@@ -2,48 +2,48 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, Moon, Sun, Phone } from 'lucide-react';
+import { Menu, X, Phone, Heart, BrainCircuit } from 'lucide-react';
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur-md">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
-          <div className="relative w-8 h-8">
-            <div className="absolute w-8 h-8 bg-astro-purple rounded-full opacity-70 animate-pulse"></div>
-            <div className="absolute w-4 h-4 bg-astro-gold rounded-full top-1 left-2 animate-sparkle"></div>
-          </div>
-          <span className="font-bold text-2xl text-gradient">AstroTalk</span>
+          <img 
+            src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" 
+            alt="iFindLife Logo" 
+            className="h-10" 
+          />
         </Link>
 
         {/* Desktop Menu */}
         <nav className="hidden md:flex gap-6">
-          <Link to="/" className="text-sm font-medium hover:text-astro-purple transition-colors">
+          <Link to="/" className="text-sm font-medium hover:text-ifind-aqua transition-colors">
             Home
           </Link>
-          <Link to="/astrologers" className="text-sm font-medium hover:text-astro-purple transition-colors">
-            Astrologers
+          <Link to="/astrologers" className="text-sm font-medium hover:text-ifind-aqua transition-colors">
+            Our Therapists
           </Link>
-          <Link to="/horoscope" className="text-sm font-medium hover:text-astro-purple transition-colors">
-            Daily Horoscope
+          <Link to="/horoscope" className="text-sm font-medium hover:text-ifind-aqua transition-colors">
+            Mental Health Tips
           </Link>
-          <Link to="/services" className="text-sm font-medium hover:text-astro-purple transition-colors">
+          <Link to="/services" className="text-sm font-medium hover:text-ifind-aqua transition-colors">
             Services
           </Link>
-          <Link to="/blog" className="text-sm font-medium hover:text-astro-purple transition-colors">
-            Blog
+          <Link to="/blog" className="text-sm font-medium hover:text-ifind-aqua transition-colors">
+            Resources
           </Link>
         </nav>
 
         <div className="hidden md:flex items-center gap-4">
-          <Button variant="outline" size="sm" className="rounded-full gap-1 text-astro-purple border-astro-purple hover:bg-astro-purple hover:text-white transition-all">
-            <Phone size={16} />
-            <span className="hidden sm:inline">Call Now</span>
+          <Button variant="outline" size="sm" className="rounded-full gap-1 text-ifind-aqua border-ifind-aqua hover:bg-ifind-aqua hover:text-white transition-all">
+            <Heart size={16} />
+            <span className="hidden sm:inline">Get Support</span>
           </Button>
           <Link to="/login">
-            <Button size="sm" className="bg-astro-purple hover:bg-astro-violet transition-colors">Login</Button>
+            <Button size="sm" className="bg-ifind-teal hover:bg-ifind-teal/80 transition-colors">Login</Button>
           </Link>
         </div>
 
@@ -63,24 +63,24 @@ const Navbar = () => {
                 Home
               </Link>
               <Link to="/astrologers" className="px-4 py-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
-                Astrologers
+                Our Therapists
               </Link>
               <Link to="/horoscope" className="px-4 py-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
-                Daily Horoscope
+                Mental Health Tips
               </Link>
               <Link to="/services" className="px-4 py-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
                 Services
               </Link>
               <Link to="/blog" className="px-4 py-2 hover:bg-muted rounded-md" onClick={() => setMobileMenuOpen(false)}>
-                Blog
+                Resources
               </Link>
               <div className="flex flex-col sm:flex-row gap-2 px-4 pt-2 border-t">
-                <Button variant="outline" size="sm" className="justify-center gap-1 text-astro-purple border-astro-purple hover:bg-astro-purple hover:text-white">
-                  <Phone size={16} />
-                  <span>Call Now</span>
+                <Button variant="outline" size="sm" className="justify-center gap-1 text-ifind-aqua border-ifind-aqua hover:bg-ifind-aqua hover:text-white">
+                  <Heart size={16} />
+                  <span>Get Support</span>
                 </Button>
                 <Link to="/login" className="w-full sm:w-auto" onClick={() => setMobileMenuOpen(false)}>
-                  <Button size="sm" className="w-full bg-astro-purple hover:bg-astro-violet">Login</Button>
+                  <Button size="sm" className="w-full bg-ifind-teal hover:bg-ifind-teal/80">Login</Button>
                 </Link>
               </div>
             </div>

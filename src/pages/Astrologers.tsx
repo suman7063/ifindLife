@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Star, SlidersHorizontal } from 'lucide-react';
+import { Search, Filter, Star, SlidersHorizontal, BrainCircuit, Heart } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import AstrologerCard from '@/components/AstrologerCard';
 import Footer from '@/components/Footer';
@@ -19,12 +19,12 @@ const Astrologers = () => {
   
   // Specialties filter checkboxes
   const [specialties, setSpecialties] = useState({
-    vedic: false,
-    tarot: false,
-    numerology: false,
-    palmistry: false,
-    vastu: false,
-    kundli: false,
+    anxiety: false,
+    depression: false,
+    stress: false,
+    relationships: false,
+    trauma: false,
+    selfEsteem: false,
   });
   
   // Languages filter checkboxes
@@ -43,15 +43,15 @@ const Astrologers = () => {
     moreThan10: false,
   });
 
-  // Sample astrologer data
-  const astrologerData = [
+  // Sample therapist data (renamed from astrologer)
+  const therapistData = [
     {
       id: 1,
-      name: "Acharya Raman",
+      name: "Dr. Raman Sharma",
       experience: 15,
-      specialties: ["Vedic", "Palmistry", "Tarot"],
+      specialties: ["Anxiety", "Depression", "CBT"],
       rating: 4.9,
-      consultations: 35000,
+      consultations: 2300,
       price: 30,
       waitTime: "Available",
       imageUrl: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=2070&auto=format&fit=crop",
@@ -60,11 +60,11 @@ const Astrologers = () => {
     },
     {
       id: 2,
-      name: "Maya Sharma",
+      name: "Dr. Maya Patel",
       experience: 10,
-      specialties: ["Numerology", "Tarot"],
+      specialties: ["Trauma", "EMDR"],
       rating: 4.8,
-      consultations: 18500,
+      consultations: 1800,
       price: 25,
       waitTime: "5 min wait",
       imageUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1976&auto=format&fit=crop",
@@ -73,11 +73,11 @@ const Astrologers = () => {
     },
     {
       id: 3,
-      name: "Guru Pranav",
+      name: "Dr. Pranav Gupta",
       experience: 12,
-      specialties: ["Kundli", "Horoscope"],
+      specialties: ["Stress", "Mindfulness"],
       rating: 4.7,
-      consultations: 22800,
+      consultations: 1500,
       price: 35,
       waitTime: "Available",
       imageUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=1974&auto=format&fit=crop",
@@ -86,11 +86,11 @@ const Astrologers = () => {
     },
     {
       id: 4,
-      name: "Kavita Joshi",
+      name: "Dr. Kavita Joshi",
       experience: 8,
-      specialties: ["Tarot", "Psychic"],
+      specialties: ["Relationships", "Family Therapy"],
       rating: 4.6,
-      consultations: 12600,
+      consultations: 1200,
       price: 28,
       waitTime: "10 min wait",
       imageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1976&auto=format&fit=crop",
@@ -101,9 +101,9 @@ const Astrologers = () => {
       id: 5,
       name: "Dr. Vijay Kumar",
       experience: 20,
-      specialties: ["Vedic", "Vastu", "Kundli"],
+      specialties: ["Anxiety", "Self-Esteem", "Depression"],
       rating: 4.9,
-      consultations: 42000,
+      consultations: 3000,
       price: 45,
       waitTime: "Available",
       imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1974&auto=format&fit=crop",
@@ -112,11 +112,11 @@ const Astrologers = () => {
     },
     {
       id: 6,
-      name: "Lakshmi Iyer",
+      name: "Dr. Lakshmi Iyer",
       experience: 7,
-      specialties: ["Numerology", "Palmistry"],
+      specialties: ["Youth Counseling", "Behavioral Therapy"],
       rating: 4.5,
-      consultations: 9800,
+      consultations: 980,
       price: 22,
       waitTime: "Available",
       imageUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=2071&auto=format&fit=crop",
@@ -127,12 +127,12 @@ const Astrologers = () => {
 
   const handleResetFilters = () => {
     setSpecialties({
-      vedic: false,
-      tarot: false,
-      numerology: false,
-      palmistry: false,
-      vastu: false,
-      kundli: false,
+      anxiety: false,
+      depression: false,
+      stress: false,
+      relationships: false,
+      trauma: false,
+      selfEsteem: false,
     });
     setLanguages({
       english: false,
@@ -151,23 +151,23 @@ const Astrologers = () => {
   };
 
   // Filter function
-  const filteredAstrologers = astrologerData.filter((astrologer) => {
+  const filteredTherapists = therapistData.filter((therapist) => {
     // Apply search filter
-    if (searchTerm && !astrologer.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (searchTerm && !therapist.name.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     
     // Apply price filter
-    if (astrologer.price < priceRange[0] || astrologer.price > priceRange[1]) {
+    if (therapist.price < priceRange[0] || therapist.price > priceRange[1]) {
       return false;
     }
     
     // Apply specialties filter
     const hasSelectedSpecialty = Object.values(specialties).some(value => value);
     if (hasSelectedSpecialty) {
-      const astrologerSpecialtiesLower = astrologer.specialties.map(s => s.toLowerCase());
+      const therapistSpecialtiesLower = therapist.specialties.map(s => s.toLowerCase());
       const matchesSpecialty = Object.entries(specialties).some(([key, value]) => {
-        return value && astrologerSpecialtiesLower.includes(key);
+        return value && therapistSpecialtiesLower.includes(key.toLowerCase());
       });
       if (!matchesSpecialty) return false;
     }
@@ -175,9 +175,9 @@ const Astrologers = () => {
     // Apply language filter
     const hasSelectedLanguage = Object.values(languages).some(value => value);
     if (hasSelectedLanguage) {
-      const astrologerLanguagesLower = astrologer.languages.map(l => l.toLowerCase());
+      const therapistLanguagesLower = therapist.languages.map(l => l.toLowerCase());
       const matchesLanguage = Object.entries(languages).some(([key, value]) => {
-        return value && astrologerLanguagesLower.includes(key);
+        return value && therapistLanguagesLower.includes(key);
       });
       if (!matchesLanguage) return false;
     }
@@ -185,13 +185,13 @@ const Astrologers = () => {
     // Apply experience filter
     const hasSelectedExperience = Object.values(experience).some(value => value);
     if (hasSelectedExperience) {
-      if (experience.lessThan5 && astrologer.experience >= 5) {
+      if (experience.lessThan5 && therapist.experience >= 5) {
         if (!experience.between5And10 && !experience.moreThan10) return false;
       }
-      if (experience.between5And10 && (astrologer.experience < 5 || astrologer.experience > 10)) {
+      if (experience.between5And10 && (therapist.experience < 5 || therapist.experience > 10)) {
         if (!experience.lessThan5 && !experience.moreThan10) return false;
       }
-      if (experience.moreThan10 && astrologer.experience <= 10) {
+      if (experience.moreThan10 && therapist.experience <= 10) {
         if (!experience.lessThan5 && !experience.between5And10) return false;
       }
     }
@@ -212,10 +212,10 @@ const Astrologers = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="bg-astro-deep-blue text-white py-10">
+      <div className="bg-ifind-charcoal text-white py-10">
         <div className="container">
-          <h1 className="text-3xl font-bold mb-2">Our Astrologers</h1>
-          <p className="text-astro-stardust/80">Connect with verified experts for personalized guidance</p>
+          <h1 className="text-3xl font-bold mb-2">Our Mental Health Therapists</h1>
+          <p className="text-ifind-offwhite/80">Connect with licensed professionals for personalized support</p>
         </div>
       </div>
       
@@ -233,7 +233,7 @@ const Astrologers = () => {
                   <Filter className="h-4 w-4 mr-2" />
                   Filters
                   {filterCount > 0 && (
-                    <Badge className="ml-2 bg-astro-purple">{filterCount}</Badge>
+                    <Badge className="ml-2 bg-ifind-aqua">{filterCount}</Badge>
                   )}
                 </div>
                 <SlidersHorizontal className="h-4 w-4" />
@@ -249,7 +249,7 @@ const Astrologers = () => {
                     <Button 
                       variant="ghost" 
                       size="sm" 
-                      className="text-sm h-auto py-1 px-2 hover:text-astro-purple"
+                      className="text-sm h-auto py-1 px-2 hover:text-ifind-aqua"
                       onClick={handleResetFilters}
                     >
                       Reset All
@@ -288,13 +288,13 @@ const Astrologers = () => {
                           onCheckedChange={(checked) => 
                             setSpecialties({...specialties, [key]: !!checked})
                           }
-                          className="data-[state=checked]:bg-astro-purple data-[state=checked]:border-astro-purple"
+                          className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                         />
                         <label 
                           htmlFor={`specialty-${key}`}
                           className="text-sm font-medium capitalize cursor-pointer"
                         >
-                          {key}
+                          {key === 'selfEsteem' ? 'Self-Esteem' : key}
                         </label>
                       </div>
                     ))}
@@ -313,7 +313,7 @@ const Astrologers = () => {
                           onCheckedChange={(checked) => 
                             setLanguages({...languages, [key]: !!checked})
                           }
-                          className="data-[state=checked]:bg-astro-purple data-[state=checked]:border-astro-purple"
+                          className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                         />
                         <label 
                           htmlFor={`language-${key}`}
@@ -337,7 +337,7 @@ const Astrologers = () => {
                         onCheckedChange={(checked) => 
                           setExperience({...experience, lessThan5: !!checked})
                         }
-                        className="data-[state=checked]:bg-astro-purple data-[state=checked]:border-astro-purple"
+                        className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                       />
                       <label 
                         htmlFor="exp-less-than-5"
@@ -353,7 +353,7 @@ const Astrologers = () => {
                         onCheckedChange={(checked) => 
                           setExperience({...experience, between5And10: !!checked})
                         }
-                        className="data-[state=checked]:bg-astro-purple data-[state=checked]:border-astro-purple"
+                        className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                       />
                       <label 
                         htmlFor="exp-5-to-10"
@@ -369,7 +369,7 @@ const Astrologers = () => {
                         onCheckedChange={(checked) => 
                           setExperience({...experience, moreThan10: !!checked})
                         }
-                        className="data-[state=checked]:bg-astro-purple data-[state=checked]:border-astro-purple"
+                        className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                       />
                       <label 
                         htmlFor="exp-more-than-10"
@@ -383,7 +383,7 @@ const Astrologers = () => {
               </div>
             </div>
             
-            {/* Astrologers List */}
+            {/* Therapists List */}
             <div className="lg:w-3/4">
               {/* Search and Sort */}
               <div className="mb-6 relative">
@@ -392,7 +392,7 @@ const Astrologers = () => {
                 </div>
                 <Input
                   type="search"
-                  placeholder="Search astrologers by name"
+                  placeholder="Search therapists by name"
                   className="pl-10"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -402,31 +402,31 @@ const Astrologers = () => {
               {/* Results */}
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-sm text-muted-foreground">
-                  Showing {filteredAstrologers.length} results
+                  Showing {filteredTherapists.length} results
                 </p>
                 <div className="flex items-center space-x-1">
                   <p className="text-sm">Sort by:</p>
                   <Button variant="ghost" size="sm" className="text-sm">
                     Rating
-                    <Star className="ml-1 h-3 w-3 fill-astro-gold text-astro-gold" />
+                    <Star className="ml-1 h-3 w-3 fill-ifind-aqua text-ifind-aqua" />
                   </Button>
                 </div>
               </div>
               
-              {/* Astrologer Grid */}
-              {filteredAstrologers.length > 0 ? (
+              {/* Therapist Grid */}
+              {filteredTherapists.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredAstrologers.map((astrologer) => (
-                    <AstrologerCard key={astrologer.id} {...astrologer} />
+                  {filteredTherapists.map((therapist) => (
+                    <AstrologerCard key={therapist.id} {...therapist} />
                   ))}
                 </div>
               ) : (
                 <div className="text-center py-12 bg-muted/30 rounded-lg">
-                  <p className="text-lg font-medium mb-2">No astrologers found</p>
+                  <p className="text-lg font-medium mb-2">No therapists found</p>
                   <p className="text-muted-foreground mb-4">Try adjusting your filters or search term</p>
                   <Button 
                     variant="outline" 
-                    className="border-astro-purple text-astro-purple hover:bg-astro-purple hover:text-white"
+                    className="border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua hover:text-white"
                     onClick={handleResetFilters}
                   >
                     Reset Filters
