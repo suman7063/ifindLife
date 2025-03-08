@@ -12,13 +12,3 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ThemeProvider>
   </React.StrictMode>,
 )
-
-// Add logo resize class to the logo after mount
-document.addEventListener('DOMContentLoaded', () => {
-  setTimeout(() => {
-    const logoElement = document.querySelector('img[alt="iFindLife"]');
-    if (logoElement) {
-      logoElement.classList.add('ifindlife-logo');
-    }
-  }, 100);
-});
