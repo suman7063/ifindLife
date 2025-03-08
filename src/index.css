@@ -119,6 +119,12 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+  
+  /* Logo size override */
+  .ifindlife-logo {
+    transform: scale(1.5);
+    transform-origin: left center;
+  }
 }
 
 @layer components {
