@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,15 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				astro: {
+					purple: '#5928E5',
+					'deep-blue': '#0A1128',
+					gold: '#FFD700',
+					'light-purple': '#A682FF',
+					'midnight': '#191970',
+					violet: '#7A4EAB',
+					stardust: '#F8F7FF'
 				}
 			},
 			borderRadius: {
@@ -84,11 +94,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'sparkle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.5' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 6s ease-in-out infinite',
+				'sparkle': 'sparkle 2s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'star-pattern': "url('/stars-bg.png')",
+				'purple-gradient': 'linear-gradient(to right, #5928E5, #A682FF)',
+				'cosmic-gradient': 'linear-gradient(to bottom, #0A1128, #191970)',
 			}
 		}
 	},
