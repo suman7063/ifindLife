@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, Clock, PhoneCall, MessageCircle } from 'lucide-react';
+import { Star, Clock, PhoneCall, Video } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import CallModal from './CallModal';
 import { toast } from '@/hooks/use-toast';
@@ -35,6 +35,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
   
   const handleCallClick = () => {
     if (online && waitTime === 'Available') {
@@ -48,8 +49,16 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
     }
   };
   
-  const handleChatClick = () => {
-    navigate(`/astrologers/${id}`);
+  const handleVideoCallClick = () => {
+    if (online && waitTime === 'Available') {
+      setIsVideoCallModalOpen(true);
+    } else {
+      toast({
+        title: "Astrologer Unavailable",
+        description: "This astrologer is currently offline or busy. Please try again later.",
+        variant: "destructive"
+      });
+    }
   };
   
   return (
@@ -121,17 +130,20 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
           </Button>
           <Button 
             className="flex-1 bg-astro-purple hover:bg-astro-violet transition-colors"
-            onClick={handleChatClick}
+            onClick={handleVideoCallClick}
           >
-            <MessageCircle className="h-4 w-4 mr-1" />
-            Chat
+            <Video className="h-4 w-4 mr-1" />
+            Video
           </Button>
         </CardFooter>
       </Card>
       
       <CallModal 
-        isOpen={isCallModalOpen}
-        onClose={() => setIsCallModalOpen(false)}
+        isOpen={isCallModalOpen || isVideoCallModalOpen}
+        onClose={() => {
+          setIsCallModalOpen(false);
+          setIsVideoCallModalOpen(false);
+        }}
         astrologer={{ id, name, imageUrl, price }}
       />
     </>
