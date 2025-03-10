@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import ExpertLogin from "./pages/ExpertLogin";
+import ExpertDashboard from "./pages/ExpertDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -29,6 +31,8 @@ const App = () => (
             <Route path="/therapists/:id" element={<AstrologerDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/expert-login" element={<ExpertLogin />} />
+            <Route path="/expert-dashboard" element={<ExpertDashboard />} />
             <Route 
               path="/admin" 
               element={
