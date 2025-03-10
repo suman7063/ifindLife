@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,6 +8,7 @@ import { ArrowLeft, Save, LogOut } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
+import AdminUserManagement from '@/components/AdminUserManagement';
 import {
   categoryData,
   therapistData,
@@ -90,6 +90,9 @@ const Admin = () => {
               <TabsTrigger value="categories" className="rounded-none">Services</TabsTrigger>
               <TabsTrigger value="therapists" className="rounded-none">Therapists</TabsTrigger>
               <TabsTrigger value="testimonials" className="rounded-none">Testimonials</TabsTrigger>
+              {currentUser?.role === 'superadmin' && (
+                <TabsTrigger value="admins" className="rounded-none">Admin Users</TabsTrigger>
+              )}
             </TabsList>
             
             {/* Hero Section Editor */}
@@ -414,6 +417,11 @@ const Admin = () => {
                   </div>
                 ))}
               </div>
+            </TabsContent>
+
+            {/* Admin Users Management (only for superadmin) */}
+            <TabsContent value="admins" className="p-6">
+              <AdminUserManagement />
             </TabsContent>
           </Tabs>
         </div>
