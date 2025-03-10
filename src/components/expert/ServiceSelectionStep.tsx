@@ -24,40 +24,46 @@ const ServiceSelectionStep = ({
         Select the services you would like to offer. Rates are pre-defined by the admin.
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {services.map((service) => (
-          <Card key={service.id} className={`overflow-hidden transition-all border-2 ${
-            formData.selectedServices.includes(service.id) ? 'border-astro-purple' : 'border-transparent'
-          }`}>
-            <CardContent className="p-4">
-              <div className="flex items-start space-x-3">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`service-${service.id}`}
-                      checked={formData.selectedServices.includes(service.id)}
-                      onCheckedChange={() => handleCheckboxChange(service.id)}
-                    />
-                    <label
-                      htmlFor={`service-${service.id}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {service.name}
-                    </label>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {service.description}
-                  </p>
-                  <div className="mt-2 flex justify-between text-xs font-medium">
-                    <span>${service.rateUSD}/hour</span>
-                    <span>₹{service.rateINR}/hour</span>
+      {services.length === 0 ? (
+        <div className="p-6 text-center border border-dashed rounded-lg">
+          <p className="text-muted-foreground">No services are currently available. Please contact the administrator.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {services.map((service) => (
+            <Card key={service.id} className={`overflow-hidden transition-all border-2 ${
+              formData.selectedServices.includes(service.id) ? 'border-astro-purple' : 'border-transparent'
+            }`}>
+              <CardContent className="p-4">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`service-${service.id}`}
+                        checked={formData.selectedServices.includes(service.id)}
+                        onCheckedChange={() => handleCheckboxChange(service.id)}
+                      />
+                      <label
+                        htmlFor={`service-${service.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {service.name}
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {service.description}
+                    </p>
+                    <div className="mt-2 flex justify-between text-xs font-medium">
+                      <span>${service.rateUSD}/hour</span>
+                      <span>₹{service.rateINR}/hour</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
       
       <div className="flex items-start space-x-3 pt-4">
         <Checkbox

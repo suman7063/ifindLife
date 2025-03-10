@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -42,12 +41,53 @@ export const useExpertRegistration = () => {
             rateINR: (30 + (index * 5)) * 80,
           }));
           setServices(servicesFromCategories);
+        } else {
+          console.warn("No categories found in stored content");
+          createSampleServices();
         }
       } catch (e) {
         console.error("Error parsing saved content", e);
+        createSampleServices();
       }
+    } else {
+      console.warn("No stored content found");
+      createSampleServices();
     }
   }, []);
+
+  const createSampleServices = () => {
+    const sampleServices: ServiceType[] = [
+      {
+        id: 1,
+        name: "Therapy Session",
+        description: "One-on-one therapy session to discuss mental health concerns",
+        rateUSD: 40,
+        rateINR: 3200,
+      },
+      {
+        id: 2,
+        name: "Anxiety Management",
+        description: "Learn techniques to manage anxiety and stress",
+        rateUSD: 35,
+        rateINR: 2800,
+      },
+      {
+        id: 3,
+        name: "Depression Counseling",
+        description: "Support and guidance for managing depression",
+        rateUSD: 45,
+        rateINR: 3600,
+      },
+      {
+        id: 4,
+        name: "Relationship Counseling",
+        description: "Guidance for improving personal relationships",
+        rateUSD: 50,
+        rateINR: 4000,
+      }
+    ];
+    setServices(sampleServices);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
