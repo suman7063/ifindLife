@@ -6,15 +6,50 @@ import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
 import { Filter, SlidersHorizontal } from 'lucide-react';
 
+// Update the type definitions to match the exact shape of the state objects
 interface FilterPanelProps {
   priceRange: number[];
   setPriceRange: (value: number[]) => void;
-  specialties: Record<string, boolean>;
-  setSpecialties: (value: Record<string, boolean>) => void;
-  languages: Record<string, boolean>;
-  setLanguages: (value: Record<string, boolean>) => void;
-  experience: Record<string, boolean>;
-  setExperience: (value: Record<string, boolean>) => void;
+  specialties: {
+    anxiety: boolean;
+    depression: boolean;
+    stress: boolean;
+    relationships: boolean;
+    trauma: boolean;
+    selfEsteem: boolean;
+  };
+  setSpecialties: React.Dispatch<React.SetStateAction<{
+    anxiety: boolean;
+    depression: boolean;
+    stress: boolean;
+    relationships: boolean;
+    trauma: boolean;
+    selfEsteem: boolean;
+  }>>;
+  languages: {
+    english: boolean;
+    hindi: boolean;
+    tamil: boolean;
+    telugu: boolean;
+    kannada: boolean;
+  };
+  setLanguages: React.Dispatch<React.SetStateAction<{
+    english: boolean;
+    hindi: boolean;
+    tamil: boolean;
+    telugu: boolean;
+    kannada: boolean;
+  }>>;
+  experience: {
+    lessThan5: boolean;
+    between5And10: boolean;
+    moreThan10: boolean;
+  };
+  setExperience: React.Dispatch<React.SetStateAction<{
+    lessThan5: boolean;
+    between5And10: boolean;
+    moreThan10: boolean;
+  }>>;
   filterCount: number;
   onResetFilters: () => void;
   showFilters: boolean;
@@ -101,7 +136,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     id={`specialty-${key}`} 
                     checked={value}
                     onCheckedChange={(checked) => 
-                      setSpecialties({...specialties, [key]: !!checked})
+                      setSpecialties(prev => ({...prev, [key]: !!checked}))
                     }
                     className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                   />
@@ -126,7 +161,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                     id={`language-${key}`} 
                     checked={value}
                     onCheckedChange={(checked) => 
-                      setLanguages({...languages, [key]: !!checked})
+                      setLanguages(prev => ({...prev, [key]: !!checked}))
                     }
                     className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                   />
@@ -150,7 +185,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   id="exp-less-than-5" 
                   checked={experience.lessThan5}
                   onCheckedChange={(checked) => 
-                    setExperience({...experience, lessThan5: !!checked})
+                    setExperience(prev => ({...prev, lessThan5: !!checked}))
                   }
                   className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                 />
@@ -166,7 +201,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   id="exp-5-to-10" 
                   checked={experience.between5And10}
                   onCheckedChange={(checked) => 
-                    setExperience({...experience, between5And10: !!checked})
+                    setExperience(prev => ({...prev, between5And10: !!checked}))
                   }
                   className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                 />
@@ -182,7 +217,7 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
                   id="exp-more-than-10" 
                   checked={experience.moreThan10}
                   onCheckedChange={(checked) => 
-                    setExperience({...experience, moreThan10: !!checked})
+                    setExperience(prev => ({...prev, moreThan10: !!checked}))
                   }
                   className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
                 />
