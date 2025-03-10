@@ -8,7 +8,6 @@ interface ServiceSelectionStepProps {
   formData: ExpertFormData;
   services: ServiceType[];
   handleCheckboxChange: (serviceId: number) => void;
-  prevStep: () => void;
   setFormData: React.Dispatch<React.SetStateAction<ExpertFormData>>;
 }
 
@@ -16,7 +15,6 @@ const ServiceSelectionStep = ({
   formData, 
   services, 
   handleCheckboxChange, 
-  prevStep,
   setFormData
 }: ServiceSelectionStepProps) => {
   return (

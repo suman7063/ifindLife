@@ -53,18 +53,30 @@ const ExpertRegistrationForm = () => {
       )}
       
       {step === 4 && (
-        <FormStepContainer 
-          prevStep={prevStep}
-          submitLabel="Complete Registration"
-        >
+        <div className="space-y-6">
           <ServiceSelectionStep 
             formData={formData}
             services={services}
             handleCheckboxChange={handleCheckboxChange}
-            prevStep={prevStep}
             setFormData={setFormData}
           />
-        </FormStepContainer>
+          
+          <div className="flex justify-between mt-6">
+            <button
+              type="button"
+              onClick={prevStep}
+              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Previous
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-astro-purple hover:bg-astro-violet"
+            >
+              Complete Registration
+            </button>
+          </div>
+        </div>
       )}
     </form>
   );
