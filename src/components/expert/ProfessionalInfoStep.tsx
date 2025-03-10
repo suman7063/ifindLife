@@ -9,6 +9,7 @@ interface ProfessionalInfoStepProps {
   formData: ExpertFormData;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleRemoveCertificate: (index: number) => void;
   nextStep: () => void;
   prevStep: () => void;
 }
@@ -17,6 +18,7 @@ const ProfessionalInfoStep = ({
   formData, 
   handleChange, 
   handleFileUpload, 
+  handleRemoveCertificate,
   nextStep, 
   prevStep 
 }: ProfessionalInfoStepProps) => {
@@ -108,15 +110,7 @@ const ProfessionalInfoStep = ({
                 <button
                   type="button"
                   className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
-                  onClick={() => {
-                    const newCertificates = [...formData.certificates];
-                    newCertificates.splice(index, 1);
-                    
-                    const newUrls = [...formData.certificateUrls];
-                    newUrls.splice(index, 1);
-                    
-                    // This will be handled by the parent component through its state setter
-                  }}
+                  onClick={() => handleRemoveCertificate(index)}
                 >
                   ×
                 </button>

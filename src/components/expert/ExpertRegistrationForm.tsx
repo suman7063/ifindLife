@@ -191,6 +191,7 @@ const ExpertRegistrationForm = () => {
           formData={formData} 
           handleChange={handleChange} 
           handleFileUpload={handleFileUpload}
+          handleRemoveCertificate={handleRemoveCertificate}
           nextStep={nextStep} 
           prevStep={prevStep} 
         />
