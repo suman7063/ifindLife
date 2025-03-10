@@ -28,11 +28,16 @@ const ExpertLogin = () => {
       );
       
       if (expert) {
+        // Store the expert's email in localStorage for session management
+        localStorage.setItem('ifindlife-expert-email', expert.email);
+        
+        // This was storing an auth object instead of just the email
         localStorage.setItem('ifindlife-expert-auth', JSON.stringify({
           id: expert.id,
           name: expert.name,
           email: expert.email
         }));
+        
         toast.success('Login successful!');
         navigate('/expert-dashboard');
       } else {

@@ -17,6 +17,7 @@ export const useExpertAuth = (): ExpertAuthReturnType => {
 
   useEffect(() => {
     const expertEmail = localStorage.getItem('ifindlife-expert-email');
+    
     if (expertEmail) {
       try {
         const experts = JSON.parse(localStorage.getItem('ifindlife-experts') || '[]');
@@ -35,7 +36,10 @@ export const useExpertAuth = (): ExpertAuthReturnType => {
         navigate('/expert-login');
       }
     } else {
-      navigate('/expert-login');
+      // Only navigate to login if we're on a protected route
+      if (window.location.pathname.includes('expert-dashboard')) {
+        navigate('/expert-login');
+      }
     }
     setLoading(false);
   }, [navigate]);

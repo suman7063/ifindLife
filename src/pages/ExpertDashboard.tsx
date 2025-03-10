@@ -13,9 +13,17 @@ import { User } from '@/contexts/UserAuthContext';
 
 const ExpertDashboard = () => {
   const { expert, loading } = useExpertAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   
   useEffect(() => {
+    // Check if user is authenticated
+    if (!loading && !expert) {
+      toast.error('Please log in to access the expert dashboard');
+      navigate('/expert-login');
+      return;
+    }
+    
     // Load users from localStorage for reporting functionality
     const storedUsers = localStorage.getItem('ifindlife-users');
     if (storedUsers) {
@@ -25,7 +33,7 @@ const ExpertDashboard = () => {
         console.error("Error loading users:", e);
       }
     }
-  }, []);
+  }, [expert, loading, navigate]);
 
   if (loading) {
     return (
@@ -45,7 +53,7 @@ const ExpertDashboard = () => {
         <Navbar />
         <main className="flex-1 container py-8">
           <div className="text-center py-10">
-            You are not logged in. Please log in to access the expert dashboard.
+            You are not logged in. Please <a href="/expert-login" className="text-ifind-aqua hover:underline">log in</a> to access the expert dashboard.
           </div>
         </main>
         <Footer />
