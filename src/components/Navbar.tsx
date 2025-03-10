@@ -1,12 +1,15 @@
+
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { Menu, Shield } from "lucide-react";
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,7 +43,9 @@ const Navbar = () => {
           <Button variant="ghost">About</Button>
           <Button variant="ghost">Blog</Button>
           <Button variant="ghost" asChild>
-            <Link to="/admin" className="text-ifind-teal">Admin</Link>
+            <Link to={isAuthenticated ? "/admin" : "/admin-login"} className="text-ifind-teal">
+              {isAuthenticated ? <><Shield className="h-4 w-4 mr-1" /> Admin</> : "Admin Login"}
+            </Link>
           </Button>
         </div>
         
@@ -59,10 +64,10 @@ const Navbar = () => {
                 </SheetDescription>
               </SheetHeader>
               <div className="grid gap-4 py-4">
-                <Button variant="ghost" className="justify-start">
+                <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/">Home</Link>
                 </Button>
-                <Button variant="ghost" className="justify-start">
+                <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/therapists">Therapists</Link>
                 </Button>
                 <Button variant="ghost" className="justify-start">
@@ -71,8 +76,10 @@ const Navbar = () => {
                 <Button variant="ghost" className="justify-start">
                   Blog
                 </Button>
-                <Button variant="ghost" className="justify-start">
-                  <Link to="/login">Login</Link>
+                <Button variant="ghost" className="justify-start" asChild>
+                  <Link to={isAuthenticated ? "/admin" : "/admin-login"}>
+                    {isAuthenticated ? "Admin Dashboard" : "Admin Login"}
+                  </Link>
                 </Button>
               </div>
             </SheetContent>

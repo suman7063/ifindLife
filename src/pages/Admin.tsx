@@ -1,13 +1,14 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, LogOut } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   categoryData,
   therapistData,
@@ -25,6 +26,24 @@ const Admin = () => {
     description: "Connect with verified mental health experts for personalized guidance about your emotional well-being, relationships, and personal growth. Get support when you need it most.",
     videoUrl: "https://www.youtube.com/embed/rUJFj6yLWSw?autoplay=0"
   });
+
+  const { currentUser, logout } = useAuth();
+
+  // Load data from localStorage if available
+  useEffect(() => {
+    const savedContent = localStorage.getItem('ifindlife-content');
+    if (savedContent) {
+      try {
+        const parsedContent = JSON.parse(savedContent);
+        if (parsedContent.categories) setCategories(parsedContent.categories);
+        if (parsedContent.therapists) setTherapists(parsedContent.therapists);
+        if (parsedContent.testimonials) setTestimonials(parsedContent.testimonials);
+        if (parsedContent.heroSettings) setHeroSettings(parsedContent.heroSettings);
+      } catch (e) {
+        console.error("Error parsing saved content", e);
+      }
+    }
+  }, []);
 
   // Handler for saving changes
   const handleSave = () => {
@@ -48,10 +67,20 @@ const Admin = () => {
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+            {currentUser && (
+              <span className="ml-2 text-sm bg-ifind-teal/10 text-ifind-teal px-2 py-1 rounded-full">
+                {currentUser.username} ({currentUser.role})
+              </span>
+            )}
           </div>
-          <Button onClick={handleSave} className="bg-ifind-aqua hover:bg-ifind-teal">
-            <Save className="mr-2 h-4 w-4" /> Save Changes
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSave} className="bg-ifind-aqua hover:bg-ifind-teal">
+              <Save className="mr-2 h-4 w-4" /> Save Changes
+            </Button>
+            <Button variant="outline" onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" /> Logout
+            </Button>
+          </div>
         </div>
 
         <div className="bg-white rounded-lg shadow-md">
