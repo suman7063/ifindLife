@@ -1,23 +1,18 @@
-
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
-import { Search, Filter, Star, SlidersHorizontal, BrainCircuit, Heart } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
-import AstrologerCard from '@/components/AstrologerCard';
 import Footer from '@/components/Footer';
+import SearchSort from '@/components/experts/SearchSort';
+import FilterPanel from '@/components/experts/FilterPanel';
+import ExpertsGrid from '@/components/experts/ExpertsGrid';
+import { Expert } from '@/types/expert';
 
-const Astrologers = () => {
+const Experts = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [priceRange, setPriceRange] = useState([0, 100]);
   const [showFilters, setShowFilters] = useState(false);
   const [filterCount, setFilterCount] = useState(0);
   
-  // Specialties filter checkboxes
+  // Filter state
   const [specialties, setSpecialties] = useState({
     anxiety: false,
     depression: false,
@@ -27,7 +22,6 @@ const Astrologers = () => {
     selfEsteem: false,
   });
   
-  // Languages filter checkboxes
   const [languages, setLanguages] = useState({
     english: false,
     hindi: false,
@@ -36,15 +30,14 @@ const Astrologers = () => {
     kannada: false,
   });
 
-  // Experience filter checkboxes
   const [experience, setExperience] = useState({
     lessThan5: false,
     between5And10: false,
     moreThan10: false,
   });
 
-  // Sample therapist data (renamed from astrologer)
-  const therapistData = [
+  // Sample expert data
+  const expertData: Expert[] = [
     {
       id: 1,
       name: "Dr. Raman Sharma",
@@ -151,23 +144,23 @@ const Astrologers = () => {
   };
 
   // Filter function
-  const filteredTherapists = therapistData.filter((therapist) => {
+  const filteredExperts = expertData.filter((expert) => {
     // Apply search filter
-    if (searchTerm && !therapist.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+    if (searchTerm && !expert.name.toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
     }
     
     // Apply price filter
-    if (therapist.price < priceRange[0] || therapist.price > priceRange[1]) {
+    if (expert.price < priceRange[0] || expert.price > priceRange[1]) {
       return false;
     }
     
     // Apply specialties filter
     const hasSelectedSpecialty = Object.values(specialties).some(value => value);
     if (hasSelectedSpecialty) {
-      const therapistSpecialtiesLower = therapist.specialties.map(s => s.toLowerCase());
+      const expertSpecialtiesLower = expert.specialties.map(s => s.toLowerCase());
       const matchesSpecialty = Object.entries(specialties).some(([key, value]) => {
-        return value && therapistSpecialtiesLower.includes(key.toLowerCase());
+        return value && expertSpecialtiesLower.includes(key.toLowerCase());
       });
       if (!matchesSpecialty) return false;
     }
@@ -175,9 +168,9 @@ const Astrologers = () => {
     // Apply language filter
     const hasSelectedLanguage = Object.values(languages).some(value => value);
     if (hasSelectedLanguage) {
-      const therapistLanguagesLower = therapist.languages.map(l => l.toLowerCase());
+      const expertLanguagesLower = expert.languages.map(l => l.toLowerCase());
       const matchesLanguage = Object.entries(languages).some(([key, value]) => {
-        return value && therapistLanguagesLower.includes(key);
+        return value && expertLanguagesLower.includes(key);
       });
       if (!matchesLanguage) return false;
     }
@@ -185,13 +178,13 @@ const Astrologers = () => {
     // Apply experience filter
     const hasSelectedExperience = Object.values(experience).some(value => value);
     if (hasSelectedExperience) {
-      if (experience.lessThan5 && therapist.experience >= 5) {
+      if (experience.lessThan5 && expert.experience >= 5) {
         if (!experience.between5And10 && !experience.moreThan10) return false;
       }
-      if (experience.between5And10 && (therapist.experience < 5 || therapist.experience > 10)) {
+      if (experience.between5And10 && (expert.experience < 5 || expert.experience > 10)) {
         if (!experience.lessThan5 && !experience.moreThan10) return false;
       }
-      if (experience.moreThan10 && therapist.experience <= 10) {
+      if (experience.moreThan10 && expert.experience <= 10) {
         if (!experience.lessThan5 && !experience.between5And10) return false;
       }
     }
@@ -200,7 +193,7 @@ const Astrologers = () => {
   });
 
   // Count active filters
-  React.useEffect(() => {
+  useEffect(() => {
     let count = 0;
     Object.values(specialties).forEach(value => { if (value) count++; });
     Object.values(languages).forEach(value => { if (value) count++; });
@@ -214,7 +207,7 @@ const Astrologers = () => {
       <Navbar />
       <div className="bg-ifind-charcoal text-white py-10">
         <div className="container">
-          <h1 className="text-3xl font-bold mb-2">Our Mental Health Therapists</h1>
+          <h1 className="text-3xl font-bold mb-2">Our Mental Health Experts</h1>
           <p className="text-ifind-offwhite/80">Connect with licensed professionals for personalized support</p>
         </div>
       </div>
@@ -222,217 +215,31 @@ const Astrologers = () => {
       <main className="flex-1 py-10">
         <div className="container">
           <div className="flex flex-col lg:flex-row gap-8">
-            {/* Mobile Filter Toggle */}
-            <div className="lg:hidden w-full">
-              <Button 
-                variant="outline" 
-                className="w-full flex items-center justify-between"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <div className="flex items-center">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                  {filterCount > 0 && (
-                    <Badge className="ml-2 bg-ifind-aqua">{filterCount}</Badge>
-                  )}
-                </div>
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
+            <FilterPanel
+              priceRange={priceRange}
+              setPriceRange={setPriceRange}
+              specialties={specialties}
+              setSpecialties={setSpecialties}
+              languages={languages}
+              setLanguages={setLanguages}
+              experience={experience}
+              setExperience={setExperience}
+              filterCount={filterCount}
+              onResetFilters={handleResetFilters}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+            />
             
-            {/* Desktop Filter Sidebar */}
-            <div className={`lg:w-1/4 space-y-6 ${showFilters ? 'block' : 'hidden lg:block'}`}>
-              <div className="p-6 border rounded-lg shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold text-lg">Filters</h3>
-                  {filterCount > 0 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-sm h-auto py-1 px-2 hover:text-ifind-aqua"
-                      onClick={handleResetFilters}
-                    >
-                      Reset All
-                    </Button>
-                  )}
-                </div>
-                
-                {/* Price Range Filter */}
-                <div className="mb-6">
-                  <h4 className="font-medium mb-3">Price Range (₹/min)</h4>
-                  <div className="mb-4">
-                    <Slider 
-                      defaultValue={[0, 100]} 
-                      max={100} 
-                      step={1} 
-                      value={priceRange}
-                      onValueChange={setPriceRange}
-                      className="py-2"
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>₹{priceRange[0]}</span>
-                    <span>₹{priceRange[1]}</span>
-                  </div>
-                </div>
-                
-                {/* Specialties Filter */}
-                <div className="mb-6">
-                  <h4 className="font-medium mb-3">Specialties</h4>
-                  <div className="space-y-2">
-                    {Object.entries(specialties).map(([key, value]) => (
-                      <div key={key} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`specialty-${key}`} 
-                          checked={value}
-                          onCheckedChange={(checked) => 
-                            setSpecialties({...specialties, [key]: !!checked})
-                          }
-                          className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
-                        />
-                        <label 
-                          htmlFor={`specialty-${key}`}
-                          className="text-sm font-medium capitalize cursor-pointer"
-                        >
-                          {key === 'selfEsteem' ? 'Self-Esteem' : key}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Language Filter */}
-                <div className="mb-6">
-                  <h4 className="font-medium mb-3">Languages</h4>
-                  <div className="space-y-2">
-                    {Object.entries(languages).map(([key, value]) => (
-                      <div key={key} className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`language-${key}`} 
-                          checked={value}
-                          onCheckedChange={(checked) => 
-                            setLanguages({...languages, [key]: !!checked})
-                          }
-                          className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
-                        />
-                        <label 
-                          htmlFor={`language-${key}`}
-                          className="text-sm font-medium capitalize cursor-pointer"
-                        >
-                          {key}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Experience Filter */}
-                <div className="mb-6">
-                  <h4 className="font-medium mb-3">Experience</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="exp-less-than-5" 
-                        checked={experience.lessThan5}
-                        onCheckedChange={(checked) => 
-                          setExperience({...experience, lessThan5: !!checked})
-                        }
-                        className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
-                      />
-                      <label 
-                        htmlFor="exp-less-than-5"
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        Less than 5 years
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="exp-5-to-10" 
-                        checked={experience.between5And10}
-                        onCheckedChange={(checked) => 
-                          setExperience({...experience, between5And10: !!checked})
-                        }
-                        className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
-                      />
-                      <label 
-                        htmlFor="exp-5-to-10"
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        5-10 years
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="exp-more-than-10" 
-                        checked={experience.moreThan10}
-                        onCheckedChange={(checked) => 
-                          setExperience({...experience, moreThan10: !!checked})
-                        }
-                        className="data-[state=checked]:bg-ifind-aqua data-[state=checked]:border-ifind-aqua"
-                      />
-                      <label 
-                        htmlFor="exp-more-than-10"
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        More than 10 years
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Therapists List */}
             <div className="lg:w-3/4">
-              {/* Search and Sort */}
-              <div className="mb-6 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <Input
-                  type="search"
-                  placeholder="Search therapists by name"
-                  className="pl-10"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <SearchSort
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+              />
               
-              {/* Results */}
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  Showing {filteredTherapists.length} results
-                </p>
-                <div className="flex items-center space-x-1">
-                  <p className="text-sm">Sort by:</p>
-                  <Button variant="ghost" size="sm" className="text-sm">
-                    Rating
-                    <Star className="ml-1 h-3 w-3 fill-ifind-aqua text-ifind-aqua" />
-                  </Button>
-                </div>
-              </div>
-              
-              {/* Therapist Grid */}
-              {filteredTherapists.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredTherapists.map((therapist) => (
-                    <AstrologerCard key={therapist.id} {...therapist} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-muted/30 rounded-lg">
-                  <p className="text-lg font-medium mb-2">No therapists found</p>
-                  <p className="text-muted-foreground mb-4">Try adjusting your filters or search term</p>
-                  <Button 
-                    variant="outline" 
-                    className="border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua hover:text-white"
-                    onClick={handleResetFilters}
-                  >
-                    Reset Filters
-                  </Button>
-                </div>
-              )}
+              <ExpertsGrid
+                experts={filteredExperts}
+                onResetFilters={handleResetFilters}
+              />
             </div>
           </div>
         </div>
@@ -442,4 +249,4 @@ const Astrologers = () => {
   );
 };
 
-export default Astrologers;
+export default Experts;
