@@ -3,8 +3,11 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { PhoneCall, Star, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Slider } from '@/components/ui/slider';
 
 const Hero = () => {
+  const [volume, setVolume] = React.useState([70]);
+
   return (
     <section className="relative py-16 md:py-24 overflow-hidden">
       {/* Background decorations */}
@@ -52,39 +55,31 @@ const Hero = () => {
           </div>
         </div>
         
-        <div className="relative bg-gradient-to-br from-ifind-offwhite to-white p-1 rounded-2xl shadow-xl">
-          <div className="bg-white rounded-xl overflow-hidden">
-            <div className="bg-ifind-aqua/10 p-6 flex flex-col items-center">
-              <div className="w-24 h-24 bg-gradient-to-r from-ifind-aqua to-ifind-teal rounded-full flex items-center justify-center mb-4">
-                <span className="text-4xl">🧠</span>
-              </div>
-              <h3 className="font-semibold text-lg mb-2">Your Mental Wellness Check</h3>
-              <div className="grid grid-cols-4 gap-4 w-full max-w-sm my-4">
-                {["🧠", "💭", "🌱", "✨", "😊", "😴", "🍎", "🏃", "🧘", "🌈", "🔄", "🛌"].map((icon, i) => (
-                  <div key={i} className="h-12 w-12 bg-white rounded-lg shadow-sm flex items-center justify-center text-xl hover:bg-ifind-offwhite cursor-pointer transition-colors">
-                    {icon}
-                  </div>
-                ))}
-              </div>
-              <Button className="w-full bg-ifind-aqua hover:bg-ifind-teal">
-                Take Wellness Assessment
-              </Button>
+        <div className="relative bg-gradient-to-br from-ifind-offwhite to-white p-4 rounded-2xl shadow-xl">
+          <div className="bg-black rounded-xl overflow-hidden aspect-video mb-4">
+            <iframe
+              className="w-full h-full"
+              src="https://www.youtube.com/embed/rUJFj6yLWSw?autoplay=0"
+              title="Empowering Mental Wellness Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+          <div className="p-4 bg-white rounded-xl">
+            <h3 className="font-semibold text-lg mb-3">Set Your Motivation Level</h3>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">🔈</span>
+              <Slider
+                value={volume}
+                onValueChange={setVolume}
+                max={100}
+                step={1}
+                className="flex-1"
+              />
+              <span className="text-sm text-muted-foreground">🔊</span>
             </div>
-            <div className="p-6">
-              <h3 className="font-semibold text-lg mb-4">Common Concerns</h3>
-              <div className="space-y-3">
-                {[
-                  "How can I manage anxiety?",
-                  "Why do I feel depressed?",
-                  "How to improve my relationships?",
-                  "Ways to handle work stress"
-                ].map((q, i) => (
-                  <Link key={i} to="/therapists" className="flex items-center justify-between p-3 rounded-lg hover:bg-ifind-offwhite/50 transition-colors">
-                    <span>{q}</span>
-                    <ChevronRight className="h-4 w-4 text-ifind-aqua" />
-                  </Link>
-                ))}
-              </div>
+            <div className="mt-3 text-center text-sm text-muted-foreground">
+              Adjust the slider to control your journey's intensity
             </div>
           </div>
         </div>
