@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,7 @@ const Navbar = () => {
             <Link to="/">Home</Link>
           </Button>
           <Button variant="ghost" asChild>
-            <Link to="/therapists">Experts</Link>
+            <Link to="/experts">Experts</Link>
           </Button>
           <Button variant="ghost">About</Button>
           <Button variant="ghost">Blog</Button>
@@ -72,7 +73,7 @@ const Navbar = () => {
                   <Link to="/">Home</Link>
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/therapists">Experts</Link>
+                  <Link to="/experts">Experts</Link>
                 </Button>
                 <Button variant="ghost" className="justify-start">
                   About

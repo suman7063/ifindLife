@@ -27,8 +27,8 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/therapists" element={<Astrologers />} />
-            <Route path="/therapists/:id" element={<AstrologerDetail />} />
+            <Route path="/experts" element={<Astrologers />} />
+            <Route path="/experts/:id" element={<AstrologerDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/expert-login" element={<ExpertLogin />} />
@@ -41,6 +41,9 @@ const App = () => (
                 </ProtectedRoute>
               } 
             />
+            {/* Redirect from old route to new route */}
+            <Route path="/therapists" element={<Astrologers />} />
+            <Route path="/therapists/:id" element={<AstrologerDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
