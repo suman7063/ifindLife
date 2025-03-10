@@ -7,6 +7,16 @@ export type ServiceType = {
   rateINR: number;
 };
 
+export type ReportUserType = {
+  id: string;
+  userId: string;
+  userName: string;
+  reason: string;
+  details: string;
+  date: string;
+  status: 'pending' | 'reviewed' | 'resolved';
+};
+
 export interface ExpertFormData {
   id: number;
   name: string;
@@ -25,4 +35,6 @@ export interface ExpertFormData {
   bio: string;
   selectedServices: number[];
   acceptedTerms: boolean;
+  profilePicture?: string;
+  reportedUsers?: ReportUserType[];
 }

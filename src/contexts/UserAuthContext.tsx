@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -55,6 +54,7 @@ export type User = {
   country: string;
   city?: string;
   currency: string;
+  profilePicture?: string;
   walletBalance: number;
   favoriteExperts: Expert[];
   enrolledCourses: Course[];
@@ -76,6 +76,8 @@ type UserAuthContextType = {
     city?: string;
   }) => Promise<boolean>;
   logout: () => void;
+  updateProfile: (profileData: Partial<User>) => void;
+  updateProfilePicture: (file: File) => Promise<string>;
   addToFavorites: (expert: Expert) => void;
   removeFromFavorites: (expertId: number) => void;
   rechargeWallet: (amount: number) => void;
@@ -184,6 +186,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       city: userData.city,
       currency,
       walletBalance: 0,
+      profilePicture: undefined,
       favoriteExperts: [],
       enrolledCourses: [],
       transactions: [],
@@ -208,6 +211,76 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     localStorage.removeItem('ifindlife-user-auth');
     navigate('/login');
     toast.info('You have been logged out');
+  };
+
+  // New function to update user profile
+  const updateProfile = (profileData: Partial<User>) => {
+    if (!currentUser) return;
+
+    const updatedUser = {
+      ...currentUser,
+      ...profileData
+    };
+
+    setCurrentUser(updatedUser);
+    localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
+
+    // Update the user in the users array
+    const updatedUsers = users.map(user => {
+      if (user.id === currentUser.id) {
+        return { ...user, ...profileData, password: user.password };
+      }
+      return user;
+    });
+
+    setUsers(updatedUsers);
+    localStorage.setItem('ifindlife-users', JSON.stringify(updatedUsers));
+    toast.success('Profile updated successfully');
+  };
+
+  // New function to handle profile picture upload
+  const updateProfilePicture = async (file: File): Promise<string> => {
+    if (!currentUser) throw new Error('User not authenticated');
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        try {
+          const base64String = reader.result as string;
+          
+          // Update user with new profile picture
+          const updatedUser = {
+            ...currentUser,
+            profilePicture: base64String
+          };
+          
+          setCurrentUser(updatedUser);
+          localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
+          
+          // Update in users array
+          const updatedUsers = users.map(user => {
+            if (user.id === currentUser.id) {
+              return { ...user, profilePicture: base64String };
+            }
+            return user;
+          });
+          
+          setUsers(updatedUsers);
+          localStorage.setItem('ifindlife-users', JSON.stringify(updatedUsers));
+          
+          toast.success('Profile picture updated successfully');
+          resolve(base64String);
+        } catch (error) {
+          console.error('Error updating profile picture:', error);
+          reject(error);
+        }
+      };
+      reader.onerror = (error) => {
+        console.error('Error reading file:', error);
+        reject(error);
+      };
+    });
   };
 
   const addToFavorites = (expert: Expert) => {
@@ -410,6 +483,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         login,
         signup,
         logout,
+        updateProfile,
+        updateProfilePicture,
         addToFavorites,
         removeFromFavorites,
         rechargeWallet,
