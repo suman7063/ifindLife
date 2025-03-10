@@ -3,7 +3,7 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Shield } from "lucide-react";
+import { Menu, Shield, UserPlus } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -43,6 +43,11 @@ const Navbar = () => {
           <Button variant="ghost">About</Button>
           <Button variant="ghost">Blog</Button>
           <Button variant="ghost" asChild>
+            <Link to="/expert-login" className="text-ifind-teal">
+              <UserPlus className="h-4 w-4 mr-1" /> Therapist Portal
+            </Link>
+          </Button>
+          <Button variant="ghost" asChild>
             <Link to={isAuthenticated ? "/admin" : "/admin-login"} className="text-ifind-teal">
               {isAuthenticated ? <><Shield className="h-4 w-4 mr-1" /> Admin</> : "Admin Login"}
             </Link>
@@ -75,6 +80,11 @@ const Navbar = () => {
                 </Button>
                 <Button variant="ghost" className="justify-start">
                   Blog
+                </Button>
+                <Button variant="ghost" className="justify-start" asChild>
+                  <Link to="/expert-login">
+                    <UserPlus className="h-4 w-4 mr-1" /> Therapist Portal
+                  </Link>
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
                   <Link to={isAuthenticated ? "/admin" : "/admin-login"}>
