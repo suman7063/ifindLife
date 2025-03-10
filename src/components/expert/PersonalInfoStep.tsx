@@ -103,7 +103,7 @@ const PersonalInfoStep = ({ formData, handleChange, nextStep }: PersonalInfoStep
         <Button
           type="button"
           onClick={nextStep}
-          className="bg-astro-purple hover:bg-astro-violet"
+          className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
         >
           Next
         </Button>

@@ -17,7 +17,7 @@ interface ProfessionalInfoStepProps {
 const ProfessionalInfoStep = ({ 
   formData, 
   handleChange, 
-  handleFileUpload, 
+  handleFileUpload,
   handleRemoveCertificate,
   nextStep, 
   prevStep 
@@ -131,7 +131,7 @@ const ProfessionalInfoStep = ({
         <Button
           type="button"
           onClick={nextStep}
-          className="bg-astro-purple hover:bg-astro-violet"
+          className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
         >
           Next
         </Button>
