@@ -70,7 +70,7 @@ const ExpertRegistrationForm = () => {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-astro-purple hover:bg-astro-violet"
+              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ifind-aqua hover:bg-ifind-teal transition-colors"
             >
               Complete Registration
             </button>

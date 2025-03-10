@@ -51,8 +51,8 @@ const ExpertLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <Link to="/" className="flex items-center justify-center space-x-2 mb-8">
               <div className="relative w-8 h-8">
-                <div className="absolute w-8 h-8 bg-astro-purple rounded-full opacity-70"></div>
-                <div className="absolute w-4 h-4 bg-astro-gold rounded-full top-1 left-2"></div>
+                <div className="absolute w-8 h-8 bg-ifind-aqua rounded-full opacity-70"></div>
+                <div className="absolute w-4 h-4 bg-ifind-teal rounded-full top-1 left-2"></div>
               </div>
               <span className="font-bold text-2xl text-gradient">For Mental Health Experts</span>
             </Link>
@@ -90,7 +90,7 @@ const ExpertLogin = () => {
                       <label htmlFor="password" className="text-sm font-medium">
                         Password
                       </label>
-                      <Link to="/forgot-password" className="text-xs text-astro-purple hover:underline">
+                      <Link to="/forgot-password" className="text-xs text-ifind-aqua hover:underline">
                         Forgot password?
                       </Link>
                     </div>
@@ -117,7 +117,7 @@ const ExpertLogin = () => {
                     </div>
                   </div>
                   
-                  <Button type="submit" className="w-full bg-astro-purple hover:bg-astro-violet">
+                  <Button type="submit" className="w-full bg-ifind-aqua hover:bg-ifind-teal">
                     Sign In as Expert
                   </Button>
                 </form>
