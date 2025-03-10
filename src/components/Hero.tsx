@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { PhoneCall, Star, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -7,6 +7,32 @@ import { Slider } from '@/components/ui/slider';
 
 const Hero = () => {
   const [volume, setVolume] = React.useState([70]);
+  
+  // Default hero content
+  const defaultHeroContent = {
+    title: "Discover Your",
+    subtitle: "Mental Wellness",
+    description: "Connect with verified mental health experts for personalized guidance about your emotional well-being, relationships, and personal growth. Get support when you need it most.",
+    videoUrl: "https://www.youtube.com/embed/rUJFj6yLWSw?autoplay=0"
+  };
+  
+  // State for hero content
+  const [heroContent, setHeroContent] = useState(defaultHeroContent);
+  
+  // Load content from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedContent = localStorage.getItem('ifindlife-content');
+      if (savedContent) {
+        const parsedContent = JSON.parse(savedContent);
+        if (parsedContent.heroSettings) {
+          setHeroContent(parsedContent.heroSettings);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading content from localStorage:', error);
+    }
+  }, []);
 
   return (
     <section className="relative py-16 md:py-24 overflow-hidden">
@@ -23,12 +49,12 @@ const Hero = () => {
           </div>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-            <span className="block">Discover Your</span>
-            <span className="text-gradient">Mental Wellness</span>
+            <span className="block">{heroContent.title}</span>
+            <span className="text-gradient">{heroContent.subtitle}</span>
           </h1>
           
           <p className="text-lg text-muted-foreground">
-            Connect with verified mental health experts for personalized guidance about your emotional well-being, relationships, and personal growth. Get support when you need it most.
+            {heroContent.description}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4">
@@ -59,7 +85,7 @@ const Hero = () => {
           <div className="bg-black rounded-xl overflow-hidden aspect-video mb-4">
             <iframe
               className="w-full h-full"
-              src="https://www.youtube.com/embed/rUJFj6yLWSw?autoplay=0"
+              src={heroContent.videoUrl}
               title="Empowering Mental Wellness Video"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
