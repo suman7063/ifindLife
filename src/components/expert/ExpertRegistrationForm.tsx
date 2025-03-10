@@ -6,6 +6,7 @@ import AddressInfoStep from './AddressInfoStep';
 import ProfessionalInfoStep from './ProfessionalInfoStep';
 import ServiceSelectionStep from './ServiceSelectionStep';
 import { ExpertFormData, ServiceType } from './types';
+import { Button } from '@/components/ui/button';
 
 const ExpertRegistrationForm = () => {
   const navigate = useNavigate();
@@ -190,14 +191,31 @@ const ExpertRegistrationForm = () => {
       )}
       
       {step === 4 && (
-        <ServiceSelectionStep 
-          formData={formData}
-          services={services}
-          handleCheckboxChange={handleCheckboxChange}
-          handleSubmit={handleSubmit}
-          prevStep={prevStep}
-          setFormData={setFormData}
-        />
+        <div className="space-y-6">
+          <ServiceSelectionStep 
+            formData={formData}
+            services={services}
+            handleCheckboxChange={handleCheckboxChange}
+            handleSubmit={handleSubmit}
+            prevStep={prevStep}
+            setFormData={setFormData}
+          />
+          <div className="flex justify-end space-x-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prevStep}
+            >
+              Previous
+            </Button>
+            <Button
+              type="submit"
+              className="bg-astro-purple hover:bg-astro-violet"
+            >
+              Complete Registration
+            </Button>
+          </div>
+        </div>
       )}
     </form>
   );
