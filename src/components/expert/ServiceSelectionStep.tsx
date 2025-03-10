@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExpertFormData, ServiceType } from './types';
@@ -9,7 +8,6 @@ interface ServiceSelectionStepProps {
   formData: ExpertFormData;
   services: ServiceType[];
   handleCheckboxChange: (serviceId: number) => void;
-  handleSubmit: (e: React.FormEvent) => void;
   prevStep: () => void;
   setFormData: React.Dispatch<React.SetStateAction<ExpertFormData>>;
 }
@@ -18,7 +16,6 @@ const ServiceSelectionStep = ({
   formData, 
   services, 
   handleCheckboxChange, 
-  handleSubmit, 
   prevStep,
   setFormData
 }: ServiceSelectionStepProps) => {
@@ -83,22 +80,6 @@ const ServiceSelectionStep = ({
             By submitting this form, you agree to our terms of service and privacy policy.
           </p>
         </div>
-      </div>
-      
-      <div className="flex justify-between">
-        <Button
-          type="button"
-          onClick={prevStep}
-          variant="outline"
-        >
-          Previous
-        </Button>
-        <Button
-          type="submit"
-          className="bg-astro-purple hover:bg-astro-violet"
-        >
-          Register as Expert
-        </Button>
       </div>
     </div>
   );
