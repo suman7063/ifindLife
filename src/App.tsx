@@ -5,7 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Astrologers from "./pages/Astrologers";
+import Experts from "./pages/Experts";
 import AstrologerDetail from "./pages/AstrologerDetail";
 import Login from "./pages/Login";
 import AdminLogin from "./pages/AdminLogin";
@@ -27,7 +27,7 @@ const App = () => (
         <AuthProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/experts" element={<Astrologers />} />
+            <Route path="/experts" element={<Experts />} />
             <Route path="/experts/:id" element={<AstrologerDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin-login" element={<AdminLogin />} />
@@ -42,7 +42,7 @@ const App = () => (
               } 
             />
             {/* Redirect from old route to new route */}
-            <Route path="/therapists" element={<Astrologers />} />
+            <Route path="/therapists" element={<Experts />} />
             <Route path="/therapists/:id" element={<AstrologerDetail />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
