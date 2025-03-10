@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -122,7 +123,7 @@ const ExpertLogin = () => {
                 </form>
               </TabsContent>
               
-              <TabsContent value="register">
+              <TabsContent value="register" className="max-h-[70vh] overflow-y-auto">
                 <ExpertRegistrationForm />
               </TabsContent>
             </Tabs>

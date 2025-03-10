@@ -5,7 +5,6 @@ import AddressInfoStep from './AddressInfoStep';
 import ProfessionalInfoStep from './ProfessionalInfoStep';
 import ServiceSelectionStep from './ServiceSelectionStep';
 import { useExpertRegistration } from './hooks/useExpertRegistration';
-import FormStepContainer from './FormStepContainer';
 
 const ExpertRegistrationForm = () => {
   const {
