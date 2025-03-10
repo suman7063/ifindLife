@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -42,8 +41,8 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
       setIsCallModalOpen(true);
     } else {
       toast({
-        title: "Therapist Unavailable",
-        description: "This therapist is currently offline or busy. Please try again later.",
+        title: "Expert Unavailable",
+        description: "This expert is currently offline or busy. Please try again later.",
         variant: "destructive"
       });
     }
@@ -54,8 +53,8 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
       setIsVideoCallModalOpen(true);
     } else {
       toast({
-        title: "Therapist Unavailable",
-        description: "This therapist is currently offline or busy. Please try again later.",
+        title: "Expert Unavailable",
+        description: "This expert is currently offline or busy. Please try again later.",
         variant: "destructive"
       });
     }

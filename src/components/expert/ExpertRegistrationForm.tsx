@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -32,21 +31,18 @@ const ExpertRegistrationForm = () => {
     acceptedTerms: false
   });
 
-  // Load services defined by admin
   useEffect(() => {
-    // In a real application, this would be fetched from an API
     const storedContent = localStorage.getItem('ifindlife-content');
     if (storedContent) {
       try {
         const parsedContent = JSON.parse(storedContent);
         if (parsedContent.categories) {
-          // Transform categories into services
           const servicesFromCategories = parsedContent.categories.map((category: any, index: number) => ({
             id: index + 1,
             name: category.title,
             description: category.description,
-            rateUSD: 30 + (index * 5), // Sample rates
-            rateINR: (30 + (index * 5)) * 80, // Sample conversion
+            rateUSD: 30 + (index * 5),
+            rateINR: (30 + (index * 5)) * 80,
           }));
           setServices(servicesFromCategories);
         }
@@ -114,19 +110,15 @@ const ExpertRegistrationForm = () => {
       return;
     }
     
-    // In a real application, this would send data to a backend API
-    // For this demo, we'll store it in localStorage
     const experts = localStorage.getItem('ifindlife-experts')
       ? JSON.parse(localStorage.getItem('ifindlife-experts')!)
       : [];
     
-    // Check if email already exists
     if (experts.some((expert: any) => expert.email === formData.email)) {
       toast.error("Email already registered");
       return;
     }
     
-    // Add new expert
     const newExperts = [...experts, formData];
     localStorage.setItem('ifindlife-experts', JSON.stringify(newExperts));
     

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -38,13 +37,13 @@ const Navbar = () => {
             <Link to="/">Home</Link>
           </Button>
           <Button variant="ghost" asChild>
-            <Link to="/therapists">Therapists</Link>
+            <Link to="/therapists">Experts</Link>
           </Button>
           <Button variant="ghost">About</Button>
           <Button variant="ghost">Blog</Button>
           <Button variant="ghost" asChild>
             <Link to="/expert-login" className="text-ifind-teal">
-              <UserPlus className="h-4 w-4 mr-1" /> Therapist Portal
+              <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
             </Link>
           </Button>
           <Button variant="ghost" asChild>
@@ -73,7 +72,7 @@ const Navbar = () => {
                   <Link to="/">Home</Link>
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/therapists">Therapists</Link>
+                  <Link to="/therapists">Experts</Link>
                 </Button>
                 <Button variant="ghost" className="justify-start">
                   About
@@ -83,7 +82,7 @@ const Navbar = () => {
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/expert-login">
-                    <UserPlus className="h-4 w-4 mr-1" /> Therapist Portal
+                    <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
                   </Link>
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
