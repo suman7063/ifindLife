@@ -13,7 +13,10 @@ import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 import ExpertLogin from "./pages/ExpertLogin";
 import ExpertDashboard from "./pages/ExpertDashboard";
+import UserLogin from "./pages/UserLogin";
+import UserDashboard from "./pages/UserDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
+import { UserAuthProvider } from "./contexts/UserAuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
@@ -25,28 +28,31 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/experts" element={<Experts />} />
-            <Route path="/experts/:id" element={<AstrologerDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admin-login" element={<AdminLogin />} />
-            <Route path="/expert-login" element={<ExpertLogin />} />
-            <Route path="/expert-dashboard" element={<ExpertDashboard />} />
-            <Route 
-              path="/admin" 
-              element={
-                <ProtectedRoute>
-                  <Admin />
-                </ProtectedRoute>
-              } 
-            />
-            {/* Redirect from old route to new route */}
-            <Route path="/therapists" element={<Experts />} />
-            <Route path="/therapists/:id" element={<AstrologerDetail />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <UserAuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/experts" element={<Experts />} />
+              <Route path="/experts/:id" element={<AstrologerDetail />} />
+              <Route path="/login" element={<UserLogin />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/expert-login" element={<ExpertLogin />} />
+              <Route path="/expert-dashboard" element={<ExpertDashboard />} />
+              <Route path="/user-dashboard" element={<UserDashboard />} />
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <Admin />
+                  </ProtectedRoute>
+                } 
+              />
+              {/* Redirect from old route to new route */}
+              <Route path="/therapists" element={<Experts />} />
+              <Route path="/therapists/:id" element={<AstrologerDetail />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </UserAuthProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
