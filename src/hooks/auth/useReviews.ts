@@ -66,8 +66,8 @@ export const useReviews = () => {
         return { success: true, reviews: [] };
       }
       
-      // Extract all expert IDs first
-      const expertIds = updatedUserReviews.map(review => 
+      // Extract all expert IDs first as strings
+      const expertIdsString: string[] = updatedUserReviews.map(review => 
         convertExpertIdToString(review.expert_id)
       );
       
@@ -75,9 +75,9 @@ export const useReviews = () => {
       const { data: expertsData } = await supabase
         .from('experts')
         .select('id, name')
-        .in('id', expertIds);
+        .in('id', expertIdsString);
       
-      // Create a simple lookup object instead of a Map to avoid potential type issues
+      // Create a lookup object for expert names
       const expertNameLookup: Record<string, string> = {};
       
       if (expertsData) {
@@ -86,11 +86,14 @@ export const useReviews = () => {
         });
       }
       
-      // Build the formatted reviews array
-      const formattedReviews = updatedUserReviews.map(review => {
+      // Build the formatted reviews array with explicit type annotation
+      const formattedReviews: Review[] = [];
+      
+      // Process each review individually to avoid deep type instantiation
+      for (const review of updatedUserReviews) {
         const expertIdString = convertExpertIdToString(review.expert_id);
         
-        return {
+        formattedReviews.push({
           id: review.id,
           expertId: expertIdString,
           rating: review.rating,
@@ -100,8 +103,8 @@ export const useReviews = () => {
           userId: review.user_id || '',
           userName: userProfile.name || 'Anonymous User',
           expertName: expertNameLookup[expertIdString] || 'Unknown Expert'
-        };
-      });
+        });
+      }
       
       return {
         success: true,
