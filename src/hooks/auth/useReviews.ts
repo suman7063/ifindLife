@@ -76,21 +76,23 @@ export const useReviews = () => {
         };
       }));
       
-      // Create a new object instead of modifying the original to avoid circular references
+      // Create a fresh object to avoid circular references
       const updatedProfile = {
-        ...userProfile,
-        reviews: reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
-          id: review.id,
-          expertId: convertExpertIdToString(review.expert_id),
-          rating: review.rating,
-          comment: review.comment || '',
-          date: review.date,
-          verified: review.verified || false,
-          userId: review.user_id || '',
-          userName: userProfile.name || 'Anonymous User',
-          expertName: review.expert_name
-        })) : []
+        ...userProfile
       };
+      
+      // Add reviews to the fresh object
+      updatedProfile.reviews = reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
+        id: review.id,
+        expertId: convertExpertIdToString(review.expert_id),
+        rating: review.rating,
+        comment: review.comment || '',
+        date: review.date,
+        verified: review.verified || false,
+        userId: review.user_id || '',
+        userName: userProfile.name || 'Anonymous User',
+        expertName: review.expert_name
+      })) : [];
       
       return updatedProfile;
     } catch (error: any) {
