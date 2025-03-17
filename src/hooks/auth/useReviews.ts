@@ -76,13 +76,28 @@ export const useReviews = () => {
         };
       }));
       
-      // Create a completely fresh object without any circular references
-      const cleanUserProfile: Omit<UserProfile, 'reviews'> = {
+      // Define the review objects separately to avoid circular type references
+      const formattedReviews = reviewsWithExpertNames 
+        ? reviewsWithExpertNames.map(review => ({
+            id: review.id,
+            expertId: convertExpertIdToString(review.expert_id),
+            rating: review.rating,
+            comment: review.comment || '',
+            date: review.date,
+            verified: review.verified || false,
+            userId: review.user_id || '',
+            userName: userProfile.name || 'Anonymous User',
+            expertName: review.expert_name
+          }))
+        : [];
+      
+      // Create a new user profile object with the reviews
+      return {
         id: userProfile.id,
         name: userProfile.name,
         email: userProfile.email,
         phone: userProfile.phone,
-        country: userProfile.country,
+        country: userProfile.country, 
         city: userProfile.city,
         currency: userProfile.currency,
         profilePicture: userProfile.profilePicture,
@@ -91,32 +106,13 @@ export const useReviews = () => {
         referralCode: userProfile.referralCode,
         referredBy: userProfile.referredBy,
         referralLink: userProfile.referralLink,
-        favoriteExperts: userProfile.favoriteExperts,
-        enrolledCourses: userProfile.enrolledCourses,
-        transactions: userProfile.transactions,
-        reports: userProfile.reports,
-        referrals: userProfile.referrals
+        favoriteExperts: userProfile.favoriteExperts || [],
+        enrolledCourses: userProfile.enrolledCourses || [],
+        transactions: userProfile.transactions || [],
+        reports: userProfile.reports || [],
+        referrals: userProfile.referrals || [],
+        reviews: formattedReviews
       };
-      
-      // Now create the final object including the reviews
-      const updatedProfile = {
-        ...cleanUserProfile,
-        reviews: reviewsWithExpertNames 
-          ? reviewsWithExpertNames.map(review => ({
-              id: review.id,
-              expertId: convertExpertIdToString(review.expert_id),
-              rating: review.rating,
-              comment: review.comment || '',
-              date: review.date,
-              verified: review.verified || false,
-              userId: review.user_id || '',
-              userName: userProfile.name || 'Anonymous User',
-              expertName: review.expert_name
-            }))
-          : []
-      };
-      
-      return updatedProfile;
     } catch (error: any) {
       console.error('Error adding review:', error);
       toast.error(error.message || 'Failed to add review');
