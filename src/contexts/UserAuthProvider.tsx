@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -36,7 +37,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       const session = await getSession();
       
       if (session?.user) {
-        const userProfile = await fetchUserProfile(session.user);
+        const userProfile = await fetchUserProfile(session.user.id);
         if (userProfile) {
           setCurrentUser(userProfile);
         }

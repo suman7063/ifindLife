@@ -57,7 +57,7 @@ export const fetchUserReviews = async (userId: string) => {
       const { data: expertData } = await supabase
         .from('experts')
         .select('name')
-        .eq('id', review.expert_id)
+        .eq('id', convertExpertIdToString(review.expert_id))
         .single();
       
       return {
