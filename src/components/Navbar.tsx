@@ -32,7 +32,7 @@ const Navbar = () => {
       <div className="container flex h-20 items-center justify-between">
         <Link to="/" className="flex items-center">
           <img 
-            src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" 
+            src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
             alt="iFindLife" 
             className="h-12 transform scale-125 origin-left" 
           />

@@ -12,7 +12,7 @@ const Footer = () => {
           <div>
             <Link to="/" className="flex items-center mb-6">
               <img 
-                src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" 
+                src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
                 alt="iFindLife Logo" 
                 className="h-12 transform scale-125 origin-left bg-white/90 p-1 rounded" 
               />
