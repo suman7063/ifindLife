@@ -77,7 +77,7 @@ export const useReviews = () => {
         };
       }));
       
-      // Create formatted reviews array
+      // Create formatted reviews array without circular references
       const formattedReviews: Review[] = reviewsWithExpertNames.map(review => ({
         id: review.id,
         expertId: convertExpertIdToString(review.expert_id),
@@ -90,8 +90,9 @@ export const useReviews = () => {
         expertName: review.expert_name
       }));
       
-      // Create a completely new user profile object
-      const updatedProfile: UserProfile = {
+      // Create a completely new user profile object by manually copying properties
+      // This avoids deep type instantiation and circular references
+      const updatedProfile = {
         id: userProfile.id,
         name: userProfile.name,
         email: userProfile.email,
@@ -113,7 +114,7 @@ export const useReviews = () => {
         referrals: userProfile.referrals || [],
         // Add the formatted reviews
         reviews: formattedReviews
-      };
+      } as UserProfile; // Use type assertion instead of direct typing
       
       return updatedProfile;
     } catch (error: any) {
