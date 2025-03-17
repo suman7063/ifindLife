@@ -1,22 +1,44 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Star, Phone } from 'lucide-react';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
 
 const Hero = () => {
+  const [heroSettings, setHeroSettings] = useState({
+    title: "Mental Wellness",
+    subtitle: "For a Balanced Life",
+    description: "Connect with verified mental health experts for personalized guidance, support, and solutions.",
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" // Default video URL
+  });
+
+  // Load content from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedContent = localStorage.getItem('ifindlife-content');
+      if (savedContent) {
+        const parsedContent = JSON.parse(savedContent);
+        if (parsedContent.heroSettings) {
+          setHeroSettings(parsedContent.heroSettings);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading content from localStorage:', error);
+    }
+  }, []);
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-white to-ifind-offwhite pt-8 pb-16">
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
           <div className="space-y-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              <span className="text-gradient">Mental Wellness</span> <br /> 
-              For a Balanced Life
+              {heroSettings.title} <br /> 
+              <span className="text-gradient">{heroSettings.subtitle}</span>
             </h1>
             
             <p className="text-lg md:text-xl text-ifind-charcoal/80 max-w-lg">
-              Connect with verified mental health experts for personalized guidance, support, and solutions.
+              {heroSettings.description}
             </p>
             
             <div className="flex items-center space-x-1 text-ifind-teal">
@@ -40,11 +62,21 @@ const Hero = () => {
           
           <div className="relative">
             <div className="relative z-10 rounded-lg overflow-hidden border-8 border-white shadow-xl animate-float">
-              <img 
-                src="https://images.unsplash.com/photo-1569437061238-3cf61084f487?q=80&w=2070&auto=format&fit=crop" 
-                alt="Mental Health Expert" 
-                className="w-full h-auto"
-              />
+              {heroSettings.videoUrl ? (
+                <iframe
+                  src={heroSettings.videoUrl}
+                  className="w-full aspect-video"
+                  title="Mental Health Video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <img 
+                  src="https://images.unsplash.com/photo-1569437061238-3cf61084f487?q=80&w=2070&auto=format&fit=crop" 
+                  alt="Mental Health Expert" 
+                  className="w-full h-auto"
+                />
+              )}
             </div>
             
             {/* Decorative elements */}
