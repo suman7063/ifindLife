@@ -200,15 +200,21 @@ const AssessmentResults: React.FC<AssessmentResultsProps> = ({
           </div>
           
           {(feedback.depressionFeedback || feedback.anxietyFeedback || feedback.overallMentalHealthFeedback) && (
-            <Alert variant="destructive" className="bg-red-50 border-red-200">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Important</AlertTitle>
-              <AlertDescription className="space-y-2">
-                {feedback.depressionFeedback && <p>{feedback.depressionFeedback}</p>}
-                {feedback.anxietyFeedback && <p>{feedback.anxietyFeedback}</p>}
-                {feedback.overallMentalHealthFeedback && <p>{feedback.overallMentalHealthFeedback}</p>}
-              </AlertDescription>
-            </Alert>
+            <div className="rounded-lg border-l-4 border-l-ifind-purple bg-gradient-to-r from-ifind-purple/10 to-ifind-offwhite p-4 shadow-sm">
+              <div className="flex items-start">
+                <AlertCircle className="h-5 w-5 text-ifind-purple mr-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-medium text-ifind-charcoal mb-2">Important Health Information</h4>
+                  <div className="space-y-2 text-ifind-charcoal/90">
+                    {feedback.depressionFeedback && <p>{feedback.depressionFeedback}</p>}
+                    {feedback.anxietyFeedback && <p>{feedback.anxietyFeedback}</p>}
+                    {feedback.overallMentalHealthFeedback && (
+                      <p className="font-medium text-ifind-purple">{feedback.overallMentalHealthFeedback}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
         </div>
         
@@ -272,7 +278,7 @@ const AssessmentResults: React.FC<AssessmentResultsProps> = ({
         <div className="bg-white p-8 space-y-6">
           <div className="flex items-center justify-between border-b border-ifind-teal/30 pb-6">
             <div>
-              <img src="/ifindlife-logo.png" alt="iFindLife" className="h-12 mb-2" />
+              <img src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" alt="iFindLife" className="h-12 mb-2" />
               <h1 className="text-2xl font-bold text-ifind-charcoal">Mental Well-Being Assessment</h1>
               <p className="text-ifind-charcoal/70">Results & Recommendations</p>
             </div>
@@ -299,14 +305,19 @@ const AssessmentResults: React.FC<AssessmentResultsProps> = ({
           </div>
           
           {(feedback.depressionFeedback || feedback.anxietyFeedback || feedback.overallMentalHealthFeedback) && (
-            <div className="border border-red-200 bg-red-50 p-4 rounded-lg">
-              <h3 className="flex items-center text-red-700 font-medium">
-                <AlertCircle className="h-4 w-4 mr-2" /> Important
-              </h3>
-              <div className="mt-2 space-y-2 text-red-700">
-                {feedback.depressionFeedback && <p>{feedback.depressionFeedback}</p>}
-                {feedback.anxietyFeedback && <p>{feedback.anxietyFeedback}</p>}
-                {feedback.overallMentalHealthFeedback && <p>{feedback.overallMentalHealthFeedback}</p>}
+            <div className="border-l-4 border-l-ifind-purple bg-gradient-to-r from-ifind-purple/10 to-white p-5 rounded-lg shadow-sm">
+              <div className="flex items-start">
+                <AlertCircle className="h-5 w-5 text-ifind-purple mr-3 mt-0.5 flex-shrink-0" />
+                <div>
+                  <h3 className="font-medium text-ifind-charcoal mb-2">Important Health Information</h3>
+                  <div className="space-y-2 text-ifind-charcoal/90">
+                    {feedback.depressionFeedback && <p>{feedback.depressionFeedback}</p>}
+                    {feedback.anxietyFeedback && <p>{feedback.anxietyFeedback}</p>}
+                    {feedback.overallMentalHealthFeedback && (
+                      <p className="font-medium text-ifind-purple">{feedback.overallMentalHealthFeedback}</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
