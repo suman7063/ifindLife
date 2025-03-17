@@ -83,7 +83,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return success;
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     const success = await authLogout();
     if (success) {
       setCurrentUser(null);
@@ -92,7 +92,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const updateProfile = async (profileData: Partial<UserProfile>) => {
+  const updateProfile = async (profileData: Partial<UserProfile>): Promise<void> => {
     if (!currentUser || !currentUser.id) return;
 
     const result = await updateUserProfile(currentUser.id, profileData);

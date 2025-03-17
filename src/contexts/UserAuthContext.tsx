@@ -1,10 +1,10 @@
 
-// Re-export everything from separate files
+// Export the context and provider from separate files
 import { UserAuthContext, UserAuthContextType } from './UserAuthContext';
 import { UserAuthProvider } from './UserAuthProvider';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
-// Re-export for backward compatibility
+// Re-export for convenience
 export { UserAuthContext, UserAuthProvider, useUserAuth };
 export type { UserAuthContextType };
 

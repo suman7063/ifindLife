@@ -1,6 +1,8 @@
 
 import { createContext } from 'react';
-import { UserProfile, Expert, Review, Report, Course, UserTransaction, User } from '@/types/supabase';
+import { UserProfile, Expert } from '@/types/supabase';
+import { Review, Report } from '@/types/supabase/reviews';
+import { Course, UserTransaction, User } from '@/types/supabase';
 
 export type UserAuthContextType = {
   currentUser: UserProfile | null;
@@ -15,8 +17,8 @@ export type UserAuthContextType = {
     city?: string;
     referralCode?: string;
   }) => Promise<boolean>;
-  logout: () => void;
-  updateProfile: (profileData: Partial<UserProfile>) => void;
+  logout: () => Promise<void>;
+  updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   updateProfilePicture: (file: File) => Promise<string>;
   addToFavorites: (expert: Expert) => void;
   removeFromFavorites: (expertId: string) => void;
@@ -24,7 +26,7 @@ export type UserAuthContextType = {
   addReview: (expertId: string, rating: number, comment: string) => void;
   reportExpert: (expertId: string, reason: string, details: string) => void;
   getExpertShareLink: (expertId: string) => string;
-  hasTakenServiceFrom: (expertId: string) => boolean;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
   getReferralLink: () => string;
 };
 

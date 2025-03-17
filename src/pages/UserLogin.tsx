@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useUserAuth } from '@/hooks/useUserAuth';
 import { toast } from 'sonner';
 import { fetchReferralSettings } from '@/utils/referralUtils';
 import { ReferralSettings } from '@/types/supabase';
