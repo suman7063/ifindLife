@@ -9,7 +9,7 @@ import { useUserAuth } from '@/hooks/useUserAuth';
 import { toast } from 'sonner';
 
 interface ExpertReportModalProps {
-  expertId: number;
+  expertId: string;
   expertName: string;
 }
 

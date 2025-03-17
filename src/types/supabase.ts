@@ -18,6 +18,7 @@ export interface CustomTable {
     profile_picture?: string;
     selected_services?: number[];
     created_at?: string;
+    rating?: number; // Added for expert ratings
   };
   expert_reports: {
     id: string;
@@ -44,7 +45,7 @@ export interface CustomTable {
   user_favorites: {
     id: string;
     user_id?: string;
-    expert_id: number;
+    expert_id: string;
   };
   user_transactions: {
     id: string;
@@ -58,7 +59,7 @@ export interface CustomTable {
   user_reviews: {
     id: string;
     user_id?: string;
-    expert_id: number;
+    expert_id: string;
     rating: number;
     comment?: string;
     date: string;
@@ -66,7 +67,7 @@ export interface CustomTable {
   user_reports: {
     id: string;
     user_id?: string;
-    expert_id: number;
+    expert_id: string;
     reason: string;
     details?: string;
     date: string;
@@ -76,7 +77,7 @@ export interface CustomTable {
     id: string;
     user_id?: string;
     title: string;
-    expert_id: number;
+    expert_id: string;
     expert_name: string;
     enrollment_date: string;
     progress?: number;
@@ -96,10 +97,24 @@ export type Expert = CustomTable['experts'];
 export type ExpertProfile = CustomTable['experts']; // Alias for compatibility
 
 // Extended UserProfile with additional properties needed by our UI
-export interface UserProfile extends CustomTable['users'] {
+export interface UserProfile {
+  // Core user data
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  currency?: string;
+  profile_picture?: string;
+  wallet_balance?: number;
+  created_at?: string;
+  
   // For UI convenience, we add derived fields here
   profilePicture?: string; // maps to profile_picture
   walletBalance?: number;  // maps to wallet_balance
+  
+  // Related data collections
   favoriteExperts?: Expert[];
   enrolledCourses?: Course[];
   transactions?: UserTransaction[];

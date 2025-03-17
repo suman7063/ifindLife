@@ -11,6 +11,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Define a custom from function for type-safe access to custom tables
 export function from<T extends keyof CustomTable>(table: T) {
-  // Use type assertion to handle the table name safely
-  return supabase.from(table.toString()) as any;
+  // Use type casting to handle the table name constraint
+  return supabase.from(table as any);
 }

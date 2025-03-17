@@ -50,7 +50,13 @@ const UserProfileEdit: React.FC = () => {
     setLoading(true);
     
     try {
-      await updateProfile(formData);
+      await updateProfile({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        country: formData.country,
+        city: formData.city
+      });
     } catch (error) {
       console.error('Error updating profile:', error);
     } finally {
