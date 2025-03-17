@@ -20,6 +20,7 @@ import MigrateData from "./pages/MigrateData";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from './components/ProtectedRoute';
 import UserReferrals from './pages/UserReferrals';
+import MentalHealthAssessment from './pages/MentalHealthAssessment';
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/migrate-data" element={<MigrateData />} />
       <Route path="/referrals" element={<ProtectedRoute><UserReferrals /></ProtectedRoute>} />
+      <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -1,116 +1,59 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PhoneCall, Star, ChevronRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Slider } from '@/components/ui/slider';
+import { ChevronRight, Star, Phone } from 'lucide-react';
+import FreeAssessmentCTA from './FreeAssessmentCTA';
 
 const Hero = () => {
-  const [volume, setVolume] = React.useState([70]);
-  
-  // Default hero content
-  const defaultHeroContent = {
-    title: "Discover Your",
-    subtitle: "Mental Wellness",
-    description: "Connect with verified mental health experts for personalized guidance about your emotional well-being, relationships, and personal growth. Get support when you need it most.",
-    videoUrl: "https://www.youtube.com/embed/rUJFj6yLWSw?autoplay=0"
-  };
-  
-  // State for hero content
-  const [heroContent, setHeroContent] = useState(defaultHeroContent);
-  
-  // Load content from localStorage on component mount
-  useEffect(() => {
-    try {
-      const savedContent = localStorage.getItem('ifindlife-content');
-      if (savedContent) {
-        const parsedContent = JSON.parse(savedContent);
-        if (parsedContent.heroSettings) {
-          setHeroContent(parsedContent.heroSettings);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading content from localStorage:', error);
-    }
-  }, []);
-
   return (
-    <section className="relative py-16 md:py-24 overflow-hidden">
-      {/* Background decorations */}
-      <div className="absolute inset-0 bg-pattern pointer-events-none"></div>
-      <div className="absolute -top-24 -left-24 w-64 h-64 bg-ifind-teal/10 rounded-full blur-3xl"></div>
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-ifind-aqua/10 rounded-full blur-3xl"></div>
-      
-      <div className="container grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-        <div className="flex flex-col space-y-6 max-w-xl">
-          <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none bg-ifind-offwhite border-ifind-aqua/40 text-ifind-aqua">
-            <Star className="mr-1 h-3 w-3 fill-ifind-aqua text-ifind-aqua" />
-            <span>4.8/5 from 35k+ consultations</span>
-          </div>
-          
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-            <span className="block">{heroContent.title}</span>
-            <span className="text-gradient">{heroContent.subtitle}</span>
-          </h1>
-          
-          <p className="text-lg text-muted-foreground">
-            {heroContent.description}
-          </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4">
-            <Button className="bg-ifind-aqua hover:bg-ifind-teal text-white px-6 py-6 text-lg rounded-full shadow-lg shadow-ifind-aqua/25 hover:shadow-ifind-teal/25 transition-all">
-              <PhoneCall className="mr-2 h-5 w-5" />
-              Talk to a Therapist
-            </Button>
-            <Button variant="outline" className="border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua hover:text-white px-6 py-6 text-lg rounded-full">
-              Free Mental Health Assessment
-            </Button>
-          </div>
-          
-          <div className="flex items-center pt-4">
-            <div className="flex -space-x-2">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-8 w-8 rounded-full border-2 border-background bg-ifind-offwhite flex items-center justify-center text-xs font-medium">
-                  {['🧠', '💭', '🌱', '✨'][i-1]}
-                </div>
-              ))}
+    <div className="relative overflow-hidden bg-gradient-to-b from-white to-ifind-offwhite pt-8 pb-16">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+          <div className="space-y-6">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+              <span className="text-gradient">Mental Wellness</span> <br /> 
+              For a Balanced Life
+            </h1>
+            
+            <p className="text-lg md:text-xl text-ifind-charcoal/80 max-w-lg">
+              Connect with verified mental health experts for personalized guidance, support, and solutions.
+            </p>
+            
+            <div className="flex items-center space-x-1 text-ifind-teal">
+              <Star className="h-5 w-5 fill-ifind-teal" />
+              <Star className="h-5 w-5 fill-ifind-teal" />
+              <Star className="h-5 w-5 fill-ifind-teal" />
+              <Star className="h-5 w-5 fill-ifind-teal" />
+              <Star className="h-5 w-5 fill-ifind-teal" />
+              <span className="ml-1 text-ifind-charcoal/90">Trusted by 2M+ clients worldwide</span>
             </div>
-            <span className="ml-3 text-sm font-medium">
-              Join 2M+ people finding emotional balance
-            </span>
+            
+            <div className="pt-4 flex flex-col sm:flex-row gap-4">
+              <Button className="bg-ifind-teal text-white hover:bg-ifind-teal/90 transition-colors px-6 py-6 h-auto">
+                <Phone className="h-5 w-5 mr-2" />
+                <span className="font-medium">Talk to an Expert</span>
+              </Button>
+              
+              <FreeAssessmentCTA />
+            </div>
           </div>
-        </div>
-        
-        <div className="relative bg-gradient-to-br from-ifind-offwhite to-white p-4 rounded-2xl shadow-xl">
-          <div className="bg-black rounded-xl overflow-hidden aspect-video mb-4">
-            <iframe
-              className="w-full h-full"
-              src={heroContent.videoUrl}
-              title="Empowering Mental Wellness Video"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </div>
-          <div className="p-4 bg-white rounded-xl">
-            <h3 className="font-semibold text-lg mb-3">Set Your Motivation Level</h3>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">🔈</span>
-              <Slider
-                value={volume}
-                onValueChange={setVolume}
-                max={100}
-                step={1}
-                className="flex-1"
+          
+          <div className="relative">
+            <div className="relative z-10 rounded-lg overflow-hidden border-8 border-white shadow-xl animate-float">
+              <img 
+                src="https://images.unsplash.com/photo-1569437061238-3cf61084f487?q=80&w=2070&auto=format&fit=crop" 
+                alt="Mental Health Expert" 
+                className="w-full h-auto"
               />
-              <span className="text-sm text-muted-foreground">🔊</span>
             </div>
-            <div className="mt-3 text-center text-sm text-muted-foreground">
-              Adjust the slider to control your journey's intensity
-            </div>
+            
+            {/* Decorative elements */}
+            <div className="absolute top-1/4 right-10 -z-0 w-40 h-40 bg-ifind-purple/30 rounded-full blur-3xl"></div>
+            <div className="absolute bottom-1/4 -left-10 -z-0 w-32 h-32 bg-ifind-aqua/30 rounded-full blur-3xl"></div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
