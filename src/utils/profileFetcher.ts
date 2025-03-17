@@ -4,6 +4,7 @@ import { UserProfile, User, Referral } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
+import { convertExpertIdToString } from '@/types/supabase/expertId';
 
 export const fetchUserProfile = async (
   user: User
@@ -30,7 +31,7 @@ export const fetchUserProfile = async (
       .eq('user_id', user.id);
     
     if (favorites && favorites.length > 0) {
-      const expertIds = favorites.map(fav => fav.expert_id.toString());
+      const expertIds = favorites.map(fav => String(fav.expert_id));
       const { data: expertsData } = await supabase
         .from('experts')
         .select('*')
@@ -69,7 +70,7 @@ export const fetchUserProfile = async (
     // Convert to UI format with complete data
     userProfile.reviews = reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
       id: review.id,
-      expertId: String(review.expert_id),
+      expertId: convertExpertIdToString(review.expert_id),
       rating: review.rating,
       comment: review.comment || '',
       date: review.date,
@@ -84,8 +85,17 @@ export const fetchUserProfile = async (
       .select('*')
       .eq('user_id', user.id);
       
-    // Convert expert_id from number to string during adaptation
-    userProfile.reports = reports ? adaptReportsToUI(reports) : [];
+    // Convert expert_id from number to string for reports
+    userProfile.reports = reports ? reports.map(report => ({
+      id: report.id,
+      expertId: convertExpertIdToString(report.expert_id),
+      reason: report.reason,
+      details: report.details || '',
+      date: report.date,
+      status: report.status,
+      userId: report.user_id,
+      userName: data.name || `User ${report.user_id?.slice(0, 8)}...` || 'Anonymous User'
+    })) : [];
     
     const { data: transactions } = await supabase
       .from('user_transactions')

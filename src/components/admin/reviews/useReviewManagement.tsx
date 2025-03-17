@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Review } from '@/types/supabase/reviews';
+import { convertExpertIdToString } from '@/types/supabase/expertId';
 
 export const useReviewManagement = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -119,7 +121,7 @@ export const useReviewManagement = () => {
           date: review.date || new Date().toISOString(),
           verified: review.verified || false,
           userId: review.user_id || '',
-          expertId: String(review.expert_id), // Convert to string here
+          expertId: convertExpertIdToString(review.expert_id), // Convert number to string
           userName: userData?.name || 'Anonymous User',
           expertName: expertData?.name || 'Unknown Expert'
         };

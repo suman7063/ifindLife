@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
+import { convertExpertIdToNumber, convertExpertIdToString } from '@/types/supabase/expertId';
 
 export const useReviews = () => {
   // Add a review to an expert
@@ -13,7 +14,7 @@ export const useReviews = () => {
   ) => {
     try {
       // Convert expertId to number for database storage
-      const expertIdNumber = parseInt(expertId);
+      const expertIdNumber = convertExpertIdToNumber(expertId);
       
       // Check if user has already reviewed this expert
       const { data: existingReviews } = await supabase
@@ -80,7 +81,7 @@ export const useReviews = () => {
         ...userProfile,
         reviews: reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
           id: review.id,
-          expertId: String(review.expert_id),
+          expertId: convertExpertIdToString(review.expert_id),
           rating: review.rating,
           comment: review.comment || '',
           date: review.date,
@@ -108,7 +109,7 @@ export const useReviews = () => {
     
     try {
       // Convert expertId to number for database query
-      const expertIdNumber = parseInt(expertId);
+      const expertIdNumber = convertExpertIdToNumber(expertId);
       
       const { data: transactions } = await supabase
         .from('user_transactions')

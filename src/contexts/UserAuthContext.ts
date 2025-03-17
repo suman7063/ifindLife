@@ -34,5 +34,5 @@ export type UserAuthContextType = {
 // Create the context with undefined as default value
 export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
 
-// Also export User for components that need to use this type
-export { User };
+// Also export User for components that need to use this type - using export type for isolation mode
+export type { User };
