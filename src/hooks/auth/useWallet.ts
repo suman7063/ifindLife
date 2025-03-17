@@ -17,23 +17,25 @@ export const useWallet = () => {
       // Create a new transaction record
       const { data, error } = await supabase
         .from('user_transactions')
-        .insert([{
+        .insert({
           user_id: currentUser.id,
           date: new Date().toISOString(),
           type: 'recharge',
           amount: amount,
           currency: currentUser.currency || 'USD',
           description: 'Wallet recharge',
-        }]);
+        });
 
       if (error) throw error;
 
       // Return updated user data to update the local state
+      const newTransactionId = data && data.length > 0 ? data[0].id : 'temp_id';
+      
       const updatedUser = {
         ...currentUser,
         walletBalance: newBalance,
         transactions: [...currentUser.transactions, {
-          id: data ? data[0].id : 'temp_id', // Use a temporary ID
+          id: newTransactionId,
           user_id: currentUser.id,
           date: new Date().toISOString(),
           type: 'recharge',

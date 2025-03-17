@@ -9,6 +9,7 @@ import {
   adaptReviewsToUI,
   adaptReportsToUI 
 } from '@/utils/userProfileUtils';
+import { convertExpertIdToString } from '@/types/supabase/expertId';
 
 export const useUserProfile = () => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
@@ -37,7 +38,9 @@ export const useUserProfile = () => {
         .eq('user_id', userId);
       
       if (favorites && favorites.length > 0) {
-        const expertIds = favorites.map(fav => fav.expert_id);
+        // Convert expert_id numbers to strings for UI
+        const expertIds = favorites.map(fav => String(fav.expert_id));
+        
         const { data: expertsData } = await supabase
           .from('experts')
           .select('*')

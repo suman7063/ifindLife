@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
+import { ExpertIdDB, convertExpertIdToNumber, convertExpertIdToString } from '@/types/supabase/expertId';
 
 export const useFavorites = () => {
   const addToFavorites = async (currentUser: UserProfile | null, expertId: string) => {
@@ -11,9 +12,15 @@ export const useFavorites = () => {
     }
 
     try {
+      // Convert string ID to number for database
+      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
+      
       const { data, error } = await supabase
         .from('user_favorites')
-        .insert([{ user_id: currentUser.id, expert_id: expertId }]);
+        .insert({ 
+          user_id: currentUser.id, 
+          expert_id: expertIdNumber 
+        });
 
       if (error) throw error;
 
@@ -38,11 +45,14 @@ export const useFavorites = () => {
     }
 
     try {
+      // Convert string ID to number for database
+      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
+      
       const { data, error } = await supabase
         .from('user_favorites')
         .delete()
         .eq('user_id', currentUser.id)
-        .eq('expert_id', expertId);
+        .eq('expert_id', expertIdNumber);
 
       if (error) throw error;
 

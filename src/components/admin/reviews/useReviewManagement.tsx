@@ -2,21 +2,46 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Review } from '@/types/supabase/reviews';
+import { Expert } from '@/types/supabase';
+
+export interface Review {
+  id: string;
+  expertId: string;
+  userId: string;
+  expertName?: string;
+  userName?: string;
+  rating: number;
+  comment: string;
+  date: string;
+  verified: boolean;
+}
 
 export const useReviewManagement = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [experts, setExperts] = useState<Expert[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Filter states
+  const [filterRating, setFilterRating] = useState(0);
+  const [filterVerified, setFilterVerified] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedExpertId, setSelectedExpertId] = useState('');
+  
+  // Edit states
   const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editedRating, setEditedRating] = useState(0);
+  const [editedComment, setEditedComment] = useState('');
+  
+  // Delete states
   const [deletingReview, setDeletingReview] = useState<Review | null>(null);
-  const [filterRating, setFilterRating] = useState<number | null>(null);
-  const [filterVerified, setFilterVerified] = useState<boolean | null>(null);
-
-  // Fetch reviews
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  
+  // Fetch reviews with join to experts
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      // Using proper join syntax for Supabase
+      // Use join syntax
       const { data, error } = await supabase
         .from('user_reviews')
         .select(`
@@ -28,83 +53,119 @@ export const useReviewManagement = () => {
           date,
           verified,
           experts:expert_id (name)
-        `)
-        .order('date', { ascending: false });
+        `);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
-      // Transform the data to match Review type
-      const formattedReviews: Review[] = data.map(review => ({
-        id: review.id,
-        expertId: review.expert_id.toString(),
-        expertName: review.experts?.name || 'Unknown Expert',
-        userId: review.user_id,
-        userName: 'User', // This would need to be fetched separately or included in the query
-        rating: review.rating,
-        comment: review.comment,
-        date: review.date,
-        verified: review.verified
-      }));
-
-      setReviews(formattedReviews);
+      if (data) {
+        const formattedReviews: Review[] = data.map((review) => ({
+          id: review.id,
+          expertId: String(review.expert_id),
+          userId: review.user_id,
+          expertName: review.experts?.name,
+          rating: review.rating,
+          comment: review.comment,
+          date: review.date,
+          verified: review.verified
+        }));
+        
+        setReviews(formattedReviews);
+      }
     } catch (error: any) {
-      console.error('Error fetching reviews:', error);
-      toast.error('Failed to load reviews');
+      toast.error(`Error fetching reviews: ${error.message}`);
     } finally {
       setLoading(false);
     }
   }, []);
-
+  
+  // Fetch experts for dropdown
+  const fetchExperts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.from('experts').select('*');
+      if (error) throw error;
+      setExperts(data || []);
+    } catch (error: any) {
+      toast.error(`Error fetching experts: ${error.message}`);
+    }
+  }, []);
+  
+  // Load data on mount
   useEffect(() => {
     fetchReviews();
-  }, [fetchReviews]);
-
-  // Filter reviews
-  const filteredReviews = reviews.filter(review => {
-    if (filterRating !== null && review.rating !== filterRating) {
-      return false;
+    fetchExperts();
+  }, [fetchReviews, fetchExperts]);
+  
+  // Filter reviews based on criteria
+  const filteredReviews = reviews.filter((review) => {
+    // Apply rating filter
+    if (filterRating > 0 && review.rating !== filterRating) return false;
+    
+    // Apply verification filter
+    if (filterVerified && !review.verified) return false;
+    
+    // Apply expert filter
+    if (selectedExpertId && review.expertId !== selectedExpertId) return false;
+    
+    // Apply search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        (review.comment && review.comment.toLowerCase().includes(query)) ||
+        (review.expertName && review.expertName.toLowerCase().includes(query)) ||
+        (review.userName && review.userName.toLowerCase().includes(query))
+      );
     }
-    if (filterVerified !== null && review.verified !== filterVerified) {
-      return false;
-    }
+    
     return true;
   });
-
-  // Edit review
-  const editReview = (review: Review) => {
+  
+  // Handle review edit
+  const handleEdit = (review: Review) => {
     setEditingReview(review);
+    setEditedRating(review.rating);
+    setEditedComment(review.comment);
+    setIsEditDialogOpen(true);
   };
-
-  const updateReview = async (updatedReview: Review) => {
+  
+  // Handle delete prompt
+  const handleDeletePrompt = (review: Review) => {
+    setDeletingReview(review);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Update a review
+  const handleUpdateReview = async () => {
+    if (!editingReview) return;
+    
     try {
       const { error } = await supabase
         .from('user_reviews')
         .update({
-          rating: updatedReview.rating,
-          comment: updatedReview.comment,
-          verified: updatedReview.verified
+          rating: editedRating,
+          comment: editedComment,
         })
-        .eq('id', updatedReview.id);
-
+        .eq('id', editingReview.id);
+      
       if (error) throw error;
-
-      setReviews(reviews.map(r => 
-        r.id === updatedReview.id ? updatedReview : r
+      
+      // Update reviews in state
+      setReviews(reviews.map(review => 
+        review.id === editingReview.id 
+          ? { ...review, rating: editedRating, comment: editedComment }
+          : review
       ));
+      
       toast.success('Review updated successfully');
-      setEditingReview(null);
+      setIsEditDialogOpen(false);
     } catch (error: any) {
-      console.error('Error updating review:', error);
-      toast.error('Failed to update review');
+      toast.error(`Error updating review: ${error.message}`);
     }
   };
-
-  // Delete review
-  const confirmDelete = (review: Review) => {
-    setDeletingReview(review);
-  };
-
-  const deleteReview = async () => {
+  
+  // Delete a review
+  const handleDeleteReview = async () => {
     if (!deletingReview) return;
     
     try {
@@ -112,24 +173,31 @@ export const useReviewManagement = () => {
         .from('user_reviews')
         .delete()
         .eq('id', deletingReview.id);
-
+      
       if (error) throw error;
-
-      setReviews(reviews.filter(r => r.id !== deletingReview.id));
+      
+      // Remove review from state
+      setReviews(reviews.filter(review => review.id !== deletingReview.id));
+      
       toast.success('Review deleted successfully');
-      setDeletingReview(null);
+      setIsDeleteDialogOpen(false);
     } catch (error: any) {
-      console.error('Error deleting review:', error);
-      toast.error('Failed to delete review');
+      toast.error(`Error deleting review: ${error.message}`);
     }
   };
-
-  const cancelDelete = () => {
-    setDeletingReview(null);
+  
+  // Cancel edit
+  const cancelEdit = () => {
+    setIsEditDialogOpen(false);
   };
-
+  
+  // Cancel delete
+  const cancelDelete = () => {
+    setIsDeleteDialogOpen(false);
+  };
+  
   return {
-    reviews: filteredReviews,
+    reviews,
     loading,
     editingReview,
     deletingReview,
@@ -137,10 +205,25 @@ export const useReviewManagement = () => {
     filterVerified,
     setFilterRating,
     setFilterVerified,
-    editReview,
-    updateReview,
-    confirmDelete,
-    deleteReview,
+    experts,
+    searchQuery,
+    setSearchQuery,
+    selectedExpertId,
+    setSelectedExpertId,
+    filteredReviews,
+    handleEdit,
+    handleDeletePrompt,
+    isEditDialogOpen,
+    setIsEditDialogOpen,
+    editedRating,
+    setEditedRating,
+    editedComment,
+    setEditedComment,
+    handleUpdateReview,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    handleDeleteReview,
+    cancelEdit,
     cancelDelete
   };
 };

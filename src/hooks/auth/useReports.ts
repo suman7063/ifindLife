@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
+import { ExpertIdDB, convertExpertIdToNumber } from '@/types/supabase/expertId';
 
 export const useReports = () => {
   const addReport = async (currentUser: UserProfile | null, expertId: string, reason: string, details: string) => {
@@ -11,33 +12,37 @@ export const useReports = () => {
     }
 
     try {
+      // Convert string ID to number for database
+      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
+      
       const { data, error } = await supabase
         .from('user_reports')
-        .insert([{
+        .insert({
           user_id: currentUser.id,
-          expert_id: expertId,
+          expert_id: expertIdNumber,
           reason: reason,
           details: details,
           date: new Date().toISOString(),
           status: 'pending',
-        }]);
+        });
 
       if (error) throw error;
 
       // Return updated user data to update the local state
+      const newReportId = data && data.length > 0 ? data[0].id : 'temp_id';
+      
       const newReport = {
-        id: data ? data[0].id : 'temp_id', // Use a temporary ID
-        user_id: currentUser.id,
-        expert_id: expertId,
-        reason: reason,
-        details: details,
+        id: newReportId,
+        expertId: expertId, // Store as string in our UI
+        reason,
+        details,
         date: new Date().toISOString(),
         status: 'pending',
       };
 
       const updatedUser = {
         ...currentUser,
-        reports: [...currentUser.reports, newReport],
+        reports: [...(currentUser.reports || []), newReport],
       };
 
       toast.success('Report added successfully!');

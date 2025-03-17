@@ -2,6 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
+import { ExpertIdDB, convertExpertIdToNumber } from '@/types/supabase/expertId';
 
 export const useReviews = () => {
   const hasTakenServiceFrom = async (currentUser: UserProfile | null, expertId: string): Promise<boolean> => {
@@ -10,12 +11,15 @@ export const useReviews = () => {
     }
 
     try {
+      // Convert string ID to number for database
+      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
+      
       // Check if there are any completed service engagements between the user and expert
       const { data, error } = await supabase
         .from('user_expert_services')
         .select('id')
         .eq('user_id', currentUser.id)
-        .eq('expert_id', expertId)
+        .eq('expert_id', expertIdNumber)
         .eq('status', 'completed')
         .limit(1);
 
@@ -37,11 +41,14 @@ export const useReviews = () => {
     }
 
     try {
+      // Convert string ID to number for database
+      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
+      
       const { data, error } = await supabase
         .from('user_reviews')
         .select('id')
         .eq('user_id', currentUser.id)
-        .eq('expert_id', expertId)
+        .eq('expert_id', expertIdNumber)
         .limit(1);
 
       if (error) {
@@ -76,24 +83,29 @@ export const useReviews = () => {
         toast.error('You can only review experts after taking their service');
         return null;
       }
+      
+      // Convert string ID to number for database
+      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
 
       const { data, error } = await supabase
         .from('user_reviews')
-        .insert([{
+        .insert({
           user_id: currentUser.id,
-          expert_id: expertId,
+          expert_id: expertIdNumber,
           rating: rating,
           comment: comment,
           date: new Date().toISOString(),
           verified: true
-        }]);
+        });
 
       if (error) throw error;
 
       // Return updated user data to update the local state
+      const newReviewId = data && data.length > 0 ? data[0].id : 'temp_id';
+      
       const newReview = {
-        id: data ? data[0].id : 'temp_id', // Use a temporary ID
-        expertId: expertId,
+        id: newReviewId,
+        expertId: expertId, // Store as string in our UI
         rating: rating,
         comment: comment,
         date: new Date().toISOString(),

@@ -1,28 +1,27 @@
+// Review status type
+export interface ReviewStatus {
+  canReview: boolean;
+  hasReviewed: boolean;
+}
 
-// Using interfaces for UI-friendly models
-export interface Review {
+// Other review-related types
+export interface ReviewUI {
   id: string;
   expertId: string;
+  rating: number;
+  comment: string;
+  date: string;
+  verified?: boolean;
   expertName?: string;
+}
+
+export interface ReviewDB {
+  id: string;
+  user_id: string;
+  expert_id: number; // In database, stored as number
   rating: number;
   comment?: string;
   date: string;
   verified?: boolean;
-  userId?: string;
-  userName?: string;
-}
-
-export interface Report {
-  id: string;
-  expertId: string;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-}
-
-// For compatibility with the database schema that uses numbers for IDs
-export interface ReviewStatus {
-  canReview: boolean;
-  hasReviewed: boolean;
+  user_name?: string;
 }
