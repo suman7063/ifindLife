@@ -9,6 +9,8 @@ import { supabase } from '@/lib/supabase';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { InfoIcon } from 'lucide-react';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -89,6 +91,12 @@ const ForgotPassword = () => {
                 <p>Password reset instructions have been sent to your email address.</p>
                 <p className="mt-2">Please check your inbox and follow the link to reset your password.</p>
               </div>
+              <Alert className="bg-blue-50 text-blue-700 border-blue-200">
+                <InfoIcon className="h-4 w-4" />
+                <AlertDescription>
+                  If you don't receive an email, please check your spam folder or try another email address you might have used.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           ) : (
             <form onSubmit={handleSubmit}>
@@ -104,6 +112,13 @@ const ForgotPassword = () => {
                     required
                   />
                 </div>
+                <Alert className="bg-blue-50 text-blue-700 border-blue-200">
+                  <InfoIcon className="h-4 w-4" />
+                  <AlertDescription>
+                    Not sure which email you used? For security reasons, we won't confirm if an email exists. 
+                    Try with different emails you typically use for registrations.
+                  </AlertDescription>
+                </Alert>
               </CardContent>
               <CardFooter className="flex flex-col space-y-2">
                 <Button 
