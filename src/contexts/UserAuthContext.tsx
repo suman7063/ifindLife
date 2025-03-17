@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -38,7 +37,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const navigate = useNavigate();
   const { login: authLogin, signup: authSignup, logout: authLogout, getSession } = useSupabaseAuth();
 
-  // Listen for authentication state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
@@ -46,7 +44,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
     });
 
-    // Initial session check
     const initializeAuth = async () => {
       const session = await getSession();
       
@@ -96,7 +93,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     const success = await updateUserProfile(currentUser.id, profileData);
     if (success) {
-      // Update local state
       setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
     }
   };
@@ -105,12 +101,10 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!currentUser) throw new Error('User not authenticated');
 
     const publicUrl = await updateProfilePicture(currentUser.id, file);
-    // Update local state
     setCurrentUser(prev => prev ? { ...prev, profilePicture: publicUrl } : null);
     return publicUrl;
   };
 
-  // Placeholder functions to be implemented with Supabase later
   const addToFavorites = (expert: Expert) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
@@ -128,7 +122,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const hasTakenServiceFrom = (expertId: number): boolean => {
     if (!currentUser) return false;
-    // Stub implementation
     return false;
   };
 
@@ -170,5 +163,4 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
-// Export types
-export type { Expert, Review, Report, Course, UserTransaction };
+export type { UserProfile, Expert, Review, Report, Course, UserTransaction };

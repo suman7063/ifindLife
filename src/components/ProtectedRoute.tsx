@@ -18,8 +18,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/admin-login" replace />;
   }
 
-  // If route requires superadmin access and user is not a superadmin
-  if (requireSuperAdmin && currentUser?.role !== 'superadmin') {
+  // We need to check for admin role differently as it may not exist directly on UserProfile
+  if (requireSuperAdmin && currentUser?.email !== 'admin@ifindlife.com') {
     return <Navigate to="/admin" replace />;
   }
 

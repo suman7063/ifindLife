@@ -2,6 +2,21 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
+// Helper function to check if a table exists
+const tableExists = async (tableName: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .limit(1);
+    
+    return !error;
+  } catch (error) {
+    console.error(`Error checking if table ${tableName} exists:`, error);
+    return false;
+  }
+};
+
 export const migrateExpertsToSupabase = async (): Promise<boolean> => {
   try {
     const storedExperts = localStorage.getItem('ifindlife-experts');
@@ -10,12 +25,24 @@ export const migrateExpertsToSupabase = async (): Promise<boolean> => {
       return false;
     }
 
+    // Check if experts table exists
+    const hasExpertsTable = await tableExists('experts');
+    if (!hasExpertsTable) {
+      console.log('Experts table does not exist in Supabase');
+      toast.error('Experts table does not exist. Please create it first.');
+      return false;
+    }
+
     const experts = JSON.parse(storedExperts);
     
     // First check if experts already exist in Supabase
-    const { data: existingExperts } = await supabase
+    const { data: existingExperts, error: expertsError } = await supabase
       .from('experts')
       .select('email');
+    
+    if (expertsError) {
+      throw expertsError;
+    }
     
     const existingEmails = existingExperts?.map(e => e.email) || [];
     
@@ -33,7 +60,6 @@ export const migrateExpertsToSupabase = async (): Promise<boolean> => {
       name: expert.name,
       email: expert.email,
       phone: expert.phone,
-      password: expert.password,
       address: expert.address,
       city: expert.city,
       state: expert.state,
@@ -57,24 +83,27 @@ export const migrateExpertsToSupabase = async (): Promise<boolean> => {
     }
     
     // Handle reported users migration if needed
-    for (const expert of experts) {
-      if (expert.reportedUsers && expert.reportedUsers.length > 0) {
-        const expertReports = expert.reportedUsers.map((report: any) => ({
-          expert_id: expert.id,
-          user_id: report.userId,
-          user_name: report.userName,
-          reason: report.reason,
-          details: report.details,
-          date: report.date,
-          status: report.status
-        }));
-        
-        const { error: reportError } = await supabase
-          .from('expert_reports')
-          .insert(expertReports);
-        
-        if (reportError) {
-          console.error('Error migrating expert reports:', reportError);
+    const hasExpertReportsTable = await tableExists('expert_reports');
+    if (hasExpertReportsTable) {
+      for (const expert of experts) {
+        if (expert.reportedUsers && expert.reportedUsers.length > 0) {
+          const expertReports = expert.reportedUsers.map((report: any) => ({
+            expert_id: expert.id,
+            user_id: report.userId,
+            user_name: report.userName,
+            reason: report.reason,
+            details: report.details,
+            date: report.date,
+            status: report.status
+          }));
+          
+          const { error: reportError } = await supabase
+            .from('expert_reports')
+            .insert(expertReports);
+          
+          if (reportError) {
+            console.error('Error migrating expert reports:', reportError);
+          }
         }
       }
     }
@@ -94,12 +123,24 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
       return false;
     }
 
+    // Check if users table exists
+    const hasUsersTable = await tableExists('users');
+    if (!hasUsersTable) {
+      console.log('Users table does not exist in Supabase');
+      toast.error('Users table does not exist. Please create it first.');
+      return false;
+    }
+    
     const users = JSON.parse(storedUsers);
     
     // First check if users already exist in Supabase
-    const { data: existingUsers } = await supabase
+    const { data: existingUsers, error: usersError } = await supabase
       .from('users')
       .select('email');
+    
+    if (usersError) {
+      throw usersError;
+    }
     
     const existingEmails = existingUsers?.map(u => u.email) || [];
     
@@ -117,7 +158,6 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
       name: user.name,
       email: user.email,
       phone: user.phone,
-      password: user.password,
       country: user.country,
       city: user.city,
       currency: user.currency,
@@ -135,76 +175,92 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
       throw error;
     }
     
-    // Migrate related user data
+    // Conditionally migrate related user data
+    // Only attempt to insert into tables if they exist
     for (const user of users) {
       // Migrate favorite experts
       if (user.favoriteExperts && user.favoriteExperts.length > 0) {
-        const favorites = user.favoriteExperts.map((fav: any) => ({
-          user_id: user.id,
-          expert_id: fav.id
-        }));
-        
-        await supabase.from('user_favorites').insert(favorites);
+        const hasTable = await tableExists('user_favorites');
+        if (hasTable) {
+          const favorites = user.favoriteExperts.map((fav: any) => ({
+            user_id: user.id,
+            expert_id: fav.id
+          }));
+          
+          await supabase.from('user_favorites').insert(favorites);
+        }
       }
       
       // Migrate transactions
       if (user.transactions && user.transactions.length > 0) {
-        const transactions = user.transactions.map((txn: any) => ({
-          id: txn.id,
-          user_id: user.id,
-          date: txn.date,
-          type: txn.type,
-          amount: txn.amount,
-          currency: txn.currency,
-          description: txn.description
-        }));
-        
-        await supabase.from('user_transactions').insert(transactions);
+        const hasTable = await tableExists('user_transactions');
+        if (hasTable) {
+          const transactions = user.transactions.map((txn: any) => ({
+            id: txn.id,
+            user_id: user.id,
+            date: txn.date,
+            type: txn.type,
+            amount: txn.amount,
+            currency: txn.currency,
+            description: txn.description
+          }));
+          
+          await supabase.from('user_transactions').insert(transactions);
+        }
       }
       
       // Migrate reviews
       if (user.reviews && user.reviews.length > 0) {
-        const reviews = user.reviews.map((review: any) => ({
-          id: review.id,
-          user_id: user.id,
-          expert_id: review.expertId,
-          rating: review.rating,
-          comment: review.comment,
-          date: review.date
-        }));
-        
-        await supabase.from('user_reviews').insert(reviews);
+        const hasTable = await tableExists('user_reviews');
+        if (hasTable) {
+          const reviews = user.reviews.map((review: any) => ({
+            id: review.id,
+            user_id: user.id,
+            expert_id: review.expertId,
+            rating: review.rating,
+            comment: review.comment,
+            date: review.date
+          }));
+          
+          await supabase.from('user_reviews').insert(reviews);
+        }
       }
       
       // Migrate reports
       if (user.reports && user.reports.length > 0) {
-        const reports = user.reports.map((report: any) => ({
-          id: report.id,
-          user_id: user.id,
-          expert_id: report.expertId,
-          reason: report.reason,
-          details: report.details,
-          date: report.date,
-          status: report.status
-        }));
-        
-        await supabase.from('user_reports').insert(reports);
+        const hasTable = await tableExists('user_reports');
+        if (hasTable) {
+          const reports = user.reports.map((report: any) => ({
+            id: report.id,
+            user_id: user.id,
+            expert_id: report.expertId,
+            reason: report.reason,
+            details: report.details,
+            date: report.date,
+            status: report.status
+          }));
+          
+          await supabase.from('user_reports').insert(reports);
+        }
       }
       
       // Migrate courses
       if (user.enrolledCourses && user.enrolledCourses.length > 0) {
-        const courses = user.enrolledCourses.map((course: any) => ({
-          id: course.id,
-          user_id: user.id,
-          title: course.title,
-          expert_id: course.expertId,
-          expert_name: course.expertName,
-          enrollment_date: course.enrollmentDate,
-          progress: course.progress,
-          completed: course.completed
-        }));
-        
-        await supabase.from('user_courses').insert(courses);
+        const hasTable = await tableExists('user_courses');
+        if (hasTable) {
+          const courses = user.enrolledCourses.map((course: any) => ({
+            id: course.id,
+            user_id: user.id,
+            title: course.title,
+            expert_id: course.expertId,
+            expert_name: course.expertName,
+            enrollment_date: course.enrollmentDate,
+            progress: course.progress,
+            completed: course.completed
+          }));
+          
+          await supabase.from('user_courses').insert(courses);
+        }
       }
     }
     
@@ -219,6 +275,14 @@ export const migrateServicesToSupabase = async (): Promise<boolean> => {
   try {
     const storedContent = localStorage.getItem('ifindlife-content');
     if (!storedContent) {
+      return false;
+    }
+
+    // Check if services table exists
+    const hasServicesTable = await tableExists('services');
+    if (!hasServicesTable) {
+      console.log('Services table does not exist in Supabase');
+      toast.error('Services table does not exist. Please create it first.');
       return false;
     }
 
@@ -237,9 +301,13 @@ export const migrateServicesToSupabase = async (): Promise<boolean> => {
     }));
     
     // First check if services already exist in Supabase
-    const { data: existingServices } = await supabase
+    const { data: existingServices, error: servicesError } = await supabase
       .from('services')
       .select('id');
+    
+    if (servicesError) {
+      throw servicesError;
+    }
     
     if (existingServices && existingServices.length > 0) {
       console.log('Services are already migrated to Supabase');
