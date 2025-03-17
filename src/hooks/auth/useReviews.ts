@@ -82,17 +82,21 @@ export const useReviews = () => {
       };
       
       // Add reviews to the fresh object
-      updatedProfile.reviews = reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
-        id: review.id,
-        expertId: convertExpertIdToString(review.expert_id),
-        rating: review.rating,
-        comment: review.comment || '',
-        date: review.date,
-        verified: review.verified || false,
-        userId: review.user_id || '',
-        userName: userProfile.name || 'Anonymous User',
-        expertName: review.expert_name
-      })) : [];
+      if (reviewsWithExpertNames) {
+        updatedProfile.reviews = reviewsWithExpertNames.map(review => ({
+          id: review.id,
+          expertId: convertExpertIdToString(review.expert_id),
+          rating: review.rating,
+          comment: review.comment || '',
+          date: review.date,
+          verified: review.verified || false,
+          userId: review.user_id || '',
+          userName: userProfile.name || 'Anonymous User',
+          expertName: review.expert_name
+        }));
+      } else {
+        updatedProfile.reviews = [];
+      }
       
       return updatedProfile;
     } catch (error: any) {

@@ -1,7 +1,44 @@
+
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 import { convertExpertIdToString, convertExpertIdToNumber } from '@/types/supabase/expertId';
+
+// Function to fetch user profile
+export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+  try {
+    const { data: userData, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    if (error) throw error;
+    
+    // Create base user profile
+    const userProfile: UserProfile = {
+      id: userData.id,
+      name: userData.name,
+      email: userData.email,
+      phone: userData.phone,
+      country: userData.country,
+      city: userData.city,
+      currency: userData.currency,
+      profilePicture: userData.profile_picture,
+      walletBalance: userData.wallet_balance,
+      createdAt: userData.created_at,
+      referralCode: userData.referral_code,
+      referredBy: userData.referred_by,
+      referralLink: userData.referral_link
+    };
+    
+    return userProfile;
+  } catch (error: any) {
+    console.error('Error fetching user profile:', error);
+    toast.error(error.message || 'Failed to load user profile');
+    return null;
+  }
+};
 
 // Function to fetch user reviews
 export const fetchUserReviews = async (userId: string) => {
