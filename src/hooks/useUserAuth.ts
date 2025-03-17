@@ -9,3 +9,6 @@ export const useUserAuth = () => {
   }
   return context;
 };
+
+// Re-export the hook implementation for compatibility with existing imports
+export { useUserAuth as useUserAuthImplementation } from './useUserAuth.tsx';
