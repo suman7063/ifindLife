@@ -20,6 +20,8 @@ export type UserProfile = {
   reports: Report[];
 };
 
+export type User = UserProfile; // Adding alias for compatibility
+
 export type UserTransaction = {
   id: string;
   date: string;

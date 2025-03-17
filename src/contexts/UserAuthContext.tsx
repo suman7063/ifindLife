@@ -2,9 +2,13 @@ import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { fetchUserProfile, updateUserProfile, updateProfilePicture } from '@/utils/userProfileUtils';
-import { UserProfile, Expert, Review, Report, Course, UserTransaction } from '@/types/supabase';
+import { UserProfile, Expert, Review, Report, Course, UserTransaction, User } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+
+// Re-export the useUserAuth hook for backwards compatibility
+import { useUserAuth } from '@/hooks/useUserAuth';
+export { useUserAuth };
 
 type UserAuthContextType = {
   currentUser: UserProfile | null;
@@ -163,4 +167,4 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
-export type { UserProfile, Expert, Review, Report, Course, UserTransaction };
+export type { UserProfile, Expert, Review, Report, Course, UserTransaction, User };
