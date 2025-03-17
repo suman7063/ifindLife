@@ -123,7 +123,19 @@ export interface UserProfile {
 }
 
 export type User = CustomTable['users'];
-export type Review = CustomTable['user_reviews'];
-export type Report = CustomTable['user_reports'];
-export type Course = CustomTable['user_courses'];
+
+// Extend the base types with UI-friendly properties
+export interface Review extends CustomTable['user_reviews'] {
+  expertId?: string; // UI-friendly alias for expert_id
+}
+
+export interface Report extends CustomTable['user_reports'] {
+  expertId?: string; // UI-friendly alias for expert_id
+}
+
+export interface Course extends CustomTable['user_courses'] {
+  expertName?: string; // UI-friendly alias for expert_name
+  enrollmentDate?: string; // UI-friendly alias for enrollment_date
+}
+
 export type UserTransaction = CustomTable['user_transactions'];

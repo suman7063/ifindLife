@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +17,6 @@ const UserDashboard = () => {
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [currentExpert, setCurrentExpert] = useState<Expert | null>(null);
 
-  // If user is not logged in, redirect to login page
   React.useEffect(() => {
     if (!currentUser) {
       navigate('/login');
@@ -26,7 +24,7 @@ const UserDashboard = () => {
   }, [currentUser, navigate]);
 
   if (!currentUser) {
-    return null; // Prevents the rest of the component from rendering while redirecting
+    return null;
   }
 
   const handleRecharge = () => {
@@ -53,8 +51,6 @@ const UserDashboard = () => {
     setCurrentExpert(expert);
     const shareLink = getExpertShareLink(expert.id);
     
-    // In a real app, you'd implement proper sharing functionality
-    // For now, let's copy to clipboard
     navigator.clipboard.writeText(shareLink)
       .then(() => {
         toast.success(`Link copied to clipboard`);
@@ -110,7 +106,6 @@ const UserDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Courses Tab */}
           <TabsContent value="courses">
             <div className="grid gap-4">
               {currentUser.enrolledCourses.length > 0 ? (
@@ -118,11 +113,11 @@ const UserDashboard = () => {
                   <Card key={course.id}>
                     <CardHeader>
                       <CardTitle>{course.title}</CardTitle>
-                      <CardDescription>Expert: {course.expertName}</CardDescription>
+                      <CardDescription>Expert: {course.expert_name}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        <p className="text-sm">Enrolled on: {formatDate(course.enrollmentDate)}</p>
+                        <p className="text-sm">Enrolled on: {formatDate(course.enrollment_date)}</p>
                         <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-ifind-aqua" 
@@ -157,7 +152,6 @@ const UserDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Wallet Tab */}
           <TabsContent value="wallet">
             <div className="grid gap-6">
               <Card>
@@ -231,7 +225,6 @@ const UserDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Favorites Tab */}
           <TabsContent value="favorites">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {currentUser.favoriteExperts.length > 0 ? (
@@ -298,7 +291,6 @@ const UserDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Reviews Tab */}
           <TabsContent value="reviews">
             <div className="grid gap-4">
               {currentUser.reviews.length > 0 ? (
@@ -306,7 +298,7 @@ const UserDashboard = () => {
                   <Card key={review.id}>
                     <CardHeader>
                       <div className="flex items-center justify-between">
-                        <CardTitle>Expert #{review.expertId}</CardTitle>
+                        <CardTitle>Expert #{review.expert_id}</CardTitle>
                         <div className="flex items-center">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <Star 
@@ -324,7 +316,7 @@ const UserDashboard = () => {
                     <CardFooter>
                       <Button 
                         variant="outline" 
-                        onClick={() => navigate(`/experts/${review.expertId}`)}
+                        onClick={() => navigate(`/experts/${review.expert_id}`)}
                       >
                         View Expert
                       </Button>
@@ -343,7 +335,6 @@ const UserDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Reports Tab */}
           <TabsContent value="reports">
             <div className="grid gap-4">
               {currentUser.reports.length > 0 ? (
@@ -370,7 +361,7 @@ const UserDashboard = () => {
                     <CardFooter>
                       <Button 
                         variant="outline" 
-                        onClick={() => navigate(`/experts/${report.expertId}`)}
+                        onClick={() => navigate(`/experts/${report.expert_id}`)}
                       >
                         View Expert
                       </Button>
@@ -389,7 +380,6 @@ const UserDashboard = () => {
             </div>
           </TabsContent>
 
-          {/* Profile Tab */}
           <TabsContent value="profile">
             <Card>
               <CardHeader>
@@ -437,7 +427,6 @@ const UserDashboard = () => {
       </div>
       <Footer />
       
-      {/* Share Expert Dialog */}
       <Dialog>
         <DialogTrigger asChild>
           <span className="hidden">Share</span>

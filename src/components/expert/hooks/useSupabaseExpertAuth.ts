@@ -1,211 +1,84 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase, from } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Session } from '@supabase/supabase-js';
-import { ExpertFormData } from '../types';
-import { ExpertProfile } from '@/types/supabase';
+import { Expert } from '@/types/supabase';
 
 export const useSupabaseExpertAuth = () => {
-  const [session, setSession] = useState<Session | null>(null);
+  const [expert, setExpert] = useState<Expert | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-
-      if (data.user) {
-        // Verify if this is an expert account
-        const { data: expertData, error: expertError } = await from('experts')
+  useEffect(() => {
+    const fetchExpert = async () => {
+      try {
+        setLoading(true);
+        
+        // Get the current session
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (!sessionData?.session) {
+          setExpert(null);
+          return;
+        }
+        
+        // Get the expert from the database
+        const { data, error } = await from('experts')
           .select('*')
-          .eq('email', email)
+          .eq('email', sessionData.session.user.email)
           .single();
-
-        if (expertError || !expertData) {
-          toast.error('This account is not registered as an expert.');
-          await supabase.auth.signOut();
-          return false;
-        }
-
-        toast.success(`Welcome back, ${expertData.name}!`);
-        return true;
-      }
-      return false;
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed');
-      return false;
-    }
-  };
-
-  const signup = async (expertData: ExpertFormData): Promise<boolean> => {
-    try {
-      // Create auth user
-      const { data, error } = await supabase.auth.signUp({
-        email: expertData.email,
-        password: expertData.password,
-        options: {
-          data: {
-            name: expertData.name,
-            phone: expertData.phone,
-            country: expertData.country
+        
+        if (error) {
+          // Check if it's a not found error versus a server error
+          if (error.code === 'PGRST116') {
+            // This is "No rows returned" error - the expert doesn't exist
+            console.log("Expert not found in database");
+            setExpert(null);
+          } else {
+            // Handle other errors
+            console.error("Error fetching expert:", error.message || "Unknown error");
+            toast.error(`Error fetching expert profile: ${error.message || "Unknown error"}`);
           }
+          return;
         }
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return false;
+        
+        setExpert(data as Expert);
+        
+      } catch (error: any) {
+        console.error('Error checking expert auth:', error);
+        toast.error(error.message || 'Error checking expert authentication');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (!data.user) {
-        toast.error('Failed to create user account');
-        return false;
+    fetchExpert();
+
+    // Listen for changes to auth state
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setExpert(null);
+      } else {
+        fetchExpert();
       }
+    });
 
-      // Now create the expert profile
-      const { error: expertError } = await from('experts')
-        .insert({
-          id: data.user.id,
-          name: expertData.name,
-          email: expertData.email,
-          phone: expertData.phone,
-          address: expertData.address,
-          city: expertData.city,
-          state: expertData.state,
-          country: expertData.country,
-          specialization: expertData.specialization,
-          experience: expertData.experience,
-          bio: expertData.bio,
-          certificate_urls: expertData.certificateUrls,
-          profile_picture: expertData.profilePicture || null,
-          selected_services: expertData.selectedServices,
-          created_at: new Date().toISOString()
-        });
-
-      if (expertError) {
-        console.error('Error creating expert profile:', expertError);
-        toast.error('Error creating expert profile');
-        return false;
-      }
-
-      toast.success('Expert account created successfully!');
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
-      return false;
-    }
-  };
-
-  const updateExpertProfile = async (expertId: string, profileData: Partial<ExpertProfile>): Promise<boolean> => {
-    try {
-      const { error } = await from('experts')
-        .update({
-          name: profileData.name,
-          phone: profileData.phone,
-          address: profileData.address,
-          city: profileData.city,
-          state: profileData.state,
-          country: profileData.country,
-          specialization: profileData.specialization,
-          experience: profileData.experience,
-          bio: profileData.bio,
-          certificate_urls: profileData.certificate_urls,
-          profile_picture: profileData.profile_picture,
-          selected_services: profileData.selected_services,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', expertId);
-
-      if (error) {
-        toast.error('Failed to update profile');
-        return false;
-      }
-
-      toast.success('Profile updated successfully');
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || 'Update failed');
-      return false;
-    }
-  };
-
-  const reportUser = async (
-    expertId: string, 
-    reportData: { 
-      userId: string; 
-      userName: string; 
-      reason: string; 
-      details: string;
-    }
-  ): Promise<boolean> => {
-    try {
-      const newReport = {
-        expert_id: expertId,
-        user_id: reportData.userId,
-        user_name: reportData.userName,
-        reason: reportData.reason,
-        details: reportData.details,
-        date: new Date().toISOString(),
-        status: 'pending'
-      };
-
-      const { error } = await from('expert_reports')
-        .insert(newReport);
-
-      if (error) {
-        toast.error('Failed to submit report');
-        return false;
-      }
-
-      toast.success('User reported successfully');
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to report user');
-      return false;
-    }
-  };
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const logout = async () => {
     try {
       await supabase.auth.signOut();
+      setExpert(null);
+      toast.success('Successfully logged out');
       return true;
     } catch (error: any) {
-      toast.error(error.message || 'Logout failed');
+      console.error('Error logging out:', error);
+      toast.error(error.message || 'Error logging out');
       return false;
     }
   };
 
-  const getExpertSession = async () => {
-    try {
-      setLoading(true);
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      return data.session;
-    } catch (error) {
-      console.error('Error getting session:', error);
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return {
-    session,
-    loading,
-    setSession,
-    login,
-    signup,
-    logout,
-    getExpertSession,
-    updateExpertProfile,
-    reportUser
-  };
+  return { expert, loading, logout };
 };

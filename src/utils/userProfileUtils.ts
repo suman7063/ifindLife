@@ -1,118 +1,85 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase';
-import { User as SupabaseUser } from '@supabase/supabase-js';
-import { toast } from 'sonner';
+import { UserProfile, Expert, Review, Report, Course, UserTransaction } from '@/types/supabase';
 
-export const fetchUserProfile = async (authUser: SupabaseUser): Promise<UserProfile | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (data) {
-      // Convert from Supabase profile format to our app's User format with UI-friendly properties
-      return {
-        id: data.id,
-        name: data.name,
-        email: data.email || authUser.email,
-        phone: data.phone,
-        country: data.country,
-        city: data.city,
-        currency: data.currency || 'USD',
-        profile_picture: data.profile_picture,
-        wallet_balance: Number(data.wallet_balance) || 0,
-        
-        // Map to camelCase properties for UI convenience
-        profilePicture: data.profile_picture,
-        walletBalance: Number(data.wallet_balance) || 0,
-        
-        // These will be populated separately as needed
-        favoriteExperts: [],
-        enrolledCourses: [],
-        transactions: [],
-        reviews: [],
-        reports: []
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error('Error fetching user profile:', error);
-    toast.error('Error loading user profile');
-    return null;
-  }
+// Function to convert database user to UserProfile
+export const convertUserToUserProfile = (user: any): UserProfile => {
+  if (!user) return {} as UserProfile;
+  
+  return {
+    // Core user data with both snake_case (from DB) and camelCase (for UI)
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    country: user.country,
+    city: user.city,
+    currency: user.currency,
+    profile_picture: user.profile_picture,
+    wallet_balance: user.wallet_balance,
+    created_at: user.created_at,
+    
+    // UI convenience fields (camelCase)
+    profilePicture: user.profile_picture,
+    walletBalance: user.wallet_balance,
+    
+    // Related collections that will be populated separately
+    favoriteExperts: [],
+    enrolledCourses: [],
+    transactions: [],
+    reviews: [],
+    reports: []
+  };
 };
 
-export const updateUserProfile = async (userId: string, profileData: Partial<UserProfile>) => {
-  try {
-    const { error } = await supabase
-      .from('profiles')
-      .update({
-        name: profileData.name,
-        phone: profileData.phone,
-        country: profileData.country,
-        city: profileData.city,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
+// Function to update user profile
+export const updateUserProfile = async (
+  userId: string,
+  data: Partial<UserProfile>
+): Promise<void> => {
+  // Convert camelCase to snake_case for database
+  const dbData = {
+    name: data.name,
+    phone: data.phone,
+    country: data.country,
+    city: data.city,
+    // Add other fields as needed
+  };
 
-    if (error) {
-      throw error;
-    }
+  const { error } = await supabase
+    .from('users')
+    .update(dbData)
+    .eq('id', userId);
 
-    toast.success('Profile updated successfully');
-    return true;
-  } catch (error: any) {
-    console.error('Error updating profile:', error);
-    toast.error(error.message || 'Failed to update profile');
-    return false;
-  }
-};
-
-export const updateProfilePicture = async (userId: string, file: File): Promise<string> => {
-  try {
-    // Upload image to Supabase Storage
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Date.now()}.${fileExt}`;
-    const filePath = `profile-pictures/${fileName}`;
-
-    // Create a readable stream from the file
-    const { error: uploadError } = await supabase.storage
-      .from('user-profiles')
-      .upload(filePath, file);
-
-    if (uploadError) {
-      throw uploadError;
-    }
-
-    // Get the public URL
-    const { data: urlData } = supabase.storage
-      .from('user-profiles')
-      .getPublicUrl(filePath);
-
-    const publicUrl = urlData.publicUrl;
-
-    // Update profile with new picture URL
-    const { error: updateError } = await supabase
-      .from('profiles')
-      .update({ profile_picture: publicUrl })
-      .eq('id', userId);
-
-    if (updateError) {
-      throw updateError;
-    }
-
-    toast.success('Profile picture updated successfully');
-    return publicUrl;
-  } catch (error: any) {
-    console.error('Error updating profile picture:', error);
-    toast.error(error.message || 'Failed to update profile picture');
+  if (error) {
+    console.error('Error updating user profile:', error);
     throw error;
   }
+};
+
+// Function to adapt database courses to UI format
+export const adaptCoursesToUI = (courses: Course[]): any[] => {
+  return courses.map(course => ({
+    ...course,
+    // Add camelCase aliases for UI components
+    expertName: course.expert_name,
+    enrollmentDate: course.enrollment_date
+  }));
+};
+
+// Function to adapt database reviews/reports to UI format
+export const adaptReviewsToUI = (reviews: Review[]): any[] => {
+  return reviews.map(review => ({
+    ...review,
+    // Add camelCase aliases for UI components
+    expertId: review.expert_id
+  }));
+};
+
+export const adaptReportsToUI = (reports: Report[]): any[] => {
+  return reports.map(report => ({
+    ...report,
+    // Add camelCase aliases for UI components
+    expertId: report.expert_id
+  }));
 };
