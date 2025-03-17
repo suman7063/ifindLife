@@ -31,6 +31,7 @@ const Hero = () => {
     <div className="relative overflow-hidden bg-gradient-to-b from-white to-ifind-offwhite pt-8 pb-16">
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+          {/* Left side content */}
           <div className="space-y-6">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
               {heroSettings.title} <br /> 
@@ -60,8 +61,9 @@ const Hero = () => {
             </div>
           </div>
           
-          <div className="relative">
-            <div className="relative z-10 rounded-lg overflow-hidden border-8 border-white shadow-xl animate-float">
+          {/* Right side video/image */}
+          <div className="relative h-full flex items-center justify-center">
+            <div className="relative z-10 rounded-lg overflow-hidden border-8 border-white shadow-xl animate-float w-full">
               {heroSettings.videoUrl ? (
                 <iframe
                   src={heroSettings.videoUrl}
