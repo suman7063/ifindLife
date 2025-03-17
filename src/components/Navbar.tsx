@@ -31,7 +31,7 @@ const Navbar = () => {
     <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${scrolled ? 'bg-background/90 shadow-sm' : 'bg-transparent'}`}>
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/ifindlife-logo.png" alt="iFindLife" className="h-8" />
+          <img src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" alt="iFindLife" className="h-8" />
           <span className="font-bold text-xl hidden md:inline-block">iFindLife</span>
         </Link>
         
