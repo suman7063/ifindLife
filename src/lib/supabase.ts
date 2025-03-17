@@ -13,6 +13,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export function from<T extends keyof CustomTable>(
   table: T
 ) {
-  // Use type assertion with 'as const' to make TypeScript treat this as a literal type
-  return supabase.from(table as unknown as string);
+  // Use type assertion to allow tables from the Database type
+  return supabase.from(table as any);
 }

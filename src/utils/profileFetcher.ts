@@ -35,7 +35,7 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       const { data: expertsData } = await supabase
         .from('experts')
         .select('*')
-        .in('id', expertIds as string[]);
+        .in('id', expertIds as any); // Using type assertion here
         
       userProfile.favoriteExperts = expertsData || [];
     }
