@@ -66,24 +66,30 @@ export const useReviews = () => {
         return { success: true, reviews: [] };
       }
       
-      // Get expert names for each review using a separate query
-      const expertIds = updatedUserReviews.map(review => review.expert_id);
+      // Extract all expert IDs first
+      const expertIds = updatedUserReviews.map(review => 
+        convertExpertIdToString(review.expert_id)
+      );
+      
+      // Get expert names in a single batch query
       const { data: expertsData } = await supabase
         .from('experts')
         .select('id, name')
-        .in('id', expertIds.map(id => convertExpertIdToString(id)));
+        .in('id', expertIds);
       
-      // Create a map of expert IDs to names for easy lookup
-      const expertNameMap = new Map();
+      // Create a simple lookup object instead of a Map to avoid potential type issues
+      const expertNameLookup: Record<string, string> = {};
+      
       if (expertsData) {
         expertsData.forEach(expert => {
-          expertNameMap.set(expert.id, expert.name);
+          expertNameLookup[expert.id] = expert.name;
         });
       }
       
-      // Create formatted reviews array
-      const formattedReviews: Review[] = updatedUserReviews.map(review => {
+      // Build the formatted reviews array
+      const formattedReviews = updatedUserReviews.map(review => {
         const expertIdString = convertExpertIdToString(review.expert_id);
+        
         return {
           id: review.id,
           expertId: expertIdString,
@@ -93,11 +99,10 @@ export const useReviews = () => {
           verified: review.verified || false,
           userId: review.user_id || '',
           userName: userProfile.name || 'Anonymous User',
-          expertName: expertNameMap.get(expertIdString) || 'Unknown Expert'
+          expertName: expertNameLookup[expertIdString] || 'Unknown Expert'
         };
       });
       
-      // Return only the success status and reviews
       return {
         success: true,
         reviews: formattedReviews
