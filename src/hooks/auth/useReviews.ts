@@ -90,33 +90,32 @@ export const useReviews = () => {
         expertName: review.expert_name
       }));
       
-      // Create a completely new user profile object by manually copying properties
-      // This avoids deep type instantiation and circular references
-      const updatedProfile = {
-        id: userProfile.id,
-        name: userProfile.name,
-        email: userProfile.email,
-        phone: userProfile.phone,
-        country: userProfile.country,
-        city: userProfile.city,
-        currency: userProfile.currency,
-        profilePicture: userProfile.profilePicture,
-        walletBalance: userProfile.walletBalance,
-        createdAt: userProfile.createdAt,
-        referralCode: userProfile.referralCode,
-        referredBy: userProfile.referredBy,
-        referralLink: userProfile.referralLink,
-        // Use empty arrays as fallbacks for all collections
-        favoriteExperts: userProfile.favoriteExperts || [],
-        enrolledCourses: userProfile.enrolledCourses || [],
-        transactions: userProfile.transactions || [],
-        reports: userProfile.reports || [],
-        referrals: userProfile.referrals || [],
-        // Add the formatted reviews
-        reviews: formattedReviews
-      } as UserProfile; // Use type assertion instead of direct typing
+      // Create a new user profile using a factory function to avoid deep type instantiation
+      function createUserProfile(): UserProfile {
+        return {
+          id: userProfile.id,
+          name: userProfile.name,
+          email: userProfile.email,
+          phone: userProfile.phone,
+          country: userProfile.country,
+          city: userProfile.city,
+          currency: userProfile.currency,
+          profilePicture: userProfile.profilePicture,
+          walletBalance: userProfile.walletBalance,
+          createdAt: userProfile.createdAt,
+          referralCode: userProfile.referralCode,
+          referredBy: userProfile.referredBy,
+          referralLink: userProfile.referralLink,
+          favoriteExperts: userProfile.favoriteExperts || [],
+          enrolledCourses: userProfile.enrolledCourses || [],
+          transactions: userProfile.transactions || [],
+          reports: userProfile.reports || [],
+          referrals: userProfile.referrals || [],
+          reviews: formattedReviews
+        };
+      }
       
-      return updatedProfile;
+      return createUserProfile();
     } catch (error: any) {
       console.error('Error adding review:', error);
       toast.error(error.message || 'Failed to add review');
