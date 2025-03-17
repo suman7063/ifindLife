@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -52,8 +51,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [getSession]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const success = await authLogin(email, password);
-    return success;
+    return await authLogin(email, password);
   };
 
   const signup = async (userData: {
@@ -151,7 +149,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Features that will be implemented later
   const addToFavorites = (expert: Expert) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
@@ -171,7 +168,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return `${window.location.origin}/signup?ref=${currentUser.referralCode}`;
   };
 
-  // Create the context value object
   const contextValue: UserAuthContextType = {
     currentUser,
     isAuthenticated: !!currentUser,

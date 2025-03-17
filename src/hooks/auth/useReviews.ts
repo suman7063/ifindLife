@@ -1,135 +1,105 @@
 
+// Fix the expert ID type conversion in the useReviews hook
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { ExpertIdDB, convertExpertIdToNumber, convertExpertIdToString } from '@/types/supabase/expertId';
-import { Review } from '@/types/supabase/reviews';
 
 export const useReviews = () => {
-  const hasTakenServiceFrom = async (currentUser: UserProfile | null, expertId: string): Promise<boolean> => {
-    if (!currentUser) {
-      return false;
-    }
-
+  // Add a review to an expert
+  const addReview = async (
+    userProfile: UserProfile,
+    expertId: string,
+    rating: number,
+    comment: string
+  ) => {
     try {
-      // Convert string ID to number for database
-      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
+      // Convert expertId to string if it's a number
+      const expertIdString = String(expertId);
       
-      // Check if there are any completed service engagements between the user and expert
-      const { data, error } = await supabase
-        .from('user_expert_services')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .eq('expert_id', expertIdNumber.toString()) // Convert to string for Supabase query
-        .eq('status', 'completed')
-        .limit(1);
-
-      if (error) {
-        console.error('Error checking service history:', error);
-        return false;
-      }
-
-      return data && data.length > 0;
-    } catch (error) {
-      console.error('Error checking service history:', error);
-      return false;
-    }
-  };
-
-  const hasReviewedExpert = async (currentUser: UserProfile | null, expertId: string): Promise<boolean> => {
-    if (!currentUser) {
-      return false;
-    }
-
-    try {
-      // Convert string ID to number for database
-      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
-      
-      const { data, error } = await supabase
+      // Check if user has already reviewed this expert
+      const { data: existingReviews } = await supabase
         .from('user_reviews')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .eq('expert_id', expertIdNumber)
-        .limit(1);
-
-      if (error) {
-        console.error('Error checking review history:', error);
-        return false;
-      }
-
-      return data && data.length > 0;
-    } catch (error) {
-      console.error('Error checking review history:', error);
-      return false;
-    }
-  };
-
-  const addReview = async (currentUser: UserProfile | null, expertId: string, rating: number, comment: string) => {
-    if (!currentUser) {
-      toast.error('Please log in to add a review');
-      return null;
-    }
-
-    try {
-      // Check if user has taken service from this expert
-      const hasTakenService = await hasTakenServiceFrom(currentUser, expertId);
-      const hasReviewed = await hasReviewedExpert(currentUser, expertId);
-
-      if (hasReviewed) {
-        toast.error('You have already reviewed this expert');
-        return null;
-      }
-
-      if (!hasTakenService) {
-        toast.error('You can only review experts after taking their service');
-        return null;
+        .select('*')
+        .eq('user_id', userProfile.id)
+        .eq('expert_id', expertIdString);
+      
+      if (existingReviews && existingReviews.length > 0) {
+        // Update existing review
+        const { error } = await supabase
+          .from('user_reviews')
+          .update({
+            rating,
+            comment,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingReviews[0].id)
+          .select();
+        
+        if (error) throw error;
+        
+        toast.success('Review updated successfully');
+      } else {
+        // Create new review
+        const { error } = await supabase
+          .from('user_reviews')
+          .insert({
+            user_id: userProfile.id,
+            expert_id: expertIdString,
+            rating,
+            comment,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .select();
+        
+        if (error) throw error;
+        
+        toast.success('Review added successfully');
       }
       
-      // Convert string ID to number for database
-      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
-
-      const { data, error } = await supabase
+      // Return updated user profile
+      const { data: updatedUserReviews } = await supabase
         .from('user_reviews')
-        .insert({
-          user_id: currentUser.id,
-          expert_id: expertIdNumber,
-          rating: rating,
-          comment: comment,
-          date: new Date().toISOString(),
-          verified: true
-        })
-        .select();
-
-      if (error) throw error;
-
-      // Return updated user data to update the local state
-      const newReviewId = data && data.length > 0 ? data[0].id : 'temp_id';
+        .select('*')
+        .eq('user_id', userProfile.id);
       
-      const newReview: Review = {
-        id: newReviewId,
-        expertId: expertId, // Store as string in our UI
-        rating: rating,
-        comment: comment,
-        date: new Date().toISOString(),
-        verified: true
+      return {
+        ...userProfile,
+        reviews: updatedUserReviews || []
       };
-
-      const updatedUser = {
-        ...currentUser,
-        reviews: [...(currentUser.reviews || []), newReview],
-      };
-
-      toast.success('Review added successfully!');
-      return updatedUser;
     } catch (error: any) {
+      console.error('Error adding review:', error);
       toast.error(error.message || 'Failed to add review');
       return null;
     }
   };
-
+  
+  // Check if user has taken service from an expert
+  const hasTakenServiceFrom = async (
+    userProfile: UserProfile | null,
+    expertId: string
+  ): Promise<boolean> => {
+    if (!userProfile) return false;
+    
+    try {
+      // Convert expertId to string if it's a number
+      const expertIdString = String(expertId);
+      
+      const { data: transactions } = await supabase
+        .from('user_transactions')
+        .select('*')
+        .eq('user_id', userProfile.id)
+        .eq('expert_id', expertIdString);
+      
+      return !!(transactions && transactions.length > 0);
+    } catch (error: any) {
+      console.error('Error checking transactions:', error);
+      return false;
+    }
+  };
+  
   return {
-    hasTakenServiceFrom,
-    hasReviewedExpert,
-    addReview
+    addReview,
+    hasTakenServiceFrom
   };
 };

@@ -1,5 +1,4 @@
 
-// Export the context and provider from separate files
 import { UserAuthContext, UserAuthContextType } from './UserAuthContext';
 import { UserAuthProvider } from './UserAuthProvider';
 import { useUserAuth } from '@/hooks/useUserAuth';
@@ -8,8 +7,8 @@ import { useUserAuth } from '@/hooks/useUserAuth';
 export { UserAuthContext, UserAuthProvider, useUserAuth };
 export type { UserAuthContextType };
 
-// Re-export types from the original context
+// Re-export types
 export type { UserProfile, Expert } from '@/types/supabase';
-export type { Review, Report } from '@/types/supabase/reviews';
+export type { ReviewUI as Review, Report } from '@/types/supabase/reviews';
 export type { Course, UserTransaction } from '@/types/supabase';
 export type { User } from '@/types/supabase';
