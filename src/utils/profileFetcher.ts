@@ -74,7 +74,8 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
     userProfile.transactions = transactions || [];
     
     // Referrals
-    userProfile.referrals = await fetchUserReferrals(user.id);
+    const referrals = await fetchUserReferrals(user.id);
+    userProfile.referrals = referrals;
     
     return userProfile;
   } catch (error) {

@@ -47,12 +47,12 @@ export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> 
       return [];
     }
 
-    // Transform to UI-friendly format
+    // Transform to UI-friendly format with correct property names
     return data.map(item => ({
       id: item.id,
       referrerId: item.referrer_id,
       referredId: item.referred_id,
-      referredName: item.users?.name || 'Anonymous',
+      referredName: item.users ? item.users.name : 'Anonymous',
       referralCode: item.referral_code,
       status: item.status as 'pending' | 'completed' | 'expired',
       rewardClaimed: item.reward_claimed,

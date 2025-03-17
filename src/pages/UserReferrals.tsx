@@ -20,9 +20,14 @@ const UserReferrals: React.FC = () => {
     const loadReferrals = async () => {
       if (currentUser?.id) {
         setIsLoading(true);
-        const data = await fetchUserReferrals(currentUser.id);
-        setReferrals(data);
-        setIsLoading(false);
+        try {
+          const data = await fetchUserReferrals(currentUser.id);
+          setReferrals(data);
+        } catch (error) {
+          console.error("Error loading referrals:", error);
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -54,7 +59,7 @@ const UserReferrals: React.FC = () => {
           {currentUser && <ReferralCard userProfile={currentUser} />}
           
           <div className="mt-8">
-            <ReferralsList referrals={currentUser?.referrals || []} isLoading={isLoading} />
+            <ReferralsList referrals={referrals} isLoading={isLoading} />
           </div>
         </div>
       </main>
