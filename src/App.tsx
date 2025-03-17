@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,6 +17,7 @@ import UserDashboard from "./pages/UserDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { UserAuthProvider } from "./contexts/UserAuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MigrateData from "./pages/MigrateData";
 
 const queryClient = new QueryClient();
 
@@ -46,10 +46,9 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
-              {/* Redirect from old route to new route */}
+              <Route path="/migrate-data" element={<MigrateData />} />
               <Route path="/therapists" element={<Experts />} />
               <Route path="/therapists/:id" element={<AstrologerDetail />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </UserAuthProvider>
