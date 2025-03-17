@@ -12,7 +12,7 @@ export const useReviews = () => {
     expertId: string,
     rating: number,
     comment: string
-  ) => {
+  ): Promise<{success: boolean, reviews: Review[]}> => {
     try {
       // Convert expertId to number for database storage
       const expertIdNumber = convertExpertIdToNumber(expertId);
@@ -57,7 +57,7 @@ export const useReviews = () => {
         toast.success('Review added successfully');
       }
       
-      // Return updated user profile
+      // Return updated reviews for this user
       const { data: updatedUserReviews } = await supabase
         .from('user_reviews')
         .select('*')
@@ -77,7 +77,7 @@ export const useReviews = () => {
         };
       }));
       
-      // Create formatted reviews array without circular references
+      // Create formatted reviews array
       const formattedReviews: Review[] = reviewsWithExpertNames.map(review => ({
         id: review.id,
         expertId: convertExpertIdToString(review.expert_id),
@@ -90,36 +90,18 @@ export const useReviews = () => {
         expertName: review.expert_name
       }));
       
-      // Create a new user profile using a factory function to avoid deep type instantiation
-      function createUserProfile(): UserProfile {
-        return {
-          id: userProfile.id,
-          name: userProfile.name,
-          email: userProfile.email,
-          phone: userProfile.phone,
-          country: userProfile.country,
-          city: userProfile.city,
-          currency: userProfile.currency,
-          profilePicture: userProfile.profilePicture,
-          walletBalance: userProfile.walletBalance,
-          createdAt: userProfile.createdAt,
-          referralCode: userProfile.referralCode,
-          referredBy: userProfile.referredBy,
-          referralLink: userProfile.referralLink,
-          favoriteExperts: userProfile.favoriteExperts || [],
-          enrolledCourses: userProfile.enrolledCourses || [],
-          transactions: userProfile.transactions || [],
-          reports: userProfile.reports || [],
-          referrals: userProfile.referrals || [],
-          reviews: formattedReviews
-        };
-      }
-      
-      return createUserProfile();
+      // Return only the success status and reviews
+      return {
+        success: true,
+        reviews: formattedReviews
+      };
     } catch (error: any) {
       console.error('Error adding review:', error);
       toast.error(error.message || 'Failed to add review');
-      return null;
+      return {
+        success: false,
+        reviews: []
+      };
     }
   };
   
