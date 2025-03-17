@@ -29,12 +29,12 @@ const Navbar = () => {
 
   return (
     <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${scrolled ? 'bg-background/90 shadow-sm' : 'bg-transparent'}`}>
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-20 items-center justify-between">
         <Link to="/" className="flex items-center">
           <img 
             src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" 
             alt="iFindLife" 
-            className="h-16 transform scale-150 origin-left" 
+            className="h-12 transform scale-125 origin-left" 
           />
         </Link>
         

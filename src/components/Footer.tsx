@@ -14,7 +14,7 @@ const Footer = () => {
               <img 
                 src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" 
                 alt="iFindLife Logo" 
-                className="h-16 transform scale-150 origin-left bg-white/90 p-1 rounded" 
+                className="h-12 transform scale-125 origin-left bg-white/90 p-1 rounded" 
               />
             </Link>
             <p className="text-ifind-offwhite/80 mb-6">
