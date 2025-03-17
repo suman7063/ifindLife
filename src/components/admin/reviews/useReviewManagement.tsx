@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Expert } from '@/types/supabase';
 import { Review } from '@/types/supabase/reviews';
+import { convertExpertIdToString } from '@/types/supabase/expertId';
 
 export const useReviewManagement = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -30,7 +31,6 @@ export const useReviewManagement = () => {
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      // Use proper join syntax
       const { data, error } = await supabase
         .from('user_reviews')
         .select(`
@@ -49,11 +49,14 @@ export const useReviewManagement = () => {
 
       if (data) {
         // Fetch expert names separately
+        // Convert numeric expert IDs to strings for the IN clause
         const expertIds = [...new Set(data.map(review => review.expert_id))];
+        const expertIdsAsStrings = expertIds.map(id => id.toString());
+        
         const { data: expertsData, error: expertsError } = await supabase
           .from('experts')
           .select('id, name')
-          .in('id', expertIds);
+          .in('id', expertIdsAsStrings);
           
         if (expertsError) {
           console.error('Error fetching expert names:', expertsError);
@@ -69,7 +72,7 @@ export const useReviewManagement = () => {
           
         const formattedReviews: Review[] = data.map((review) => ({
           id: review.id,
-          expertId: String(review.expert_id),
+          expertId: convertExpertIdToString(review.expert_id),
           userId: review.user_id,
           expertName: expertNameMap.get(String(review.expert_id)) || 'Unknown Expert',
           rating: review.rating,

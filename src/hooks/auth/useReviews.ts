@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { ExpertIdDB, convertExpertIdToNumber } from '@/types/supabase/expertId';
+import { ExpertIdDB, convertExpertIdToNumber, convertExpertIdToString } from '@/types/supabase/expertId';
 import { Review } from '@/types/supabase/reviews';
 
 export const useReviews = () => {
@@ -20,7 +20,7 @@ export const useReviews = () => {
         .from('user_expert_services')
         .select('id')
         .eq('user_id', currentUser.id)
-        .eq('expert_id', expertIdNumber)
+        .eq('expert_id', expertIdNumber.toString()) // Convert to string for Supabase query
         .eq('status', 'completed')
         .limit(1);
 

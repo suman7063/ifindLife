@@ -11,6 +11,9 @@ import { UserProfile, Expert } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { processReferralCode } from '@/utils/referralUtils';
+import { useReports } from '@/hooks/auth/useReports';
+import { useReviews } from '@/hooks/auth/useReviews';
+import { useWallet } from '@/hooks/auth/useWallet';
 
 // Import the context definition
 import { UserAuthContext, UserAuthContextType } from './UserAuthContext';
@@ -19,6 +22,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
   const { login: authLogin, signup: authSignup, logout: authLogout, getSession } = useSupabaseAuth();
+  const { addReport } = useReports();
+  const { addReview, hasTakenServiceFrom } = useReviews();
+  const { rechargeWallet } = useWallet();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -43,7 +49,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [getSession]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     const success = await authLogin(email, password);
@@ -109,32 +115,49 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return publicUrl;
   };
 
+  const handleAddReview = async (expertId: string, rating: number, comment: string) => {
+    if (!currentUser) {
+      toast.error('Please log in to add a review');
+      return;
+    }
+    
+    const updatedUser = await addReview(currentUser, expertId, rating, comment);
+    if (updatedUser) {
+      setCurrentUser(updatedUser);
+    }
+  };
+  
+  const handleReportExpert = async (expertId: string, reason: string, details: string) => {
+    if (!currentUser) {
+      toast.error('Please log in to report an expert');
+      return;
+    }
+    
+    const updatedUser = await addReport(currentUser, expertId, reason, details);
+    if (updatedUser) {
+      setCurrentUser(updatedUser);
+    }
+  };
+  
+  const handleRechargeWallet = async (amount: number) => {
+    if (!currentUser) {
+      toast.error('Please log in to recharge your wallet');
+      return;
+    }
+    
+    const updatedUser = await rechargeWallet(currentUser, amount);
+    if (updatedUser) {
+      setCurrentUser(updatedUser);
+    }
+  };
+
+  // Features that will be implemented later
   const addToFavorites = (expert: Expert) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
   };
 
   const removeFromFavorites = (expertId: string) => {
-    if (!currentUser) return;
-    toast.info('This feature will be implemented with Supabase soon');
-  };
-
-  const rechargeWallet = (amount: number) => {
-    if (!currentUser) return;
-    toast.info('This feature will be implemented with Supabase soon');
-  };
-
-  const hasTakenServiceFrom = (expertId: string): boolean => {
-    if (!currentUser) return false;
-    return false;
-  };
-
-  const addReview = (expertId: string, rating: number, comment: string) => {
-    if (!currentUser) return;
-    toast.info('This feature will be implemented with Supabase soon');
-  };
-  
-  const reportExpert = (expertId: string, reason: string, details: string) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
   };
@@ -159,11 +182,11 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     updateProfilePicture: handleUpdateProfilePicture,
     addToFavorites,
     removeFromFavorites,
-    rechargeWallet,
-    addReview,
-    reportExpert,
+    rechargeWallet: handleRechargeWallet,
+    addReview: handleAddReview,
+    reportExpert: handleReportExpert,
     getExpertShareLink,
-    hasTakenServiceFrom,
+    hasTakenServiceFrom: (expertId) => hasTakenServiceFrom(currentUser, expertId),
     getReferralLink
   };
 
