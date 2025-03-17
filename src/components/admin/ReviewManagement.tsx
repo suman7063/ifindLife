@@ -62,12 +62,11 @@ const ReviewManagement: React.FC = () => {
             comment,
             date,
             verified,
-            user_name,
             experts(name)
           `);
         
         if (selectedExpertId) {
-          query = query.eq('expert_id', selectedExpertId);
+          query = query.eq('expert_id', parseInt(selectedExpertId));
         }
         
         const { data, error } = await query;
@@ -76,10 +75,10 @@ const ReviewManagement: React.FC = () => {
         
         const formattedReviews: Review[] = (data || []).map(review => ({
           id: review.id,
-          expertId: review.expert_id,
+          expertId: review.expert_id.toString(),
           expertName: review.experts?.name || 'Unknown Expert',
           userId: review.user_id,
-          userName: review.user_name || 'Anonymous User',
+          userName: review.user_id ? `User ${review.user_id.slice(0, 8)}...` : 'Anonymous User',
           rating: review.rating,
           comment: review.comment || '',
           date: review.date,

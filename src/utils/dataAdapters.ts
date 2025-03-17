@@ -6,7 +6,7 @@ export const adaptCoursesToUI = (courses: UserCourse[]): Course[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
-    expertId: course.expert_id,
+    expertId: course.expert_id.toString(), // Convert number to string
     expertName: course.expert_name,
     enrollmentDate: course.enrollment_date,
     progress: course.progress,
@@ -18,7 +18,7 @@ export const adaptCoursesToUI = (courses: UserCourse[]): Course[] => {
 export const adaptReviewsToUI = (reviews: UserReview[]): Review[] => {
   return reviews.map(review => ({
     id: review.id,
-    expertId: review.expert_id,
+    expertId: review.expert_id.toString(), // Convert number to string
     rating: review.rating,
     comment: review.comment,
     date: review.date,
@@ -32,7 +32,7 @@ export const adaptReviewsToUI = (reviews: UserReview[]): Review[] => {
 export const adaptReportsToUI = (reports: UserReport[]): Report[] => {
   return reports.map(report => ({
     id: report.id,
-    expertId: report.expert_id,
+    expertId: report.expert_id.toString(), // Convert number to string
     reason: report.reason,
     details: report.details,
     date: report.date,
@@ -45,7 +45,7 @@ export const adaptCoursesToDB = (courses: Course[]): UserCourse[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
-    expert_id: course.expertId,
+    expert_id: parseInt(course.expertId), // Convert string to number
     expert_name: course.expertName,
     enrollment_date: course.enrollmentDate,
     progress: course.progress,
@@ -57,7 +57,7 @@ export const adaptCoursesToDB = (courses: Course[]): UserCourse[] => {
 export const adaptReviewsToDB = (reviews: Review[]): UserReview[] => {
   return reviews.map(review => ({
     id: review.id,
-    expert_id: review.expertId,
+    expert_id: parseInt(review.expertId), // Convert string to number
     rating: review.rating,
     comment: review.comment,
     date: review.date,
@@ -71,7 +71,7 @@ export const adaptReviewsToDB = (reviews: Review[]): UserReview[] => {
 export const adaptReportsToDB = (reports: Report[]): UserReport[] => {
   return reports.map(report => ({
     id: report.id,
-    expert_id: report.expertId,
+    expert_id: parseInt(report.expertId), // Convert string to number
     reason: report.reason,
     details: report.details,
     date: report.date,

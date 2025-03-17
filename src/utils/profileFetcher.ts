@@ -44,21 +44,48 @@ export const fetchUserProfile = async (
       .select('*')
       .eq('user_id', user.id);
       
-    userProfile.enrolledCourses = adaptCoursesToUI(courses || []);
+    // Convert expert_id from number to string during adaptation
+    userProfile.enrolledCourses = courses ? courses.map(course => ({
+      id: course.id,
+      title: course.title,
+      expertId: course.expert_id.toString(),
+      expertName: course.expert_name,
+      enrollmentDate: course.enrollment_date,
+      progress: course.progress,
+      completed: course.completed
+    })) : [];
     
     const { data: reviews } = await supabase
       .from('user_reviews')
       .select('*')
       .eq('user_id', user.id);
       
-    userProfile.reviews = adaptReviewsToUI(reviews || []);
+    // Convert expert_id from number to string during adaptation
+    userProfile.reviews = reviews ? reviews.map(review => ({
+      id: review.id,
+      expertId: review.expert_id.toString(),
+      rating: review.rating,
+      comment: review.comment,
+      date: review.date,
+      verified: review.verified,
+      userId: review.user_id,
+      userName: review.user_id ? `User ${review.user_id.slice(0, 8)}...` : undefined
+    })) : [];
     
     const { data: reports } = await supabase
       .from('user_reports')
       .select('*')
       .eq('user_id', user.id);
       
-    userProfile.reports = adaptReportsToUI(reports || []);
+    // Convert expert_id from number to string during adaptation
+    userProfile.reports = reports ? reports.map(report => ({
+      id: report.id,
+      expertId: report.expert_id.toString(),
+      reason: report.reason,
+      details: report.details,
+      date: report.date,
+      status: report.status
+    })) : [];
     
     const { data: transactions } = await supabase
       .from('user_transactions')

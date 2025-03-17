@@ -6,15 +6,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Star } from 'lucide-react';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { toast } from 'sonner';
+import { ReviewStatus } from '@/types/supabase/reviews';
 
 interface ExpertReviewModalProps {
   expertId: string;
   expertName: string;
-}
-
-interface ReviewStatus {
-  canReview: boolean;
-  hasReviewed: boolean;
 }
 
 const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertName }) => {
@@ -34,7 +30,14 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
       setIsChecking(true);
       try {
         // Check if user has taken service from this expert
-        const serviceCheck = await hasTakenServiceFrom(expertId) as ReviewStatus;
+        const canTakeService = await hasTakenServiceFrom(expertId);
+        
+        // Create a ReviewStatus object
+        const serviceCheck: ReviewStatus = {
+          canReview: Boolean(canTakeService),
+          hasReviewed: false // We'll set this separately
+        };
+        
         setCanReview(serviceCheck.canReview);
         setHasReviewed(serviceCheck.hasReviewed);
       } catch (error) {

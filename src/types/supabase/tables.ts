@@ -50,7 +50,7 @@ export interface CustomTable {
   user_favorites: {
     id: string;
     user_id?: string;
-    expert_id: string;
+    expert_id: number; // Changed to number to match database
   };
   user_transactions: {
     id: string;
@@ -64,7 +64,7 @@ export interface CustomTable {
   user_reviews: {
     id: string;
     user_id?: string;
-    expert_id: string;
+    expert_id: number; // Changed to number to match database
     rating: number;
     comment?: string;
     date: string;
@@ -74,7 +74,7 @@ export interface CustomTable {
   user_reports: {
     id: string;
     user_id?: string;
-    expert_id: string;
+    expert_id: number; // Changed to number to match database
     reason: string;
     details?: string;
     date: string;
@@ -84,7 +84,7 @@ export interface CustomTable {
     id: string;
     user_id?: string;
     title: string;
-    expert_id: string;
+    expert_id: number; // Changed to number to match database
     expert_name: string;
     enrollment_date: string;
     progress?: number;

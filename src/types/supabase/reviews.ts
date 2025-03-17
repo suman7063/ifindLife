@@ -3,6 +3,7 @@
 export interface Review {
   id: string;
   expertId: string;
+  expertName?: string;
   rating: number;
   comment?: string;
   date: string;
@@ -18,4 +19,10 @@ export interface Report {
   details?: string;
   date: string;
   status: string;
+}
+
+// For compatibility with the database schema that uses numbers for IDs
+export interface ReviewStatus {
+  canReview: boolean;
+  hasReviewed: boolean;
 }
