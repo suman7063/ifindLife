@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Shield, UserPlus, User } from "lucide-react";
+import { Menu, UserPlus, User } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserAuth } from '@/hooks/useUserAuth';
@@ -49,11 +50,6 @@ const Navbar = () => {
             </Link>
           </Button>
           <Button variant="ghost" asChild>
-            <Link to={isAuthenticated ? "/admin" : "/admin-login"} className="text-ifind-teal">
-              <Shield className="h-4 w-4 mr-1" /> Admin
-            </Link>
-          </Button>
-          <Button variant="ghost" asChild>
             <Link to={isUserAuthenticated ? "/user-dashboard" : "/login"} className="text-ifind-teal">
               <User className="h-4 w-4 mr-1" /> {isUserAuthenticated ? "Dashboard" : "Login"}
             </Link>
@@ -90,11 +86,6 @@ const Navbar = () => {
                 <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/expert-login">
                     <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="justify-start" asChild>
-                  <Link to={isAuthenticated ? "/admin" : "/admin-login"}>
-                    {isAuthenticated ? "Admin Dashboard" : "Admin Login"}
                   </Link>
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
