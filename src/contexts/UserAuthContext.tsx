@@ -1,7 +1,12 @@
+
 import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { fetchUserProfile, updateUserProfile, updateProfilePicture } from '@/utils/userProfileUtils';
+import { 
+  fetchUserProfile, 
+  updateUserProfile, 
+  updateProfilePicture 
+} from '@/utils/userProfileUtils';
 import { UserProfile, Expert, Review, Report, Course, UserTransaction, User } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -95,8 +100,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const updateProfile = async (profileData: Partial<UserProfile>) => {
     if (!currentUser) return;
 
-    const success = await updateUserProfile(currentUser.id, profileData);
-    if (success) {
+    const result = await updateUserProfile(currentUser.id, profileData);
+    if (result) {
       setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
     }
   };
@@ -109,7 +114,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (!prev) return null;
       return { 
         ...prev, 
-        profile_picture: publicUrl,
         profilePicture: publicUrl 
       };
     });

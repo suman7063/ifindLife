@@ -107,49 +107,47 @@ const UserDashboard = () => {
           </TabsList>
 
           <TabsContent value="courses">
-            <div className="grid gap-4">
-              {currentUser.enrolledCourses.length > 0 ? (
-                currentUser.enrolledCourses.map((course) => (
-                  <Card key={course.id}>
-                    <CardHeader>
-                      <CardTitle>{course.title}</CardTitle>
-                      <CardDescription>Expert: {course.expert_name}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <p className="text-sm">Enrolled on: {formatDate(course.enrollment_date)}</p>
-                        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-ifind-aqua" 
-                            style={{ width: `${course.progress}%` }}
-                          />
-                        </div>
-                        <p className="text-sm">{course.progress}% completed</p>
+            {currentUser.enrolledCourses && currentUser.enrolledCourses.length > 0 ? (
+              currentUser.enrolledCourses.map((course) => (
+                <Card key={course.id}>
+                  <CardHeader>
+                    <CardTitle>{course.title}</CardTitle>
+                    <CardDescription>Expert: {course.expertName}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <p className="text-sm">Enrolled on: {formatDate(course.enrollmentDate)}</p>
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-ifind-aqua" 
+                          style={{ width: `${course.progress}%` }}
+                        />
                       </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors">
-                        {course.completed ? "View Certificate" : "Continue Learning"}
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <ListChecks className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No courses enrolled</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    You haven't enrolled in any courses yet.
-                  </p>
-                  <Button 
-                    className="mt-4 bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-                    onClick={() => navigate('/experts')}
-                  >
-                    Browse Experts
-                  </Button>
-                </div>
-              )}
-            </div>
+                      <p className="text-sm">{course.progress}% completed</p>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors">
+                      {course.completed ? "View Certificate" : "Continue Learning"}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <ListChecks className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-medium">No courses enrolled</h3>
+                <p className="mt-2 text-muted-foreground">
+                  You haven't enrolled in any courses yet.
+                </p>
+                <Button 
+                  className="mt-4 bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+                  onClick={() => navigate('/experts')}
+                >
+                  Browse Experts
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="wallet">
@@ -292,92 +290,88 @@ const UserDashboard = () => {
           </TabsContent>
 
           <TabsContent value="reviews">
-            <div className="grid gap-4">
-              {currentUser.reviews.length > 0 ? (
-                currentUser.reviews.map((review) => (
-                  <Card key={review.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle>Expert #{review.expert_id}</CardTitle>
-                        <div className="flex items-center">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star 
-                              key={star} 
-                              className={`h-4 w-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-                            />
-                          ))}
-                        </div>
+            {currentUser.reviews && currentUser.reviews.length > 0 ? (
+              currentUser.reviews.map((review) => (
+                <Card key={review.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Expert #{review.expertId}</CardTitle>
+                      <div className="flex items-center">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star 
+                            key={star} 
+                            className={`h-4 w-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                          />
+                        ))}
                       </div>
-                      <CardDescription>{formatDate(review.date)}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p>{review.comment}</p>
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => navigate(`/experts/${review.expert_id}`)}
-                      >
-                        View Expert
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <Star className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No reviews yet</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    You haven't reviewed any experts yet.
-                  </p>
-                </div>
-              )}
-            </div>
+                    </div>
+                    <CardDescription>{formatDate(review.date)}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p>{review.comment}</p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate(`/experts/${review.expertId}`)}
+                    >
+                      View Expert
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <Star className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-medium">No reviews yet</h3>
+                <p className="mt-2 text-muted-foreground">
+                  You haven't reviewed any experts yet.
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="reports">
-            <div className="grid gap-4">
-              {currentUser.reports.length > 0 ? (
-                currentUser.reports.map((report) => (
-                  <Card key={report.id}>
-                    <CardHeader>
-                      <CardTitle>Report: {report.reason}</CardTitle>
-                      <CardDescription>
-                        Status: <span className={`capitalize font-medium ${
-                          report.status === 'pending' ? 'text-yellow-500' : 
-                          report.status === 'reviewed' ? 'text-blue-500' : 
-                          'text-green-500'
-                        }`}>{report.status}</span>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="text-sm text-muted-foreground">
-                          Submitted on {formatDate(report.date)}
-                        </div>
-                        <p>{report.details}</p>
+            {currentUser.reports && currentUser.reports.length > 0 ? (
+              currentUser.reports.map((report) => (
+                <Card key={report.id}>
+                  <CardHeader>
+                    <CardTitle>Report: {report.reason}</CardTitle>
+                    <CardDescription>
+                      Status: <span className={`capitalize font-medium ${
+                        report.status === 'pending' ? 'text-yellow-500' : 
+                        report.status === 'reviewed' ? 'text-blue-500' : 
+                        'text-green-500'
+                      }`}>{report.status}</span>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div className="text-sm text-muted-foreground">
+                        Submitted on {formatDate(report.date)}
                       </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => navigate(`/experts/${report.expert_id}`)}
-                      >
-                        View Expert
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <div className="text-center py-12">
-                  <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No reports</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    You haven't reported any experts.
-                  </p>
-                </div>
-              )}
-            </div>
+                      <p>{report.details}</p>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => navigate(`/experts/${report.expertId}`)}
+                    >
+                      View Expert
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
+                <h3 className="mt-4 text-lg font-medium">No reports</h3>
+                <p className="mt-2 text-muted-foreground">
+                  You haven't reported any experts.
+                </p>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="profile">

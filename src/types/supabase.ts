@@ -106,13 +106,9 @@ export interface UserProfile {
   country?: string;
   city?: string;
   currency?: string;
-  profile_picture?: string;
-  wallet_balance?: number;
-  created_at?: string;
-  
-  // For UI convenience, we add derived fields here
-  profilePicture?: string; // maps to profile_picture
-  walletBalance?: number;  // maps to wallet_balance
+  profilePicture?: string;
+  walletBalance?: number;
+  createdAt?: string;
   
   // Related data collections
   favoriteExperts?: Expert[];
@@ -124,18 +120,32 @@ export interface UserProfile {
 
 export type User = CustomTable['users'];
 
-// Extend the base types with UI-friendly properties
-export interface Review extends CustomTable['user_reviews'] {
-  expertId?: string; // UI-friendly alias for expert_id
+// Define UI-friendly interfaces that don't extend database types
+export interface Review {
+  id: string;
+  expertId: string;
+  rating: number;
+  comment?: string;
+  date: string;
 }
 
-export interface Report extends CustomTable['user_reports'] {
-  expertId?: string; // UI-friendly alias for expert_id
+export interface Report {
+  id: string;
+  expertId: string;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
 }
 
-export interface Course extends CustomTable['user_courses'] {
-  expertName?: string; // UI-friendly alias for expert_name
-  enrollmentDate?: string; // UI-friendly alias for enrollment_date
+export interface Course {
+  id: string;
+  title: string;
+  expertId: string;
+  expertName: string;
+  enrollmentDate: string;
+  progress?: number;
+  completed?: boolean;
 }
 
 export type UserTransaction = CustomTable['user_transactions'];
