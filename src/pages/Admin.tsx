@@ -21,6 +21,7 @@ import TherapistsEditor from '@/components/admin/TherapistsEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import ReviewManagement from '@/components/admin/ReviewManagement';
+import AdminModerationTab from '@/components/admin/moderation/AdminModerationTab';
 
 const Admin = () => {
   // State for each section
@@ -98,6 +99,7 @@ const Admin = () => {
               <TabsTrigger value="therapists" className="rounded-none">Therapists</TabsTrigger>
               <TabsTrigger value="testimonials" className="rounded-none">Testimonials</TabsTrigger>
               <TabsTrigger value="reviews" className="rounded-none">Expert Reviews</TabsTrigger>
+              <TabsTrigger value="moderation" className="rounded-none">Moderation</TabsTrigger>
               <TabsTrigger value="referral" className="rounded-none">Referral Program</TabsTrigger>
               {currentUser?.role === 'superadmin' && (
                 <TabsTrigger value="admins" className="rounded-none">Admin Users</TabsTrigger>
@@ -112,7 +114,6 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Services/Categories Editor */}
             <TabsContent value="categories" className="p-6">
               <ServicesEditor 
                 categories={categories} 
@@ -120,7 +121,6 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Therapists Editor */}
             <TabsContent value="therapists" className="p-6">
               <TherapistsEditor 
                 therapists={therapists} 
@@ -128,7 +128,6 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Testimonials Editor */}
             <TabsContent value="testimonials" className="p-6">
               <TestimonialsEditor 
                 testimonials={testimonials} 
@@ -136,17 +135,19 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Expert Reviews Management */}
             <TabsContent value="reviews" className="p-6">
               <ReviewManagement />
             </TabsContent>
 
-            {/* Referral Settings Editor */}
+            {/* New Moderation Tab */}
+            <TabsContent value="moderation" className="p-6">
+              <AdminModerationTab />
+            </TabsContent>
+
             <TabsContent value="referral" className="p-6">
               <ReferralSettingsEditor />
             </TabsContent>
 
-            {/* Admin Users Management (only for superadmin) */}
             <TabsContent value="admins" className="p-6">
               <AdminUserManagement />
             </TabsContent>
