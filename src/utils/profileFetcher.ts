@@ -1,12 +1,12 @@
-
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
 
-// Function to fetch user profile from Supabase
-export const fetchUserProfile = async (user: any): Promise<UserProfile | null> => {
+export const fetchUserProfile = async (
+  user: User
+): Promise<UserProfile | null> => {
   if (!user || !user.id) return null;
   
   try {
@@ -21,11 +21,8 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       return null;
     }
     
-    // Convert to UserProfile with camelCase properties
     const userProfile = convertUserToUserProfile(data);
     
-    // Fetch related data
-    // Favorites
     const { data: favorites } = await supabase
       .from('user_favorites')
       .select('expert_id')
@@ -36,12 +33,11 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       const { data: expertsData } = await supabase
         .from('experts')
         .select('*')
-        .in('id', expertIds as any); // Using type assertion here
+        .in('id', expertIds as any);
         
       userProfile.favoriteExperts = expertsData || [];
     }
     
-    // Courses
     const { data: courses } = await supabase
       .from('user_courses')
       .select('*')
@@ -49,7 +45,6 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       
     userProfile.enrolledCourses = adaptCoursesToUI(courses || []);
     
-    // Reviews
     const { data: reviews } = await supabase
       .from('user_reviews')
       .select('*')
@@ -57,7 +52,6 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       
     userProfile.reviews = adaptReviewsToUI(reviews || []);
     
-    // Reports
     const { data: reports } = await supabase
       .from('user_reports')
       .select('*')
@@ -65,7 +59,6 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       
     userProfile.reports = adaptReportsToUI(reports || []);
     
-    // Transactions
     const { data: transactions } = await supabase
       .from('user_transactions')
       .select('*')
@@ -73,13 +66,45 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       
     userProfile.transactions = transactions || [];
     
-    // Referrals
     const referrals = await fetchUserReferrals(user.id);
-    userProfile.referrals = referrals;
+    userProfile.referrals = adaptReferralsToUI(referrals);
     
     return userProfile;
   } catch (error) {
     console.error('Error fetching user profile:', error);
     return null;
   }
+};
+
+export const convertUserToUserProfile = (
+  userData: any
+): UserProfile => {
+  return {
+    id: userData.id,
+    name: userData.name,
+    email: userData.email,
+    created_at: userData.created_at,
+    updated_at: userData.updated_at,
+    favoriteExperts: [],
+    enrolledCourses: [],
+    reviews: [],
+    reports: [],
+    transactions: [],
+    referrals: []
+  };
+};
+
+export const adaptReferralsToUI = (
+  referrals: any[]
+): any[] => {
+  return referrals.map(ref => ({
+    id: ref.id,
+    referrer_id: ref.referrer_id,
+    referred_id: ref.referred_id,
+    referral_code: ref.referral_code,
+    status: ref.status,
+    reward_claimed: ref.reward_claimed,
+    created_at: ref.created_at,
+    completed_at: ref.completed_at
+  }));
 };

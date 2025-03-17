@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/table"
 import { UserProfile, UserTransaction } from '@/types/supabase';
 import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
+import RazorPayCheckout from '@/components/user/RazorPayCheckout';
 
 const WalletBalanceCard: React.FC<{ userProfile: UserProfile | null; onRecharge: () => void }> = ({ userProfile, onRecharge }) => {
   return (
@@ -90,6 +92,7 @@ const UserDashboard = () => {
   const navigate = useNavigate();
   const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('');
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -110,17 +113,15 @@ const UserDashboard = () => {
     setRechargeAmount('');
   };
 
-  const handleRecharge = () => {
-    const amount = parseFloat(rechargeAmount);
-    if (isNaN(amount) || amount <= 0) {
-      toast.error('Please enter a valid amount to recharge.');
-      return;
-    }
-    
-    // Call the rechargeWallet function from the context
-    // rechargeWallet(amount);
-    toast.info('This feature will be implemented with Supabase soon');
+  const handlePaymentSuccess = () => {
+    toast.success('Payment successful! Your wallet has been recharged.');
     handleCloseRechargeDialog();
+    // The wallet balance will be updated by the edge function
+  };
+
+  const handlePaymentCancel = () => {
+    toast.info('Payment was cancelled.');
+    setIsProcessingPayment(false);
   };
 
   if (!currentUser) {
@@ -165,7 +166,19 @@ const UserDashboard = () => {
                   />
                 </div>
               </div>
-              <Button onClick={handleRecharge} className='w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors'>Recharge</Button>
+              
+              {parseFloat(rechargeAmount) > 0 ? (
+                <RazorPayCheckout 
+                  amount={parseFloat(rechargeAmount)}
+                  onSuccess={handlePaymentSuccess}
+                  onCancel={handlePaymentCancel}
+                />
+              ) : (
+                <Button disabled className="w-full bg-ifind-aqua/50">
+                  Enter an amount to continue
+                </Button>
+              )}
+              
               <Button type="button" variant="secondary" onClick={handleCloseRechargeDialog} className="mt-2 w-full">
                 Cancel
               </Button>

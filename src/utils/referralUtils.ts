@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { ReferralSettings, Referral, ReferralUI } from '@/types/supabase';
 import { toast } from 'sonner';
@@ -73,51 +72,43 @@ export const getReferralLink = (code: string): string => {
 
 // Process a referral code during signup
 export const processReferralCode = async (
-  referralCode: string, 
-  newUserId: string
+  referralCode: string,
+  userId: string
 ): Promise<boolean> => {
   try {
-    // Find referrer by code
-    const { data: referrer, error: referrerError } = await supabase
+    // Find the user who owns this referral code
+    const { data: referrerData, error: referrerError } = await supabase
       .from('users')
       .select('id')
       .eq('referral_code', referralCode)
       .single();
 
-    if (referrerError || !referrer) {
-      console.error('Invalid referral code or referrer not found:', referrerError);
+    if (referrerError || !referrerData) {
+      console.error('Invalid referral code', referrerError);
       return false;
     }
 
-    // Create referral record
+    const referrerId = referrerData.id;
+
+    // Create a new referral record
     const { error: referralError } = await supabase
       .from('referrals')
       .insert({
-        referrer_id: referrer.id,
-        referred_id: newUserId,
+        referrer_id: referrerId,
+        referred_id: userId,
         referral_code: referralCode,
-        status: 'pending'
+        status: 'pending',
+        reward_claimed: false
       });
 
     if (referralError) {
-      console.error('Error creating referral record:', referralError);
-      return false;
-    }
-
-    // Update user with referred_by
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ referred_by: referrer.id })
-      .eq('id', newUserId);
-
-    if (updateError) {
-      console.error('Error updating user with referrer:', updateError);
+      console.error('Error creating referral record:', referralError.message || referralError);
       return false;
     }
 
     return true;
-  } catch (error) {
-    console.error('Error processing referral code:', error);
+  } catch (error: any) {
+    console.error('Error processing referral code:', error.message || error);
     return false;
   }
 };
