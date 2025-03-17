@@ -9,6 +9,101 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      expert_reports: {
+        Row: {
+          date: string | null
+          details: string | null
+          expert_id: string | null
+          id: string
+          reason: string | null
+          status: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          date?: string | null
+          details?: string | null
+          expert_id?: string | null
+          id?: string
+          reason?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          date?: string | null
+          details?: string | null
+          expert_id?: string | null
+          id?: string
+          reason?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_reports_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experts: {
+        Row: {
+          address: string | null
+          bio: string | null
+          certificate_urls: string[] | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          experience: string | null
+          id: string
+          name: string
+          phone: string | null
+          profile_picture: string | null
+          selected_services: number[] | null
+          specialization: string | null
+          state: string | null
+        }
+        Insert: {
+          address?: string | null
+          bio?: string | null
+          certificate_urls?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          experience?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          profile_picture?: string | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          state?: string | null
+        }
+        Update: {
+          address?: string | null
+          bio?: string | null
+          certificate_urls?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          experience?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          profile_picture?: string | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          state?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           city: string | null
@@ -47,6 +142,247 @@ export type Database = {
           phone?: string | null
           profile_picture?: string | null
           updated_at?: string | null
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          description: string | null
+          id: number
+          name: string
+          rate_inr: number
+          rate_usd: number
+        }
+        Insert: {
+          description?: string | null
+          id: number
+          name: string
+          rate_inr: number
+          rate_usd: number
+        }
+        Update: {
+          description?: string | null
+          id?: number
+          name?: string
+          rate_inr?: number
+          rate_usd?: number
+        }
+        Relationships: []
+      }
+      user_courses: {
+        Row: {
+          completed: boolean | null
+          enrollment_date: string
+          expert_id: number
+          expert_name: string
+          id: string
+          progress: number | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          enrollment_date: string
+          expert_id: number
+          expert_name: string
+          id?: string
+          progress?: number | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          enrollment_date?: string
+          expert_id?: number
+          expert_name?: string
+          id?: string
+          progress?: number | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_courses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_favorites: {
+        Row: {
+          expert_id: number
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          expert_id: number
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          expert_id?: number
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_reports: {
+        Row: {
+          date: string
+          details: string | null
+          expert_id: number
+          id: string
+          reason: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          date: string
+          details?: string | null
+          expert_id: number
+          id?: string
+          reason: string
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          date?: string
+          details?: string | null
+          expert_id?: number
+          id?: string
+          reason?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_reviews: {
+        Row: {
+          comment: string | null
+          date: string
+          expert_id: number
+          id: string
+          rating: number
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          date: string
+          expert_id: number
+          id?: string
+          rating: number
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          date?: string
+          expert_id?: number
+          id?: string
+          rating?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_transactions: {
+        Row: {
+          amount: number
+          currency: string
+          date: string
+          description: string | null
+          id: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          currency: string
+          date: string
+          description?: string | null
+          id?: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          currency?: string
+          date?: string
+          description?: string | null
+          id?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          profile_picture: string | null
+          wallet_balance: number | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          profile_picture?: string | null
+          wallet_balance?: number | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          profile_picture?: string | null
           wallet_balance?: number | null
         }
         Relationships: []
