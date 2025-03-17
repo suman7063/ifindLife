@@ -82,6 +82,81 @@ export type ExpertProfile = {
   certificate_urls: string[];
   profile_picture: string;
   selected_services: number[];
-  password: string; // Note: This should be removed in production and handled securely
+  password?: string; // Note: This should be handled securely
   created_at: string;
+};
+
+// Add this helper type to allow type-safe access to tables not defined in the Database type
+export type CustomTable = {
+  experts: ExpertProfile;
+  expert_reports: {
+    id: string;
+    expert_id: string;
+    user_id: string;
+    user_name: string;
+    reason: string;
+    details: string;
+    date: string;
+    status: string;
+  };
+  users: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    country: string;
+    city: string;
+    currency: string;
+    profile_picture: string;
+    wallet_balance: number;
+    created_at: string;
+  };
+  user_favorites: {
+    id: string;
+    user_id: string;
+    expert_id: number;
+  };
+  user_transactions: {
+    id: string;
+    user_id: string;
+    date: string;
+    type: string;
+    amount: number;
+    currency: string;
+    description: string;
+  };
+  user_reviews: {
+    id: string;
+    user_id: string;
+    expert_id: number;
+    rating: number;
+    comment: string;
+    date: string;
+  };
+  user_reports: {
+    id: string;
+    user_id: string;
+    expert_id: number;
+    reason: string;
+    details: string;
+    date: string;
+    status: string;
+  };
+  user_courses: {
+    id: string;
+    user_id: string;
+    title: string;
+    expert_id: number;
+    expert_name: string;
+    enrollment_date: string;
+    progress: number;
+    completed: boolean;
+  };
+  services: {
+    id: number;
+    name: string;
+    description: string;
+    rate_usd: number;
+    rate_inr: number;
+  };
 };

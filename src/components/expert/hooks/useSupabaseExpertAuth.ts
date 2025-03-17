@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, from } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Session } from '@supabase/supabase-js';
 import { ExpertFormData } from '../types';
@@ -24,9 +24,7 @@ export const useSupabaseExpertAuth = () => {
 
       if (data.user) {
         // Verify if this is an expert account
-        // @ts-ignore - We know the experts table exists in our system
-        const { data: expertData, error: expertError } = await supabase
-          .from('experts')
+        const { data: expertData, error: expertError } = await from('experts')
           .select('*')
           .eq('email', email)
           .single();
@@ -73,9 +71,7 @@ export const useSupabaseExpertAuth = () => {
       }
 
       // Now create the expert profile
-      // @ts-ignore - We know the experts table exists in our system
-      const { error: expertError } = await supabase
-        .from('experts')
+      const { error: expertError } = await from('experts')
         .insert({
           id: data.user.id,
           name: expertData.name,
@@ -110,9 +106,7 @@ export const useSupabaseExpertAuth = () => {
 
   const updateExpertProfile = async (expertId: string, profileData: Partial<ExpertProfile>): Promise<boolean> => {
     try {
-      // @ts-ignore - We know the experts table exists in our system
-      const { error } = await supabase
-        .from('experts')
+      const { error } = await from('experts')
         .update({
           name: profileData.name,
           phone: profileData.phone,
@@ -163,9 +157,7 @@ export const useSupabaseExpertAuth = () => {
         status: 'pending'
       };
 
-      // @ts-ignore - We know the expert_reports table exists in our system
-      const { error } = await supabase
-        .from('expert_reports')
+      const { error } = await from('expert_reports')
         .insert(newReport);
 
       if (error) {

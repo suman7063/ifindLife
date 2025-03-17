@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase, from } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 // Function to check if a table exists using the PostgreSQL function we created
@@ -57,8 +57,7 @@ export const migrateExpertsToSupabase = async (): Promise<boolean> => {
     
     // First check if experts already exist in Supabase
     const { data: existingExperts, error: expertsError } = await safeQuery('experts', () => 
-      // @ts-ignore - We know the table exists but TypeScript doesn't
-      supabase.from('experts').select('email')
+      from('experts').select('email')
     );
     
     if (expertsError) {
@@ -96,8 +95,7 @@ export const migrateExpertsToSupabase = async (): Promise<boolean> => {
     
     // Insert experts data to Supabase
     const { error } = await safeQuery('experts', () => 
-      // @ts-ignore - We know the table exists but TypeScript doesn't
-      supabase.from('experts').insert(formattedExperts)
+      from('experts').insert(formattedExperts)
     );
     
     if (error) {
@@ -119,9 +117,8 @@ export const migrateExpertsToSupabase = async (): Promise<boolean> => {
             status: report.status
           }));
           
-          // @ts-ignore - We know the table exists but TypeScript doesn't
           const { error: reportError } = await safeQuery('expert_reports', () => 
-            supabase.from('expert_reports').insert(expertReports)
+            from('expert_reports').insert(expertReports)
           );
           
           if (reportError) {
@@ -157,9 +154,8 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
     const users = JSON.parse(storedUsers);
     
     // First check if users already exist in Supabase
-    // @ts-ignore - We know the table exists but TypeScript doesn't
     const { data: existingUsers, error: usersError } = await safeQuery('users', () => 
-      supabase.from('users').select('email')
+      from('users').select('email')
     );
     
     if (usersError) {
@@ -191,9 +187,8 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
     }));
     
     // Insert users data to Supabase
-    // @ts-ignore - We know the table exists but TypeScript doesn't
     const { error } = await safeQuery('users', () => 
-      supabase.from('users').insert(formattedUsers)
+      from('users').insert(formattedUsers)
     );
     
     if (error) {
@@ -212,9 +207,8 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
             expert_id: fav.id
           }));
           
-          // @ts-ignore - We know the table exists but TypeScript doesn't
           await safeQuery('user_favorites', () => 
-            supabase.from('user_favorites').insert(favorites)
+            from('user_favorites').insert(favorites)
           );
         }
       }
@@ -233,9 +227,8 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
             description: txn.description
           }));
           
-          // @ts-ignore - We know the table exists but TypeScript doesn't
           await safeQuery('user_transactions', () => 
-            supabase.from('user_transactions').insert(transactions)
+            from('user_transactions').insert(transactions)
           );
         }
       }
@@ -253,9 +246,8 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
             date: review.date
           }));
           
-          // @ts-ignore - We know the table exists but TypeScript doesn't
           await safeQuery('user_reviews', () => 
-            supabase.from('user_reviews').insert(reviews)
+            from('user_reviews').insert(reviews)
           );
         }
       }
@@ -274,9 +266,8 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
             status: report.status
           }));
           
-          // @ts-ignore - We know the table exists but TypeScript doesn't
           await safeQuery('user_reports', () => 
-            supabase.from('user_reports').insert(reports)
+            from('user_reports').insert(reports)
           );
         }
       }
@@ -296,9 +287,8 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
             completed: course.completed
           }));
           
-          // @ts-ignore - We know the table exists but TypeScript doesn't
           await safeQuery('user_courses', () => 
-            supabase.from('user_courses').insert(courses)
+            from('user_courses').insert(courses)
           );
         }
       }
@@ -341,9 +331,8 @@ export const migrateServicesToSupabase = async (): Promise<boolean> => {
     }));
     
     // First check if services already exist in Supabase
-    // @ts-ignore - We know the table exists but TypeScript doesn't
     const { data: existingServices, error: servicesError } = await safeQuery('services', () => 
-      supabase.from('services').select('id')
+      from('services').select('id')
     );
     
     if (servicesError) {
@@ -356,9 +345,8 @@ export const migrateServicesToSupabase = async (): Promise<boolean> => {
     }
     
     // Insert services data to Supabase
-    // @ts-ignore - We know the table exists but TypeScript doesn't
     const { error } = await safeQuery('services', () => 
-      supabase.from('services').insert(services)
+      from('services').insert(services)
     );
     
     if (error) {
