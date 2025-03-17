@@ -41,6 +41,9 @@ export interface CustomTable {
     profile_picture?: string;
     wallet_balance?: number;
     created_at?: string;
+    referral_code?: string;
+    referred_by?: string;
+    referral_link?: string;
   };
   user_favorites: {
     id: string;
@@ -90,12 +93,32 @@ export interface CustomTable {
     rate_usd: number;
     rate_inr: number;
   };
+  referral_settings: {
+    id: string;
+    referrer_reward: number;
+    referred_reward: number;
+    active: boolean;
+    description?: string;
+    updated_at?: string;
+  };
+  referrals: {
+    id: string;
+    referrer_id: string;
+    referred_id: string;
+    referral_code: string;
+    status: string;
+    reward_claimed: boolean;
+    created_at?: string;
+    completed_at?: string;
+  };
 }
 
 // Direct type definitions from database tables
 export type Expert = CustomTable['experts'];
 export type User = CustomTable['users'];
 export type UserTransaction = CustomTable['user_transactions'];
+export type ReferralSettings = CustomTable['referral_settings'];
+export type Referral = CustomTable['referrals'];
 
 // UI-friendly interfaces with camelCase properties
 export interface UserProfile {
@@ -109,6 +132,9 @@ export interface UserProfile {
   profilePicture?: string;
   walletBalance?: number;
   createdAt?: string;
+  referralCode?: string;
+  referredBy?: string;
+  referralLink?: string;
   
   // Related data collections
   favoriteExperts?: Expert[];
@@ -116,6 +142,7 @@ export interface UserProfile {
   transactions?: UserTransaction[];
   reviews?: Review[];
   reports?: Report[];
+  referrals?: Referral[];
 }
 
 // Using interfaces for UI-friendly models
@@ -144,6 +171,26 @@ export interface Course {
   enrollmentDate: string;
   progress?: number;
   completed?: boolean;
+}
+
+// For referral program
+export interface ReferralSettingsUI {
+  referrerReward: number;
+  referredReward: number;
+  active: boolean;
+  description?: string;
+}
+
+export interface ReferralUI {
+  id: string;
+  referrerId: string;
+  referredId: string;
+  referredName?: string;
+  referralCode: string;
+  status: 'pending' | 'completed' | 'expired';
+  rewardClaimed: boolean;
+  createdAt?: string;
+  completedAt?: string;
 }
 
 // For backward compatibility

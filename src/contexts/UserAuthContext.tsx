@@ -10,6 +10,7 @@ import {
 import { UserProfile, Expert, Review, Report, Course, UserTransaction, User } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { processReferralCode } from '@/utils/referralUtils';
 
 // Re-export the useUserAuth hook for backwards compatibility
 import { useUserAuth } from '@/hooks/useUserAuth';
@@ -26,6 +27,7 @@ type UserAuthContextType = {
     password: string;
     country: string;
     city?: string;
+    referralCode?: string;
   }) => Promise<boolean>;
   logout: () => void;
   updateProfile: (profileData: Partial<UserProfile>) => void;
@@ -37,6 +39,7 @@ type UserAuthContextType = {
   reportExpert: (expertId: string, reason: string, details: string) => void;
   getExpertShareLink: (expertId: string) => string;
   hasTakenServiceFrom: (expertId: string) => boolean;
+  getReferralLink: () => string;
 };
 
 export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
@@ -83,8 +86,23 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     password: string;
     country: string;
     city?: string;
+    referralCode?: string;
   }): Promise<boolean> => {
     const success = await authSignup(userData);
+    
+    // If signup was successful and there's a referral code, process it
+    if (success && userData.referralCode) {
+      try {
+        const { data } = await supabase.auth.getUser();
+        if (data?.user) {
+          await processReferralCode(userData.referralCode, data.user.id);
+        }
+      } catch (error) {
+        console.error("Error processing referral:", error);
+        // Don't fail the signup if referral processing fails
+      }
+    }
+    
     return success;
   };
 
@@ -153,6 +171,11 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const getExpertShareLink = (expertId: string): string => {
     return `${window.location.origin}/experts/${expertId}?ref=${currentUser?.id || 'guest'}`;
   };
+  
+  const getReferralLink = (): string => {
+    if (!currentUser?.referralCode) return '';
+    return `${window.location.origin}/signup?ref=${currentUser.referralCode}`;
+  };
 
   return (
     <UserAuthContext.Provider
@@ -170,7 +193,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         addReview,
         reportExpert,
         getExpertShareLink,
-        hasTakenServiceFrom
+        hasTakenServiceFrom,
+        getReferralLink
       }}
     >
       {children}

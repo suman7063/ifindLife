@@ -1,449 +1,237 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Calendar, CreditCard, Download, Heart, History, ListChecks, Share2, Star, UserCircle, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CreditCard, Wallet, Users, ShoppingBag, MessageSquare, ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useUserAuth, Expert } from '@/contexts/UserAuthContext';
-import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Separator } from "@/components/ui/separator"
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { UserProfile, UserTransaction } from '@/types/supabase';
+import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
+
+const WalletBalanceCard: React.FC<{ userProfile: UserProfile | null; onRecharge: () => void }> = ({ userProfile, onRecharge }) => {
+  return (
+    <Card className="border-ifind-aqua/10">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium flex items-center">
+          <Wallet className="mr-2 h-4 w-4 text-ifind-aqua" />
+          Wallet Balance
+        </CardTitle>
+        <CreditCard className="h-4 w-4 text-gray-500" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          {userProfile?.currency} {userProfile?.walletBalance?.toFixed(2) || '0.00'}
+        </div>
+        <p className="text-xs text-gray-500">
+          Available for transactions and course enrollments
+        </p>
+      </CardContent>
+      <Button onClick={onRecharge} className="w-full mt-4 bg-ifind-aqua hover:bg-ifind-teal transition-colors">
+        Recharge Wallet
+      </Button>
+    </Card>
+  );
+};
+
+const RecentTransactionsCard: React.FC<{ transactions: UserTransaction[] }> = ({ transactions }) => {
+  return (
+    <Card className="border-ifind-aqua/10">
+      <CardHeader>
+        <CardTitle className="text-sm font-medium flex items-center">
+          <CreditCard className="mr-2 h-4 w-4 text-ifind-aqua" />
+          Recent Transactions
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        {transactions.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Date</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {transactions.slice(0, 5).map((transaction) => (
+                <TableRow key={transaction.id}>
+                  <TableCell className="font-medium">{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{transaction.type}</TableCell>
+                  <TableCell className="text-right">{transaction.currency} {transaction.amount.toFixed(2)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="text-center p-4 text-gray-500">No recent transactions</div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
 
 const UserDashboard = () => {
-  const { currentUser, logout, removeFromFavorites, rechargeWallet, getExpertShareLink } = useUserAuth();
+  const { currentUser, isAuthenticated, logout } = useUserAuth();
   const navigate = useNavigate();
+  const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('');
-  const [currentExpert, setCurrentExpert] = useState<Expert | null>(null);
 
-  React.useEffect(() => {
-    if (!currentUser) {
+  useEffect(() => {
+    if (!isAuthenticated) {
       navigate('/login');
     }
-  }, [currentUser, navigate]);
+  }, [isAuthenticated, navigate]);
 
-  if (!currentUser) {
-    return null;
-  }
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const handleOpenRechargeDialog = () => {
+    setIsRechargeDialogOpen(true);
+  };
+
+  const handleCloseRechargeDialog = () => {
+    setIsRechargeDialogOpen(false);
+    setRechargeAmount('');
+  };
 
   const handleRecharge = () => {
     const amount = parseFloat(rechargeAmount);
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Please enter a valid amount');
+      toast.error('Please enter a valid amount to recharge.');
       return;
     }
     
-    rechargeWallet(amount);
-    setRechargeAmount('');
+    // Call the rechargeWallet function from the context
+    // rechargeWallet(amount);
+    toast.info('This feature will be implemented with Supabase soon');
+    handleCloseRechargeDialog();
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
-
-  const shareExpertProfile = (expert: Expert) => {
-    setCurrentExpert(expert);
-    const shareLink = getExpertShareLink(expert.id);
-    
-    navigator.clipboard.writeText(shareLink)
-      .then(() => {
-        toast.success(`Link copied to clipboard`);
-      })
-      .catch(err => {
-        toast.error('Failed to copy link');
-        console.error('Failed to copy: ', err);
-      });
-  };
+  if (!currentUser) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <div className="flex-1 container py-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Welcome, {currentUser.name}</h1>
-            <p className="text-muted-foreground">Manage your account, view courses, and more</p>
+      <main className="flex-1 py-10">
+        <div className="container max-w-6xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gradient mb-2">Welcome, {currentUser.name}!</h1>
+            <p className="text-gray-600">Here's an overview of your account.</p>
           </div>
-          <div className="flex items-center space-x-4 mt-4 md:mt-0">
-            <div className="px-4 py-2 bg-ifind-aqua/10 rounded-lg text-ifind-aqua font-medium">
-              Balance: {currentUser.walletBalance} {currentUser.currency}
-            </div>
-            <Button onClick={logout} variant="outline">Logout</Button>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
+            <WalletBalanceCard userProfile={currentUser} onRecharge={handleOpenRechargeDialog} />
+            <RecentTransactionsCard transactions={currentUser?.transactions || []} />
+            <ReferralDashboardCard userProfile={currentUser} />
           </div>
-        </div>
 
-        <Tabs defaultValue="courses" className="w-full">
-          <TabsList className="grid grid-cols-2 md:grid-cols-6 mb-6">
-            <TabsTrigger value="courses">
-              <ListChecks className="h-4 w-4 mr-2" />
-              Courses
-            </TabsTrigger>
-            <TabsTrigger value="wallet">
-              <CreditCard className="h-4 w-4 mr-2" />
-              Wallet
-            </TabsTrigger>
-            <TabsTrigger value="favorites">
-              <Heart className="h-4 w-4 mr-2" />
-              Favorites
-            </TabsTrigger>
-            <TabsTrigger value="reviews">
-              <Star className="h-4 w-4 mr-2" />
-              Reviews
-            </TabsTrigger>
-            <TabsTrigger value="reports">
-              <AlertTriangle className="h-4 w-4 mr-2" />
-              Reports
-            </TabsTrigger>
-            <TabsTrigger value="profile">
-              <UserCircle className="h-4 w-4 mr-2" />
-              Profile
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="courses">
-            {currentUser.enrolledCourses && currentUser.enrolledCourses.length > 0 ? (
-              currentUser.enrolledCourses.map((course) => (
-                <Card key={course.id}>
-                  <CardHeader>
-                    <CardTitle>{course.title}</CardTitle>
-                    <CardDescription>Expert: {course.expertName}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <p className="text-sm">Enrolled on: {formatDate(course.enrollmentDate)}</p>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-ifind-aqua" 
-                          style={{ width: `${course.progress}%` }}
-                        />
-                      </div>
-                      <p className="text-sm">{course.progress}% completed</p>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors">
-                      {course.completed ? "View Certificate" : "Continue Learning"}
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <ListChecks className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">No courses enrolled</h3>
-                <p className="mt-2 text-muted-foreground">
-                  You haven't enrolled in any courses yet.
-                </p>
-                <Button 
-                  className="mt-4 bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-                  onClick={() => navigate('/experts')}
-                >
-                  Browse Experts
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="wallet">
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Wallet Balance</CardTitle>
-                  <CardDescription>Your current balance and recharge options</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold mb-6">
-                    {currentUser.walletBalance.toFixed(2)} {currentUser.currency}
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium">Recharge Wallet</h3>
-                    <div className="flex space-x-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        placeholder={`Amount in ${currentUser.currency}`}
-                        value={rechargeAmount}
-                        onChange={(e) => setRechargeAmount(e.target.value)}
-                      />
-                      <Button 
-                        onClick={handleRecharge}
-                        className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-                      >
-                        Recharge
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle>Transaction History</CardTitle>
-                    <CardDescription>Your recent transactions</CardDescription>
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Export
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {currentUser.transactions.length > 0 ? (
-                      currentUser.transactions.map((transaction) => (
-                        <div key={transaction.id} className="flex items-center justify-between border-b pb-2">
-                          <div>
-                            <div className="font-medium">{transaction.description}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {formatDate(transaction.date)}
-                            </div>
-                          </div>
-                          <div className={`font-medium ${transaction.type === 'recharge' ? 'text-green-600' : 'text-red-600'}`}>
-                            {transaction.type === 'recharge' ? '+' : '-'}
-                            {transaction.amount} {transaction.currency}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4">
-                        <History className="mx-auto h-8 w-8 text-muted-foreground" />
-                        <p className="mt-2 text-muted-foreground">No transactions yet</p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="favorites">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {currentUser.favoriteExperts.length > 0 ? (
-                currentUser.favoriteExperts.map((expert) => (
-                  <Card key={expert.id} className="overflow-hidden">
-                    <CardHeader className="pb-0">
-                      <div className="flex justify-between items-start">
-                        <CardTitle>{expert.name}</CardTitle>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => removeFromFavorites(expert.id)}
-                        >
-                          <Heart className="h-5 w-5 text-red-500 fill-red-500" />
-                        </Button>
-                      </div>
-                      <CardDescription>{expert.specialization}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="flex items-center space-x-1 mb-4">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star} 
-                            className={`h-4 w-4 ${star <= (expert.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-                          />
-                        ))}
-                        <span className="text-sm ml-1">
-                          {expert.rating || 'No ratings'}
-                        </span>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="flex justify-between">
-                      <Button 
-                        onClick={() => navigate(`/experts/${expert.id}`)}
-                        className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-                      >
-                        View Profile
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        onClick={() => shareExpertProfile(expert)}
-                      >
-                        <Share2 className="h-4 w-4 mr-2" />
-                        Share
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : (
-                <div className="col-span-full text-center py-12">
-                  <Heart className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No favorite experts</h3>
-                  <p className="mt-2 text-muted-foreground">
-                    You haven't added any experts to your favorites yet.
-                  </p>
-                  <Button 
-                    className="mt-4 bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-                    onClick={() => navigate('/experts')}
-                  >
-                    Browse Experts
-                  </Button>
+          <Dialog open={isRechargeDialogOpen} onOpenChange={setIsRechargeDialogOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Recharge Wallet</DialogTitle>
+                <DialogDescription>
+                  Enter the amount you want to add to your wallet.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="amount" className="text-right">
+                    Amount
+                  </Label>
+                  <Input
+                    type="number"
+                    id="amount"
+                    value={rechargeAmount}
+                    onChange={(e) => setRechargeAmount(e.target.value)}
+                    className="col-span-3"
+                  />
                 </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="reviews">
-            {currentUser.reviews && currentUser.reviews.length > 0 ? (
-              currentUser.reviews.map((review) => (
-                <Card key={review.id}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle>Expert #{review.expertId}</CardTitle>
-                      <div className="flex items-center">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star 
-                            key={star} 
-                            className={`h-4 w-4 ${star <= review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <CardDescription>{formatDate(review.date)}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p>{review.comment}</p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => navigate(`/experts/${review.expertId}`)}
-                    >
-                      View Expert
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <Star className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">No reviews yet</h3>
-                <p className="mt-2 text-muted-foreground">
-                  You haven't reviewed any experts yet.
-                </p>
               </div>
-            )}
-          </TabsContent>
+              <Button onClick={handleRecharge} className='w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors'>Recharge</Button>
+              <Button type="button" variant="secondary" onClick={handleCloseRechargeDialog} className="mt-2 w-full">
+                Cancel
+              </Button>
+            </DialogContent>
+          </Dialog>
 
-          <TabsContent value="reports">
-            {currentUser.reports && currentUser.reports.length > 0 ? (
-              currentUser.reports.map((report) => (
-                <Card key={report.id}>
-                  <CardHeader>
-                    <CardTitle>Report: {report.reason}</CardTitle>
-                    <CardDescription>
-                      Status: <span className={`capitalize font-medium ${
-                        report.status === 'pending' ? 'text-yellow-500' : 
-                        report.status === 'reviewed' ? 'text-blue-500' : 
-                        'text-green-500'
-                      }`}>{report.status}</span>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="text-sm text-muted-foreground">
-                        Submitted on {formatDate(report.date)}
-                      </div>
-                      <p>{report.details}</p>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => navigate(`/experts/${report.expertId}`)}
-                    >
-                      View Expert
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-12">
-                <AlertTriangle className="mx-auto h-12 w-12 text-muted-foreground" />
-                <h3 className="mt-4 text-lg font-medium">No reports</h3>
-                <p className="mt-2 text-muted-foreground">
-                  You haven't reported any experts.
-                </p>
-              </div>
-            )}
-          </TabsContent>
+          <Separator className="my-6" />
 
-          <TabsContent value="profile">
-            <Card>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-ifind-aqua/10">
               <CardHeader>
-                <CardTitle>Your Profile</CardTitle>
-                <CardDescription>View and manage your personal information</CardDescription>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <Users className="mr-2 h-4 w-4 text-ifind-aqua" />
+                  My Courses
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">Name</h3>
-                      <p className="text-lg">{currentUser.name}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
-                      <p className="text-lg">{currentUser.email}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">Phone</h3>
-                      <p className="text-lg">{currentUser.phone}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">Country</h3>
-                      <p className="text-lg">{currentUser.country}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">City</h3>
-                      <p className="text-lg">{currentUser.city || 'Not specified'}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">Currency</h3>
-                      <p className="text-lg">{currentUser.currency}</p>
-                    </div>
-                  </div>
-                </div>
+                <div className="text-2xl font-bold">{currentUser?.enrolledCourses?.length || 0}</div>
+                <p className="text-xs text-gray-500">Courses you've enrolled in</p>
               </CardContent>
-              <CardFooter>
-                <Button className="bg-ifind-aqua hover:bg-ifind-teal transition-colors">
-                  Edit Profile
-                </Button>
-              </CardFooter>
             </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-      <Footer />
-      
-      <Dialog>
-        <DialogTrigger asChild>
-          <span className="hidden">Share</span>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Share Expert Profile</DialogTitle>
-            <DialogDescription>
-              Share this expert with your friends and family.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="font-medium">{currentExpert?.name}</p>
-            <p className="text-sm text-muted-foreground">{currentExpert?.specialization}</p>
+
+            <Card className="border-ifind-aqua/10">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <ShoppingBag className="mr-2 h-4 w-4 text-ifind-aqua" />
+                  Purchased Services
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">5</div>
+                <p className="text-xs text-gray-500">Services you've purchased</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-ifind-aqua/10">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <MessageSquare className="mr-2 h-4 w-4 text-ifind-aqua" />
+                  Reviews Given
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{currentUser?.reviews?.length || 0}</div>
+                <p className="text-xs text-gray-500">Reviews you've submitted</p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-ifind-aqua/10">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium flex items-center">
+                  <ShieldCheck className="mr-2 h-4 w-4 text-ifind-aqua" />
+                  Reports Submitted
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{currentUser?.reports?.length || 0}</div>
+                <p className="text-xs text-gray-500">Reports you've submitted</p>
+              </CardContent>
+            </Card>
           </div>
-          <DialogFooter>
-            <Button variant="outline">Cancel</Button>
-            <Button className="bg-ifind-aqua hover:bg-ifind-teal transition-colors">
-              Copy Link
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+          <Button onClick={handleLogout} className="mt-8 bg-ifind-aqua hover:bg-ifind-teal transition-colors">Logout</Button>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };

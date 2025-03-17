@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
+import { fetchUserReferrals } from '@/utils/referralUtils';
 
 // Function to fetch user profile from Supabase
 export const fetchUserProfile = async (user: any): Promise<UserProfile | null> => {
@@ -71,6 +72,9 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       .eq('user_id', user.id);
       
     userProfile.transactions = transactions || [];
+    
+    // Referrals
+    userProfile.referrals = await fetchUserReferrals(user.id);
     
     return userProfile;
   } catch (error) {

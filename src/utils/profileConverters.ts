@@ -16,10 +16,14 @@ export const convertUserToUserProfile = (user: any): UserProfile => {
     profilePicture: user.profile_picture,
     walletBalance: user.wallet_balance,
     createdAt: user.created_at,
+    referralCode: user.referral_code,
+    referredBy: user.referred_by,
+    referralLink: user.referral_link,
     favoriteExperts: [],
     enrolledCourses: [],
     transactions: [],
     reviews: [],
-    reports: []
+    reports: [],
+    referrals: []
   };
 };

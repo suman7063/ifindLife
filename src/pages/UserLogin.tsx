@@ -1,16 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail, Phone, User, MapPin, Building } from 'lucide-react';
+import { Eye, EyeOff, Mail, Phone, User, MapPin, Building, Gift } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { fetchReferralSettings } from '@/utils/referralUtils';
+import { ReferralSettings } from '@/types/supabase';
 
 // List of common countries
 const COUNTRIES = [
@@ -29,8 +31,14 @@ const COUNTRIES = [
 
 const UserLogin = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, signup, isAuthenticated } = useUserAuth();
   const [showPassword, setShowPassword] = useState(false);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+
+  // Get referral code from URL if available
+  const queryParams = new URLSearchParams(location.search);
+  const referralCodeFromUrl = queryParams.get('ref');
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -44,6 +52,7 @@ const UserLogin = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
+  const [referralCode, setReferralCode] = useState(referralCodeFromUrl || '');
   const [loading, setLoading] = useState(false);
 
   // Redirect if already authenticated
@@ -52,6 +61,27 @@ const UserLogin = () => {
       navigate('/user-dashboard');
     }
   }, [isAuthenticated, navigate]);
+
+  // Load referral settings
+  useEffect(() => {
+    const loadReferralSettings = async () => {
+      const settings = await fetchReferralSettings();
+      setReferralSettings(settings);
+    };
+    
+    loadReferralSettings();
+  }, []);
+
+  // Switch to registration tab if referral code is in URL
+  useEffect(() => {
+    if (referralCodeFromUrl) {
+      // Find the register tab trigger and click it
+      const registerTab = document.querySelector('[data-value="register"]');
+      if (registerTab && registerTab instanceof HTMLElement) {
+        registerTab.click();
+      }
+    }
+  }, [referralCodeFromUrl]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +121,8 @@ const UserLogin = () => {
         phone,
         password,
         country,
-        city
+        city,
+        referralCode: referralCode || undefined
       });
       
       if (success) {
@@ -278,6 +309,31 @@ const UserLogin = () => {
                         />
                       </div>
                     </div>
+                  </div>
+                  
+                  {/* Referral Code Field */}
+                  <div className="space-y-2">
+                    <Label htmlFor="referral-code">Referral Code (Optional)</Label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Gift className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <Input
+                        id="referral-code"
+                        type="text"
+                        placeholder="Enter referral code"
+                        className="pl-10"
+                        value={referralCode}
+                        onChange={(e) => setReferralCode(e.target.value)}
+                      />
+                    </div>
+                    
+                    {referralSettings && (
+                      <div className="text-xs text-gray-500 mt-1 flex items-center p-2 bg-ifind-aqua/5 rounded-md">
+                        <Gift className="h-3 w-3 mr-1 text-ifind-aqua" />
+                        Get ${referralSettings.referred_reward} credit when you sign up with a referral code!
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-2">

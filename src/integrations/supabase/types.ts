@@ -146,6 +146,66 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_settings: {
+        Row: {
+          active: boolean
+          description: string | null
+          id: string
+          referred_reward: number
+          referrer_reward: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          description?: string | null
+          id?: string
+          referred_reward?: number
+          referrer_reward?: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          description?: string | null
+          id?: string
+          referred_reward?: number
+          referrer_reward?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed: boolean
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed?: boolean
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
+          reward_claimed?: boolean
+          status?: string
+        }
+        Relationships: []
+      }
       services: {
         Row: {
           description: string | null
@@ -359,6 +419,9 @@ export type Database = {
           name: string | null
           phone: string | null
           profile_picture: string | null
+          referral_code: string | null
+          referral_link: string | null
+          referred_by: string | null
           wallet_balance: number | null
         }
         Insert: {
@@ -371,6 +434,9 @@ export type Database = {
           name?: string | null
           phone?: string | null
           profile_picture?: string | null
+          referral_code?: string | null
+          referral_link?: string | null
+          referred_by?: string | null
           wallet_balance?: number | null
         }
         Update: {
@@ -383,6 +449,9 @@ export type Database = {
           name?: string | null
           phone?: string | null
           profile_picture?: string | null
+          referral_code?: string | null
+          referral_link?: string | null
+          referred_by?: string | null
           wallet_balance?: number | null
         }
         Relationships: []
@@ -395,6 +464,12 @@ export type Database = {
       check_if_table_exists: {
         Args: {
           table_name: string
+        }
+        Returns: boolean
+      }
+      handle_completed_referral: {
+        Args: {
+          p_referral_id: string
         }
         Returns: boolean
       }
