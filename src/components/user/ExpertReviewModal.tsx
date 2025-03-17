@@ -21,20 +21,17 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
   const [hasReviewed, setHasReviewed] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   
-  const { hasTakenServiceFrom, hasReviewedExpert, addReview } = useUserAuth();
+  const { hasTakenServiceFrom, addReview } = useUserAuth();
   
   // Check if the user can review this expert
   useEffect(() => {
     const checkReviewStatus = async () => {
       setIsChecking(true);
       try {
-        const [serviceCheck, reviewCheck] = await Promise.all([
-          hasTakenServiceFrom(expertId),
-          hasReviewedExpert(expertId)
-        ]);
-        
-        setCanReview(serviceCheck);
-        setHasReviewed(reviewCheck);
+        // Check if user has taken service from this expert
+        const serviceCheck = await hasTakenServiceFrom(expertId);
+        setCanReview(serviceCheck.canReview);
+        setHasReviewed(serviceCheck.hasReviewed);
       } catch (error) {
         console.error('Error checking review status:', error);
       } finally {
@@ -43,7 +40,7 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
     };
     
     checkReviewStatus();
-  }, [expertId, hasTakenServiceFrom, hasReviewedExpert]);
+  }, [expertId, hasTakenServiceFrom]);
   
   const handleSubmit = () => {
     if (rating === 0) {

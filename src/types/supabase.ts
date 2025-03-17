@@ -1,4 +1,3 @@
-
 // This file defines custom table types for Supabase
 
 export interface CustomTable {
@@ -68,7 +67,8 @@ export interface CustomTable {
     rating: number;
     comment?: string;
     date: string;
-    verified?: boolean; // Added for verified reviews
+    verified?: boolean;
+    user_name?: string;
   };
   user_reports: {
     id: string;
@@ -166,6 +166,8 @@ export interface Review {
   comment?: string;
   date: string;
   verified?: boolean;
+  userId?: string;
+  userName?: string;
 }
 
 export interface Report {

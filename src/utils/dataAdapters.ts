@@ -22,7 +22,9 @@ export const adaptReviewsToUI = (reviews: any[]): Review[] => {
     rating: review.rating,
     comment: review.comment,
     date: review.date,
-    verified: review.verified
+    verified: review.verified,
+    userId: review.user_id,
+    userName: review.user_name
   }));
 };
 
@@ -59,7 +61,9 @@ export const adaptReviewsToDB = (reviews: Review[]): any[] => {
     rating: review.rating,
     comment: review.comment,
     date: review.date,
-    verified: review.verified
+    verified: review.verified,
+    user_id: review.userId,
+    user_name: review.userName
   }));
 };
 
