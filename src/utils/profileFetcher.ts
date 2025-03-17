@@ -1,5 +1,6 @@
+
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, User } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
@@ -67,44 +68,13 @@ export const fetchUserProfile = async (
     userProfile.transactions = transactions || [];
     
     const referrals = await fetchUserReferrals(user.id);
-    userProfile.referrals = adaptReferralsToUI(referrals);
+    
+    // Use the new imported adaptor function from utils/referralUtils
+    userProfile.referrals = referrals;
     
     return userProfile;
   } catch (error) {
     console.error('Error fetching user profile:', error);
     return null;
   }
-};
-
-export const convertUserToUserProfile = (
-  userData: any
-): UserProfile => {
-  return {
-    id: userData.id,
-    name: userData.name,
-    email: userData.email,
-    created_at: userData.created_at,
-    updated_at: userData.updated_at,
-    favoriteExperts: [],
-    enrolledCourses: [],
-    reviews: [],
-    reports: [],
-    transactions: [],
-    referrals: []
-  };
-};
-
-export const adaptReferralsToUI = (
-  referrals: any[]
-): any[] => {
-  return referrals.map(ref => ({
-    id: ref.id,
-    referrer_id: ref.referrer_id,
-    referred_id: ref.referred_id,
-    referral_code: ref.referral_code,
-    status: ref.status,
-    reward_claimed: ref.reward_claimed,
-    created_at: ref.created_at,
-    completed_at: ref.completed_at
-  }));
 };

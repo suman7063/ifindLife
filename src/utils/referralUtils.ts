@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { ReferralSettings, Referral, ReferralUI } from '@/types/supabase';
 import { toast } from 'sonner';
@@ -26,6 +27,7 @@ export const fetchReferralSettings = async (): Promise<ReferralSettings | null> 
 // Fetch referrals made by a user
 export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> => {
   try {
+    // First fetch basic referral data
     const { data, error } = await supabase
       .from('referrals')
       .select(`
@@ -36,8 +38,7 @@ export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> 
         status,
         reward_claimed,
         created_at,
-        completed_at,
-        users!referred_id(name, email)
+        completed_at
       `)
       .eq('referrer_id', userId);
 
@@ -46,18 +47,39 @@ export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> 
       return [];
     }
 
-    // Transform to UI-friendly format with correct property names
-    return data.map(item => ({
-      id: item.id,
-      referrerId: item.referrer_id,
-      referredId: item.referred_id,
-      referredName: item.users ? item.users.name : 'Anonymous',
-      referralCode: item.referral_code,
-      status: item.status as 'pending' | 'completed' | 'expired',
-      rewardClaimed: item.reward_claimed,
-      createdAt: item.created_at,
-      completedAt: item.completed_at
-    }));
+    // Then fetch the names of referred users separately
+    const referralUIs: ReferralUI[] = await Promise.all(
+      data.map(async (item) => {
+        let referredName = 'Anonymous';
+        
+        // Only try to fetch the name if we have a referred_id
+        if (item.referred_id) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', item.referred_id)
+            .single();
+            
+          if (!userError && userData) {
+            referredName = userData.name || 'Anonymous';
+          }
+        }
+        
+        return {
+          id: item.id,
+          referrerId: item.referrer_id,
+          referredId: item.referred_id,
+          referredName: referredName,
+          referralCode: item.referral_code,
+          status: item.status as 'pending' | 'completed' | 'expired',
+          rewardClaimed: item.reward_claimed,
+          createdAt: item.created_at,
+          completedAt: item.completed_at
+        };
+      })
+    );
+
+    return referralUIs;
   } catch (error) {
     console.error('Error fetching user referrals:', error);
     return [];
