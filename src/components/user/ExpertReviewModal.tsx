@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -65,7 +66,7 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
     setOpen(false);
     setRating(0);
     setComment('');
-    setReviewStatus(prev => ({...prev, hasReviewed: true}));
+    setReviewStatus({...reviewStatus, hasReviewed: true});
   };
   
   // Get appropriate button state

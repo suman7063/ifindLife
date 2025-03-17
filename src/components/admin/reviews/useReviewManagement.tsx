@@ -98,7 +98,7 @@ export const useReviewManagement = () => {
       }
       
       // Get user names and expert names
-      const reviews = await Promise.all((data || []).map(async (review) => {
+      const reviewsData = await Promise.all((data || []).map(async (review) => {
         // Get user name
         const { data: userData } = await supabase
           .from('users')
@@ -120,13 +120,13 @@ export const useReviewManagement = () => {
           date: review.date || new Date().toISOString(),
           verified: review.verified || false,
           userId: review.user_id || '',
-          expertId: String(review.expert_id), // Convert to string
+          expertId: String(review.expert_id), // Convert to string here
           userName: userData?.name || 'Anonymous User',
           expertName: expertData?.name || 'Unknown Expert'
         };
       }));
       
-      setReviews(reviews);
+      setReviews(reviewsData);
     } catch (error: any) {
       console.error('Error fetching reviews:', error);
       toast.error(error.message || 'Failed to load reviews');
@@ -155,6 +155,9 @@ export const useReviewManagement = () => {
     
     setLoading(true);
     try {
+      // Need to convert string expertId back to number for database
+      const expertIdNumber = parseInt(editingReview.expertId);
+      
       const { error } = await supabase
         .from('user_reviews')
         .update({

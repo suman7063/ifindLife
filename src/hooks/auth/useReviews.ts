@@ -1,5 +1,4 @@
 
-// Fix the expert ID type conversion in the useReviews hook
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
@@ -81,13 +80,13 @@ export const useReviews = () => {
         ...userProfile,
         reviews: reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
           id: review.id,
-          expertId: review.expert_id.toString(),
+          expertId: String(review.expert_id),
           rating: review.rating,
           comment: review.comment || '',
           date: review.date,
           verified: review.verified || false,
           userId: review.user_id || '',
-          userName: review.user_name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
+          userName: userProfile.name || 'Anonymous User',
           expertName: review.expert_name
         })) : []
       };

@@ -30,11 +30,11 @@ export const fetchUserProfile = async (
       .eq('user_id', user.id);
     
     if (favorites && favorites.length > 0) {
-      const expertIds = favorites.map(fav => fav.expert_id);
+      const expertIds = favorites.map(fav => fav.expert_id.toString());
       const { data: expertsData } = await supabase
         .from('experts')
         .select('*')
-        .in('id', expertIds as any);
+        .in('id', expertIds);
         
       userProfile.favoriteExperts = expertsData || [];
     }
@@ -75,7 +75,7 @@ export const fetchUserProfile = async (
       date: review.date,
       verified: review.verified || false,
       userId: review.user_id || '',
-      userName: review.user_name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
+      userName: data.name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
       expertName: review.expert_name
     })) : [];
     

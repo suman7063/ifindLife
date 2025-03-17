@@ -38,7 +38,9 @@ export const adaptReportsToUI = (reports: UserReport[]): Report[] => {
     reason: report.reason,
     details: report.details || '',
     date: report.date,
-    status: report.status
+    status: report.status,
+    userId: report.user_id,
+    userName: report.user_id ? `User ${report.user_id.slice(0, 8)}...` : 'Anonymous'
   }));
 };
 
@@ -77,6 +79,7 @@ export const adaptReportsToDB = (reports: Report[]): UserReport[] => {
     reason: report.reason,
     details: report.details,
     date: report.date,
-    status: report.status
+    status: report.status,
+    user_id: report.userId
   }));
 };

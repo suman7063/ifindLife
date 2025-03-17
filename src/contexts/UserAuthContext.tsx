@@ -9,6 +9,6 @@ export type { UserAuthContextType };
 
 // Re-export types
 export type { UserProfile, Expert } from '@/types/supabase';
-export type { ReviewUI as Review, Report } from '@/types/supabase/reviews';
+export type { Review, Report } from '@/types/supabase/reviews';
 export type { Course, UserTransaction } from '@/types/supabase';
-export type { User } from '@/types/supabase';
+export type { User } from '@/types/supabase/tables';

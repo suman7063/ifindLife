@@ -29,9 +29,21 @@ export interface Report {
 // ReportUI type for the admin panel
 export type ReportUI = Report;
 
-// Report status enum
-export enum ReviewStatus {
+// Define proper ReviewStatus interface as an object, not an enum
+export interface ReviewStatus {
+  canReview: boolean;
+  hasReviewed: boolean;
+}
+
+// Report status values as an enum
+export enum ReportStatusValues {
   PENDING = 'pending',
   VERIFIED = 'verified',
   REJECTED = 'rejected'
 }
+
+// Moderation types
+export type ReporterType = 'user' | 'expert';
+export type TargetType = 'user' | 'expert';
+export type ModerationActionType = 'warning' | 'suspension' | 'ban' | 'no_action';
+export type ModerationStatus = 'pending' | 'under_review' | 'resolved' | 'dismissed';

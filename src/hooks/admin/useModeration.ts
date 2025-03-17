@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ReportUI, ReportStatus, ModerationType } from '@/types/supabase/moderation';
+import { ReportUI, ReportStatus, ModerationActionType } from '@/types/supabase/moderation';
 import { ReviewUI } from '@/types/supabase/reviews';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -78,14 +78,14 @@ export const useModeration = () => {
           return {
             id: report.id,
             reporterId: report.reporter_id,
-            reporterType: report.reporter_type,
+            reporterType: report.reporter_type as 'user' | 'expert',
             reporterName: reporterName,
             targetId: report.target_id,
-            targetType: report.target_type,
+            targetType: report.target_type as 'user' | 'expert',
             targetName: targetName,
-            reason: report.reason,
+            reason: report.reason as any,
             details: report.details || '',
-            status: report.status,
+            status: report.status as 'pending' | 'under_review' | 'resolved' | 'dismissed',
             date: report.created_at,
             sessionId: report.session_id
           };
@@ -130,7 +130,7 @@ export const useModeration = () => {
           const { data: expertData } = await supabase
             .from('experts')
             .select('name')
-            .eq('id', review.expert_id)
+            .eq('id', review.expert_id.toString())
             .single();
           expertName = expertData?.name || 'Unknown Expert';
 
@@ -215,7 +215,7 @@ export const useModeration = () => {
   };
 
   // Take action on a report
-  const handleTakeAction = async (reportId: string, actionType: string, message: string, notes?: string) => {
+  const handleTakeAction = async (reportId: string, actionType: ModerationActionType, message: string, notes?: string) => {
     try {
       if (!currentUser) {
         toast.error('You must be logged in to take action');
@@ -228,7 +228,7 @@ export const useModeration = () => {
         .insert({
           report_id: reportId,
           admin_id: currentUser.username, // Using username as ID since we don't have real auth.users
-          action_type: actionType,
+          action_type: actionType as 'warning' | 'suspension' | 'ban' | 'no_action',
           message: message,
           notes: notes,
         });

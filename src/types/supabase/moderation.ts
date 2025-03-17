@@ -1,5 +1,6 @@
 
 import { Expert, User } from './tables';
+import { ReporterType, TargetType, ModerationStatus, ModerationActionType } from '@/types/supabase/reviews';
 
 // Moderation Report Types
 export type ReportReason = 
@@ -10,22 +11,21 @@ export type ReportReason =
   | 'foul_language'
   | 'other';
 
-export type ReportStatus = 'pending' | 'under_review' | 'resolved' | 'dismissed';
-
-export type ModerationType = 'warning' | 'suspension' | 'ban' | 'no_action';
+// Re-export enum types for consistency 
+export { ModerationStatus as ReportStatus, ModerationActionType };
 
 // Report interface for the UI
 export interface ReportUI {
   id: string;
   reporterId: string;
-  reporterType: 'user' | 'expert';
+  reporterType: ReporterType;
   reporterName: string;
   targetId: string;
-  targetType: 'user' | 'expert'; 
+  targetType: TargetType; 
   targetName: string;
   reason: ReportReason;
   details: string;
-  status: ReportStatus;
+  status: ModerationStatus;
   date: string;
   sessionId?: string;
 }
@@ -36,7 +36,7 @@ export interface ModerationAction {
   reportId: string;
   adminId: string;
   adminName: string;
-  actionType: ModerationType;
+  actionType: ModerationActionType;
   message: string;
   date: string;
   notes?: string;
