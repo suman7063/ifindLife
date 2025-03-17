@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 import { convertExpertIdToNumber, convertExpertIdToString } from '@/types/supabase/expertId';
+import { Review } from '@/types/supabase/reviews';
 
 export const useReviews = () => {
   // Add a review to an expert
@@ -76,28 +77,26 @@ export const useReviews = () => {
         };
       }));
       
-      // Define the review objects separately to avoid circular type references
-      const formattedReviews = reviewsWithExpertNames 
-        ? reviewsWithExpertNames.map(review => ({
-            id: review.id,
-            expertId: convertExpertIdToString(review.expert_id),
-            rating: review.rating,
-            comment: review.comment || '',
-            date: review.date,
-            verified: review.verified || false,
-            userId: review.user_id || '',
-            userName: userProfile.name || 'Anonymous User',
-            expertName: review.expert_name
-          }))
-        : [];
+      // Create formatted reviews array
+      const formattedReviews: Review[] = reviewsWithExpertNames.map(review => ({
+        id: review.id,
+        expertId: convertExpertIdToString(review.expert_id),
+        rating: review.rating,
+        comment: review.comment || '',
+        date: review.date,
+        verified: review.verified || false,
+        userId: review.user_id || '',
+        userName: userProfile.name || 'Anonymous User',
+        expertName: review.expert_name
+      }));
       
-      // Create a new user profile object with the reviews
-      return {
+      // Create a completely new user profile object
+      const updatedProfile: UserProfile = {
         id: userProfile.id,
         name: userProfile.name,
         email: userProfile.email,
         phone: userProfile.phone,
-        country: userProfile.country, 
+        country: userProfile.country,
         city: userProfile.city,
         currency: userProfile.currency,
         profilePicture: userProfile.profilePicture,
@@ -106,13 +105,17 @@ export const useReviews = () => {
         referralCode: userProfile.referralCode,
         referredBy: userProfile.referredBy,
         referralLink: userProfile.referralLink,
+        // Use empty arrays as fallbacks for all collections
         favoriteExperts: userProfile.favoriteExperts || [],
         enrolledCourses: userProfile.enrolledCourses || [],
         transactions: userProfile.transactions || [],
         reports: userProfile.reports || [],
         referrals: userProfile.referrals || [],
+        // Add the formatted reviews
         reviews: formattedReviews
       };
+      
+      return updatedProfile;
     } catch (error: any) {
       console.error('Error adding review:', error);
       toast.error(error.message || 'Failed to add review');
