@@ -1,7 +1,8 @@
+
 import React from 'react';
 import {
-  createBrowserRouter,
-  RouterProvider,
+  Routes,
+  Route,
 } from "react-router-dom";
 import Index from "./pages/Index";
 import Admin from "./pages/Admin";
@@ -20,74 +21,25 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from './components/ProtectedRoute';
 import UserReferrals from './pages/UserReferrals';
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Index />,
-  },
-  {
-    path: "/admin",
-    element: <Admin />,
-  },
-  {
-    path: "/admin-login",
-    element: <AdminLogin />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/user-login",
-    element: <UserLogin />,
-  },
-  {
-    path: "/expert-login",
-    element: <ExpertLogin />,
-  },
-  {
-    path: "/user-dashboard",
-    element: <ProtectedRoute><UserDashboard /></ProtectedRoute>,
-  },
-  {
-    path: "/expert-dashboard",
-    element: <ProtectedRoute><ExpertDashboard /></ProtectedRoute>,
-  },
-  {
-    path: "/experts",
-    element: <Experts />,
-  },
-  {
-    path: "/experts/:id",
-    element: <AstrologerDetail />,
-  },
-  {
-    path: "/forgot-password",
-    element: <ForgotPassword />,
-  },
-  {
-    path: "/reset-password",
-    element: <ResetPassword />,
-  },
-  {
-    path: "/migrate-data",
-    element: <MigrateData />,
-  },
-  {
-    path: "/referrals",
-    element: <ProtectedRoute><UserReferrals /></ProtectedRoute>,
-  },
-  {
-    path: "*",
-    element: <NotFound />,
-  },
-]);
-
 function App() {
   return (
-    <React.StrictMode>
-      <RouterProvider router={router} />
-    </React.StrictMode>
+    <Routes>
+      <Route path="/" element={<Index />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin-login" element={<AdminLogin />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/user-login" element={<UserLogin />} />
+      <Route path="/expert-login" element={<ExpertLogin />} />
+      <Route path="/user-dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
+      <Route path="/expert-dashboard" element={<ProtectedRoute><ExpertDashboard /></ProtectedRoute>} />
+      <Route path="/experts" element={<Experts />} />
+      <Route path="/experts/:id" element={<AstrologerDetail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/migrate-data" element={<MigrateData />} />
+      <Route path="/referrals" element={<ProtectedRoute><UserReferrals /></ProtectedRoute>} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
