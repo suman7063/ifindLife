@@ -10,11 +10,11 @@ const Footer = () => {
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
-            <Link to="/" className="flex items-center space-x-2 mb-6">
+            <Link to="/" className="flex items-center mb-6">
               <img 
                 src="/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png" 
                 alt="iFindLife Logo" 
-                className="h-10 bg-white/90 p-1 rounded" 
+                className="h-16 transform scale-150 origin-left bg-white/90 p-1 rounded" 
               />
             </Link>
             <p className="text-ifind-offwhite/80 mb-6">
