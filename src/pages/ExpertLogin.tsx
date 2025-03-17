@@ -95,7 +95,7 @@ const ExpertLogin = () => {
                       <label htmlFor="password" className="text-sm font-medium">
                         Password
                       </label>
-                      <Link to="/forgot-password" className="text-xs text-ifind-aqua hover:underline">
+                      <Link to="/forgot-password?type=expert" className="text-xs text-ifind-aqua hover:underline">
                         Forgot password?
                       </Link>
                     </div>

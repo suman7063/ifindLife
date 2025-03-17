@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Mail } from 'lucide-react';
@@ -9,12 +9,14 @@ import { Label } from '@/components/ui/label';
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
   loading: boolean;
+  userType?: 'user' | 'expert' | 'admin';
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
+const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'user' }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const location = useLocation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,7 +46,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading }) => {
       <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Password</Label>
-          <Link to="/forgot-password" className="text-xs text-ifind-aqua hover:underline">
+          <Link to={`/forgot-password?type=${userType}`} className="text-xs text-ifind-aqua hover:underline">
             Forgot password?
           </Link>
         </div>

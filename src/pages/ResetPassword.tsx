@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -16,6 +16,20 @@ const ResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const userType = searchParams.get('type') || 'user';
+
+  const getRedirectPage = () => {
+    switch (userType) {
+      case 'expert':
+        return '/expert-login';
+      case 'admin':
+        return '/admin-login';
+      case 'user':
+      default:
+        return '/login';
+    }
+  };
 
   // Check if we have the hash fragment from Supabase
   useEffect(() => {
@@ -55,9 +69,9 @@ const ResetPassword = () => {
       setIsSuccess(true);
       toast.success('Password has been reset successfully');
       
-      // Redirect to login after a short delay
+      // Redirect to appropriate login page after a short delay
       setTimeout(() => {
-        navigate('/login');
+        navigate(getRedirectPage());
       }, 3000);
     } catch (error: any) {
       console.error('Error updating password:', error);
@@ -119,7 +133,7 @@ const ResetPassword = () => {
                   {isLoading ? 'Updating...' : 'Reset Password'}
                 </Button>
                 <div className="text-sm text-center mt-2">
-                  <Link to="/login" className="text-ifind-aqua hover:text-ifind-teal transition-colors">
+                  <Link to={getRedirectPage()} className="text-ifind-aqua hover:text-ifind-teal transition-colors">
                     Back to Login
                   </Link>
                 </div>

@@ -116,7 +116,7 @@ const UserLogin = () => {
               </TabsList>
               
               <TabsContent value="login">
-                <LoginForm onLogin={handleLogin} loading={loading} />
+                <LoginForm onLogin={handleLogin} loading={loading} userType="user" />
               </TabsContent>
               
               <TabsContent value="register">

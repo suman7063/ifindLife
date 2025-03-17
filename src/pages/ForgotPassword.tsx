@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -15,6 +15,32 @@ const ForgotPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const userType = searchParams.get('type') || 'user';
+
+  const getRedirectPage = () => {
+    switch (userType) {
+      case 'expert':
+        return '/expert-login';
+      case 'admin':
+        return '/admin-login';
+      case 'user':
+      default:
+        return '/login';
+    }
+  };
+
+  const getPageTitle = () => {
+    switch (userType) {
+      case 'expert':
+        return 'Expert Password Reset';
+      case 'admin':
+        return 'Admin Password Reset';
+      case 'user':
+      default:
+        return 'Password Reset';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +54,7 @@ const ForgotPassword = () => {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/reset-password?type=${userType}`,
       });
       
       if (error) {
@@ -51,7 +77,7 @@ const ForgotPassword = () => {
       <main className="flex-1 container py-16 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Reset Password</CardTitle>
+            <CardTitle>{getPageTitle()}</CardTitle>
             <CardDescription>
               Enter your email address and we'll send you instructions to reset your password.
             </CardDescription>
@@ -88,7 +114,7 @@ const ForgotPassword = () => {
                   {isLoading ? 'Sending...' : 'Send Reset Instructions'}
                 </Button>
                 <div className="text-sm text-center mt-2">
-                  <Link to="/login" className="text-ifind-aqua hover:text-ifind-teal transition-colors">
+                  <Link to={getRedirectPage()} className="text-ifind-aqua hover:text-ifind-teal transition-colors">
                     Back to Login
                   </Link>
                 </div>
