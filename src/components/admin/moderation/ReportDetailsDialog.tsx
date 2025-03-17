@@ -4,13 +4,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
-import { ReportUI } from '@/types/supabase/moderation';
+import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
+import { ReportUI } from '@/types/supabase/moderation';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 interface ReportDetailsDialogProps {
   report: ReportUI;
@@ -25,74 +27,72 @@ const ReportDetailsDialog: React.FC<ReportDetailsDialogProps> = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[550px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Report Details</DialogTitle>
           <DialogDescription>
-            Reported on {format(new Date(report.date), 'MMMM d, yyyy')} • ID: {report.id}
+            Detailed information about the report
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Status:</div>
-            <div className="col-span-3">
-              <Badge variant="outline" className="capitalize">
-                {report.status.replace(/_/g, ' ')}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Report ID</h3>
+              <p className="text-sm">{report.id}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
+              <Badge className="mt-1">
+                {report.status.replace('_', ' ')}
               </Badge>
             </div>
           </div>
           
-          <Separator />
-          
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Reported by:</div>
-            <div className="col-span-3">
-              <div className="font-semibold">{report.reporterName}</div>
-              <div className="text-sm text-muted-foreground capitalize">
-                {report.reporterType} (ID: {report.reporterId})
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Reported by</h3>
+              <p className="text-sm font-medium">{report.reporterName}</p>
+              <p className="text-xs text-muted-foreground capitalize">{report.reporterType}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Date Reported</h3>
+              <p className="text-sm">{format(new Date(report.date), 'PPP p')}</p>
             </div>
           </div>
           
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Reported:</div>
-            <div className="col-span-3">
-              <div className="font-semibold">{report.targetName}</div>
-              <div className="text-sm text-muted-foreground capitalize">
-                {report.targetType} (ID: {report.targetId})
-              </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Target</h3>
+              <p className="text-sm font-medium">{report.targetName}</p>
+              <p className="text-xs text-muted-foreground capitalize">{report.targetType}</p>
             </div>
-          </div>
-          
-          <Separator />
-          
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Reason:</div>
-            <div className="col-span-3 capitalize">
-              {report.reason.replace(/_/g, ' ')}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Details:</div>
-            <div className="col-span-3 bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
-              {report.details || 'No additional details provided.'}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Reason</h3>
+              <p className="text-sm capitalize">{report.reason.replace(/_/g, ' ')}</p>
             </div>
           </div>
           
           {report.sessionId && (
-            <>
-              <Separator />
-              <div className="grid grid-cols-4 gap-2">
-                <div className="col-span-1 font-medium text-sm">Session ID:</div>
-                <div className="col-span-3">
-                  {report.sessionId}
-                </div>
-              </div>
-            </>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Session ID</h3>
+              <p className="text-sm">{report.sessionId}</p>
+            </div>
           )}
+          
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground">Details</h3>
+            <div className="mt-2 p-3 border rounded-md bg-muted/20">
+              <p className="text-sm whitespace-pre-wrap">{report.details}</p>
+            </div>
+          </div>
         </div>
+        
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Close</Button>
+          </DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

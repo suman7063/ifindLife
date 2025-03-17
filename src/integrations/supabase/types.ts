@@ -9,6 +9,24 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
       expert_reports: {
         Row: {
           date: string | null
@@ -107,6 +125,86 @@ export type Database = {
           selected_services?: number[] | null
           specialization?: string | null
           state?: string | null
+        }
+        Relationships: []
+      }
+      moderation_actions: {
+        Row: {
+          action_type: Database["public"]["Enums"]["moderation_action_type"]
+          admin_id: string
+          created_at: string
+          id: string
+          message: string
+          notes: string | null
+          report_id: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["moderation_action_type"]
+          admin_id: string
+          created_at?: string
+          id?: string
+          message: string
+          notes?: string | null
+          report_id: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["moderation_action_type"]
+          admin_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          notes?: string | null
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_actions_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "moderation_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moderation_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reporter_id: string
+          reporter_type: string
+          session_id: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reporter_id: string
+          reporter_type: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: Database["public"]["Enums"]["report_reason"]
+          reporter_id?: string
+          reporter_type?: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id?: string
+          target_type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -522,7 +620,15 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      moderation_action_type: "warning" | "suspension" | "ban" | "no_action"
+      report_reason:
+        | "misleading_information"
+        | "off_platform_redirection"
+        | "inappropriate_behavior"
+        | "bad_behavior"
+        | "foul_language"
+        | "other"
+      report_status: "pending" | "under_review" | "resolved" | "dismissed"
     }
     CompositeTypes: {
       [_ in never]: never

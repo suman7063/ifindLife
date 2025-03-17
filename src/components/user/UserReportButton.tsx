@@ -22,6 +22,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { toast } from 'sonner';
 import { ReportReason } from '@/types/supabase/moderation';
+import { supabase } from '@/lib/supabase';
 
 interface UserReportButtonProps {
   expert: {
@@ -49,10 +50,11 @@ const UserReportButton: React.FC<UserReportButtonProps> = ({
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<ReportReason | ''>('');
   const [details, setDetails] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { reportExpert, isAuthenticated } = useUserAuth();
+  const { currentUser } = useUserAuth();
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!reason) {
       toast.error('Please select a reason for the report');
       return;
@@ -62,11 +64,39 @@ const UserReportButton: React.FC<UserReportButtonProps> = ({
       toast.error('Please provide details about the issue');
       return;
     }
+
+    if (!currentUser) {
+      toast.error('You must be logged in to report an expert');
+      setOpen(false);
+      return;
+    }
+
+    setIsSubmitting(true);
     
-    reportExpert(expert.id, reason, details);
-    setOpen(false);
-    setReason('');
-    setDetails('');
+    try {
+      // Submit report to database
+      const { error } = await supabase.from('moderation_reports').insert({
+        reporter_id: currentUser.id,
+        reporter_type: 'user',
+        target_id: expert.id,
+        target_type: 'expert',
+        reason: reason,
+        details: details,
+        status: 'pending'
+      });
+      
+      if (error) throw error;
+      
+      toast.success('Report submitted successfully. Our team will review it shortly.');
+      setOpen(false);
+      setReason('');
+      setDetails('');
+    } catch (error: any) {
+      console.error('Error submitting report:', error);
+      toast.error(error.message || 'Failed to submit report. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -76,12 +106,12 @@ const UserReportButton: React.FC<UserReportButtonProps> = ({
           variant={variant} 
           className={className}
           onClick={(e) => {
-            if (!isAuthenticated) {
+            if (!currentUser) {
               e.preventDefault();
               toast.error('Please sign in to report an expert');
             }
           }}
-          disabled={!isAuthenticated}
+          disabled={!currentUser}
         >
           {children || (
             <>
@@ -137,14 +167,15 @@ const UserReportButton: React.FC<UserReportButtonProps> = ({
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit}
             className="bg-destructive hover:bg-destructive/90"
+            disabled={isSubmitting}
           >
-            Submit Report
+            {isSubmitting ? 'Submitting...' : 'Submit Report'}
           </Button>
         </DialogFooter>
       </DialogContent>

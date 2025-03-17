@@ -1,6 +1,7 @@
 
 import React from 'react';
 import ModerationDashboard from './ModerationDashboard';
+import { Card } from '@/components/ui/card';
 
 const AdminModerationTab: React.FC = () => {
   return (
@@ -10,7 +11,9 @@ const AdminModerationTab: React.FC = () => {
         Manage reports, feedback, and moderate user and expert activity on the platform.
       </p>
       
-      <ModerationDashboard />
+      <Card className="p-6">
+        <ModerationDashboard />
+      </Card>
     </div>
   );
 };

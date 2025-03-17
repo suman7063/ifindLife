@@ -10,23 +10,17 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
-import { Loader2, Star, Trash2, Eye } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Star, Eye, Trash2, Loader2 } from 'lucide-react';
 import { ReviewUI } from '@/types/supabase/reviews';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FeedbackDetailsDialog from './FeedbackDetailsDialog';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 
 interface FeedbackListProps {
   feedback: ReviewUI[];
   isLoading: boolean;
-  onDelete: (feedbackId: string) => void;
+  onDelete: (id: string) => void;
 }
 
 const FeedbackList: React.FC<FeedbackListProps> = ({
@@ -36,36 +30,37 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
 }) => {
   const [selectedFeedback, setSelectedFeedback] = useState<ReviewUI | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
   const [ratingFilter, setRatingFilter] = useState('all');
+  const [verifiedFilter, setVerifiedFilter] = useState('all');
   
   // Filter feedback
   const filteredFeedback = feedback.filter(item => {
     // Search filter
     const searchMatches = 
-      item.expertName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.comment?.toLowerCase().includes(searchQuery.toLowerCase());
+      item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.expertName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.comment || '').toLowerCase().includes(searchQuery.toLowerCase());
     
     // Rating filter
-    const ratingMatches = ratingFilter === 'all' || item.rating === parseInt(ratingFilter);
+    const ratingMatches = 
+      ratingFilter === 'all' || 
+      item.rating === parseInt(ratingFilter);
     
-    return searchMatches && ratingMatches;
+    // Verified filter
+    const verifiedMatches = 
+      verifiedFilter === 'all' || 
+      (verifiedFilter === 'verified' && item.verified) ||
+      (verifiedFilter === 'unverified' && !item.verified);
+    
+    return searchMatches && ratingMatches && verifiedMatches;
   });
 
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex">
-        {[...Array(5)].map((_, i) => (
-          <Star 
-            key={i} 
-            className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-          />
-        ))}
-      </div>
-    );
+  const handleConfirmDelete = (id: string) => {
+    onDelete(id);
+    setItemToDelete(null);
   };
 
   return (
@@ -90,6 +85,16 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
             <SelectItem value="5">5 Stars</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={verifiedFilter} onValueChange={setVerifiedFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Filter by status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="verified">Verified</SelectItem>
+            <SelectItem value="unverified">Unverified</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {isLoading ? (
@@ -110,6 +115,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
                 <TableHead>Expert</TableHead>
                 <TableHead>Rating</TableHead>
                 <TableHead>Comment</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -119,46 +125,56 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
                   <TableCell>
                     {format(new Date(item.date), 'MMM d, yyyy')}
                   </TableCell>
-                  <TableCell className="font-medium">
-                    {item.userName || 'Anonymous User'}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {item.expertName || 'Unknown Expert'}
-                  </TableCell>
+                  <TableCell>{item.userName}</TableCell>
+                  <TableCell>{item.expertName}</TableCell>
                   <TableCell>
-                    {renderStars(item.rating)}
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={14}
+                          className={`${
+                            star <= item.rating
+                              ? 'text-yellow-400 fill-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate">
-                    {item.comment ? (
-                      <span>{item.comment.substring(0, 50)}{item.comment.length > 50 ? '...' : ''}</span>
+                    {item.comment || "No comment"}
+                  </TableCell>
+                  <TableCell>
+                    {item.verified ? (
+                      <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+                        Verified
+                      </span>
                     ) : (
-                      <span className="text-muted-foreground italic">No comment</span>
+                      <span className="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">
+                        Unverified
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size="icon"
                         onClick={() => {
                           setSelectedFeedback(item);
                           setIsDetailsOpen(true);
                         }}
                       >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
+                        <Eye className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="outline"
-                        size="sm"
-                        className="text-red-500 hover:text-red-600"
-                        onClick={() => {
-                          setSelectedFeedback(item);
-                          setIsDeleteOpen(true);
-                        }}
+                        size="icon"
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => setItemToDelete(item.id)}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
@@ -170,21 +186,20 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
       )}
 
       {selectedFeedback && (
-        <>
-          <FeedbackDetailsDialog
-            feedback={selectedFeedback}
-            open={isDetailsOpen}
-            onOpenChange={setIsDetailsOpen}
-          />
-          <DeleteConfirmDialog
-            itemId={selectedFeedback.id}
-            itemType="feedback"
-            open={isDeleteOpen}
-            onOpenChange={setIsDeleteOpen}
-            onConfirm={onDelete}
-          />
-        </>
+        <FeedbackDetailsDialog
+          feedback={selectedFeedback}
+          open={isDetailsOpen}
+          onOpenChange={setIsDetailsOpen}
+        />
       )}
+
+      <DeleteConfirmDialog
+        itemId={itemToDelete || ''}
+        itemType="feedback"
+        open={!!itemToDelete}
+        onOpenChange={(open) => !open && setItemToDelete(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };

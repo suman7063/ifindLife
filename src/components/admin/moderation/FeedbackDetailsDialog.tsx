@@ -4,13 +4,15 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogClose,
 } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Star } from 'lucide-react';
 import { ReviewUI } from '@/types/supabase/reviews';
 import { format } from 'date-fns';
-import { Star } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 
 interface FeedbackDetailsDialogProps {
@@ -24,79 +26,75 @@ const FeedbackDetailsDialog: React.FC<FeedbackDetailsDialogProps> = ({
   open,
   onOpenChange,
 }) => {
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex">
-        {[...Array(5)].map((_, i) => (
-          <Star 
-            key={i} 
-            className={`h-5 w-5 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-          />
-        ))}
-      </div>
-    );
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle>Feedback Details</DialogTitle>
           <DialogDescription>
-            Submitted on {format(new Date(feedback.date), 'MMMM d, yyyy')} • ID: {feedback.id}
+            Detailed information about the user feedback
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Status:</div>
-            <div className="col-span-3">
-              <Badge variant={feedback.verified ? "default" : "outline"}>
-                {feedback.verified ? "Verified" : "Unverified"}
-              </Badge>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">From</h3>
+              <p className="text-sm font-medium">{feedback.userName}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">For</h3>
+              <p className="text-sm font-medium">{feedback.expertName}</p>
             </div>
           </div>
           
-          <Separator />
-          
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">User:</div>
-            <div className="col-span-3">
-              <div className="font-semibold">{feedback.userName || 'Anonymous User'}</div>
-              {feedback.userId && (
-                <div className="text-sm text-muted-foreground">
-                  ID: {feedback.userId}
-                </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Date</h3>
+              <p className="text-sm">
+                {format(new Date(feedback.date), 'PPP')}
+              </p>
+            </div>
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground">Status</h3>
+              {feedback.verified ? (
+                <Badge className="mt-1 bg-green-100 text-green-800">Verified</Badge>
+              ) : (
+                <Badge className="mt-1 bg-yellow-100 text-yellow-800" variant="outline">Unverified</Badge>
               )}
             </div>
           </div>
           
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Expert:</div>
-            <div className="col-span-3">
-              <div className="font-semibold">{feedback.expertName || 'Unknown Expert'}</div>
-              <div className="text-sm text-muted-foreground">
-                ID: {feedback.expertId}
-              </div>
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground">Rating</h3>
+            <div className="flex items-center mt-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`h-5 w-5 ${
+                    star <= feedback.rating
+                    ? 'text-yellow-400 fill-yellow-400'
+                    : 'text-gray-300'
+                  }`}
+                />
+              ))}
+              <span className="ml-2">{feedback.rating}/5</span>
             </div>
           </div>
           
-          <Separator />
-          
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Rating:</div>
-            <div className="col-span-3">
-              {renderStars(feedback.rating)}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-4 gap-2">
-            <div className="col-span-1 font-medium text-sm">Comment:</div>
-            <div className="col-span-3 bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
-              {feedback.comment || 'No comment provided.'}
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground">Comment</h3>
+            <div className="mt-2 p-3 border rounded-md bg-muted/20">
+              <p className="text-sm whitespace-pre-wrap">{feedback.comment || "No comment provided"}</p>
             </div>
           </div>
         </div>
+        
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline">Close</Button>
+          </DialogClose>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

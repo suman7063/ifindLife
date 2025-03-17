@@ -2,13 +2,15 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ReportUI, ReportDB, ModerationAction } from '@/types/supabase/moderation';
+import { ReportUI, ReportStatus, ModerationType } from '@/types/supabase/moderation';
 import { ReviewUI } from '@/types/supabase/reviews';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useModeration = () => {
   const [reports, setReports] = useState<ReportUI[]>([]);
   const [feedback, setFeedback] = useState<ReviewUI[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { currentUser } = useAuth();
 
   // Fetch reports and feedback
   const fetchData = async () => {
@@ -27,33 +29,68 @@ export const useModeration = () => {
           details,
           status,
           created_at,
-          session_id,
-          users:reporter_id(name),
-          experts:target_id(name)
+          session_id
         `)
         .order('created_at', { ascending: false });
 
       if (reportError) throw reportError;
 
-      // Transform report data
-      const transformedReports: ReportUI[] = (reportData || []).map(report => ({
-        id: report.id,
-        reporterId: report.reporter_id,
-        reporterType: report.reporter_type,
-        reporterName: report.reporter_type === 'user' 
-          ? report.users?.name || 'Unknown User'
-          : report.experts?.name || 'Unknown Expert',
-        targetId: report.target_id,
-        targetType: report.target_type,
-        targetName: report.target_type === 'user'
-          ? report.users?.name || 'Unknown User'
-          : report.experts?.name || 'Unknown Expert',
-        reason: report.reason as any,
-        details: report.details,
-        status: report.status as any,
-        date: report.created_at,
-        sessionId: report.session_id
-      }));
+      // Get reporter/target names
+      const transformedReports: ReportUI[] = await Promise.all(
+        (reportData || []).map(async (report) => {
+          let reporterName = 'Unknown';
+          let targetName = 'Unknown';
+
+          // Get reporter name based on type
+          if (report.reporter_type === 'user') {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name')
+              .eq('id', report.reporter_id)
+              .single();
+            reporterName = userData?.name || 'Unknown User';
+          } else {
+            const { data: expertData } = await supabase
+              .from('experts')
+              .select('name')
+              .eq('id', report.reporter_id)
+              .single();
+            reporterName = expertData?.name || 'Unknown Expert';
+          }
+
+          // Get target name based on type
+          if (report.target_type === 'user') {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name')
+              .eq('id', report.target_id)
+              .single();
+            targetName = userData?.name || 'Unknown User';
+          } else {
+            const { data: expertData } = await supabase
+              .from('experts')
+              .select('name')
+              .eq('id', report.target_id)
+              .single();
+            targetName = expertData?.name || 'Unknown Expert';
+          }
+
+          return {
+            id: report.id,
+            reporterId: report.reporter_id,
+            reporterType: report.reporter_type,
+            reporterName: reporterName,
+            targetId: report.target_id,
+            targetType: report.target_type,
+            targetName: targetName,
+            reason: report.reason,
+            details: report.details || '',
+            status: report.status,
+            date: report.created_at,
+            sessionId: report.session_id
+          };
+        })
+      );
 
       setReports(transformedReports);
 
@@ -67,26 +104,49 @@ export const useModeration = () => {
           rating,
           comment,
           date,
-          verified,
-          users:user_id(name),
-          experts:expert_id(name)
+          verified
         `)
         .order('date', { ascending: false });
 
       if (reviewError) throw reviewError;
 
       // Transform review data
-      const transformedReviews: ReviewUI[] = (reviewData || []).map(review => ({
-        id: review.id,
-        userId: review.user_id,
-        userName: review.users?.name || 'Unknown User',
-        expertId: String(review.expert_id),
-        expertName: review.experts?.name || 'Unknown Expert',
-        rating: review.rating,
-        comment: review.comment || '',
-        date: review.date,
-        verified: review.verified || false
-      }));
+      const transformedReviews: ReviewUI[] = await Promise.all(
+        (reviewData || []).map(async (review) => {
+          let userName = 'Unknown User';
+          let expertName = 'Unknown Expert';
+
+          // Get user name
+          if (review.user_id) {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('name')
+              .eq('id', review.user_id)
+              .single();
+            userName = userData?.name || 'Unknown User';
+          }
+
+          // Get expert name
+          const { data: expertData } = await supabase
+            .from('experts')
+            .select('name')
+            .eq('id', review.expert_id)
+            .single();
+          expertName = expertData?.name || 'Unknown Expert';
+
+          return {
+            id: review.id,
+            userId: review.user_id || '',
+            userName: userName,
+            expertId: String(review.expert_id),
+            expertName: expertName,
+            rating: review.rating,
+            comment: review.comment || '',
+            date: review.date,
+            verified: review.verified || false
+          };
+        })
+      );
 
       setFeedback(transformedReviews);
     } catch (error: any) {
@@ -157,22 +217,21 @@ export const useModeration = () => {
   // Take action on a report
   const handleTakeAction = async (reportId: string, actionType: string, message: string, notes?: string) => {
     try {
-      // Get the current admin user (this will need to be updated based on your auth implementation)
-      const adminId = 'admin_user_id'; // Replace with actual admin ID
-      const adminName = 'Administrator'; // Replace with actual admin name
+      if (!currentUser) {
+        toast.error('You must be logged in to take action');
+        return;
+      }
 
       // 1. Create a moderation action record
-      const { data: actionData, error: actionError } = await supabase
+      const { error: actionError } = await supabase
         .from('moderation_actions')
         .insert({
           report_id: reportId,
-          admin_id: adminId,
+          admin_id: currentUser.username, // Using username as ID since we don't have real auth.users
           action_type: actionType,
           message: message,
           notes: notes,
-          created_at: new Date().toISOString()
-        })
-        .select();
+        });
 
       if (actionError) throw actionError;
 
@@ -192,9 +251,6 @@ export const useModeration = () => {
             : report
         )
       );
-
-      // 4. Send notification to the user or expert
-      // This would need to be implemented based on your notification system
 
       toast.success(`Action taken: ${actionType}`);
 
