@@ -1,110 +1,132 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ReviewUI } from '@/types/supabase/reviews';
+import { Review } from '@/types/supabase/reviews';
 
-// Helper function to convert numeric IDs to strings
-const convertToStringId = (id: number | string): string => {
-  return String(id);
-};
-
-// Hook for managing reviews in the admin panel
 export const useReviewManagement = () => {
-  const [reviews, setReviews] = useState<ReviewUI[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
-  const [editingReview, setEditingReview] = useState<string | null>(null);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [deletingReview, setDeletingReview] = useState<string | null>(null);
   const [filterRating, setFilterRating] = useState(0);
   const [filterVerified, setFilterVerified] = useState(false);
-  const [searchExpert, setSearchExpert] = useState('');
-  const [searchUser, setSearchUser] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedExpertId, setSelectedExpertId] = useState<string | null>(null);
+  const [experts, setExperts] = useState<Array<{id: string, name: string}>>([]);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editedRating, setEditedRating] = useState(0);
+  const [editedComment, setEditedComment] = useState('');
+  
+  // Fetch all available experts for the filter dropdown
+  useEffect(() => {
+    const fetchExperts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('experts')
+          .select('id, name');
+        
+        if (error) {
+          console.error('Error fetching experts:', error);
+          return;
+        }
+        
+        setExperts(data || []);
+      } catch (error) {
+        console.error('Error fetching experts:', error);
+      }
+    };
+    
+    fetchExperts();
+  }, []);
+  
+  // Fetch reviews on component mount
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+  
+  // Computed property for filtered reviews
+  const filteredReviews = reviews.filter(review => {
+    // Filter by rating if selected
+    if (filterRating > 0 && review.rating !== filterRating) {
+      return false;
+    }
+    
+    // Filter by verification status if selected
+    if (filterVerified && !review.verified) {
+      return false;
+    }
+    
+    // Filter by selected expert if any
+    if (selectedExpertId && review.expertId !== selectedExpertId) {
+      return false;
+    }
+    
+    // Filter by search query (check both user name and comment)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesUserName = review.userName.toLowerCase().includes(query);
+      const matchesComment = (review.comment || '').toLowerCase().includes(query);
+      return matchesUserName || matchesComment;
+    }
+    
+    return true;
+  });
   
   // Fetch reviews data
   const fetchReviews = async () => {
     setLoading(true);
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('user_reviews')
         .select(`
           id,
           rating,
           comment,
           verified,
-          created_at,
-          updated_at,
-          user_id (id, name, email, profile_picture),
-          expert_id (id, name, email, profile_picture, specialty)
+          date,
+          user_id,
+          expert_id
         `);
-      
-      if (filterRating > 0) {
-        query = query.eq('rating', filterRating);
-      }
-      
-      if (filterVerified) {
-        query = query.eq('verified', true);
-      }
-      
-      // If searching by expert
-      if (searchExpert.trim()) {
-        // First find experts matching the search term
-        const { data: experts } = await supabase
-          .from('experts')
-          .select('id')
-          .ilike('name', `%${searchExpert}%`);
-        
-        if (experts && experts.length > 0) {
-          // Convert numeric IDs to strings before using in query
-          const expertIds = experts.map(expert => convertToStringId(expert.id));
-          query = query.in('expert_id', expertIds as string[]);
-        } else {
-          // No matching experts found
-          setReviews([]);
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // If searching by user
-      if (searchUser.trim()) {
-        // First find users matching the search term
-        const { data: users } = await supabase
-          .from('users')
-          .select('id')
-          .ilike('name', `%${searchUser}%`);
-        
-        if (users && users.length > 0) {
-          const userIds = users.map(user => user.id);
-          query = query.in('user_id', userIds);
-        } else {
-          // No matching users found
-          setReviews([]);
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // Execute the query with all filters applied
-      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching reviews:', error);
         toast.error('Failed to load reviews');
+        setLoading(false);
         return;
       }
       
-      // Transform the data for UI
-      const reviewsData = (data || []).map(review => ({
-        id: review.id,
-        rating: review.rating,
-        comment: review.comment,
-        verified: review.verified,
-        createdAt: review.created_at,
-        updatedAt: review.updated_at,
-        user: review.user_id,
-        expert: review.expert_id
+      // Get user names and expert names
+      const reviews = await Promise.all((data || []).map(async (review) => {
+        // Get user name
+        const { data: userData } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', review.user_id)
+          .single();
+        
+        // Get expert name
+        const { data: expertData } = await supabase
+          .from('experts')
+          .select('name')
+          .eq('id', review.expert_id)
+          .single();
+        
+        return {
+          id: review.id,
+          rating: review.rating,
+          comment: review.comment || '',
+          date: review.date || new Date().toISOString(),
+          verified: review.verified || false,
+          userId: review.user_id || '',
+          expertId: String(review.expert_id), // Convert to string
+          userName: userData?.name || 'Anonymous User',
+          expertName: expertData?.name || 'Unknown Expert'
+        };
       }));
       
-      setReviews(reviewsData);
+      setReviews(reviews);
     } catch (error: any) {
       console.error('Error fetching reviews:', error);
       toast.error(error.message || 'Failed to load reviews');
@@ -113,24 +135,34 @@ export const useReviewManagement = () => {
     }
   };
   
-  // Start editing a review
-  const startEdit = (id: string) => {
-    setEditingReview(id);
+  // Handle edit review
+  const handleEdit = (review: Review) => {
+    setEditingReview(review);
+    setEditedRating(review.rating);
+    setEditedComment(review.comment);
+    setIsEditDialogOpen(true);
   };
   
-  // Cancel editing
-  const cancelEdit = () => {
-    setEditingReview(null);
+  // Handle delete prompt
+  const handleDeletePrompt = (review: Review) => {
+    setDeletingReview(review.id);
+    setIsDeleteDialogOpen(true);
   };
   
-  // Save the edited review
-  const saveEdit = async (id: string, verified: boolean) => {
+  // Update review
+  const handleUpdateReview = async () => {
+    if (!editingReview) return;
+    
     setLoading(true);
     try {
       const { error } = await supabase
         .from('user_reviews')
-        .update({ verified })
-        .eq('id', id);
+        .update({
+          rating: editedRating,
+          comment: editedComment,
+          verified: true // Mark as verified when edited by admin
+        })
+        .eq('id', editingReview.id);
       
       if (error) {
         console.error('Error updating review:', error);
@@ -139,7 +171,7 @@ export const useReviewManagement = () => {
       }
       
       toast.success('Review updated successfully');
-      setEditingReview(null);
+      setIsEditDialogOpen(false);
       fetchReviews(); // Refresh reviews
     } catch (error: any) {
       console.error('Error updating review:', error);
@@ -149,24 +181,16 @@ export const useReviewManagement = () => {
     }
   };
   
-  // Start deleting a review
-  const startDelete = (id: string) => {
-    setDeletingReview(id);
-  };
-  
-  // Cancel deleting
-  const cancelDelete = () => {
-    setDeletingReview(null);
-  };
-  
-  // Confirm deletion of a review
-  const confirmDelete = async (id: string) => {
+  // Delete review
+  const handleDeleteReview = async () => {
+    if (!deletingReview) return;
+    
     setLoading(true);
     try {
       const { error } = await supabase
         .from('user_reviews')
         .delete()
-        .eq('id', id);
+        .eq('id', deletingReview);
       
       if (error) {
         console.error('Error deleting review:', error);
@@ -175,7 +199,7 @@ export const useReviewManagement = () => {
       }
       
       toast.success('Review deleted successfully');
-      setDeletingReview(null);
+      setIsDeleteDialogOpen(false);
       fetchReviews(); // Refresh reviews
     } catch (error: any) {
       console.error('Error deleting review:', error);
@@ -192,18 +216,26 @@ export const useReviewManagement = () => {
     deletingReview,
     filterRating,
     filterVerified,
+    searchQuery,
+    setSearchQuery,
+    selectedExpertId,
+    setSelectedExpertId,
+    filteredReviews,
+    experts,
+    isEditDialogOpen,
+    setIsEditDialogOpen,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    editedRating,
+    setEditedRating,
+    editedComment,
+    setEditedComment,
     setFilterRating,
     setFilterVerified,
-    searchExpert,
-    setSearchExpert,
-    searchUser,
-    setSearchUser,
     fetchReviews,
-    startEdit,
-    cancelEdit,
-    saveEdit,
-    startDelete,
-    confirmDelete,
-    cancelDelete
+    handleEdit,
+    handleDeletePrompt,
+    handleUpdateReview,
+    handleDeleteReview
   };
 };

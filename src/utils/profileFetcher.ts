@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile, User, Referral, ReferralUI } from '@/types/supabase';
+import { UserProfile, User, Referral } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
@@ -45,31 +45,38 @@ export const fetchUserProfile = async (
       .eq('user_id', user.id);
       
     // Convert expert_id from number to string during adaptation
-    userProfile.enrolledCourses = courses ? courses.map(course => ({
-      id: course.id,
-      title: course.title,
-      expertId: course.expert_id.toString(),
-      expertName: course.expert_name,
-      enrollmentDate: course.enrollment_date,
-      progress: course.progress,
-      completed: course.completed
-    })) : [];
+    userProfile.enrolledCourses = courses ? adaptCoursesToUI(courses) : [];
     
     const { data: reviews } = await supabase
       .from('user_reviews')
       .select('*')
       .eq('user_id', user.id);
+    
+    // Get expert names for each review
+    const reviewsWithExpertNames = await Promise.all((reviews || []).map(async (review) => {
+      const { data: expertData } = await supabase
+        .from('experts')
+        .select('name')
+        .eq('id', review.expert_id)
+        .single();
       
-    // Convert expert_id from number to string during adaptation
-    userProfile.reviews = reviews ? reviews.map(review => ({
+      return {
+        ...review,
+        expert_name: expertData?.name || 'Unknown Expert'
+      };
+    }));
+    
+    // Convert to UI format with complete data
+    userProfile.reviews = reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
       id: review.id,
       expertId: review.expert_id.toString(),
       rating: review.rating,
-      comment: review.comment,
+      comment: review.comment || '',
       date: review.date,
-      verified: review.verified,
-      userId: review.user_id,
-      userName: review.user_id ? `User ${review.user_id.slice(0, 8)}...` : undefined
+      verified: review.verified || false,
+      userId: review.user_id || '',
+      userName: review.user_name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
+      expertName: review.expert_name
     })) : [];
     
     const { data: reports } = await supabase
@@ -78,14 +85,7 @@ export const fetchUserProfile = async (
       .eq('user_id', user.id);
       
     // Convert expert_id from number to string during adaptation
-    userProfile.reports = reports ? reports.map(report => ({
-      id: report.id,
-      expertId: report.expert_id.toString(),
-      reason: report.reason,
-      details: report.details,
-      date: report.date,
-      status: report.status
-    })) : [];
+    userProfile.reports = reports ? adaptReportsToUI(reports) : [];
     
     const { data: transactions } = await supabase
       .from('user_transactions')

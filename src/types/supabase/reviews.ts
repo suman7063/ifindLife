@@ -11,15 +11,27 @@ export interface Review {
   verified: boolean;
 }
 
-// Review UI interface for the admin panel
-export interface ReviewUI {
+// ReviewUI is now the same as Review for consistency
+export type ReviewUI = Review;
+
+// Report interface for user reports
+export interface Report {
   id: string;
-  userId: string;
-  userName: string;
   expertId: string;
-  expertName: string;
-  rating: number;
-  comment: string;
+  reason: string;
+  details: string;
   date: string;
-  verified: boolean;
+  status: string;
+  userId?: string;
+  userName?: string;
+}
+
+// ReportUI type for the admin panel
+export type ReportUI = Report;
+
+// Report status enum
+export enum ReviewStatus {
+  PENDING = 'pending',
+  VERIFIED = 'verified',
+  REJECTED = 'rejected'
 }

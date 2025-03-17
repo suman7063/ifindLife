@@ -1,7 +1,7 @@
 
 import { Expert, Referral, UserTransaction } from './tables';
 import { Course } from './education';
-import { ReviewUI as Review, ReportUI as Report } from './reviews';
+import { Review, Report } from './reviews';
 
 // UI-friendly interface with camelCase properties
 export interface UserProfile {

@@ -1,5 +1,6 @@
+
 import { Course, UserCourse, UserReview, UserReport } from '@/types/supabase';
-import { ReviewUI as Review, ReportUI as Report } from '@/types/supabase/reviews';
+import { Review, Report } from '@/types/supabase/reviews';
 
 // Function to adapt database courses to UI format
 export const adaptCoursesToUI = (courses: UserCourse[]): Course[] => {
@@ -22,9 +23,10 @@ export const adaptReviewsToUI = (reviews: UserReview[]): Review[] => {
     rating: review.rating,
     comment: review.comment || '',
     date: review.date,
-    verified: review.verified,
-    userId: review.user_id,
-    userName: review.user_name
+    verified: review.verified || false,
+    userId: review.user_id || '',
+    userName: review.user_name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
+    expertName: 'Expert' // This will be filled in later when needed
   }));
 };
 

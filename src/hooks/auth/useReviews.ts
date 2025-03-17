@@ -13,15 +13,15 @@ export const useReviews = () => {
     comment: string
   ) => {
     try {
-      // Convert expertId to string if it's a number
-      const expertIdString = String(expertId);
+      // Convert expertId to number for database storage
+      const expertIdNumber = parseInt(expertId);
       
       // Check if user has already reviewed this expert
       const { data: existingReviews } = await supabase
         .from('user_reviews')
         .select('*')
         .eq('user_id', userProfile.id)
-        .eq('expert_id', expertIdString);
+        .eq('expert_id', expertIdNumber);
       
       if (existingReviews && existingReviews.length > 0) {
         // Update existing review
@@ -44,13 +44,12 @@ export const useReviews = () => {
           .from('user_reviews')
           .insert({
             user_id: userProfile.id,
-            expert_id: expertIdString,
+            expert_id: expertIdNumber,
             rating,
             comment,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .select();
+            date: new Date().toISOString(),
+            user_name: userProfile.name || 'Anonymous User'
+          });
         
         if (error) throw error;
         
@@ -63,10 +62,37 @@ export const useReviews = () => {
         .select('*')
         .eq('user_id', userProfile.id);
       
-      return {
+      // Get expert names for each review
+      const reviewsWithExpertNames = await Promise.all((updatedUserReviews || []).map(async (review) => {
+        const { data: expertData } = await supabase
+          .from('experts')
+          .select('name')
+          .eq('id', review.expert_id)
+          .single();
+        
+        return {
+          ...review,
+          expert_name: expertData?.name || 'Unknown Expert'
+        };
+      }));
+      
+      // Add updated reviews to the profile
+      const updatedProfile = {
         ...userProfile,
-        reviews: updatedUserReviews || []
+        reviews: reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
+          id: review.id,
+          expertId: review.expert_id.toString(),
+          rating: review.rating,
+          comment: review.comment || '',
+          date: review.date,
+          verified: review.verified || false,
+          userId: review.user_id || '',
+          userName: review.user_name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
+          expertName: review.expert_name
+        })) : []
       };
+      
+      return updatedProfile;
     } catch (error: any) {
       console.error('Error adding review:', error);
       toast.error(error.message || 'Failed to add review');
@@ -82,14 +108,14 @@ export const useReviews = () => {
     if (!userProfile) return false;
     
     try {
-      // Convert expertId to string if it's a number
-      const expertIdString = String(expertId);
+      // Convert expertId to number for database query
+      const expertIdNumber = parseInt(expertId);
       
       const { data: transactions } = await supabase
         .from('user_transactions')
         .select('*')
         .eq('user_id', userProfile.id)
-        .eq('expert_id', expertIdString);
+        .eq('expert_id', expertIdNumber);
       
       return !!(transactions && transactions.length > 0);
     } catch (error: any) {

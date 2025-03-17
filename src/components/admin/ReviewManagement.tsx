@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useReviewManagement } from './reviews/useReviewManagement';
 import ReviewFilters from './reviews/ReviewFilters';
@@ -28,7 +28,6 @@ const ReviewManagement: React.FC = () => {
     handleUpdateReview,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
-    deletingReview,
     handleDeleteReview,
   } = useReviewManagement();
   
