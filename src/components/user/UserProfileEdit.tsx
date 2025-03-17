@@ -70,6 +70,9 @@ const UserProfileEdit: React.FC = () => {
 
   if (!currentUser) return null;
 
+  // Use the appropriate property based on what's available in currentUser
+  const currentImage = currentUser.profilePicture || currentUser.profile_picture;
+
   return (
     <Card>
       <CardHeader>
@@ -82,7 +85,7 @@ const UserProfileEdit: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-center mb-6">
             <ProfilePictureUploader
-              currentImage={currentUser.profilePicture || undefined}
+              currentImage={currentImage}
               onImageUpload={handleImageUpload}
               name={currentUser.name || ''}
             />

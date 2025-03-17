@@ -94,10 +94,21 @@ export interface CustomTable {
 // Additional interfaces used in the application
 export type Expert = CustomTable['experts'];
 export type ExpertProfile = CustomTable['experts']; // Alias for compatibility
+
+// Extended UserProfile with additional properties needed by our UI
+export interface UserProfile extends CustomTable['users'] {
+  // For UI convenience, we add derived fields here
+  profilePicture?: string; // maps to profile_picture
+  walletBalance?: number;  // maps to wallet_balance
+  favoriteExperts?: Expert[];
+  enrolledCourses?: Course[];
+  transactions?: UserTransaction[];
+  reviews?: Review[];
+  reports?: Report[];
+}
+
 export type User = CustomTable['users'];
-export type UserProfile = CustomTable['users']; // Alias for compatibility
 export type Review = CustomTable['user_reviews'];
 export type Report = CustomTable['user_reports'];
 export type Course = CustomTable['user_courses'];
 export type UserTransaction = CustomTable['user_transactions'];
-

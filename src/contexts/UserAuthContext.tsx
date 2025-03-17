@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -26,12 +27,12 @@ type UserAuthContextType = {
   updateProfile: (profileData: Partial<UserProfile>) => void;
   updateProfilePicture: (file: File) => Promise<string>;
   addToFavorites: (expert: Expert) => void;
-  removeFromFavorites: (expertId: number) => void;
+  removeFromFavorites: (expertId: string) => void;
   rechargeWallet: (amount: number) => void;
-  addReview: (expertId: number, rating: number, comment: string) => void;
-  reportExpert: (expertId: number, reason: string, details: string) => void;
-  getExpertShareLink: (expertId: number) => string;
-  hasTakenServiceFrom: (expertId: number) => boolean;
+  addReview: (expertId: string, rating: number, comment: string) => void;
+  reportExpert: (expertId: string, reason: string, details: string) => void;
+  getExpertShareLink: (expertId: string) => string;
+  hasTakenServiceFrom: (expertId: string) => boolean;
 };
 
 export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
@@ -105,7 +106,14 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!currentUser) throw new Error('User not authenticated');
 
     const publicUrl = await updateProfilePicture(currentUser.id, file);
-    setCurrentUser(prev => prev ? { ...prev, profilePicture: publicUrl } : null);
+    setCurrentUser(prev => {
+      if (!prev) return null;
+      return { 
+        ...prev, 
+        profile_picture: publicUrl,
+        profilePicture: publicUrl 
+      };
+    });
     return publicUrl;
   };
 
@@ -114,7 +122,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     toast.info('This feature will be implemented with Supabase soon');
   };
 
-  const removeFromFavorites = (expertId: number) => {
+  const removeFromFavorites = (expertId: string) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
   };
@@ -124,22 +132,22 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     toast.info('This feature will be implemented with Supabase soon');
   };
 
-  const hasTakenServiceFrom = (expertId: number): boolean => {
+  const hasTakenServiceFrom = (expertId: string): boolean => {
     if (!currentUser) return false;
     return false;
   };
 
-  const addReview = (expertId: number, rating: number, comment: string) => {
+  const addReview = (expertId: string, rating: number, comment: string) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
   };
   
-  const reportExpert = (expertId: number, reason: string, details: string) => {
+  const reportExpert = (expertId: string, reason: string, details: string) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
   };
   
-  const getExpertShareLink = (expertId: number): string => {
+  const getExpertShareLink = (expertId: string): string => {
     return `${window.location.origin}/experts/${expertId}?ref=${currentUser?.id || 'guest'}`;
   };
 

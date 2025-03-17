@@ -17,7 +17,7 @@ export const fetchUserProfile = async (authUser: SupabaseUser): Promise<UserProf
     }
 
     if (data) {
-      // Convert from Supabase profile format to our app's User format
+      // Convert from Supabase profile format to our app's User format with UI-friendly properties
       return {
         id: data.id,
         name: data.name,
@@ -26,13 +26,19 @@ export const fetchUserProfile = async (authUser: SupabaseUser): Promise<UserProf
         country: data.country,
         city: data.city,
         currency: data.currency || 'USD',
+        profile_picture: data.profile_picture,
+        wallet_balance: Number(data.wallet_balance) || 0,
+        
+        // Map to camelCase properties for UI convenience
         profilePicture: data.profile_picture,
         walletBalance: Number(data.wallet_balance) || 0,
-        favoriteExperts: [],  // We'll fetch these separately
-        enrolledCourses: [],  // We'll fetch these separately
-        transactions: [],     // We'll fetch these separately
-        reviews: [],          // We'll fetch these separately
-        reports: []           // We'll fetch these separately
+        
+        // These will be populated separately as needed
+        favoriteExperts: [],
+        enrolledCourses: [],
+        transactions: [],
+        reviews: [],
+        reports: []
       };
     }
     return null;
