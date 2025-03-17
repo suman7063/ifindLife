@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Video } from "lucide-react";
 
 type HeroSettingsProps = {
   heroSettings: {
@@ -21,6 +23,21 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
   heroSettings, 
   setHeroSettings 
 }) => {
+  // Function to handle video URL changes and ensure autoplay is included
+  const handleVideoUrlChange = (url: string) => {
+    // Clean the URL to remove existing autoplay parameter if present
+    let cleanUrl = url.replace(/([?&])autoplay=1&?/g, '$1').replace(/\?$/, '');
+    
+    // Add autoplay parameter
+    if (cleanUrl) {
+      cleanUrl = cleanUrl.includes('?') 
+        ? `${cleanUrl}&autoplay=1` 
+        : `${cleanUrl}?autoplay=1`;
+    }
+    
+    setHeroSettings({...heroSettings, videoUrl: cleanUrl});
+  };
+
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Edit Hero Section</h2>
@@ -50,10 +67,28 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Video URL (YouTube Embed)</label>
-          <Input 
-            value={heroSettings.videoUrl} 
-            onChange={(e) => setHeroSettings({...heroSettings, videoUrl: e.target.value})}
-          />
+          <div className="flex gap-2">
+            <Input 
+              value={heroSettings.videoUrl?.replace(/([?&])autoplay=1&?/g, '$1').replace(/\?$/, '') || ''}
+              onChange={(e) => handleVideoUrlChange(e.target.value)}
+              placeholder="e.g., https://www.youtube.com/embed/VIDEO_ID"
+            />
+            <Button 
+              variant="outline" 
+              type="button"
+              className="flex-shrink-0 bg-ifind-offwhite"
+              onClick={() => {
+                // Common YouTube video - for testing
+                handleVideoUrlChange("https://www.youtube.com/embed/dQw4w9WgXcQ");
+              }}
+            >
+              <Video className="h-4 w-4 mr-2" />
+              Test
+            </Button>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Note: Use embed URLs (e.g., https://www.youtube.com/embed/VIDEO_ID). The video will autoplay on page load.
+          </p>
         </div>
         <div className="mt-2">
           <h3 className="text-sm font-medium mb-2">Preview:</h3>

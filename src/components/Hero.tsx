@@ -9,7 +9,7 @@ const Hero = () => {
     title: "Mental Wellness",
     subtitle: "For a Balanced Life",
     description: "Connect with verified mental health experts for personalized guidance, support, and solutions.",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ" // Default video URL
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" // Default video URL with autoplay
   });
 
   // Load content from localStorage on component mount
@@ -19,7 +19,18 @@ const Hero = () => {
       if (savedContent) {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.heroSettings) {
-          setHeroSettings(parsedContent.heroSettings);
+          // Ensure the autoplay parameter is added to the video URL if not already present
+          let videoUrl = parsedContent.heroSettings.videoUrl || heroSettings.videoUrl;
+          if (videoUrl && !videoUrl.includes('autoplay=1')) {
+            videoUrl = videoUrl.includes('?') 
+              ? `${videoUrl}&autoplay=1` 
+              : `${videoUrl}?autoplay=1`;
+          }
+          
+          setHeroSettings({
+            ...parsedContent.heroSettings,
+            videoUrl
+          });
         }
       }
     } catch (error) {
