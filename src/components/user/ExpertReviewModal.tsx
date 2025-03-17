@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,8 +17,33 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
   const [open, setOpen] = useState(false);
+  const [canReview, setCanReview] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   
-  const { addReview, hasTakenServiceFrom } = useUserAuth();
+  const { hasTakenServiceFrom, hasReviewedExpert, addReview } = useUserAuth();
+  
+  // Check if the user can review this expert
+  useEffect(() => {
+    const checkReviewStatus = async () => {
+      setIsChecking(true);
+      try {
+        const [serviceCheck, reviewCheck] = await Promise.all([
+          hasTakenServiceFrom(expertId),
+          hasReviewedExpert(expertId)
+        ]);
+        
+        setCanReview(serviceCheck);
+        setHasReviewed(reviewCheck);
+      } catch (error) {
+        console.error('Error checking review status:', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+    
+    checkReviewStatus();
+  }, [expertId, hasTakenServiceFrom, hasReviewedExpert]);
   
   const handleSubmit = () => {
     if (rating === 0) {
@@ -35,10 +60,27 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
     setOpen(false);
     setRating(0);
     setComment('');
+    setHasReviewed(true);
   };
   
-  // Check if the user has taken service from this expert
-  const canReview = hasTakenServiceFrom(expertId);
+  // Get appropriate button state
+  const getButtonState = () => {
+    if (isChecking) {
+      return { disabled: true, text: 'Checking...' };
+    }
+    
+    if (hasReviewed) {
+      return { disabled: true, text: 'Already Reviewed' };
+    }
+    
+    if (!canReview) {
+      return { disabled: true, text: 'Take Service First' };
+    }
+    
+    return { disabled: false, text: 'Add Review' };
+  };
+  
+  const buttonState = getButtonState();
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -46,18 +88,23 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
         <Button 
           variant="outline" 
           onClick={() => {
+            if (hasReviewed) {
+              toast.info('You have already reviewed this expert');
+              return;
+            }
+            
             if (!canReview) {
               toast.error('You can only review experts after taking their service');
               return;
             }
           }}
-          disabled={!canReview}
+          disabled={buttonState.disabled || isChecking}
         >
-          Add Review
+          {buttonState.text}
         </Button>
       </DialogTrigger>
       
-      {canReview && (
+      {canReview && !hasReviewed && (
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Review {expertName}</DialogTitle>

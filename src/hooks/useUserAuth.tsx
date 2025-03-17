@@ -186,6 +186,58 @@ export const useUserAuth = () => {
     }
   };
 
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+    if (!currentUser) {
+      return false;
+    }
+
+    try {
+      // Check if there are any completed service engagements between the user and expert
+      const { data, error } = await supabase
+        .from('user_expert_services')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('expert_id', expertId)
+        .eq('status', 'completed')
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking service history:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking service history:', error);
+      return false;
+    }
+  };
+
+  const hasReviewedExpert = async (expertId: string): Promise<boolean> => {
+    if (!currentUser) {
+      return false;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_reviews')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('expert_id', expertId)
+        .limit(1);
+
+      if (error) {
+        console.error('Error checking review history:', error);
+        return false;
+      }
+
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking review history:', error);
+      return false;
+    }
+  };
+
   const addReview = async (expertId: string, rating: number, comment: string) => {
     if (!currentUser) {
       toast.error('Please log in to add a review');
@@ -193,6 +245,20 @@ export const useUserAuth = () => {
     }
 
     try {
+      // Check if user has taken service from this expert
+      const hasTakenService = await hasTakenServiceFrom(expertId);
+      const hasReviewed = await hasReviewedExpert(expertId);
+
+      if (hasReviewed) {
+        toast.error('You have already reviewed this expert');
+        return;
+      }
+
+      if (!hasTakenService) {
+        toast.error('You can only review experts after taking their service');
+        return;
+      }
+
       const { data, error } = await supabase
         .from('user_reviews')
         .insert([{
@@ -201,6 +267,7 @@ export const useUserAuth = () => {
           rating: rating,
           comment: comment,
           date: new Date().toISOString(),
+          verified: true
         }]);
 
       if (error) throw error;
@@ -208,8 +275,7 @@ export const useUserAuth = () => {
       // Optimistically update the local state
       const newReview = {
         id: data ? data[0].id : 'temp_id', // Use a temporary ID
-        user_id: currentUser.id,
-        expert_id: expertId,
+        expertId: expertId,
         rating: rating,
         comment: comment,
         date: new Date().toISOString(),
@@ -217,7 +283,7 @@ export const useUserAuth = () => {
 
       const updatedUser = {
         ...currentUser,
-        reviews: [...currentUser.reviews, newReview],
+        reviews: [...(currentUser.reviews || []), newReview],
       };
       setCurrentUser(updatedUser);
 
@@ -316,12 +382,6 @@ export const useUserAuth = () => {
     }
   };
 
-  const hasTakenServiceFrom = (expertId: string): boolean => {
-    // In a real application, you would check if the user has taken service from the expert
-    // For now, let's return true
-    return true;
-  };
-
   const getExpertShareLink = (expertId: string): string => {
     // In a real application, you would generate a share link
     // For now, let's return a dummy link
@@ -335,9 +395,95 @@ export const useUserAuth = () => {
     addToFavorites,
     removeFromFavorites,
     addReview,
-    addReport,
-    rechargeWallet,
+    addReport: async (expertId: string, reason: string, details: string) => {
+      if (!currentUser) {
+        toast.error('Please log in to add a report');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('user_reports')
+          .insert([{
+            user_id: currentUser.id,
+            expert_id: expertId,
+            reason: reason,
+            details: details,
+            date: new Date().toISOString(),
+            status: 'pending',
+          }]);
+
+        if (error) throw error;
+
+        // Optimistically update the local state
+        const newReport = {
+          id: data ? data[0].id : 'temp_id', // Use a temporary ID
+          user_id: currentUser.id,
+          expert_id: expertId,
+          reason: reason,
+          details: details,
+          date: new Date().toISOString(),
+          status: 'pending',
+        };
+
+        const updatedUser = {
+          ...currentUser,
+          reports: [...currentUser.reports, newReport],
+        };
+        setCurrentUser(updatedUser);
+
+        toast.success('Report added successfully!');
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to add report');
+      }
+    },
+    rechargeWallet: async (amount: number) => {
+      if (!currentUser) {
+        toast.error('Please log in to recharge your wallet');
+        return;
+      }
+
+      try {
+        // Simulate a successful transaction
+        const newBalance = currentUser.walletBalance + amount;
+
+        // Create a new transaction record
+        const { data, error } = await supabase
+          .from('user_transactions')
+          .insert([{
+            user_id: currentUser.id,
+            date: new Date().toISOString(),
+            type: 'recharge',
+            amount: amount,
+            currency: currentUser.currency || 'USD',
+            description: 'Wallet recharge',
+          }]);
+
+        if (error) throw error;
+
+        // Optimistically update the local state
+        const updatedUser = {
+          ...currentUser,
+          walletBalance: newBalance,
+          transactions: [...currentUser.transactions, {
+            id: data ? data[0].id : 'temp_id', // Use a temporary ID
+            user_id: currentUser.id,
+            date: new Date().toISOString(),
+            type: 'recharge',
+            amount: amount,
+            currency: currentUser.currency || 'USD',
+            description: 'Wallet recharge',
+          }],
+        };
+        setCurrentUser(updatedUser);
+
+        toast.success('Wallet recharged successfully!');
+      } catch (error: any) {
+        toast.error(error.message || 'Failed to recharge wallet');
+      }
+    },
     hasTakenServiceFrom,
+    hasReviewedExpert,
     getExpertShareLink,
   };
 };

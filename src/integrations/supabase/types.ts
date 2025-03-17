@@ -53,6 +53,7 @@ export type Database = {
       experts: {
         Row: {
           address: string | null
+          average_rating: number | null
           bio: string | null
           certificate_urls: string[] | null
           city: string | null
@@ -64,12 +65,14 @@ export type Database = {
           name: string
           phone: string | null
           profile_picture: string | null
+          reviews_count: number | null
           selected_services: number[] | null
           specialization: string | null
           state: string | null
         }
         Insert: {
           address?: string | null
+          average_rating?: number | null
           bio?: string | null
           certificate_urls?: string[] | null
           city?: string | null
@@ -81,12 +84,14 @@ export type Database = {
           name: string
           phone?: string | null
           profile_picture?: string | null
+          reviews_count?: number | null
           selected_services?: number[] | null
           specialization?: string | null
           state?: string | null
         }
         Update: {
           address?: string | null
+          average_rating?: number | null
           bio?: string | null
           certificate_urls?: string[] | null
           city?: string | null
@@ -98,6 +103,7 @@ export type Database = {
           name?: string
           phone?: string | null
           profile_picture?: string | null
+          reviews_count?: number | null
           selected_services?: number[] | null
           specialization?: string | null
           state?: string | null
@@ -271,6 +277,44 @@ export type Database = {
           },
         ]
       }
+      user_expert_services: {
+        Row: {
+          amount: number
+          created_at: string
+          expert_id: string
+          id: string
+          service_id: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expert_id: string
+          id?: string
+          service_id: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expert_id?: string
+          id?: string
+          service_id?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_expert_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_favorites: {
         Row: {
           expert_id: number
@@ -343,6 +387,7 @@ export type Database = {
           id: string
           rating: number
           user_id: string | null
+          verified: boolean | null
         }
         Insert: {
           comment?: string | null
@@ -351,6 +396,7 @@ export type Database = {
           id?: string
           rating: number
           user_id?: string | null
+          verified?: boolean | null
         }
         Update: {
           comment?: string | null
@@ -359,6 +405,7 @@ export type Database = {
           id?: string
           rating?: number
           user_id?: string | null
+          verified?: boolean | null
         }
         Relationships: [
           {

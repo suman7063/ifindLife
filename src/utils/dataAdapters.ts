@@ -21,7 +21,8 @@ export const adaptReviewsToUI = (reviews: any[]): Review[] => {
     expertId: review.expert_id,
     rating: review.rating,
     comment: review.comment,
-    date: review.date
+    date: review.date,
+    verified: review.verified
   }));
 };
 
@@ -57,7 +58,8 @@ export const adaptReviewsToDB = (reviews: Review[]): any[] => {
     expert_id: review.expertId,
     rating: review.rating,
     comment: review.comment,
-    date: review.date
+    date: review.date,
+    verified: review.verified
   }));
 };
 

@@ -1,3 +1,4 @@
+
 // This file defines custom table types for Supabase
 
 export interface CustomTable {
@@ -18,6 +19,8 @@ export interface CustomTable {
     selected_services?: number[];
     created_at?: string;
     rating?: number; // Added for expert ratings
+    average_rating?: number; // Cached average rating
+    reviews_count?: number; // Count of reviews
   };
   expert_reports: {
     id: string;
@@ -65,6 +68,7 @@ export interface CustomTable {
     rating: number;
     comment?: string;
     date: string;
+    verified?: boolean; // Added for verified reviews
   };
   user_reports: {
     id: string;
@@ -110,6 +114,15 @@ export interface CustomTable {
     created_at?: string;
     completed_at?: string;
   };
+  user_expert_services: {
+    id: string;
+    user_id: string;
+    expert_id: string;
+    service_id: number;
+    amount: number;
+    status: string;
+    created_at: string;
+  };
 }
 
 // Direct type definitions from database tables
@@ -118,6 +131,7 @@ export type User = CustomTable['users'];
 export type UserTransaction = CustomTable['user_transactions'];
 export type ReferralSettings = CustomTable['referral_settings'];
 export type Referral = CustomTable['referrals'];
+export type UserExpertService = CustomTable['user_expert_services'];
 
 // UI-friendly interfaces with camelCase properties
 export interface UserProfile {
@@ -151,6 +165,7 @@ export interface Review {
   rating: number;
   comment?: string;
   date: string;
+  verified?: boolean;
 }
 
 export interface Report {
