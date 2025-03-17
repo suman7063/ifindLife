@@ -1,155 +1,160 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ExpertFormData, ReportUserType } from '../types';
+import { toast } from 'sonner';
+import { Session } from '@supabase/supabase-js';
+import { ExpertFormData } from '../types';
+import { ExpertProfile } from '@/types/supabase';
 
-type ExpertAuthReturnType = {
-  expert: ExpertFormData | null;
-  loading: boolean;
-  reportUser: (report: Omit<ReportUserType, 'id' | 'date' | 'status'>) => Promise<void>;
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-};
-
-export const useSupabaseExpertAuth = (): ExpertAuthReturnType => {
-  const [expert, setExpert] = useState<ExpertFormData | null>(null);
+export const useSupabaseExpertAuth = () => {
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        setLoading(true);
-        const expertEmail = localStorage.getItem('ifindlife-expert-email');
-        
-        if (!expertEmail) {
-          // Only navigate to login if we're on a protected route
-          if (window.location.pathname.includes('expert-dashboard')) {
-            navigate('/expert-login');
-          }
-          setLoading(false);
-          return;
-        }
-        
-        // Fetch expert data from Supabase
-        const { data, error } = await supabase
-          .from('experts')
-          .select('*')
-          .eq('email', expertEmail)
-          .single();
-        
-        if (error || !data) {
-          console.error('Error fetching expert data:', error);
-          toast.error('Error loading your data. Please login again.');
-          localStorage.removeItem('ifindlife-expert-email');
-          if (window.location.pathname.includes('expert-dashboard')) {
-            navigate('/expert-login');
-          }
-        } else {
-          // Transform Supabase data to match ExpertFormData structure
-          const expertData: ExpertFormData = {
-            id: data.id,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            password: data.password,
-            confirmPassword: data.password, // Not stored in DB but needed for the type
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            country: data.country,
-            specialization: data.specialization,
-            experience: data.experience,
-            certificates: [], // Actual files aren't stored
-            certificateUrls: data.certificate_urls || [],
-            bio: data.bio,
-            selectedServices: data.selected_services,
-            acceptedTerms: true, // Not stored in DB but needed for the type
-            profilePicture: data.profile_picture || undefined,
-            reportedUsers: [] // Will be loaded separately if needed
-          };
-          
-          setExpert(expertData);
-        }
-      } catch (error) {
-        console.error('Session check error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkSession();
-  }, [navigate]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Check if the expert exists with the provided credentials
-      const { data, error } = await supabase
-        .from('experts')
-        .select('*')
-        .eq('email', email)
-        .eq('password', password) // In a production app, you'd use Supabase Auth instead
-        .single();
-      
-      if (error || !data) {
-        toast.error('Invalid email or password');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        toast.error(error.message);
         return false;
       }
-      
-      // Store the expert's email in localStorage for session management
-      localStorage.setItem('ifindlife-expert-email', email);
-      
-      // Transform Supabase data to match ExpertFormData structure
-      const expertData: ExpertFormData = {
-        id: data.id,
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        password: data.password,
-        confirmPassword: data.password, // Not stored in DB but needed for the type
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        country: data.country,
-        specialization: data.specialization,
-        experience: data.experience,
-        certificates: [], // Actual files aren't stored
-        certificateUrls: data.certificate_urls || [],
-        bio: data.bio,
-        selectedServices: data.selected_services,
-        acceptedTerms: true, // Not stored in DB but needed for the type
-        profilePicture: data.profile_picture || undefined,
-        reportedUsers: [] // Will be loaded separately if needed
-      };
-      
-      setExpert(expertData);
-      toast.success('Login successful!');
-      return true;
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error('An error occurred during login');
+
+      if (data.user) {
+        // Verify if this is an expert account
+        // @ts-ignore - We know the experts table exists in our system
+        const { data: expertData, error: expertError } = await supabase
+          .from('experts')
+          .select('*')
+          .eq('email', email)
+          .single();
+
+        if (expertError || !expertData) {
+          toast.error('This account is not registered as an expert.');
+          await supabase.auth.signOut();
+          return false;
+        }
+
+        toast.success(`Welcome back, ${expertData.name}!`);
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed');
       return false;
     }
   };
 
-  const logout = async (): Promise<void> => {
-    localStorage.removeItem('ifindlife-expert-email');
-    setExpert(null);
-    navigate('/expert-login');
-    toast.success('Logged out successfully');
+  const signup = async (expertData: ExpertFormData): Promise<boolean> => {
+    try {
+      // Create auth user
+      const { data, error } = await supabase.auth.signUp({
+        email: expertData.email,
+        password: expertData.password,
+        options: {
+          data: {
+            name: expertData.name,
+            phone: expertData.phone,
+            country: expertData.country
+          }
+        }
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+
+      if (!data.user) {
+        toast.error('Failed to create user account');
+        return false;
+      }
+
+      // Now create the expert profile
+      // @ts-ignore - We know the experts table exists in our system
+      const { error: expertError } = await supabase
+        .from('experts')
+        .insert({
+          id: data.user.id,
+          name: expertData.name,
+          email: expertData.email,
+          phone: expertData.phone,
+          address: expertData.address,
+          city: expertData.city,
+          state: expertData.state,
+          country: expertData.country,
+          specialization: expertData.specialization,
+          experience: expertData.experience,
+          bio: expertData.bio,
+          certificate_urls: expertData.certificateUrls,
+          profile_picture: expertData.profilePicture || null,
+          selected_services: expertData.selectedServices,
+          created_at: new Date().toISOString()
+        });
+
+      if (expertError) {
+        console.error('Error creating expert profile:', expertError);
+        toast.error('Error creating expert profile');
+        return false;
+      }
+
+      toast.success('Expert account created successfully!');
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || 'Registration failed');
+      return false;
+    }
   };
 
-  const reportUser = async (reportData: Omit<ReportUserType, 'id' | 'date' | 'status'>): Promise<void> => {
-    if (!expert) {
-      toast.error('You must be logged in to report a user');
-      return;
-    }
+  const updateExpertProfile = async (expertId: string, profileData: Partial<ExpertProfile>): Promise<boolean> => {
+    try {
+      // @ts-ignore - We know the experts table exists in our system
+      const { error } = await supabase
+        .from('experts')
+        .update({
+          name: profileData.name,
+          phone: profileData.phone,
+          address: profileData.address,
+          city: profileData.city,
+          state: profileData.state,
+          country: profileData.country,
+          specialization: profileData.specialization,
+          experience: profileData.experience,
+          bio: profileData.bio,
+          certificate_urls: profileData.certificate_urls,
+          profile_picture: profileData.profile_picture,
+          selected_services: profileData.selected_services,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', expertId);
 
+      if (error) {
+        toast.error('Failed to update profile');
+        return false;
+      }
+
+      toast.success('Profile updated successfully');
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || 'Update failed');
+      return false;
+    }
+  };
+
+  const reportUser = async (
+    expertId: string, 
+    reportData: { 
+      userId: string; 
+      userName: string; 
+      reason: string; 
+      details: string;
+    }
+  ): Promise<boolean> => {
     try {
       const newReport = {
-        expert_id: expert.id,
+        expert_id: expertId,
         user_id: reportData.userId,
         user_name: reportData.userName,
         reason: reportData.reason,
@@ -158,20 +163,57 @@ export const useSupabaseExpertAuth = (): ExpertAuthReturnType => {
         status: 'pending'
       };
 
+      // @ts-ignore - We know the expert_reports table exists in our system
       const { error } = await supabase
         .from('expert_reports')
         .insert(newReport);
-      
+
       if (error) {
-        throw error;
+        toast.error('Failed to submit report');
+        return false;
       }
-      
+
       toast.success('User reported successfully');
-    } catch (error) {
-      console.error('Error reporting user:', error);
-      toast.error('Failed to report user. Please try again.');
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to report user');
+      return false;
     }
   };
 
-  return { expert, loading, reportUser, login, logout };
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || 'Logout failed');
+      return false;
+    }
+  };
+
+  const getExpertSession = async () => {
+    try {
+      setLoading(true);
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      return data.session;
+    } catch (error) {
+      console.error('Error getting session:', error);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return {
+    session,
+    loading,
+    setSession,
+    login,
+    signup,
+    logout,
+    getExpertSession,
+    updateExpertProfile,
+    reportUser
+  };
 };

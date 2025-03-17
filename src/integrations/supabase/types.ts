@@ -56,7 +56,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_if_table_exists: {
+        Args: {
+          table_name: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

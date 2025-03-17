@@ -65,3 +65,23 @@ export type Course = {
   progress: number;
   completed: boolean;
 };
+
+// Add Expert type for the Supabase database
+export type ExpertProfile = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  specialization: string;
+  experience: string;
+  bio: string;
+  certificate_urls: string[];
+  profile_picture: string;
+  selected_services: number[];
+  password: string; // Note: This should be removed in production and handled securely
+  created_at: string;
+};
