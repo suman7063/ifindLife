@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import Footer from '@/components/Footer';
 import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import { useExpertAuth } from '@/components/expert/hooks/useExpertAuth';
-import { User } from '@/contexts/UserAuthContext';
+import { User } from '@/types/supabase/tables';
 
 const ExpertDashboard = () => {
   const { expert, loading } = useExpertAuth();
@@ -17,14 +16,12 @@ const ExpertDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   
   useEffect(() => {
-    // Check if user is authenticated
     if (!loading && !expert) {
       toast.error('Please log in to access the expert dashboard');
       navigate('/expert-login');
       return;
     }
     
-    // Load users from localStorage for reporting functionality
     const storedUsers = localStorage.getItem('ifindlife-users');
     if (storedUsers) {
       try {

@@ -12,7 +12,11 @@ export type ReportReason =
   | 'other';
 
 // Re-export enum types for consistency 
-export { ModerationStatus as ReportStatus, ModerationActionType };
+export type { ModerationStatus as ReportStatus };
+export type { ModerationActionType };
+
+// Define ModerationType for ActionDialog
+export type ModerationType = ModerationActionType;
 
 // Report interface for the UI
 export interface ReportUI {

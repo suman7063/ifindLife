@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { UserProfile, User, Referral } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
-import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
+import { adaptCoursesToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
 
 export const fetchUserProfile = async (
@@ -69,13 +69,13 @@ export const fetchUserProfile = async (
     // Convert to UI format with complete data
     userProfile.reviews = reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
       id: review.id,
-      expertId: review.expert_id.toString(),
+      expertId: String(review.expert_id),
       rating: review.rating,
       comment: review.comment || '',
       date: review.date,
       verified: review.verified || false,
       userId: review.user_id || '',
-      userName: data.name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
+      userName: data.name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous User',
       expertName: review.expert_name
     })) : [];
     

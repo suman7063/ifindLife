@@ -2,7 +2,8 @@
 import { createContext } from 'react';
 import { UserProfile, Expert } from '@/types/supabase';
 import { ReviewUI, Report } from '@/types/supabase/reviews';
-import { Course, UserTransaction, User } from '@/types/supabase';
+import { Course, UserTransaction } from '@/types/supabase';
+import { User } from '@/types/supabase/tables';
 
 export type UserAuthContextType = {
   currentUser: UserProfile | null;
@@ -32,3 +33,6 @@ export type UserAuthContextType = {
 
 // Create the context with undefined as default value
 export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
+
+// Also export User for components that need to use this type
+export { User };
