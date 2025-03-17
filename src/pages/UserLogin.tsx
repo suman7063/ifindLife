@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 // List of common countries
 const COUNTRIES = [
@@ -27,7 +29,7 @@ const COUNTRIES = [
 
 const UserLogin = () => {
   const navigate = useNavigate();
-  const { login, signup } = useUserAuth();
+  const { login, signup, isAuthenticated } = useUserAuth();
   const [showPassword, setShowPassword] = useState(false);
 
   // Login form state
@@ -42,12 +44,28 @@ const UserLogin = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [country, setCountry] = useState('');
   const [city, setCity] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/user-dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await login(loginEmail, loginPassword);
-    if (success) {
-      navigate('/user-dashboard');
+    setLoading(true);
+    
+    try {
+      const success = await login(loginEmail, loginPassword);
+      if (success) {
+        navigate('/user-dashboard');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,21 +73,39 @@ const UserLogin = () => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      alert('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
     
-    const success = await signup({
-      name,
-      email,
-      phone,
-      password,
-      country,
-      city
-    });
+    if (!country) {
+      toast.error('Please select a country');
+      return;
+    }
     
-    if (success) {
-      navigate('/user-dashboard');
+    setLoading(true);
+    
+    try {
+      const success = await signup({
+        name,
+        email,
+        phone,
+        password,
+        country,
+        city
+      });
+      
+      if (success) {
+        toast.success('Please check your email to confirm your account');
+        // Optional: Switch to login tab after successful signup
+        const loginTab = document.querySelector('[data-state="inactive"][data-value="login"]');
+        if (loginTab) {
+          (loginTab as HTMLElement).click();
+        }
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -96,9 +132,7 @@ const UserLogin = () => {
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium">
-                      Email Address
-                    </label>
+                    <Label htmlFor="email">Email Address</Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Mail className="h-4 w-4 text-muted-foreground" />
@@ -117,9 +151,7 @@ const UserLogin = () => {
                   
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label htmlFor="password" className="text-sm font-medium">
-                        Password
-                      </label>
+                      <Label htmlFor="password">Password</Label>
                       <Link to="/forgot-password" className="text-xs text-ifind-aqua hover:underline">
                         Forgot password?
                       </Link>
@@ -147,8 +179,12 @@ const UserLogin = () => {
                     </div>
                   </div>
                   
-                  <Button type="submit" className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors">
-                    Sign In
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+                    disabled={loading}
+                  >
+                    {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
                 </form>
               </TabsContent>
@@ -156,9 +192,7 @@ const UserLogin = () => {
               <TabsContent value="register">
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium">
-                      Full Name
-                    </label>
+                    <Label htmlFor="name">Full Name</Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <User className="h-4 w-4 text-muted-foreground" />
@@ -176,9 +210,7 @@ const UserLogin = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="register-email" className="text-sm font-medium">
-                      Email Address
-                    </label>
+                    <Label htmlFor="register-email">Email Address</Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Mail className="h-4 w-4 text-muted-foreground" />
@@ -196,9 +228,7 @@ const UserLogin = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="phone" className="text-sm font-medium">
-                      Phone Number
-                    </label>
+                    <Label htmlFor="phone">Phone Number</Label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <Phone className="h-4 w-4 text-muted-foreground" />
@@ -217,9 +247,7 @@ const UserLogin = () => {
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label htmlFor="country" className="text-sm font-medium">
-                        Country
-                      </label>
+                      <Label htmlFor="country">Country</Label>
                       <Select value={country} onValueChange={setCountry} required>
                         <SelectTrigger id="country" className="w-full">
                           <SelectValue placeholder="Select country" />
@@ -235,9 +263,7 @@ const UserLogin = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <label htmlFor="city" className="text-sm font-medium">
-                        City (Optional)
-                      </label>
+                      <Label htmlFor="city">City (Optional)</Label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                           <Building className="h-4 w-4 text-muted-foreground" />
@@ -255,9 +281,7 @@ const UserLogin = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="register-password" className="text-sm font-medium">
-                      Password
-                    </label>
+                    <Label htmlFor="register-password">Password</Label>
                     <div className="relative">
                       <Input
                         id="register-password"
@@ -266,6 +290,7 @@ const UserLogin = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
+                        minLength={8}
                       />
                       <button
                         type="button"
@@ -285,9 +310,7 @@ const UserLogin = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <label htmlFor="confirm-password" className="text-sm font-medium">
-                      Confirm Password
-                    </label>
+                    <Label htmlFor="confirm-password">Confirm Password</Label>
                     <div className="relative">
                       <Input
                         id="confirm-password"
@@ -296,12 +319,17 @@ const UserLogin = () => {
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
+                        minLength={8}
                       />
                     </div>
                   </div>
                   
-                  <Button type="submit" className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors">
-                    Create Account
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+                    disabled={loading}
+                  >
+                    {loading ? 'Creating Account...' : 'Create Account'}
                   </Button>
                   
                   <p className="text-xs text-center text-muted-foreground">

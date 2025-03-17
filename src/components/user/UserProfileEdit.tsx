@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { User, Mail, Phone, Building, MapPin } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import ProfilePictureUploader from '../common/ProfilePictureUploader';
+import { Label } from '@/components/ui/label';
 
 // List of common countries
 const COUNTRIES = [
@@ -25,6 +26,7 @@ const COUNTRIES = [
 
 const UserProfileEdit: React.FC = () => {
   const { currentUser, updateProfile, updateProfilePicture } = useUserAuth();
+  const [loading, setLoading] = useState(false);
   
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
@@ -43,9 +45,27 @@ const UserProfileEdit: React.FC = () => {
     setFormData(prev => ({ ...prev, country: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(formData);
+    setLoading(true);
+    
+    try {
+      await updateProfile(formData);
+    } catch (error) {
+      console.error('Error updating profile:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      const url = await updateProfilePicture(file);
+      return url;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw error;
+    }
   };
 
   if (!currentUser) return null;
@@ -63,16 +83,14 @@ const UserProfileEdit: React.FC = () => {
           <div className="flex justify-center mb-6">
             <ProfilePictureUploader
               currentImage={currentUser.profilePicture}
-              onImageUpload={updateProfilePicture}
+              onImageUpload={handleImageUpload}
               name={currentUser.name}
             />
           </div>
           
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium">
-                Full Name
-              </label>
+              <Label htmlFor="name">Full Name</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <User className="h-4 w-4 text-muted-foreground" />
@@ -90,9 +108,7 @@ const UserProfileEdit: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email Address
-              </label>
+              <Label htmlFor="email">Email Address</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-4 w-4 text-muted-foreground" />
@@ -104,15 +120,13 @@ const UserProfileEdit: React.FC = () => {
                   className="pl-10"
                   value={formData.email}
                   onChange={handleChange}
-                  required
+                  disabled
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="phone" className="text-sm font-medium">
-                Phone Number
-              </label>
+              <Label htmlFor="phone">Phone Number</Label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Phone className="h-4 w-4 text-muted-foreground" />
@@ -131,9 +145,7 @@ const UserProfileEdit: React.FC = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label htmlFor="country" className="text-sm font-medium">
-                  Country
-                </label>
+                <Label htmlFor="country">Country</Label>
                 <Select
                   value={formData.country}
                   onValueChange={handleCountryChange}
@@ -155,9 +167,7 @@ const UserProfileEdit: React.FC = () => {
               </div>
               
               <div className="space-y-2">
-                <label htmlFor="city" className="text-sm font-medium">
-                  City (Optional)
-                </label>
+                <Label htmlFor="city">City (Optional)</Label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Building className="h-4 w-4 text-muted-foreground" />
@@ -178,8 +188,9 @@ const UserProfileEdit: React.FC = () => {
           <Button 
             type="submit" 
             className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+            disabled={loading}
           >
-            Update Profile
+            {loading ? 'Updating...' : 'Update Profile'}
           </Button>
         </form>
       </CardContent>

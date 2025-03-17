@@ -1,6 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { Session, User } from '@supabase/supabase-js';
 
 export type UserTransaction = {
   id: string;
@@ -97,8 +99,6 @@ export const useUserAuth = () => {
   return context;
 };
 
-type UserWithPassword = User & { password: string };
-
 const DEFAULT_CURRENCY_MAP: Record<string, string> = {
   'India': 'INR',
   'United States': 'USD',
@@ -110,51 +110,106 @@ const DEFAULT_CURRENCY_MAP: Record<string, string> = {
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<UserWithPassword[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // Load users and current user from localStorage
+  // Listen for authentication state changes
   useEffect(() => {
-    const storedUsers = localStorage.getItem('ifindlife-users');
-    if (storedUsers) {
-      try {
-        setUsers(JSON.parse(storedUsers));
-      } catch (e) {
-        console.error("Error loading users:", e);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (!session) {
+        setCurrentUser(null);
       }
-    }
+    });
 
-    const storedUser = localStorage.getItem('ifindlife-user-auth');
-    if (storedUser) {
+    // Initial session check
+    const getInitialSession = async () => {
       try {
-        setCurrentUser(JSON.parse(storedUser));
-      } catch (e) {
-        localStorage.removeItem('ifindlife-user-auth');
+        setLoading(true);
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        
+        if (session) {
+          await fetchUserProfile(session.user);
+        }
+      } catch (error) {
+        console.error('Error getting initial session:', error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    getInitialSession();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Update localStorage whenever users state changes
+  // Fetch user profile when session changes
   useEffect(() => {
-    if (users.length > 0) {
-      localStorage.setItem('ifindlife-users', JSON.stringify(users));
+    if (session?.user) {
+      fetchUserProfile(session.user);
     }
-  }, [users]);
+  }, [session]);
+
+  const fetchUserProfile = async (authUser: User) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        // Convert from Supabase profile format to our app's User format
+        setCurrentUser({
+          id: data.id,
+          name: data.name || '',
+          email: data.email || authUser.email || '',
+          phone: data.phone || '',
+          country: data.country || '',
+          city: data.city || '',
+          currency: data.currency || 'USD',
+          profilePicture: data.profile_picture,
+          walletBalance: Number(data.wallet_balance) || 0,
+          favoriteExperts: [],  // We'll fetch these separately
+          enrolledCourses: [],  // We'll fetch these separately
+          transactions: [],     // We'll fetch these separately
+          reviews: [],          // We'll fetch these separately
+          reports: []           // We'll fetch these separately
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Error loading user profile');
+    }
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would call an API
-    const user = users.find(
-      (user) => user.email === email && user.password === password
-    );
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (user) {
-      const { password, ...userWithoutPassword } = user;
-      setCurrentUser(userWithoutPassword);
-      localStorage.setItem('ifindlife-user-auth', JSON.stringify(userWithoutPassword));
-      toast.success(`Welcome back, ${user.name}!`);
-      return true;
-    } else {
-      toast.error('Invalid email or password');
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+
+      if (data.user) {
+        toast.success(`Welcome back, ${data.user.email}!`);
+        return true;
+      }
+      return false;
+    } catch (error: any) {
+      toast.error(error.message || 'Login failed');
       return false;
     }
   };
@@ -167,311 +222,158 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     country: string;
     city?: string;
   }): Promise<boolean> => {
-    // Check if email already exists
-    if (users.some(user => user.email === userData.email)) {
-      toast.error('Email already exists');
+    try {
+      // Determine currency based on country
+      const currency = DEFAULT_CURRENCY_MAP[userData.country] || 'USD';
+
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            name: userData.name,
+            phone: userData.phone,
+            country: userData.country,
+            city: userData.city,
+            currency
+          }
+        }
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+
+      toast.success('Account created successfully!');
+      return true;
+    } catch (error: any) {
+      toast.error(error.message || 'Registration failed');
       return false;
     }
-
-    // Determine currency based on country
-    const currency = DEFAULT_CURRENCY_MAP[userData.country] || 'USD';
-
-    const newUser: UserWithPassword = {
-      id: `user_${Date.now()}`,
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone,
-      password: userData.password,
-      country: userData.country,
-      city: userData.city,
-      currency,
-      walletBalance: 0,
-      profilePicture: undefined,
-      favoriteExperts: [],
-      enrolledCourses: [],
-      transactions: [],
-      reviews: [],
-      reports: []
-    };
-
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-
-    // Log the user in automatically
-    const { password, ...userWithoutPassword } = newUser;
-    setCurrentUser(userWithoutPassword);
-    localStorage.setItem('ifindlife-user-auth', JSON.stringify(userWithoutPassword));
-    
-    toast.success('Account created successfully!');
-    return true;
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('ifindlife-user-auth');
-    navigate('/login');
-    toast.info('You have been logged out');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setCurrentUser(null);
+      navigate('/login');
+      toast.info('You have been logged out');
+    } catch (error: any) {
+      toast.error(error.message || 'Logout failed');
+    }
   };
 
-  // New function to update user profile
-  const updateProfile = (profileData: Partial<User>) => {
+  // Update user profile
+  const updateProfile = async (profileData: Partial<User>) => {
     if (!currentUser) return;
 
-    const updatedUser = {
-      ...currentUser,
-      ...profileData
-    };
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: profileData.name,
+          phone: profileData.phone,
+          country: profileData.country,
+          city: profileData.city,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', currentUser.id);
 
-    setCurrentUser(updatedUser);
-    localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
-
-    // Update the user in the users array
-    const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id) {
-        return { ...user, ...profileData, password: user.password };
+      if (error) {
+        throw error;
       }
-      return user;
-    });
 
-    setUsers(updatedUsers);
-    localStorage.setItem('ifindlife-users', JSON.stringify(updatedUsers));
-    toast.success('Profile updated successfully');
+      // Update local state
+      setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
+      toast.success('Profile updated successfully');
+    } catch (error: any) {
+      console.error('Error updating profile:', error);
+      toast.error(error.message || 'Failed to update profile');
+    }
   };
 
-  // New function to handle profile picture upload
+  // Handle profile picture upload
   const updateProfilePicture = async (file: File): Promise<string> => {
     if (!currentUser) throw new Error('User not authenticated');
 
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        try {
-          const base64String = reader.result as string;
-          
-          // Update user with new profile picture
-          const updatedUser = {
-            ...currentUser,
-            profilePicture: base64String
-          };
-          
-          setCurrentUser(updatedUser);
-          localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
-          
-          // Update in users array
-          const updatedUsers = users.map(user => {
-            if (user.id === currentUser.id) {
-              return { ...user, profilePicture: base64String };
-            }
-            return user;
-          });
-          
-          setUsers(updatedUsers);
-          localStorage.setItem('ifindlife-users', JSON.stringify(updatedUsers));
-          
-          toast.success('Profile picture updated successfully');
-          resolve(base64String);
-        } catch (error) {
-          console.error('Error updating profile picture:', error);
-          reject(error);
-        }
-      };
-      reader.onerror = (error) => {
-        console.error('Error reading file:', error);
-        reject(error);
-      };
-    });
+    try {
+      // Upload image to Supabase Storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
+      const filePath = `profile-pictures/${fileName}`;
+
+      // Create a readable stream from the file
+      const { error: uploadError } = await supabase.storage
+        .from('user-profiles')
+        .upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // Get the public URL
+      const { data: urlData } = supabase.storage
+        .from('user-profiles')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Update profile with new picture URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture: publicUrl })
+        .eq('id', currentUser.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      // Update local state
+      setCurrentUser(prev => prev ? { ...prev, profilePicture: publicUrl } : null);
+      toast.success('Profile picture updated successfully');
+      return publicUrl;
+    } catch (error: any) {
+      console.error('Error updating profile picture:', error);
+      toast.error(error.message || 'Failed to update profile picture');
+      throw error;
+    }
   };
 
+  // These functions will need to be updated to use Supabase
+  // For now, keeping stub implementations
   const addToFavorites = (expert: Expert) => {
     if (!currentUser) return;
-
-    // Check if already in favorites
-    if (currentUser.favoriteExperts.some(e => e.id === expert.id)) {
-      toast.info('This expert is already in your favorites');
-      return;
-    }
-
-    const updatedUser = {
-      ...currentUser,
-      favoriteExperts: [...currentUser.favoriteExperts, expert]
-    };
-
-    setCurrentUser(updatedUser);
-    localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
-
-    // Update the user in the users array
-    const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id) {
-        return { ...user, favoriteExperts: [...user.favoriteExperts, expert] };
-      }
-      return user;
-    });
-
-    setUsers(updatedUsers);
-    toast.success(`${expert.name} added to favorites`);
+    toast.info('This feature will be implemented with Supabase soon');
   };
 
   const removeFromFavorites = (expertId: number) => {
     if (!currentUser) return;
-
-    const updatedUser = {
-      ...currentUser,
-      favoriteExperts: currentUser.favoriteExperts.filter(e => e.id !== expertId)
-    };
-
-    setCurrentUser(updatedUser);
-    localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
-
-    // Update the user in the users array
-    const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id) {
-        return { 
-          ...user, 
-          favoriteExperts: user.favoriteExperts.filter(e => e.id !== expertId) 
-        };
-      }
-      return user;
-    });
-
-    setUsers(updatedUsers);
-    toast.success('Expert removed from favorites');
+    toast.info('This feature will be implemented with Supabase soon');
   };
 
   const rechargeWallet = (amount: number) => {
     if (!currentUser) return;
-
-    const transaction: UserTransaction = {
-      id: `txn_${Date.now()}`,
-      date: new Date().toISOString(),
-      type: 'recharge',
-      amount,
-      currency: currentUser.currency,
-      description: 'Wallet recharge'
-    };
-
-    const updatedUser = {
-      ...currentUser,
-      walletBalance: currentUser.walletBalance + amount,
-      transactions: [transaction, ...currentUser.transactions]
-    };
-
-    setCurrentUser(updatedUser);
-    localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
-
-    // Update the user in the users array
-    const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id) {
-        return {
-          ...user,
-          walletBalance: user.walletBalance + amount,
-          transactions: [transaction, ...user.transactions]
-        };
-      }
-      return user;
-    });
-
-    setUsers(updatedUsers);
-    toast.success(`Recharged wallet with ${amount} ${currentUser.currency}`);
+    toast.info('This feature will be implemented with Supabase soon');
   };
 
   const hasTakenServiceFrom = (expertId: number): boolean => {
     if (!currentUser) return false;
-    
-    // Check if the user has enrolled in any course from this expert
-    const hasEnrolled = currentUser.enrolledCourses.some(course => course.expertId === expertId);
-    
-    // Check if the user has any transactions related to this expert
-    const hasTransaction = currentUser.transactions.some(
-      txn => txn.type === 'payment' && txn.description.includes(`expert_${expertId}`)
-    );
-    
-    return hasEnrolled || hasTransaction;
+    // Stub implementation
+    return false;
   };
 
   const addReview = (expertId: number, rating: number, comment: string) => {
     if (!currentUser) return;
-    
-    // Check if user has taken service from this expert
-    if (!hasTakenServiceFrom(expertId)) {
-      toast.error('You can only review experts after taking their service');
-      return;
-    }
-    
-    const review: Review = {
-      id: `review_${Date.now()}`,
-      expertId,
-      rating,
-      comment,
-      date: new Date().toISOString()
-    };
-    
-    const updatedUser = {
-      ...currentUser,
-      reviews: [review, ...currentUser.reviews]
-    };
-    
-    setCurrentUser(updatedUser);
-    localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
-    
-    // Update the user in the users array
-    const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id) {
-        return {
-          ...user,
-          reviews: [review, ...user.reviews]
-        };
-      }
-      return user;
-    });
-    
-    setUsers(updatedUsers);
-    toast.success('Review submitted successfully');
+    toast.info('This feature will be implemented with Supabase soon');
   };
   
   const reportExpert = (expertId: number, reason: string, details: string) => {
     if (!currentUser) return;
-    
-    // Check if user has taken service from this expert
-    if (!hasTakenServiceFrom(expertId)) {
-      toast.error('You can only report experts after taking their service');
-      return;
-    }
-    
-    const report: Report = {
-      id: `report_${Date.now()}`,
-      expertId,
-      reason,
-      details,
-      date: new Date().toISOString(),
-      status: 'pending'
-    };
-    
-    const updatedUser = {
-      ...currentUser,
-      reports: [report, ...currentUser.reports]
-    };
-    
-    setCurrentUser(updatedUser);
-    localStorage.setItem('ifindlife-user-auth', JSON.stringify(updatedUser));
-    
-    // Update the user in the users array
-    const updatedUsers = users.map(user => {
-      if (user.id === currentUser.id) {
-        return {
-          ...user,
-          reports: [report, ...user.reports]
-        };
-      }
-      return user;
-    });
-    
-    setUsers(updatedUsers);
-    toast.success('Report submitted successfully');
+    toast.info('This feature will be implemented with Supabase soon');
   };
   
   const getExpertShareLink = (expertId: number): string => {
-    // In a real app, this might generate a unique link with a tracking code
     return `${window.location.origin}/experts/${expertId}?ref=${currentUser?.id || 'guest'}`;
   };
 
