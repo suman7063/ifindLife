@@ -92,13 +92,13 @@ export interface CustomTable {
   };
 }
 
-// Additional interfaces used in the application
+// Direct type definitions from database tables
 export type Expert = CustomTable['experts'];
-export type ExpertProfile = CustomTable['experts']; // Alias for compatibility
+export type User = CustomTable['users'];
+export type UserTransaction = CustomTable['user_transactions'];
 
-// Extended UserProfile with additional properties needed by our UI
+// UI-friendly interfaces with camelCase properties
 export interface UserProfile {
-  // Core user data
   id: string;
   name?: string;
   email?: string;
@@ -118,9 +118,7 @@ export interface UserProfile {
   reports?: Report[];
 }
 
-export type User = CustomTable['users'];
-
-// Define UI-friendly interfaces that don't extend database types
+// Using interfaces for UI-friendly models
 export interface Review {
   id: string;
   expertId: string;
@@ -148,4 +146,5 @@ export interface Course {
   completed?: boolean;
 }
 
-export type UserTransaction = CustomTable['user_transactions'];
+// For backward compatibility
+export type ExpertProfile = Expert;

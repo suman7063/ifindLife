@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase, from } from '@/lib/supabase';
 import { UserProfile, Expert, Review, Report, Course, UserTransaction } from '@/types/supabase';
 
 // Function to convert database user to UserProfile
@@ -41,7 +41,7 @@ export const fetchUserProfile = async (user: any): Promise<UserProfile | null> =
       return null;
     }
     
-    // Convert to UserProfile with both snake_case and camelCase properties
+    // Convert to UserProfile with camelCase properties
     const userProfile = convertUserToUserProfile(data);
     
     // Fetch related data
@@ -107,13 +107,20 @@ export const updateUserProfile = async (
 ): Promise<boolean> => {
   try {
     // Convert camelCase to snake_case for database
-    const dbData = {
+    const dbData: any = {
       name: data.name,
       phone: data.phone,
       country: data.country,
       city: data.city,
-      // Add other fields as needed
+      currency: data.currency
     };
+
+    // Only include defined properties
+    Object.keys(dbData).forEach(key => {
+      if (dbData[key] === undefined) {
+        delete dbData[key];
+      }
+    });
 
     const { error } = await supabase
       .from('users')
@@ -201,6 +208,42 @@ export const adaptReportsToUI = (reports: any[]): Report[] => {
   return reports.map(report => ({
     id: report.id,
     expertId: report.expert_id,
+    reason: report.reason,
+    details: report.details,
+    date: report.date,
+    status: report.status
+  }));
+};
+
+// Function to convert UI format back to database format for courses
+export const adaptCoursesToDB = (courses: Course[]): any[] => {
+  return courses.map(course => ({
+    id: course.id,
+    title: course.title,
+    expert_id: course.expertId,
+    expert_name: course.expertName,
+    enrollment_date: course.enrollmentDate,
+    progress: course.progress,
+    completed: course.completed
+  }));
+};
+
+// Function to convert UI format back to database format for reviews
+export const adaptReviewsToDB = (reviews: Review[]): any[] => {
+  return reviews.map(review => ({
+    id: review.id,
+    expert_id: review.expertId,
+    rating: review.rating,
+    comment: review.comment,
+    date: review.date
+  }));
+};
+
+// Function to convert UI format back to database format for reports
+export const adaptReportsToDB = (reports: Report[]): any[] => {
+  return reports.map(report => ({
+    id: report.id,
+    expert_id: report.expertId,
     reason: report.reason,
     details: report.details,
     date: report.date,

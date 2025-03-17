@@ -13,6 +13,6 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export function from<T extends keyof CustomTable>(
   table: T
 ): ReturnType<typeof supabase.from> {
-  // Use type casting to handle the table name constraint
-  return supabase.from(table as string);
+  // Use type assertion instead of casting to handle the table name constraint
+  return supabase.from(table as string) as any;
 }

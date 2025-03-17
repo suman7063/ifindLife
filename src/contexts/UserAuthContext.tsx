@@ -98,7 +98,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const updateProfile = async (profileData: Partial<UserProfile>) => {
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.id) return;
 
     const result = await updateUserProfile(currentUser.id, profileData);
     if (result) {
@@ -107,7 +107,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const handleUpdateProfilePicture = async (file: File): Promise<string> => {
-    if (!currentUser) throw new Error('User not authenticated');
+    if (!currentUser || !currentUser.id) throw new Error('User not authenticated');
 
     const publicUrl = await updateProfilePicture(currentUser.id, file);
     setCurrentUser(prev => {

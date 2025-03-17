@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -76,8 +75,8 @@ const UserProfileEdit: React.FC = () => {
 
   if (!currentUser) return null;
 
-  // Use the appropriate property based on what's available in currentUser
-  const currentImage = currentUser.profilePicture || currentUser.profile_picture;
+  // Use the profilePicture property from UserProfile
+  const currentImage = currentUser.profilePicture;
 
   return (
     <Card>
