@@ -12,6 +12,11 @@ interface ExpertReviewModalProps {
   expertName: string;
 }
 
+interface ReviewStatus {
+  canReview: boolean;
+  hasReviewed: boolean;
+}
+
 const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertName }) => {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -29,7 +34,7 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
       setIsChecking(true);
       try {
         // Check if user has taken service from this expert
-        const serviceCheck = await hasTakenServiceFrom(expertId);
+        const serviceCheck = await hasTakenServiceFrom(expertId) as ReviewStatus;
         setCanReview(serviceCheck.canReview);
         setHasReviewed(serviceCheck.hasReviewed);
       } catch (error) {

@@ -1,417 +1,346 @@
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-  DialogTrigger 
-} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { 
-  Pencil, 
-  Trash, 
-  Star, 
-  SearchIcon, 
-  RefreshCw,
-  BadgeAlert
-} from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Pencil, Trash2, Star, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { adaptReviewsToUI, adaptReviewsToDB } from '@/utils/dataAdapters';
+import { supabase } from '@/lib/supabase';
 import { Review } from '@/types/supabase';
 
-const ReviewManagement = () => {
-  const [experts, setExperts] = useState<any[]>([]);
-  const [selectedExpertId, setSelectedExpertId] = useState<string | null>(null);
+const ReviewManagement: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [newRating, setNewRating] = useState(0);
-  const [newComment, setNewComment] = useState('');
-  const [hoveredRating, setHoveredRating] = useState(0);
-
-  // Fetch all experts on component mount
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedExpertId, setSelectedExpertId] = useState<string | null>(null);
+  const [experts, setExperts] = useState<Array<{ id: string, name: string }>>([]);
+  
+  // Edit review state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [currentReview, setCurrentReview] = useState<Review | null>(null);
+  const [editedRating, setEditedRating] = useState(0);
+  const [editedComment, setEditedComment] = useState('');
+  
+  // Delete review state
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
+  
+  // Fetch experts for the dropdown
   useEffect(() => {
+    const fetchExperts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('experts')
+          .select('id, name');
+        
+        if (error) throw error;
+        setExperts(data || []);
+      } catch (error) {
+        console.error('Error fetching experts:', error);
+        toast.error('Failed to load experts');
+      }
+    };
+    
     fetchExperts();
   }, []);
-
-  // Fetch experts from Supabase
-  const fetchExperts = async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('experts')
-        .select('id, name, email, average_rating, reviews_count')
-        .order('name');
-      
-      if (error) throw error;
-      setExperts(data || []);
-    } catch (error) {
-      console.error('Error fetching experts:', error);
-      toast.error('Failed to load experts');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch reviews for selected expert
-  const fetchReviews = async (expertId: string) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('user_reviews')
-        .select('*, users(name)')
-        .eq('expert_id', expertId);
-      
-      if (error) throw error;
-      
-      // Format reviews with user name
-      const reviewsWithUserNames = data?.map(review => ({
-        ...review,
-        user_name: review.users?.name || 'Anonymous User'
-      })) || [];
-      
-      setReviews(adaptReviewsToUI(reviewsWithUserNames));
-    } catch (error) {
-      console.error('Error fetching reviews:', error);
-      toast.error('Failed to load reviews');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle expert selection change
-  const handleExpertChange = (expertId: string) => {
-    setSelectedExpertId(expertId);
-    fetchReviews(expertId);
-  };
-
-  // Filter experts based on search term
-  const filteredExperts = experts.filter(expert => 
-    expert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    expert.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Handle review delete
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!confirm('Are you sure you want to delete this review?')) return;
-    
-    try {
-      const { error } = await supabase
-        .from('user_reviews')
-        .delete()
-        .eq('id', reviewId);
-      
-      if (error) throw error;
-      
-      // Remove review from local state
-      setReviews(reviews.filter(review => review.id !== reviewId));
-      toast.success('Review deleted successfully');
-      
-      // Refetch expert to update rating
-      if (selectedExpertId) {
-        const { data } = await supabase
-          .from('experts')
-          .select('average_rating, reviews_count')
-          .eq('id', selectedExpertId)
-          .single();
-          
-        if (data) {
-          setExperts(experts.map(expert => 
-            expert.id === selectedExpertId 
-              ? { ...expert, average_rating: data.average_rating, reviews_count: data.reviews_count } 
-              : expert
-          ));
+  
+  // Fetch reviews when expert selection changes
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from('user_reviews')
+          .select(`
+            id,
+            expert_id,
+            user_id,
+            rating,
+            comment,
+            date,
+            verified,
+            user_name,
+            experts(name)
+          `);
+        
+        if (selectedExpertId) {
+          query = query.eq('expert_id', selectedExpertId);
         }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        const formattedReviews: Review[] = (data || []).map(review => ({
+          id: review.id,
+          expertId: review.expert_id,
+          expertName: review.experts?.name || 'Unknown Expert',
+          userId: review.user_id,
+          userName: review.user_name || 'Anonymous User',
+          rating: review.rating,
+          comment: review.comment || '',
+          date: review.date,
+          verified: review.verified,
+        }));
+        
+        setReviews(formattedReviews);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        toast.error('Failed to load reviews');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error deleting review:', error);
-      toast.error('Failed to delete review');
-    }
+    };
+    
+    fetchReviews();
+  }, [selectedExpertId]);
+  
+  // Open edit dialog
+  const handleEdit = (review: Review) => {
+    setCurrentReview(review);
+    setEditedRating(review.rating);
+    setEditedComment(review.comment || '');
+    setIsEditDialogOpen(true);
   };
-
-  // Open edit dialog and set editing review
-  const handleEditReview = (review: Review) => {
-    setEditingReview(review);
-    setNewRating(review.rating);
-    setNewComment(review.comment || '');
-    setEditDialogOpen(true);
-  };
-
-  // Handle save edit
-  const handleSaveEdit = async () => {
-    if (!editingReview || !selectedExpertId) return;
+  
+  // Update review
+  const handleUpdateReview = async () => {
+    if (!currentReview) return;
     
     try {
-      const updatedReview = {
-        ...editingReview,
-        rating: newRating,
-        comment: newComment
-      };
-      
-      const dbReview = adaptReviewsToDB([updatedReview])[0];
-      
       const { error } = await supabase
         .from('user_reviews')
         .update({
-          rating: dbReview.rating,
-          comment: dbReview.comment
+          rating: editedRating,
+          comment: editedComment,
         })
-        .eq('id', dbReview.id);
+        .eq('id', currentReview.id);
       
       if (error) throw error;
       
-      // Update review in local state
+      // Update local state
       setReviews(reviews.map(review => 
-        review.id === editingReview.id 
-          ? updatedReview 
+        review.id === currentReview.id 
+          ? { ...review, rating: editedRating, comment: editedComment }
           : review
       ));
       
-      // Close dialog
-      setEditDialogOpen(false);
-      setEditingReview(null);
       toast.success('Review updated successfully');
-      
-      // Refetch expert to update rating
-      const { data } = await supabase
-        .from('experts')
-        .select('average_rating, reviews_count')
-        .eq('id', selectedExpertId)
-        .single();
-        
-      if (data) {
-        setExperts(experts.map(expert => 
-          expert.id === selectedExpertId 
-            ? { ...expert, average_rating: data.average_rating, reviews_count: data.reviews_count } 
-            : expert
-        ));
-      }
+      setIsEditDialogOpen(false);
     } catch (error) {
       console.error('Error updating review:', error);
       toast.error('Failed to update review');
     }
   };
-
+  
+  // Open delete dialog
+  const handleDeletePrompt = (review: Review) => {
+    setReviewToDelete(review);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  // Delete review
+  const handleDeleteReview = async () => {
+    if (!reviewToDelete) return;
+    
+    try {
+      const { error } = await supabase
+        .from('user_reviews')
+        .delete()
+        .eq('id', reviewToDelete.id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setReviews(reviews.filter(review => review.id !== reviewToDelete.id));
+      
+      toast.success('Review deleted successfully');
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      toast.error('Failed to delete review');
+    }
+  };
+  
+  // Filter reviews by search query
+  const filteredReviews = reviews.filter(review => 
+    review.userName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    review.comment?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    review.expertName?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-        <h2 className="text-2xl font-bold">Expert Reviews Management</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={fetchExperts}>
-            <RefreshCw className="h-4 w-4 mr-2" /> Refresh
-          </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="md:col-span-1 space-y-4">
-          <div className="relative">
-            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
-            <Input
-              type="text"
-              placeholder="Search experts..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
+    <Card>
+      <CardHeader>
+        <CardTitle>Review Management</CardTitle>
+        <CardDescription>
+          Manage user reviews for experts
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by user or review content..."
+                  className="pl-8"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="w-full md:w-64">
+              <Select onValueChange={(value) => setSelectedExpertId(value)} value={selectedExpertId || undefined}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select an expert" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Experts</SelectItem>
+                  {experts.map(expert => (
+                    <SelectItem key={expert.id} value={expert.id}>
+                      {expert.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           
-          <div className="border rounded-md p-2 h-[500px] overflow-y-auto bg-white">
-            {filteredExperts.length === 0 && !loading ? (
-              <div className="text-center text-gray-500 p-4">No experts found</div>
-            ) : (
-              <ul className="divide-y">
-                {filteredExperts.map(expert => (
-                  <li 
-                    key={expert.id}
-                    className={`p-2 cursor-pointer hover:bg-gray-100 ${
-                      selectedExpertId === expert.id ? 'bg-gray-100' : ''
-                    }`}
-                    onClick={() => handleExpertChange(expert.id)}
-                  >
-                    <div className="font-medium">{expert.name}</div>
-                    <div className="text-sm text-gray-500">{expert.email}</div>
-                    <div className="text-sm flex items-center mt-1">
-                      {expert.average_rating > 0 ? (
-                        <>
-                          <Star className="h-3 w-3 text-yellow-400 fill-yellow-400 mr-1" />
-                          <span>{expert.average_rating.toFixed(1)}</span>
-                          <span className="text-gray-400 ml-2">({expert.reviews_count} reviews)</span>
-                        </>
-                      ) : (
-                        <span className="text-gray-400">No reviews</span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </div>
-        
-        <div className="md:col-span-3">
-          {!selectedExpertId ? (
-            <div className="border rounded-md p-6 flex justify-center items-center h-[500px] bg-gray-50">
-              <div className="text-center text-gray-500">
-                <BadgeAlert className="h-8 w-8 mx-auto mb-2" />
-                <p>Select an expert to view and manage their reviews</p>
-              </div>
-            </div>
-          ) : reviews.length === 0 ? (
-            <div className="border rounded-md p-6 flex justify-center items-center h-[500px] bg-gray-50">
-              <div className="text-center text-gray-500">
-                <Star className="h-8 w-8 mx-auto mb-2" />
-                <p>No reviews for this expert yet</p>
-              </div>
+          {loading ? (
+            <div className="text-center py-10">Loading reviews...</div>
+          ) : filteredReviews.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              No reviews found
             </div>
           ) : (
-            <div className="border rounded-md overflow-hidden bg-white">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Rating</TableHead>
-                    <TableHead>Comment</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Verified</TableHead>
-                    <TableHead className="w-[100px] text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {reviews.map(review => (
-                    <TableRow key={review.id}>
-                      <TableCell className="font-medium">
-                        {review.userName || 'Anonymous User'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex">
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <Star
-                              key={star}
-                              className={`h-4 w-4 ${
-                                star <= review.rating
-                                  ? 'text-yellow-400 fill-yellow-400'
-                                  : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
-                        {review.comment || 'No comment'}
-                      </TableCell>
-                      <TableCell>{review.date}</TableCell>
-                      <TableCell>
-                        {review.verified ? 
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            <div className="space-y-4 mt-6">
+              {filteredReviews.map(review => (
+                <div 
+                  key={review.id}
+                  className="p-4 border rounded-lg bg-card"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="font-medium">{review.userName || 'Anonymous User'}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Reviewed: {review.expertName} | {new Date(review.date).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center mt-1 mb-2">
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <Star 
+                            key={star} 
+                            className={`h-4 w-4 ${
+                              star <= review.rating 
+                              ? 'text-yellow-400 fill-yellow-400' 
+                              : 'text-gray-300'
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-2 text-sm">{review.rating}/5</span>
+                        {review.verified && (
+                          <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
                             Verified
-                          </span> : 
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
-                            Unverified
                           </span>
-                        }
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleEditReview(review)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDeleteReview(review.id)}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                        )}
+                      </div>
+                      <p className="text-sm">{review.comment || 'No comment provided'}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        onClick={() => handleEdit(review)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="icon"
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleDeletePrompt(review)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
-      </div>
-
-      {/* Edit Review Dialog */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Edit Review</DialogTitle>
-          </DialogHeader>
-          
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Rating</p>
-              <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`h-8 w-8 cursor-pointer ${
-                      star <= (hoveredRating || newRating)
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                    onClick={() => setNewRating(star)}
-                    onMouseEnter={() => setHoveredRating(star)}
-                    onMouseLeave={() => setHoveredRating(0)}
-                  />
-                ))}
+        
+        {/* Edit Review Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Edit Review</DialogTitle>
+              <DialogDescription>
+                Make changes to the review rating and comment.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <div className="font-medium text-sm">Rating</div>
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star
+                      key={star}
+                      className={`h-6 w-6 cursor-pointer ${
+                        star <= editedRating
+                          ? 'text-yellow-400 fill-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                      onClick={() => setEditedRating(star)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="font-medium text-sm">Comment</div>
+                <Textarea
+                  value={editedComment}
+                  onChange={(e) => setEditedComment(e.target.value)}
+                  rows={5}
+                />
               </div>
             </div>
-            
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Comment</p>
-              <Textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                rows={5}
-              />
-            </div>
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSaveEdit}
-              className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-            >
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="button" onClick={handleUpdateReview}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        {/* Delete Review Dialog */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Delete Review</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this review? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="button" variant="destructive" onClick={handleDeleteReview}>
+                Delete Review
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,8 +1,8 @@
 
-import { Course, Review, Report } from '@/types/supabase';
+import { Course, Review, Report, UserCourse, UserReview, UserReport } from '@/types/supabase';
 
 // Function to adapt database courses to UI format
-export const adaptCoursesToUI = (courses: any[]): Course[] => {
+export const adaptCoursesToUI = (courses: UserCourse[]): Course[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
@@ -15,7 +15,7 @@ export const adaptCoursesToUI = (courses: any[]): Course[] => {
 };
 
 // Function to adapt database reviews to UI format
-export const adaptReviewsToUI = (reviews: any[]): Review[] => {
+export const adaptReviewsToUI = (reviews: UserReview[]): Review[] => {
   return reviews.map(review => ({
     id: review.id,
     expertId: review.expert_id,
@@ -29,7 +29,7 @@ export const adaptReviewsToUI = (reviews: any[]): Review[] => {
 };
 
 // Function to adapt database reports to UI format
-export const adaptReportsToUI = (reports: any[]): Report[] => {
+export const adaptReportsToUI = (reports: UserReport[]): Report[] => {
   return reports.map(report => ({
     id: report.id,
     expertId: report.expert_id,
@@ -41,7 +41,7 @@ export const adaptReportsToUI = (reports: any[]): Report[] => {
 };
 
 // Function to convert UI format back to database format for courses
-export const adaptCoursesToDB = (courses: Course[]): any[] => {
+export const adaptCoursesToDB = (courses: Course[]): UserCourse[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
@@ -54,7 +54,7 @@ export const adaptCoursesToDB = (courses: Course[]): any[] => {
 };
 
 // Function to convert UI format back to database format for reviews
-export const adaptReviewsToDB = (reviews: Review[]): any[] => {
+export const adaptReviewsToDB = (reviews: Review[]): UserReview[] => {
   return reviews.map(review => ({
     id: review.id,
     expert_id: review.expertId,
@@ -68,7 +68,7 @@ export const adaptReviewsToDB = (reviews: Review[]): any[] => {
 };
 
 // Function to convert UI format back to database format for reports
-export const adaptReportsToDB = (reports: Report[]): any[] => {
+export const adaptReportsToDB = (reports: Report[]): UserReport[] => {
   return reports.map(report => ({
     id: report.id,
     expert_id: report.expertId,
