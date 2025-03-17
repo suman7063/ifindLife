@@ -82,9 +82,9 @@ const UserProfileEdit: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-center mb-6">
             <ProfilePictureUploader
-              currentImage={currentUser.profilePicture}
+              currentImage={currentUser.profilePicture || undefined}
               onImageUpload={handleImageUpload}
-              name={currentUser.name}
+              name={currentUser.name || ''}
             />
           </div>
           

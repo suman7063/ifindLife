@@ -2,71 +2,11 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { Session, User } from '@supabase/supabase-js';
-
-export type UserTransaction = {
-  id: string;
-  date: string;
-  type: 'recharge' | 'payment';
-  amount: number;
-  currency: string;
-  description: string;
-};
-
-export type Expert = {
-  id: number;
-  name: string;
-  specialization: string;
-  image?: string;
-  rating?: number;
-};
-
-export type Review = {
-  id: string;
-  expertId: number;
-  rating: number;
-  comment: string;
-  date: string;
-};
-
-export type Report = {
-  id: string;
-  expertId: number;
-  reason: string;
-  details: string;
-  date: string;
-  status: 'pending' | 'reviewed' | 'resolved';
-};
-
-export type Course = {
-  id: string;
-  title: string;
-  expertId: number;
-  expertName: string;
-  enrollmentDate: string;
-  progress: number;
-  completed: boolean;
-};
-
-export type User = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  country: string;
-  city?: string;
-  currency: string;
-  profilePicture?: string;
-  walletBalance: number;
-  favoriteExperts: Expert[];
-  enrolledCourses: Course[];
-  transactions: UserTransaction[];
-  reviews: Review[];
-  reports: Report[];
-};
+import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { UserProfile, Expert, Review, Report, Course, UserTransaction } from '@/types/supabase';
 
 type UserAuthContextType = {
-  currentUser: User | null;
+  currentUser: UserProfile | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (userData: {
@@ -78,7 +18,7 @@ type UserAuthContextType = {
     city?: string;
   }) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (profileData: Partial<User>) => void;
+  updateProfile: (profileData: Partial<UserProfile>) => void;
   updateProfilePicture: (file: File) => Promise<string>;
   addToFavorites: (expert: Expert) => void;
   removeFromFavorites: (expertId: number) => void;
@@ -109,7 +49,7 @@ const DEFAULT_CURRENCY_MAP: Record<string, string> = {
 };
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -154,7 +94,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [session]);
 
-  const fetchUserProfile = async (authUser: User) => {
+  const fetchUserProfile = async (authUser: SupabaseUser) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -170,11 +110,11 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         // Convert from Supabase profile format to our app's User format
         setCurrentUser({
           id: data.id,
-          name: data.name || '',
-          email: data.email || authUser.email || '',
-          phone: data.phone || '',
-          country: data.country || '',
-          city: data.city || '',
+          name: data.name,
+          email: data.email || authUser.email,
+          phone: data.phone,
+          country: data.country,
+          city: data.city,
           currency: data.currency || 'USD',
           profilePicture: data.profile_picture,
           walletBalance: Number(data.wallet_balance) || 0,
@@ -264,8 +204,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Update user profile
-  const updateProfile = async (profileData: Partial<User>) => {
+  const updateProfile = async (profileData: Partial<UserProfile>) => {
     if (!currentUser) return;
 
     try {
@@ -293,7 +232,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Handle profile picture upload
   const updateProfilePicture = async (file: File): Promise<string> => {
     if (!currentUser) throw new Error('User not authenticated');
 
@@ -340,8 +278,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // These functions will need to be updated to use Supabase
-  // For now, keeping stub implementations
   const addToFavorites = (expert: Expert) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
@@ -400,3 +336,5 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     </UserAuthContext.Provider>
   );
 };
+
+export { Expert, Review, Report, Course, UserTransaction };
