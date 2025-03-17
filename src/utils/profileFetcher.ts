@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile, User } from '@/types/supabase';
+import { UserProfile, User, Referral, ReferralUI } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
@@ -69,8 +69,17 @@ export const fetchUserProfile = async (
     
     const referrals = await fetchUserReferrals(user.id);
     
-    // Use the new imported adaptor function from utils/referralUtils
-    userProfile.referrals = referrals;
+    // Convert the ReferralUI[] to the format expected by UserProfile.referrals
+    userProfile.referrals = referrals.map(ref => ({
+      id: ref.id,
+      referrer_id: ref.referrerId,
+      referred_id: ref.referredId,
+      referral_code: ref.referralCode,
+      status: ref.status,
+      reward_claimed: ref.rewardClaimed,
+      created_at: ref.createdAt,
+      completed_at: ref.completedAt
+    }));
     
     return userProfile;
   } catch (error) {

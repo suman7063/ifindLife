@@ -1,4 +1,3 @@
-
 // This file defines custom table types for Supabase
 
 export interface CustomTable {
@@ -142,7 +141,7 @@ export interface UserProfile {
   transactions?: UserTransaction[];
   reviews?: Review[];
   reports?: Report[];
-  referrals?: Referral[];
+  referrals?: Referral[]; // This expects Referral type, not ReferralUI
 }
 
 // Using interfaces for UI-friendly models
