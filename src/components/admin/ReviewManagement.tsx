@@ -20,7 +20,7 @@ const ReviewManagement: React.FC = () => {
     handleDeletePrompt,
     isEditDialogOpen,
     setIsEditDialogOpen,
-    currentReview,
+    editingReview,
     editedRating,
     setEditedRating,
     editedComment,
@@ -28,7 +28,7 @@ const ReviewManagement: React.FC = () => {
     handleUpdateReview,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
-    reviewToDelete,
+    deletingReview,
     handleDeleteReview,
   } = useReviewManagement();
   
@@ -62,7 +62,7 @@ const ReviewManagement: React.FC = () => {
         <EditReviewDialog
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          review={currentReview}
+          review={editingReview}
           editedRating={editedRating}
           editedComment={editedComment}
           setEditedRating={setEditedRating}

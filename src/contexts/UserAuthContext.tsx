@@ -9,4 +9,7 @@ export { UserAuthContext, UserAuthProvider, useUserAuth };
 export type { UserAuthContextType };
 
 // Re-export types from the original context
-export type { UserProfile, Expert, Review, Report, Course, UserTransaction, User } from '@/types/supabase';
+export type { UserProfile, Expert } from '@/types/supabase';
+export type { Review, Report } from '@/types/supabase/reviews';
+export type { Course, UserTransaction } from '@/types/supabase';
+export type { User } from '@/types/supabase';

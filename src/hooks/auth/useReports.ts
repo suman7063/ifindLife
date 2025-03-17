@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 import { ExpertIdDB, convertExpertIdToNumber } from '@/types/supabase/expertId';
+import { Report } from '@/types/supabase/reviews';
 
 export const useReports = () => {
   const addReport = async (currentUser: UserProfile | null, expertId: string, reason: string, details: string) => {
@@ -24,14 +25,15 @@ export const useReports = () => {
           details: details,
           date: new Date().toISOString(),
           status: 'pending',
-        });
+        })
+        .select();
 
       if (error) throw error;
 
       // Return updated user data to update the local state
       const newReportId = data && data.length > 0 ? data[0].id : 'temp_id';
       
-      const newReport = {
+      const newReport: Report = {
         id: newReportId,
         expertId: expertId, // Store as string in our UI
         reason,

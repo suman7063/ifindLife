@@ -1,7 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, UserTransaction } from '@/types/supabase';
 
 export const useWallet = () => {
   const rechargeWallet = async (currentUser: UserProfile | null, amount: number) => {
@@ -12,7 +12,7 @@ export const useWallet = () => {
 
     try {
       // Simulate a successful transaction
-      const newBalance = currentUser.walletBalance + amount;
+      const newBalance = (currentUser.walletBalance || 0) + amount;
 
       // Create a new transaction record
       const { data, error } = await supabase
@@ -24,25 +24,28 @@ export const useWallet = () => {
           amount: amount,
           currency: currentUser.currency || 'USD',
           description: 'Wallet recharge',
-        });
+        })
+        .select();
 
       if (error) throw error;
 
       // Return updated user data to update the local state
       const newTransactionId = data && data.length > 0 ? data[0].id : 'temp_id';
       
+      const newTransaction: UserTransaction = {
+        id: newTransactionId,
+        user_id: currentUser.id,
+        date: new Date().toISOString(),
+        type: 'recharge',
+        amount: amount,
+        currency: currentUser.currency || 'USD',
+        description: 'Wallet recharge',
+      };
+
       const updatedUser = {
         ...currentUser,
         walletBalance: newBalance,
-        transactions: [...currentUser.transactions, {
-          id: newTransactionId,
-          user_id: currentUser.id,
-          date: new Date().toISOString(),
-          type: 'recharge',
-          amount: amount,
-          currency: currentUser.currency || 'USD',
-          description: 'Wallet recharge',
-        }],
+        transactions: [...(currentUser.transactions || []), newTransaction],
       };
 
       toast.success('Wallet recharged successfully!');

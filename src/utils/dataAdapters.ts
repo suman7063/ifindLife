@@ -1,5 +1,5 @@
-
-import { Course, Review, Report, UserCourse, UserReview, UserReport } from '@/types/supabase';
+import { Course, UserCourse, UserReview, UserReport } from '@/types/supabase';
+import { ReviewUI as Review, ReportUI as Report } from '@/types/supabase/reviews';
 
 // Function to adapt database courses to UI format
 export const adaptCoursesToUI = (courses: UserCourse[]): Course[] => {
@@ -20,7 +20,7 @@ export const adaptReviewsToUI = (reviews: UserReview[]): Review[] => {
     id: review.id,
     expertId: review.expert_id.toString(), // Convert number to string
     rating: review.rating,
-    comment: review.comment,
+    comment: review.comment || '',
     date: review.date,
     verified: review.verified,
     userId: review.user_id,
@@ -34,7 +34,7 @@ export const adaptReportsToUI = (reports: UserReport[]): Report[] => {
     id: report.id,
     expertId: report.expert_id.toString(), // Convert number to string
     reason: report.reason,
-    details: report.details,
+    details: report.details || '',
     date: report.date,
     status: report.status
   }));

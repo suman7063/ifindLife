@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 import { ExpertIdDB, convertExpertIdToNumber } from '@/types/supabase/expertId';
+import { Review } from '@/types/supabase/reviews';
 
 export const useReviews = () => {
   const hasTakenServiceFrom = async (currentUser: UserProfile | null, expertId: string): Promise<boolean> => {
@@ -96,19 +97,21 @@ export const useReviews = () => {
           comment: comment,
           date: new Date().toISOString(),
           verified: true
-        });
+        })
+        .select();
 
       if (error) throw error;
 
       // Return updated user data to update the local state
       const newReviewId = data && data.length > 0 ? data[0].id : 'temp_id';
       
-      const newReview = {
+      const newReview: Review = {
         id: newReviewId,
         expertId: expertId, // Store as string in our UI
         rating: rating,
         comment: comment,
         date: new Date().toISOString(),
+        verified: true
       };
 
       const updatedUser = {

@@ -3,18 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Expert } from '@/types/supabase';
-
-export interface Review {
-  id: string;
-  expertId: string;
-  userId: string;
-  expertName?: string;
-  userName?: string;
-  rating: number;
-  comment: string;
-  date: string;
-  verified: boolean;
-}
+import { Review } from '@/types/supabase/reviews';
 
 export const useReviewManagement = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -41,7 +30,7 @@ export const useReviewManagement = () => {
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      // Use join syntax
+      // Use proper join syntax
       const { data, error } = await supabase
         .from('user_reviews')
         .select(`
@@ -51,8 +40,7 @@ export const useReviewManagement = () => {
           rating,
           comment,
           date,
-          verified,
-          experts:expert_id (name)
+          verified
         `);
 
       if (error) {
@@ -60,15 +48,34 @@ export const useReviewManagement = () => {
       }
 
       if (data) {
+        // Fetch expert names separately
+        const expertIds = [...new Set(data.map(review => review.expert_id))];
+        const { data: expertsData, error: expertsError } = await supabase
+          .from('experts')
+          .select('id, name')
+          .in('id', expertIds);
+          
+        if (expertsError) {
+          console.error('Error fetching expert names:', expertsError);
+        }
+        
+        // Create a map of expert ID to name
+        const expertNameMap = new Map();
+        if (expertsData) {
+          expertsData.forEach(expert => {
+            expertNameMap.set(String(expert.id), expert.name);
+          });
+        }
+          
         const formattedReviews: Review[] = data.map((review) => ({
           id: review.id,
           expertId: String(review.expert_id),
           userId: review.user_id,
-          expertName: review.experts?.name,
+          expertName: expertNameMap.get(String(review.expert_id)) || 'Unknown Expert',
           rating: review.rating,
-          comment: review.comment,
+          comment: review.comment || '',
           date: review.date,
-          verified: review.verified
+          verified: review.verified || false
         }));
         
         setReviews(formattedReviews);
