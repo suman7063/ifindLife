@@ -76,28 +76,45 @@ export const useReviews = () => {
         };
       }));
       
-      // Create a completely fresh object to avoid circular references
-      const updatedProfile: UserProfile = {
-        ...userProfile,
-        reviews: undefined // Clear existing reviews to avoid circular reference
+      // Create a completely fresh object without any circular references
+      const cleanUserProfile: Omit<UserProfile, 'reviews'> = {
+        id: userProfile.id,
+        name: userProfile.name,
+        email: userProfile.email,
+        phone: userProfile.phone,
+        country: userProfile.country,
+        city: userProfile.city,
+        currency: userProfile.currency,
+        profilePicture: userProfile.profilePicture,
+        walletBalance: userProfile.walletBalance,
+        createdAt: userProfile.createdAt,
+        referralCode: userProfile.referralCode,
+        referredBy: userProfile.referredBy,
+        referralLink: userProfile.referralLink,
+        favoriteExperts: userProfile.favoriteExperts,
+        enrolledCourses: userProfile.enrolledCourses,
+        transactions: userProfile.transactions,
+        reports: userProfile.reports,
+        referrals: userProfile.referrals
       };
       
-      // Add reviews separately after creating the base object
-      if (reviewsWithExpertNames) {
-        updatedProfile.reviews = reviewsWithExpertNames.map(review => ({
-          id: review.id,
-          expertId: convertExpertIdToString(review.expert_id),
-          rating: review.rating,
-          comment: review.comment || '',
-          date: review.date,
-          verified: review.verified || false,
-          userId: review.user_id || '',
-          userName: userProfile.name || 'Anonymous User',
-          expertName: review.expert_name
-        }));
-      } else {
-        updatedProfile.reviews = [];
-      }
+      // Now create the final object including the reviews
+      const updatedProfile = {
+        ...cleanUserProfile,
+        reviews: reviewsWithExpertNames 
+          ? reviewsWithExpertNames.map(review => ({
+              id: review.id,
+              expertId: convertExpertIdToString(review.expert_id),
+              rating: review.rating,
+              comment: review.comment || '',
+              date: review.date,
+              verified: review.verified || false,
+              userId: review.user_id || '',
+              userName: userProfile.name || 'Anonymous User',
+              expertName: review.expert_name
+            }))
+          : []
+      };
       
       return updatedProfile;
     } catch (error: any) {
