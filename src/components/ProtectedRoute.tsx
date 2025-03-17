@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -12,7 +12,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requireSuperAdmin = false 
 }) => {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser } = useUserAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/admin-login" replace />;

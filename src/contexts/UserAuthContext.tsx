@@ -1,9 +1,11 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+
+import React, { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { Session, User as SupabaseUser } from '@supabase/supabase-js';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { fetchUserProfile, updateUserProfile, updateProfilePicture } from '@/utils/userProfileUtils';
 import { UserProfile, Expert, Review, Report, Course, UserTransaction } from '@/types/supabase';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 type UserAuthContextType = {
   currentUser: UserProfile | null;
@@ -29,129 +31,43 @@ type UserAuthContextType = {
   hasTakenServiceFrom: (expertId: number) => boolean;
 };
 
-const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
-
-export const useUserAuth = () => {
-  const context = useContext(UserAuthContext);
-  if (context === undefined) {
-    throw new Error('useUserAuth must be used within a UserAuthProvider');
-  }
-  return context;
-};
-
-const DEFAULT_CURRENCY_MAP: Record<string, string> = {
-  'India': 'INR',
-  'United States': 'USD',
-  'United Kingdom': 'GBP',
-  'Canada': 'CAD',
-  'Australia': 'AUD',
-  // Add more as needed
-};
+export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { login: authLogin, signup: authSignup, logout: authLogout, getSession } = useSupabaseAuth();
 
   // Listen for authentication state changes
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
       if (!session) {
         setCurrentUser(null);
       }
     });
 
     // Initial session check
-    const getInitialSession = async () => {
-      try {
-        setLoading(true);
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        
-        if (session) {
-          await fetchUserProfile(session.user);
+    const initializeAuth = async () => {
+      const session = await getSession();
+      
+      if (session?.user) {
+        const userProfile = await fetchUserProfile(session.user);
+        if (userProfile) {
+          setCurrentUser(userProfile);
         }
-      } catch (error) {
-        console.error('Error getting initial session:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
-    getInitialSession();
+    initializeAuth();
 
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
-  // Fetch user profile when session changes
-  useEffect(() => {
-    if (session?.user) {
-      fetchUserProfile(session.user);
-    }
-  }, [session]);
-
-  const fetchUserProfile = async (authUser: SupabaseUser) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (data) {
-        // Convert from Supabase profile format to our app's User format
-        setCurrentUser({
-          id: data.id,
-          name: data.name,
-          email: data.email || authUser.email,
-          phone: data.phone,
-          country: data.country,
-          city: data.city,
-          currency: data.currency || 'USD',
-          profilePicture: data.profile_picture,
-          walletBalance: Number(data.wallet_balance) || 0,
-          favoriteExperts: [],  // We'll fetch these separately
-          enrolledCourses: [],  // We'll fetch these separately
-          transactions: [],     // We'll fetch these separately
-          reviews: [],          // We'll fetch these separately
-          reports: []           // We'll fetch these separately
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      toast.error('Error loading user profile');
-    }
-  };
-
   const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-
-      if (data.user) {
-        toast.success(`Welcome back, ${data.user.email}!`);
-        return true;
-      }
-      return false;
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed');
-      return false;
-    }
+    const success = await authLogin(email, password);
+    return success;
   };
 
   const signup = async (userData: {
@@ -162,122 +78,39 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     country: string;
     city?: string;
   }): Promise<boolean> => {
-    try {
-      // Determine currency based on country
-      const currency = DEFAULT_CURRENCY_MAP[userData.country] || 'USD';
-
-      const { data, error } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            name: userData.name,
-            phone: userData.phone,
-            country: userData.country,
-            city: userData.city,
-            currency
-          }
-        }
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-
-      toast.success('Account created successfully!');
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed');
-      return false;
-    }
+    const success = await authSignup(userData);
+    return success;
   };
 
   const logout = async () => {
-    try {
-      await supabase.auth.signOut();
+    const success = await authLogout();
+    if (success) {
       setCurrentUser(null);
       navigate('/login');
       toast.info('You have been logged out');
-    } catch (error: any) {
-      toast.error(error.message || 'Logout failed');
     }
   };
 
   const updateProfile = async (profileData: Partial<UserProfile>) => {
     if (!currentUser) return;
 
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          name: profileData.name,
-          phone: profileData.phone,
-          country: profileData.country,
-          city: profileData.city,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentUser.id);
-
-      if (error) {
-        throw error;
-      }
-
+    const success = await updateUserProfile(currentUser.id, profileData);
+    if (success) {
       // Update local state
       setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
-      toast.success('Profile updated successfully');
-    } catch (error: any) {
-      console.error('Error updating profile:', error);
-      toast.error(error.message || 'Failed to update profile');
     }
   };
 
-  const updateProfilePicture = async (file: File): Promise<string> => {
+  const handleUpdateProfilePicture = async (file: File): Promise<string> => {
     if (!currentUser) throw new Error('User not authenticated');
 
-    try {
-      // Upload image to Supabase Storage
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${currentUser.id}-${Date.now()}.${fileExt}`;
-      const filePath = `profile-pictures/${fileName}`;
-
-      // Create a readable stream from the file
-      const { error: uploadError } = await supabase.storage
-        .from('user-profiles')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      // Get the public URL
-      const { data: urlData } = supabase.storage
-        .from('user-profiles')
-        .getPublicUrl(filePath);
-
-      const publicUrl = urlData.publicUrl;
-
-      // Update profile with new picture URL
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ profile_picture: publicUrl })
-        .eq('id', currentUser.id);
-
-      if (updateError) {
-        throw updateError;
-      }
-
-      // Update local state
-      setCurrentUser(prev => prev ? { ...prev, profilePicture: publicUrl } : null);
-      toast.success('Profile picture updated successfully');
-      return publicUrl;
-    } catch (error: any) {
-      console.error('Error updating profile picture:', error);
-      toast.error(error.message || 'Failed to update profile picture');
-      throw error;
-    }
+    const publicUrl = await updateProfilePicture(currentUser.id, file);
+    // Update local state
+    setCurrentUser(prev => prev ? { ...prev, profilePicture: publicUrl } : null);
+    return publicUrl;
   };
 
+  // Placeholder functions to be implemented with Supabase later
   const addToFavorites = (expert: Expert) => {
     if (!currentUser) return;
     toast.info('This feature will be implemented with Supabase soon');
@@ -322,7 +155,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         signup,
         logout,
         updateProfile,
-        updateProfilePicture,
+        updateProfilePicture: handleUpdateProfilePicture,
         addToFavorites,
         removeFromFavorites,
         rechargeWallet,
@@ -337,4 +170,5 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
-export { Expert, Review, Report, Course, UserTransaction };
+// Export types
+export type { Expert, Review, Report, Course, UserTransaction };
