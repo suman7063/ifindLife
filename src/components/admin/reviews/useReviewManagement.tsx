@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -20,7 +19,6 @@ export const useReviewManagement = () => {
   const [editedRating, setEditedRating] = useState(0);
   const [editedComment, setEditedComment] = useState('');
   
-  // Fetch all available experts for the filter dropdown
   useEffect(() => {
     const fetchExperts = async () => {
       try {
@@ -42,29 +40,23 @@ export const useReviewManagement = () => {
     fetchExperts();
   }, []);
   
-  // Fetch reviews on component mount
   useEffect(() => {
     fetchReviews();
   }, []);
   
-  // Computed property for filtered reviews
   const filteredReviews = reviews.filter(review => {
-    // Filter by rating if selected
     if (filterRating > 0 && review.rating !== filterRating) {
       return false;
     }
     
-    // Filter by verification status if selected
     if (filterVerified && !review.verified) {
       return false;
     }
     
-    // Filter by selected expert if any
     if (selectedExpertId && review.expertId !== selectedExpertId) {
       return false;
     }
     
-    // Filter by search query (check both user name and comment)
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesUserName = review.userName.toLowerCase().includes(query);
@@ -75,7 +67,6 @@ export const useReviewManagement = () => {
     return true;
   });
   
-  // Fetch reviews data
   const fetchReviews = async () => {
     setLoading(true);
     try {
@@ -98,16 +89,13 @@ export const useReviewManagement = () => {
         return;
       }
       
-      // Get user names and expert names
       const reviewsData = await Promise.all((data || []).map(async (review) => {
-        // Get user name
         const { data: userData } = await supabase
           .from('users')
           .select('name')
           .eq('id', review.user_id)
           .single();
         
-        // Get expert name
         const { data: expertData } = await supabase
           .from('experts')
           .select('name')
@@ -121,7 +109,7 @@ export const useReviewManagement = () => {
           date: review.date || new Date().toISOString(),
           verified: review.verified || false,
           userId: review.user_id || '',
-          expertId: convertExpertIdToString(review.expert_id), // Convert number to string
+          expertId: convertExpertIdToString(review.expert_id),
           userName: userData?.name || 'Anonymous User',
           expertName: expertData?.name || 'Unknown Expert'
         };
@@ -136,7 +124,6 @@ export const useReviewManagement = () => {
     }
   };
   
-  // Handle edit review
   const handleEdit = (review: Review) => {
     setEditingReview(review);
     setEditedRating(review.rating);
@@ -144,19 +131,16 @@ export const useReviewManagement = () => {
     setIsEditDialogOpen(true);
   };
   
-  // Handle delete prompt
   const handleDeletePrompt = (review: Review) => {
     setDeletingReview(review.id);
     setIsDeleteDialogOpen(true);
   };
   
-  // Update review
   const handleUpdateReview = async () => {
     if (!editingReview) return;
     
     setLoading(true);
     try {
-      // Need to convert string expertId back to number for database
       const expertIdNumber = parseInt(editingReview.expertId);
       
       const { error } = await supabase
@@ -164,7 +148,7 @@ export const useReviewManagement = () => {
         .update({
           rating: editedRating,
           comment: editedComment,
-          verified: true // Mark as verified when edited by admin
+          verified: true
         })
         .eq('id', editingReview.id);
       
@@ -176,7 +160,7 @@ export const useReviewManagement = () => {
       
       toast.success('Review updated successfully');
       setIsEditDialogOpen(false);
-      fetchReviews(); // Refresh reviews
+      fetchReviews();
     } catch (error: any) {
       console.error('Error updating review:', error);
       toast.error(error.message || 'Failed to update review');
@@ -185,7 +169,6 @@ export const useReviewManagement = () => {
     }
   };
   
-  // Delete review
   const handleDeleteReview = async () => {
     if (!deletingReview) return;
     
@@ -204,7 +187,7 @@ export const useReviewManagement = () => {
       
       toast.success('Review deleted successfully');
       setIsDeleteDialogOpen(false);
-      fetchReviews(); // Refresh reviews
+      fetchReviews();
     } catch (error: any) {
       console.error('Error deleting review:', error);
       toast.error(error.message || 'Failed to delete review');

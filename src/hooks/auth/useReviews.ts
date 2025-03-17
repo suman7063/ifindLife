@@ -62,7 +62,7 @@ export const useReviews = () => {
         .select('*')
         .eq('user_id', userProfile.id);
       
-      // Get expert names for each review
+      // Get expert names for each review, but avoid infinite recursion
       const reviewsWithExpertNames = await Promise.all((updatedUserReviews || []).map(async (review) => {
         const { data: expertData } = await supabase
           .from('experts')
@@ -76,7 +76,7 @@ export const useReviews = () => {
         };
       }));
       
-      // Add updated reviews to the profile
+      // Create a new object instead of modifying the original to avoid circular references
       const updatedProfile = {
         ...userProfile,
         reviews: reviewsWithExpertNames ? reviewsWithExpertNames.map(review => ({
