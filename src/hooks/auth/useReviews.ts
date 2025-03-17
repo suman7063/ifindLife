@@ -33,8 +33,7 @@ export const useReviews = () => {
             comment,
             updated_at: new Date().toISOString()
           })
-          .eq('id', existingReviews[0].id)
-          .select();
+          .eq('id', existingReviews[0].id);
         
         if (error) throw error;
         
@@ -63,32 +62,40 @@ export const useReviews = () => {
         .select('*')
         .eq('user_id', userProfile.id);
       
-      // Get expert names for each review
-      const reviewsWithExpertNames = await Promise.all((updatedUserReviews || []).map(async (review) => {
-        const { data: expertData } = await supabase
-          .from('experts')
-          .select('name')
-          .eq('id', convertExpertIdToString(review.expert_id))
-          .single();
-        
-        return {
-          ...review,
-          expert_name: expertData?.name || 'Unknown Expert'
-        };
-      }));
+      if (!updatedUserReviews) {
+        return { success: true, reviews: [] };
+      }
+      
+      // Get expert names for each review using a separate query
+      const expertIds = updatedUserReviews.map(review => review.expert_id);
+      const { data: expertsData } = await supabase
+        .from('experts')
+        .select('id, name')
+        .in('id', expertIds.map(id => convertExpertIdToString(id)));
+      
+      // Create a map of expert IDs to names for easy lookup
+      const expertNameMap = new Map();
+      if (expertsData) {
+        expertsData.forEach(expert => {
+          expertNameMap.set(expert.id, expert.name);
+        });
+      }
       
       // Create formatted reviews array
-      const formattedReviews: Review[] = reviewsWithExpertNames.map(review => ({
-        id: review.id,
-        expertId: convertExpertIdToString(review.expert_id),
-        rating: review.rating,
-        comment: review.comment || '',
-        date: review.date,
-        verified: review.verified || false,
-        userId: review.user_id || '',
-        userName: userProfile.name || 'Anonymous User',
-        expertName: review.expert_name
-      }));
+      const formattedReviews: Review[] = updatedUserReviews.map(review => {
+        const expertIdString = convertExpertIdToString(review.expert_id);
+        return {
+          id: review.id,
+          expertId: expertIdString,
+          rating: review.rating,
+          comment: review.comment || '',
+          date: review.date,
+          verified: review.verified || false,
+          userId: review.user_id || '',
+          userName: userProfile.name || 'Anonymous User',
+          expertName: expertNameMap.get(expertIdString) || 'Unknown Expert'
+        };
+      });
       
       // Return only the success status and reviews
       return {
