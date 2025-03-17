@@ -120,9 +120,16 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
     
-    const updatedUser = await addReview(currentUser, expertId, rating, comment);
-    if (updatedUser) {
-      setCurrentUser(updatedUser);
+    const result = await addReview(currentUser, expertId, rating, comment);
+    if (result.success && currentUser) {
+      // Update the current user's reviews collection without replacing the entire user object
+      setCurrentUser(prevUser => {
+        if (!prevUser) return null;
+        return {
+          ...prevUser,
+          reviews: result.reviews
+        };
+      });
     }
   };
   
