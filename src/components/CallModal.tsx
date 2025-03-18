@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { PhoneCall, PhoneOff, Mic, MicOff, Video, VideoOff, Camera, CameraOff } from 'lucide-react';
+import { PhoneCall, PhoneOff, Mic, MicOff, Video, VideoOff, Camera, CameraOff, ExternalLink } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { useDoxyme } from '@/hooks/auth/useDoxyme';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface CallModalProps {
   isOpen: boolean;
@@ -17,12 +19,15 @@ interface CallModalProps {
 }
 
 const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) => {
-  const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
+  const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended' | 'doxyme'>('connecting');
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [balance, setBalance] = useState(500); // Dummy balance in wallet (₹)
+  const { currentUser } = useUserAuth();
+  const { startProviderSession, joinDoxymeRoom, isLoading } = useDoxyme();
+  const [doxymeRoom, setDoxymeRoom] = useState<{ roomUrl: string; roomName: string } | null>(null);
   
   // Handle call connection
   useEffect(() => {
@@ -78,6 +83,29 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
   
+  // Handle starting a Doxy.me session
+  const handleStartDoxymeSession = () => {
+    if (isLoading) return;
+    
+    const room = startProviderSession(
+      currentUser, 
+      astrologer.id.toString(), 
+      astrologer.name
+    );
+    
+    if (room) {
+      setDoxymeRoom(room);
+      setCallStatus('doxyme');
+    }
+  };
+  
+  // Handle joining a Doxy.me room
+  const handleJoinDoxymeRoom = () => {
+    if (doxymeRoom) {
+      joinDoxymeRoom(doxymeRoom.roomUrl);
+    }
+  };
+  
   // Handle end call
   const handleEndCall = () => {
     setCallStatus('ended');
@@ -95,6 +123,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
       setIsMuted(false);
       setIsVideoOn(true);
       setIsCameraOn(true);
+      setDoxymeRoom(null);
     }, 1500);
   };
   
@@ -128,11 +157,15 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
         <DialogHeader>
           <DialogTitle className="text-center">
             {callStatus === 'connecting' ? 'Connecting...' : 
-             callStatus === 'connected' ? 'Video Call' : 'Call Ended'}
+             callStatus === 'connected' ? 'Video Call' : 
+             callStatus === 'doxyme' ? 'Doxy.me Session' :
+             'Call Ended'}
           </DialogTitle>
           <DialogDescription className="text-center">
             {callStatus === 'connected' ? 
               `Connected with ${astrologer.name} (₹${astrologer.price}/min)` : 
+              callStatus === 'doxyme' ?
+              `Join ${astrologer.name}'s Doxy.me room` :
               callStatus === 'ended' ? 
               `Call with ${astrologer.name} ended` : 
               `Connecting to ${astrologer.name}...`}
@@ -140,36 +173,59 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
         </DialogHeader>
         
         <div className="flex flex-col items-center py-6 space-y-4">
-          <div className="relative w-full max-w-sm aspect-video bg-slate-900 rounded-lg overflow-hidden">
-            {/* Astrologer video (simulated) */}
-            {callStatus !== 'ended' && isVideoOn && (
-              <div className="w-full h-full">
-                <img 
-                  src={astrologer.imageUrl} 
-                  alt={astrologer.name}
-                  className="w-full h-full object-cover opacity-90"
-                />
-                <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 text-xs rounded">
-                  {astrologer.name}
+          {callStatus === 'connecting' && (
+            <div className="w-16 h-16 border-4 border-ifind-aqua border-t-transparent rounded-full animate-spin"></div>
+          )}
+          
+          {callStatus === 'doxyme' && doxymeRoom && (
+            <div className="text-center space-y-4 w-full">
+              <div className="p-4 bg-ifind-aqua/10 rounded-lg">
+                <p className="font-medium text-lg">{doxymeRoom.roomName}</p>
+                <p className="text-sm text-muted-foreground break-all">{doxymeRoom.roomUrl}</p>
+              </div>
+              
+              <Button 
+                onClick={handleJoinDoxymeRoom}
+                className="w-full bg-ifind-aqua hover:bg-ifind-teal"
+              >
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Join Doxy.me Room
+              </Button>
+            </div>
+          )}
+          
+          {(callStatus === 'connected' || callStatus === 'ended') && (
+            <div className="relative w-full max-w-sm aspect-video bg-slate-900 rounded-lg overflow-hidden">
+              {/* Astrologer video (simulated) */}
+              {callStatus !== 'ended' && isVideoOn && (
+                <div className="w-full h-full">
+                  <img 
+                    src={astrologer.imageUrl} 
+                    alt={astrologer.name}
+                    className="w-full h-full object-cover opacity-90"
+                  />
+                  <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 text-xs rounded">
+                    {astrologer.name}
+                  </div>
                 </div>
-              </div>
-            )}
-            
-            {(!isVideoOn || callStatus === 'ended') && (
-              <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                <VideoOff className="h-12 w-12 text-white/50" />
-              </div>
-            )}
-            
-            {/* User camera (simulated) */}
-            {callStatus !== 'ended' && isCameraOn && (
-              <div className="absolute bottom-2 right-2 w-24 h-32 bg-slate-700 rounded overflow-hidden border-2 border-white/20">
-                <div className="w-full h-full flex items-center justify-center">
-                  <Camera className="h-8 w-8 text-white/70" />
+              )}
+              
+              {(!isVideoOn || callStatus === 'ended') && (
+                <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                  <VideoOff className="h-12 w-12 text-white/50" />
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+              
+              {/* User camera (simulated) */}
+              {callStatus !== 'ended' && isCameraOn && (
+                <div className="absolute bottom-2 right-2 w-24 h-32 bg-slate-700 rounded overflow-hidden border-2 border-white/20">
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Camera className="h-8 w-8 text-white/70" />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           {callStatus === 'connected' && (
             <>
@@ -184,6 +240,18 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
             <div className="text-sm text-muted-foreground">
               Duration: {formatDuration(duration)}
             </div>
+          )}
+          
+          {/* Add option to switch to Doxy.me when in connected or connecting state */}
+          {(callStatus === 'connected' || callStatus === 'connecting') && (
+            <Button 
+              onClick={handleStartDoxymeSession}
+              variant="outline" 
+              className="mt-4"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Loading...' : 'Switch to Doxy.me'}
+            </Button>
           )}
         </div>
         

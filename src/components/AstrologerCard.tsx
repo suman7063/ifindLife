@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, Clock, PhoneCall, Video, Award, Heart } from 'lucide-react';
+import { Star, Clock, PhoneCall, Video, Award, Heart, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import CallModal from './CallModal';
 import { toast } from '@/hooks/use-toast';
+import { useDoxyme } from '@/hooks/auth/useDoxyme';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface AstrologerCardProps {
   id: number;
@@ -35,6 +38,8 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   const navigate = useNavigate();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
+  const { currentUser } = useUserAuth();
+  const { startProviderSession, joinDoxymeRoom, isLoading } = useDoxyme();
   
   const handleCallClick = () => {
     if (online && waitTime === 'Available') {
@@ -57,6 +62,31 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
         description: "This expert is currently offline or busy. Please try again later.",
         variant: "destructive"
       });
+    }
+  };
+  
+  const handleDirectDoxymeCall = () => {
+    if (!online || waitTime !== 'Available') {
+      toast({
+        title: "Expert Unavailable",
+        description: "This expert is currently offline or busy. Please try again later.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!currentUser) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to start a video session",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const room = startProviderSession(currentUser, id.toString(), name);
+    if (room) {
+      joinDoxymeRoom(room.roomUrl);
     }
   };
   
@@ -133,6 +163,17 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
           >
             <Video className="h-4 w-4 mr-1" />
             Video
+          </Button>
+        </CardFooter>
+        <CardFooter className="pt-0 pb-3 px-4 border-t-0">
+          <Button 
+            variant="outline" 
+            className="w-full border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10"
+            onClick={handleDirectDoxymeCall}
+            disabled={isLoading}
+          >
+            <ExternalLink className="h-4 w-4 mr-1" />
+            {isLoading ? 'Loading...' : 'Doxy.me Session'}
           </Button>
         </CardFooter>
       </Card>
