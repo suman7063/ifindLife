@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom'; // Using react-router instead of
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Expert } from '@/types/supabase';
+import { ExpertUI } from '@/types/supabase';
 
 export const useSupabaseExpertAuth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const getExpert = async (email: string): Promise<Expert | null> => {
+  const getExpert = async (email: string): Promise<ExpertUI | null> => {
     try {
       const { data, error } = await supabase
         .from('experts')
@@ -23,7 +23,7 @@ export const useSupabaseExpertAuth = () => {
         return null;
       }
       
-      return data as Expert;
+      return data as ExpertUI;
     } catch (error) {
       console.error('Error in getExpert:', error);
       return null;

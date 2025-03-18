@@ -8,8 +8,8 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 // Create a type-safe helper for dynamic table access
-export function getTable<T = any>(tableName: string) {
-  return supabase.from(tableName as any) as any;
+export function getTable<T = any>(tableName: keyof Database['public']['Tables']) {
+  return supabase.from(tableName);
 }
 
 // For strongly typed table access, use these functions:
@@ -29,7 +29,9 @@ export const tables = {
   referral_settings: () => supabase.from('referral_settings'),
   moderation_reports: () => supabase.from('moderation_reports'),
   moderation_actions: () => supabase.from('moderation_actions'),
-  // Add other tables as needed
+  expert_reports: () => supabase.from('expert_reports'),
+  user_expert_services: () => supabase.from('user_expert_services'),
+  admin_users: () => supabase.from('admin_users'),
 };
 
 export default supabase;

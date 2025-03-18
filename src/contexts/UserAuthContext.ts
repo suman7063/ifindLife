@@ -1,7 +1,7 @@
 
 import { createContext } from 'react';
 import { UserProfile } from '@/types/supabase/user';
-import { Expert } from '@/types/expert';
+import { ExpertUI } from '@/types/supabase';
 
 export interface UserAuthContextType {
   currentUser: UserProfile | null;
@@ -19,7 +19,7 @@ export interface UserAuthContextType {
   logout: () => Promise<void>;
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   updateProfilePicture: (file: File) => Promise<string>;
-  addToFavorites: (expert: Expert) => void;
+  addToFavorites: (expert: ExpertUI) => void;
   removeFromFavorites: (expertId: string) => void;
   rechargeWallet: (amount: number) => Promise<void>;
   addReview: (expertId: string, rating: number, comment: string) => void;

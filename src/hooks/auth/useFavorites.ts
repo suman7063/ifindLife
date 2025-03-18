@@ -26,7 +26,7 @@ export const useFavorites = () => {
       // Return updated user data to update the local state
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: [...(currentUser.favoriteExperts || []), { id: expertId } as any],
+        favoriteExperts: [...(currentUser.favoriteExperts || []), { id: expertId }]
       };
 
       toast.success('Added to favorites!');
@@ -57,7 +57,7 @@ export const useFavorites = () => {
       // Return updated user data to update the local state
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: (currentUser.favoriteExperts || []).filter((expert) => expert.id !== expertId),
+        favoriteExperts: (currentUser.favoriteExperts || []).filter((expert: any) => expert.id !== expertId)
       };
 
       toast.success('Removed from favorites!');

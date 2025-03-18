@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { UserProfile, ReferralSettings } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/user';
+import { ReferralSettingsUI } from '@/types/supabase/referrals';
 import { 
   fetchReferralSettings, 
   getReferralLink, 
@@ -11,7 +12,7 @@ import {
 } from '@/utils/referralUtils';
 
 export const useReferral = (userProfile: UserProfile) => {
-  const [settings, setSettings] = useState<ReferralSettings | null>(null);
+  const [settings, setSettings] = useState<ReferralSettingsUI | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
   const [customText, setCustomText] = useState<string>('');
   const [isGettingLink, setIsGettingLink] = useState<boolean>(false);

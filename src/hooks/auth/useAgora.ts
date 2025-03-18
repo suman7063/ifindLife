@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser, IMicrophoneAudioTrack, ICameraVideoTrack } from 'agora-rtc-sdk-ng';
+import AgoraRTC, { IAgoraRTCRemoteUser, UID, IRemoteAudioTrack, IRemoteVideoTrack, IRemoteTrack, IRemoteDataChannel } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -11,7 +11,10 @@ const AGORA_APP_ID = import.meta.env.VITE_AGORA_APP_ID || '';
 export const useAgora = () => {
   // Create an Agora client instance
   const createClient = () => {
-    return AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+    return AgoraRTC.createClient({
+      mode: 'rtc',
+      codec: 'vp8'
+    });
   };
 
   // Create a microphone audio track
@@ -39,27 +42,27 @@ export const useAgora = () => {
 
   // Added missing methods that are used in components
   const useClient = () => {
-    const [client, setClient] = useState<IAgoraRTCClient | null>(null);
-  
+    const [client, setClient] = useState<any>(null);
+
     useEffect(() => {
       const agoraClient = createClient();
       setClient(agoraClient);
-  
+
       return () => {
         if (client) {
           client.leave();
         }
       };
     }, []);
-  
+
     return client;
   };
 
   const useMicrophoneAndCameraTracks = () => {
-    const [tracks, setTracks] = useState<[IMicrophoneAudioTrack, ICameraVideoTrack] | null>(null);
+    const [tracks, setTracks] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
-  
+
     useEffect(() => {
       const initTracks = async () => {
         try {
@@ -67,17 +70,17 @@ export const useAgora = () => {
           const audioTrack = await createMicrophoneTrack();
           const videoTrack = await createCameraTrack();
           setTracks([audioTrack, videoTrack]);
-        } catch (err) {
-          setError(err as Error);
+        } catch (err: any) {
+          setError(err);
           toast.error('Error initializing audio and video tracks');
           console.error('Error initializing audio and video tracks:', err);
         } finally {
           setLoading(false);
         }
       };
-  
+
       initTracks();
-  
+
       return () => {
         if (tracks) {
           tracks[0].close();
@@ -85,7 +88,7 @@ export const useAgora = () => {
         }
       };
     }, []);
-  
+
     return { tracks, loading, error };
   };
 

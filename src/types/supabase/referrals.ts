@@ -1,20 +1,33 @@
 
-// For referral program
-export interface ReferralSettingsUI {
-  referrerReward: number;
-  referredReward: number;
-  active: boolean;
-  description?: string;
-}
-
 export interface ReferralUI {
   id: string;
   referrerId: string;
   referredId: string;
-  referredName?: string;
   referralCode: string;
-  status: 'pending' | 'completed' | 'expired';
+  status: string;
   rewardClaimed: boolean;
-  createdAt?: string;
+  createdAt: string;
   completedAt?: string;
+  
+  // DB format (snake_case)
+  referrer_id?: string;
+  referred_id?: string;
+  referral_code?: string;
+  reward_claimed?: boolean;
+  created_at?: string;
+  completed_at?: string;
+}
+
+export interface ReferralSettingsUI {
+  id: string;
+  referrerReward: number;
+  referredReward: number;
+  active: boolean;
+  description?: string;
+  updatedAt?: string;
+  
+  // DB format (snake_case)
+  referrer_reward?: number;
+  referred_reward?: number;
+  updated_at?: string;
 }

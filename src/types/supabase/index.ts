@@ -1,11 +1,106 @@
 
-// Main export file to maintain backward compatibility
+// This file is maintained for backward compatibility
+// It re-exports all types from the modular structure
 
-// Re-export everything from our modular files
-export * from './tables';
 export * from './user';
+export * from './appointments';
 export * from './reviews';
-export * from './education';
 export * from './referrals';
+export * from './expertId';
+export * from './moderation';
+export * from './education';
+export * from './tables';
 
-// Additional types can be added here if needed for backward compatibility
+// Re-export common types with UI-friendly naming
+export type { UserProfile } from './user';
+export type { Appointment, AppointmentStatus, TimeSlot } from './appointments';
+export type { ReferralUI as Referral, ReferralSettingsUI as ReferralSettings } from './referrals';
+export type { Review } from './reviews';
+
+// Define types for tables not already covered in specific files
+export interface ExpertUI {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  specialties?: string[];
+  experience: string | number;
+  bio?: string;
+  profilePicture?: string;
+  averageRating?: number;
+  reviewsCount?: number;
+  selectedServices?: number[];
+  certificateUrls?: string[];
+  
+  // DB format (snake_case)
+  profile_picture?: string;
+  average_rating?: number;
+  reviews_count?: number;
+  selected_services?: number[];
+  certificate_urls?: string[];
+}
+
+export type Expert = ExpertUI;
+
+export interface UserTransaction {
+  id: string;
+  userId: string;
+  amount: number;
+  currency: string;
+  type: string;
+  date: string;
+  description?: string;
+  
+  // DB format (snake_case)
+  user_id?: string;
+}
+
+export interface UserCourse {
+  id: string;
+  userId: string;
+  title: string;
+  expertId: number;
+  expertName: string;
+  enrollmentDate: string;
+  progress?: number;
+  completed?: boolean;
+  
+  // DB format (snake_case)
+  user_id?: string;
+  expert_id?: number;
+  expert_name?: string;
+  enrollment_date?: string;
+}
+
+export interface UserReport {
+  id: string;
+  userId: string;
+  expertId: number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+  
+  // DB format (snake_case)
+  user_id?: string;
+  expert_id?: number;
+}
+
+export interface UserReview {
+  id: string;
+  userId: string;
+  expertId: number;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+  
+  // DB format (snake_case)
+  user_id?: string;
+  expert_id?: number;
+}

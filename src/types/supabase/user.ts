@@ -1,6 +1,6 @@
 
 import { Report } from './index';
-import { Referral } from './referrals';
+import { ReferralUI } from './referrals';
 import { Review } from './reviews';
 import { Appointment } from './appointments';
 
@@ -39,7 +39,7 @@ export interface UserProfile {
   reports?: Report[];
   reviews?: Review[];
   appointments?: Appointment[];
-  referrals?: Referral[];
+  referrals?: ReferralUI[];
 }
 
 export interface UserInsert {
