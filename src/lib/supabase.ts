@@ -1,14 +1,26 @@
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/integrations/supabase/types';
+import { Database } from '@/types/supabase';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://nmcqyudqvbldxwzhyzma.supabase.co";
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5tY3F5dWRxdmJsZHh3emh5em1hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIyMDg3NzQsImV4cCI6MjA1Nzc4NDc3NH0.xV1bMMoTHuglbW72yoT2Hnh-pqkSWKHTE-mOsOQoC8g";
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
-// Create Supabase client
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Helper function with proper typing for tables
-export function from(table: string) {
-  return supabase.from(table);
+// Create a type-safe helper for dynamic table access
+export function getTable<T = any>(tableName: string) {
+  return supabase.from(tableName as any) as any;
 }
+
+// For strongly typed table access, use these functions:
+export const tables = {
+  experts: () => supabase.from('experts'),
+  appointments: () => supabase.from('appointments'),
+  profiles: () => supabase.from('profiles'),
+  users: () => supabase.from('users'),
+  user_reviews: () => supabase.from('user_reviews'),
+  expert_availability: () => supabase.from('expert_availability'),
+  // Add other tables as needed
+};
+
+export default supabase;

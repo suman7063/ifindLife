@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -10,14 +9,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import AdminUserManagement from '@/components/AdminUserManagement';
 import {
   categoryData,
-  therapistData as expertData,
+  expertData,
   testimonialData,
 } from '@/data/homePageData';
 
 // Import refactored components
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
-import ExpertsEditor from '@/components/admin/TherapistsEditor';
+import ExpertsEditor from '@/components/admin/ExpertsEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import ReviewManagement from '@/components/admin/ReviewManagement';
@@ -44,7 +43,7 @@ const Admin = () => {
       try {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.categories) setCategories(parsedContent.categories);
-        if (parsedContent.therapists) setExperts(parsedContent.therapists);
+        if (parsedContent.experts) setExperts(parsedContent.experts);
         if (parsedContent.testimonials) setTestimonials(parsedContent.testimonials);
         if (parsedContent.heroSettings) setHeroSettings(parsedContent.heroSettings);
       } catch (e) {
@@ -58,7 +57,7 @@ const Admin = () => {
     // In a real application, this would save to a database or localStorage
     localStorage.setItem('ifindlife-content', JSON.stringify({
       categories,
-      therapists: experts,
+      experts,
       testimonials,
       heroSettings
     }));
@@ -96,7 +95,7 @@ const Admin = () => {
             <TabsList className="w-full border-b p-0 rounded-none">
               <TabsTrigger value="hero" className="rounded-none rounded-tl-lg">Hero Section</TabsTrigger>
               <TabsTrigger value="categories" className="rounded-none">Services</TabsTrigger>
-              <TabsTrigger value="therapists" className="rounded-none">Experts</TabsTrigger>
+              <TabsTrigger value="experts" className="rounded-none">Experts</TabsTrigger>
               <TabsTrigger value="testimonials" className="rounded-none">Testimonials</TabsTrigger>
               <TabsTrigger value="reviews" className="rounded-none">Expert Reviews</TabsTrigger>
               <TabsTrigger value="moderation" className="rounded-none">Moderation</TabsTrigger>
@@ -121,10 +120,10 @@ const Admin = () => {
               />
             </TabsContent>
 
-            <TabsContent value="therapists" className="p-6">
+            <TabsContent value="experts" className="p-6">
               <ExpertsEditor 
-                therapists={experts} 
-                setTherapists={setExperts} 
+                experts={experts} 
+                setExperts={setExperts} 
               />
             </TabsContent>
 

@@ -1,434 +1,467 @@
 
 import React, { useState, useEffect } from 'react';
-import { format, addMonths, parseISO, isBefore, addDays } from 'date-fns';
-import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Tables } from '@/types/supabase';
+import { getTable } from '@/lib/supabase';
+import { useExpertAuth } from './hooks/useExpertAuth';
+import { format } from "date-fns";
+import { TimeSlot } from '@/types/supabase/appointments';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { Expert } from '@/types/supabase/tables';
 
-interface TimeSlot {
-  id: string;
-  expertId: string;
-  date: string;
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
-}
+const timeSlots = [
+  "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
+];
 
-interface ExpertAvailabilityProps {
-  expert: Expert;
-}
+const formatDate = (date: Date) => format(date, 'yyyy-MM-dd');
 
-const ExpertAvailability: React.FC<ExpertAvailabilityProps> = ({ expert }) => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('17:00');
-  const [isAvailable, setIsAvailable] = useState(true);
+const ExpertAvailability: React.FC = () => {
+  const [date, setDate] = useState<Date | undefined>(new Date());
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [selectedTime, setSelectedTime] = useState('');
+  const [selectedTimeFrame, setSelectedTimeFrame] = useState<'single' | 'recurring'>('single');
+  const [repeatDays, setRepeatDays] = useState<number[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [slotToDelete, setSlotToDelete] = useState<TimeSlot | null>(null);
 
-  // Fetch time slots for the selected date
+  const { expert } = useExpertAuth();
+
   useEffect(() => {
-    if (selectedDate && expert?.id) {
-      fetchTimeSlotsForDate(format(selectedDate, 'yyyy-MM-dd'));
+    if (date && expert?.id) {
+      fetchAvailableSlots();
     }
-  }, [selectedDate, expert?.id]);
+  }, [date, expert]);
 
-  const fetchTimeSlotsForDate = async (dateString: string) => {
-    setIsLoading(true);
+  const fetchAvailableSlots = async () => {
+    if (!date || !expert?.id) return;
+    
     try {
-      const { data, error } = await supabase
-        .from('expert_availability')
-        .select('*')
-        .eq('expert_id', expert.id)
-        .eq('date', dateString);
-
-      if (error) throw error;
-
-      // Transform from database format
-      const formattedTimeSlots: TimeSlot[] = data?.map(slot => ({
-        id: String(slot.id),
-        expertId: String(slot.expert_id),
-        date: String(slot.date),
-        startTime: String(slot.start_time),
-        endTime: String(slot.end_time),
-        isAvailable: Boolean(slot.is_available)
-      })) || [];
-
-      setTimeSlots(formattedTimeSlots);
-    } catch (error) {
-      console.error('Error fetching time slots:', error);
-      toast.error('Failed to load availability');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const addTimeSlot = async () => {
-    if (!selectedDate) {
-      toast.error('Please select a date');
-      return;
-    }
-
-    // Validate time slot
-    if (startTime >= endTime) {
-      toast.error('End time must be after start time');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      setIsLoading(true);
+      const formattedDate = formatDate(date);
       
-      // Check for overlapping slots
-      const overlapping = timeSlots.some(slot => {
-        return (
-          (startTime >= slot.startTime && startTime < slot.endTime) ||
-          (endTime > slot.startTime && endTime <= slot.endTime) ||
-          (startTime <= slot.startTime && endTime >= slot.endTime)
-        );
-      });
-
-      if (overlapping) {
-        toast.error('This time slot overlaps with an existing one');
+      // Using the getTable helper function to access the expert_availability table
+      const { data, error } = await getTable('expert_availability')
+        .select()
+        .eq('expert_id', expert.id.toString())
+        .eq('date', formattedDate);
+      
+      if (error) {
+        console.error("Error fetching availability:", error);
+        toast.error("Failed to load availability");
         return;
       }
-
-      // Add new time slot
-      const { data, error } = await supabase
-        .from('expert_availability')
-        .insert({
-          expert_id: expert.id,
-          date: formattedDate,
-          start_time: startTime,
-          end_time: endTime,
-          is_available: isAvailable
-        })
-        .select();
-
-      if (error) throw error;
-
-      // Add the new slot to the UI
-      if (data && data.length > 0) {
-        const newSlot: TimeSlot = {
-          id: String(data[0].id),
-          expertId: String(data[0].expert_id),
-          date: String(data[0].date),
-          startTime: String(data[0].start_time),
-          endTime: String(data[0].end_time),
-          isAvailable: Boolean(data[0].is_available)
-        };
-
-        setTimeSlots([...timeSlots, newSlot]);
-        toast.success('Time slot added successfully');
-      }
-    } catch (error) {
-      console.error('Error adding time slot:', error);
-      toast.error('Failed to add time slot');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateTimeSlot = async (slotId: string, isAvailable: boolean) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('expert_availability')
-        .update({ 
-          is_available: isAvailable 
-        })
-        .eq('id', slotId);
-
-      if (error) throw error;
-
-      // Update the UI
-      setTimeSlots(timeSlots.map(slot => 
-        slot.id === slotId ? { ...slot, isAvailable } : slot
-      ));
-
-      toast.success('Time slot updated successfully');
-    } catch (error) {
-      console.error('Error updating time slot:', error);
-      toast.error('Failed to update time slot');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const deleteTimeSlot = async (slotId: string) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('expert_availability')
-        .delete()
-        .eq('id', slotId);
-
-      if (error) throw error;
-
-      // Update the UI
-      setTimeSlots(timeSlots.filter(slot => slot.id !== slotId));
-      toast.success('Time slot removed successfully');
-    } catch (error) {
-      console.error('Error deleting time slot:', error);
-      toast.error('Failed to remove time slot');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Disable dates in the past or more than 3 months in the future
-  const disabledDays = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    return isBefore(date, today) || isBefore(addMonths(today, 3), date);
-  };
-
-  // Block a full day as unavailable
-  const blockFullDay = async () => {
-    if (!selectedDate) {
-      toast.error('Please select a date');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      // First, delete any existing slots for this day
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       
-      await supabase
-        .from('expert_availability')
-        .delete()
-        .eq('expert_id', expert.id)
-        .eq('date', formattedDate);
-
-      // Add a full-day unavailable slot
-      const { data, error } = await supabase
-        .from('expert_availability')
-        .insert({
-          expert_id: expert.id,
-          date: formattedDate,
-          start_time: '00:00',
-          end_time: '23:59',
-          is_available: false
-        })
-        .select();
-
-      if (error) throw error;
-
-      // Update the UI
-      fetchTimeSlotsForDate(formattedDate);
-      toast.success('Day marked as unavailable');
+      // Map the data to TimeSlot format
+      const slots: TimeSlot[] = data ? data.map(slot => ({
+        id: slot.id,
+        expertId: slot.expert_id,
+        date: slot.date,
+        startTime: slot.start_time,
+        endTime: slot.end_time,
+        isAvailable: slot.is_available
+      })) : [];
+      
+      setAvailableSlots(slots);
     } catch (error) {
-      console.error('Error blocking day:', error);
-      toast.error('Failed to block day');
+      console.error("Error in fetchAvailableSlots:", error);
+      toast.error("An error occurred while loading availability");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Set standard working hours for a range of days
-  const setStandardHours = async () => {
-    if (!selectedDate) {
-      toast.error('Please select a starting date');
+  const isTimeSlotAvailable = (time: string) => {
+    return availableSlots.some(slot => 
+      slot.startTime === time && slot.isAvailable
+    );
+  };
+
+  const isTimeSlotBooked = (time: string) => {
+    return availableSlots.some(slot => 
+      slot.startTime === time && !slot.isAvailable
+    );
+  };
+
+  const isTimeSlotScheduled = (time: string) => {
+    return availableSlots.some(slot => slot.startTime === time);
+  };
+
+  const handleOpenSlotDialog = (time: string) => {
+    setSelectedTime(time);
+    setOpenDialog(true);
+  };
+
+  const getCurrentTimeSlot = (time: string) => {
+    return availableSlots.find(slot => slot.startTime === time);
+  };
+
+  const handleToggleAvailability = async (time: string) => {
+    if (!date || !expert?.id) return;
+    
+    try {
+      const currentSlot = getCurrentTimeSlot(time);
+      const formattedDate = formatDate(date);
+      
+      if (currentSlot) {
+        // Update existing slot
+        const { error } = await getTable('expert_availability')
+          .update({ 
+            is_available: !currentSlot.isAvailable 
+          })
+          .eq('id', currentSlot.id);
+          
+        if (error) throw error;
+        
+        setAvailableSlots(prev => 
+          prev.map(slot => 
+            slot.id === currentSlot.id 
+              ? { ...slot, isAvailable: !slot.isAvailable } 
+              : slot
+          )
+        );
+        
+        toast.success(`Time slot ${currentSlot.isAvailable ? 'marked as unavailable' : 'marked as available'}`);
+      } else {
+        // Create new slot
+        const endTime = time.split(':').map(Number);
+        endTime[0] += 1;
+        const endTimeString = `${endTime[0].toString().padStart(2, '0')}:00`;
+        
+        const newSlot = {
+          expert_id: expert.id.toString(),
+          date: formattedDate,
+          start_time: time,
+          end_time: endTimeString,
+          is_available: true
+        };
+        
+        const { data, error } = await getTable('expert_availability')
+          .insert(newSlot)
+          .select();
+          
+        if (error) throw error;
+        
+        if (data && data[0]) {
+          const addedSlot: TimeSlot = {
+            id: data[0].id,
+            expertId: data[0].expert_id,
+            date: data[0].date,
+            startTime: data[0].start_time,
+            endTime: data[0].end_time,
+            isAvailable: data[0].is_available
+          };
+          
+          setAvailableSlots(prev => [...prev, addedSlot]);
+          toast.success('Time slot added as available');
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling availability:", error);
+      toast.error("Failed to update availability");
+    }
+  };
+
+  const handleSetRecurring = async () => {
+    if (!date || !expert?.id || !selectedTime || repeatDays.length === 0) {
+      toast.error("Please select all required information");
       return;
     }
-
-    const startDate = selectedDate;
-    const endDate = addDays(startDate, 6); // Set for one week
-
-    setIsLoading(true);
+    
     try {
-      // Standard working hours (9am-5pm)
-      const workingHours = [
-        { startTime: '09:00', endTime: '12:00' },
-        { startTime: '13:00', endTime: '17:00' }
-      ];
-
-      // Loop through each day in the range
-      let currentDate = startDate;
-      const bulkInsertData = [];
-
-      while (!isBefore(endDate, currentDate)) {
-        const formattedDate = format(currentDate, 'yyyy-MM-dd');
-        
-        // Add morning and afternoon slots
-        for (const hours of workingHours) {
-          bulkInsertData.push({
-            expert_id: expert.id,
-            date: formattedDate,
-            start_time: hours.startTime,
-            end_time: hours.endTime,
-            is_available: true
-          });
+      setIsLoading(true);
+      const currentDate = new Date(date);
+      const promises = [];
+      
+      // Process each selected day of the week
+      for (let i = 0; i < 4; i++) { // Set for the next 4 weeks
+        for (const dayOffset of repeatDays) {
+          const targetDate = new Date(currentDate);
+          targetDate.setDate(currentDate.getDate() + (dayOffset - currentDate.getDay()) + (i * 7));
+          
+          // Skip dates in the past
+          if (targetDate < new Date()) continue;
+          
+          const formattedDate = formatDate(targetDate);
+          
+          // Check if slot already exists
+          const { data: existingSlots } = await getTable('expert_availability')
+            .select()
+            .eq('expert_id', expert.id.toString())
+            .eq('date', formattedDate)
+            .eq('start_time', selectedTime);
+            
+          if (existingSlots && existingSlots.length > 0) {
+            // Update existing slot
+            promises.push(
+              getTable('expert_availability')
+                .update({ is_available: true })
+                .eq('id', existingSlots[0].id)
+            );
+          } else {
+            // Create new slot
+            const endTime = selectedTime.split(':').map(Number);
+            endTime[0] += 1;
+            const endTimeString = `${endTime[0].toString().padStart(2, '0')}:00`;
+            
+            promises.push(
+              getTable('expert_availability')
+                .insert({
+                  expert_id: expert.id.toString(),
+                  date: formattedDate,
+                  start_time: selectedTime,
+                  end_time: endTimeString,
+                  is_available: true
+                })
+            );
+          }
         }
-
-        currentDate = addDays(currentDate, 1);
       }
-
-      // Batch insert all slots
-      const { error } = await supabase
-        .from('expert_availability')
-        .insert(bulkInsertData);
-
-      if (error) throw error;
-
-      // Refresh the current view
-      fetchTimeSlotsForDate(format(selectedDate, 'yyyy-MM-dd'));
-      toast.success('Standard working hours set for the week');
+      
+      await Promise.all(promises);
+      setOpenDialog(false);
+      fetchAvailableSlots();
+      toast.success('Recurring availability set successfully');
     } catch (error) {
-      console.error('Error setting standard hours:', error);
-      toast.error('Failed to set standard hours');
+      console.error("Error setting recurring availability:", error);
+      toast.error("Failed to set recurring availability");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteSlot = () => {
+    if (!slotToDelete) return;
+    
+    setIsLoading(true);
+    getTable('expert_availability')
+      .delete()
+      .eq('id', slotToDelete.id)
+      .then(({ error }) => {
+        if (error) {
+          throw error;
+        }
+        setAvailableSlots(prev => 
+          prev.filter(slot => slot.id !== slotToDelete.id)
+        );
+        toast.success('Time slot removed');
+      })
+      .catch(error => {
+        console.error("Error deleting slot:", error);
+        toast.error("Failed to delete time slot");
+      })
+      .finally(() => {
+        setDeleteDialogOpen(false);
+        setSlotToDelete(null);
+        setIsLoading(false);
+      });
+  };
+
+  const confirmDeleteSlot = (slot: TimeSlot) => {
+    setSlotToDelete(slot);
+    setDeleteDialogOpen(true);
+  };
+
+  const toggleRepeatDay = (day: number) => {
+    setRepeatDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day) 
+        : [...prev, day]
+    );
+  };
+
+  const getDayLabel = (day: number) => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    return days[day];
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Select Date</CardTitle>
-          <CardDescription>Choose a date to manage your availability</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            disabled={disabledDays}
-            className="rounded-md border"
-          />
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Availability</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div>
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              className="border rounded-md"
+              disabled={{ before: new Date() }}
+            />
+            
+            <div className="mt-4">
+              <h3 className="font-medium mb-2">Legend</h3>
+              <div className="flex items-center space-x-2 mb-1">
+                <div className="w-4 h-4 bg-ifind-teal/20 rounded"></div>
+                <span className="text-sm">Available</span>
+              </div>
+              <div className="flex items-center space-x-2 mb-1">
+                <div className="w-4 h-4 bg-red-100 rounded"></div>
+                <span className="text-sm">Unavailable</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="w-4 h-4 bg-gray-100 border border-gray-300 rounded"></div>
+                <span className="text-sm">Not set</span>
+              </div>
+            </div>
+          </div>
           
-          <div className="mt-4 space-y-2">
-            <Button 
-              onClick={blockFullDay} 
-              variant="outline" 
-              className="w-full"
-              disabled={isLoading}
-            >
-              Block Entire Day
-            </Button>
-            
-            <Button 
-              onClick={setStandardHours} 
-              variant="outline" 
-              className="w-full"
-              disabled={isLoading}
-            >
-              Set Standard Hours (Week)
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {selectedDate ? format(selectedDate, 'EEEE, MMMM d, yyyy') : 'Time Slots'}
-          </CardTitle>
-          <CardDescription>Manage your availability for this date</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="startTime">Start Time</Label>
-                <Input
-                  id="startTime"
-                  type="time"
-                  value={startTime}
-                  onChange={e => setStartTime(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="endTime">End Time</Label>
-                <Input
-                  id="endTime"
-                  type="time"
-                  value={endTime}
-                  onChange={e => setEndTime(e.target.value)}
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="available"
-                checked={isAvailable}
-                onCheckedChange={setIsAvailable}
-              />
-              <Label htmlFor="available">Available for Booking</Label>
-            </div>
-            
-            <Button 
-              onClick={addTimeSlot} 
-              className="w-full"
-              disabled={isLoading}
-            >
-              Add Time Slot
-            </Button>
-          </div>
-
-          <div className="mt-6 space-y-2">
-            <h3 className="text-sm font-medium">Current Time Slots</h3>
+          <div>
+            <h3 className="font-medium mb-4">
+              Time Slots for {date ? format(date, 'EEEE, MMMM do, yyyy') : ''}
+            </h3>
             
             {isLoading ? (
-              <div className="text-center py-4">Loading...</div>
-            ) : timeSlots.length === 0 ? (
-              <div className="text-center py-4 text-muted-foreground">
-                No time slots set for this date
-              </div>
+              <div className="py-8 text-center">Loading availability...</div>
             ) : (
-              <div className="space-y-2">
-                {timeSlots.map(slot => (
-                  <div 
-                    key={slot.id} 
-                    className={`flex items-center justify-between p-3 rounded-md border ${
-                      slot.isAvailable ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'
-                    }`}
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {slot.startTime} - {slot.endTime}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {slot.isAvailable ? 'Available' : 'Unavailable'}
-                      </p>
-                    </div>
-                    
-                    <div className="flex space-x-2">
+              <div className="grid grid-cols-2 gap-2">
+                {timeSlots.map(time => {
+                  const currentSlot = getCurrentTimeSlot(time);
+                  const isAvailable = isTimeSlotAvailable(time);
+                  const isBooked = isTimeSlotBooked(time);
+                  const isScheduled = isTimeSlotScheduled(time);
+                  
+                  return (
+                    <div key={time} className="relative">
                       <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => updateTimeSlot(slot.id, !slot.isAvailable)}
+                        variant={isAvailable ? "default" : isBooked ? "destructive" : "outline"}
+                        className={`w-full ${isAvailable ? 'bg-ifind-teal/20 hover:bg-ifind-teal/30 text-ifind-teal border border-ifind-teal/20' : 
+                          isBooked ? 'bg-red-100 hover:bg-red-200 text-red-600 border border-red-200' : 
+                          'bg-gray-100'}`}
+                        onClick={() => handleOpenSlotDialog(time)}
                       >
-                        {slot.isAvailable ? 'Block' : 'Unblock'}
+                        {time}
                       </Button>
                       
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => deleteTimeSlot(slot.id)}
-                      >
-                        Remove
-                      </Button>
+                      {isScheduled && (
+                        <button 
+                          className="absolute -top-1 -right-1 bg-white rounded-full p-0.5 shadow-sm border border-gray-200"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (currentSlot) confirmDeleteSlot(currentSlot);
+                          }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500 hover:text-red-500">
+                            <path d="M18 6 6 18"></path>
+                            <path d="m6 6 12 12"></path>
+                          </svg>
+                        </button>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedTime} - {date ? format(date, 'EEEE, MMMM do, yyyy') : ''}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="timeframe">Time Frame</Label>
+                <Select 
+                  value={selectedTimeFrame} 
+                  onValueChange={(value) => setSelectedTimeFrame(value as 'single' | 'recurring')}
+                >
+                  <SelectTrigger id="timeframe">
+                    <SelectValue placeholder="Select time frame" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">Single day</SelectItem>
+                    <SelectItem value="recurring">Recurring weekly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedTimeFrame === 'recurring' && (
+                <div className="space-y-2">
+                  <Label>Repeat on these days</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[0, 1, 2, 3, 4, 5, 6].map(day => (
+                      <Badge 
+                        key={day}
+                        variant={repeatDays.includes(day) ? "default" : "outline"}
+                        className={`cursor-pointer ${repeatDays.includes(day) ? 'bg-ifind-teal hover:bg-ifind-teal/80' : ''}`}
+                        onClick={() => toggleRepeatDay(day)}
+                      >
+                        {getDayLabel(day)}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="availability">Mark as available</Label>
+                  <Switch 
+                    id="availability"
+                    checked={!getCurrentTimeSlot(selectedTime) || getCurrentTimeSlot(selectedTime)?.isAvailable}
+                    onCheckedChange={() => handleToggleAvailability(selectedTime)}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setOpenDialog(false)}>Cancel</Button>
+                {selectedTimeFrame === 'single' ? (
+                  <Button 
+                    onClick={() => {
+                      handleToggleAvailability(selectedTime);
+                      setOpenDialog(false);
+                    }}
+                    className="bg-ifind-aqua hover:bg-ifind-teal"
+                  >
+                    Save
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleSetRecurring}
+                    className="bg-ifind-aqua hover:bg-ifind-teal"
+                    disabled={repeatDays.length === 0}
+                  >
+                    Set Recurring
+                  </Button>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Deletion</DialogTitle>
+            </DialogHeader>
+            <p>Are you sure you want to delete this time slot?</p>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleDeleteSlot}>
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
   );
 };
 
