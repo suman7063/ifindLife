@@ -1,10 +1,10 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { from } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { useAgora } from './useAgora';
-import { Appointment, AppointmentRow, AppointmentStatus } from '@/types/supabase/appointments';
+import { Appointment, AppointmentStatus } from '@/types/supabase/appointments';
 
 export type { Appointment, AppointmentStatus } from '@/types/supabase/appointments';
 
@@ -20,8 +20,7 @@ export const useAppointments = () => {
     setIsLoading(true);
     try {
       // Using a type assertion to specify the expected return type
-      const { data, error } = await supabase
-        .from('appointments')
+      const { data, error } = await from('appointments')
         .select('*')
         .eq('user_id', userId)
         .order('appointment_date', { ascending: true });
@@ -68,8 +67,7 @@ export const useAppointments = () => {
     
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('appointments')
+      const { data, error } = await from('appointments')
         .select('*')
         .eq('expert_id', expertId)
         .order('appointment_date', { ascending: true });
@@ -134,8 +132,7 @@ export const useAppointments = () => {
       const token = generateToken(channelName);
       const uid = Math.floor(Math.random() * 1000000);
       
-      const { data, error } = await supabase
-        .from('appointments')
+      const { data, error } = await from('appointments')
         .insert({
           user_id: user.id,
           expert_id: expertId,
@@ -201,8 +198,7 @@ export const useAppointments = () => {
     setIsLoading(true);
     try {
       // First, get the appointment details
-      const { data: appointmentData, error: fetchError } = await supabase
-        .from('appointments')
+      const { data: appointmentData, error: fetchError } = await from('appointments')
         .select('*')
         .eq('id', appointmentId)
         .single();
@@ -211,8 +207,7 @@ export const useAppointments = () => {
       
       // Update the appointment status
       const status = isExpert ? 'no-show-expert' : 'cancelled';
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await from('appointments')
         .update({ 
           status: status as AppointmentStatus,
           refunded: isExpert // Refund if expert cancels
@@ -249,8 +244,7 @@ export const useAppointments = () => {
     setIsLoading(true);
     try {
       // Get current appointment details
-      const { data: appointment, error: fetchError } = await supabase
-        .from('appointments')
+      const { data: appointment, error: fetchError } = await from('appointments')
         .select('*')
         .eq('id', appointmentId)
         .single();
@@ -262,8 +256,7 @@ export const useAppointments = () => {
       const newExtensionCount = (appointment.extension_count || 0) + 1;
       
       // Update the appointment
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await from('appointments')
         .update({ 
           duration: newDuration,
           extension_count: newExtensionCount
@@ -287,8 +280,7 @@ export const useAppointments = () => {
   const completeSession = async (appointmentId: string, actualDuration: number) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await from('appointments')
         .update({ 
           status: 'completed' as AppointmentStatus,
           actual_duration: actualDuration
@@ -312,8 +304,7 @@ export const useAppointments = () => {
   const markUserNoShow = async (appointmentId: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await from('appointments')
         .update({ status: 'no-show-user' as AppointmentStatus })
         .eq('id', appointmentId);
         
@@ -334,8 +325,7 @@ export const useAppointments = () => {
   const markExpertNoShow = async (appointmentId: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await from('appointments')
         .update({ 
           status: 'no-show-expert' as AppointmentStatus,
           refunded: true

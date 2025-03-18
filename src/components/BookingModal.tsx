@@ -11,8 +11,8 @@ import { CalendarIcon, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useUserAuth } from '@/hooks/useUserAuth';
-import { supabase } from '@/lib/supabase';
-import { ExpertAvailability } from '@/types/supabase/tables';
+import { from } from '@/lib/supabase';
+import { useAppointments } from '@/hooks/auth/useAppointments';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -35,7 +35,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) 
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   
-  const { currentUser, bookAppointment } = useUserAuth();
+  const { currentUser } = useUserAuth();
+  const { bookAppointment } = useAppointments();
   
   // Reset form when modal opens/closes
   useEffect(() => {
@@ -62,8 +63,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) 
       
       try {
         // Fetch expert's availability for the selected date
-        const { data, error } = await supabase
-          .from('expert_availability')
+        const { data, error } = await from('expert_availability')
           .select('*')
           .eq('expert_id', expert.id.toString())
           .eq('date', formattedDate);
@@ -71,11 +71,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) 
         if (error) throw error;
         
         // Transform the data to time slots
-        const slots = data.map(slot => ({
+        const slots = data?.map(slot => ({
           startTime: slot.start_time,
           endTime: slot.end_time,
           isAvailable: slot.is_available
-        }));
+        })) || [];
         
         // If no slots defined for this date, generate default slots (9 AM to 7 PM)
         if (slots.length === 0) {
@@ -136,21 +136,21 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) 
       const appointmentDateTime = `${formattedDate}T${timeSlot}`;
       
       // Book the appointment
-      const result = await bookAppointment({
-        expertId: expert.id.toString(),
-        expertName: expert.name,
-        appointmentDate: appointmentDateTime,
-        duration: duration,
-        notes: notes,
-        price: totalPrice,
-        currency: 'INR'
-      });
+      const result = await bookAppointment(
+        currentUser,
+        expert.id.toString(),
+        expert.name,
+        appointmentDateTime,
+        duration,
+        totalPrice,
+        'INR'
+      );
       
-      if (result.success) {
+      if (result) {
         toast.success('Appointment booked successfully!');
         onClose();
       } else {
-        toast.error(result.message || 'Failed to book appointment');
+        toast.error('Failed to book appointment');
       }
     } catch (error) {
       console.error('Error booking appointment:', error);

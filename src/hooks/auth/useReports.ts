@@ -1,61 +1,73 @@
 
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { ExpertIdDB, convertExpertIdToNumber } from '@/types/supabase/expertId';
-import { Report } from '@/types/supabase/reviews';
+import { from } from '@/lib/supabase';
 
-export const useReports = () => {
-  const addReport = async (currentUser: UserProfile | null, expertId: string, reason: string, details: string) => {
-    if (!currentUser) {
-      toast.error('Please log in to add a report');
+const useReports = () => {
+  // Add a new report
+  const addReport = async (user: UserProfile, expertId: string, reason: string, details: string) => {
+    if (!user || !user.id) {
+      toast.error('You must be logged in to report an expert');
       return null;
     }
-
+    
     try {
-      // Convert string ID to number for database
-      const expertIdNumber: ExpertIdDB = convertExpertIdToNumber(expertId);
+      const today = new Date().toISOString().split('T')[0];
       
-      const { data, error } = await supabase
-        .from('user_reports')
+      // Add the report
+      const { error } = await from('user_reports')
         .insert({
-          user_id: currentUser.id,
-          expert_id: expertIdNumber,
-          reason: reason,
-          details: details,
-          date: new Date().toISOString(),
-          status: 'pending',
-        })
-        .select();
-
+          user_id: user.id,
+          expert_id: Number(expertId),
+          reason,
+          details,
+          date: today,
+          status: 'pending'
+        });
+        
       if (error) throw error;
-
-      // Return updated user data to update the local state
-      const newReportId = data && data.length > 0 ? data[0].id : 'temp_id';
       
-      const newReport: Report = {
-        id: newReportId,
-        expertId: expertId, // Store as string in our UI
-        reason,
-        details,
-        date: new Date().toISOString(),
-        status: 'pending',
+      toast.success('Report submitted successfully');
+      
+      // Return the updated user with reports
+      const { data: reportsData, error: reportsError } = await from('user_reports')
+        .select('*')
+        .eq('user_id', user.id);
+        
+      if (reportsError) throw reportsError;
+      
+      // Update the user object with the reports
+      return {
+        ...user,
+        reports: reportsData
       };
-
-      const updatedUser = {
-        ...currentUser,
-        reports: [...(currentUser.reports || []), newReport],
-      };
-
-      toast.success('Report added successfully!');
-      return updatedUser;
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to add report');
+    } catch (error) {
+      console.error('Error adding report:', error);
+      toast.error('Failed to submit report');
       return null;
     }
   };
-
+  
+  // Get reports for a user
+  const getUserReports = async (userId: string) => {
+    try {
+      const { data, error } = await from('user_reports')
+        .select('*')
+        .eq('user_id', userId);
+        
+      if (error) throw error;
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error fetching user reports:', error);
+      return [];
+    }
+  };
+  
   return {
-    addReport
+    addReport,
+    getUserReports
   };
 };
+
+export default useReports;

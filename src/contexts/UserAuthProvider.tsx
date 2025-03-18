@@ -11,9 +11,10 @@ import { UserProfile, Expert } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { processReferralCode } from '@/utils/referralUtils';
-import { useReports } from '@/hooks/auth/useReports';
-import { useReviews } from '@/hooks/auth/useReviews';
+import useReports from '@/hooks/auth/useReports';
+import useReviews from '@/hooks/auth/useReviews';
 import { useWallet } from '@/hooks/auth/useWallet';
+import { useAppointments } from '@/hooks/auth/useAppointments';
 
 // Import the context definition
 import { UserAuthContext, UserAuthContextType } from './UserAuthContext';
@@ -25,6 +26,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const { addReport } = useReports();
   const { addReview, hasTakenServiceFrom } = useReviews();
   const { rechargeWallet } = useWallet();
+  const { bookAppointment: bookUserAppointment } = useAppointments();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -176,6 +178,46 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return `${window.location.origin}/signup?ref=${currentUser.referralCode}`;
   };
 
+  const handleBookAppointment = async (appointmentData: {
+    expertId: string;
+    expertName: string;
+    appointmentDate: string;
+    duration: number;
+    notes?: string;
+    price: number;
+    currency: string;
+  }): Promise<{ success: boolean; message?: string }> => {
+    if (!currentUser) {
+      return { success: false, message: 'User not authenticated' };
+    }
+
+    try {
+      const result = await bookUserAppointment(
+        currentUser,
+        appointmentData.expertId,
+        appointmentData.expertName,
+        appointmentData.appointmentDate,
+        appointmentData.duration,
+        appointmentData.price,
+        appointmentData.currency,
+        undefined, // service_id
+        appointmentData.notes
+      );
+
+      if (result) {
+        return { success: true };
+      } else {
+        return { success: false, message: 'Failed to book appointment' };
+      }
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      return { 
+        success: false, 
+        message: error instanceof Error ? error.message : 'An unknown error occurred' 
+      };
+    }
+  };
+
   const contextValue: UserAuthContextType = {
     currentUser,
     isAuthenticated: !!currentUser,
@@ -191,7 +233,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     reportExpert: handleReportExpert,
     getExpertShareLink,
     hasTakenServiceFrom: (expertId) => hasTakenServiceFrom(currentUser, expertId),
-    getReferralLink
+    getReferralLink,
+    bookAppointment: handleBookAppointment
   };
 
   return (

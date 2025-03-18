@@ -5,7 +5,7 @@ import AgoraRTC, { IAgoraRTCClient, IMicrophoneAudioTrack, ICameraVideoTrack } f
 // Setup Agora client
 const APP_ID = "your-agora-app-id"; // Replace with actual Agora App ID
 
-const useAgora = () => {
+export const useAgora = () => {
   const createClient = () => {
     return AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
   };
@@ -38,5 +38,3 @@ const useAgora = () => {
     generateChannelName
   };
 };
-
-export { useAgora };

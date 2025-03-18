@@ -35,7 +35,7 @@ const TopTherapistsSection = () => {
               Connect with our highly-rated, verified therapists for a personalized consultation.
             </p>
           </div>
-          <Link to="/therapists">
+          <Link to="/experts">
             <Button variant="outline" className="border-ifind-purple text-ifind-purple hover:bg-ifind-purple hover:text-white">
               View All
               <ChevronRight className="ml-1 h-4 w-4" />

@@ -13,7 +13,7 @@ import ExpertLogin from "./pages/ExpertLogin";
 import UserDashboard from "./pages/UserDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import Experts from "./pages/Experts";
-import AstrologerDetail from "./pages/AstrologerDetail";
+import ExpertDetail from "./pages/ExpertDetail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import MigrateData from "./pages/MigrateData";
@@ -34,7 +34,7 @@ function App() {
       <Route path="/user-dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
       <Route path="/expert-dashboard" element={<ProtectedRoute><ExpertDashboard /></ProtectedRoute>} />
       <Route path="/experts" element={<Experts />} />
-      <Route path="/experts/:id" element={<AstrologerDetail />} />
+      <Route path="/experts/:id" element={<ExpertDetail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/migrate-data" element={<MigrateData />} />
