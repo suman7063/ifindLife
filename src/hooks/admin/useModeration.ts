@@ -5,7 +5,9 @@ import { toast } from 'sonner';
 import { 
   ModerationStatus, 
   ModerationType,
-  ReportUI
+  ReportUI,
+  ReporterType,
+  TargetType
 } from '@/types/supabase/moderation';
 
 /**
@@ -34,18 +36,18 @@ export const useModeration = () => {
         throw error;
       }
 
-      // Convert data to UI format
+      // Convert data to UI format with proper type casting
       const formattedReports: ReportUI[] = data.map(report => ({
         id: report.id,
         reporterId: report.reporter_id,
-        reporterType: report.reporter_type,
+        reporterType: (report.reporter_type as unknown) as ReporterType,
         reporterName: report.reporting_user?.name || 'Unknown User',
         targetId: report.target_id,
-        targetType: report.target_type,
+        targetType: (report.target_type as unknown) as TargetType,
         targetName: report.target_user?.name || 'Unknown Target',
         reason: report.reason,
         details: report.details || '',
-        status: report.status,
+        status: (report.status as unknown) as ModerationStatus,
         date: new Date(report.created_at).toLocaleDateString(),
         sessionId: report.session_id || undefined
       }));

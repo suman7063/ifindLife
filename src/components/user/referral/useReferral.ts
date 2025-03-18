@@ -7,16 +7,19 @@ import {
   getReferralLink, 
   copyReferralLink 
 } from '@/utils/referralUtils';
+import { ReferralSettingsUI, convertReferralSettingsToUI } from '@/types/supabase/referrals';
 
 export const useReferral = (userProfile: UserProfile) => {
-  const [settings, setSettings] = useState<any>(null);
+  const [settings, setSettings] = useState<ReferralSettingsUI | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
   const [customText, setCustomText] = useState<string>('');
   const [isGettingLink, setIsGettingLink] = useState<boolean>(false);
 
   const fetchSettings = async () => {
     const data = await getReferralSettings();
-    setSettings(data);
+    if (data) {
+      setSettings(convertReferralSettingsToUI(data));
+    }
   };
 
   const fetchReferralLink = () => {
@@ -47,8 +50,12 @@ export const useReferral = (userProfile: UserProfile) => {
     }
   };
 
-  const handleCustomTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCustomText(e.target.value);
+  const handleCustomTextChange = (e: React.ChangeEvent<HTMLTextAreaElement> | string) => {
+    if (typeof e === 'string') {
+      setCustomText(e);
+    } else {
+      setCustomText(e.target.value);
+    }
   };
 
   const handleCustomLink = () => {

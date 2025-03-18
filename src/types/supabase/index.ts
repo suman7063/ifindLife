@@ -4,9 +4,16 @@
 
 export * from './user';
 export * from './appointments';
-export * from './reviews';
+
+// Explicitly import and re-export from reviews to avoid conflicts
+import { Review, Report } from './reviews';
+export { Review, Report };
+
+// Import and re-export referrals
 export * from './referrals';
 export * from './expertId';
+
+// Only export moderation types from the moderation file to avoid conflicts
 export * from './moderation';
 export * from './education';
 export * from './tables';
@@ -15,7 +22,6 @@ export * from './tables';
 export type { UserProfile } from './user';
 export type { Appointment, AppointmentStatus, TimeSlot } from './appointments';
 export type { ReferralUI as Referral, ReferralSettingsUI as ReferralSettings } from './referrals';
-export type { Review, Report } from './reviews';
 
 // Define types for tables not already covered in specific files
 export interface ExpertUI {

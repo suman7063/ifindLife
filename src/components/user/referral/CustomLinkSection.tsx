@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 
 interface CustomLinkSectionProps {
   customText: string;
-  onCustomTextChange: (text: string) => void;
+  onCustomTextChange: (e: React.ChangeEvent<HTMLTextAreaElement> | string) => void;
   onGetCustomLink: () => void;
   isGettingLink: boolean;
 }
@@ -26,7 +26,7 @@ const CustomLinkSection: React.FC<CustomLinkSectionProps> = ({
             id="custom-text" 
             placeholder="e.g. join-my-community" 
             value={customText} 
-            onChange={(e) => onCustomTextChange(e.target.value)}
+            onChange={(e) => onCustomTextChange(e)}
           />
           <Button 
             variant="outline" 

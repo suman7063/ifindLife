@@ -1,156 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Save, LogOut } from 'lucide-react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { useAuth } from '@/contexts/AuthContext';
-import AdminUserManagement from '@/components/AdminUserManagement';
-import {
-  categoryData,
-  expertData,
-  testimonialData,
-} from '@/data/homePageData';
-import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
+import React, { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ServicesEditor from '@/components/admin/ServicesEditor';
-import ExpertsEditor from '@/components/admin/ExpertsEditor';
+import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
-import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
+import TherapistsEditor from '@/components/admin/TherapistsEditor';
+import AdminUserManagement from '@/components/AdminUserManagement';
 import ReviewManagement from '@/components/admin/ReviewManagement';
+import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import AdminModerationTab from '@/components/admin/moderation/AdminModerationTab';
-import { convertAdminExpertsToStandard } from '@/utils/expertUtils';
+import ExpertsEditor from '@/components/admin/ExpertsEditor';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { Navigate } from 'react-router-dom';
+import { Expert } from '@/types/supabase/index';
 
-const Admin = () => {
-  const [categories, setCategories] = useState(categoryData);
-  const [experts, setExperts] = useState<Expert[]>(
-    convertAdminExpertsToStandard([
-      // Mock experts data
-    ])
-  );
-  const [testimonials, setTestimonials] = useState(testimonialData);
-  const [heroSettings, setHeroSettings] = useState({
-    title: "Discover Your",
-    subtitle: "Mental Wellness",
-    description: "Connect with verified mental health experts for personalized guidance about your emotional well-being, relationships, and personal growth. Get support when you need it most.",
-    videoUrl: "https://www.youtube.com/embed/rUJFj6yLWSw?autoplay=0"
-  });
-
-  const { currentUser, logout } = useAuth();
-
-  useEffect(() => {
-    const savedContent = localStorage.getItem('ifindlife-content');
-    if (savedContent) {
-      try {
-        const parsedContent = JSON.parse(savedContent);
-        if (parsedContent.categories) setCategories(parsedContent.categories);
-        if (parsedContent.experts) setExperts(parsedContent.experts);
-        if (parsedContent.testimonials) setTestimonials(parsedContent.testimonials);
-        if (parsedContent.heroSettings) setHeroSettings(parsedContent.heroSettings);
-      } catch (e) {
-        console.error("Error parsing saved content", e);
-      }
-    }
-  }, []);
-
-  const handleSave = () => {
-    localStorage.setItem('ifindlife-content', JSON.stringify({
-      categories,
-      experts,
-      testimonials,
-      heroSettings
-    }));
-    alert('Changes saved successfully! In a real application, this would update your database.');
-  };
-
+const Admin: React.FC = () => {
+  const { currentUser } = useUserAuth();
+  const [activeTab, setActiveTab] = useState('users');
+  
+  // Mock data for all pages in a single place
+  const [therapists, setTherapists] = useState<Omit<Expert, 'email'>[]>([
+    {
+      id: '1',
+      name: 'Dr. Jane Smith',
+      experience: 5,
+      specialties: ['Anxiety', 'Depression'],
+      rating: 4.8,
+      consultations: 150,
+      price: 75,
+      waitTime: '1-2 days',
+      imageUrl: '/placeholder.svg',
+      online: true
+    },
+    // ... other therapists
+  ]);
+  
+  // If not logged in, redirect to login
+  if (!currentUser) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 container py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-2">
-            <Link to="/" className="text-ifind-aqua hover:text-ifind-teal">
-              <ArrowLeft className="h-5 w-5" />
-            </Link>
-            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-            {currentUser && (
-              <span className="ml-2 text-sm bg-ifind-teal/10 text-ifind-teal px-2 py-1 rounded-full">
-                {currentUser.username} ({currentUser.role})
-              </span>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={handleSave} className="bg-ifind-aqua hover:bg-ifind-teal">
-              <Save className="mr-2 h-4 w-4" /> Save Changes
-            </Button>
-            <Button variant="outline" onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" /> Logout
-            </Button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md">
-          <Tabs defaultValue="hero">
-            <TabsList className="w-full border-b p-0 rounded-none">
-              <TabsTrigger value="hero" className="rounded-none rounded-tl-lg">Hero Section</TabsTrigger>
-              <TabsTrigger value="categories" className="rounded-none">Services</TabsTrigger>
-              <TabsTrigger value="experts" className="rounded-none">Experts</TabsTrigger>
-              <TabsTrigger value="testimonials" className="rounded-none">Testimonials</TabsTrigger>
-              <TabsTrigger value="reviews" className="rounded-none">Expert Reviews</TabsTrigger>
-              <TabsTrigger value="moderation" className="rounded-none">Moderation</TabsTrigger>
-              <TabsTrigger value="referral" className="rounded-none">Referral Program</TabsTrigger>
-              {currentUser?.role === 'superadmin' && (
-                <TabsTrigger value="admins" className="rounded-none">Admin Users</TabsTrigger>
-              )}
-            </TabsList>
-            
-            <TabsContent value="hero" className="p-6">
-              <HeroSectionEditor 
-                heroSettings={heroSettings} 
-                setHeroSettings={setHeroSettings} 
-              />
-            </TabsContent>
-
-            <TabsContent value="categories" className="p-6">
-              <ServicesEditor 
-                categories={categories} 
-                setCategories={setCategories} 
-              />
-            </TabsContent>
-
-            <TabsContent value="experts" className="p-6">
-              <ExpertsEditor 
-                experts={experts} 
-                setExperts={setExperts} 
-              />
-            </TabsContent>
-
-            <TabsContent value="testimonials" className="p-6">
-              <TestimonialsEditor 
-                testimonials={testimonials} 
-                setTestimonials={setTestimonials} 
-              />
-            </TabsContent>
-
-            <TabsContent value="reviews" className="p-6">
-              <ReviewManagement />
-            </TabsContent>
-
-            <TabsContent value="moderation" className="p-6">
-              <AdminModerationTab />
-            </TabsContent>
-
-            <TabsContent value="referral" className="p-6">
-              <ReferralSettingsEditor />
-            </TabsContent>
-
-            <TabsContent value="admins" className="p-6">
-              <AdminUserManagement />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </main>
-      <Footer />
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid grid-cols-4 md:grid-cols-8 gap-2">
+          <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="experts">Experts</TabsTrigger>
+          <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          <TabsTrigger value="moderation">Moderation</TabsTrigger>
+          <TabsTrigger value="referrals">Referrals</TabsTrigger>
+          <TabsTrigger value="hero">Hero</TabsTrigger>
+          <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="users" className="space-y-4">
+          <AdminUserManagement />
+        </TabsContent>
+        
+        <TabsContent value="experts" className="space-y-4">
+          <ExpertsEditor />
+        </TabsContent>
+        
+        <TabsContent value="services" className="space-y-4">
+          <ServicesEditor />
+        </TabsContent>
+        
+        <TabsContent value="reviews" className="space-y-4">
+          <ReviewManagement />
+        </TabsContent>
+        
+        <TabsContent value="moderation" className="space-y-4">
+          <AdminModerationTab />
+        </TabsContent>
+        
+        <TabsContent value="referrals" className="space-y-4">
+          <ReferralSettingsEditor />
+        </TabsContent>
+        
+        <TabsContent value="hero" className="space-y-4">
+          <HeroSectionEditor />
+        </TabsContent>
+        
+        <TabsContent value="testimonials" className="space-y-4">
+          <TestimonialsEditor therapists={therapists} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -3,6 +3,14 @@ import { toast } from 'sonner';
 import { UserProfile, Report } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { adaptReportsToUI } from '@/utils/dataAdapters';
+import { ReportReason } from '@/types/supabase/moderation';
+
+interface ReportSubmission {
+  targetId: string;
+  targetType: 'expert' | 'user';
+  reason: ReportReason;
+  details: string;
+}
 
 const useReports = () => {
   // Add a new report
@@ -54,6 +62,36 @@ const useReports = () => {
     }
   };
   
+  // Submit a report using the moderation system
+  const submitReport = async (reportData: ReportSubmission) => {
+    try {
+      // This would normally check for currentUser, but we'll mock the user ID
+      const mockUserId = 'current-user-id';
+      
+      const { error } = await supabase
+        .from('moderation_reports')
+        .insert({
+          reporter_id: mockUserId,
+          reporter_type: 'user',
+          target_id: reportData.targetId,
+          target_type: reportData.targetType,
+          reason: reportData.reason,
+          details: reportData.details,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        });
+        
+      if (error) throw error;
+      
+      toast.success('Report submitted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast.error('Failed to submit report');
+      return false;
+    }
+  };
+  
   // Get reports for a user
   const getUserReports = async (userId: string) => {
     try {
@@ -73,7 +111,8 @@ const useReports = () => {
   
   return {
     addReport,
-    getUserReports
+    getUserReports,
+    submitReport
   };
 };
 

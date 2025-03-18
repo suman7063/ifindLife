@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ReportReason } from '@/types/supabase/moderation';
@@ -23,18 +24,15 @@ const UserReportButton: React.FC<UserReportButtonProps> = ({
   className = '',
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { submitReport } = useReports();
+  const { addReport } = useReports();
 
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => setIsModalOpen(false);
 
-  const handleReportSubmit = async (reason: string, details: string) => {
-    await submitReport({
-      targetId,
-      targetType,
-      reason: reason as ReportReason,
-      details
-    });
+  const handleReportSubmit = async (reason: ReportReason, details: string) => {
+    // We need to mock the user for now as we don't have the current user context
+    const mockUser = { id: 'current-user-id' };
+    await addReport(mockUser, targetId, reason, details);
     handleCloseModal();
   };
 

@@ -19,7 +19,20 @@ const UserReferrals: React.FC = () => {
         setIsLoading(true);
         try {
           const data = await getUserReferrals(currentUser.id);
-          setReferrals(data);
+          // Convert the data format to match ReferralUI
+          const formattedReferrals: ReferralUI[] = data.map(item => ({
+            id: item.id,
+            referrerId: item.referrer_id,
+            referredId: item.referred_id,
+            referralCode: item.referral_code,
+            status: item.status,
+            createdAt: item.created_at,
+            completedAt: item.completed_at,
+            rewardClaimed: item.reward_claimed,
+            referredUserName: item.users?.name || 'Unknown User',
+            referredUserEmail: item.users?.email || undefined
+          }));
+          setReferrals(formattedReferrals);
         } catch (error) {
           console.error('Error fetching referrals:', error);
         } finally {

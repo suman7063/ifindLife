@@ -1,137 +1,83 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Users, Share2, Twitter, Facebook, Copy, Mail, MessageCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase/user';
-import { ReferralSettings } from '@/types/supabase/referrals';
-import { getReferralLink, copyReferralLink, getReferralSettings } from '@/utils/referralUtils';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { ReferralSettingsUI, convertReferralSettingsToUI } from '@/types/supabase/referrals';
 
-interface ReferralDashboardCardProps {
-  userProfile: UserProfile | null;
-}
+const ReferralDashboardCard: React.FC = () => {
+  const [settings, setSettings] = useState<ReferralSettingsUI | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
-const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfile }) => {
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
-  
   useEffect(() => {
-    const loadSettings = async () => {
-      const settings = await getReferralSettings();
-      setReferralSettings(settings);
+    const fetchReferralSettings = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('referral_settings')
+          .select('*')
+          .single();
+          
+        if (error) throw error;
+        
+        if (data) {
+          // Convert snake_case properties to camelCase using the conversion function
+          setSettings(convertReferralSettingsToUI(data));
+        }
+      } catch (error) {
+        console.error("Error fetching referral settings:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
     
-    loadSettings();
+    fetchReferralSettings();
   }, []);
 
-  const referralLink = userProfile?.referralCode ? getReferralLink(userProfile.referralCode) : '';
-  
-  const handleCopyLink = () => {
-    copyReferralLink(referralLink);
-  };
-  
-  const handleShareViaTwitter = () => {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Join me on iFindLife! Use my referral code ${userProfile?.referralCode} and get credits when you sign up: ${referralLink}`)}`);
-    toast.success('Sharing via Twitter');
-  };
-  
-  const handleShareViaFacebook = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`);
-    toast.success('Sharing via Facebook');
-  };
-  
-  const handleShareViaWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`Join me on iFindLife! Use my referral code ${userProfile?.referralCode} and get credits when you sign up: ${referralLink}`)}`);
-    toast.success('Sharing via WhatsApp');
-  };
-  
-  const handleShareViaEmail = () => {
-    const subject = 'Join me on iFindLife';
-    const body = `I thought you might be interested in iFindLife. Sign up using my referral code ${userProfile?.referralCode} and get credits when you join! ${referralLink}`;
-    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
-    toast.success('Opening email client');
-  };
-
   return (
-    <Card className="border-ifind-aqua/10">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium flex items-center">
-          <Users className="mr-2 h-4 w-4 text-ifind-aqua" />
-          Referral Program
-        </CardTitle>
-        <Share2 className="h-4 w-4 text-gray-500" />
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg font-semibold">Referral Program</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{userProfile?.referralCode || 'No code yet'}</div>
-        <p className="text-xs text-gray-500 mb-4">
-          Invite friends and earn rewards. You get {referralSettings?.referrerReward} credits when someone joins!
-        </p>
-        
-        <div className="space-y-4">
-          <div className="flex space-x-2">
-            <Input 
-              value={referralLink} 
-              readOnly 
-              className="text-sm" 
-            />
+        {isLoading ? (
+          <div className="h-24 flex items-center justify-center">
+            <div className="animate-spin h-6 w-6 border-2 border-t-ifind-teal rounded-full"></div>
+          </div>
+        ) : settings ? (
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-sm">
+              {settings.description || 'Invite friends to iFind Life and earn rewards!'}
+            </p>
+            
+            <div className="bg-gray-50 rounded-md p-3 text-center">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-gray-500 text-xs">You earn</p>
+                  <p className="font-semibold text-ifind-teal">${settings.referrerReward.toFixed(2)}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-xs">Your friend gets</p>
+                  <p className="font-semibold text-ifind-teal">${settings.referredReward.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+            
             <Button 
-              size="icon" 
-              variant="outline"
-              onClick={handleCopyLink}
-              title="Copy referral link"
+              variant="default" 
+              className="w-full bg-ifind-teal hover:bg-ifind-teal/90"
+              onClick={() => navigate('/user/referrals')}
             >
-              <Copy className="h-4 w-4" />
+              View My Referrals
             </Button>
           </div>
-          
-          <div className="text-center text-sm text-gray-500">Share via</div>
-          
-          <div className="flex justify-center space-x-4">
-            <Button 
-              size="icon" 
-              variant="ghost"
-              className="rounded-full hover:bg-blue-50 hover:text-blue-600"
-              onClick={handleShareViaTwitter}
-              title="Share on Twitter"
-            >
-              <Twitter className="h-5 w-5" />
-            </Button>
-            <Button 
-              size="icon" 
-              variant="ghost"
-              className="rounded-full hover:bg-blue-100 hover:text-blue-800"
-              onClick={handleShareViaFacebook}
-              title="Share on Facebook"
-            >
-              <Facebook className="h-5 w-5" />
-            </Button>
-            <Button 
-              size="icon" 
-              variant="ghost"
-              className="rounded-full hover:bg-green-50 hover:text-green-600"
-              onClick={handleShareViaWhatsApp}
-              title="Share via WhatsApp"
-            >
-              <MessageCircle className="h-5 w-5" />
-            </Button>
-            <Button 
-              size="icon" 
-              variant="ghost"
-              className="rounded-full hover:bg-red-50 hover:text-red-600"
-              onClick={handleShareViaEmail}
-              title="Share via Email"
-            >
-              <Mail className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-        
-        <div className="mt-4 text-xs text-center text-gray-500">
-          Your friend gets {referralSettings?.referredReward} credits too!
-        </div>
+        ) : (
+          <p className="text-muted-foreground text-sm text-center py-4">
+            Referral program is not available at this time.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

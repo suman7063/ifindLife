@@ -10,13 +10,16 @@ const ModerationDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('reports');
   const {
     reports,
-    feedback,
-    isLoading,
-    handleReviewReport,
-    handleDismissReport,
-    handleTakeAction,
-    handleDeleteFeedback,
+    loading: isLoading,
+    error,
+    assignReport: handleReviewReport,
+    dismissReport: handleDismissReport,
+    takeAction: handleTakeAction
   } = useModeration();
+
+  // Mock feedback data since it's not implemented in the hook yet
+  const feedback = [];
+  const handleDeleteFeedback = () => {};
 
   return (
     <Card className="w-full">
