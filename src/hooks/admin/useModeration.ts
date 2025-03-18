@@ -2,13 +2,19 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ReportUI, ReportStatus, ModerationActionType } from '@/types/supabase/moderation';
-import { ReviewUI } from '@/types/supabase/reviews';
+import { 
+  ReportUI, 
+  ModerationStatus, 
+  ModerationActionType, 
+  ReporterType, 
+  TargetType 
+} from '@/types/supabase/moderation';
+import { Review } from '@/types/supabase/reviews';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useModeration = () => {
   const [reports, setReports] = useState<ReportUI[]>([]);
-  const [feedback, setFeedback] = useState<ReviewUI[]>([]);
+  const [feedback, setFeedback] = useState<Review[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { currentUser } = useAuth();
 
@@ -78,14 +84,14 @@ export const useModeration = () => {
           return {
             id: report.id,
             reporterId: report.reporter_id,
-            reporterType: report.reporter_type as 'user' | 'expert',
+            reporterType: report.reporter_type as ReporterType,
             reporterName: reporterName,
             targetId: report.target_id,
-            targetType: report.target_type as 'user' | 'expert',
+            targetType: report.target_type as TargetType,
             targetName: targetName,
-            reason: report.reason as any,
+            reason: report.reason,
             details: report.details || '',
-            status: report.status as 'pending' | 'under_review' | 'resolved' | 'dismissed',
+            status: report.status as ModerationStatus,
             date: report.created_at,
             sessionId: report.session_id
           };
@@ -111,7 +117,7 @@ export const useModeration = () => {
       if (reviewError) throw reviewError;
 
       // Transform review data
-      const transformedReviews: ReviewUI[] = await Promise.all(
+      const transformedReviews: Review[] = await Promise.all(
         (reviewData || []).map(async (review) => {
           let userName = 'Unknown User';
           let expertName = 'Unknown Expert';
@@ -136,14 +142,14 @@ export const useModeration = () => {
 
           return {
             id: review.id,
-            userId: review.user_id || '',
-            userName: userName,
             expertId: String(review.expert_id),
-            expertName: expertName,
             rating: review.rating,
             comment: review.comment || '',
             date: review.date,
-            verified: review.verified || false
+            verified: review.verified || false,
+            userId: review.user_id || '',
+            userName: userName,
+            expertName: expertName
           };
         })
       );
@@ -176,7 +182,7 @@ export const useModeration = () => {
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
-            ? { ...report, status: 'under_review' } 
+            ? { ...report, status: ModerationStatus.REVIEWING } 
             : report
         )
       );
@@ -202,7 +208,7 @@ export const useModeration = () => {
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
-            ? { ...report, status: 'dismissed' } 
+            ? { ...report, status: ModerationStatus.DISMISSED } 
             : report
         )
       );
@@ -228,7 +234,7 @@ export const useModeration = () => {
         .insert({
           report_id: reportId,
           admin_id: currentUser.username, // Using username as ID since we don't have real auth.users
-          action_type: actionType as 'warning' | 'suspension' | 'ban' | 'no_action',
+          action_type: actionType,
           message: message,
           notes: notes,
         });
@@ -247,7 +253,7 @@ export const useModeration = () => {
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
-            ? { ...report, status: 'resolved' } 
+            ? { ...report, status: ModerationStatus.RESOLVED } 
             : report
         )
       );

@@ -12,8 +12,6 @@ import {
   expertData,
   testimonialData,
 } from '@/data/homePageData';
-
-// Import refactored components
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
 import ExpertsEditor from '@/components/admin/ExpertsEditor';
@@ -21,11 +19,15 @@ import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import ReviewManagement from '@/components/admin/ReviewManagement';
 import AdminModerationTab from '@/components/admin/moderation/AdminModerationTab';
+import { convertAdminExpertsToStandard } from '@/utils/expertUtils';
 
 const Admin = () => {
-  // State for each section
   const [categories, setCategories] = useState(categoryData);
-  const [experts, setExperts] = useState(expertData);
+  const [experts, setExperts] = useState<Expert[]>(
+    convertAdminExpertsToStandard([
+      // Mock experts data
+    ])
+  );
   const [testimonials, setTestimonials] = useState(testimonialData);
   const [heroSettings, setHeroSettings] = useState({
     title: "Discover Your",
@@ -36,7 +38,6 @@ const Admin = () => {
 
   const { currentUser, logout } = useAuth();
 
-  // Load data from localStorage if available
   useEffect(() => {
     const savedContent = localStorage.getItem('ifindlife-content');
     if (savedContent) {
@@ -52,9 +53,7 @@ const Admin = () => {
     }
   }, []);
 
-  // Handler for saving changes
   const handleSave = () => {
-    // In a real application, this would save to a database or localStorage
     localStorage.setItem('ifindlife-content', JSON.stringify({
       categories,
       experts,
@@ -105,7 +104,6 @@ const Admin = () => {
               )}
             </TabsList>
             
-            {/* Hero Section Editor */}
             <TabsContent value="hero" className="p-6">
               <HeroSectionEditor 
                 heroSettings={heroSettings} 
@@ -138,7 +136,6 @@ const Admin = () => {
               <ReviewManagement />
             </TabsContent>
 
-            {/* New Moderation Tab */}
             <TabsContent value="moderation" className="p-6">
               <AdminModerationTab />
             </TabsContent>

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ModerationActionType, ReportUI } from '@/types/supabase/reviews';
+import { ModerationActionType, ReportUI } from '@/types/supabase/moderation';
 
 interface ActionDialogProps {
   report: ReportUI;

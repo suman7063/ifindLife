@@ -1,135 +1,105 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import React, { useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { toast } from 'sonner';
-import { Eye, EyeOff } from 'lucide-react';
-import { ReferralSettings } from '@/types/supabase/referrals';
-import { getReferralSettings } from '@/utils/referralUtils';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/components/ui/use-toast";
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { Link } from 'react-router-dom';
 
 const UserLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const navigate = useNavigate();
-  const { signUp, logIn } = useUserAuth();
+  const location = useLocation();
+  const { toast } = useToast();
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+  const redirectPath = location.state?.path || '/';
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Use the correct function names from UserAuthContext
+  const { login, signup } = useUserAuth();
+  // Update the handleLogin function
+  const handleLogin = async (email: string, password: string) => {
     setLoading(true);
     try {
-      await signUp(email, password);
-      toast.success('Signed up successfully! Please verify your email.');
-      navigate('/profile');
-    } catch (error: any) {
-      console.error('Signup failed:', error.message);
-      toast.error(`Signup failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      await logIn(email, password);
-      toast.success('Logged in successfully!');
-      navigate('/profile');
-    } catch (error: any) {
-      console.error('Login failed:', error.message);
-      toast.error(`Login failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Load referral settings for the registration form
-  useEffect(() => {
-    const loadReferralSettings = async () => {
-      try {
-        const settings = await getReferralSettings();
-        setReferralSettings(settings || {
-          id: '',
-          referrerReward: 10,
-          referredReward: 5,
-          active: true,
-          description: 'Default referral program'
-        });
-      } catch (error) {
-        console.error('Error loading referral settings:', error);
+      const success = await login(email, password);
+      
+      if (success) {
+        navigate(redirectPath || '/');
+        toast.success('Login successful');
+      } else {
+        toast.error('Login failed');
       }
-    };
+    } catch (error) {
+      toast.error('An error occurred during login');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    loadReferralSettings();
-  }, []);
+  // Update the handleRegister function
+  const handleRegister = async (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    country: string;
+    city: string;
+    referralCode?: string;
+  }) => {
+    setLoading(true);
+    try {
+      const success = await signup(userData);
+      
+      if (success) {
+        navigate('/');
+        toast.success('Registration successful!');
+      } else {
+        toast.error('Registration failed');
+      }
+    } catch (error) {
+      toast.error('An error occurred during registration');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md p-4">
-        <CardHeader className="space-y-1">
+    <div className="flex justify-center items-center h-screen bg-gray-100">
+      <Card className="w-full max-w-md">
+        <CardHeader>
           <CardTitle className="text-2xl text-center">User Login</CardTitle>
-          <CardDescription className="text-center">Enter your email and password to sign in</CardDescription>
+          <CardDescription className="text-center">Enter your email and password to login</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <form onSubmit={handleLogin}>
-            <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2"
-                  onClick={togglePasswordVisibility}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-            <Button type="submit" className="w-full mt-4 bg-ifind-aqua hover:bg-ifind-teal" disabled={loading}>
-              {loading ? 'Logging in...' : 'Log In'}
-            </Button>
-          </form>
-          <div className="text-sm text-center">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-ifind-aqua hover:underline">
-              Sign Up
-            </Link>
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <Button onClick={() => handleLogin(email, password)} className="bg-blue-500 text-white" disabled={loading}>
+            {loading ? 'Logging in...' : 'Login'}
+          </Button>
           <div className="text-sm text-center">
-            Forgot password?{' '}
-            <Link to="/forgot-password" className="text-ifind-aqua hover:underline">
-              Reset Password
-            </Link>
+            Don't have an account? <Link to="/signup" className="text-blue-500">Sign up</Link>
           </div>
         </CardContent>
       </Card>

@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { ReferralSettings, ReferralUI } from '@/types/supabase/referrals';
 import { toast } from 'sonner';
@@ -103,5 +102,61 @@ export const getUserReferrals = async (userId: string): Promise<ReferralUI[]> =>
   } catch (error) {
     console.error('Error fetching user referrals:', error);
     return [];
+  }
+};
+
+/**
+ * Process referral code during user signup
+ * @param referralCode The referral code entered by the user
+ * @param newUserId The ID of the newly registered user
+ */
+export const processReferralCode = async (
+  referralCode: string,
+  newUserId: string
+): Promise<boolean> => {
+  try {
+    // Check if the referral code is valid
+    const { data: referrerData, error: referrerError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('referral_code', referralCode)
+      .single();
+
+    if (referrerError || !referrerData) {
+      console.error('Invalid referral code:', referrerError);
+      return false;
+    }
+
+    // Create a referral record
+    const { error: referralError } = await supabase
+      .from('referrals')
+      .insert({
+        referrer_id: referrerData.id,
+        referred_id: newUserId,
+        referral_code: referralCode,
+        status: 'pending',
+        reward_claimed: false
+      });
+
+    if (referralError) {
+      console.error('Error creating referral record:', referralError);
+      return false;
+    }
+
+    // Update user with referred_by
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ referred_by: referrerData.id })
+      .eq('id', newUserId);
+
+    if (updateError) {
+      console.error('Error updating user with referral:', updateError);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error processing referral code:', error);
+    return false;
   }
 };

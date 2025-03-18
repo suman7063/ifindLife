@@ -1,60 +1,58 @@
 
-import { Expert } from "@/types/expert";
+import { Expert } from '@/types/expert';
 
-export function convertDBExpertToUI(dbExpert: any): Expert {
+/**
+ * Convert a database expert object to the UI format expected by the Admin page
+ * This is a temporary solution until we standardize our types
+ */
+export const convertToExpertUIFormat = (expert: any): Expert => {
   return {
-    id: dbExpert.id,
-    name: dbExpert.name || "",
-    email: dbExpert.email || "",
-    phone: dbExpert.phone,
-    address: dbExpert.address,
-    city: dbExpert.city,
-    state: dbExpert.state,
-    country: dbExpert.country,
-    specialization: dbExpert.specialization,
-    specialties: dbExpert.specialties || [],
-    experience: dbExpert.experience || 0,
-    bio: dbExpert.bio,
-    imageUrl: dbExpert.image_url,
-    profile_picture: dbExpert.profile_picture,
-    rating: dbExpert.rating || dbExpert.average_rating || 0,
-    reviews_count: dbExpert.reviews_count || 0,
-    average_rating: dbExpert.average_rating || 0,
-    certificate_urls: dbExpert.certificate_urls || [],
-    selected_services: dbExpert.selected_services || [],
-    languages: dbExpert.languages || [],
-    consultations: dbExpert.consultations || 0,
-    price: dbExpert.price || 0,
-    waitTime: dbExpert.wait_time || "0 min",
-    online: dbExpert.online || false
+    id: expert.id,
+    name: expert.name,
+    email: expert.email || 'unknown@example.com', // Provide default for required field
+    phone: expert.phone,
+    address: expert.address,
+    city: expert.city,
+    state: expert.state,
+    country: expert.country,
+    specialization: expert.specialization,
+    specialties: expert.specialties || [],
+    experience: expert.experience || 0,
+    bio: expert.bio,
+    imageUrl: expert.imageUrl || expert.profile_picture,
+    rating: expert.rating || expert.average_rating || 0,
+    consultations: expert.consultations || expert.reviews_count || 0,
+    price: expert.price || 0,
+    waitTime: expert.waitTime || expert.wait_time || '15 minutes',
+    online: expert.online || false,
+    certificate_urls: expert.certificate_urls || [],
+    profile_picture: expert.profile_picture,
+    average_rating: expert.average_rating || expert.rating || 0,
+    reviews_count: expert.reviews_count || expert.consultations || 0,
+    selected_services: expert.selected_services || []
   };
-}
+};
 
-// Convert UI format to DB format for expert
-export function convertUIExpertToDB(uiExpert: Expert): any {
-  return {
-    id: uiExpert.id,
-    name: uiExpert.name,
-    email: uiExpert.email,
-    phone: uiExpert.phone,
-    address: uiExpert.address,
-    city: uiExpert.city,
-    state: uiExpert.state,
-    country: uiExpert.country,
-    specialization: uiExpert.specialization,
-    specialties: uiExpert.specialties,
-    experience: uiExpert.experience,
-    bio: uiExpert.bio,
-    profile_picture: uiExpert.profile_picture || uiExpert.imageUrl,
-    rating: uiExpert.rating,
-    average_rating: uiExpert.average_rating || uiExpert.rating,
-    reviews_count: uiExpert.reviews_count,
-    certificate_urls: uiExpert.certificate_urls,
-    selected_services: uiExpert.selected_services,
-    languages: uiExpert.languages,
-    consultations: uiExpert.consultations,
-    price: uiExpert.price,
-    wait_time: uiExpert.waitTime,
-    online: uiExpert.online
-  };
-}
+/**
+ * Convert Admin page temporary expert format to our standard Expert type
+ */
+export const convertAdminExpertsToStandard = (experts: any[]): Expert[] => {
+  return experts.map(expert => ({
+    id: expert.id,
+    name: expert.name,
+    email: 'contact@example.com', // Temporary email since Admin expects it
+    experience: expert.experience,
+    specialties: expert.specialties,
+    rating: expert.rating,
+    consultations: expert.consultations,
+    price: expert.price,
+    waitTime: expert.waitTime,
+    imageUrl: expert.imageUrl,
+    online: expert.online,
+    average_rating: expert.rating,
+    reviews_count: expert.consultations,
+    // Add other required fields with defaults
+    specialization: '',
+    bio: ''
+  }));
+};

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,8 +14,9 @@ import { useUserAuth } from '@/hooks/useUserAuth';
 import { supabase } from '@/lib/supabase';
 import { Expert } from '@/types/supabase/tables';
 import { toast } from 'sonner';
+import { normalizeExpertForDetail } from '@/utils/expertDetailUtils';
+import ExpertModalWrapper from '@/components/expert/ExpertDetailWrapper';
 
-// Replace this with actual data fetching from database
 const getExpertData = async (expertId: string) => {
   try {
     const { data, error } = await supabase
@@ -42,8 +42,8 @@ const ExpertDetail: React.FC = () => {
   const [expert, setExpert] = useState<Expert | null>(null);
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
   const [canReview, setCanReview] = useState(false);
   const [loading, setLoading] = useState(true);
   
@@ -55,13 +55,12 @@ const ExpertDetail: React.FC = () => {
       const expertData = await getExpertData(id);
       
       if (expertData) {
-        setExpert(expertData);
+        setExpert(normalizeExpertForDetail(expertData));
       } else {
         toast.error("Expert not found");
         navigate('/experts');
       }
       
-      // Check if user can review this expert
       if (currentUser) {
         const hasService = await hasTakenServiceFrom(id);
         setCanReview(hasService);
@@ -79,9 +78,8 @@ const ExpertDetail: React.FC = () => {
     try {
       await addReview(expert.id, rating, comment);
       toast.success("Thank you for your review!");
-      setIsReviewModalOpen(false);
+      setReviewModalOpen(false);
       
-      // Refresh expert data to show updated rating
       const updatedExpert = await getExpertData(expert.id);
       if (updatedExpert) {
         setExpert(updatedExpert);
@@ -98,7 +96,7 @@ const ExpertDetail: React.FC = () => {
     try {
       await reportExpert(expert.id, reason, details);
       toast.success("Report submitted successfully");
-      setIsReportModalOpen(false);
+      setReportModalOpen(false);
     } catch (error) {
       console.error("Error submitting report:", error);
       toast.error("Failed to submit report");
@@ -124,7 +122,6 @@ const ExpertDetail: React.FC = () => {
     );
   }
   
-  // Format expert data for the modals
   const expertForModals = {
     id: Number(expert.id),
     name: expert.name,
@@ -134,7 +131,6 @@ const ExpertDetail: React.FC = () => {
   
   return (
     <div className="container py-8">
-      {/* Expert Header */}
       <div className="flex flex-col md:flex-row gap-6 items-start">
         <div className="w-32 h-32 rounded-xl overflow-hidden bg-gray-100">
           <Avatar className="w-full h-full">
@@ -196,7 +192,7 @@ const ExpertDetail: React.FC = () => {
             
             <Button 
               variant="outline"
-              onClick={() => setIsReviewModalOpen(true)}
+              onClick={() => setReviewModalOpen(true)}
               disabled={!currentUser || !canReview}
             >
               <Star className="mr-2 h-4 w-4" />
@@ -206,7 +202,7 @@ const ExpertDetail: React.FC = () => {
             <Button 
               variant="outline"
               className="text-red-600 border-red-600 hover:bg-red-50"
-              onClick={() => setIsReportModalOpen(true)}
+              onClick={() => setReportModalOpen(true)}
               disabled={!currentUser}
             >
               Report
@@ -215,7 +211,6 @@ const ExpertDetail: React.FC = () => {
         </div>
       </div>
       
-      {/* Expert Details */}
       <div className="mt-12">
         <Tabs defaultValue="about">
           <TabsList className="mb-6">
@@ -279,7 +274,7 @@ const ExpertDetail: React.FC = () => {
               <h3 className="text-lg font-semibold">Reviews</h3>
               <Button 
                 variant="outline"
-                onClick={() => setIsReviewModalOpen(true)}
+                onClick={() => setReviewModalOpen(true)}
                 disabled={!currentUser || !canReview}
               >
                 <Star className="mr-2 h-4 w-4" />
@@ -322,32 +317,41 @@ const ExpertDetail: React.FC = () => {
         </Tabs>
       </div>
       
-      {/* Modals */}
-      <CallModal 
-        isOpen={isCallModalOpen}
-        onClose={() => setIsCallModalOpen(false)}
-        expert={expertForModals}
-      />
+      {isCallModalOpen && (
+        <CallModal 
+          isOpen={isCallModalOpen}
+          onClose={() => setIsCallModalOpen(false)}
+          expert={expertForModals}
+        />
+      )}
       
-      <BookingModal 
-        isOpen={isBookingModalOpen}
-        onClose={() => setIsBookingModalOpen(false)}
-        expert={expertForModals}
-      />
+      {isBookingModalOpen && (
+        <BookingModal 
+          isOpen={isBookingModalOpen}
+          onClose={() => setIsBookingModalOpen(false)}
+          expert={expertForModals}
+        />
+      )}
       
-      <ExpertReviewModal 
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        onSubmit={handleReviewSubmit}
-        expertName={expert.name}
-      />
+      {reviewModalOpen && (
+        <ExpertModalWrapper
+          isOpen={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          onSubmit={handleReviewSubmit}
+          expertName={expert?.name || ''}
+          Component={ExpertReviewModal}
+        />
+      )}
       
-      <ExpertReportModal 
-        isOpen={isReportModalOpen}
-        onClose={() => setIsReportModalOpen(false)}
-        onSubmit={handleReportSubmit}
-        expertName={expert.name}
-      />
+      {reportModalOpen && (
+        <ExpertModalWrapper
+          isOpen={reportModalOpen}
+          onClose={() => setReportModalOpen(false)}
+          onSubmit={handleReportSubmit}
+          expertName={expert?.name || ''}
+          Component={ExpertReportModal}
+        />
+      )}
     </div>
   );
 };
