@@ -56,7 +56,7 @@ export const useReviews = () => {
         toast.success('Review added successfully');
       }
       
-      // Fetch updated reviews for this user - simplified approach to avoid deep type instantiation
+      // Fetch all reviews from this user with a direct query
       const { data: updatedReviews, error: reviewsError } = await supabase
         .from('user_reviews')
         .select('*')
@@ -64,36 +64,45 @@ export const useReviews = () => {
       
       if (reviewsError) throw reviewsError;
       
-      // Create a simple array to store formatted reviews
+      // Initialize an empty array with explicit type
       const formattedReviews: Review[] = [];
       
       if (updatedReviews && updatedReviews.length > 0) {
-        // Get all expert IDs for a single batch query
-        const expertIds: number[] = [];
-        for (const review of updatedReviews) {
-          if (!expertIds.includes(review.expert_id)) {
-            expertIds.push(review.expert_id);
-          }
-        }
+        // Extract unique expert IDs
+        const expertIdNumbers: number[] = [];
         
-        // Get expert names in a single batch query
+        updatedReviews.forEach(review => {
+          if (!expertIdNumbers.includes(review.expert_id)) {
+            expertIdNumbers.push(review.expert_id);
+          }
+        });
+        
+        // Convert IDs to strings for the query
+        const expertIdStrings: string[] = expertIdNumbers.map(id => 
+          convertExpertIdToString(id)
+        );
+        
+        // Get expert data in a single query
         const { data: experts } = await supabase
           .from('experts')
           .select('id, name')
-          .in('id', expertIds.map(id => convertExpertIdToString(id)));
+          .in('id', expertIdStrings);
         
-        // Create a lookup map for expert names
+        // Create a simple lookup object
         const expertNameMap: Record<string, string> = {};
+        
         if (experts) {
-          for (const expert of experts) {
+          experts.forEach(expert => {
             expertNameMap[expert.id] = expert.name;
-          }
+          });
         }
         
-        // Map reviews to the UI format avoiding complex transformations
-        for (const dbReview of updatedReviews) {
+        // Transform reviews without complex type operations
+        updatedReviews.forEach(dbReview => {
           const expertIdStr = convertExpertIdToString(dbReview.expert_id);
-          formattedReviews.push({
+          
+          // Create review object with explicit properties
+          const review: Review = {
             id: dbReview.id,
             expertId: expertIdStr,
             rating: dbReview.rating,
@@ -103,8 +112,10 @@ export const useReviews = () => {
             userId: userProfile.id,
             userName: userProfile.name || 'Anonymous User',
             expertName: expertNameMap[expertIdStr] || 'Unknown Expert'
-          });
-        }
+          };
+          
+          formattedReviews.push(review);
+        });
       }
       
       return {
