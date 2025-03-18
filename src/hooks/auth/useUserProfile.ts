@@ -50,28 +50,34 @@ export const useUserProfile = () => {
       }
       
       // Courses
-      const { data: courses } = await supabase
+      const { data: coursesData } = await supabase
         .from('user_courses')
         .select('*')
         .eq('user_id', userId);
-        
-      userProfile.enrolledCourses = adaptCoursesToUI(courses || []);
+      
+      if (coursesData) {
+        userProfile.enrolledCourses = adaptCoursesToUI(coursesData);
+      }
       
       // Reviews
-      const { data: reviews } = await supabase
+      const { data: reviewsData } = await supabase
         .from('user_reviews')
         .select('*')
         .eq('user_id', userId);
-        
-      userProfile.reviews = adaptReviewsToUI(reviews || []);
+      
+      if (reviewsData) {
+        userProfile.reviews = adaptReviewsToUI(reviewsData);
+      }
       
       // Reports
-      const { data: reports } = await supabase
+      const { data: reportsData } = await supabase
         .from('user_reports')
         .select('*')
         .eq('user_id', userId);
-        
-      userProfile.reports = adaptReportsToUI(reports || []);
+      
+      if (reportsData) {
+        userProfile.reports = adaptReportsToUI(reportsData);
+      }
       
       // Transactions
       const { data: transactions } = await supabase

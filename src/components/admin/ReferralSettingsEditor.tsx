@@ -8,13 +8,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { ReferralSettings } from "@/types/supabase";
+import { ReferralSettingsUI, convertReferralSettingsToUI, convertReferralSettingsToDB } from "@/types/supabase/referrals";
 
 const ReferralSettingsEditor: React.FC = () => {
-  const [settings, setSettings] = useState<ReferralSettings>({
+  const [settings, setSettings] = useState<ReferralSettingsUI>({
     id: '',
-    referrer_reward: 10,
-    referred_reward: 5,
+    referrerReward: 10,
+    referredReward: 5,
     active: true,
     description: 'Invite friends and earn rewards when they make their first purchase.',
   });
@@ -35,7 +35,7 @@ const ReferralSettingsEditor: React.FC = () => {
           console.error('Error fetching referral settings:', error);
           toast.error('Failed to load referral settings');
         } else if (data) {
-          setSettings(data);
+          setSettings(convertReferralSettingsToUI(data));
         }
       } catch (error) {
         console.error('Error fetching referral settings:', error);
@@ -52,21 +52,17 @@ const ReferralSettingsEditor: React.FC = () => {
     setIsSaving(true);
     try {
       // Validate inputs
-      if (settings.referrer_reward < 0 || settings.referred_reward < 0) {
+      if (settings.referrerReward < 0 || settings.referredReward < 0) {
         toast.error('Reward values cannot be negative');
         return;
       }
 
+      // Convert UI settings to DB format
+      const dbSettings = convertReferralSettingsToDB(settings);
+
       const { data, error } = await supabase
         .from('referral_settings')
-        .upsert({
-          id: settings.id || undefined,
-          referrer_reward: settings.referrer_reward,
-          referred_reward: settings.referred_reward,
-          active: settings.active,
-          description: settings.description,
-          updated_at: new Date().toISOString()
-        })
+        .upsert(dbSettings)
         .select()
         .single();
 
@@ -76,7 +72,7 @@ const ReferralSettingsEditor: React.FC = () => {
       } else {
         toast.success('Referral settings saved successfully');
         if (data) {
-          setSettings(data);
+          setSettings(convertReferralSettingsToUI(data));
         }
       }
     } catch (error) {
@@ -94,7 +90,7 @@ const ReferralSettingsEditor: React.FC = () => {
     let parsedValue: string | number | boolean = value;
     
     // Convert numeric string values to numbers
-    if (name === 'referrer_reward' || name === 'referred_reward') {
+    if (name === 'referrerReward' || name === 'referredReward') {
       parsedValue = parseFloat(value) || 0;
     }
     
@@ -140,14 +136,14 @@ const ReferralSettingsEditor: React.FC = () => {
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="referrer_reward">Referrer Reward (credits)</Label>
+                <Label htmlFor="referrerReward">Referrer Reward (credits)</Label>
                 <Input
-                  id="referrer_reward"
-                  name="referrer_reward"
+                  id="referrerReward"
+                  name="referrerReward"
                   type="number"
                   min="0"
                   step="0.01"
-                  value={settings.referrer_reward}
+                  value={settings.referrerReward}
                   onChange={handleChange}
                   placeholder="10"
                 />
@@ -156,14 +152,14 @@ const ReferralSettingsEditor: React.FC = () => {
                 </p>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="referred_reward">Referred User Reward (credits)</Label>
+                <Label htmlFor="referredReward">Referred User Reward (credits)</Label>
                 <Input
-                  id="referred_reward"
-                  name="referred_reward"
+                  id="referredReward"
+                  name="referredReward"
                   type="number"
                   min="0"
                   step="0.01"
-                  value={settings.referred_reward}
+                  value={settings.referredReward}
                   onChange={handleChange}
                   placeholder="5"
                 />

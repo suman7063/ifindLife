@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 const useReports = () => {
   // Add a new report
@@ -15,7 +15,8 @@ const useReports = () => {
       const today = new Date().toISOString().split('T')[0];
       
       // Add the report
-      const { error } = await from('user_reports')
+      const { error } = await supabase
+        .from('user_reports')
         .insert({
           user_id: user.id,
           expert_id: Number(expertId),
@@ -30,7 +31,8 @@ const useReports = () => {
       toast.success('Report submitted successfully');
       
       // Return the updated user with reports
-      const { data: reportsData, error: reportsError } = await from('user_reports')
+      const { data: reportsData, error: reportsError } = await supabase
+        .from('user_reports')
         .select('*')
         .eq('user_id', user.id);
         
@@ -51,7 +53,8 @@ const useReports = () => {
   // Get reports for a user
   const getUserReports = async (userId: string) => {
     try {
-      const { data, error } = await from('user_reports')
+      const { data, error } = await supabase
+        .from('user_reports')
         .select('*')
         .eq('user_id', userId);
         

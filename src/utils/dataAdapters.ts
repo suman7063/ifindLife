@@ -18,11 +18,12 @@ const courseAdapter = createAdapter<UserCourse, Course>(
   (dbCourse: UserCourse): Course => ({
     id: dbCourse.id,
     title: dbCourse.title,
-    expertId: dbCourse.expert_id.toString(),
+    expertId: dbCourse.expert_id?.toString(),
     expertName: dbCourse.expert_name,
     enrollmentDate: dbCourse.enrollment_date,
     progress: dbCourse.progress,
-    completed: dbCourse.completed
+    completed: dbCourse.completed,
+    userId: dbCourse.user_id
   }),
   // UI to DB transform
   (uiCourse: Course): UserCourse => ({
@@ -32,7 +33,8 @@ const courseAdapter = createAdapter<UserCourse, Course>(
     expert_name: uiCourse.expertName,
     enrollment_date: uiCourse.enrollmentDate,
     progress: uiCourse.progress,
-    completed: uiCourse.completed
+    completed: uiCourse.completed,
+    user_id: uiCourse.userId
   })
 );
 
@@ -87,31 +89,85 @@ const reportAdapter = createAdapter<UserReport, Report>(
 );
 
 // Function to adapt database courses to UI format
-export const adaptCoursesToUI = (courses: UserCourse[]): Course[] => {
-  return courseAdapter.toUiList(courses);
+export const adaptCoursesToUI = (courses: any[]): Course[] => {
+  return courses.map(course => ({
+    id: course.id,
+    title: course.title,
+    expertId: course.expert_id?.toString(),
+    expertName: course.expert_name,
+    enrollmentDate: course.enrollment_date,
+    progress: course.progress,
+    completed: course.completed,
+    userId: course.user_id
+  }));
 };
 
 // Function to adapt database reviews to UI format
-export const adaptReviewsToUI = (reviews: UserReview[]): Review[] => {
-  return reviewAdapter.toUiList(reviews);
+export const adaptReviewsToUI = (reviews: any[]): Review[] => {
+  return reviews.map(review => ({
+    id: review.id,
+    expertId: convertExpertIdToString(review.expert_id),
+    rating: review.rating,
+    comment: review.comment || '',
+    date: review.date,
+    verified: review.verified || false,
+    userId: review.user_id || '',
+    userName: review.user_name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
+    expertName: 'Expert'
+  }));
 };
 
 // Function to adapt database reports to UI format
-export const adaptReportsToUI = (reports: UserReport[]): Report[] => {
-  return reportAdapter.toUiList(reports);
+export const adaptReportsToUI = (reports: any[]): Report[] => {
+  return reports.map(report => ({
+    id: report.id,
+    expertId: convertExpertIdToString(report.expert_id),
+    reason: report.reason,
+    details: report.details || '',
+    date: report.date,
+    status: report.status,
+    userId: report.user_id,
+    userName: report.user_id ? `User ${report.user_id.slice(0, 8)}...` : 'Anonymous'
+  }));
 };
 
 // Function to convert UI format back to database format for courses
 export const adaptCoursesToDB = (courses: Course[]): UserCourse[] => {
-  return courseAdapter.toDbList(courses);
+  return courses.map(course => ({
+    id: course.id,
+    title: course.title,
+    expert_id: parseInt(course.expertId),
+    expert_name: course.expertName,
+    enrollment_date: course.enrollmentDate,
+    progress: course.progress,
+    completed: course.completed,
+    user_id: course.userId
+  }));
 };
 
 // Function to convert UI format back to database format for reviews
 export const adaptReviewsToDB = (reviews: Review[]): UserReview[] => {
-  return reviewAdapter.toDbList(reviews);
+  return reviews.map(review => ({
+    id: review.id,
+    expert_id: parseInt(review.expertId),
+    rating: review.rating,
+    comment: review.comment,
+    date: review.date,
+    verified: review.verified,
+    user_id: review.userId,
+    user_name: review.userName
+  }));
 };
 
 // Function to convert UI format back to database format for reports
 export const adaptReportsToDB = (reports: Report[]): UserReport[] => {
-  return reportAdapter.toDbList(reports);
+  return reports.map(report => ({
+    id: report.id,
+    expert_id: parseInt(report.expertId),
+    reason: report.reason,
+    details: report.details,
+    date: report.date,
+    status: report.status,
+    user_id: report.userId
+  }));
 };

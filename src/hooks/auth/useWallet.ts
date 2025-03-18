@@ -34,12 +34,14 @@ export const useWallet = () => {
       
       const newTransaction: UserTransaction = {
         id: newTransactionId,
-        user_id: currentUser.id,
+        userId: currentUser.id,
         date: new Date().toISOString(),
         type: 'recharge',
         amount: amount,
         currency: currentUser.currency || 'USD',
         description: 'Wallet recharge',
+        // DB fields for compatibility
+        user_id: currentUser.id
       };
 
       const updatedUser = {
