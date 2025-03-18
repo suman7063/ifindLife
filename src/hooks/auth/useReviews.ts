@@ -56,7 +56,7 @@ export const useReviews = () => {
         toast.success('Review added successfully');
       }
       
-      // Fetch all reviews from this user with a direct query
+      // Fetch all reviews from this user
       const { data: updatedReviews, error: reviewsError } = await supabase
         .from('user_reviews')
         .select('*')
@@ -64,59 +64,64 @@ export const useReviews = () => {
       
       if (reviewsError) throw reviewsError;
       
-      // Initialize an empty array with explicit type
-      const formattedReviews: Review[] = [];
+      // Early return if no reviews
+      if (!updatedReviews || updatedReviews.length === 0) {
+        return {
+          success: true,
+          reviews: []
+        };
+      }
       
-      if (updatedReviews && updatedReviews.length > 0) {
-        // Extract unique expert IDs
-        const expertIdNumbers: number[] = [];
-        
-        updatedReviews.forEach(review => {
-          if (!expertIdNumbers.includes(review.expert_id)) {
-            expertIdNumbers.push(review.expert_id);
-          }
-        });
-        
-        // Convert IDs to strings for the query
-        const expertIdStrings: string[] = expertIdNumbers.map(id => 
-          convertExpertIdToString(id)
-        );
-        
-        // Get expert data in a single query
-        const { data: experts } = await supabase
-          .from('experts')
-          .select('id, name')
-          .in('id', expertIdStrings);
-        
-        // Create a simple lookup object
-        const expertNameMap: Record<string, string> = {};
-        
-        if (experts) {
-          experts.forEach(expert => {
-            expertNameMap[expert.id] = expert.name;
-          });
+      // Extract unique expert IDs as numbers
+      const expertIdNumbers: number[] = [];
+      updatedReviews.forEach(review => {
+        if (!expertIdNumbers.includes(review.expert_id)) {
+          expertIdNumbers.push(review.expert_id);
         }
-        
-        // Transform reviews without complex type operations
-        updatedReviews.forEach(dbReview => {
-          const expertIdStr = convertExpertIdToString(dbReview.expert_id);
-          
-          // Create review object with explicit properties
-          const review: Review = {
-            id: dbReview.id,
-            expertId: expertIdStr,
-            rating: dbReview.rating,
-            comment: dbReview.comment || '',
-            date: dbReview.date,
-            verified: Boolean(dbReview.verified),
-            userId: userProfile.id,
-            userName: userProfile.name || 'Anonymous User',
-            expertName: expertNameMap[expertIdStr] || 'Unknown Expert'
-          };
-          
-          formattedReviews.push(review);
+      });
+      
+      // Convert IDs to strings for the query - do this separately
+      const expertIdStrings: string[] = [];
+      expertIdNumbers.forEach(idNumber => {
+        expertIdStrings.push(convertExpertIdToString(idNumber));
+      });
+      
+      // Get expert data
+      const { data: experts } = await supabase
+        .from('experts')
+        .select('id, name')
+        .in('id', expertIdStrings);
+      
+      // Create a simple lookup object
+      const expertNameMap: {[key: string]: string} = {};
+      
+      if (experts) {
+        experts.forEach(expert => {
+          expertNameMap[expert.id] = expert.name;
         });
       }
+      
+      // Create the reviews array manually
+      const formattedReviews: Review[] = [];
+      
+      updatedReviews.forEach(dbReview => {
+        const expertIdStr = convertExpertIdToString(dbReview.expert_id);
+        
+        // Build the review object with direct property assignments
+        const review: Review = {
+          id: dbReview.id,
+          expertId: expertIdStr,
+          rating: dbReview.rating,
+          comment: dbReview.comment || '',
+          date: dbReview.date,
+          verified: Boolean(dbReview.verified),
+          userId: userProfile.id,
+          userName: userProfile.name || 'Anonymous User',
+          expertName: expertNameMap[expertIdStr] || 'Unknown Expert'
+        };
+        
+        formattedReviews.push(review);
+      });
       
       return {
         success: true,
