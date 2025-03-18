@@ -1,8 +1,9 @@
 
 import { createContext } from 'react';
 import { UserProfile } from '@/types/supabase/user';
-import { ExpertUI } from '@/types/supabase';
+import { Expert } from '@/types/expert';
 
+// Define the shape of the context
 export interface UserAuthContextType {
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
@@ -19,11 +20,11 @@ export interface UserAuthContextType {
   logout: () => Promise<void>;
   updateProfile: (profileData: Partial<UserProfile>) => Promise<void>;
   updateProfilePicture: (file: File) => Promise<string>;
-  addToFavorites: (expert: ExpertUI) => void;
+  addToFavorites: (expert: Expert) => void;
   removeFromFavorites: (expertId: string) => void;
   rechargeWallet: (amount: number) => Promise<void>;
-  addReview: (expertId: string, rating: number, comment: string) => void;
-  reportExpert: (expertId: string, reason: string, details: string) => void;
+  addReview: (expertId: string, rating: number, comment: string) => Promise<void>;
+  reportExpert: (expertId: string, reason: string, details: string) => Promise<void>;
   getExpertShareLink: (expertId: string) => string;
   hasTakenServiceFrom: (expertId: string) => boolean;
   getReferralLink: () => string;
@@ -38,6 +39,7 @@ export interface UserAuthContextType {
   }) => Promise<{ success: boolean; message?: string }>;
 }
 
+// Create the context with a default value
 export const UserAuthContext = createContext<UserAuthContextType>({
   currentUser: null,
   isAuthenticated: false,
@@ -49,10 +51,10 @@ export const UserAuthContext = createContext<UserAuthContextType>({
   addToFavorites: () => {},
   removeFromFavorites: () => {},
   rechargeWallet: async () => {},
-  addReview: () => {},
-  reportExpert: () => {},
+  addReview: async () => {},
+  reportExpert: async () => {},
   getExpertShareLink: () => '',
   hasTakenServiceFrom: () => false,
   getReferralLink: () => '',
-  bookAppointment: async () => ({ success: false })
+  bookAppointment: async () => ({ success: false }),
 });

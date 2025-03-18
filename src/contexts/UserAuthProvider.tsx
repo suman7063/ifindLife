@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -68,7 +67,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }): Promise<boolean> => {
     const success = await authSignup(userData);
     
-    // If signup was successful and there's a referral code, process it
     if (success && userData.referralCode) {
       try {
         const { data } = await supabase.auth.getUser();
@@ -77,7 +75,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       } catch (error) {
         console.error("Error processing referral:", error);
-        // Don't fail the signup if referral processing fails
       }
     }
     
@@ -124,7 +121,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     
     const result = await addReview(currentUser, expertId, rating, comment);
     if (result.success && currentUser) {
-      // Update the current user's reviews collection without replacing the entire user object
       setCurrentUser(prevUser => {
         if (!prevUser) return null;
         return {

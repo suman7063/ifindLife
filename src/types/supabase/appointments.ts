@@ -36,3 +36,17 @@ export interface TimeSlot {
   endTime: string;
   isAvailable: boolean;
 }
+
+export interface AppointmentInsert {
+  id?: string;
+  userId: string;
+  expertId: string;
+  serviceId: number;
+  appointmentDate: string;
+  duration: number;
+  status: AppointmentStatus;
+  price?: number;
+  currency?: string;
+  notes?: string;
+  expertName: string;
+}

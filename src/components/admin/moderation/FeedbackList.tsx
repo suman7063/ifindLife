@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -11,14 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
 import { Star, Eye, Trash2, Loader2 } from 'lucide-react';
-import { ReviewUI } from '@/types/supabase/reviews';
+import { Review } from '@/types/supabase/reviews';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import FeedbackDetailsDialog from './FeedbackDetailsDialog';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
 
 interface FeedbackListProps {
-  feedback: ReviewUI[];
+  feedback: Review[];
   isLoading: boolean;
   onDelete: (id: string) => void;
 }
@@ -28,7 +27,7 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
   isLoading,
   onDelete,
 }) => {
-  const [selectedFeedback, setSelectedFeedback] = useState<ReviewUI | null>(null);
+  const [selectedFeedback, setSelectedFeedback] = useState<Review | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   
@@ -36,20 +35,16 @@ const FeedbackList: React.FC<FeedbackListProps> = ({
   const [ratingFilter, setRatingFilter] = useState('all');
   const [verifiedFilter, setVerifiedFilter] = useState('all');
   
-  // Filter feedback
   const filteredFeedback = feedback.filter(item => {
-    // Search filter
     const searchMatches = 
       item.userName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.expertName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.comment || '').toLowerCase().includes(searchQuery.toLowerCase());
     
-    // Rating filter
     const ratingMatches = 
       ratingFilter === 'all' || 
       item.rating === parseInt(ratingFilter);
     
-    // Verified filter
     const verifiedMatches = 
       verifiedFilter === 'all' || 
       (verifiedFilter === 'verified' && item.verified) ||

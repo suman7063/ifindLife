@@ -2,6 +2,7 @@
 import React from 'react';
 import ExpertCard from '@/components/ExpertCard';
 import { Expert } from '@/types/expert';
+import { convertDBExpertToUI } from '@/utils/expertUtils';
 
 interface ExpertsGridProps {
   experts: Expert[];
@@ -33,9 +34,21 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, isLoading = false })
     );
   }
 
+  // Make sure all experts have the required properties
+  const validatedExperts = experts.map(expert => {
+    // If expert is missing any required fields, add defaults
+    if (!expert.email) {
+      return {
+        ...expert,
+        email: `expert-${expert.id}@example.com` // Default email
+      };
+    }
+    return expert;
+  });
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {experts.map(expert => (
+      {validatedExperts.map(expert => (
         <ExpertCard key={expert.id} expert={expert} />
       ))}
     </div>

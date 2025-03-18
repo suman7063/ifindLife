@@ -11,6 +11,9 @@ export interface Review {
   expertName: string;
 }
 
+// Alias for Review to maintain compatibility with existing code
+export type ReviewUI = Review;
+
 export interface Report {
   id: string;
   expertId: string;
@@ -20,4 +23,39 @@ export interface Report {
   status: string;
   userId: string;
   userName: string;
+}
+
+// Moderation related types
+export enum ReporterType {
+  USER = 'user',
+  EXPERT = 'expert',
+  SYSTEM = 'system'
+}
+
+export enum TargetType {
+  USER = 'user',
+  EXPERT = 'expert',
+  REVIEW = 'review',
+  APPOINTMENT = 'appointment'
+}
+
+export enum ModerationStatus {
+  PENDING = 'pending',
+  REVIEWING = 'reviewing',
+  RESOLVED = 'resolved',
+  DISMISSED = 'dismissed'
+}
+
+export enum ModerationActionType {
+  WARNING = 'warning',
+  SUSPENSION = 'suspension',
+  BAN = 'ban',
+  CONTENT_REMOVAL = 'content_removal',
+  NO_ACTION = 'no_action'
+}
+
+export enum ReviewStatus {
+  PENDING = 'pending',
+  APPROVED = 'approved',
+  REJECTED = 'rejected'
 }

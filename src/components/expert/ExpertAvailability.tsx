@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,11 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Tables } from '@/types/supabase';
+import { TimeSlot } from '@/types/supabase/appointments';
 import { getTable } from '@/lib/supabase';
 import { useExpertAuth } from './hooks/useExpertAuth';
 import { format } from "date-fns";
-import { TimeSlot } from '@/types/supabase/appointments';
 import { toast } from 'sonner';
 
 const timeSlots = [
@@ -61,7 +59,7 @@ const ExpertAvailability: React.FC = () => {
       
       // Map the data to TimeSlot format
       const slots: TimeSlot[] = data ? data.map(slot => ({
-        id: slot.id,
+        id: String(slot.id),
         expertId: slot.expert_id,
         date: slot.date,
         startTime: slot.start_time,
@@ -151,7 +149,7 @@ const ExpertAvailability: React.FC = () => {
         
         if (data && data[0]) {
           const addedSlot: TimeSlot = {
-            id: data[0].id,
+            id: String(data[0].id),
             expertId: data[0].expert_id,
             date: data[0].date,
             startTime: data[0].start_time,

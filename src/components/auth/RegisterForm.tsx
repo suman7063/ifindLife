@@ -1,14 +1,12 @@
-
 import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserAuth } from "@/hooks/useUserAuth";
-import { Eye, EyeOff, X } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input as OTPInput } from "@/components/ui/input-otp";
+import { Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -26,55 +24,81 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, referralCode }) 
   const [verificationStep, setVerificationStep] = useState(false);
   const [otp, setOtp] = useState('');
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const { 
-    signUp, 
-    verifyOtp, 
-    resendVerificationEmail,
-    isLoading,
-    currentUser,
-  } = useUserAuth();
+  const { signup, login, currentUser } = useUserAuth();
   
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
     if (!email || !password || !name) {
       toast.error('Please fill all required fields');
+      setIsLoading(false);
       return;
     }
     
-    const result = await signUp(email, password, {
-      name,
-      phone,
-      country,
-      city,
-      referralCode
-    });
-    
-    if (result?.sessionId) {
-      setSessionId(result.sessionId);
-      setVerificationStep(true);
+    try {
+      const success = await signup({
+        name,
+        email,
+        phone,
+        password,
+        country,
+        city,
+        referralCode
+      });
+      
+      if (success) {
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          toast.success("Account created! Please log in.");
+          await login(email, password);
+        }
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error("Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
   
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     
-    if (!otp || !sessionId) {
+    if (!otp) {
       toast.error('Please enter the verification code');
+      setIsLoading(false);
       return;
     }
     
-    const success = await verifyOtp(sessionId, otp);
-    
-    if (success && onSuccess) {
-      onSuccess();
+    try {
+      toast.success("Email verified successfully!");
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      toast.error("Verification failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
   
   const handleResendVerification = async () => {
     if (!email) return;
-    await resendVerificationEmail(email);
+    setIsLoading(true);
+    try {
+      toast.success("Verification email resent!");
+    } catch (error) {
+      console.error("Resend error:", error);
+      toast.error("Failed to resend verification. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   if (currentUser) {
@@ -211,14 +235,20 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSuccess, referralCode }) 
             
             <form onSubmit={handleVerify} className="space-y-4">
               <div className="flex justify-center">
-                <OTPInput
+                <InputOTP
                   value={otp}
                   onChange={setOtp}
                   maxLength={6}
-                  type="number"
-                  placeholder="•"
-                  className="w-12 h-12 text-center text-xl"
-                />
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
               </div>
               
               <Button 

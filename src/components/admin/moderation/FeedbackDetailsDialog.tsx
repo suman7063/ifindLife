@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Star } from 'lucide-react';
-import { ReviewUI } from '@/types/supabase/reviews';
+import { Review } from '@/types/supabase/reviews';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 
 interface FeedbackDetailsDialogProps {
-  feedback: ReviewUI;
+  feedback: Review;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
