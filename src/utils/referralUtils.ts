@@ -167,3 +167,21 @@ export const registerReferral = async (referralCode: string, newUserId: string):
     return false;
   }
 };
+
+// Function to process a referral code and create the referral in Supabase
+export const processReferralCode = async (referralCode: string, newUserId: string): Promise<boolean> => {
+  if (!referralCode || !newUserId) return false;
+  
+  try {
+    const isValid = await validateReferralCode(referralCode);
+    if (!isValid) {
+      console.log('Invalid referral code:', referralCode);
+      return false;
+    }
+    
+    return await registerReferral(referralCode, newUserId);
+  } catch (error) {
+    console.error('Error processing referral code:', error);
+    return false;
+  }
+};
