@@ -12,6 +12,7 @@ import { useUserAuth } from '@/hooks/useUserAuth';
 import { useAppointments } from '@/hooks/auth/useAppointments';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { ExpertAvailability } from '@/types/supabase/tables';
 
 interface AstrologerInfo {
   id: number;
@@ -65,8 +66,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, astrologer
     try {
       const formattedDate = format(selectedDate, 'yyyy-MM-dd');
       
-      // In a real app, we would fetch time slots from the expert_availability table
-      // For now, we'll generate some fake time slots
+      // Try to fetch from expert_availability table
       const { data, error } = await supabase
         .from('expert_availability')
         .select('*')
@@ -77,11 +77,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, astrologer
       if (error) throw error;
       
       if (data && data.length > 0) {
-        // Use actual time slots from database
-        const availableSlots = data.map(slot => ({
+        // Map the database slots to our TimeSlot interface
+        const availableSlots = data.map((slot: ExpertAvailability) => ({
           startTime: slot.start_time,
           endTime: slot.end_time,
-          isAvailable: true
+          isAvailable: slot.is_available
         }));
         
         setTimeSlots(availableSlots);
@@ -147,6 +147,11 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, astrologer
       return;
     }
     
+    if (!currentUser) {
+      toast.error('Please log in to book a session');
+      return;
+    }
+    
     // Check if user has enough wallet balance
     if (currentUser?.walletBalance && currentUser.walletBalance < totalPrice) {
       toast.error('Insufficient wallet balance. Please recharge your wallet.');
@@ -160,24 +165,26 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, astrologer
     appointmentDate.setHours(hours, minutes);
     
     // Book the appointment
-    const result = await bookAppointment(
-      currentUser,
-      astrologer.id.toString(),
-      astrologer.name,
-      appointmentDate.toISOString(),
-      duration,
-      totalPrice,
-      currentUser?.currency || 'USD',
-      undefined,
-      notes
-    );
-    
-    if (result) {
-      // In a real application, we would also deduct the amount from the user's wallet
-      // await deductFromWallet(currentUser.id, totalPrice);
+    try {
+      const result = await bookAppointment(
+        currentUser,
+        astrologer.id.toString(),
+        astrologer.name,
+        appointmentDate.toISOString(),
+        duration,
+        totalPrice,
+        currentUser?.currency || 'USD',
+        undefined,
+        notes
+      );
       
-      toast.success(`Appointment booked with ${astrologer.name}. The amount of ${currentUser?.currency} ${totalPrice.toFixed(2)} has been deducted from your wallet.`);
-      onClose();
+      if (result) {
+        toast.success(`Appointment booked with ${astrologer.name}. The amount of ${currentUser?.currency} ${totalPrice.toFixed(2)} has been deducted from your wallet.`);
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast.error('Failed to book appointment. Please try again.');
     }
   };
   
@@ -315,7 +322,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, astrologer
               isLoading || 
               !selectedDate || 
               !selectedTimeSlot || 
-              (currentUser?.walletBalance !== undefined && currentUser.walletBalance < totalPrice)
+              (currentUser?.walletBalance !== undefined && currentUser.walletBalance < totalPrice) ||
+              !currentUser
             }
           >
             {isLoading ? 'Booking...' : 'Book Session'}

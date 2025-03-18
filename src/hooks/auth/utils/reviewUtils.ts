@@ -1,170 +1,170 @@
 
 import { supabase } from '@/lib/supabase';
+import { UserReview } from '@/types/supabase/reviews';
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
 
-export interface Review {
-  id: string;
-  expertId: string;
-  rating: number;
-  comment: string;
-  date: string;
-  verified: boolean;
-  userId: string;
-  userName: string;
-  expertName: string;
-}
+// Function to fetch user reviews
+export const fetchUserReviews = async (userId: string): Promise<UserReview[]> => {
+  try {
+    // Use direct query instead of the problematic type instantiation
+    const { data, error } = await supabase
+      .from('user_reviews')
+      .select('*')
+      .eq('user_id', userId);
 
-export interface ReviewsResult {
-  success: boolean;
-  reviews: Review[];
-}
+    if (error) {
+      console.error('Error fetching user reviews:', error);
+      return [];
+    }
 
-/**
- * Fetch reviews for a user
- */
-export const fetchUserReviews = async (userId: string): Promise<ReviewsResult> => {
+    // Transform the data manually to avoid type issues
+    return (data || []).map(item => ({
+      id: item.id,
+      expertId: item.expert_id,
+      rating: item.rating,
+      comment: item.comment,
+      date: item.date,
+      verified: item.verified,
+      userName: item.user_name || '',
+      expertName: '', // This might be filled in on the client side or through a join
+    }));
+  } catch (error) {
+    console.error('Error in fetchUserReviews:', error);
+    return [];
+  }
+};
+
+// Function to fetch reviews by expert ID
+export const fetchExpertReviews = async (expertId: number): Promise<UserReview[]> => {
   try {
     const { data, error } = await supabase
       .from('user_reviews')
-      .select(`
-        id,
-        expert_id,
+      .select('*')
+      .eq('expert_id', expertId);
+
+    if (error) {
+      console.error('Error fetching expert reviews:', error);
+      return [];
+    }
+
+    // Transform the data manually to avoid type issues
+    return (data || []).map(item => ({
+      id: item.id,
+      expertId: item.expert_id,
+      rating: item.rating,
+      comment: item.comment,
+      date: item.date,
+      verified: item.verified,
+      userName: item.user_name || '',
+      expertName: '', // This might be filled in on the client side or through a join
+    }));
+  } catch (error) {
+    console.error('Error in fetchExpertReviews:', error);
+    return [];
+  }
+};
+
+// Submit a new review
+export const submitReview = async (
+  userId: string,
+  userName: string,
+  expertId: number,
+  rating: number,
+  comment: string
+): Promise<UserReview | null> => {
+  try {
+    const date = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    
+    const { data, error } = await supabase
+      .from('user_reviews')
+      .insert({
+        user_id: userId,
+        user_name: userName,
+        expert_id: expertId,
         rating,
         comment,
         date,
-        verified,
-        user_name
-      `)
-      .eq('user_id', userId);
-    
-    if (error) throw error;
-    
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return { success: true, reviews: [] };
+        verified: false
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit review');
+      return null;
     }
+
+    toast.success('Review submitted successfully');
     
-    // Get expert names (for simplicity, we'll make a separate query)
-    const expertIds = data.map(review => review.expert_id.toString());
-    
-    const { data: experts, error: expertError } = await supabase
-      .from('experts')
-      .select('id, name')
-      .in('id', expertIds);
-    
-    if (expertError) {
-      console.error('Error fetching expert names:', expertError);
-    }
-    
-    // Create a map of expert IDs to names
-    const expertNameMap: Record<string, string> = {};
-    if (experts) {
-      experts.forEach(expert => {
-        expertNameMap[expert.id] = expert.name;
-      });
-    }
-    
-    // Map the data to Review objects
-    const reviews: Review[] = data.map(item => ({
-      id: item.id,
-      expertId: item.expert_id.toString(),
-      rating: item.rating,
-      comment: item.comment || '',
-      date: item.date,
-      verified: Boolean(item.verified),
-      userId: userId,
-      userName: item.user_name || 'Anonymous User',
-      expertName: expertNameMap[item.expert_id.toString()] || 'Unknown Expert'
-    }));
-    
-    return { success: true, reviews };
-    
-  } catch (error: any) {
-    console.error('Error fetching reviews:', error);
-    return { success: false, reviews: [] };
+    // Transform the data manually to avoid type issues
+    return {
+      id: data.id,
+      expertId: data.expert_id,
+      rating: data.rating,
+      comment: data.comment,
+      date: data.date,
+      verified: data.verified,
+      userName: data.user_name || '',
+      expertName: '', // This might be filled in on the client side
+    };
+  } catch (error) {
+    console.error('Error in submitReview:', error);
+    toast.error('Failed to submit review');
+    return null;
   }
 };
 
-/**
- * Add a review to an expert
- */
-export const addReview = async (
-  userProfile: UserProfile,
-  expertId: string,
+// Update an existing review
+export const updateReview = async (
+  reviewId: string,
   rating: number,
   comment: string
-): Promise<ReviewsResult> => {
+): Promise<boolean> => {
   try {
-    // Check if user has already reviewed this expert
-    const { data: existingReviews } = await supabase
+    const { error } = await supabase
       .from('user_reviews')
-      .select('*')
-      .eq('user_id', userProfile.id)
-      .eq('expert_id', expertId);
-    
-    if (existingReviews && existingReviews.length > 0) {
-      // Update existing review
-      const { error } = await supabase
-        .from('user_reviews')
-        .update({
-          rating,
-          comment,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', existingReviews[0].id);
-      
-      if (error) throw error;
-      
-      toast.success('Review updated successfully');
-    } else {
-      // Create new review
-      const { error } = await supabase
-        .from('user_reviews')
-        .insert({
-          user_id: userProfile.id,
-          expert_id: expertId,
-          rating,
-          comment,
-          date: new Date().toISOString(),
-          user_name: userProfile.name || 'Anonymous User'
-        });
-      
-      if (error) throw error;
-      
-      toast.success('Review added successfully');
+      .update({
+        rating,
+        comment,
+        date: new Date().toISOString().split('T')[0], // Update the date to today
+      })
+      .eq('id', reviewId);
+
+    if (error) {
+      console.error('Error updating review:', error);
+      toast.error('Failed to update review');
+      return false;
     }
-    
-    return await fetchUserReviews(userProfile.id);
-    
-  } catch (error: any) {
-    console.error('Error adding review:', error);
-    toast.error(error.message || 'Failed to add review');
-    return {
-      success: false,
-      reviews: []
-    };
+
+    toast.success('Review updated successfully');
+    return true;
+  } catch (error) {
+    console.error('Error in updateReview:', error);
+    toast.error('Failed to update review');
+    return false;
   }
 };
 
-/**
- * Check if user has taken service from an expert
- */
-export const hasTakenServiceFrom = async (
-  userProfile: UserProfile | null,
-  expertId: string
-): Promise<boolean> => {
-  if (!userProfile) return false;
-  
+// Delete a review
+export const deleteReview = async (reviewId: string): Promise<boolean> => {
   try {
-    const { data: transactions } = await supabase
-      .from('user_transactions')
-      .select('*')
-      .eq('user_id', userProfile.id)
-      .eq('expert_id', expertId);
-    
-    return !!(transactions && transactions.length > 0);
-  } catch (error: any) {
-    console.error('Error checking transactions:', error);
+    const { error } = await supabase
+      .from('user_reviews')
+      .delete()
+      .eq('id', reviewId);
+
+    if (error) {
+      console.error('Error deleting review:', error);
+      toast.error('Failed to delete review');
+      return false;
+    }
+
+    toast.success('Review deleted successfully');
+    return true;
+  } catch (error) {
+    console.error('Error in deleteReview:', error);
+    toast.error('Failed to delete review');
     return false;
   }
 };

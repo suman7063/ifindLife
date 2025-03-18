@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { format, parseISO, isBefore, addMinutes } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -91,7 +90,6 @@ const AppointmentsManagement: React.FC = () => {
     setIsVideoSessionOpen(false);
     setSelectedAppointment(null);
     
-    // Reload appointments to get updated status
     await loadAppointments();
   };
   
@@ -270,7 +268,6 @@ const AppointmentsManagement: React.FC = () => {
                             variant="outline" 
                             className="flex-1"
                             onClick={() => {
-                              // Add Google Calendar integration here in the future
                               toast.success("Added to calendar");
                             }}
                           >
@@ -329,7 +326,6 @@ const AppointmentsManagement: React.FC = () => {
                           </div>
                         )}
                         
-                        {/* No-show Reporting - only for scheduled appointments that are in the past */}
                         {appointment.status === 'scheduled' && (
                           <div className="flex gap-2 mt-4">
                             <Button 
@@ -361,8 +357,8 @@ const AppointmentsManagement: React.FC = () => {
         </Tabs>
       </div>
       
-      <Dialog open={isVideoSessionOpen} onOpenChange={(open) => !open && handleEndSession()} className="max-w-4xl">
-        <DialogContent className="sm:max-w-4xl">
+      <Dialog open={isVideoSessionOpen} onOpenChange={(open) => !open && handleEndSession()}>
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
               Video Session with {selectedAppointment?.expertName}

@@ -8,7 +8,7 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIU
 // Create Supabase client
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Helper function with proper typing
+// Helper function with proper typing for tables we commonly use
 export function from<T extends keyof Database['public']['Tables']>(
   table: T
 ) {

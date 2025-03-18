@@ -154,6 +154,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
         </CardFooter>
       </Card>
       
+      {/* CallModal for both regular and video calls */}
       <CallModal 
         isOpen={isCallModalOpen || isVideoCallModalOpen}
         onClose={() => {
@@ -163,6 +164,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
         astrologer={{ id, name, imageUrl, price }}
       />
 
+      {/* BookingModal for scheduling future sessions */}
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}

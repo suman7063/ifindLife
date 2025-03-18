@@ -1,4 +1,3 @@
-
 // This file defines the database table structures for Supabase
 
 export interface CustomTable {
@@ -139,6 +138,15 @@ export interface CustomTable {
     uid?: number;
     created_at: string;
   };
+  expert_availability: {
+    id: string;
+    expert_id: string;
+    date: string;
+    start_time: string;
+    end_time: string;
+    is_available: boolean;
+    created_at?: string;
+  };
 }
 
 // Direct type definitions from database tables
@@ -155,3 +163,4 @@ export type UserCourse = CustomTable['user_courses'];
 export type UserFavorite = CustomTable['user_favorites'];
 export type ExpertReport = CustomTable['expert_reports'];
 export type AppointmentTable = CustomTable['appointments'];
+export type ExpertAvailability = CustomTable['expert_availability'];

@@ -29,7 +29,7 @@ export const useAppointments = () => {
       if (error) throw error;
       
       // Transform from snake_case to camelCase
-      const formattedAppointments: Appointment[] = (data || []).map(appointment => ({
+      const formattedAppointments: Appointment[] = (data || []).map((appointment: any) => ({
         id: appointment.id,
         userId: appointment.user_id,
         expertId: appointment.expert_id,
@@ -77,7 +77,7 @@ export const useAppointments = () => {
       if (error) throw error;
       
       // Transform from snake_case to camelCase
-      const formattedAppointments: Appointment[] = (data || []).map(appointment => ({
+      const formattedAppointments: Appointment[] = (data || []).map((appointment: any) => ({
         id: appointment.id,
         userId: appointment.user_id,
         expertId: appointment.expert_id,
