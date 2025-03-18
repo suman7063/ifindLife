@@ -17,6 +17,18 @@ interface DbReview {
   user_name: string | null;
 }
 
+// Define the structure returned by our RPC function
+interface UserReviewWithExpert {
+  review_id: string;
+  expert_id: number;
+  rating: number;
+  comment: string | null;
+  date: string;
+  verified: boolean | null;
+  user_name: string | null;
+  expert_name: string | null;
+}
+
 export const useReviews = () => {
   // Add a review to an expert
   const addReview = async (
@@ -80,13 +92,14 @@ export const useReviews = () => {
     }
   };
 
-  // Fetch reviews for a specific user
+  // Fetch reviews for a specific user using the RPC function
   const fetchUserReviews = async (userId: string): Promise<{success: boolean, reviews: Review[]}> => {
     try {
-      // Simple JOIN query to get reviews with expert data in a single query
-      const { data, error } = await supabase.rpc('get_user_reviews_with_experts', {
-        user_id_param: userId
-      });
+      // Call the RPC function directly using the function name
+      const { data, error } = await supabase
+        .rpc('get_user_reviews_with_experts', {
+          user_id_param: userId
+        });
       
       if (error) throw error;
       
@@ -94,8 +107,9 @@ export const useReviews = () => {
         return { success: true, reviews: [] };
       }
       
-      // Map the joined data directly to Review objects
-      const reviews: Review[] = data.map((item): Review => ({
+      // Map the joined data to Review objects with proper type assertion
+      const reviewsData = data as UserReviewWithExpert[];
+      const reviews: Review[] = reviewsData.map((item): Review => ({
         id: item.review_id,
         expertId: String(item.expert_id),
         rating: item.rating,
@@ -111,7 +125,8 @@ export const useReviews = () => {
       
     } catch (error: any) {
       console.error('Error fetching reviews:', error);
-      return { success: false, reviews: [] };
+      // If the RPC function fails, try the legacy method
+      return fetchUserReviewsLegacy(userId);
     }
   };
   

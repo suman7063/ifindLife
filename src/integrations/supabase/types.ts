@@ -612,6 +612,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_user_reviews_with_experts: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: {
+          review_id: string
+          expert_id: number
+          rating: number
+          comment: string
+          date: string
+          verified: boolean
+          user_name: string
+          expert_name: string
+        }[]
+      }
       handle_completed_referral: {
         Args: {
           p_referral_id: string
