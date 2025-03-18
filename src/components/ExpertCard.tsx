@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useAgora } from '@/hooks/auth/useAgora';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
-interface AstrologerCardProps {
+interface ExpertCardProps {
   id: number;
   name: string;
   experience: number;
@@ -24,7 +24,7 @@ interface AstrologerCardProps {
   online?: boolean;
 }
 
-const AstrologerCard: React.FC<AstrologerCardProps> = ({
+const ExpertCard: React.FC<ExpertCardProps> = ({
   id,
   name,
   experience,
@@ -161,17 +161,17 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
           setIsCallModalOpen(false);
           setIsVideoCallModalOpen(false);
         }}
-        astrologer={{ id, name, imageUrl, price }}
+        expert={{ id, name, imageUrl, price }}
       />
 
       {/* BookingModal for scheduling future sessions */}
       <BookingModal
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
-        astrologer={{ id, name, imageUrl, price }}
+        expert={{ id, name, imageUrl, price }}
       />
     </>
   );
 };
 
-export default AstrologerCard;
+export default ExpertCard;

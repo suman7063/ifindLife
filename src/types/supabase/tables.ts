@@ -1,3 +1,4 @@
+
 // This file defines the database table structures for Supabase
 
 export interface CustomTable {
@@ -137,6 +138,12 @@ export interface CustomTable {
     token?: string;
     uid?: number;
     created_at: string;
+    price?: number;
+    currency?: string;
+    extension_count?: number;
+    actual_duration?: number;
+    refunded?: boolean;
+    calendar_event_id?: string;
   };
   expert_availability: {
     id: string;

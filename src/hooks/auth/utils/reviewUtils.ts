@@ -1,10 +1,9 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserReview } from '@/types/supabase/reviews';
 import { toast } from 'sonner';
 
 // Function to fetch user reviews
-export const fetchUserReviews = async (userId: string): Promise<UserReview[]> => {
+export const fetchUserReviews = async (userId: string) => {
   try {
     // Use direct query instead of the problematic type instantiation
     const { data, error } = await supabase
@@ -35,7 +34,7 @@ export const fetchUserReviews = async (userId: string): Promise<UserReview[]> =>
 };
 
 // Function to fetch reviews by expert ID
-export const fetchExpertReviews = async (expertId: number): Promise<UserReview[]> => {
+export const fetchExpertReviews = async (expertId: number) => {
   try {
     const { data, error } = await supabase
       .from('user_reviews')
@@ -71,7 +70,7 @@ export const submitReview = async (
   expertId: number,
   rating: number,
   comment: string
-): Promise<UserReview | null> => {
+) => {
   try {
     const date = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
     
@@ -120,7 +119,7 @@ export const updateReview = async (
   reviewId: string,
   rating: number,
   comment: string
-): Promise<boolean> => {
+) => {
   try {
     const { error } = await supabase
       .from('user_reviews')
@@ -147,7 +146,7 @@ export const updateReview = async (
 };
 
 // Delete a review
-export const deleteReview = async (reviewId: string): Promise<boolean> => {
+export const deleteReview = async (reviewId: string) => {
   try {
     const { error } = await supabase
       .from('user_reviews')
@@ -167,4 +166,16 @@ export const deleteReview = async (reviewId: string): Promise<boolean> => {
     toast.error('Failed to delete review');
     return false;
   }
+};
+
+// Check if user has taken service from expert
+export const hasTakenServiceFrom = async (expertId: string) => {
+  // This is just a stub - implement with real logic
+  return true;
+};
+
+// Add a review - function for useReviews hook
+export const addReview = async (expertId: number, rating: number, comment: string) => {
+  // This is just a stub - implement with real logic
+  return true;
 };

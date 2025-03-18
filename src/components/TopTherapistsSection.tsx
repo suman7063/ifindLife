@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
-import AstrologerCard from '@/components/AstrologerCard';
+import ExpertCard from '@/components/ExpertCard';
 import { therapistData as defaultTherapistData } from '@/data/homePageData';
 
 const TopTherapistsSection = () => {
@@ -45,7 +45,7 @@ const TopTherapistsSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {therapists.map((therapist) => (
-            <AstrologerCard key={therapist.id} {...therapist} />
+            <ExpertCard key={therapist.id} {...therapist} />
           ))}
         </div>
       </div>

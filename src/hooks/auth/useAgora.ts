@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import AgoraRTC from 'agora-rtc-sdk-ng';
+import AgoraRTC, { IAgoraRTCClient, IMicrophoneAudioTrack, ICameraVideoTrack } from 'agora-rtc-sdk-ng';
 
 // Setup Agora client
 const APP_ID = "your-agora-app-id"; // Replace with actual Agora App ID

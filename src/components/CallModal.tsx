@@ -7,11 +7,12 @@ import { toast } from 'sonner';
 import { useAgora } from '@/hooks/auth/useAgora';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import VideoCall from './VideoCall';
+import AgoraRTC, { IAgoraRTCClient, IMicrophoneAudioTrack, ICameraVideoTrack } from 'agora-rtc-sdk-ng';
 
 interface CallModalProps {
   isOpen: boolean;
   onClose: () => void;
-  astrologer: {
+  expert: {
     id: number;
     name: string;
     imageUrl: string;
@@ -19,37 +20,57 @@ interface CallModalProps {
   };
 }
 
-const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) => {
+const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, expert }) => {
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
   const [duration, setDuration] = useState(0);
   const [balance, setBalance] = useState(500); // Dummy balance in wallet (₹)
   const { currentUser } = useUserAuth();
-  const { useClient, useMicrophoneAndCameraTracks, startVideoSession, isLoading } = useAgora();
+  const agora = useAgora();
   
   const [videoSession, setVideoSession] = useState<any>(null);
   const [inCall, setInCall] = useState(false);
+  const [tracks, setTracks] = useState<[IMicrophoneAudioTrack, ICameraVideoTrack] | null>(null);
   
-  // Agora client and tracks
-  const client = useClient();
-  const { ready, tracks } = useMicrophoneAndCameraTracks();
+  // Initialize Agora client
+  const [client, setClient] = useState<IAgoraRTCClient | null>(null);
   
-  // Start Agora session when modal opens
+  // Create client and tracks when modal opens
   useEffect(() => {
-    if (isOpen && currentUser && !videoSession) {
-      const session = startVideoSession(
-        currentUser, 
-        astrologer.id.toString(), 
-        astrologer.name
-      );
+    if (isOpen) {
+      // Create Agora client
+      const agoraClient = agora.createClient();
+      setClient(agoraClient);
       
-      if (session) {
-        setVideoSession(session);
+      // Initialize session data
+      if (currentUser && expert.id) {
+        const channelName = agora.generateChannelName(expert.id.toString(), currentUser.id);
+        const token = agora.generateToken(channelName);
+        
+        setVideoSession({
+          channelName,
+          token,
+          uid: Date.now()
+        });
       }
+      
+      // Create tracks
+      const initTracks = async () => {
+        try {
+          const audioTrack = await agora.createMicrophoneTrack();
+          const videoTrack = await agora.createCameraTrack();
+          setTracks([audioTrack, videoTrack]);
+        } catch (error) {
+          console.error("Error creating tracks:", error);
+          toast.error("Failed to initialize audio/video. Please check your camera and microphone.");
+        }
+      };
+      
+      initTracks();
     }
     
     return () => {
-      if (inCall) {
-        // Clean up the call when component unmounts
+      // Clean up when component unmounts
+      if (inCall && client) {
         client.leave();
         setInCall(false);
         if (tracks) {
@@ -58,13 +79,13 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
         }
       }
     };
-  }, [isOpen, currentUser, astrologer, client, tracks]);
+  }, [isOpen, currentUser, expert.id, agora]);
   
-  // Initialize client when ready
+  // Join channel when client and tracks are ready
   useEffect(() => {
-    if (ready && videoSession && !inCall) {
-      const initCall = async () => {
-        // Join the channel
+    if (client && tracks && videoSession && !inCall) {
+      const joinChannel = async () => {
+        // Set up event handlers
         client.on('user-published', async (user, mediaType) => {
           await client.subscribe(user, mediaType);
           if (mediaType === 'video') {
@@ -76,6 +97,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
         });
         
         try {
+          // Join the channel
           await client.join(
             'your-agora-app-id', // Replace with your Agora app ID
             videoSession.channelName,
@@ -83,21 +105,20 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
             videoSession.uid || null
           );
           
-          if (tracks) {
-            await client.publish(tracks);
-            setInCall(true);
-            setCallStatus('connected');
-            toast.success(`Connected with ${astrologer.name}`);
-          }
+          // Publish local tracks
+          await client.publish(tracks);
+          setInCall(true);
+          setCallStatus('connected');
+          toast.success(`Connected with ${expert.name}`);
         } catch (error) {
           console.error('Error joining Agora channel:', error);
           toast.error('Failed to connect video call');
         }
       };
       
-      initCall();
+      joinChannel();
     }
-  }, [ready, videoSession, client, tracks]);
+  }, [client, tracks, videoSession, inCall, expert.name]);
   
   // Handle call duration and balance update
   useEffect(() => {
@@ -108,7 +129,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
         setDuration(prev => prev + 1);
         // Deduct balance based on price per minute (converting to per second)
         setBalance(prev => {
-          const newBalance = prev - (astrologer.price / 60);
+          const newBalance = prev - (expert.price / 60);
           // End call if balance is low
           if (newBalance <= 50) {
             handleEndCall();
@@ -123,7 +144,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [callStatus, astrologer.price]);
+  }, [callStatus, expert.price]);
   
   // Format duration to MM:SS
   const formatDuration = (seconds: number) => {
@@ -134,7 +155,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
   
   // Handle end call
   const handleEndCall = () => {
-    if (inCall) {
+    if (inCall && client) {
       client.leave();
       tracks?.[0].close();
       tracks?.[1].close();
@@ -165,10 +186,10 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
           </DialogTitle>
           <DialogDescription className="text-center">
             {callStatus === 'connected' ? 
-              `Connected with ${astrologer.name} (₹${astrologer.price}/min)` : 
+              `Connected with ${expert.name} (₹${expert.price}/min)` : 
               callStatus === 'ended' ? 
-              `Call with ${astrologer.name} ended` : 
-              `Connecting to ${astrologer.name}...`}
+              `Call with ${expert.name} ended` : 
+              `Connecting to ${expert.name}...`}
           </DialogDescription>
         </DialogHeader>
         
@@ -177,7 +198,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) =>
             <div className="w-16 h-16 border-4 border-ifind-aqua border-t-transparent rounded-full animate-spin"></div>
           )}
           
-          {(callStatus === 'connected' || (ready && inCall)) && (
+          {callStatus === 'connected' && inCall && client && tracks && (
             <div className="w-full h-64 md:h-80">
               <VideoCall 
                 client={client} 
