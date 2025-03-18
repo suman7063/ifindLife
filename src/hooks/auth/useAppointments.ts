@@ -1,8 +1,9 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { supabase, tables } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { Appointment, AppointmentStatus } from '@/types/supabase/appointments';
+import { Appointment, AppointmentInsert, AppointmentStatus } from '@/types/supabase/appointments';
 import { useAgora } from './useAgora';
 
 export const useAppointments = () => {
@@ -17,7 +18,9 @@ export const useAppointments = () => {
     appointmentDate: string, 
     duration: number,
     price: number,
-    currency: string
+    currency: string,
+    serviceId: number = 1,
+    notes?: string
   ) => {
     if (!user || !user.id) {
       toast.error('You must be logged in to book an appointment');
@@ -37,23 +40,24 @@ export const useAppointments = () => {
       const uid = Math.floor(Math.random() * 1000000);
       
       // Insert the appointment into the database
-      const { data, error } = await supabase
-        .from('appointments')
-        .insert({
-          user_id: user.id,
-          expert_id: expertId,
-          expert_name: expertName,
-          appointment_date: appointmentDate,
-          duration,
-          status: 'scheduled' as AppointmentStatus,
-          channel_name: channelName,
-          token,
-          uid,
-          price,
-          currency,
-          extension_count: 0,
-          refunded: false
-        })
+      const appointmentData: AppointmentInsert = {
+        user_id: user.id,
+        expert_id: expertId,
+        expert_name: expertName,
+        appointment_date: appointmentDate,
+        duration,
+        status: 'scheduled' as AppointmentStatus,
+        service_id: serviceId,
+        channel_name: channelName,
+        token,
+        uid,
+        price,
+        currency,
+        notes
+      };
+      
+      const { data, error } = await tables.appointments()
+        .insert(appointmentData)
         .select()
         .single();
       
@@ -78,34 +82,44 @@ export const useAppointments = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase
-        .from('appointments')
+      const { data, error } = await tables.appointments()
         .select('*')
         .eq('user_id', userId)
         .order('appointment_date', { ascending: false });
       
       if (error) throw error;
       
-      // Transform the data to match the Appointment interface
+      // Transform the data to include both snake_case and camelCase properties
       const appointments: Appointment[] = (data || []).map(item => ({
         id: item.id,
+        user_id: item.user_id,
+        expert_id: item.expert_id,
+        expert_name: item.expert_name,
+        appointment_date: item.appointment_date,
+        duration: item.duration,
+        status: item.status as AppointmentStatus,
+        service_id: item.service_id,
+        notes: item.notes,
+        channel_name: item.channel_name,
+        token: item.token,
+        uid: item.uid,
+        created_at: item.created_at,
+        price: item.price,
+        currency: item.currency,
+        extension_count: item.extension_count,
+        actual_duration: item.actual_duration,
+        refunded: item.refunded,
+        calendar_event_id: item.calendar_event_id,
+        
+        // Add camelCase versions for UI components
         userId: item.user_id,
         expertId: item.expert_id,
         expertName: item.expert_name,
         appointmentDate: item.appointment_date,
-        duration: item.duration,
-        status: item.status as AppointmentStatus,
         serviceId: item.service_id,
-        notes: item.notes,
         channelName: item.channel_name,
-        token: item.token,
-        uid: item.uid,
-        createdAt: item.created_at,
-        price: item.price,
-        currency: item.currency,
         extensionCount: item.extension_count,
         actualDuration: item.actual_duration,
-        refunded: item.refunded,
         calendarEventId: item.calendar_event_id
       }));
       
@@ -124,8 +138,7 @@ export const useAppointments = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await tables.appointments()
         .update({ status: 'cancelled' })
         .eq('id', appointmentId);
       
@@ -147,8 +160,7 @@ export const useAppointments = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await tables.appointments()
         .update({
           status: 'completed',
           actual_duration: actualDuration
@@ -174,8 +186,7 @@ export const useAppointments = () => {
     
     try {
       // First get the current appointment details
-      const { data, error: fetchError } = await supabase
-        .from('appointments')
+      const { data, error: fetchError } = await tables.appointments()
         .select('duration, extension_count')
         .eq('id', appointmentId)
         .single();
@@ -187,8 +198,7 @@ export const useAppointments = () => {
       }
       
       // Update the appointment with extended duration
-      const { error: updateError } = await supabase
-        .from('appointments')
+      const { error: updateError } = await tables.appointments()
         .update({
           duration: data.duration + additionalMinutes,
           extension_count: (data.extension_count || 0) + 1
@@ -213,8 +223,7 @@ export const useAppointments = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await tables.appointments()
         .update({ status: 'no-show-user' })
         .eq('id', appointmentId);
       
@@ -236,8 +245,7 @@ export const useAppointments = () => {
     setIsLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await tables.appointments()
         .update({
           status: 'no-show-expert',
           refunded: true

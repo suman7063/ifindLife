@@ -14,10 +14,23 @@ interface ExpertCardProps {
 }
 
 const ExpertCard: React.FC<ExpertCardProps> = ({ expert }) => {
-  const { user } = useUserAuth();
-  const { favorites = [], toggleFavorite, isFavorite } = useFavorites();
+  const { currentUser } = useUserAuth();
+  const { addToFavorites, removeFromFavorites } = useFavorites();
   
-  const isExpertFavorite = isFavorite ? isFavorite(expert.id.toString()) : false;
+  // Check if the expert is in favorites list
+  const isExpertFavorite = currentUser?.favoriteExperts?.some(
+    favExpert => favExpert.id === expert.id.toString()
+  ) || false;
+
+  const toggleFavorite = () => {
+    if (!currentUser) return;
+    
+    if (isExpertFavorite) {
+      removeFromFavorites(currentUser, expert.id.toString());
+    } else {
+      addToFavorites(currentUser, expert.id.toString());
+    }
+  };
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-shadow group">
@@ -32,9 +45,9 @@ const ExpertCard: React.FC<ExpertCardProps> = ({ expert }) => {
             Online
           </Badge>
         )}
-        {user && (
+        {currentUser && (
           <button
-            onClick={() => toggleFavorite && toggleFavorite(expert.id.toString())}
+            onClick={toggleFavorite}
             className="absolute top-2 left-2 p-1.5 bg-white/80 rounded-full hover:bg-white transition-colors"
             aria-label={isExpertFavorite ? "Remove from favorites" : "Add to favorites"}
           >

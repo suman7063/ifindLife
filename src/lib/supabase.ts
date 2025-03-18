@@ -20,6 +20,15 @@ export const tables = {
   users: () => supabase.from('users'),
   user_reviews: () => supabase.from('user_reviews'),
   expert_availability: () => supabase.from('expert_availability'),
+  user_favorites: () => supabase.from('user_favorites'),
+  referrals: () => supabase.from('referrals'),
+  user_transactions: () => supabase.from('user_transactions'),
+  user_reports: () => supabase.from('user_reports'),
+  user_courses: () => supabase.from('user_courses'),
+  services: () => supabase.from('services'),
+  referral_settings: () => supabase.from('referral_settings'),
+  moderation_reports: () => supabase.from('moderation_reports'),
+  moderation_actions: () => supabase.from('moderation_actions'),
   // Add other tables as needed
 };
 

@@ -1,6 +1,7 @@
 
 import { createContext } from 'react';
-import { UserProfile, Expert } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/user';
+import { Expert } from '@/types/expert';
 
 export interface UserAuthContextType {
   currentUser: UserProfile | null;
@@ -21,10 +22,10 @@ export interface UserAuthContextType {
   addToFavorites: (expert: Expert) => void;
   removeFromFavorites: (expertId: string) => void;
   rechargeWallet: (amount: number) => Promise<void>;
-  addReview: (expertId: string, rating: number, comment: string) => Promise<void>;
-  reportExpert: (expertId: string, reason: string, details: string) => Promise<void>;
+  addReview: (expertId: string, rating: number, comment: string) => void;
+  reportExpert: (expertId: string, reason: string, details: string) => void;
   getExpertShareLink: (expertId: string) => string;
-  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string) => boolean;
   getReferralLink: () => string;
   bookAppointment: (appointmentData: {
     expertId: string;
@@ -48,10 +49,10 @@ export const UserAuthContext = createContext<UserAuthContextType>({
   addToFavorites: () => {},
   removeFromFavorites: () => {},
   rechargeWallet: async () => {},
-  addReview: async () => {},
-  reportExpert: async () => {},
+  addReview: () => {},
+  reportExpert: () => {},
   getExpertShareLink: () => '',
-  hasTakenServiceFrom: async () => false,
+  hasTakenServiceFrom: () => false,
   getReferralLink: () => '',
-  bookAppointment: async () => ({ success: false }),
+  bookAppointment: async () => ({ success: false })
 });

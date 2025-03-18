@@ -6,6 +6,7 @@ import { Appointment } from './appointments';
 
 export interface UserProfile {
   id: string;
+  // Snake case for DB compatibility
   name?: string;
   email?: string;
   phone?: string;
@@ -23,7 +24,18 @@ export interface UserProfile {
   referral_code?: string;
   referral_link?: string;
   referred_by?: string;
+  
+  // Camel case for UI compatibility
+  profilePicture?: string;
+  walletBalance?: number;
+  referralCode?: string;
+  referralLink?: string;
+  
+  // Related collections
   favorites?: string[];
+  favoriteExperts?: any[];
+  enrolledCourses?: any[];
+  transactions?: any[];
   reports?: Report[];
   reviews?: Review[];
   appointments?: Appointment[];

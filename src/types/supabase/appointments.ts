@@ -1,12 +1,15 @@
 
+export type AppointmentStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no-show-user' | 'no-show-expert';
+
 export interface Appointment {
   id: string;
+  // Snake case for DB compatibility
   user_id: string;
   expert_id: string;
   expert_name: string;
   appointment_date: string;
   duration: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: AppointmentStatus;
   service_id: number;
   notes: string | null;
   channel_name: string | null;
@@ -19,6 +22,17 @@ export interface Appointment {
   actual_duration?: number;
   refunded?: boolean;
   calendar_event_id?: string;
+  
+  // Camel case for UI compatibility
+  userId?: string;
+  expertId?: string;
+  expertName?: string;
+  appointmentDate?: string;
+  serviceId?: number;
+  channelName?: string;
+  extensionCount?: number;
+  actualDuration?: number;
+  calendarEventId?: string;
 }
 
 export interface AppointmentInsert {
@@ -27,7 +41,7 @@ export interface AppointmentInsert {
   expert_name: string;
   appointment_date: string;
   duration: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: AppointmentStatus;
   service_id: number;
   notes?: string;
   channel_name?: string;

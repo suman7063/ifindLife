@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser, IMicrophoneAudioTrack, ICameraVideoTrack, ILocalTrack } from 'agora-rtc-sdk-ng';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser, IMicrophoneAudioTrack, ICameraVideoTrack } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
