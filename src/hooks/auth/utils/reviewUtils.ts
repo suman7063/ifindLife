@@ -1,21 +1,42 @@
 
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Review } from '@/types/supabase/reviews';
 import { UserProfile } from '@/types/supabase';
-import { convertExpertIdToNumber, convertExpertIdToString } from '@/types/supabase/expertId';
-import { DbReview, UserReviewWithExpert, ReviewsResult } from '../types/reviewTypes';
+
+export interface Review {
+  id: string;
+  expertId: string;
+  rating: number;
+  comment: string;
+  date: string;
+  verified: boolean;
+  userId: string;
+  userName: string;
+  expertName: string;
+}
+
+export interface ReviewsResult {
+  success: boolean;
+  reviews: Review[];
+}
 
 /**
- * Fetch reviews for a user using the RPC function
+ * Fetch reviews for a user
  */
 export const fetchUserReviews = async (userId: string): Promise<ReviewsResult> => {
   try {
-    // Call the RPC function with proper type parameters
     const { data, error } = await supabase
-      .rpc('get_user_reviews_with_experts', {
-        user_id_param: userId
-      });
+      .from('user_reviews')
+      .select(`
+        id,
+        expert_id,
+        rating,
+        comment,
+        date,
+        verified,
+        user_name
+      `)
+      .eq('user_id', userId);
     
     if (error) throw error;
     
@@ -23,105 +44,44 @@ export const fetchUserReviews = async (userId: string): Promise<ReviewsResult> =
       return { success: true, reviews: [] };
     }
     
-    // Map the data to Review objects with proper type handling
-    const typedData = data as UserReviewWithExpert[];
-    const reviews: Review[] = typedData.map((item): Review => ({
-      id: item.review_id,
-      expertId: String(item.expert_id),
+    // Get expert names (for simplicity, we'll make a separate query)
+    const expertIds = data.map(review => review.expert_id.toString());
+    
+    const { data: experts, error: expertError } = await supabase
+      .from('experts')
+      .select('id, name')
+      .in('id', expertIds);
+    
+    if (expertError) {
+      console.error('Error fetching expert names:', expertError);
+    }
+    
+    // Create a map of expert IDs to names
+    const expertNameMap: Record<string, string> = {};
+    if (experts) {
+      experts.forEach(expert => {
+        expertNameMap[expert.id] = expert.name;
+      });
+    }
+    
+    // Map the data to Review objects
+    const reviews: Review[] = data.map(item => ({
+      id: item.id,
+      expertId: item.expert_id.toString(),
       rating: item.rating,
       comment: item.comment || '',
       date: item.date,
       verified: Boolean(item.verified),
       userId: userId,
       userName: item.user_name || 'Anonymous User',
-      expertName: item.expert_name || 'Unknown Expert'
+      expertName: expertNameMap[item.expert_id.toString()] || 'Unknown Expert'
     }));
     
     return { success: true, reviews };
     
   } catch (error: any) {
     console.error('Error fetching reviews:', error);
-    // If the RPC function fails, try the legacy method
-    return fetchUserReviewsLegacy(userId);
-  }
-};
-
-/**
- * Alternative implementation if the RPC function is not available
- */
-export const fetchUserReviewsLegacy = async (userId: string): Promise<ReviewsResult> => {
-  try {
-    // Fetch reviews
-    const { data: dbReviews, error: reviewsError } = await supabase
-      .from('user_reviews')
-      .select('*')
-      .eq('user_id', userId);
-    
-    if (reviewsError) throw reviewsError;
-    
-    // Early return if no reviews
-    if (!dbReviews || dbReviews.length === 0) {
-      return {
-        success: true,
-        reviews: []
-      };
-    }
-    
-    // Extract expert IDs
-    const expertIdNumbers: number[] = [];
-    const typedReviews = dbReviews as DbReview[];
-    
-    for (const review of typedReviews) {
-      if (!expertIdNumbers.includes(review.expert_id)) {
-        expertIdNumbers.push(review.expert_id);
-      }
-    }
-    
-    // Convert to string IDs for query
-    const expertIdStrings: string[] = expertIdNumbers.map(convertExpertIdToString);
-    
-    // Get expert data
-    const { data: experts } = await supabase
-      .from('experts')
-      .select('id, name')
-      .in('id', expertIdStrings);
-    
-    // Create expert name lookup
-    const expertNameMap: Record<string, string> = {};
-    
-    if (experts) {
-      for (const expert of experts) {
-        expertNameMap[expert.id] = expert.name;
-      }
-    }
-    
-    // Create review objects
-    const reviews: Review[] = typedReviews.map((dbReview: DbReview) => {
-      const expertIdStr = convertExpertIdToString(dbReview.expert_id);
-      
-      return {
-        id: dbReview.id,
-        expertId: expertIdStr,
-        rating: dbReview.rating,
-        comment: dbReview.comment || '',
-        date: dbReview.date,
-        verified: Boolean(dbReview.verified),
-        userId: userId,
-        userName: dbReview.user_name || 'Anonymous User',
-        expertName: expertNameMap[expertIdStr] || 'Unknown Expert'
-      };
-    });
-    
-    return {
-      success: true,
-      reviews
-    };
-  } catch (error: any) {
-    console.error('Error fetching reviews legacy method:', error);
-    return {
-      success: false,
-      reviews: []
-    };
+    return { success: false, reviews: [] };
   }
 };
 
@@ -135,15 +95,12 @@ export const addReview = async (
   comment: string
 ): Promise<ReviewsResult> => {
   try {
-    // Convert expertId to number for database storage
-    const expertIdNumber = convertExpertIdToNumber(expertId);
-    
     // Check if user has already reviewed this expert
     const { data: existingReviews } = await supabase
       .from('user_reviews')
       .select('*')
       .eq('user_id', userProfile.id)
-      .eq('expert_id', expertIdNumber);
+      .eq('expert_id', expertId);
     
     if (existingReviews && existingReviews.length > 0) {
       // Update existing review
@@ -165,7 +122,7 @@ export const addReview = async (
         .from('user_reviews')
         .insert({
           user_id: userProfile.id,
-          expert_id: expertIdNumber,
+          expert_id: expertId,
           rating,
           comment,
           date: new Date().toISOString(),
@@ -199,14 +156,11 @@ export const hasTakenServiceFrom = async (
   if (!userProfile) return false;
   
   try {
-    // Convert expertId to number for database query
-    const expertIdNumber = convertExpertIdToNumber(expertId);
-    
     const { data: transactions } = await supabase
       .from('user_transactions')
       .select('*')
       .eq('user_id', userProfile.id)
-      .eq('expert_id', expertIdNumber);
+      .eq('expert_id', expertId);
     
     return !!(transactions && transactions.length > 0);
   } catch (error: any) {
