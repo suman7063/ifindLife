@@ -1,126 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { DollarSign, Users } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Gift, Users } from "lucide-react";
+import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 interface ReferralDashboardCardProps {
-  referralCode: string;
-  totalReferrals: number;
-  pendingReferrals: number;
-  successfulReferrals: number;
-  rewardsEarned: number;
+  userProfile?: any; // Making this optional
 }
 
-interface ReferralSettingsUI {
-  id: string;
-  referrerReward: number;
-  referredReward: number;
-  active: boolean;
-  description: string;
-  updatedAt: string;
-  
-  // Original fields for compatibility
-  referrer_reward: number;
-  referred_reward: number;
-  updated_at: string;
-}
-
-const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ 
-  referralCode, 
-  totalReferrals, 
-  pendingReferrals, 
-  successfulReferrals, 
-  rewardsEarned 
-}) => {
-  const [settings, setSettings] = useState<ReferralSettingsUI | null>(null);
-  
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('referral_settings')
-          .select('*')
-          .limit(1)
-          .single();
-          
-        if (error) throw error;
-        
-        // Map DB format to UI format
-        const settingsUI: ReferralSettingsUI = {
-          id: data.id,
-          referrerReward: data.referrer_reward,
-          referredReward: data.referred_reward,
-          active: data.active,
-          description: data.description,
-          updatedAt: data.updated_at,
-          
-          // Original fields for compatibility
-          referrer_reward: data.referrer_reward,
-          referred_reward: data.referred_reward,
-          updated_at: data.updated_at
-        };
-        
-        setSettings(settingsUI);
-      } catch (error) {
-        // Silent fail, not critical
-      }
-    };
-    
-    fetchSettings();
-  }, []);
-
+const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = () => {
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Referral Dashboard</CardTitle>
-        <CardDescription>
-          Track your referrals and rewards
-        </CardDescription>
+    <Card className="shadow-sm border border-border/50">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-md flex items-center">
+          <Gift className="h-5 w-5 mr-2 text-ifind-teal" />
+          Referral Program
+        </CardTitle>
       </CardHeader>
-      <CardContent className="grid gap-4">
-        <div className="flex items-center space-x-4">
-          <Users className="w-5 h-5 text-gray-500" />
-          <div>
-            <p className="text-sm font-medium">Total Referrals</p>
-            <p className="text-2xl font-bold">{totalReferrals}</p>
+      <CardContent>
+        <p className="text-sm text-muted-foreground mb-4">
+          Invite friends to iFindLife and both of you will receive rewards
+        </p>
+        <div className="flex justify-between items-center">
+          <div className="flex items-center">
+            <Users className="h-5 w-5 mr-2 text-muted-foreground" />
+            <span className="text-sm font-medium">0 referrals</span>
           </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm font-medium">Pending</p>
-            <p className="text-xl font-bold">{pendingReferrals}</p>
-          </div>
-          <div>
-            <p className="text-sm font-medium">Successful</p>
-            <p className="text-xl font-bold">{successfulReferrals}</p>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <DollarSign className="w-5 h-5 text-gray-500" />
-          <div>
-            <p className="text-sm font-medium">Rewards Earned</p>
-            <p className="text-2xl font-bold">${rewardsEarned.toFixed(2)}</p>
-          </div>
-        </div>
-        
-        <div>
-          <p className="text-sm font-medium">Referral Code</p>
-          <div className="flex items-center space-x-2">
-            <Badge variant="secondary">{referralCode}</Badge>
-            <Badge variant="outline">Copy</Badge>
-          </div>
-        </div>
-        
-        <div>
-          <p className="text-sm font-medium">Referral Program Progress</p>
-          <Progress value={(successfulReferrals / 10) * 100} />
-          <p className="text-xs text-gray-500 mt-1">
-            {successfulReferrals} / 10 referrals
-          </p>
+          <Button asChild size="sm" className="bg-ifind-teal hover:bg-ifind-teal/90">
+            <Link to="/referrals">Manage</Link>
+          </Button>
         </div>
       </CardContent>
     </Card>

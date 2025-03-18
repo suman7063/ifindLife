@@ -28,6 +28,9 @@ export const normalizeExpertData = (expert: any): Expert => {
   };
 };
 
+// Alias to ensure code using the old name still works
+export const normalizeExpertForDetail = normalizeExpertData;
+
 export const getExpertAvailability = (expertId: string) => {
   // This would be replaced with a real API call to get expert availability
   return {
@@ -43,5 +46,6 @@ export const getExpertAvailability = (expertId: string) => {
 
 export default {
   normalizeExpertData,
+  normalizeExpertForDetail,
   getExpertAvailability
 };

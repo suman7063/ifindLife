@@ -15,3 +15,6 @@ export type {
   Review,
   ReviewUI
 } from './reviews';
+
+// Re-export ReferralSettings to resolve ambiguity
+export type { ReferralSettings } from './tables';

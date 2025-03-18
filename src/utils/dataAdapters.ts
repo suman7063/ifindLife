@@ -1,3 +1,4 @@
+
 import { 
   UserProfile, 
   ReportUI,
@@ -61,4 +62,25 @@ export const adaptReferrals = (referrals: any[]): ReferralUI[] => {
     completed_at: referral.completed_at,
     reward_claimed: referral.reward_claimed
   }));
+};
+
+// Add these export stubs to resolve missing imports
+export const adaptCoursesToUI = (courses: any[]) => {
+  return courses;
+};
+
+export const adaptReportsToUI = (reports: any[]) => {
+  return reports;
+};
+
+export const adaptCoursesToDB = (courses: any[]) => {
+  return courses;
+};
+
+export const adaptReviewsToDB = (reviews: any[]) => {
+  return reviews;
+};
+
+export const adaptReportsToDB = (reports: any[]) => {
+  return reports;
 };

@@ -1,14 +1,4 @@
 
-export interface ReferralSettingsUI {
-  id: string;
-  referrerReward: number;
-  referredReward: number;
-  active: boolean;
-  description?: string;
-}
-
-export type ReferralSettings = ReferralSettingsUI;
-
 export interface ReferralUI {
   id: string;
   referrerId: string;
@@ -16,31 +6,29 @@ export interface ReferralUI {
   referralCode: string;
   status: string;
   createdAt: string;
-  completedAt?: string;
+  completedAt: string | null;
   rewardClaimed: boolean;
-  referredUserName?: string;
-  referredUserEmail?: string;
+  referredName: string;
+  
+  // DB fields for compatibility
+  referrer_id: string;
+  referred_id: string;
+  referral_code: string;
+  created_at: string;
+  completed_at: string | null;
+  reward_claimed: boolean;
 }
 
-export type Referral = ReferralUI;
-
-// Utility functions for converting between UI and DB formats
-export function convertReferralSettingsToUI(dbSettings: any): ReferralSettingsUI {
-  return {
-    id: dbSettings.id,
-    referrerReward: dbSettings.referrer_reward,
-    referredReward: dbSettings.referred_reward,
-    active: dbSettings.active,
-    description: dbSettings.description
-  };
-}
-
-export function convertReferralSettingsToDB(uiSettings: ReferralSettingsUI): any {
-  return {
-    id: uiSettings.id,
-    referrer_reward: uiSettings.referrerReward,
-    referred_reward: uiSettings.referredReward,
-    active: uiSettings.active,
-    description: uiSettings.description
-  };
+export interface ReferralSettingsUI {
+  id: string;
+  referrerReward: number;
+  referredReward: number;
+  active: boolean;
+  description: string;
+  updatedAt: string;
+  
+  // DB fields for compatibility
+  referrer_reward: number;
+  referred_reward: number;
+  updated_at: string;
 }

@@ -1,92 +1,60 @@
 
 import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { ReportUI } from '@/types/supabase';
-import { UserProfile } from '@/types/supabase/user';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useReports = () => {
-  // Add a report to a user
-  const addReport = async (user: UserProfile, expertId: string, reason: string, details: string) => {
-    try {
-      const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('user_reports')
-        .insert({
-          user_id: user.id,
-          expert_id: parseInt(expertId),
-          reason,
-          details,
-          date: now,
-          status: 'pending'
-        });
-        
-      if (error) {
-        throw error;
-      }
-      
-      toast.success('Report submitted successfully');
-      return { ...user, reports: [...(user.reports || [])] };
-    } catch (error: any) {
-      toast.error('Failed to submit report: ' + error.message);
-      return user;
-    }
-  };
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Get all reports by a user
-  const getUserReports = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_reports')
-        .select('*')
-        .eq('user_id', userId);
-      
-      if (error) {
-        throw error;
-      }
-      
-      return data || [];
-    } catch (error: any) {
-      toast.error('Failed to fetch reports: ' + error.message);
-      return [];
-    }
-  };
-
-  // Submit a report for any content (expert, review, etc.)
   const submitReport = async (
-    reporterId: string,
-    reporterType: string,
     targetId: string,
     targetType: string,
     reason: string,
     details: string
   ) => {
-    try {
-      const now = new Date().toISOString();
-      const { data, error } = await supabase
-        .from('moderation_reports')
-        .insert({
-          reporter_id: reporterId,
-          reporter_type: reporterType,
-          target_id: targetId,
-          target_type: targetType,
-          reason,
-          details,
-          created_at: now,
-          status: 'pending'
-        });
-        
-      if (error) {
-        throw error;
-      }
-      
-      toast.success('Report submitted successfully');
-      return true;
-    } catch (error: any) {
-      toast.error('Failed to submit report: ' + error.message);
+    if (!user) {
+      setError("You must be logged in to submit a report");
       return false;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const reportData = {
+        id: uuidv4(),
+        reporter_id: user.id,
+        reporter_type: 'user',
+        target_id: targetId,
+        target_type: targetType,
+        reason,
+        details,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      };
+
+      const { error } = await supabase
+        .from('moderation_reports')
+        .insert(reportData);
+
+      if (error) throw new Error(error.message);
+      
+      return true;
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      setError((err as Error).message);
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { addReport, getUserReports, submitReport };
+  return {
+    submitReport,
+    loading,
+    error
+  };
 };

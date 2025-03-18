@@ -1,140 +1,106 @@
 
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { ReportReason } from '@/types/supabase/moderation';
-import { useReports } from '@/hooks/auth/useReports';
 
-interface ReportModalProps {
+export interface ReportModalProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  targetId: string;
-  targetType: string;
+  onClose: () => void;
+  onSubmit: (reason: string, details: string) => Promise<boolean>;
   targetName: string;
-  reporterId: string;
-  reporterType: string;
+  targetType: string;
 }
-
-const REPORT_REASONS = [
-  { value: 'inappropriate_behavior', label: 'Inappropriate Behavior' },
-  { value: 'false_information', label: 'False Information' },
-  { value: 'unqualified', label: 'Unqualified for Services' },
-  { value: 'harassment', label: 'Harassment' },
-  { value: 'fake_account', label: 'Fake Account' },
-  { value: 'inappropriate', label: 'Inappropriate Content' },
-  { value: 'misleading', label: 'Misleading Information' },
-  { value: 'spam', label: 'Spam' },
-  { value: 'other', label: 'Other' },
-];
 
 const ReportModal: React.FC<ReportModalProps> = ({
   open,
-  onOpenChange,
-  targetId,
-  targetType,
+  onClose,
+  onSubmit,
   targetName,
-  reporterId,
-  reporterType,
+  targetType
 }) => {
   const [reason, setReason] = useState<ReportReason>('inappropriate_behavior');
   const [details, setDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { submitReport } = useReports();
-  
+
   const handleSubmit = async () => {
-    if (!reason) {
-      return;
-    }
-    
     setIsSubmitting(true);
-    
     try {
-      const success = await submitReport(
-        reporterId,
-        reporterType,
-        targetId,
-        targetType,
-        reason,
-        details
-      );
-      
+      const success = await onSubmit(reason, details);
       if (success) {
-        onOpenChange(false);
-        // Reset form
         setReason('inappropriate_behavior');
         setDetails('');
+        onClose();
       }
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Report {targetType}</DialogTitle>
           <DialogDescription>
-            Submit a report about {targetName}. Our moderation team will review it.
+            Please provide details about why you're reporting {targetName}.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid gap-4 py-4">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Reason for Report</label>
-            <Select
-              value={reason}
+            <Label htmlFor="reason">Reason for reporting</Label>
+            <RadioGroup 
+              value={reason} 
               onValueChange={(value) => setReason(value as ReportReason)}
+              className="space-y-2"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select reason" />
-              </SelectTrigger>
-              <SelectContent>
-                {REPORT_REASONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="inappropriate_behavior" id="inappropriate" />
+                <Label htmlFor="inappropriate">Inappropriate behavior</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="false_information" id="false_info" />
+                <Label htmlFor="false_info">False information</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="unqualified" id="unqualified" />
+                <Label htmlFor="unqualified">Unqualified or misleading credentials</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="harassment" id="harassment" />
+                <Label htmlFor="harassment">Harassment</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="other" id="other" />
+                <Label htmlFor="other">Other</Label>
+              </div>
+            </RadioGroup>
           </div>
           
           <div className="space-y-2">
-            <label className="text-sm font-medium">
-              Details
-            </label>
+            <Label htmlFor="details">Details</Label>
             <Textarea
+              id="details"
+              placeholder="Please provide specific details about the issue..."
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              placeholder="Please provide specific details about your report..."
-              rows={5}
+              rows={4}
             />
           </div>
         </div>
         
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={!reason || details.length < 10 || isSubmitting}
+            disabled={isSubmitting || !details.trim()}
+            className="bg-red-500 hover:bg-red-600 text-white"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Report'}
           </Button>
