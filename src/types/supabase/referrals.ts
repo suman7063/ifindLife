@@ -1,44 +1,77 @@
 
-// Database schema type (snake_case)
-export interface ReferralDb {
-  id: string;
-  referrer_id: string;
-  referred_id: string;
-  referral_code: string;
-  status: string;
-  reward_claimed: boolean;
-  created_at: string;
-  completed_at?: string;
-}
+// Types for Referrals in Supabase
+import { Database } from '../supabase/tables';
 
-// UI schema type (camelCase)
+// DB Type (snake_case)
+export type ReferralDB = Database['public']['Tables']['referrals']['Row'];
+export type ReferralSettingsDB = Database['public']['Tables']['referral_settings']['Row'];
+
+// UI Type (camelCase)
 export interface ReferralUI {
   id: string;
   referrerId: string;
+  referrerName?: string;
   referredId: string;
+  referredName?: string;
   referralCode: string;
-  status: string;
+  status: 'pending' | 'completed';
   rewardClaimed: boolean;
-  createdAt: string;
+  createdAt?: string;
   completedAt?: string;
 }
 
-// Database schema type (snake_case)
-export interface ReferralSettingsDb {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  active: boolean;
-  description?: string;
-  updated_at?: string;
-}
-
-// UI schema type (camelCase)
 export interface ReferralSettingsUI {
   id: string;
   referrerReward: number;
   referredReward: number;
   active: boolean;
   description?: string;
-  updatedAt?: string;
 }
+
+// Create adapter functions for converting between DB and UI formats
+export const convertReferralToUI = (dbReferral: ReferralDB): ReferralUI => {
+  return {
+    id: dbReferral.id,
+    referrerId: dbReferral.referrer_id,
+    referredId: dbReferral.referred_id,
+    referralCode: dbReferral.referral_code,
+    status: dbReferral.status as 'pending' | 'completed',
+    rewardClaimed: dbReferral.reward_claimed,
+    createdAt: dbReferral.created_at,
+    completedAt: dbReferral.completed_at
+  };
+};
+
+export const convertReferralSettingsToUI = (dbSettings: ReferralSettingsDB): ReferralSettingsUI => {
+  return {
+    id: dbSettings.id,
+    referrerReward: dbSettings.referrer_reward,
+    referredReward: dbSettings.referred_reward,
+    active: dbSettings.active,
+    description: dbSettings.description || undefined
+  };
+};
+
+export const convertReferralToDB = (uiReferral: ReferralUI): ReferralDB => {
+  return {
+    id: uiReferral.id,
+    referrer_id: uiReferral.referrerId,
+    referred_id: uiReferral.referredId,
+    referral_code: uiReferral.referralCode,
+    status: uiReferral.status,
+    reward_claimed: uiReferral.rewardClaimed,
+    created_at: uiReferral.createdAt,
+    completed_at: uiReferral.completedAt
+  } as ReferralDB;
+};
+
+export const convertReferralSettingsToDB = (uiSettings: ReferralSettingsUI): ReferralSettingsDB => {
+  return {
+    id: uiSettings.id,
+    referrer_reward: uiSettings.referrerReward,
+    referred_reward: uiSettings.referredReward,
+    active: uiSettings.active,
+    description: uiSettings.description || null,
+    updated_at: new Date().toISOString()
+  } as ReferralSettingsDB;
+};

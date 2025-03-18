@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -306,40 +307,63 @@ export interface Database {
       }
       referrals: {
         Row: {
-          code: string | null
+          completed_at: string | null
           created_at: string | null
           id: string
-          new_user_id: string | null
-          referrer_id: string | null
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed: boolean
+          status: string
         }
         Insert: {
-          code?: string | null
+          completed_at?: string | null
           created_at?: string | null
           id?: string
-          new_user_id?: string | null
-          referrer_id?: string | null
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed?: boolean
+          status?: string
         }
         Update: {
-          code?: string | null
+          completed_at?: string | null
           created_at?: string | null
           id?: string
-          new_user_id?: string | null
-          referrer_id?: string | null
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
+          reward_claimed?: boolean
+          status?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "referrals_new_user_id_fkey"
-            columns: ["new_user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "referrals_referrer_id_fkey"
-            columns: ["referrer_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
+      }
+      referral_settings: {
+        Row: {
+          id: string
+          referrer_reward: number
+          referred_reward: number
+          active: boolean
+          description: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          referrer_reward: number
+          referred_reward: number
+          active: boolean
+          description?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          referrer_reward?: number
+          referred_reward?: number
+          active?: boolean
+          description?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       reports: {
         Row: {
@@ -412,20 +436,7 @@ export interface Database {
           user_id?: string | null
           verified?: boolean | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "reviews_expert_id_fkey"
-            columns: ["expert_id"]
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       services: {
         Row: {
@@ -458,14 +469,7 @@ export interface Database {
           name?: string | null
           price?: number | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "services_expert_id_fkey"
-            columns: ["expert_id"]
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
       }
       user_reviews: {
         Row: {
@@ -476,6 +480,7 @@ export interface Database {
           rating: number | null
           user_id: string | null
           verified: boolean | null
+          user_name: string | null
         }
         Insert: {
           comment?: string | null
@@ -485,6 +490,7 @@ export interface Database {
           rating?: number | null
           user_id?: string | null
           verified?: boolean | null
+          user_name?: string | null
         }
         Update: {
           comment?: string | null
@@ -494,79 +500,319 @@ export interface Database {
           rating?: number | null
           user_id?: string | null
           verified?: boolean | null
+          user_name?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "user_reviews_expert_id_fkey"
-            columns: ["expert_id"]
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_reviews_user_id_fkey"
-            columns: ["user_id"]
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
+        Relationships: []
+      }
+      user_reports: {
+        Row: {
+          id: string
+          user_id: string | null
+          expert_id: number
+          reason: string
+          details: string | null
+          date: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          expert_id: number
+          reason: string
+          details?: string | null
+          date: string
+          status: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          expert_id?: number
+          reason?: string
+          details?: string | null
+          date?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      moderation_reports: {
+        Row: {
+          id: string
+          reporter_id: string
+          reporter_type: string
+          target_id: string
+          target_type: string
+          reason: string
+          details: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          session_id: string | null
+        }
+        Insert: {
+          id?: string
+          reporter_id: string
+          reporter_type: string
+          target_id: string
+          target_type: string
+          reason: string
+          details?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          session_id?: string | null
+        }
+        Update: {
+          id?: string
+          reporter_id?: string
+          reporter_type?: string
+          target_id?: string
+          target_type?: string
+          reason?: string
+          details?: string | null
+          status?: string
+          created_at?: string
+          updated_at?: string
+          session_id?: string | null
+        }
+        Relationships: []
+      }
+      moderation_actions: {
+        Row: {
+          id: string
+          report_id: string
+          admin_id: string
+          action_type: string
+          message: string
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          report_id: string
+          admin_id: string
+          action_type: string
+          message: string
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          report_id?: string
+          admin_id?: string
+          action_type?: string
+          message?: string
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      expert_reports: {
+        Row: {
+          id: string
+          expert_id: string | null
+          reason: string | null
+          details: string | null
+          date: string | null
+          status: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          id?: string
+          expert_id?: string | null
+          reason?: string | null
+          details?: string | null
+          date?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          id?: string
+          expert_id?: string | null
+          reason?: string | null
+          details?: string | null
+          date?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      user_expert_services: {
+        Row: {
+          id: string
+          user_id: string
+          expert_id: string
+          service_id: number
+          amount: number
+          status: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          expert_id: string
+          service_id: number
+          amount: number
+          status?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          expert_id?: string
+          service_id?: number
+          amount?: number
+          status?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      user_favorites: {
+        Row: {
+          id: string
+          user_id: string | null
+          expert_id: number
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          expert_id: number
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          expert_id?: number
+        }
+        Relationships: []
+      }
+      user_transactions: {
+        Row: {
+          id: string
+          user_id: string | null
+          date: string
+          type: string
+          amount: number
+          currency: string
+          description: string | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          date: string
+          type: string
+          amount: number
+          currency: string
+          description?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          date?: string
+          type?: string
+          amount?: number
+          currency?: string
+          description?: string | null
+        }
+        Relationships: []
+      }
+      user_courses: {
+        Row: {
+          id: string
+          user_id: string | null
+          title: string
+          expert_id: number
+          expert_name: string
+          enrollment_date: string
+          progress: number | null
+          completed: boolean | null
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          title: string
+          expert_id: number
+          expert_name: string
+          enrollment_date: string
+          progress?: number | null
+          completed?: boolean | null
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          title?: string
+          expert_id?: number
+          expert_name?: string
+          enrollment_date?: string
+          progress?: number | null
+          completed?: boolean | null
+        }
+        Relationships: []
+      }
+      admin_users: {
+        Row: {
+          id: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id: string
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          role?: string
+          created_at?: string
+        }
+        Relationships: []
       }
       users: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
-          city: string | null
-          country: string | null
-          created_at: string | null
-          date_of_birth: string | null
-          email: string | null
           id: string
-          last_login: string | null
+          created_at: string | null
+          email: string | null
           name: string | null
           phone: string | null
+          country: string | null
+          city: string | null
           profile_picture: string | null
+          wallet_balance: number | null
+          currency: string | null
           referral_code: string | null
           referral_link: string | null
           referred_by: string | null
-          state: string | null
-          wallet_balance: number | null
         }
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          email?: string | null
           id: string
-          last_login?: string | null
+          created_at?: string | null
+          email?: string | null
           name?: string | null
           phone?: string | null
+          country?: string | null
+          city?: string | null
           profile_picture?: string | null
+          wallet_balance?: number | null
+          currency?: string | null
           referral_code?: string | null
           referral_link?: string | null
           referred_by?: string | null
-          state?: string | null
-          wallet_balance?: number | null
         }
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string | null
-          date_of_birth?: string | null
-          email?: string | null
           id?: string
-          last_login?: string | null
+          created_at?: string | null
+          email?: string | null
           name?: string | null
           phone?: string | null
+          country?: string | null
+          city?: string | null
           profile_picture?: string | null
+          wallet_balance?: number | null
+          currency?: string | null
           referral_code?: string | null
           referral_link?: string | null
           referred_by?: string | null
-          state?: string | null
-          wallet_balance?: number | null
         }
         Relationships: []
       }
@@ -586,90 +832,42 @@ export interface Database {
   }
 }
 
-export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (Database["public"]["Tables"] & Database["public"]["Views"])
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
-    : never = never
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
-    ? R
-    : never
-  : PublicTableNameOrOptions extends keyof (Database["public"]["Tables"] &
-      Database["public"]["Views"])
-    ? (Database["public"]["Tables"] &
-        Database["public"]["Views"])[PublicTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
-    : never
-
-export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof Database["public"]["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
-    ? I
-    : never
-  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-    ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
-    : never
-
-export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof Database["public"]["Tables"]
-    | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
-    : never = never
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
-    ? U
-    : never
-  : PublicTableNameOrOptions extends keyof Database["public"]["Tables"]
-    ? Database["public"]["Tables"][PublicTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
-    : never
+// Now define the types for the UI with camelCase properties
+export type User = Database['public']['Tables']['users']['Row'];
+export type Expert = Database['public']['Tables']['experts']['Row'];
 
 // Add expert_availability table
 export interface ExpertAvailability {
   id: string;
-  expert_id: string;
+  expertId: string;
   date: string;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
-  created_at?: string;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+  createdAt?: string;
 }
 
 // Define update and insert types if needed
-export interface ExpertAvailabilityInsert extends Omit<ExpertAvailability, 'id' | 'created_at'> {
+export interface ExpertAvailabilityInsert {
   id?: string;
-  created_at?: string;
+  expertId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+  createdAt?: string;
 }
 
 export interface ExpertAvailabilityUpdate extends Partial<ExpertAvailabilityInsert> {
   id?: string;
+}
+
+// Add a type for the ReferralSettings with proper camelCase props
+export interface ReferralSettings {
+  id: string;
+  referrerReward: number;
+  referredReward: number;
+  active: boolean;
+  description?: string;
+  updatedAt?: string;
 }

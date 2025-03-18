@@ -32,6 +32,9 @@ export const tables = {
   expert_reports: () => supabase.from('expert_reports'),
   user_expert_services: () => supabase.from('user_expert_services'),
   admin_users: () => supabase.from('admin_users'),
+  categories: () => supabase.from('categories'),
+  reviews: () => supabase.from('reviews'),
+  reports: () => supabase.from('reports'),
 };
 
 export default supabase;

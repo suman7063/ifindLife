@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { ReferralSettings } from '@/types/supabase';
+import { ReferralSettingsUI } from '@/types/supabase/referrals';
 
 interface RewardsSectionProps {
-  settings: ReferralSettings;
+  settings: ReferralSettingsUI;
 }
 
 const RewardsSection: React.FC<RewardsSectionProps> = ({ settings }) => {
@@ -13,11 +13,11 @@ const RewardsSection: React.FC<RewardsSectionProps> = ({ settings }) => {
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <p className="text-gray-500">You receive</p>
-          <p className="font-semibold">${settings.referrer_reward.toFixed(2)}</p>
+          <p className="font-semibold">${settings.referrerReward.toFixed(2)}</p>
         </div>
         <div>
           <p className="text-gray-500">Your friend receives</p>
-          <p className="font-semibold">${settings.referred_reward.toFixed(2)}</p>
+          <p className="font-semibold">${settings.referredReward.toFixed(2)}</p>
         </div>
         <div className="col-span-2 text-xs text-gray-500 mt-1">
           {settings.description || 'Rewards are added to your wallet after your friend makes their first purchase.'}
