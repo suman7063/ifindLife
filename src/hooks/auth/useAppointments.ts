@@ -1,42 +1,10 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { supabase, from } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { useAgora } from './useAgora';
-
-export interface Appointment {
-  id: string;
-  userId: string;
-  expertId: string;
-  expertName: string;
-  appointmentDate: string; // ISO string
-  duration: number; // in minutes
-  status: 'scheduled' | 'completed' | 'cancelled';
-  serviceId?: number;
-  notes?: string;
-  channelName?: string;
-  token?: string;
-  uid?: number;
-  createdAt: string;
-}
-
-// Define the shape of our appointments table row
-interface AppointmentRow {
-  id: string;
-  user_id: string;
-  expert_id: string;
-  expert_name: string;
-  appointment_date: string;
-  duration: number;
-  status: 'scheduled' | 'completed' | 'cancelled';
-  service_id?: number;
-  notes?: string;
-  channel_name?: string;
-  token?: string;
-  uid?: number;
-  created_at: string;
-}
+import { Appointment, AppointmentRow } from '@/types/supabase/appointments';
 
 export const useAppointments = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -49,10 +17,8 @@ export const useAppointments = () => {
     
     setIsLoading(true);
     try {
-      // Using 'appointments' as a string literal to avoid type issues
-      // This assumes the table exists in your Supabase database
-      const { data, error } = await supabase
-        .from('appointments')
+      // Using the custom from function with a type assertion
+      const { data, error } = await from('appointments')
         .select('*')
         .eq('user_id', userId)
         .order('appointment_date', { ascending: true }) as { data: AppointmentRow[] | null, error: any };
@@ -109,8 +75,7 @@ export const useAppointments = () => {
       const token = generateToken(channelName);
       const uid = Math.floor(Math.random() * 1000000);
       
-      const { data, error } = await supabase
-        .from('appointments')
+      const { data, error } = await from('appointments')
         .insert({
           user_id: user.id,
           expert_id: expertId,
@@ -161,8 +126,7 @@ export const useAppointments = () => {
   const cancelAppointment = async (appointmentId: string) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('appointments')
+      const { error } = await from('appointments')
         .update({ status: 'cancelled' })
         .eq('id', appointmentId) as { error: any };
         

@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { supabase, from } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Review } from '@/types/supabase/reviews';
 import { UserProfile } from '@/types/supabase';
@@ -13,7 +13,7 @@ export const fetchUserReviews = async (userId: string): Promise<ReviewsResult> =
   try {
     // Call the RPC function with proper type parameters
     const { data, error } = await supabase
-      .rpc<UserReviewWithExpert>('get_user_reviews_with_experts', {
+      .rpc('get_user_reviews_with_experts', {
         user_id_param: userId
       });
     
@@ -52,10 +52,9 @@ export const fetchUserReviews = async (userId: string): Promise<ReviewsResult> =
 export const fetchUserReviewsLegacy = async (userId: string): Promise<ReviewsResult> => {
   try {
     // Fetch reviews
-    const { data: dbReviews, error: reviewsError } = await supabase
-      .from('user_reviews')
+    const { data: dbReviews, error: reviewsError } = await from('user_reviews')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', userId) as { data: DbReview[] | null, error: any };
     
     if (reviewsError) throw reviewsError;
     
@@ -81,10 +80,9 @@ export const fetchUserReviewsLegacy = async (userId: string): Promise<ReviewsRes
     const expertIdStrings: string[] = expertIdNumbers.map(convertExpertIdToString);
     
     // Get expert data
-    const { data: experts } = await supabase
-      .from('experts')
+    const { data: experts } = await from('experts')
       .select('id, name')
-      .in('id', expertIdStrings);
+      .in('id', expertIdStrings) as { data: any[] | null, error: any };
     
     // Create expert name lookup
     const expertNameMap: Record<string, string> = {};
@@ -139,30 +137,27 @@ export const addReview = async (
     const expertIdNumber = convertExpertIdToNumber(expertId);
     
     // Check if user has already reviewed this expert
-    const { data: existingReviews } = await supabase
-      .from('user_reviews')
+    const { data: existingReviews } = await from('user_reviews')
       .select('*')
       .eq('user_id', userProfile.id)
-      .eq('expert_id', expertIdNumber);
+      .eq('expert_id', expertIdNumber) as { data: any[] | null, error: any };
     
     if (existingReviews && existingReviews.length > 0) {
       // Update existing review
-      const { error } = await supabase
-        .from('user_reviews')
+      const { error } = await from('user_reviews')
         .update({
           rating,
           comment,
           updated_at: new Date().toISOString()
         })
-        .eq('id', existingReviews[0].id);
+        .eq('id', existingReviews[0].id) as { error: any };
       
       if (error) throw error;
       
       toast.success('Review updated successfully');
     } else {
       // Create new review
-      const { error } = await supabase
-        .from('user_reviews')
+      const { error } = await from('user_reviews')
         .insert({
           user_id: userProfile.id,
           expert_id: expertIdNumber,
@@ -170,7 +165,7 @@ export const addReview = async (
           comment,
           date: new Date().toISOString(),
           user_name: userProfile.name || 'Anonymous User'
-        });
+        }) as { error: any };
       
       if (error) throw error;
       
@@ -202,11 +197,10 @@ export const hasTakenServiceFrom = async (
     // Convert expertId to number for database query
     const expertIdNumber = convertExpertIdToNumber(expertId);
     
-    const { data: transactions } = await supabase
-      .from('user_transactions')
+    const { data: transactions } = await from('user_transactions')
       .select('*')
       .eq('user_id', userProfile.id)
-      .eq('expert_id', expertIdNumber);
+      .eq('expert_id', expertIdNumber) as { data: any[] | null, error: any };
     
     return !!(transactions && transactions.length > 0);
   } catch (error: any) {

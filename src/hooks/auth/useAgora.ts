@@ -4,9 +4,10 @@ import {
   IAgoraRTCClient, 
   IAgoraRTCRemoteUser, 
   ICameraVideoTrack, 
-  IMicrophoneAudioTrack 
+  IMicrophoneAudioTrack,
+  createClient,
+  createMicrophoneAndCameraTracks
 } from 'agora-rtc-sdk-ng';
-import AgoraRTC from 'agora-rtc-react';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 
@@ -16,8 +17,8 @@ const appId = 'your-agora-app-id'; // Replace with your Agora App ID
 
 // Configure Agora client
 const config = {
-  mode: 'rtc',
-  codec: 'vp8',
+  mode: 'rtc' as const,
+  codec: 'vp8' as const,
 };
 
 export interface VideoCallSession {
@@ -36,7 +37,7 @@ export const useAgora = () => {
     const [client, setClient] = useState<IAgoraRTCClient | null>(null);
     
     useEffect(() => {
-      const agoraClient = AgoraRTC.createClient(config);
+      const agoraClient = createClient(config);
       setClient(agoraClient);
       
       return () => {
@@ -54,13 +55,10 @@ export const useAgora = () => {
     const [ready, setReady] = useState(false);
     
     useEffect(() => {
-      let tracksPromise: Promise<[IMicrophoneAudioTrack, ICameraVideoTrack]>;
-      
       // Create tracks
-      const createTracks = async () => {
+      const createAudioAndVideoTracks = async () => {
         try {
-          tracksPromise = AgoraRTC.createMicrophoneAndCameraTracks();
-          const audioAndVideoTracks = await tracksPromise;
+          const audioAndVideoTracks = await createMicrophoneAndCameraTracks();
           setTracks(audioAndVideoTracks);
           setReady(true);
         } catch (error) {
@@ -69,7 +67,7 @@ export const useAgora = () => {
         }
       };
       
-      createTracks();
+      createAudioAndVideoTracks();
       
       return () => {
         if (tracks) {

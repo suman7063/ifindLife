@@ -124,6 +124,21 @@ export interface CustomTable {
     status: string;
     created_at: string;
   };
+  appointments: {
+    id: string;
+    user_id: string;
+    expert_id: string;
+    expert_name: string;
+    appointment_date: string;
+    duration: number;
+    status: 'scheduled' | 'completed' | 'cancelled';
+    service_id?: number;
+    notes?: string;
+    channel_name?: string;
+    token?: string;
+    uid?: number;
+    created_at: string;
+  };
 }
 
 // Direct type definitions from database tables
@@ -139,3 +154,4 @@ export type UserReport = CustomTable['user_reports'];
 export type UserCourse = CustomTable['user_courses'];
 export type UserFavorite = CustomTable['user_favorites'];
 export type ExpertReport = CustomTable['expert_reports'];
+export type AppointmentTable = CustomTable['appointments'];
