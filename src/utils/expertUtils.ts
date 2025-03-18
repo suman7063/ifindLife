@@ -33,6 +33,9 @@ export const convertToExpertUIFormat = (expert: any): Expert => {
   };
 };
 
+// Fix for ExpertsGrid.tsx by adding this function
+export const convertDBExpertToUI = convertToExpertUIFormat;
+
 /**
  * Convert Admin page temporary expert format to our standard Expert type
  */

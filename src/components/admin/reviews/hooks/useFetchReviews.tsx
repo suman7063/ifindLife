@@ -18,13 +18,13 @@ export const useFetchReviews = () => {
           .select('id, name');
         
         if (error) {
-          console.error('Error fetching experts:', error);
+          toast.error('Error fetching experts');
           return;
         }
         
         setExperts(data || []);
       } catch (error) {
-        console.error('Error fetching experts:', error);
+        toast.error('Error fetching experts');
       }
     };
     
@@ -51,7 +51,6 @@ export const useFetchReviews = () => {
         `);
       
       if (error) {
-        console.error('Error fetching reviews:', error);
         toast.error('Failed to load reviews');
         setLoading(false);
         return;
@@ -85,7 +84,6 @@ export const useFetchReviews = () => {
       
       setReviews(reviewsData);
     } catch (error: any) {
-      console.error('Error fetching reviews:', error);
       toast.error(error.message || 'Failed to load reviews');
     } finally {
       setLoading(false);

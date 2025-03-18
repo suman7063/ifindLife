@@ -43,7 +43,6 @@ export const useReviewActions = (fetchReviews: () => Promise<void>) => {
         .eq('id', editingReview.id);
       
       if (error) {
-        console.error('Error updating review:', error);
         toast.error('Failed to update review');
         return;
       }
@@ -52,7 +51,6 @@ export const useReviewActions = (fetchReviews: () => Promise<void>) => {
       setIsEditDialogOpen(false);
       fetchReviews();
     } catch (error: any) {
-      console.error('Error updating review:', error);
       toast.error(error.message || 'Failed to update review');
     } finally {
       setLoading(false);
@@ -70,7 +68,6 @@ export const useReviewActions = (fetchReviews: () => Promise<void>) => {
         .eq('id', deletingReview);
       
       if (error) {
-        console.error('Error deleting review:', error);
         toast.error('Failed to delete review');
         return;
       }
@@ -79,7 +76,6 @@ export const useReviewActions = (fetchReviews: () => Promise<void>) => {
       setIsDeleteDialogOpen(false);
       fetchReviews();
     } catch (error: any) {
-      console.error('Error deleting review:', error);
       toast.error(error.message || 'Failed to delete review');
     } finally {
       setLoading(false);

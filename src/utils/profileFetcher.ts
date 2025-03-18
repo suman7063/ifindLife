@@ -34,7 +34,6 @@ export const fetchUserProfile = async (userId: string): Promise<UserProfile | nu
     
     return userProfile;
   } catch (error: any) {
-    console.error('Error fetching user profile:', error);
     toast.error(error.message || 'Failed to load user profile');
     return null;
   }
@@ -49,7 +48,7 @@ export const fetchUserReviews = async (userId: string) => {
       .eq('user_id', userId);
     
     if (error) {
-      console.error('Error fetching user reviews:', error);
+      toast.error('Error fetching user reviews');
       return [];
     }
     
@@ -75,7 +74,7 @@ export const fetchUserReviews = async (userId: string) => {
     
     return reviewsWithDetails;
   } catch (error) {
-    console.error('Error fetching user reviews:', error);
+    toast.error('Error fetching user reviews');
     return [];
   }
 };
@@ -89,7 +88,7 @@ export const fetchUserReports = async (userId: string) => {
       .eq('user_id', userId);
     
     if (error) {
-      console.error('Error fetching user reports:', error);
+      toast.error('Error fetching user reports');
       return [];
     }
     
@@ -105,7 +104,7 @@ export const fetchUserReports = async (userId: string) => {
       userName: 'User' // Will be updated from profile
     }));
   } catch (error) {
-    console.error('Error fetching user reports:', error);
+    toast.error('Error fetching user reports');
     return [];
   }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/components/ui/use-toast";
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const UserLogin = () => {
   const [email, setEmail] = useState('');
@@ -14,12 +16,12 @@ const UserLogin = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
 
   const redirectPath = location.state?.path || '/';
 
   // Use the correct function names from UserAuthContext
   const { login, signup } = useUserAuth();
+  
   // Update the handleLogin function
   const handleLogin = async (email: string, password: string) => {
     setLoading(true);
@@ -34,7 +36,6 @@ const UserLogin = () => {
       }
     } catch (error) {
       toast.error('An error occurred during login');
-      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -62,7 +63,6 @@ const UserLogin = () => {
       }
     } catch (error) {
       toast.error('An error occurred during registration');
-      console.error(error);
     } finally {
       setLoading(false);
     }

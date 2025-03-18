@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase, tables } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { Appointment, AppointmentStatus, AppointmentInsert } from '@/types/supabase/appointments';
+import { Appointment, AppointmentStatus } from '@/types/supabase/appointments';
 import { useAgora } from './useAgora';
 
 export const useAppointments = () => {
@@ -86,7 +86,6 @@ export const useAppointments = () => {
       toast.success('Appointment booked successfully!');
       return data;
     } catch (error: any) {
-      console.error('Error booking appointment:', error);
       toast.error(error.message || 'Failed to book appointment');
       return false;
     } finally {
@@ -125,12 +124,12 @@ export const useAppointments = () => {
         currency: item.currency,
         extensionCount: item.extension_count,
         actualDuration: item.actual_duration,
-        refunded: item.refunded
+        refunded: item.refunded,
+        calendarEventId: item.calendar_event_id
       }));
       
       return appointments;
     } catch (error: any) {
-      console.error('Error fetching appointments:', error);
       toast.error(error.message || 'Failed to fetch appointments');
       return [];
     } finally {
@@ -152,7 +151,6 @@ export const useAppointments = () => {
       toast.success('Appointment cancelled successfully');
       return true;
     } catch (error: any) {
-      console.error('Error cancelling appointment:', error);
       toast.error(error.message || 'Failed to cancel appointment');
       return false;
     } finally {
@@ -177,7 +175,6 @@ export const useAppointments = () => {
       toast.success('Session completed successfully');
       return true;
     } catch (error: any) {
-      console.error('Error completing session:', error);
       toast.error(error.message || 'Failed to complete session');
       return false;
     } finally {
@@ -215,7 +212,6 @@ export const useAppointments = () => {
       toast.success(`Session extended by ${additionalMinutes} minutes`);
       return true;
     } catch (error: any) {
-      console.error('Error extending session:', error);
       toast.error(error.message || 'Failed to extend session');
       return false;
     } finally {
@@ -237,7 +233,6 @@ export const useAppointments = () => {
       toast.success('Appointment marked as no-show');
       return true;
     } catch (error: any) {
-      console.error('Error marking no-show:', error);
       toast.error(error.message || 'Failed to update appointment');
       return false;
     } finally {
@@ -262,7 +257,6 @@ export const useAppointments = () => {
       toast.success('Expert marked as no-show. Refund will be processed.');
       return true;
     } catch (error: any) {
-      console.error('Error marking expert no-show:', error);
       toast.error(error.message || 'Failed to update appointment');
       return false;
     } finally {

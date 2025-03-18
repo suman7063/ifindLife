@@ -1,59 +1,87 @@
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { 
-  fetchUserProfile, 
-  updateUserProfile, 
-  updateProfilePicture 
-} from '@/utils/userProfileUtils';
-import { UserProfile, Expert } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
+import { UserProfile } from '@/types/supabase';
 import { toast } from 'sonner';
 import { processReferralCode } from '@/utils/referralUtils';
-import useReports from '@/hooks/auth/useReports';
-import useReviews from '@/hooks/auth/useReviews';
-import { useWallet } from '@/hooks/auth/useWallet';
-import { useAppointments } from '@/hooks/auth/useAppointments';
 
-// Import the context definition
-import { UserAuthContext, UserAuthContextType } from './UserAuthContext';
+interface UserAuthContextType {
+  currentUser: UserProfile | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    country: string;
+    city: string;
+    referralCode?: string;
+  }) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  fetchProfile: () => Promise<void>;
+}
 
-export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
+
+export const useUserAuth = () => {
+  const context = useContext(UserAuthContext);
+  if (!context) {
+    throw new Error('useUserAuth must be used within a UserAuthProvider');
+  }
+  return context;
+};
+
+interface UserAuthProviderProps {
+  children: React.ReactNode;
+}
+
+export const UserAuthProvider: React.FC<UserAuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { login: authLogin, signup: authSignup, logout: authLogout, getSession } = useSupabaseAuth();
-  const { addReport } = useReports();
-  const { addReview, hasTakenServiceFrom } = useReviews();
-  const { rechargeWallet } = useWallet();
-  const { bookAppointment: bookUserAppointment } = useAppointments();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
+    const session = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        await fetchProfile();
+      } else {
         setCurrentUser(null);
+        setLoading(false);
       }
-    });
 
-    const initializeAuth = async () => {
-      const session = await getSession();
-      
-      if (session?.user) {
-        const userProfile = await fetchUserProfile(session.user.id);
-        if (userProfile) {
-          setCurrentUser(userProfile);
+      supabase.auth.onAuthStateChange(async (_event, session) => {
+        if (session) {
+          await fetchProfile();
+        } else {
+          setCurrentUser(null);
+          setLoading(false);
         }
-      }
+      });
     };
 
-    initializeAuth();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [getSession]);
+    session();
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    return await authLogin(email, password);
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      await fetchProfile();
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
+      return false;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const signup = async (userData: {
@@ -62,180 +90,131 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     phone: string;
     password: string;
     country: string;
-    city?: string;
+    city: string;
     referralCode?: string;
   }): Promise<boolean> => {
-    const success = await authSignup(userData);
-    
-    if (success && userData.referralCode) {
-      try {
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) {
-          await processReferralCode(userData.referralCode, data.user.id);
-        }
-      } catch (error) {
-        console.error("Error processing referral:", error);
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: {
+            name: userData.name,
+            phone: userData.phone,
+            country: userData.country,
+            city: userData.city,
+          },
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        return false;
       }
+
+      if (userData.referralCode) {
+        const isValidReferral = await processReferralCode(userData.referralCode);
+        if (!isValidReferral) {
+          toast.error('Invalid referral code.');
+          return false;
+        }
+
+        // Update the user's record with the referral information
+        const { error: profileError } = await supabase
+          .from('users')
+          .update({ referred_by: userData.referralCode })
+          .eq('id', data.user?.id);
+
+        if (profileError) {
+          toast.error('Failed to apply referral code.');
+          return false;
+        }
+      }
+
+      await fetchProfile();
+      return true;
+    } catch (error: any) {
+      toast.error(error.message);
+      return false;
+    } finally {
+      setLoading(false);
     }
-    
-    return success;
   };
 
   const logout = async (): Promise<void> => {
-    const success = await authLogout();
-    if (success) {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       setCurrentUser(null);
       navigate('/login');
-      toast.info('You have been logged out');
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateProfile = async (profileData: Partial<UserProfile>): Promise<void> => {
-    if (!currentUser || !currentUser.id) return;
-
-    const result = await updateUserProfile(currentUser.id, profileData);
-    if (result) {
-      setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
-    }
-  };
-
-  const handleUpdateProfilePicture = async (file: File): Promise<string> => {
-    if (!currentUser || !currentUser.id) throw new Error('User not authenticated');
-
-    const publicUrl = await updateProfilePicture(currentUser.id, file);
-    setCurrentUser(prev => {
-      if (!prev) return null;
-      return { 
-        ...prev, 
-        profilePicture: publicUrl 
-      };
-    });
-    return publicUrl;
-  };
-
-  const handleAddReview = async (expertId: string, rating: number, comment: string) => {
-    if (!currentUser) {
-      toast.error('Please log in to add a review');
-      return;
-    }
-    
-    const result = await addReview(currentUser, expertId, rating, comment);
-    if (result.success && currentUser) {
-      setCurrentUser(prevUser => {
-        if (!prevUser) return null;
-        return {
-          ...prevUser,
-          reviews: result.reviews
-        };
-      });
-    }
-  };
-  
-  const handleReportExpert = async (expertId: string, reason: string, details: string) => {
-    if (!currentUser) {
-      toast.error('Please log in to report an expert');
-      return;
-    }
-    
-    const updatedUser = await addReport(currentUser, expertId, reason, details);
-    if (updatedUser) {
-      setCurrentUser(updatedUser);
-    }
-  };
-  
-  const handleRechargeWallet = async (amount: number) => {
-    if (!currentUser) {
-      toast.error('Please log in to recharge your wallet');
-      return;
-    }
-    
-    const updatedUser = await rechargeWallet(currentUser, amount);
-    if (updatedUser) {
-      setCurrentUser(updatedUser);
-    }
-  };
-
-  const addToFavorites = (expert: Expert) => {
-    if (!currentUser) return;
-    toast.info('This feature will be implemented with Supabase soon');
-  };
-
-  const removeFromFavorites = (expertId: string) => {
-    if (!currentUser) return;
-    toast.info('This feature will be implemented with Supabase soon');
-  };
-  
-  const getExpertShareLink = (expertId: string): string => {
-    return `${window.location.origin}/experts/${expertId}?ref=${currentUser?.id || 'guest'}`;
-  };
-  
-  const getReferralLink = (): string => {
-    if (!currentUser?.referralCode) return '';
-    return `${window.location.origin}/signup?ref=${currentUser.referralCode}`;
-  };
-
-  const handleBookAppointment = async (appointmentData: {
-    expertId: string;
-    expertName: string;
-    appointmentDate: string;
-    duration: number;
-    notes?: string;
-    price: number;
-    currency: string;
-  }): Promise<{ success: boolean; message?: string }> => {
-    if (!currentUser) {
-      return { success: false, message: 'User not authenticated' };
-    }
-
+  const updateProfile = async (updates: Partial<UserProfile>): Promise<void> => {
+    setLoading(true);
     try {
-      const result = await bookUserAppointment(
-        currentUser,
-        appointmentData.expertId,
-        appointmentData.expertName,
-        appointmentData.appointmentDate,
-        appointmentData.duration,
-        appointmentData.price,
-        appointmentData.currency,
-        undefined, // service_id
-        appointmentData.notes
-      );
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', currentUser?.id);
 
-      if (result) {
-        return { success: true };
-      } else {
-        return { success: false, message: 'Failed to book appointment' };
+      if (error) {
+        throw error;
       }
-    } catch (error) {
-      console.error('Error booking appointment:', error);
-      return { 
-        success: false, 
-        message: error instanceof Error ? error.message : 'An unknown error occurred' 
-      };
+
+      await fetchProfile();
+      toast.success('Profile updated successfully!');
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const contextValue: UserAuthContextType = {
+  const fetchProfile = async (): Promise<void> => {
+    setLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (error) {
+          throw error;
+        }
+
+        setCurrentUser(profile);
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const value: UserAuthContextType = {
     currentUser,
-    isAuthenticated: !!currentUser,
+    loading,
     login,
     signup,
     logout,
     updateProfile,
-    updateProfilePicture: handleUpdateProfilePicture,
-    addToFavorites,
-    removeFromFavorites,
-    rechargeWallet: handleRechargeWallet,
-    addReview: handleAddReview,
-    reportExpert: handleReportExpert,
-    getExpertShareLink,
-    hasTakenServiceFrom: (expertId) => hasTakenServiceFrom(currentUser, expertId),
-    getReferralLink,
-    bookAppointment: handleBookAppointment
+    fetchProfile,
   };
 
   return (
-    <UserAuthContext.Provider value={contextValue}>
-      {children}
+    <UserAuthContext.Provider value={value}>
+      {!loading && children}
     </UserAuthContext.Provider>
   );
 };

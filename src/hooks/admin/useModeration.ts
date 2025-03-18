@@ -1,14 +1,8 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { 
-  ReportUI, 
-  ModerationStatus, 
-  ModerationActionType, 
-  ReporterType, 
-  TargetType 
-} from '@/types/supabase/moderation';
+import { convertExpertIdToString } from '@/types/supabase/expertId';
+import { ModerationStatus, ModerationActionType, ReportUI, ReporterType, TargetType } from '@/types/supabase/moderation';
 import { Review } from '@/types/supabase/reviews';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -18,11 +12,9 @@ export const useModeration = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { currentUser } = useAuth();
 
-  // Fetch reports and feedback
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Fetch reports
       const { data: reportData, error: reportError } = await supabase
         .from('moderation_reports')
         .select(`
@@ -41,13 +33,11 @@ export const useModeration = () => {
 
       if (reportError) throw reportError;
 
-      // Get reporter/target names
       const transformedReports: ReportUI[] = await Promise.all(
         (reportData || []).map(async (report) => {
           let reporterName = 'Unknown';
           let targetName = 'Unknown';
 
-          // Get reporter name based on type
           if (report.reporter_type === 'user') {
             const { data: userData } = await supabase
               .from('users')
@@ -64,7 +54,6 @@ export const useModeration = () => {
             reporterName = expertData?.name || 'Unknown Expert';
           }
 
-          // Get target name based on type
           if (report.target_type === 'user') {
             const { data: userData } = await supabase
               .from('users')
@@ -100,7 +89,6 @@ export const useModeration = () => {
 
       setReports(transformedReports);
 
-      // Fetch feedback (reviews)
       const { data: reviewData, error: reviewError } = await supabase
         .from('user_reviews')
         .select(`
@@ -116,13 +104,11 @@ export const useModeration = () => {
 
       if (reviewError) throw reviewError;
 
-      // Transform review data
       const transformedReviews: Review[] = await Promise.all(
         (reviewData || []).map(async (review) => {
           let userName = 'Unknown User';
           let expertName = 'Unknown Expert';
 
-          // Get user name
           if (review.user_id) {
             const { data: userData } = await supabase
               .from('users')
@@ -132,7 +118,6 @@ export const useModeration = () => {
             userName = userData?.name || 'Unknown User';
           }
 
-          // Get expert name
           const { data: expertData } = await supabase
             .from('experts')
             .select('name')
@@ -161,15 +146,13 @@ export const useModeration = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Initialize data on component mount
-  useEffect(() => {
-    fetchData();
   }, []);
 
-  // Mark a report as under review
-  const handleReviewReport = async (reportId: string) => {
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleReviewReport = useCallback(async (reportId: string) => {
     try {
       const { error } = await supabase
         .from('moderation_reports')
@@ -178,7 +161,6 @@ export const useModeration = () => {
 
       if (error) throw error;
 
-      // Update local state
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
@@ -192,10 +174,9 @@ export const useModeration = () => {
       console.error('Error updating report status:', error);
       toast.error(error.message || 'Failed to update report');
     }
-  };
+  }, []);
 
-  // Dismiss a report
-  const handleDismissReport = async (reportId: string) => {
+  const handleDismissReport = useCallback(async (reportId: string) => {
     try {
       const { error } = await supabase
         .from('moderation_reports')
@@ -204,7 +185,6 @@ export const useModeration = () => {
 
       if (error) throw error;
 
-      // Update local state
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
@@ -218,22 +198,20 @@ export const useModeration = () => {
       console.error('Error dismissing report:', error);
       toast.error(error.message || 'Failed to dismiss report');
     }
-  };
+  }, []);
 
-  // Take action on a report
-  const handleTakeAction = async (reportId: string, actionType: ModerationActionType, message: string, notes?: string) => {
+  const handleTakeAction = useCallback(async (reportId: string, actionType: ModerationActionType, message: string, notes?: string) => {
     try {
       if (!currentUser) {
         toast.error('You must be logged in to take action');
         return;
       }
 
-      // 1. Create a moderation action record
       const { error: actionError } = await supabase
         .from('moderation_actions')
         .insert({
           report_id: reportId,
-          admin_id: currentUser.username, // Using username as ID since we don't have real auth.users
+          admin_id: currentUser.username,
           action_type: actionType,
           message: message,
           notes: notes,
@@ -241,7 +219,6 @@ export const useModeration = () => {
 
       if (actionError) throw actionError;
 
-      // 2. Update the report status to resolved
       const { error: reportError } = await supabase
         .from('moderation_reports')
         .update({ status: 'resolved' })
@@ -249,7 +226,6 @@ export const useModeration = () => {
 
       if (reportError) throw reportError;
 
-      // 3. Update local state
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
@@ -260,16 +236,14 @@ export const useModeration = () => {
 
       toast.success(`Action taken: ${actionType}`);
 
-      // Refresh data to ensure it's up to date
       fetchData();
     } catch (error: any) {
       console.error('Error taking action:', error);
       toast.error(error.message || 'Failed to take action');
     }
-  };
+  }, [fetchData]);
 
-  // Delete feedback
-  const handleDeleteFeedback = async (feedbackId: string) => {
+  const handleDeleteFeedback = useCallback(async (feedbackId: string) => {
     try {
       const { error } = await supabase
         .from('user_reviews')
@@ -278,7 +252,6 @@ export const useModeration = () => {
 
       if (error) throw error;
 
-      // Update local state
       setFeedback(prevFeedback => 
         prevFeedback.filter(item => item.id !== feedbackId)
       );
@@ -288,7 +261,7 @@ export const useModeration = () => {
       console.error('Error deleting feedback:', error);
       toast.error(error.message || 'Failed to delete feedback');
     }
-  };
+  }, []);
 
   return {
     reports,

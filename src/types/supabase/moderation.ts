@@ -62,3 +62,7 @@ export interface ModerateRequestUI {
 }
 
 export type ModerationType = ModerationActionType;
+
+// For backward compatibility, ensure these are also defined
+// for components that might still be using them
+export type ReportStatus = ModerationStatus;
