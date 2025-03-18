@@ -66,10 +66,11 @@ export const useReviews = () => {
         return { success: true, reviews: [] };
       }
       
-      // Extract all expert IDs first as strings
-      const expertIdsString: string[] = updatedUserReviews.map(review => 
-        convertExpertIdToString(review.expert_id)
-      );
+      // Convert expert IDs to strings first
+      const expertIdsString: string[] = [];
+      for (const review of updatedUserReviews) {
+        expertIdsString.push(convertExpertIdToString(review.expert_id));
+      }
       
       // Get expert names in a single batch query
       const { data: expertsData } = await supabase
@@ -81,19 +82,22 @@ export const useReviews = () => {
       const expertNameLookup: Record<string, string> = {};
       
       if (expertsData) {
-        expertsData.forEach(expert => {
+        for (const expert of expertsData) {
           expertNameLookup[expert.id] = expert.name;
-        });
+        }
       }
       
-      // Build the formatted reviews array with explicit type annotation
+      // Build the formatted reviews array
       const formattedReviews: Review[] = [];
       
       // Process each review individually to avoid deep type instantiation
       for (const review of updatedUserReviews) {
         const expertIdString = convertExpertIdToString(review.expert_id);
+        const expertName = expertNameLookup[expertIdString] || 'Unknown Expert';
+        const userName = userProfile.name || 'Anonymous User';
         
-        formattedReviews.push({
+        // Explicitly create the review object without any complex mapping
+        const formattedReview: Review = {
           id: review.id,
           expertId: expertIdString,
           rating: review.rating,
@@ -101,9 +105,11 @@ export const useReviews = () => {
           date: review.date,
           verified: review.verified || false,
           userId: review.user_id || '',
-          userName: userProfile.name || 'Anonymous User',
-          expertName: expertNameLookup[expertIdString] || 'Unknown Expert'
-        });
+          userName: userName,
+          expertName: expertName
+        };
+        
+        formattedReviews.push(formattedReview);
       }
       
       return {
