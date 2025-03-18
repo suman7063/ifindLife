@@ -26,7 +26,6 @@ export async function fetchExpertAvailability(expertId: string, date: string): P
     
     return slots;
   } catch (error) {
-    console.error("Error fetching expert availability:", error);
     return [];
   }
 }
@@ -44,7 +43,6 @@ export async function updateExpertAvailability(
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error("Error updating availability:", error);
     return false;
   }
 }
@@ -85,7 +83,6 @@ export async function createExpertAvailability(
     
     return null;
   } catch (error) {
-    console.error("Error creating availability:", error);
     return null;
   }
 }
@@ -100,7 +97,6 @@ export async function deleteExpertAvailability(slotId: string): Promise<boolean>
     if (error) throw error;
     return true;
   } catch (error) {
-    console.error("Error deleting availability:", error);
     return false;
   }
 }

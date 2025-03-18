@@ -44,7 +44,6 @@ export const copyReferralLink = async (referralCode: string): Promise<boolean> =
     await navigator.clipboard.writeText(link);
     return true;
   } catch (error) {
-    console.error("Failed to copy referral link:", error);
     return false;
   }
 };
@@ -68,19 +67,15 @@ export const processReferralCode = async (referralCode: string): Promise<boolean
       .single();
 
     if (error) {
-      console.error("Error checking referral code:", error);
       return false;
     }
 
     if (!data) {
-      console.log("Referral code not found.");
       return false;
     }
 
-    console.log("Referral code is valid. Referring user ID:", data.id);
     return true;
   } catch (error) {
-    console.error("Error processing referral code:", error);
     return false;
   }
 };
@@ -97,13 +92,11 @@ export const getReferralSettings = async () => {
       .single();
     
     if (error) {
-      console.error("Error fetching referral settings:", error);
       return null;
     }
     
     return data;
   } catch (error) {
-    console.error("Error in getReferralSettings:", error);
     return null;
   }
 };
@@ -130,13 +123,11 @@ export const getUserReferrals = async (userId: string) => {
       .eq('referrer_id', userId);
     
     if (error) {
-      console.error("Error fetching user referrals:", error);
       return [];
     }
     
     return data || [];
   } catch (error) {
-    console.error("Error in getUserReferrals:", error);
     return [];
   }
 };

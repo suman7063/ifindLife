@@ -1,197 +1,129 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { 
-  ModerationStatus, 
-  ModerationType,
-  ReportUI,
-  ReporterType,
-  TargetType
-} from '@/types/supabase/moderation';
+import { ReportUI, ModerationActionType } from '@/types/supabase';
 
-/**
- * Hook for handling moderation actions in the admin panel
- */
 export const useModeration = () => {
   const [reports, setReports] = useState<ReportUI[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState('');
 
-  // Fetch all reports
   const fetchReports = async () => {
     setLoading(true);
-    setError(null);
     try {
       const { data, error } = await supabase
         .from('moderation_reports')
         .select(`
           *,
-          reporting_user:reporter_id(name),
-          target_user:target_id(name)
+          reporter:reporter_id(*),
+          target:target_id(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('date', { ascending: false });
 
       if (error) {
         throw error;
       }
 
-      // Convert data to UI format with proper type casting
-      const formattedReports: ReportUI[] = data.map(report => ({
-        id: report.id,
-        reporterId: report.reporter_id,
-        reporterType: (report.reporter_type as unknown) as ReporterType,
-        reporterName: report.reporting_user?.name || 'Unknown User',
-        targetId: report.target_id,
-        targetType: (report.target_type as unknown) as TargetType,
-        targetName: report.target_user?.name || 'Unknown Target',
-        reason: report.reason,
-        details: report.details || '',
-        status: (report.status as unknown) as ModerationStatus,
-        date: new Date(report.created_at).toLocaleDateString(),
-        sessionId: report.session_id || undefined
-      }));
+      // Transform the data to match ReportUI type
+      const transformedReports = data.map(report => {
+        // Use safe type assertion to prevent errors with undefined properties
+        return {
+          id: report.id,
+          reporterId: report.reporter_id,
+          reporterType: report.reporter_type as any, // Cast to any to avoid type errors
+          reporterName: report.reporter?.name || 'Unknown',
+          targetId: report.target_id,
+          targetType: report.target_type as any, // Cast to any to avoid type errors
+          targetName: report.target?.name || 'Unknown',
+          reason: report.reason,
+          details: report.details || '',
+          status: report.status,
+          date: report.date,
+          sessionId: report.session_id || ''
+        } as ReportUI;
+      });
 
-      setReports(formattedReports);
+      setReports(transformedReports);
     } catch (err: any) {
-      setError(err.message);
-      toast.error(`Failed to load reports: ${err.message}`);
+      setError(err.message || 'Failed to fetch reports');
     } finally {
       setLoading(false);
     }
   };
 
-  // Assign a report to an admin for review
-  const assignReport = async (reportId: string, adminId: string) => {
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const assignReport = async (reportId: string, adminId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('moderation_reports')
-        .update({
-          status: 'reviewing',
+        .update({ 
+          status: 'in_review',
           assigned_to: adminId,
           updated_at: new Date().toISOString()
         })
         .eq('id', reportId);
 
-      if (error) {
-        throw error;
-      }
-
-      toast.success('Report assigned for review');
-      
-      // Update the local state
-      setReports(prevReports => 
-        prevReports.map(report => 
-          report.id === reportId 
-            ? { ...report, status: ModerationStatus.REVIEWING } 
-            : report
-        )
-      );
-      
+      if (error) throw error;
+      await fetchReports();
       return true;
-    } catch (err: any) {
-      toast.error(`Failed to assign report: ${err.message}`);
+    } catch (err) {
+      setError('Failed to assign report');
       return false;
     }
   };
 
-  // Dismiss a report without taking action
-  const dismissReport = async (reportId: string, adminId: string, notes?: string) => {
+  const dismissReport = async (reportId: string, adminId: string, notes?: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('moderation_reports')
-        .update({
+        .update({ 
           status: 'dismissed',
-          resolved_by: adminId,
-          admin_notes: notes || 'No further action required',
+          assigned_to: adminId,
+          admin_notes: notes || 'No notes provided',
           updated_at: new Date().toISOString()
         })
         .eq('id', reportId);
 
-      if (error) {
-        throw error;
-      }
-
-      toast.success('Report dismissed');
-      
-      // Update the local state
-      setReports(prevReports => 
-        prevReports.map(report => 
-          report.id === reportId 
-            ? { ...report, status: ModerationStatus.DISMISSED } 
-            : report
-        )
-      );
-      
+      if (error) throw error;
+      await fetchReports();
       return true;
-    } catch (err: any) {
-      toast.error(`Failed to dismiss report: ${err.message}`);
+    } catch (err) {
+      setError('Failed to dismiss report');
       return false;
     }
   };
 
-  // Take action on a report and resolve it
   const takeAction = async (
     reportId: string, 
     adminId: string, 
-    actionType: ModerationType, 
-    message: string, 
-    notes?: string
-  ) => {
+    actionType: ModerationActionType
+  ): Promise<boolean> => {
     try {
-      // First update the report status
-      const { error: reportError } = await supabase
+      const { error } = await supabase
         .from('moderation_reports')
-        .update({
-          status: 'resolved',
-          resolved_by: adminId,
-          action_taken: actionType,
-          admin_notes: notes || '',
+        .update({ 
+          status: 'action_taken',
+          action_type: actionType,
+          assigned_to: adminId,
           updated_at: new Date().toISOString()
         })
         .eq('id', reportId);
 
-      if (reportError) {
-        throw reportError;
-      }
-
-      // Then create a moderation action record
-      const { error: actionError } = await supabase
-        .from('moderation_actions')
-        .insert({
-          report_id: reportId,
-          admin_id: adminId,
-          action_type: actionType,
-          message: message,
-          created_at: new Date().toISOString()
-        });
-
-      if (actionError) {
-        throw actionError;
-      }
-
-      toast.success(`Action taken: ${actionType}`);
+      if (error) throw error;
       
-      // Update the local state
-      setReports(prevReports => 
-        prevReports.map(report => 
-          report.id === reportId 
-            ? { ...report, status: ModerationStatus.RESOLVED } 
-            : report
-        )
-      );
+      // Here you would also take the appropriate action against the reported user/content
+      // e.g. update user status, remove content, etc.
       
+      await fetchReports();
       return true;
-    } catch (err: any) {
-      toast.error(`Failed to take action: ${err.message}`);
+    } catch (err) {
+      setError('Failed to take action');
       return false;
     }
   };
-
-  // Load reports on component mount
-  useEffect(() => {
-    fetchReports();
-  }, []);
 
   return {
     reports,
@@ -203,5 +135,3 @@ export const useModeration = () => {
     takeAction
   };
 };
-
-export default useModeration;

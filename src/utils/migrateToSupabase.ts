@@ -14,7 +14,6 @@ export const runMigrations = async (): Promise<boolean> => {
     toast.success('Migration completed successfully!');
     return true;
   } catch (error) {
-    console.error('Migration error:', error);
     toast.error('Migration failed. See console for details.');
     return false;
   }

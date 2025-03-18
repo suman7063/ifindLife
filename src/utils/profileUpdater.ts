@@ -25,13 +25,11 @@ export const updateUserProfile = async (
       .eq('id', userId);
 
     if (error) {
-      console.error('Error updating user profile:', error);
       return false;
     }
     
     return true;
   } catch (error) {
-    console.error('Error updating user profile:', error);
     return false;
   }
 };
@@ -71,7 +69,6 @@ export const updateProfilePicture = async (userId: string, file: File): Promise<
     
     return publicUrl;
   } catch (error) {
-    console.error('Error updating profile picture:', error);
     throw error;
   }
 };

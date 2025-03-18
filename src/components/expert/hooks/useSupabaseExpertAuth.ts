@@ -19,13 +19,11 @@ export const useSupabaseExpertAuth = () => {
         .single();
       
       if (error) {
-        console.error('Error fetching expert:', error);
         return null;
       }
       
       return data as ExpertUI;
     } catch (error) {
-      console.error('Error in getExpert:', error);
       return null;
     }
   };
@@ -59,7 +57,6 @@ export const useSupabaseExpertAuth = () => {
         return false;
       }
     } catch (error) {
-      console.error('Login failed:', error);
       toast.error('Login failed. Please try again.');
       return false;
     } finally {
