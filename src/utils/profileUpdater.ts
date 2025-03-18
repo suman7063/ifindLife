@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, UserProfileDb, UserUpdate } from '@/types/supabase';
+import { camelToSnake } from './dataFormatters';
 
 // Function to update user profile
 export const updateUserProfile = async (
@@ -8,15 +9,9 @@ export const updateUserProfile = async (
   data: Partial<UserProfile>
 ): Promise<boolean> => {
   try {
-    // Convert camelCase to snake_case for database
-    const dbData: any = {
-      name: data.name,
-      phone: data.phone,
-      country: data.country,
-      city: data.city,
-      currency: data.currency
-    };
-
+    // Convert camelCase data to snake_case for database
+    const dbData = camelToSnake(data) as Record<string, any>;
+    
     // Only include defined properties
     Object.keys(dbData).forEach(key => {
       if (dbData[key] === undefined) {

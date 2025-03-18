@@ -4,9 +4,9 @@ import { ReferralUI } from './referrals';
 import { Review } from './reviews';
 import { Appointment } from './appointments';
 
-export interface UserProfile {
+// Database schema type (snake_case)
+export interface UserProfileDb {
   id: string;
-  // Snake case for DB compatibility
   name?: string;
   email?: string;
   phone?: string;
@@ -24,12 +24,28 @@ export interface UserProfile {
   referral_code?: string;
   referral_link?: string;
   referred_by?: string;
-  
-  // Camel case for UI compatibility
+}
+
+// UI schema type (camelCase)
+export interface UserProfile {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  dateOfBirth?: string;
+  bio?: string;
   profilePicture?: string;
+  lastLogin?: string;
+  createdAt?: string;
   walletBalance?: number;
+  currency?: string;
   referralCode?: string;
   referralLink?: string;
+  referredBy?: string;
   
   // Related collections
   favorites?: string[];
@@ -42,7 +58,7 @@ export interface UserProfile {
   referrals?: ReferralUI[];
 }
 
-export interface UserInsert {
+export interface UserInsertDb {
   id: string;
   name: string;
   email: string;
@@ -58,6 +74,26 @@ export interface UserInsert {
   currency?: string;
 }
 
-export interface UserUpdate extends Partial<UserInsert> {
+export interface UserInsert {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  dateOfBirth?: string;
+  bio?: string;
+  profilePicture?: string;
+  walletBalance?: number;
+  currency?: string;
+}
+
+export interface UserUpdateDb extends Partial<UserInsertDb> {
   last_login?: string;
+}
+
+export interface UserUpdate extends Partial<UserInsert> {
+  lastLogin?: string;
 }
