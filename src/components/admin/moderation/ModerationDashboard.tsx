@@ -1,10 +1,11 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import ReportsList from './ReportsList';
 import FeedbackList from './FeedbackList';
 import { useModeration } from '@/hooks/admin/useModeration';
+import { ModerationActionType } from '@/types/supabase';
 
 const ModerationDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('reports');
@@ -34,7 +35,7 @@ const ModerationDashboard: React.FC = () => {
   
   const handleTakeAction = (reportId: string, actionType: string) => {
     const mockAdminId = 'admin-123';
-    return takeAction(reportId, mockAdminId, actionType);
+    return takeAction(reportId, mockAdminId, actionType as ModerationActionType);
   };
   
   const handleDeleteFeedback = () => {

@@ -1,16 +1,15 @@
 
-// Import the correct router package based on the framework
-import { useNavigate } from 'react-router-dom'; // Using react-router instead of next
+import { useNavigate } from 'react-router-dom'; 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { ExpertUI } from '@/types/supabase';
+import { Expert } from '@/types/supabase';
 
 export const useSupabaseExpertAuth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const getExpert = async (email: string): Promise<ExpertUI | null> => {
+  const getExpert = async (email: string): Promise<Expert | null> => {
     try {
       const { data, error } = await supabase
         .from('experts')
@@ -22,7 +21,7 @@ export const useSupabaseExpertAuth = () => {
         return null;
       }
       
-      return data as ExpertUI;
+      return data as Expert;
     } catch (error) {
       return null;
     }

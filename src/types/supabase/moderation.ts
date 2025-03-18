@@ -1,42 +1,22 @@
 
-// Define the enums for moderation
-export enum ReporterType {
-  USER = 'user',
-  EXPERT = 'expert',
-  SYSTEM = 'system'
-}
+export type ReportReason = 
+  | 'inappropriate_behavior'
+  | 'false_information'
+  | 'unqualified'
+  | 'harassment'
+  | 'fake_account'
+  | 'inappropriate'
+  | 'misleading'
+  | 'spam'
+  | 'other';
 
-export enum TargetType {
-  USER = 'user',
-  EXPERT = 'expert',
-  REVIEW = 'review',
-  APPOINTMENT = 'appointment'
-}
+export type ReporterType = 'user' | 'expert' | 'admin' | 'system';
 
-export enum ModerationStatus {
-  PENDING = 'pending',
-  REVIEWING = 'reviewing',
-  RESOLVED = 'resolved',
-  DISMISSED = 'dismissed'
-}
+export type TargetType = 'user' | 'expert' | 'content' | 'appointment' | 'review';
 
-export enum ModerationActionType {
-  WARNING = 'warning',
-  SUSPENSION = 'suspension',
-  BAN = 'ban',
-  CONTENT_REMOVAL = 'content_removal',
-  NO_ACTION = 'no_action'
-}
+export type ModerationStatus = 'pending' | 'in_review' | 'dismissed' | 'actioned';
 
-// Define the type for report reasons
-export enum ReportReason {
-  MISLEADING_INFORMATION = 'misleading_information',
-  OFF_PLATFORM_REDIRECTION = 'off_platform_redirection',
-  INAPPROPRIATE_BEHAVIOR = 'inappropriate_behavior',
-  BAD_BEHAVIOR = 'bad_behavior',
-  FOUL_LANGUAGE = 'foul_language',
-  OTHER = 'other'
-}
+export type ModerationActionType = 'warn' | 'suspend' | 'ban' | 'dismiss' | 'hide' | 'delete';
 
 export interface ReportUI {
   id: string;
@@ -46,23 +26,23 @@ export interface ReportUI {
   targetId: string;
   targetType: TargetType;
   targetName: string;
-  reason: ReportReason | string;
+  reason: string | ReportReason;
   details: string;
   status: ModerationStatus;
   date: string;
   sessionId?: string;
 }
 
-export interface ModerateRequestUI {
-  reportId: string;
-  adminId: string;
-  actionType: ModerationActionType;
-  message: string;
-  notes?: string;
+export interface Report {
+  id: string;
+  userId: string;
+  expertId: string;
+  reason: string;
+  details: string;
+  date: string;
+  status: string;
+  
+  // DB fields for compatibility
+  user_id: string;
+  expert_id: string;
 }
-
-export type ModerationType = ModerationActionType;
-
-// For backward compatibility, ensure these are also defined
-// for components that might still be using them
-export type ReportStatus = ModerationStatus;

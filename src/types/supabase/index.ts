@@ -6,11 +6,12 @@ export * from './appointments';
 export * from './education';
 export * from './referrals';
 export * from './expertId';
+export * from './transaction';
+export * from './userObjects';
 
 // Use 'export type' to avoid TS1205 errors with types from moderation
 export type { 
   ReportReason, 
-  Report,
   ReportUI,
   ReporterType,
   TargetType,

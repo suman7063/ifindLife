@@ -1,3 +1,4 @@
+
 import { Expert } from '@/types/supabase';
 
 /**
@@ -21,8 +22,6 @@ export const normalizeExpertForDetail = (expert: any): Expert => {
     selectedServices: expert.selectedServices || expert.selected_services || [],
     certificateUrls: expert.certificateUrls || expert.certificate_urls || [],
     profilePicture: expert.profilePicture || expert.profile_picture || '/placeholder.svg',
-    
-    // Remove all console logs while keeping functionality
   };
 };
 

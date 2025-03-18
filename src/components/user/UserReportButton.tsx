@@ -1,58 +1,48 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ReportReason } from '@/types/supabase/moderation';
-import useReports from '@/hooks/auth/useReports';
 import { Flag } from 'lucide-react';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { useReports } from '@/hooks/auth/useReports';
 import ReportModal from '@/components/moderation/ReportModal';
 
 interface UserReportButtonProps {
-  targetId: string;
-  targetType: 'expert' | 'user';
-  targetName: string;
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  className?: string;
+  expertId: string;
+  expertName: string;
 }
 
-const UserReportButton: React.FC<UserReportButtonProps> = ({
-  targetId,
-  targetType,
-  targetName,
-  variant = 'outline',
-  size = 'sm',
-  className = '',
-}) => {
+const UserReportButton: React.FC<UserReportButtonProps> = ({ expertId, expertName }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { addReport } = useReports();
+  const { currentUser } = useUserAuth();
+  const { submitReport } = useReports();
 
-  const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false);
+  const handleReport = (reason: string, details: string) => {
+    if (!currentUser) {
+      // Handle not logged in state
+      return;
+    }
 
-  const handleReportSubmit = async (reason: ReportReason, details: string) => {
-    // We need to mock the user for now as we don't have the current user context
-    const mockUser = { id: 'current-user-id' };
-    await addReport(mockUser, targetId, reason, details);
-    handleCloseModal();
+    return submitReport(currentUser, expertId, reason, details);
   };
 
   return (
     <>
-      <Button
-        variant={variant}
-        size={size}
-        onClick={handleOpenModal}
-        className={`text-destructive hover:bg-destructive/10 ${className}`}
+      <Button 
+        variant="ghost" 
+        size="sm" 
+        onClick={() => setIsModalOpen(true)}
+        className="text-gray-500 hover:text-red-500 transition-colors"
       >
-        <Flag className="h-4 w-4 mr-1" />
+        <Flag className="w-4 h-4 mr-2" />
         Report
       </Button>
 
       <ReportModal
         isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSubmit={handleReportSubmit}
-        targetName={targetName}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleReport}
+        targetName={expertName}
+        targetType="expert"
       />
     </>
   );

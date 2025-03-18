@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,37 +6,51 @@ import { useUserAuth } from '@/hooks/useUserAuth';
 import { ReferralUI } from '@/types/supabase/referrals';
 import { Badge } from '@/components/ui/badge';
 import { format, parseISO } from 'date-fns';
+import { supabase, toast } from '@/utils/supabase';
 
 const UserReferrals: React.FC = () => {
   const { currentUser } = useUserAuth();
   const [referrals, setReferrals] = useState<ReferralUI[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchReferrals = async () => {
-      if (currentUser?.id) {
-        setIsLoading(true);
-        try {
-          const data = await getUserReferrals(currentUser.id);
-          // Convert the data format to match ReferralUI
-          const formattedReferrals: ReferralUI[] = data.map(item => ({
-            id: item.id,
-            referrerId: item.referrer_id,
-            referredId: item.referred_id,
-            referralCode: item.referral_code,
-            status: item.status,
-            createdAt: item.created_at,
-            completedAt: item.completed_at,
-            rewardClaimed: item.reward_claimed,
-            referredUserName: item.users?.name || 'Unknown User',
-            referredUserEmail: item.users?.email || undefined
-          }));
-          setReferrals(formattedReferrals);
-        } catch (error) {
-          console.error('Error fetching referrals:', error);
-        } finally {
-          setIsLoading(false);
-        }
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('referrals')
+          .select(`
+            *,
+            users:referred_id(*)
+          `)
+          .eq('referrer_id', currentUser?.id);
+
+        if (error) throw error;
+
+        const referralsUI = data.map(referral => ({
+          id: referral.id,
+          referrerId: referral.referrer_id,
+          referredId: referral.referred_id,
+          referralCode: referral.referral_code || '',
+          status: referral.status,
+          createdAt: referral.created_at,
+          completedAt: referral.completed_at,
+          rewardClaimed: referral.reward_claimed,
+          referredUserName: 'Anonymous User',
+          referredUserEmail: 'Unknown',
+          
+          referrer_id: referral.referrer_id,
+          referred_id: referral.referred_id,
+          created_at: referral.created_at,
+          completed_at: referral.completed_at,
+          reward_claimed: referral.reward_claimed
+        }));
+
+        setReferrals(referralsUI);
+      } catch (error) {
+        toast.error('Failed to fetch referrals');
+      } finally {
+        setLoading(false);
       }
     };
 

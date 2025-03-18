@@ -1,170 +1,101 @@
 
 import { 
-  Course, 
   UserCourse, 
   UserReview, 
-  UserReport 
-} from '@/types/supabase';
-import { 
+  UserReport, 
   Review, 
   Report 
-} from '@/types/supabase/reviews';
-import { createAdapter } from './dataFormatters';
-import { convertExpertIdToString } from '@/types/supabase/expertId';
+} from '@/types/supabase';
 
-// Create adapters for each type
-const courseAdapter = createAdapter<UserCourse, Course>(
-  // DB to UI transform
-  (dbCourse: UserCourse): Course => ({
-    id: dbCourse.id,
-    title: dbCourse.title,
-    expertId: dbCourse.expert_id?.toString(),
-    expertName: dbCourse.expert_name,
-    enrollmentDate: dbCourse.enrollment_date,
-    progress: dbCourse.progress,
-    completed: dbCourse.completed
-  }),
-  // UI to DB transform
-  (uiCourse: Course): UserCourse => ({
-    id: uiCourse.id,
-    title: uiCourse.title,
-    expert_id: parseInt(uiCourse.expertId),
-    expert_name: uiCourse.expertName,
-    enrollment_date: uiCourse.enrollmentDate,
-    progress: uiCourse.progress,
-    completed: uiCourse.completed,
-    user_id: undefined // This will be set by the backend
-  })
-);
-
-const reviewAdapter = createAdapter<UserReview, Review>(
-  // DB to UI transform
-  (dbReview: UserReview): Review => ({
-    id: dbReview.id,
-    expertId: convertExpertIdToString(dbReview.expert_id),
-    rating: dbReview.rating,
-    comment: dbReview.comment || '',
-    date: dbReview.date,
-    verified: dbReview.verified || false,
-    userId: dbReview.user_id || '',
-    userName: dbReview.user_name || `User ${dbReview.user_id?.slice(0, 8)}...` || 'Anonymous',
-    expertName: 'Expert' // This will be filled in later when needed
-  }),
-  // UI to DB transform
-  (uiReview: Review): UserReview => ({
-    id: uiReview.id,
-    expert_id: parseInt(uiReview.expertId),
-    rating: uiReview.rating,
-    comment: uiReview.comment,
-    date: uiReview.date,
-    verified: uiReview.verified,
-    user_id: uiReview.userId,
-    user_name: uiReview.userName
-  })
-);
-
-const reportAdapter = createAdapter<UserReport, Report>(
-  // DB to UI transform
-  (dbReport: UserReport): Report => ({
-    id: dbReport.id,
-    expertId: convertExpertIdToString(dbReport.expert_id),
-    reason: dbReport.reason,
-    details: dbReport.details || '',
-    date: dbReport.date,
-    status: dbReport.status,
-    userId: dbReport.user_id,
-    userName: dbReport.user_id ? `User ${dbReport.user_id.slice(0, 8)}...` : 'Anonymous'
-  }),
-  // UI to DB transform
-  (uiReport: Report): UserReport => ({
-    id: uiReport.id,
-    expert_id: parseInt(uiReport.expertId),
-    reason: uiReport.reason,
-    details: uiReport.details,
-    date: uiReport.date,
-    status: uiReport.status,
-    user_id: uiReport.userId
-  })
-);
-
-// Function to adapt database courses to UI format
-export const adaptCoursesToUI = (courses: any[]): Course[] => {
+// Adapter functions to convert DB format to UI format
+export const adaptCoursesToUI = (courses: any[]): UserCourse[] => {
   return courses.map(course => ({
     id: course.id,
-    title: course.title,
-    expertId: course.expert_id?.toString(),
+    userId: course.user_id,
+    expertId: course.expert_id,
     expertName: course.expert_name,
+    title: course.title,
     enrollmentDate: course.enrollment_date,
-    progress: course.progress,
-    completed: course.completed
+    completed: course.completed || false,
+    progress: course.progress || 0,
+    
+    // DB fields for compatibility
+    user_id: course.user_id,
+    expert_id: course.expert_id,
+    expert_name: course.expert_name,
+    enrollment_date: course.enrollment_date
   }));
 };
 
-// Function to adapt database reviews to UI format
 export const adaptReviewsToUI = (reviews: any[]): Review[] => {
   return reviews.map(review => ({
     id: review.id,
-    expertId: convertExpertIdToString(review.expert_id),
+    userId: review.user_id,
+    userName: review.user_name || 'Anonymous',
+    expertId: review.expert_id,
     rating: review.rating,
     comment: review.comment || '',
     date: review.date,
     verified: review.verified || false,
-    userId: review.user_id || '',
-    userName: review.user_name || `User ${review.user_id?.slice(0, 8)}...` || 'Anonymous',
-    expertName: 'Expert'
+    
+    // DB fields for compatibility
+    user_id: review.user_id,
+    expert_id: review.expert_id,
+    user_name: review.user_name || 'Anonymous'
   }));
 };
 
-// Function to adapt database reports to UI format
 export const adaptReportsToUI = (reports: any[]): Report[] => {
   return reports.map(report => ({
     id: report.id,
-    expertId: convertExpertIdToString(report.expert_id),
+    userId: report.user_id,
+    expertId: report.expert_id,
     reason: report.reason,
     details: report.details || '',
     date: report.date,
     status: report.status,
-    userId: report.user_id,
-    userName: report.user_id ? `User ${report.user_id.slice(0, 8)}...` : 'Anonymous'
+    
+    // DB fields for compatibility
+    user_id: report.user_id,
+    expert_id: report.expert_id
   }));
 };
 
-// Function to convert UI format back to database format for courses
-export const adaptCoursesToDB = (courses: Course[]): any[] => {
+// Adapter functions to convert UI format to DB format
+export const adaptCoursesToDB = (courses: UserCourse[]): any[] => {
   return courses.map(course => ({
     id: course.id,
-    title: course.title,
-    expert_id: parseInt(course.expertId),
+    user_id: course.userId,
+    expert_id: course.expertId,
     expert_name: course.expertName,
+    title: course.title,
     enrollment_date: course.enrollmentDate,
-    progress: course.progress,
-    completed: course.completed
+    completed: course.completed,
+    progress: course.progress
   }));
 };
 
-// Function to convert UI format back to database format for reviews
 export const adaptReviewsToDB = (reviews: Review[]): any[] => {
   return reviews.map(review => ({
     id: review.id,
-    expert_id: parseInt(review.expertId),
+    user_id: review.userId,
+    user_name: review.userName,
+    expert_id: review.expertId,
     rating: review.rating,
     comment: review.comment,
     date: review.date,
-    verified: review.verified,
-    user_id: review.userId,
-    user_name: review.userName
+    verified: review.verified
   }));
 };
 
-// Function to convert UI format back to database format for reports
 export const adaptReportsToDB = (reports: Report[]): any[] => {
   return reports.map(report => ({
     id: report.id,
-    expert_id: parseInt(report.expertId),
+    user_id: report.userId,
+    expert_id: report.expertId,
     reason: report.reason,
     details: report.details,
     date: report.date,
-    status: report.status,
-    user_id: report.userId
+    status: report.status
   }));
 };

@@ -17,6 +17,10 @@ const CustomLinkSection: React.FC<CustomLinkSectionProps> = ({
   onGetCustomLink, 
   isGettingLink 
 }) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onCustomTextChange(e.target.value);
+  };
+  
   return (
     <div>
       <div className="flex flex-col gap-2">
@@ -26,7 +30,7 @@ const CustomLinkSection: React.FC<CustomLinkSectionProps> = ({
             id="custom-text" 
             placeholder="e.g. join-my-community" 
             value={customText} 
-            onChange={(e) => onCustomTextChange(e.target.value)}
+            onChange={handleInputChange}
           />
           <Button 
             variant="outline" 
