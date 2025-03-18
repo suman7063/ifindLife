@@ -11,7 +11,7 @@ import { DbReview, UserReviewWithExpert, ReviewsResult } from '../types/reviewTy
  */
 export const fetchUserReviews = async (userId: string): Promise<ReviewsResult> => {
   try {
-    // Call the RPC function with explicit typing
+    // Call the RPC function with proper type parameters
     const { data, error } = await supabase
       .rpc<UserReviewWithExpert>('get_user_reviews_with_experts', {
         user_id_param: userId
