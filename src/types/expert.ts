@@ -26,6 +26,8 @@ export interface Expert {
   services?: number[];
   reviews_count?: number;
   average_rating?: number;
+  selected_services?: number[];
+  profile_picture?: string;
 }
 
 export interface ExpertAvailability {

@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Users, Share2, Twitter, Facebook, Copy, Mail, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { UserProfile, ReferralSettings as ReferralSettingsUI } from '@/types/supabase';
-import { fetchReferralSettings, shareViaFacebook, shareViaTwitter, shareViaWhatsApp, shareViaEmail } from '@/utils/referralUtils';
+import { fetchReferralSettings, shareViaFacebook, shareViaTwitter, shareViaWhatsApp, shareViaEmail, getReferralLink, copyReferralLink } from '@/utils/referralUtils';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface ReferralDashboardCardProps {
@@ -16,7 +16,6 @@ interface ReferralDashboardCardProps {
 const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfile }) => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
   const [referralSettings, setReferralSettings] = useState<ReferralSettingsUI | null>(null);
-  const { getReferralLink } = useUserAuth();
   
   useEffect(() => {
     const loadSettings = async () => {
@@ -27,27 +26,34 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
     loadSettings();
   }, []);
 
-  const referralLink = getReferralLink();
+  const referralLink = userProfile?.referralCode ? getReferralLink(userProfile.referralCode) : '';
   
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(referralLink);
-    toast.success('Referral link copied to clipboard!');
+    copyReferralLink(referralLink);
   };
   
   const handleShareViaTwitter = () => {
-    shareViaTwitter(referralLink);
+    if (userProfile?.referralCode) {
+      shareViaTwitter(userProfile.referralCode);
+    }
   };
   
   const handleShareViaFacebook = () => {
-    shareViaFacebook(referralLink);
+    if (userProfile?.referralCode) {
+      shareViaFacebook(userProfile.referralCode);
+    }
   };
   
   const handleShareViaWhatsApp = () => {
-    shareViaWhatsApp(referralLink);
+    if (userProfile?.referralCode) {
+      shareViaWhatsApp(userProfile.referralCode);
+    }
   };
   
   const handleShareViaEmail = () => {
-    shareViaEmail(referralLink);
+    if (userProfile?.referralCode) {
+      shareViaEmail(userProfile.referralCode);
+    }
   };
 
   return (

@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { ReferralSettings, Referral } from '@/types/supabase';
+import { ReferralSettings, ReferralUI } from '@/types/supabase/referrals';
 import { toast } from 'sonner';
 
 // Fetch referral settings
@@ -23,8 +23,7 @@ export const fetchReferralSettings = async (): Promise<ReferralSettings | null> 
       active: data.active,
       referrerReward: data.referrer_reward,
       referredReward: data.referred_reward,
-      description: data.description || '',
-      updatedAt: data.updated_at
+      description: data.description || ''
     };
   } catch (error) {
     console.error('Error in fetchReferralSettings:', error);
@@ -100,7 +99,7 @@ export const completeReferral = async (referralId: string): Promise<boolean> => 
       return false;
     }
     
-    return data;
+    return !!data;
   } catch (error) {
     console.error('Error in completeReferral:', error);
     return false;
@@ -108,7 +107,7 @@ export const completeReferral = async (referralId: string): Promise<boolean> => 
 };
 
 // Get referrals for a user (as referrer)
-export const getUserReferrals = async (userId: string): Promise<Referral[]> => {
+export const getUserReferrals = async (userId: string): Promise<ReferralUI[]> => {
   try {
     const { data, error } = await supabase
       .from('referrals')
@@ -120,6 +119,7 @@ export const getUserReferrals = async (userId: string): Promise<Referral[]> => {
         completed_at,
         reward_claimed,
         referred_id,
+        referrer_id,
         users:referred_id (name, email)
       `)
       .eq('referrer_id', userId);
@@ -132,12 +132,13 @@ export const getUserReferrals = async (userId: string): Promise<Referral[]> => {
     // Format the referrals for UI
     return data.map(ref => ({
       id: ref.id,
+      referrerId: ref.referrer_id,
+      referredId: ref.referred_id,
       referralCode: ref.referral_code,
       status: ref.status,
       createdAt: ref.created_at,
       completedAt: ref.completed_at,
       rewardClaimed: ref.reward_claimed,
-      referredUserId: ref.referred_id,
       referredUserName: ref.users?.name || 'Anonymous',
       referredUserEmail: ref.users?.email || '-'
     }));
@@ -147,27 +148,44 @@ export const getUserReferrals = async (userId: string): Promise<Referral[]> => {
   }
 };
 
+// Get referral link
+export const getReferralLink = (referralCode?: string): string => {
+  if (!referralCode) return '';
+  return `${window.location.origin}/signup?ref=${referralCode}`;
+};
+
+// Copy referral link to clipboard
+export const copyReferralLink = (link: string): void => {
+  navigator.clipboard.writeText(link);
+  toast.success('Referral link copied to clipboard!');
+};
+
 // Social sharing functions
-export const shareViaTwitter = (link: string) => {
+export const shareViaTwitter = (referralCode: string): void => {
   const text = "I'm using iFindLife to connect with amazing experts! Join me using my referral link and get a bonus:";
+  const link = getReferralLink(referralCode);
   const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
   window.open(url, '_blank');
 };
 
-export const shareViaFacebook = (link: string) => {
+export const shareViaFacebook = (referralCode: string): void => {
+  const link = getReferralLink(referralCode);
   const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}`;
   window.open(url, '_blank');
 };
 
-export const shareViaWhatsApp = (link: string) => {
-  const text = "I'm using iFindLife to connect with experts! Join me using my referral link and get a bonus: ";
+export const shareViaWhatsApp = (referralCode: string, name?: string): void => {
+  const greeting = name ? `I'm ${name} and I'm` : "I'm";
+  const text = `${greeting} using iFindLife to connect with experts! Join me using my referral link and get a bonus: `;
+  const link = getReferralLink(referralCode);
   const url = `https://wa.me/?text=${encodeURIComponent(text + link)}`;
   window.open(url, '_blank');
 };
 
-export const shareViaEmail = (link: string) => {
+export const shareViaEmail = (referralCode: string, name?: string): void => {
+  const greeting = name ? `I'm ${name} and I'm` : "I'm";
   const subject = 'Join me on iFindLife';
-  const body = `I'm using iFindLife to connect with professional experts and thought you might be interested. Use my referral link to join and get a bonus: ${link}`;
+  const body = `${greeting} using iFindLife to connect with professional experts and thought you might be interested. Use my referral link to join and get a bonus: ${getReferralLink(referralCode)}`;
   const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   window.open(url);
 };

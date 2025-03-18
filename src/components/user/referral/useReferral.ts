@@ -8,7 +8,8 @@ import {
   copyReferralLink,
   shareViaEmail,
   shareViaWhatsApp,
-  shareViaTwitter
+  shareViaTwitter,
+  shareViaFacebook
 } from '@/utils/referralUtils';
 
 export const useReferral = (userProfile: UserProfile) => {
@@ -36,15 +37,19 @@ export const useReferral = (userProfile: UserProfile) => {
   };
 
   const handleEmailShare = () => {
-    shareViaEmail(userProfile.referralCode || '', userProfile.name);
+    shareViaEmail(userProfile.referralCode || '');
   };
 
   const handleWhatsAppShare = () => {
-    shareViaWhatsApp(userProfile.referralCode || '', userProfile.name);
+    shareViaWhatsApp(userProfile.referralCode || '');
   };
 
   const handleTwitterShare = () => {
     shareViaTwitter(userProfile.referralCode || '');
+  };
+
+  const handleFacebookShare = () => {
+    shareViaFacebook(userProfile.referralCode || '');
   };
 
   const handleCustomLink = () => {
@@ -75,6 +80,7 @@ export const useReferral = (userProfile: UserProfile) => {
     handleEmailShare,
     handleWhatsAppShare,
     handleTwitterShare,
+    handleFacebookShare,
     handleCustomLink,
     handleCustomTextChange,
   };

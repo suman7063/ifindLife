@@ -15,7 +15,7 @@ export * from './tables';
 export type { UserProfile } from './user';
 export type { Appointment, AppointmentStatus, TimeSlot } from './appointments';
 export type { ReferralUI as Referral, ReferralSettingsUI as ReferralSettings } from './referrals';
-export type { Review } from './reviews';
+export type { Review, Report } from './reviews';
 
 // Define types for tables not already covered in specific files
 export interface ExpertUI {
@@ -60,47 +60,44 @@ export interface UserTransaction {
   user_id?: string;
 }
 
-export interface UserCourse {
+export interface Course {
   id: string;
-  userId: string;
   title: string;
-  expertId: number;
+  expertId: string;
   expertName: string;
   enrollmentDate: string;
   progress?: number;
   completed?: boolean;
-  
-  // DB format (snake_case)
+}
+
+export interface UserCourse {
+  id: string;
   user_id?: string;
+  title: string;
   expert_id?: number;
   expert_name?: string;
   enrollment_date?: string;
+  progress?: number;
+  completed?: boolean;
 }
 
 export interface UserReport {
   id: string;
-  userId: string;
-  expertId: number;
+  user_id?: string;
+  expert_id: number;
   reason: string;
   details?: string;
   date: string;
   status: string;
-  
-  // DB format (snake_case)
-  user_id?: string;
-  expert_id?: number;
 }
 
 export interface UserReview {
   id: string;
-  userId: string;
-  expertId: number;
+  user_id?: string;
+  user_name?: string;
+  expert_id: number;
   rating: number;
   comment?: string;
   date: string;
   verified?: boolean;
-  
-  // DB format (snake_case)
-  user_id?: string;
-  expert_id?: number;
 }

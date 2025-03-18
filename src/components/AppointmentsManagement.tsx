@@ -86,7 +86,7 @@ const AppointmentsManagement: React.FC = () => {
     
     if (ready) {
       try {
-        client.on('user-published', async (user: any, mediaType: string) => {
+        client.on('user-published', async (user: any, mediaType: "audio" | "video" | "datachannel") => {
           await client.subscribe(user, mediaType);
           if (mediaType === 'audio') {
             user.audioTrack?.play();
@@ -152,31 +152,31 @@ const AppointmentsManagement: React.FC = () => {
   };
   
   const upcomingAppointments = appointments.filter(app => 
-    app.status === 'scheduled' && isBefore(new Date(), parseISO(app.appointmentDate))
+    app.status === AppointmentStatus.SCHEDULED && isBefore(new Date(), parseISO(app.appointmentDate))
   );
   
   const activeAppointments = appointments.filter(app => 
-    app.status === 'scheduled' && 
+    app.status === AppointmentStatus.SCHEDULED && 
     !isBefore(new Date(), parseISO(app.appointmentDate)) && 
     isBefore(new Date(), addMinutes(parseISO(app.appointmentDate), app.duration))
   );
   
   const pastAppointments = appointments.filter(app => 
-    app.status !== 'scheduled' || 
+    app.status !== AppointmentStatus.SCHEDULED || 
     isBefore(addMinutes(parseISO(app.appointmentDate), app.duration), new Date())
   );
   
   const getStatusBadge = (status: AppointmentStatus) => {
     switch(status) {
-      case 'scheduled':
+      case AppointmentStatus.SCHEDULED:
         return <Badge className="bg-blue-500">Scheduled</Badge>;
-      case 'completed':
+      case AppointmentStatus.COMPLETED:
         return <Badge className="bg-green-500">Completed</Badge>;
-      case 'cancelled':
+      case AppointmentStatus.CANCELLED:
         return <Badge className="bg-orange-500">Cancelled</Badge>;
-      case 'no-show-user':
+      case AppointmentStatus.NO_SHOW_USER:
         return <Badge className="bg-red-500">No-show (You)</Badge>;
-      case 'no-show-expert':
+      case AppointmentStatus.NO_SHOW_EXPERT:
         return <Badge className="bg-purple-500">No-show (Expert)</Badge>;
       default:
         return <Badge>{status}</Badge>;

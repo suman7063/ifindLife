@@ -22,9 +22,7 @@ const courseAdapter = createAdapter<UserCourse, Course>(
     expertName: dbCourse.expert_name,
     enrollmentDate: dbCourse.enrollment_date,
     progress: dbCourse.progress,
-    completed: dbCourse.completed,
-    // Ensure userId is properly mapped for consistency
-    userId: dbCourse.user_id
+    completed: dbCourse.completed
   }),
   // UI to DB transform
   (uiCourse: Course): UserCourse => ({
@@ -35,7 +33,7 @@ const courseAdapter = createAdapter<UserCourse, Course>(
     enrollment_date: uiCourse.enrollmentDate,
     progress: uiCourse.progress,
     completed: uiCourse.completed,
-    user_id: uiCourse.userId
+    user_id: undefined // This will be set by the backend
   })
 );
 
@@ -98,8 +96,7 @@ export const adaptCoursesToUI = (courses: any[]): Course[] => {
     expertName: course.expert_name,
     enrollmentDate: course.enrollment_date,
     progress: course.progress,
-    completed: course.completed,
-    userId: course.user_id
+    completed: course.completed
   }));
 };
 
@@ -133,7 +130,7 @@ export const adaptReportsToUI = (reports: any[]): Report[] => {
 };
 
 // Function to convert UI format back to database format for courses
-export const adaptCoursesToDB = (courses: Course[]): UserCourse[] => {
+export const adaptCoursesToDB = (courses: Course[]): any[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
@@ -141,13 +138,12 @@ export const adaptCoursesToDB = (courses: Course[]): UserCourse[] => {
     expert_name: course.expertName,
     enrollment_date: course.enrollmentDate,
     progress: course.progress,
-    completed: course.completed,
-    user_id: course.userId
+    completed: course.completed
   }));
 };
 
 // Function to convert UI format back to database format for reviews
-export const adaptReviewsToDB = (reviews: Review[]): UserReview[] => {
+export const adaptReviewsToDB = (reviews: Review[]): any[] => {
   return reviews.map(review => ({
     id: review.id,
     expert_id: parseInt(review.expertId),
@@ -161,7 +157,7 @@ export const adaptReviewsToDB = (reviews: Review[]): UserReview[] => {
 };
 
 // Function to convert UI format back to database format for reports
-export const adaptReportsToDB = (reports: Report[]): UserReport[] => {
+export const adaptReportsToDB = (reports: Report[]): any[] => {
   return reports.map(report => ({
     id: report.id,
     expert_id: parseInt(report.expertId),
