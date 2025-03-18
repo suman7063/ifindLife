@@ -1,166 +1,83 @@
-import { useState, useCallback } from 'react';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { convertExpertIdToString } from '@/types/supabase/expertId';
-import { ModerationStatus, ModerationActionType, ReportUI, ReporterType, TargetType } from '@/types/supabase/moderation';
-import { Review } from '@/types/supabase/reviews';
-import { useAuth } from '@/contexts/AuthContext';
+import { 
+  ModerationStatus, 
+  ModerationType,
+  ReportUI
+} from '@/types/supabase/moderation';
 
+/**
+ * Hook for handling moderation actions in the admin panel
+ */
 export const useModeration = () => {
   const [reports, setReports] = useState<ReportUI[]>([]);
-  const [feedback, setFeedback] = useState<Review[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { currentUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
+  // Fetch all reports
+  const fetchReports = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const { data: reportData, error: reportError } = await supabase
+      const { data, error } = await supabase
         .from('moderation_reports')
         .select(`
-          id,
-          reporter_id,
-          reporter_type,
-          target_id,
-          target_type,
-          reason,
-          details,
-          status,
-          created_at,
-          session_id
+          *,
+          reporting_user:reporter_id(name),
+          target_user:target_id(name)
         `)
         .order('created_at', { ascending: false });
 
-      if (reportError) throw reportError;
+      if (error) {
+        throw error;
+      }
 
-      const transformedReports: ReportUI[] = await Promise.all(
-        (reportData || []).map(async (report) => {
-          let reporterName = 'Unknown';
-          let targetName = 'Unknown';
+      // Convert data to UI format
+      const formattedReports: ReportUI[] = data.map(report => ({
+        id: report.id,
+        reporterId: report.reporter_id,
+        reporterType: report.reporter_type,
+        reporterName: report.reporting_user?.name || 'Unknown User',
+        targetId: report.target_id,
+        targetType: report.target_type,
+        targetName: report.target_user?.name || 'Unknown Target',
+        reason: report.reason,
+        details: report.details || '',
+        status: report.status,
+        date: new Date(report.created_at).toLocaleDateString(),
+        sessionId: report.session_id || undefined
+      }));
 
-          if (report.reporter_type === 'user') {
-            const { data: userData } = await supabase
-              .from('users')
-              .select('name')
-              .eq('id', report.reporter_id)
-              .single();
-            reporterName = userData?.name || 'Unknown User';
-          } else {
-            const { data: expertData } = await supabase
-              .from('experts')
-              .select('name')
-              .eq('id', report.reporter_id)
-              .single();
-            reporterName = expertData?.name || 'Unknown Expert';
-          }
-
-          if (report.target_type === 'user') {
-            const { data: userData } = await supabase
-              .from('users')
-              .select('name')
-              .eq('id', report.target_id)
-              .single();
-            targetName = userData?.name || 'Unknown User';
-          } else {
-            const { data: expertData } = await supabase
-              .from('experts')
-              .select('name')
-              .eq('id', report.target_id)
-              .single();
-            targetName = expertData?.name || 'Unknown Expert';
-          }
-
-          return {
-            id: report.id,
-            reporterId: report.reporter_id,
-            reporterType: report.reporter_type as ReporterType,
-            reporterName: reporterName,
-            targetId: report.target_id,
-            targetType: report.target_type as TargetType,
-            targetName: targetName,
-            reason: report.reason,
-            details: report.details || '',
-            status: report.status as ModerationStatus,
-            date: report.created_at,
-            sessionId: report.session_id
-          };
-        })
-      );
-
-      setReports(transformedReports);
-
-      const { data: reviewData, error: reviewError } = await supabase
-        .from('user_reviews')
-        .select(`
-          id,
-          user_id,
-          expert_id,
-          rating,
-          comment,
-          date,
-          verified
-        `)
-        .order('date', { ascending: false });
-
-      if (reviewError) throw reviewError;
-
-      const transformedReviews: Review[] = await Promise.all(
-        (reviewData || []).map(async (review) => {
-          let userName = 'Unknown User';
-          let expertName = 'Unknown Expert';
-
-          if (review.user_id) {
-            const { data: userData } = await supabase
-              .from('users')
-              .select('name')
-              .eq('id', review.user_id)
-              .single();
-            userName = userData?.name || 'Unknown User';
-          }
-
-          const { data: expertData } = await supabase
-            .from('experts')
-            .select('name')
-            .eq('id', review.expert_id.toString())
-            .single();
-          expertName = expertData?.name || 'Unknown Expert';
-
-          return {
-            id: review.id,
-            expertId: String(review.expert_id),
-            rating: review.rating,
-            comment: review.comment || '',
-            date: review.date,
-            verified: review.verified || false,
-            userId: review.user_id || '',
-            userName: userName,
-            expertName: expertName
-          };
-        })
-      );
-
-      setFeedback(transformedReviews);
-    } catch (error: any) {
-      console.error('Error fetching moderation data:', error);
-      toast.error(error.message || 'Failed to load moderation data');
+      setReports(formattedReports);
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(`Failed to load reports: ${err.message}`);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  const handleReviewReport = useCallback(async (reportId: string) => {
+  // Assign a report to an admin for review
+  const assignReport = async (reportId: string, adminId: string) => {
     try {
       const { error } = await supabase
         .from('moderation_reports')
-        .update({ status: 'under_review' })
+        .update({
+          status: 'reviewing',
+          assigned_to: adminId,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', reportId);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
+      toast.success('Report assigned for review');
+      
+      // Update the local state
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
@@ -168,23 +85,34 @@ export const useModeration = () => {
             : report
         )
       );
-
-      toast.success('Report marked as under review');
-    } catch (error: any) {
-      console.error('Error updating report status:', error);
-      toast.error(error.message || 'Failed to update report');
+      
+      return true;
+    } catch (err: any) {
+      toast.error(`Failed to assign report: ${err.message}`);
+      return false;
     }
-  }, []);
+  };
 
-  const handleDismissReport = useCallback(async (reportId: string) => {
+  // Dismiss a report without taking action
+  const dismissReport = async (reportId: string, adminId: string, notes?: string) => {
     try {
       const { error } = await supabase
         .from('moderation_reports')
-        .update({ status: 'dismissed' })
+        .update({
+          status: 'dismissed',
+          resolved_by: adminId,
+          admin_notes: notes || 'No further action required',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', reportId);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
+      toast.success('Report dismissed');
+      
+      // Update the local state
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
@@ -192,40 +120,57 @@ export const useModeration = () => {
             : report
         )
       );
-
-      toast.success('Report dismissed');
-    } catch (error: any) {
-      console.error('Error dismissing report:', error);
-      toast.error(error.message || 'Failed to dismiss report');
+      
+      return true;
+    } catch (err: any) {
+      toast.error(`Failed to dismiss report: ${err.message}`);
+      return false;
     }
-  }, []);
+  };
 
-  const handleTakeAction = useCallback(async (reportId: string, actionType: ModerationActionType, message: string, notes?: string) => {
+  // Take action on a report and resolve it
+  const takeAction = async (
+    reportId: string, 
+    adminId: string, 
+    actionType: ModerationType, 
+    message: string, 
+    notes?: string
+  ) => {
     try {
-      if (!currentUser) {
-        toast.error('You must be logged in to take action');
-        return;
+      // First update the report status
+      const { error: reportError } = await supabase
+        .from('moderation_reports')
+        .update({
+          status: 'resolved',
+          resolved_by: adminId,
+          action_taken: actionType,
+          admin_notes: notes || '',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reportId);
+
+      if (reportError) {
+        throw reportError;
       }
 
+      // Then create a moderation action record
       const { error: actionError } = await supabase
         .from('moderation_actions')
         .insert({
           report_id: reportId,
-          admin_id: currentUser.username,
+          admin_id: adminId,
           action_type: actionType,
           message: message,
-          notes: notes,
+          created_at: new Date().toISOString()
         });
 
-      if (actionError) throw actionError;
+      if (actionError) {
+        throw actionError;
+      }
 
-      const { error: reportError } = await supabase
-        .from('moderation_reports')
-        .update({ status: 'resolved' })
-        .eq('id', reportId);
-
-      if (reportError) throw reportError;
-
+      toast.success(`Action taken: ${actionType}`);
+      
+      // Update the local state
       setReports(prevReports => 
         prevReports.map(report => 
           report.id === reportId 
@@ -233,44 +178,28 @@ export const useModeration = () => {
             : report
         )
       );
-
-      toast.success(`Action taken: ${actionType}`);
-
-      fetchData();
-    } catch (error: any) {
-      console.error('Error taking action:', error);
-      toast.error(error.message || 'Failed to take action');
+      
+      return true;
+    } catch (err: any) {
+      toast.error(`Failed to take action: ${err.message}`);
+      return false;
     }
-  }, [fetchData]);
+  };
 
-  const handleDeleteFeedback = useCallback(async (feedbackId: string) => {
-    try {
-      const { error } = await supabase
-        .from('user_reviews')
-        .delete()
-        .eq('id', feedbackId);
-
-      if (error) throw error;
-
-      setFeedback(prevFeedback => 
-        prevFeedback.filter(item => item.id !== feedbackId)
-      );
-
-      toast.success('Feedback deleted successfully');
-    } catch (error: any) {
-      console.error('Error deleting feedback:', error);
-      toast.error(error.message || 'Failed to delete feedback');
-    }
+  // Load reports on component mount
+  useEffect(() => {
+    fetchReports();
   }, []);
 
   return {
     reports,
-    feedback,
-    isLoading,
-    fetchData,
-    handleReviewReport,
-    handleDismissReport,
-    handleTakeAction,
-    handleDeleteFeedback
+    loading,
+    error,
+    fetchReports,
+    assignReport,
+    dismissReport,
+    takeAction
   };
 };
+
+export default useModeration;

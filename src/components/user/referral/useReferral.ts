@@ -1,74 +1,100 @@
 
-import { useState, useEffect } from 'react';
-import { UserProfile } from '@/types/supabase/user';
-import { ReferralSettings } from '@/types/supabase/referrals';
+import { useState } from 'react';
+import { UserProfile } from '@/types/supabase';
+import { toast } from 'sonner';
 import { 
   getReferralSettings, 
   getReferralLink, 
-  copyReferralLink
+  copyReferralLink 
 } from '@/utils/referralUtils';
 
 export const useReferral = (userProfile: UserProfile) => {
-  const [settings, setSettings] = useState<ReferralSettings | null>(null);
+  const [settings, setSettings] = useState<any>(null);
   const [referralLink, setReferralLink] = useState<string>('');
   const [customText, setCustomText] = useState<string>('');
   const [isGettingLink, setIsGettingLink] = useState<boolean>(false);
 
-  useEffect(() => {
-    const loadSettings = async () => {
-      const data = await getReferralSettings();
-      setSettings(data);
-    };
+  const fetchSettings = async () => {
+    const data = await getReferralSettings();
+    setSettings(data);
+  };
 
+  const fetchReferralLink = () => {
     if (userProfile?.referralCode) {
       const link = getReferralLink(userProfile.referralCode);
       setReferralLink(link);
     }
-
-    loadSettings();
-  }, [userProfile]);
-
-  const handleCopyLink = () => {
-    copyReferralLink(referralLink);
   };
 
-  const handleEmailShare = () => {
-    const subject = 'Join me on iFindLife';
-    const body = `I thought you might be interested in iFindLife. Sign up using my referral code ${userProfile.referralCode} and get credits when you join! ${referralLink}`;
-    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  // Initialize when component mounts
+  if (!settings && userProfile?.id) {
+    fetchSettings();
+  }
+
+  if (!referralLink && userProfile?.referralCode) {
+    fetchReferralLink();
+  }
+
+  // Event handlers
+  const handleCopyLink = async () => {
+    if (userProfile?.referralCode) {
+      const success = await copyReferralLink(userProfile.referralCode);
+      if (success) {
+        toast.success('Referral link copied to clipboard!');
+      } else {
+        toast.error('Failed to copy referral link.');
+      }
+    }
   };
 
-  const handleWhatsAppShare = () => {
-    const text = `Join me on iFindLife! Sign up using my referral code ${userProfile.referralCode} and get credits when you join: ${referralLink}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
-  };
-
-  const handleTwitterShare = () => {
-    const text = `Join me on iFindLife! Sign up using my referral code ${userProfile.referralCode} and get credits when you join: ${referralLink}`;
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
-  };
-
-  const handleFacebookShare = () => {
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`);
+  const handleCustomTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCustomText(e.target.value);
   };
 
   const handleCustomLink = () => {
     setIsGettingLink(true);
     
-    // Generate personalized link with custom text
-    let customLink = referralLink;
-    if (customText.trim()) {
-      // Replace spaces with hyphens for URL, make lowercase
-      const urlFriendlyText = customText.trim().toLowerCase().replace(/\s+/g, '-');
-      customLink = `${window.location.origin}/r/${urlFriendlyText}?ref=${userProfile.referralCode}`;
-    }
-    
-    copyReferralLink(customLink);
-    setIsGettingLink(false);
+    setTimeout(() => {
+      if (userProfile?.referralCode) {
+        const link = getReferralLink(userProfile.referralCode);
+        const fullText = customText ? 
+          `${customText}\n\nJoin me using my referral link: ${link}` :
+          `Join me using my referral link: ${link}`;
+          
+        try {
+          navigator.clipboard.writeText(fullText);
+          toast.success('Custom message copied to clipboard!');
+        } catch (error) {
+          toast.error('Failed to copy message.');
+        }
+      }
+      setIsGettingLink(false);
+    }, 1000);
   };
 
-  const handleCustomTextChange = (text: string) => {
-    setCustomText(text);
+  const handleEmailShare = () => {
+    if (userProfile?.referralCode) {
+      const link = getReferralLink(userProfile.referralCode);
+      const subject = 'Join me on iFind Life!';
+      const body = `I'm using iFind Life for my health and wellness needs. Join me using my referral link: ${link}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    if (userProfile?.referralCode) {
+      const link = getReferralLink(userProfile.referralCode);
+      const text = `I'm using iFind Life for my health and wellness needs. Join me using my referral link: ${link}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  };
+
+  const handleTwitterShare = () => {
+    if (userProfile?.referralCode) {
+      const link = getReferralLink(userProfile.referralCode);
+      const text = `I'm using iFind Life for my health and wellness needs. Join me using my referral link: ${link}`;
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+    }
   };
 
   return {
@@ -80,7 +106,6 @@ export const useReferral = (userProfile: UserProfile) => {
     handleEmailShare,
     handleWhatsAppShare,
     handleTwitterShare,
-    handleFacebookShare,
     handleCustomLink,
     handleCustomTextChange,
   };
