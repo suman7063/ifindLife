@@ -1,138 +1,44 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { useAgora } from './useAgora';
 import { Appointment, AppointmentStatus } from '@/types/supabase/appointments';
-
-export type { Appointment, AppointmentStatus } from '@/types/supabase/appointments';
+import { useAgora } from './useAgora';
 
 export const useAppointments = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const { generateToken, generateChannelName } = useAgora();
-
-  // Fetch user's appointments
-  const fetchUserAppointments = async (userId: string) => {
-    if (!userId) return [];
-    
-    setIsLoading(true);
-    try {
-      // Using a type assertion to specify the expected return type
-      const { data, error } = await from('appointments')
-        .select('*')
-        .eq('user_id', userId)
-        .order('appointment_date', { ascending: true });
-        
-      if (error) throw error;
-      
-      // Transform from snake_case to camelCase
-      const formattedAppointments: Appointment[] = (data || []).map((appointment: any) => ({
-        id: appointment.id,
-        userId: appointment.user_id,
-        expertId: appointment.expert_id,
-        expertName: appointment.expert_name,
-        appointmentDate: appointment.appointment_date,
-        duration: appointment.duration,
-        status: appointment.status as AppointmentStatus,
-        serviceId: appointment.service_id,
-        notes: appointment.notes,
-        channelName: appointment.channel_name,
-        token: appointment.token,
-        uid: appointment.uid,
-        createdAt: appointment.created_at,
-        price: appointment.price,
-        currency: appointment.currency,
-        extensionCount: appointment.extension_count,
-        actualDuration: appointment.actual_duration,
-        refunded: appointment.refunded,
-        calendarEventId: appointment.calendar_event_id
-      }));
-      
-      setAppointments(formattedAppointments);
-      return formattedAppointments;
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-      toast.error('Failed to load your appointments');
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch expert's appointments
-  const fetchExpertAppointments = async (expertId: string) => {
-    if (!expertId) return [];
-    
-    setIsLoading(true);
-    try {
-      const { data, error } = await from('appointments')
-        .select('*')
-        .eq('expert_id', expertId)
-        .order('appointment_date', { ascending: true });
-        
-      if (error) throw error;
-      
-      // Transform from snake_case to camelCase
-      const formattedAppointments: Appointment[] = (data || []).map((appointment: any) => ({
-        id: appointment.id,
-        userId: appointment.user_id,
-        expertId: appointment.expert_id,
-        expertName: appointment.expert_name,
-        appointmentDate: appointment.appointment_date,
-        duration: appointment.duration,
-        status: appointment.status as AppointmentStatus,
-        serviceId: appointment.service_id,
-        notes: appointment.notes,
-        channelName: appointment.channel_name,
-        token: appointment.token,
-        uid: appointment.uid,
-        createdAt: appointment.created_at,
-        price: appointment.price,
-        currency: appointment.currency,
-        extensionCount: appointment.extension_count,
-        actualDuration: appointment.actual_duration,
-        refunded: appointment.refunded,
-        calendarEventId: appointment.calendar_event_id
-      }));
-      
-      setAppointments(formattedAppointments);
-      return formattedAppointments;
-    } catch (error) {
-      console.error('Error fetching expert appointments:', error);
-      toast.error('Failed to load appointments');
-      return [];
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  
   // Book a new appointment
   const bookAppointment = async (
-    user: UserProfile | null,
+    user: UserProfile,
     expertId: string,
-    expertName: string,
-    appointmentDate: string,
+    expertName: string, 
+    appointmentDate: string, 
     duration: number,
     price: number,
-    currency: string = 'USD',
-    serviceId?: number,
-    notes?: string
+    currency: string
   ) => {
-    if (!user) {
+    if (!user || !user.id) {
       toast.error('You must be logged in to book an appointment');
-      return null;
+      return false;
     }
     
     setIsLoading(true);
+    
     try {
-      // Generate Agora channel information
+      // Generate a unique channel name for this appointment
       const channelName = generateChannelName(expertId, user.id);
+      
+      // Generate a token for the user to join the channel
       const token = generateToken(channelName);
+      
+      // Generate a random UID for the user
       const uid = Math.floor(Math.random() * 1000000);
       
-      const { data, error } = await from('appointments')
+      // Insert the appointment into the database
+      const { data, error } = await supabase
+        .from('appointments')
         .insert({
           user_id: user.id,
           expert_id: expertId,
@@ -140,225 +46,225 @@ export const useAppointments = () => {
           appointment_date: appointmentDate,
           duration,
           status: 'scheduled' as AppointmentStatus,
-          service_id: serviceId,
-          notes,
           channel_name: channelName,
-          token: token,
-          uid: uid,
-          price: price,
-          currency: currency,
+          token,
+          uid,
+          price,
+          currency,
           extension_count: 0,
-          actual_duration: 0,
           refunded: false
         })
-        .select();
-        
+        .select()
+        .single();
+      
       if (error) throw error;
       
-      toast.success(`Appointment with ${expertName} booked successfully`);
+      // Deduct the amount from user's wallet (implement this logic)
+      // ...
       
-      // Transform to camelCase
-      const appointment: Appointment = {
-        id: data?.[0].id ?? '',
-        userId: data?.[0].user_id ?? '',
-        expertId: data?.[0].expert_id ?? '',
-        expertName: data?.[0].expert_name ?? '',
-        appointmentDate: data?.[0].appointment_date ?? '',
-        duration: data?.[0].duration ?? 0,
-        status: data?.[0].status as AppointmentStatus,
-        serviceId: data?.[0].service_id,
-        notes: data?.[0].notes,
-        channelName: data?.[0].channel_name,
-        token: data?.[0].token,
-        uid: data?.[0].uid,
-        createdAt: data?.[0].created_at ?? new Date().toISOString(),
-        price: data?.[0].price,
-        currency: data?.[0].currency,
-        extensionCount: data?.[0].extension_count,
-        actualDuration: data?.[0].actual_duration,
-        refunded: data?.[0].refunded,
-        calendarEventId: data?.[0].calendar_event_id
-      };
-      
-      // Add appointment to Google Calendar (this would be implemented in a future feature)
-      // const calendarEventId = await addAppointmentToCalendar(appointment);
-      
-      return appointment;
-    } catch (error) {
+      toast.success('Appointment booked successfully!');
+      return data;
+    } catch (error: any) {
       console.error('Error booking appointment:', error);
-      toast.error('Failed to book appointment');
-      return null;
+      toast.error(error.message || 'Failed to book appointment');
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
-
+  
+  // Fetch user's appointments
+  const fetchUserAppointments = async (userId: string): Promise<Appointment[]> => {
+    setIsLoading(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('user_id', userId)
+        .order('appointment_date', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Transform the data to match the Appointment interface
+      const appointments: Appointment[] = (data || []).map(item => ({
+        id: item.id,
+        userId: item.user_id,
+        expertId: item.expert_id,
+        expertName: item.expert_name,
+        appointmentDate: item.appointment_date,
+        duration: item.duration,
+        status: item.status as AppointmentStatus,
+        serviceId: item.service_id,
+        notes: item.notes,
+        channelName: item.channel_name,
+        token: item.token,
+        uid: item.uid,
+        createdAt: item.created_at,
+        price: item.price,
+        currency: item.currency,
+        extensionCount: item.extension_count,
+        actualDuration: item.actual_duration,
+        refunded: item.refunded,
+        calendarEventId: item.calendar_event_id
+      }));
+      
+      return appointments;
+    } catch (error: any) {
+      console.error('Error fetching appointments:', error);
+      toast.error(error.message || 'Failed to fetch appointments');
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Cancel an appointment
-  const cancelAppointment = async (appointmentId: string, isExpert: boolean = false) => {
+  const cancelAppointment = async (appointmentId: string) => {
     setIsLoading(true);
+    
     try {
-      // First, get the appointment details
-      const { data: appointmentData, error: fetchError } = await from('appointments')
-        .select('*')
-        .eq('id', appointmentId)
-        .single();
-        
-      if (fetchError) throw fetchError;
-      
-      // Update the appointment status
-      const status = isExpert ? 'no-show-expert' : 'cancelled';
-      const { error } = await from('appointments')
-        .update({ 
-          status: status as AppointmentStatus,
-          refunded: isExpert // Refund if expert cancels
-        })
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'cancelled' })
         .eq('id', appointmentId);
-        
+      
       if (error) throw error;
       
-      // Process refund if needed
-      if (isExpert) {
-        // In a real app, we would process a refund to the user's wallet or payment method
-        // and possibly apply a penalty to the expert
-        console.log("Processing refund and expert penalty");
-        // await processRefund(appointmentId);
-        // await applyExpertPenalty(appointmentId);
-      }
-      
-      toast.success(isExpert 
-        ? 'Appointment cancelled with refund to user' 
-        : 'Appointment cancelled successfully');
-      
+      toast.success('Appointment cancelled successfully');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error cancelling appointment:', error);
-      toast.error('Failed to cancel appointment');
+      toast.error(error.message || 'Failed to cancel appointment');
       return false;
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Extend a session
-  const extendSession = async (appointmentId: string, extensionMinutes: number = 5) => {
-    setIsLoading(true);
-    try {
-      // Get current appointment details
-      const { data: appointment, error: fetchError } = await from('appointments')
-        .select('*')
-        .eq('id', appointmentId)
-        .single();
-        
-      if (fetchError) throw fetchError;
-      
-      // Calculate new values
-      const newDuration = appointment.duration + extensionMinutes;
-      const newExtensionCount = (appointment.extension_count || 0) + 1;
-      
-      // Update the appointment
-      const { error } = await from('appointments')
-        .update({ 
-          duration: newDuration,
-          extension_count: newExtensionCount
-        })
-        .eq('id', appointmentId);
-        
-      if (error) throw error;
-      
-      toast.success(`Session extended by ${extensionMinutes} minutes`);
-      return true;
-    } catch (error) {
-      console.error('Error extending session:', error);
-      toast.error('Failed to extend session');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Mark session completion with actual duration
+  
+  // Mark appointment as completed
   const completeSession = async (appointmentId: string, actualDuration: number) => {
     setIsLoading(true);
+    
     try {
-      const { error } = await from('appointments')
-        .update({ 
-          status: 'completed' as AppointmentStatus,
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          status: 'completed',
           actual_duration: actualDuration
         })
         .eq('id', appointmentId);
-        
+      
       if (error) throw error;
       
       toast.success('Session completed successfully');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error completing session:', error);
-      toast.error('Failed to complete session');
+      toast.error(error.message || 'Failed to complete session');
       return false;
     } finally {
       setIsLoading(false);
     }
   };
-
+  
+  // Extend appointment duration
+  const extendSession = async (appointmentId: string, additionalMinutes: number) => {
+    setIsLoading(true);
+    
+    try {
+      // First get the current appointment details
+      const { data, error: fetchError } = await supabase
+        .from('appointments')
+        .select('duration, extension_count')
+        .eq('id', appointmentId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      if (!data) {
+        throw new Error('Appointment not found');
+      }
+      
+      // Update the appointment with extended duration
+      const { error: updateError } = await supabase
+        .from('appointments')
+        .update({
+          duration: data.duration + additionalMinutes,
+          extension_count: (data.extension_count || 0) + 1
+        })
+        .eq('id', appointmentId);
+      
+      if (updateError) throw updateError;
+      
+      toast.success(`Session extended by ${additionalMinutes} minutes`);
+      return true;
+    } catch (error: any) {
+      console.error('Error extending session:', error);
+      toast.error(error.message || 'Failed to extend session');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   // Mark user as no-show
   const markUserNoShow = async (appointmentId: string) => {
     setIsLoading(true);
+    
     try {
-      const { error } = await from('appointments')
-        .update({ status: 'no-show-user' as AppointmentStatus })
+      const { error } = await supabase
+        .from('appointments')
+        .update({ status: 'no-show-user' })
         .eq('id', appointmentId);
-        
+      
       if (error) throw error;
       
-      toast.success('User marked as no-show');
+      toast.success('Appointment marked as no-show');
       return true;
-    } catch (error) {
-      console.error('Error marking user no-show:', error);
-      toast.error('Failed to update appointment status');
+    } catch (error: any) {
+      console.error('Error marking no-show:', error);
+      toast.error(error.message || 'Failed to update appointment');
       return false;
     } finally {
       setIsLoading(false);
     }
   };
-
-  // Mark expert as no-show
+  
+  // Mark expert as no-show (initiates refund)
   const markExpertNoShow = async (appointmentId: string) => {
     setIsLoading(true);
+    
     try {
-      const { error } = await from('appointments')
-        .update({ 
-          status: 'no-show-expert' as AppointmentStatus,
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          status: 'no-show-expert',
           refunded: true
         })
         .eq('id', appointmentId);
-        
+      
       if (error) throw error;
       
-      // In a real app, we would process the refund and penalty here
-      // await processRefund(appointmentId);
-      // await applyExpertPenalty(appointmentId);
-      
-      toast.success('Expert marked as no-show, refund processed');
+      toast.success('Expert marked as no-show. Refund will be processed.');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error marking expert no-show:', error);
-      toast.error('Failed to update appointment status');
+      toast.error(error.message || 'Failed to update appointment');
       return false;
     } finally {
       setIsLoading(false);
     }
   };
-
+  
   return {
-    isLoading,
-    appointments,
-    fetchUserAppointments,
-    fetchExpertAppointments,
     bookAppointment,
+    fetchUserAppointments,
     cancelAppointment,
-    extendSession,
     completeSession,
+    extendSession,
     markUserNoShow,
-    markExpertNoShow
+    markExpertNoShow,
+    isLoading
   };
 };

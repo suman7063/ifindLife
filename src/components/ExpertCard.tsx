@@ -1,176 +1,161 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, Clock, PhoneCall, Video, Award, Heart, ExternalLink, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Star, Clock, MapPin, Phone, Calendar } from 'lucide-react';
 import CallModal from './CallModal';
 import BookingModal from './BookingModal';
-import { toast } from 'sonner';
-import { useAgora } from '@/hooks/auth/useAgora';
 import { useUserAuth } from '@/hooks/useUserAuth';
+import { Expert } from '@/types/supabase/tables';
 
 interface ExpertCardProps {
-  id: number;
-  name: string;
-  experience: number;
-  specialties: string[];
-  rating: number;
-  consultations: number;
-  price: number;
-  waitTime?: string;
-  imageUrl: string;
-  online?: boolean;
+  expert: Expert;
 }
 
-const ExpertCard: React.FC<ExpertCardProps> = ({
-  id,
-  name,
-  experience,
-  specialties,
-  rating,
-  consultations,
-  price,
-  waitTime = 'Available',
-  imageUrl,
-  online = true
-}) => {
+const ExpertCard: React.FC<ExpertCardProps> = ({ expert }) => {
   const navigate = useNavigate();
+  const { addToFavorites, removeFromFavorites, currentUser } = useUserAuth();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
-  const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const { currentUser } = useUserAuth();
   
-  const handleCallClick = () => {
-    if (online && waitTime === 'Available') {
-      setIsCallModalOpen(true);
-    } else {
-      toast.error("This expert is currently offline or busy. Please try again later.");
-    }
-  };
+  // Check if the expert is already in favorites
+  const isFavorite = currentUser?.favorites?.some(fav => fav.expertId === expert.id);
   
-  const handleVideoCallClick = () => {
-    if (online && waitTime === 'Available') {
-      setIsVideoCallModalOpen(true);
-    } else {
-      toast.error("This expert is currently offline or busy. Please try again later.");
-    }
-  };
-  
-  const handleBookSession = () => {
+  const handleFavoriteToggle = () => {
     if (!currentUser) {
-      toast.error("Please log in to book a session");
+      navigate('/login');
       return;
     }
     
-    setIsBookingModalOpen(true);
+    if (isFavorite) {
+      removeFromFavorites(expert.id);
+    } else {
+      addToFavorites(expert);
+    }
+  };
+  
+  const handleViewProfile = () => {
+    navigate(`/expert/${expert.id}`);
+  };
+  
+  // Format expert for modals
+  const expertForModals = {
+    id: Number(expert.id),
+    name: expert.name,
+    imageUrl: expert.profile_picture || '/placeholder.svg',
+    price: 20 // Replace with actual price from expert services
   };
   
   return (
-    <>
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md group border border-border/50 hover:border-ifind-teal/50">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      <CardContent className="p-0">
         <div className="relative">
-          <div className="aspect-[4/3] overflow-hidden bg-muted">
-            <img
-              src={imageUrl}
-              alt={name}
-              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-            />
+          <img 
+            src={expert.profile_picture || '/placeholder.svg'} 
+            alt={expert.name}
+            className="w-full h-48 object-cover"
+          />
+          <div className="absolute top-2 right-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`rounded-full bg-white ${isFavorite ? 'text-red-500' : 'text-gray-400'}`}
+              onClick={handleFavoriteToggle}
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                viewBox="0 0 24 24" 
+                fill={isFavorite ? "currentColor" : "none"}
+                stroke="currentColor" 
+                className="w-5 h-5"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" 
+                />
+              </svg>
+            </Button>
           </div>
-          {online && (
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-ifind-teal text-white hover:bg-ifind-teal/80">Online</Badge>
-            </div>
-          )}
         </div>
         
-        <CardContent className="p-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-poppins font-semibold text-xl">{name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {experience} yrs exp
-              </p>
-            </div>
-            <div className="flex items-center bg-ifind-aqua/10 px-2 py-1 rounded text-sm font-medium text-ifind-charcoal">
-              <Star className="h-3.5 w-3.5 fill-ifind-aqua text-ifind-aqua mr-1" />
-              {rating}
+        <div className="p-4">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="font-semibold text-lg">{expert.name}</h3>
+            <div className="flex items-center gap-1 text-ifind-gold">
+              <Star className="fill-ifind-gold h-4 w-4" />
+              <span>{expert.average_rating?.toFixed(1) || '0.0'}</span>
             </div>
           </div>
           
-          <div className="mt-3 flex flex-wrap gap-1">
-            {specialties.map((specialty, index) => (
-              <Badge key={index} variant="outline" className="bg-muted/50">
-                {specialty}
-              </Badge>
-            ))}
+          <div className="flex items-center gap-1 text-gray-600 text-sm mb-1">
+            <Badge variant="outline" className="font-normal">
+              {expert.specialization || 'Expert'}
+            </Badge>
+            {expert.experience && (
+              <span className="text-xs">{expert.experience} yrs exp</span>
+            )}
           </div>
           
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex items-center text-sm">
-              <Clock className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-              <span className={waitTime === 'Available' ? 'text-ifind-teal' : 'text-muted-foreground'}>
-                {waitTime}
-              </span>
+          {expert.city && expert.country && (
+            <div className="flex items-center gap-1 text-gray-600 text-sm mb-3">
+              <MapPin className="h-3 w-3" />
+              <span>{expert.city}, {expert.country}</span>
             </div>
-            <div className="text-sm">
-              <span className="font-medium text-ifind-purple">₹{price}</span>
-              <span className="text-muted-foreground">/min</span>
+          )}
+          
+          <div className="flex justify-between items-center text-gray-700 mb-4">
+            <div className="flex items-center">
+              <Clock className="h-4 w-4 mr-1 text-ifind-aqua" />
+              <span className="text-sm">Availability: In 30 mins</span>
             </div>
+            <div className="font-bold text-ifind-purple">₹20/min</div>
           </div>
           
-          <div className="mt-2 text-xs text-muted-foreground">
-            {consultations.toLocaleString()}+ consultations
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              variant="outline"
+              className="flex items-center justify-center"
+              onClick={() => setIsCallModalOpen(true)}
+            >
+              <Phone className="mr-1 h-4 w-4" />
+              Call Now
+            </Button>
+            
+            <Button 
+              className="flex items-center justify-center"
+              onClick={() => setIsBookingModalOpen(true)}
+            >
+              <Calendar className="mr-1 h-4 w-4" />
+              Book
+            </Button>
           </div>
-        </CardContent>
-        
-        <CardFooter className="px-4 py-3 border-t flex gap-2">
+          
           <Button 
-            variant="outline" 
-            className="flex-1 border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua hover:text-white transition-all"
-            onClick={handleCallClick}
+            variant="ghost" 
+            className="w-full mt-2 text-ifind-aqua hover:text-ifind-aqua/80"
+            onClick={handleViewProfile}
           >
-            <PhoneCall className="h-4 w-4 mr-1" />
-            Call
+            View Profile
           </Button>
-          <Button 
-            className="flex-1 bg-ifind-purple hover:bg-ifind-purple/80 transition-colors"
-            onClick={handleVideoCallClick}
-          >
-            <Video className="h-4 w-4 mr-1" />
-            Video
-          </Button>
-        </CardFooter>
-        <CardFooter className="pt-0 pb-3 px-4 border-t-0">
-          <Button 
-            variant="outline" 
-            className="w-full border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10"
-            onClick={handleBookSession}
-          >
-            <Calendar className="h-4 w-4 mr-1" />
-            Book Session
-          </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </CardContent>
       
-      {/* CallModal for both regular and video calls */}
       <CallModal 
-        isOpen={isCallModalOpen || isVideoCallModalOpen}
-        onClose={() => {
-          setIsCallModalOpen(false);
-          setIsVideoCallModalOpen(false);
-        }}
-        expert={{ id, name, imageUrl, price }}
+        isOpen={isCallModalOpen}
+        onClose={() => setIsCallModalOpen(false)}
+        expert={expertForModals}
       />
-
-      {/* BookingModal for scheduling future sessions */}
-      <BookingModal
+      
+      <BookingModal 
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
-        expert={{ id, name, imageUrl, price }}
+        expert={expertForModals}
       />
-    </>
+    </Card>
   );
 };
 

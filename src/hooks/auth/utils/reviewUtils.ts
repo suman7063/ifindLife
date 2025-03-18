@@ -1,129 +1,116 @@
 
-import { from } from '@/lib/supabase';
-import { UserReview } from '@/types/supabase/tables';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { Review } from '@/types/supabase/reviews';
+import { convertExpertIdToString, convertExpertIdToNumber } from '@/types/supabase/expertId';
 
-// Fetch user's reviews for a specific expert
-export const getReviewForExpert = async (userId: string, expertId: string): Promise<UserReview | null> => {
-  try {
-    const { data, error } = await from('user_reviews')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('expert_id', expertId)
-      .single();
-      
-    if (error) {
-      if (error.code === 'PGRST116') { // No rows found
-        return null;
-      }
-      throw error;
-    }
-    
-    if (!data) return null;
-    
-    return {
-      id: data.id,
-      expertId: data.expert_id,
-      userId: data.user_id,
-      rating: data.rating,
-      comment: data.comment,
-      date: data.date,
-      verified: data.verified
-    };
-  } catch (error) {
-    console.error('Error fetching review:', error);
-    return null;
-  }
-};
-
-// Add or update a review
+// Add a new review
 export const updateReviews = async (
   userId: string,
   expertId: string,
   rating: number,
   comment: string,
   existingReviewId?: string
-): Promise<UserReview[]> => {
+): Promise<Review[]> => {
+  const today = new Date().toISOString().split('T')[0];
+  const expertIdNumber = convertExpertIdToNumber(expertId);
+  
   try {
-    const today = new Date().toISOString().split('T')[0];
-    
     if (existingReviewId) {
       // Update existing review
-      const { error } = await from('user_reviews')
+      const { error } = await supabase
+        .from('user_reviews')
         .update({
           rating,
           comment,
           date: today
         })
         .eq('id', existingReviewId);
-        
+      
       if (error) throw error;
     } else {
       // Add new review
-      const { error } = await from('user_reviews')
+      const { error } = await supabase
+        .from('user_reviews')
         .insert({
           user_id: userId,
-          expert_id: expertId,
+          expert_id: expertIdNumber,
           rating,
           comment,
           date: today,
-          verified: false
+          verified: false,
+          user_name: 'User' // Should be updated later with actual user name
         });
-        
+      
       if (error) throw error;
     }
     
-    // Return updated reviews list
-    const { data, error: fetchError } = await from('user_reviews')
+    // Get updated reviews
+    const { data, error } = await supabase
+      .from('user_reviews')
       .select('*')
       .eq('user_id', userId);
-      
-    if (fetchError) throw fetchError;
     
-    const reviews = (data || []).map((review: any) => ({
+    if (error) throw error;
+    
+    // Convert to Review type
+    const reviews: Review[] = (data || []).map(review => ({
       id: review.id,
-      expertId: review.expert_id,
-      userId: review.user_id,
+      userId: review.user_id || '',
+      expertId: convertExpertIdToString(review.expert_id),
       rating: review.rating,
-      comment: review.comment,
+      comment: review.comment || '',
       date: review.date,
-      verified: review.verified
+      verified: review.verified || false,
+      userName: 'User', // Will be updated
+      expertName: 'Expert' // Will be updated
     }));
     
     return reviews;
-  } catch (error) {
-    console.error('Error updating reviews:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('Error updating reviews:', error.message);
+    toast.error(error.message || 'Failed to update review');
+    return [];
   }
 };
 
-// Check if user has taken a service from the expert
-export const hasServiceFromExpert = async (userId: string, expertId: string): Promise<boolean> => {
+// Check if a user has already reviewed this expert
+export const getReviewForExpert = async (userId: string, expertId: string) => {
+  const expertIdNumber = convertExpertIdToNumber(expertId);
+  
   try {
-    // Check completed appointments with this expert
-    const { data: appointmentData, error: appointmentError } = await from('appointments')
+    const { data, error } = await supabase
+      .from('user_reviews')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('expert_id', expertIdNumber)
+      .single();
+    
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned" which is not an error for us
+    
+    return data;
+  } catch (error: any) {
+    console.error('Error checking review:', error.message);
+    return null;
+  }
+};
+
+// Check if the user has taken a service from this expert
+export const hasServiceFromExpert = async (userId: string, expertId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('user_expert_services')
       .select('*')
       .eq('user_id', userId)
       .eq('expert_id', expertId)
-      .eq('status', 'completed');
-      
-    if (appointmentError) throw appointmentError;
+      .eq('status', 'completed')
+      .limit(1);
     
-    if (appointmentData && appointmentData.length > 0) {
-      return true;
-    }
+    if (error) throw error;
     
-    // Check completed services with this expert
-    const { data: serviceData, error: serviceError } = await from('user_expert_services')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('expert_id', expertId)
-      .eq('status', 'completed');
-      
-    if (serviceError) throw serviceError;
-    
-    return !!(serviceData && serviceData.length > 0);
-  } catch (error) {
-    console.error('Error checking service history:', error);
-    return false; // Default to false on error
+    return data && data.length > 0;
+  } catch (error: any) {
+    console.error('Error checking service history:', error.message);
+    return false;
   }
 };

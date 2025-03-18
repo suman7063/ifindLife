@@ -1,6 +1,11 @@
 
-import { useState } from 'react';
-import AgoraRTC, { IAgoraRTCClient, IMicrophoneAudioTrack, ICameraVideoTrack } from 'agora-rtc-sdk-ng';
+import { useState, useEffect } from 'react';
+import AgoraRTC, { 
+  IAgoraRTCClient, 
+  IMicrophoneAudioTrack, 
+  ICameraVideoTrack,
+  IAgoraRTCRemoteUser
+} from 'agora-rtc-sdk-ng';
 
 // Setup Agora client
 const APP_ID = "your-agora-app-id"; // Replace with actual Agora App ID
@@ -30,11 +35,63 @@ export const useAgora = () => {
     return `call_${expertId}_${userId}_${Date.now()}`;
   };
 
+  // New hook for using the Agora client
+  const useClient = () => {
+    const [client, setClient] = useState<IAgoraRTCClient | null>(null);
+    
+    useEffect(() => {
+      const agoraClient = createClient();
+      setClient(agoraClient);
+      
+      return () => {
+        if (client) {
+          client.leave();
+        }
+      };
+    }, []);
+    
+    return client;
+  };
+
+  // New hook for using microphone and camera tracks
+  const useMicrophoneAndCameraTracks = () => {
+    const [tracks, setTracks] = useState<[IMicrophoneAudioTrack, ICameraVideoTrack] | null>(null);
+    const [ready, setReady] = useState<boolean>(false);
+    
+    useEffect(() => {
+      const getMicrophoneAndCameraTracks = async () => {
+        try {
+          const audioTrack = await createMicrophoneTrack();
+          const videoTrack = await createCameraTrack();
+          setTracks([audioTrack, videoTrack]);
+          setReady(true);
+        } catch (error) {
+          console.error("Error creating tracks:", error);
+        }
+      };
+      
+      getMicrophoneAndCameraTracks();
+      
+      return () => {
+        if (tracks) {
+          tracks[0].close();
+          tracks[1].close();
+        }
+      };
+    }, []);
+    
+    return { tracks, ready };
+  };
+
   return {
     createClient,
     createMicrophoneTrack,
     createCameraTrack,
     generateToken,
-    generateChannelName
+    generateChannelName,
+    useClient,
+    useMicrophoneAndCameraTracks
   };
 };
+
+export default useAgora;

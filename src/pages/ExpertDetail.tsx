@@ -1,483 +1,351 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  Tabs, TabsContent, TabsList, TabsTrigger 
-} from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Avatar } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Star, MapPin, Clock, Calendar, PhoneCall, 
-  Video, Heart, Share2, CheckCircle2 
-} from 'lucide-react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { useUserAuth } from '@/hooks/useUserAuth';
-import { toast } from 'sonner';
+import { Star, MapPin, Languages, Calendar, Clock, Phone, Video } from 'lucide-react';
 import CallModal from '@/components/CallModal';
 import BookingModal from '@/components/BookingModal';
 import ExpertReviewModal from '@/components/user/ExpertReviewModal';
 import ExpertReportModal from '@/components/user/ExpertReportModal';
-import UserReportButton from '@/components/user/UserReportButton';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { supabase } from '@/lib/supabase';
+import { Expert } from '@/types/supabase/tables';
+import { toast } from 'sonner';
 
-const expertData = {
-  id: 1,
-  name: "Dr. Samantha Carter",
-  imageUrl: "/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png",
-  experience: 15,
-  specialties: ["Anxiety", "Depression", "Couples Therapy"],
-  rating: 4.9,
-  consultations: 3500,
-  price: 8.5,
-  waitTime: "Available",
-  online: true,
-  location: "New Delhi, India",
-  about: "Dr. Samantha Carter is a licensed clinical psychologist with over 15 years of experience in treating anxiety, depression, and relationship issues. She takes a holistic, client-centered approach and integrates techniques from cognitive-behavioral therapy, mindfulness, and solution-focused therapy to help clients achieve their goals.",
-  education: ["Ph.D. in Clinical Psychology, Stanford University", "M.A. in Psychology, University of California, Berkeley", "B.A. in Psychology, University of Michigan"],
-  certifications: ["Licensed Clinical Psychologist", "Certified in Cognitive Behavioral Therapy", "Certified in Mindfulness-Based Stress Reduction"],
-  languages: ["English", "Hindi", "Spanish"],
-  reviews: [
-    {
-      id: "r1",
-      userName: "Ravi S.",
-      rating: 5,
-      date: "2023-06-15",
-      comment: "Dr. Carter was incredibly helpful during a very difficult time in my life. Her approach is compassionate and practical."
-    },
-    {
-      id: "r2",
-      userName: "Priya M.",
-      rating: 5,
-      date: "2023-05-29",
-      comment: "I've been working with Dr. Carter for several months now, and the progress I've made is remarkable. Highly recommend!"
-    },
-    {
-      id: "r3",
-      userName: "Amit K.",
-      rating: 4,
-      date: "2023-04-10",
-      comment: "Helped me navigate through anxiety issues with practical strategies. Professional and understanding."
-    }
-  ]
+// Replace this with actual data fetching from database
+const getExpertData = async (expertId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('experts')
+      .select('*')
+      .eq('id', expertId)
+      .single();
+    
+    if (error) throw error;
+    
+    return data as Expert;
+  } catch (error) {
+    console.error('Error fetching expert:', error);
+    return null;
+  }
 };
 
-const ExpertDetail = () => {
-  const { id } = useParams();
+const ExpertDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { currentUser, addReview, reportExpert, addToFavorites, hasTakenServiceFrom } = useUserAuth();
+  const { currentUser, addReview, reportExpert, hasTakenServiceFrom } = useUserAuth();
   
-  const [expert, setExpert] = useState(expertData);
+  const [expert, setExpert] = useState<Expert | null>(null);
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
-  const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [canReview, setCanReview] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    // Check if user has taken service from this expert and can leave a review
-    const checkCanReview = async () => {
-      if (currentUser && id) {
+    const fetchExpert = async () => {
+      if (!id) return;
+      
+      setLoading(true);
+      const expertData = await getExpertData(id);
+      
+      if (expertData) {
+        setExpert(expertData);
+      } else {
+        toast.error("Expert not found");
+        navigate('/experts');
+      }
+      
+      // Check if user can review this expert
+      if (currentUser) {
         const hasService = await hasTakenServiceFrom(id);
         setCanReview(hasService);
       }
+      
+      setLoading(false);
     };
     
-    checkCanReview();
-  }, [currentUser, id, hasTakenServiceFrom]);
+    fetchExpert();
+  }, [id, currentUser]);
   
-  const handleCallClick = () => {
-    if (!currentUser) {
-      toast.error("Please log in to call this expert");
-      navigate("/login", { state: { returnUrl: `/experts/${id}` } });
-      return;
-    }
-    
-    setIsCallModalOpen(true);
-  };
-  
-  const handleVideoCallClick = () => {
-    if (!currentUser) {
-      toast.error("Please log in to video call this expert");
-      navigate("/login", { state: { returnUrl: `/experts/${id}` } });
-      return;
-    }
-    
-    setIsVideoCallModalOpen(true);
-  };
-  
-  const handleBookingClick = () => {
-    if (!currentUser) {
-      toast.error("Please log in to book a session");
-      navigate("/login", { state: { returnUrl: `/experts/${id}` } });
-      return;
-    }
-    
-    setIsBookingModalOpen(true);
-  };
-  
-  const handleAddReview = async (rating: number, comment: string) => {
-    if (!currentUser) {
-      toast.error("Please log in to leave a review");
-      return;
-    }
-    
-    if (!canReview) {
-      toast.error("You can only review experts after consulting with them");
-      return;
-    }
+  const handleReviewSubmit = async (rating: number, comment: string) => {
+    if (!expert || !currentUser) return;
     
     try {
-      await addReview(id || '', rating, comment);
-      toast.success("Review submitted successfully");
+      await addReview(expert.id, rating, comment);
+      toast.success("Thank you for your review!");
       setIsReviewModalOpen(false);
+      
+      // Refresh expert data to show updated rating
+      const updatedExpert = await getExpertData(expert.id);
+      if (updatedExpert) {
+        setExpert(updatedExpert);
+      }
     } catch (error) {
-      console.error("Error adding review:", error);
+      console.error("Error submitting review:", error);
       toast.error("Failed to submit review");
     }
   };
   
-  const handleReportExpert = async (reason: string, details: string) => {
-    if (!currentUser) {
-      toast.error("Please log in to report this expert");
-      return;
-    }
+  const handleReportSubmit = async (reason: string, details: string) => {
+    if (!expert || !currentUser) return;
     
     try {
-      await reportExpert(id || '', reason, details);
+      await reportExpert(expert.id, reason, details);
       toast.success("Report submitted successfully");
       setIsReportModalOpen(false);
     } catch (error) {
-      console.error("Error reporting expert:", error);
+      console.error("Error submitting report:", error);
       toast.error("Failed to submit report");
     }
   };
   
-  const handleFavoriteToggle = () => {
-    if (!currentUser) {
-      toast.error("Please log in to add to favorites");
-      navigate("/login", { state: { returnUrl: `/experts/${id}` } });
-      return;
-    }
-    
-    setIsFavorite(!isFavorite);
-    
-    if (!isFavorite) {
-      addToFavorites(expert);
-      toast.success(`Added ${expert.name} to favorites`);
-    } else {
-      // removeFromFavorites(id || '');
-      toast.success(`Removed ${expert.name} from favorites`);
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-16 h-16 border-4 border-ifind-aqua border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
   
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: `Consult with ${expert.name}`,
-        text: `Check out ${expert.name}, a mental wellness expert on iFind Life`,
-        url: window.location.href,
-      }).catch(err => {
-        console.error('Error sharing:', err);
-      });
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      navigator.clipboard.writeText(window.location.href)
-        .then(() => toast.success("Link copied to clipboard"))
-        .catch(() => toast.error("Failed to copy link"));
-    }
+  if (!expert) {
+    return (
+      <div className="container py-10 text-center">
+        <h2 className="text-2xl font-bold">Expert not found</h2>
+        <Button onClick={() => navigate('/experts')} className="mt-4">
+          Back to Experts
+        </Button>
+      </div>
+    );
+  }
+  
+  // Format expert data for the modals
+  const expertForModals = {
+    id: Number(expert.id),
+    name: expert.name,
+    imageUrl: expert.profile_picture || '/placeholder.svg',
+    price: 20 // Replace with actual price from expert services
   };
   
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <main className="flex-grow py-8">
-        <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Expert Profile Card */}
-            <div className="md:col-span-1">
-              <Card className="overflow-hidden border-border/50">
-                <div className="aspect-square relative overflow-hidden bg-muted">
-                  <img
-                    src={expert.imageUrl}
-                    alt={expert.name}
-                    className="object-cover w-full h-full"
-                  />
-                  {expert.online && (
-                    <div className="absolute top-3 right-3">
-                      <Badge className="bg-ifind-teal text-white">Online</Badge>
-                    </div>
-                  )}
-                </div>
-                
-                <CardContent className="p-5">
-                  <h1 className="text-2xl font-bold font-poppins mb-1">{expert.name}</h1>
-                  
-                  <div className="flex items-center text-sm mb-3">
-                    <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-                    <span className="text-muted-foreground">{expert.location}</span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center mb-4">
-                    <div className="flex items-center bg-ifind-aqua/10 px-2 py-1 rounded text-sm font-medium">
-                      <Star className="h-4 w-4 fill-ifind-aqua text-ifind-aqua mr-1" />
-                      {expert.rating} ({expert.reviews.length} reviews)
-                    </div>
-                    
-                    <div className="text-sm text-muted-foreground">
-                      {expert.experience} years exp.
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {expert.specialties.map((specialty, index) => (
-                      <Badge key={index} variant="outline" className="bg-muted/50">
-                        {specialty}
-                      </Badge>
-                    ))}
-                  </div>
-                  
-                  <div className="mb-4 flex justify-between items-center">
-                    <div className="flex items-center text-sm">
-                      <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                      <span className={expert.waitTime === 'Available' ? 'text-ifind-teal' : 'text-muted-foreground'}>
-                        {expert.waitTime}
-                      </span>
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium text-ifind-purple">₹{expert.price}</span>
-                      <span className="text-muted-foreground">/min</span>
-                    </div>
-                  </div>
-                  
-                  <div className="mb-5 text-xs text-muted-foreground">
-                    {expert.consultations.toLocaleString()}+ consultations
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <Button 
-                        variant="outline"
-                        className="border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua hover:text-white"
-                        onClick={handleCallClick}
-                      >
-                        <PhoneCall className="h-4 w-4 mr-2" />
-                        Call Now
-                      </Button>
-                      
-                      <Button 
-                        className="bg-ifind-purple hover:bg-ifind-purple/80"
-                        onClick={handleVideoCallClick}
-                      >
-                        <Video className="h-4 w-4 mr-2" />
-                        Video Call
-                      </Button>
-                    </div>
-                    
-                    <Button 
-                      className="w-full bg-ifind-teal hover:bg-ifind-teal/80"
-                      onClick={handleBookingClick}
-                    >
-                      <Calendar className="h-4 w-4 mr-2" />
-                      Book Session
-                    </Button>
-                    
-                    <div className="flex justify-between">
-                      <Button 
-                        variant="ghost" 
-                        className="text-muted-foreground hover:text-primary"
-                        onClick={handleFavoriteToggle}
-                      >
-                        <Heart className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} />
-                        <span className="sr-only">Favorite</span>
-                      </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        className="text-muted-foreground hover:text-primary"
-                        onClick={handleShare}
-                      >
-                        <Share2 className="h-5 w-5" />
-                        <span className="sr-only">Share</span>
-                      </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        className="text-muted-foreground hover:text-primary"
-                        onClick={() => setIsReviewModalOpen(true)}
-                      >
-                        <Star className="h-5 w-5" />
-                        <span className="sr-only">Review</span>
-                      </Button>
-                      
-                      <Button 
-                        variant="ghost" 
-                        className="text-muted-foreground hover:text-primary"
-                        onClick={() => setIsReportModalOpen(true)}
-                      >
-                        <UserReportButton />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+    <div className="container py-8">
+      {/* Expert Header */}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        <div className="w-32 h-32 rounded-xl overflow-hidden bg-gray-100">
+          <Avatar className="w-full h-full">
+            <img 
+              src={expert.profile_picture || '/placeholder.svg'} 
+              alt={expert.name} 
+              className="w-full h-full object-cover"
+            />
+          </Avatar>
+        </div>
+        
+        <div className="flex-1">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h1 className="text-3xl font-bold">{expert.name}</h1>
+            <Badge className="bg-ifind-teal">{expert.specialization}</Badge>
+            {expert.average_rating && (
+              <div className="flex items-center gap-1 text-ifind-gold">
+                <Star className="fill-ifind-gold h-4 w-4" />
+                <span className="font-medium">{expert.average_rating.toFixed(1)}</span>
+                <span className="text-gray-500 text-sm">({expert.reviews_count} reviews)</span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
+            {expert.experience && (
+              <span className="text-sm">{expert.experience} years experience</span>
+            )}
+            {expert.city && expert.country && (
+              <div className="flex items-center gap-1 text-sm">
+                <MapPin className="h-3 w-3" />
+                <span>{expert.city}, {expert.country}</span>
+              </div>
+            )}
+          </div>
+          
+          <p className="text-gray-700 mb-4 max-w-2xl">
+            {expert.bio}
+          </p>
+          
+          <div className="flex flex-wrap gap-3">
+            <Button 
+              variant="default" 
+              className="bg-ifind-purple hover:bg-ifind-purple/90"
+              onClick={() => setIsCallModalOpen(true)}
+            >
+              <Phone className="mr-2 h-4 w-4" />
+              Call Now
+            </Button>
             
-            {/* Expert Details */}
-            <div className="md:col-span-2">
-              <Tabs defaultValue="about">
-                <TabsList className="mb-6">
-                  <TabsTrigger value="about">About</TabsTrigger>
-                  <TabsTrigger value="expertise">Expertise</TabsTrigger>
-                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="about" className="space-y-6">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <h2 className="text-xl font-semibold mb-4">About {expert.name}</h2>
-                      <p className="text-muted-foreground mb-6">{expert.about}</p>
-                      
-                      <div className="grid gap-6 md:grid-cols-2">
-                        <div>
-                          <h3 className="text-lg font-medium mb-3">Education</h3>
-                          <ul className="space-y-2">
-                            {expert.education.map((edu, index) => (
-                              <li key={index} className="flex items-start">
-                                <CheckCircle2 className="h-5 w-5 text-ifind-aqua mr-2 shrink-0 mt-0.5" />
-                                <span>{edu}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                        
-                        <div>
-                          <h3 className="text-lg font-medium mb-3">Certifications</h3>
-                          <ul className="space-y-2">
-                            {expert.certifications.map((cert, index) => (
-                              <li key={index} className="flex items-start">
-                                <CheckCircle2 className="h-5 w-5 text-ifind-teal mr-2 shrink-0 mt-0.5" />
-                                <span>{cert}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="expertise" className="space-y-6">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <h2 className="text-xl font-semibold mb-4">Areas of Expertise</h2>
-                      
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="border rounded-md p-4">
-                          <h3 className="font-medium mb-2">Specialties</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {expert.specialties.map((specialty, index) => (
-                              <Badge key={index} variant="outline" className="bg-muted/30">
-                                {specialty}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                        
-                        <div className="border rounded-md p-4">
-                          <h3 className="font-medium mb-2">Languages</h3>
-                          <div className="flex flex-wrap gap-2">
-                            {expert.languages.map((lang, index) => (
-                              <Badge key={index} variant="outline" className="bg-muted/30">
-                                {lang}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-                
-                <TabsContent value="reviews" className="space-y-6">
-                  <Card>
-                    <CardContent className="pt-6">
-                      <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-semibold">Client Reviews</h2>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setIsReviewModalOpen(true)}
-                          disabled={!canReview}
-                        >
-                          Write a Review
-                        </Button>
-                      </div>
-                      
-                      {!canReview && currentUser && (
-                        <div className="mb-4 text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                          You can only review experts after consulting with them.
-                        </div>
-                      )}
-                      
-                      <div className="space-y-5">
-                        {expert.reviews.map((review) => (
-                          <div key={review.id} className="border-b pb-5 last:border-0">
-                            <div className="flex justify-between items-start mb-1">
-                              <div className="font-medium">{review.userName}</div>
-                              <div className="flex items-center">
-                                <Star className="h-4 w-4 fill-ifind-aqua text-ifind-aqua" />
-                                <span className="ml-1">{review.rating}</span>
-                              </div>
-                            </div>
-                            <div className="text-xs text-muted-foreground mb-2">{review.date}</div>
-                            <p className="text-sm">{review.comment}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-            </div>
+            <Button 
+              variant="default"
+              className="bg-ifind-aqua hover:bg-ifind-aqua/90"
+              onClick={() => setIsBookingModalOpen(true)}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Book Session
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={() => setIsReviewModalOpen(true)}
+              disabled={!currentUser || !canReview}
+            >
+              <Star className="mr-2 h-4 w-4" />
+              Write Review
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="text-red-600 border-red-600 hover:bg-red-50"
+              onClick={() => setIsReportModalOpen(true)}
+              disabled={!currentUser}
+            >
+              Report
+            </Button>
           </div>
         </div>
-      </main>
+      </div>
       
-      <Footer />
+      {/* Expert Details */}
+      <div className="mt-12">
+        <Tabs defaultValue="about">
+          <TabsList className="mb-6">
+            <TabsTrigger value="about">About</TabsTrigger>
+            <TabsTrigger value="services">Services</TabsTrigger>
+            <TabsTrigger value="reviews">Reviews</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="about" className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-3">Professional Background</h3>
+              <p className="text-gray-700">
+                {expert.bio}
+              </p>
+            </div>
+            
+            {expert.certificate_urls && expert.certificate_urls.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Certifications</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {expert.certificate_urls.map((cert, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-ifind-aqua/20 flex items-center justify-center">
+                        <span className="text-ifind-aqua">✓</span>
+                      </div>
+                      <span>{cert}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="services" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {expert.selected_services?.map((serviceId) => (
+                <Card key={serviceId} className="overflow-hidden">
+                  <CardContent className="p-6">
+                    <h3 className="font-semibold text-lg mb-2">Service {serviceId}</h3>
+                    <div className="flex justify-between items-center text-gray-600 mb-3">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-1 text-ifind-aqua" />
+                        <span>30 mins</span>
+                      </div>
+                      <div className="font-bold text-ifind-purple">₹2000</div>
+                    </div>
+                    <Button 
+                      className="w-full"
+                      onClick={() => setIsBookingModalOpen(true)}
+                    >
+                      Book Now
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="reviews" className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">Reviews</h3>
+              <Button 
+                variant="outline"
+                onClick={() => setIsReviewModalOpen(true)}
+                disabled={!currentUser || !canReview}
+              >
+                <Star className="mr-2 h-4 w-4" />
+                Write Review
+              </Button>
+            </div>
+            
+            {expert.reviews_count ? (
+              <div className="space-y-4">
+                {/* Mock reviews - should be fetched from database */}
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-10 h-10">
+                          <img src="/placeholder.svg" alt="User" />
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">John Doe</p>
+                          <p className="text-sm text-gray-500">10 days ago</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center text-ifind-gold">
+                        <Star className="fill-ifind-gold h-4 w-4" />
+                        <span className="ml-1">5.0</span>
+                      </div>
+                    </div>
+                    <p className="text-gray-700">
+                      Great experience! Very knowledgeable and helpful.
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                No reviews yet. Be the first to leave a review!
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
       
-      {/* Call Modal */}
+      {/* Modals */}
       <CallModal 
-        isOpen={isCallModalOpen || isVideoCallModalOpen}
-        onClose={() => {
-          setIsCallModalOpen(false);
-          setIsVideoCallModalOpen(false);
-        }}
-        expert={{ id: expert.id, name: expert.name, imageUrl: expert.imageUrl, price: expert.price }}
+        isOpen={isCallModalOpen}
+        onClose={() => setIsCallModalOpen(false)}
+        expert={expertForModals}
       />
       
-      {/* Booking Modal */}
-      <BookingModal
+      <BookingModal 
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
-        expert={{ id: expert.id, name: expert.name, imageUrl: expert.imageUrl, price: expert.price }}
+        expert={expertForModals}
       />
       
-      {/* Review Modal */}
-      <ExpertReviewModal
+      <ExpertReviewModal 
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
-        onSubmit={handleAddReview}
+        onSubmit={handleReviewSubmit}
         expertName={expert.name}
       />
       
-      {/* Report Modal */}
-      <ExpertReportModal
+      <ExpertReportModal 
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
-        onSubmit={handleReportExpert}
+        onSubmit={handleReportSubmit}
         expertName={expert.name}
       />
     </div>

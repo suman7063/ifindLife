@@ -52,12 +52,12 @@ const ExpertAvailability: React.FC<ExpertAvailabilityProps> = ({ expert }) => {
 
       // Transform from database format
       const formattedTimeSlots: TimeSlot[] = data?.map(slot => ({
-        id: slot.id,
-        expertId: slot.expert_id,
-        date: slot.date,
-        startTime: slot.start_time,
-        endTime: slot.end_time,
-        isAvailable: slot.is_available
+        id: String(slot.id),
+        expertId: String(slot.expert_id),
+        date: String(slot.date),
+        startTime: String(slot.start_time),
+        endTime: String(slot.end_time),
+        isAvailable: Boolean(slot.is_available)
       })) || [];
 
       setTimeSlots(formattedTimeSlots);
@@ -116,12 +116,12 @@ const ExpertAvailability: React.FC<ExpertAvailabilityProps> = ({ expert }) => {
       // Add the new slot to the UI
       if (data && data.length > 0) {
         const newSlot: TimeSlot = {
-          id: data[0].id,
-          expertId: data[0].expert_id,
-          date: data[0].date,
-          startTime: data[0].start_time,
-          endTime: data[0].end_time,
-          isAvailable: data[0].is_available
+          id: String(data[0].id),
+          expertId: String(data[0].expert_id),
+          date: String(data[0].date),
+          startTime: String(data[0].start_time),
+          endTime: String(data[0].end_time),
+          isAvailable: Boolean(data[0].is_available)
         };
 
         setTimeSlots([...timeSlots, newSlot]);
@@ -140,7 +140,9 @@ const ExpertAvailability: React.FC<ExpertAvailabilityProps> = ({ expert }) => {
     try {
       const { error } = await supabase
         .from('expert_availability')
-        .update({ is_available: isAvailable })
+        .update({ 
+          is_available: isAvailable 
+        })
         .eq('id', slotId);
 
       if (error) throw error;

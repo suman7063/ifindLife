@@ -1,16 +1,18 @@
+
 import React, { useEffect, useState } from 'react';
 import { format, parseISO, isBefore, addMinutes } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, Video, X, Check, AlertTriangle } from 'lucide-react';
 import { useUserAuth } from '@/hooks/useUserAuth';
-import { useAppointments, Appointment, AppointmentStatus } from '@/hooks/auth/useAppointments';
+import { useAppointments } from '@/hooks/auth/useAppointments';
 import { useAgora } from '@/hooks/auth/useAgora';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import VideoSessionWithTimer from './VideoSessionWithTimer';
 import { Badge } from '@/components/ui/badge';
+import { AppointmentStatus } from '@/types/supabase/appointments';
 
 const AppointmentsManagement: React.FC = () => {
   const { currentUser } = useUserAuth();
@@ -21,14 +23,45 @@ const AppointmentsManagement: React.FC = () => {
     markExpertNoShow,
     isLoading 
   } = useAppointments();
-  const { useClient, useMicrophoneAndCameraTracks } = useAgora();
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const agoraHooks = useAgora();
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [selectedAppointment, setSelectedAppointment] = useState<any | null>(null);
   const [isVideoSessionOpen, setIsVideoSessionOpen] = useState(false);
   const [inCall, setInCall] = useState(false);
   
-  const client = useClient();
-  const { ready, tracks } = useMicrophoneAndCameraTracks();
+  // Create Agora client and tracks using the hooks from useAgora
+  const client = agoraHooks.createClient();
+  const [microphoneTrack, setMicrophoneTrack] = useState<any>(null);
+  const [cameraTrack, setCameraTrack] = useState<any>(null);
+  const [ready, setReady] = useState(false);
+  
+  // Initialize the tracks
+  useEffect(() => {
+    const initTracks = async () => {
+      try {
+        const audioTrack = await agoraHooks.createMicrophoneTrack();
+        const videoTrack = await agoraHooks.createCameraTrack();
+        
+        setMicrophoneTrack(audioTrack);
+        setCameraTrack(videoTrack);
+        setReady(true);
+      } catch (error) {
+        console.error('Error initializing tracks:', error);
+        toast.error('Failed to initialize camera and microphone');
+      }
+    };
+    
+    initTracks();
+    
+    return () => {
+      if (microphoneTrack) {
+        microphoneTrack.close();
+      }
+      if (cameraTrack) {
+        cameraTrack.close();
+      }
+    };
+  }, []);
   
   useEffect(() => {
     if (currentUser?.id) {
@@ -42,7 +75,7 @@ const AppointmentsManagement: React.FC = () => {
     setAppointments(data);
   };
   
-  const handleJoinSession = async (appointment: Appointment) => {
+  const handleJoinSession = async (appointment: any) => {
     if (!appointment.channelName || !appointment.token) {
       toast.error('Video session information not available for this appointment');
       return;
@@ -53,7 +86,7 @@ const AppointmentsManagement: React.FC = () => {
     
     if (ready) {
       try {
-        client.on('user-published', async (user, mediaType) => {
+        client.on('user-published', async (user: any, mediaType: string) => {
           await client.subscribe(user, mediaType);
           if (mediaType === 'audio') {
             user.audioTrack?.play();
@@ -67,8 +100,8 @@ const AppointmentsManagement: React.FC = () => {
           appointment.uid
         );
         
-        if (tracks) {
-          await client.publish(tracks);
+        if (microphoneTrack && cameraTrack) {
+          await client.publish([microphoneTrack, cameraTrack]);
           setInCall(true);
           toast.success(`Joined session with ${appointment.expertName}`);
         }
@@ -82,8 +115,8 @@ const AppointmentsManagement: React.FC = () => {
   const handleEndSession = async () => {
     if (inCall) {
       client.leave();
-      tracks?.[0].close();
-      tracks?.[1].close();
+      if (microphoneTrack) microphoneTrack.close();
+      if (cameraTrack) cameraTrack.close();
       setInCall(false);
     }
     
@@ -365,11 +398,11 @@ const AppointmentsManagement: React.FC = () => {
             </DialogTitle>
           </DialogHeader>
           
-          {ready && inCall && selectedAppointment && (
+          {ready && inCall && selectedAppointment && microphoneTrack && cameraTrack && (
             <VideoSessionWithTimer
               appointment={selectedAppointment}
               client={client}
-              tracks={tracks}
+              tracks={[microphoneTrack, cameraTrack]}
               onEndSession={handleEndSession}
             />
           )}

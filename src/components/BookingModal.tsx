@@ -11,8 +11,8 @@ import { CalendarIcon, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useUserAuth } from '@/hooks/useUserAuth';
-import { from } from '@/lib/supabase';
 import { useAppointments } from '@/hooks/auth/useAppointments';
+import { supabase } from '@/lib/supabase';
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -25,13 +25,19 @@ interface BookingModalProps {
   };
 }
 
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  isAvailable: boolean;
+}
+
 const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [timeSlot, setTimeSlot] = useState<string>('');
   const [duration, setDuration] = useState<number>(15); // Default 15 minutes
   const [notes, setNotes] = useState<string>('');
   const [paymentMethod, setPaymentMethod] = useState<'wallet' | 'card' | ''>('');
-  const [availableSlots, setAvailableSlots] = useState<{ startTime: string; endTime: string; isAvailable: boolean }[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
   const [totalPrice, setTotalPrice] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -63,7 +69,8 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) 
       
       try {
         // Fetch expert's availability for the selected date
-        const { data, error } = await from('expert_availability')
+        const { data, error } = await supabase
+          .from('expert_availability')
           .select('*')
           .eq('expert_id', expert.id.toString())
           .eq('date', formattedDate);
@@ -72,9 +79,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) 
         
         // Transform the data to time slots
         const slots = data?.map(slot => ({
-          startTime: slot.start_time,
-          endTime: slot.end_time,
-          isAvailable: slot.is_available
+          startTime: slot.start_time as string,
+          endTime: slot.end_time as string,
+          isAvailable: slot.is_available as boolean
         })) || [];
         
         // If no slots defined for this date, generate default slots (9 AM to 7 PM)
@@ -263,7 +270,7 @@ const BookingModal: React.FC<BookingModalProps> = ({ isOpen, onClose, expert }) 
                 <div className="flex items-center space-x-2 p-3 border rounded-md">
                   <RadioGroupItem value="wallet" id="payment-wallet" />
                   <Label htmlFor="payment-wallet" className="flex-1">Wallet Balance</Label>
-                  <span>₹500.00</span>
+                  <span>₹{currentUser?.walletBalance?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="flex items-center space-x-2 p-3 border rounded-md">
                   <RadioGroupItem value="card" id="payment-card" />
