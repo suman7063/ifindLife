@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-type TherapistType = {
+type ExpertType = {
   id: number;
   name: string;
   experience: number;
@@ -17,49 +17,49 @@ type TherapistType = {
   online: boolean;
 };
 
-type TherapistsEditorProps = {
-  therapists: TherapistType[];
-  setTherapists: React.Dispatch<React.SetStateAction<TherapistType[]>>;
+type ExpertsEditorProps = {
+  therapists: ExpertType[];
+  setTherapists: React.Dispatch<React.SetStateAction<ExpertType[]>>;
 };
 
-const TherapistsEditor: React.FC<TherapistsEditorProps> = ({ therapists, setTherapists }) => {
+const ExpertsEditor: React.FC<ExpertsEditorProps> = ({ therapists, setTherapists }) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Edit Therapists</h2>
+        <h2 className="text-xl font-semibold">Edit Experts</h2>
         <Dialog>
           <DialogTrigger asChild>
-            <Button variant="outline">Add New Therapist</Button>
+            <Button variant="outline">Add New Expert</Button>
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>Add New Therapist</DialogTitle>
+              <DialogTitle>Add New Expert</DialogTitle>
             </DialogHeader>
-            <AddTherapistForm 
-              onAdd={(newTherapist) => setTherapists([...therapists, newTherapist])} 
+            <AddExpertForm 
+              onAdd={(newExpert) => setTherapists([...therapists, newExpert])} 
             />
           </DialogContent>
         </Dialog>
       </div>
       
       <div className="space-y-4">
-        {therapists.map((therapist, index) => (
+        {therapists.map((expert, index) => (
           <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
             <div className="flex flex-wrap md:flex-nowrap gap-4">
               <div className="w-full md:w-1/4">
                 <img 
-                  src={therapist.imageUrl} 
-                  alt={therapist.name}
+                  src={expert.imageUrl} 
+                  alt={expert.name}
                   className="aspect-square w-full object-cover rounded-lg" 
                 />
                 <Input
                   className="mt-2 text-xs"
                   placeholder="Image URL"
-                  value={therapist.imageUrl}
+                  value={expert.imageUrl}
                   onChange={(e) => {
-                    const newTherapists = [...therapists];
-                    newTherapists[index].imageUrl = e.target.value;
-                    setTherapists(newTherapists);
+                    const newExperts = [...therapists];
+                    newExperts[index].imageUrl = e.target.value;
+                    setTherapists(newExperts);
                   }}
                 />
               </div>
@@ -67,11 +67,11 @@ const TherapistsEditor: React.FC<TherapistsEditorProps> = ({ therapists, setTher
                 <div>
                   <label className="text-xs font-medium">Name</label>
                   <Input
-                    value={therapist.name}
+                    value={expert.name}
                     onChange={(e) => {
-                      const newTherapists = [...therapists];
-                      newTherapists[index].name = e.target.value;
-                      setTherapists(newTherapists);
+                      const newExperts = [...therapists];
+                      newExperts[index].name = e.target.value;
+                      setTherapists(newExperts);
                     }}
                   />
                 </div>
@@ -80,11 +80,11 @@ const TherapistsEditor: React.FC<TherapistsEditorProps> = ({ therapists, setTher
                     <label className="text-xs font-medium">Experience (years)</label>
                     <Input
                       type="number"
-                      value={therapist.experience}
+                      value={expert.experience}
                       onChange={(e) => {
-                        const newTherapists = [...therapists];
-                        newTherapists[index].experience = Number(e.target.value);
-                        setTherapists(newTherapists);
+                        const newExperts = [...therapists];
+                        newExperts[index].experience = Number(e.target.value);
+                        setTherapists(newExperts);
                       }}
                     />
                   </div>
@@ -95,11 +95,11 @@ const TherapistsEditor: React.FC<TherapistsEditorProps> = ({ therapists, setTher
                       step="0.1"
                       min="0"
                       max="5"
-                      value={therapist.rating}
+                      value={expert.rating}
                       onChange={(e) => {
-                        const newTherapists = [...therapists];
-                        newTherapists[index].rating = Number(e.target.value);
-                        setTherapists(newTherapists);
+                        const newExperts = [...therapists];
+                        newExperts[index].rating = Number(e.target.value);
+                        setTherapists(newExperts);
                       }}
                     />
                   </div>
@@ -109,8 +109,8 @@ const TherapistsEditor: React.FC<TherapistsEditorProps> = ({ therapists, setTher
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      const newTherapists = therapists.filter((_, i) => i !== index);
-                      setTherapists(newTherapists);
+                      const newExperts = therapists.filter((_, i) => i !== index);
+                      setTherapists(newExperts);
                     }}
                   >
                     Remove
@@ -125,8 +125,8 @@ const TherapistsEditor: React.FC<TherapistsEditorProps> = ({ therapists, setTher
   );
 };
 
-const AddTherapistForm = ({ onAdd }) => {
-  const [newTherapist, setNewTherapist] = useState({
+const AddExpertForm = ({ onAdd }) => {
+  const [newExpert, setNewExpert] = useState({
     id: Date.now(),
     name: "",
     experience: 5,
@@ -144,9 +144,9 @@ const AddTherapistForm = ({ onAdd }) => {
       <div>
         <label className="block text-sm font-medium mb-1">Name</label>
         <Input 
-          value={newTherapist.name} 
-          onChange={(e) => setNewTherapist({...newTherapist, name: e.target.value})}
-          placeholder="Therapist name"
+          value={newExpert.name} 
+          onChange={(e) => setNewExpert({...newExpert, name: e.target.value})}
+          placeholder="Expert name"
         />
       </div>
       <div className="grid grid-cols-2 gap-4">
@@ -154,8 +154,8 @@ const AddTherapistForm = ({ onAdd }) => {
           <label className="block text-sm font-medium mb-1">Experience (years)</label>
           <Input 
             type="number"
-            value={newTherapist.experience} 
-            onChange={(e) => setNewTherapist({...newTherapist, experience: Number(e.target.value)})}
+            value={newExpert.experience} 
+            onChange={(e) => setNewExpert({...newExpert, experience: Number(e.target.value)})}
           />
         </div>
         <div>
@@ -165,24 +165,24 @@ const AddTherapistForm = ({ onAdd }) => {
             step="0.1"
             min="0"
             max="5"
-            value={newTherapist.rating} 
-            onChange={(e) => setNewTherapist({...newTherapist, rating: Number(e.target.value)})}
+            value={newExpert.rating} 
+            onChange={(e) => setNewExpert({...newExpert, rating: Number(e.target.value)})}
           />
         </div>
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Specialties (comma separated)</label>
         <Input 
-          value={newTherapist.specialties.join(", ")} 
-          onChange={(e) => setNewTherapist({...newTherapist, specialties: e.target.value.split(",").map(s => s.trim())})}
+          value={newExpert.specialties.join(", ")} 
+          onChange={(e) => setNewExpert({...newExpert, specialties: e.target.value.split(",").map(s => s.trim())})}
           placeholder="Anxiety, Depression, CBT"
         />
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Profile Image URL</label>
         <Input 
-          value={newTherapist.imageUrl} 
-          onChange={(e) => setNewTherapist({...newTherapist, imageUrl: e.target.value})}
+          value={newExpert.imageUrl} 
+          onChange={(e) => setNewExpert({...newExpert, imageUrl: e.target.value})}
           placeholder="https://example.com/image.jpg"
         />
       </div>
@@ -191,15 +191,15 @@ const AddTherapistForm = ({ onAdd }) => {
           <label className="block text-sm font-medium mb-1">Price ($/min)</label>
           <Input 
             type="number"
-            value={newTherapist.price} 
-            onChange={(e) => setNewTherapist({...newTherapist, price: Number(e.target.value)})}
+            value={newExpert.price} 
+            onChange={(e) => setNewExpert({...newExpert, price: Number(e.target.value)})}
           />
         </div>
         <div>
           <label className="block text-sm font-medium mb-1">Wait Time</label>
           <Input 
-            value={newTherapist.waitTime} 
-            onChange={(e) => setNewTherapist({...newTherapist, waitTime: e.target.value})}
+            value={newExpert.waitTime} 
+            onChange={(e) => setNewExpert({...newExpert, waitTime: e.target.value})}
             placeholder="Available or wait time"
           />
         </div>
@@ -208,18 +208,18 @@ const AddTherapistForm = ({ onAdd }) => {
         <Button 
           className="bg-ifind-aqua hover:bg-ifind-teal"
           onClick={() => {
-            if (newTherapist.name && newTherapist.imageUrl) {
-              onAdd(newTherapist);
+            if (newExpert.name && newExpert.imageUrl) {
+              onAdd(newExpert);
             } else {
               alert("Please fill in all required fields");
             }
           }}
         >
-          Add Therapist
+          Add Expert
         </Button>
       </div>
     </div>
   );
 };
 
-export default TherapistsEditor;
+export default ExpertsEditor;

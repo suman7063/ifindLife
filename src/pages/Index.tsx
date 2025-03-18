@@ -2,17 +2,16 @@
 import React from 'react';
 import Hero from '../components/Hero';
 import ServicesSection from '../components/ServicesSection';
-import TopTherapistsSection from '../components/TopTherapistsSection';
+import TopExpertsSection from '../components/TopTherapistsSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FreeAssessmentCTA from '../components/FreeAssessmentCTA';
-import ExpertCard from '@/components/ExpertCard';
 
 const Index: React.FC = () => {
   return (
     <div className="bg-gray-50">
       <Hero />
       <ServicesSection />
-      <TopTherapistsSection />
+      <TopExpertsSection />
       <TestimonialsSection />
       <FreeAssessmentCTA />
     </div>

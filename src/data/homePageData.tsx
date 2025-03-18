@@ -33,7 +33,7 @@ export const categoryData = [
   }
 ];
 
-export const therapistData = [
+export const expertData = [
   {
     id: 1,
     name: "Dr. Sarah Johnson",

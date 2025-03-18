@@ -6,7 +6,7 @@ import { ChevronRight } from 'lucide-react';
 import ExpertCard from '@/components/ExpertCard';
 import { Expert } from '@/types/expert';
 
-const TopTherapistsSection = () => {
+const TopExpertsSection = () => {
   const [experts, setExperts] = useState<Expert[]>([]);
 
   useEffect(() => {
@@ -52,4 +52,4 @@ const TopTherapistsSection = () => {
   );
 };
 
-export default TopTherapistsSection;
+export default TopExpertsSection;
