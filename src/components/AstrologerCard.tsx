@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import CallModal from './CallModal';
 import BookingModal from './BookingModal';
 import { toast } from 'sonner';
-import { useDoxyme } from '@/hooks/auth/useDoxyme';
+import { useAgora } from '@/hooks/auth/useAgora';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface AstrologerCardProps {
@@ -41,17 +40,12 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { currentUser } = useUserAuth();
-  const { startProviderSession, joinDoxymeRoom, isLoading } = useDoxyme();
   
   const handleCallClick = () => {
     if (online && waitTime === 'Available') {
       setIsCallModalOpen(true);
     } else {
-      toast({
-        title: "Expert Unavailable",
-        description: "This expert is currently offline or busy. Please try again later.",
-        variant: "destructive"
-      });
+      toast.error("This expert is currently offline or busy. Please try again later.");
     }
   };
   
@@ -59,46 +53,27 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
     if (online && waitTime === 'Available') {
       setIsVideoCallModalOpen(true);
     } else {
-      toast({
-        title: "Expert Unavailable",
-        description: "This expert is currently offline or busy. Please try again later.",
-        variant: "destructive"
-      });
+      toast.error("This expert is currently offline or busy. Please try again later.");
     }
   };
   
-  const handleDirectDoxymeCall = () => {
+  const handleStartVideoCall = () => {
     if (!online || waitTime !== 'Available') {
-      toast({
-        title: "Expert Unavailable",
-        description: "This expert is currently offline or busy. Please try again later.",
-        variant: "destructive"
-      });
+      toast.error("This expert is currently offline or busy. Please try again later.");
       return;
     }
     
     if (!currentUser) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to start a video session",
-        variant: "destructive"
-      });
+      toast.error("Please log in to start a video session");
       return;
     }
     
-    const room = startProviderSession(currentUser, id.toString(), name);
-    if (room) {
-      joinDoxymeRoom(room.roomUrl);
-    }
+    setIsVideoCallModalOpen(true);
   };
 
   const handleBookSession = () => {
     if (!currentUser) {
-      toast({
-        title: "Login Required",
-        description: "Please log in to book a session",
-        variant: "destructive"
-      });
+      toast.error("Please log in to book a session");
       return;
     }
     
@@ -178,17 +153,6 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
           >
             <Video className="h-4 w-4 mr-1" />
             Video
-          </Button>
-        </CardFooter>
-        <CardFooter className="pt-0 pb-1 px-4 border-t-0">
-          <Button 
-            variant="outline" 
-            className="w-full border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10"
-            onClick={handleDirectDoxymeCall}
-            disabled={isLoading}
-          >
-            <ExternalLink className="h-4 w-4 mr-1" />
-            {isLoading ? 'Loading...' : 'Doxy.me Now'}
           </Button>
         </CardFooter>
         <CardFooter className="pt-0 pb-3 px-4 border-t-0">

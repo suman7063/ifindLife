@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
+import { useAgora } from './useAgora';
 
 export interface Appointment {
   id: string;
@@ -14,13 +15,16 @@ export interface Appointment {
   status: 'scheduled' | 'completed' | 'cancelled';
   serviceId?: number;
   notes?: string;
-  roomUrl?: string;
+  channelName?: string;
+  token?: string;
+  uid?: number;
   createdAt: string;
 }
 
 export const useAppointments = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const { generateToken, generateChannelName } = useAgora();
 
   // Fetch user's appointments
   const fetchUserAppointments = async (userId: string) => {
@@ -47,7 +51,9 @@ export const useAppointments = () => {
         status: appointment.status,
         serviceId: appointment.service_id,
         notes: appointment.notes,
-        roomUrl: appointment.room_url,
+        channelName: appointment.channel_name,
+        token: appointment.token,
+        uid: appointment.uid,
         createdAt: appointment.created_at
       }));
       
@@ -79,9 +85,10 @@ export const useAppointments = () => {
     
     setIsLoading(true);
     try {
-      // Generate a room URL for the appointment
-      const formattedName = expertName.toLowerCase().replace(/\s+/g, '');
-      const roomUrl = `https://doxy.me/${formattedName}${expertId.slice(0, 4)}`;
+      // Generate Agora channel information
+      const channelName = generateChannelName(expertId, user.id);
+      const token = generateToken(channelName);
+      const uid = Math.floor(Math.random() * 1000000);
       
       const { data, error } = await supabase
         .from('appointments')
@@ -94,7 +101,9 @@ export const useAppointments = () => {
           status: 'scheduled',
           service_id: serviceId,
           notes,
-          room_url: roomUrl
+          channel_name: channelName,
+          token: token,
+          uid: uid
         })
         .select()
         .single();
@@ -114,7 +123,9 @@ export const useAppointments = () => {
         status: data.status,
         serviceId: data.service_id,
         notes: data.notes,
-        roomUrl: data.room_url,
+        channelName: data.channel_name,
+        token: data.token,
+        uid: data.uid,
         createdAt: data.created_at
       };
       
