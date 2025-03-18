@@ -17,8 +17,9 @@ export const useAppointments = () => {
     
     setIsLoading(true);
     try {
-      // Using the custom from function with a type assertion
-      const { data, error } = await from('appointments')
+      // Using a type assertion to specify the expected return type
+      const { data, error } = await supabase
+        .from('appointments')
         .select('*')
         .eq('user_id', userId)
         .order('appointment_date', { ascending: true }) as { data: AppointmentRow[] | null, error: any };
@@ -75,7 +76,8 @@ export const useAppointments = () => {
       const token = generateToken(channelName);
       const uid = Math.floor(Math.random() * 1000000);
       
-      const { data, error } = await from('appointments')
+      const { data, error } = await supabase
+        .from('appointments')
         .insert({
           user_id: user.id,
           expert_id: expertId,
@@ -126,7 +128,8 @@ export const useAppointments = () => {
   const cancelAppointment = async (appointmentId: string) => {
     setIsLoading(true);
     try {
-      const { error } = await from('appointments')
+      const { error } = await supabase
+        .from('appointments')
         .update({ status: 'cancelled' })
         .eq('id', appointmentId) as { error: any };
         

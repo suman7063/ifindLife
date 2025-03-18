@@ -15,7 +15,7 @@ import { UserProfile } from '@/types/supabase';
 // and accessed via a secure backend
 const appId = 'your-agora-app-id'; // Replace with your Agora App ID
 
-// Configure Agora client
+// Configure Agora client with proper TypeScript types
 const config = {
   mode: 'rtc' as const,
   codec: 'vp8' as const,

@@ -27,6 +27,69 @@ export type Database = {
         }
         Relationships: []
       }
+      appointments: {
+        Row: {
+          appointment_date: string
+          channel_name: string | null
+          created_at: string
+          duration: number
+          expert_id: string
+          expert_name: string
+          id: string
+          notes: string | null
+          service_id: number | null
+          status: string
+          token: string | null
+          uid: number | null
+          user_id: string
+        }
+        Insert: {
+          appointment_date: string
+          channel_name?: string | null
+          created_at?: string
+          duration: number
+          expert_id: string
+          expert_name: string
+          id?: string
+          notes?: string | null
+          service_id?: number | null
+          status: string
+          token?: string | null
+          uid?: number | null
+          user_id: string
+        }
+        Update: {
+          appointment_date?: string
+          channel_name?: string | null
+          created_at?: string
+          duration?: number
+          expert_id?: string
+          expert_name?: string
+          id?: string
+          notes?: string | null
+          service_id?: number | null
+          status?: string
+          token?: string | null
+          uid?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_reports: {
         Row: {
           date: string | null
