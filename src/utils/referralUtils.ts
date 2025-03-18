@@ -105,7 +105,7 @@ export const shareViaWhatsApp = (referralCode: string, userName: string): void =
 // Function to share via Twitter
 export const shareViaTwitter = (referralCode: string): void => {
   const link = getReferralLink(referralCode);
-  const text = 'I'm using iFind Life to connect with expert advisors. Join using my referral link and we both get rewards!';
+  const text = "I'm using iFind Life to connect with expert advisors. Join using my referral link and we both get rewards!";
   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`);
   toast.success('Twitter sharing opened');
 };
