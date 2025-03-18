@@ -23,6 +23,7 @@ const courseAdapter = createAdapter<UserCourse, Course>(
     enrollmentDate: dbCourse.enrollment_date,
     progress: dbCourse.progress,
     completed: dbCourse.completed,
+    // Ensure userId is properly mapped for consistency
     userId: dbCourse.user_id
   }),
   // UI to DB transform

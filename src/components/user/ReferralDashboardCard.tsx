@@ -1,99 +1,133 @@
 
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UserProfile, ReferralSettings } from '@/types/supabase';
-import { fetchReferralSettings, copyReferralLink, getReferralLink } from '@/utils/referralUtils';
-import { Link } from 'react-router-dom';
-import { Gift, Share, ExternalLink, Copy } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Users, Share2, Twitter, Facebook, Copy, Mail, MessageCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { UserProfile, ReferralSettings as ReferralSettingsUI } from '@/types/supabase';
+import { fetchReferralSettings, shareViaFacebook, shareViaTwitter, shareViaWhatsApp, shareViaEmail } from '@/utils/referralUtils';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface ReferralDashboardCardProps {
-  userProfile: UserProfile;
+  userProfile: UserProfile | null;
 }
 
 const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfile }) => {
-  const [settings, setSettings] = useState<ReferralSettings | null>(null);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettingsUI | null>(null);
+  const { getReferralLink } = useUserAuth();
   
   useEffect(() => {
     const loadSettings = async () => {
-      const data = await fetchReferralSettings();
-      setSettings(data);
+      const settings = await fetchReferralSettings();
+      setReferralSettings(settings);
     };
     
     loadSettings();
   }, []);
+
+  const referralLink = getReferralLink();
   
   const handleCopyLink = () => {
-    if (userProfile?.referralCode) {
-      const link = getReferralLink(userProfile.referralCode);
-      copyReferralLink(link);
-    }
+    navigator.clipboard.writeText(referralLink);
+    toast.success('Referral link copied to clipboard!');
+  };
+  
+  const handleShareViaTwitter = () => {
+    shareViaTwitter(referralLink);
+  };
+  
+  const handleShareViaFacebook = () => {
+    shareViaFacebook(referralLink);
+  };
+  
+  const handleShareViaWhatsApp = () => {
+    shareViaWhatsApp(referralLink);
+  };
+  
+  const handleShareViaEmail = () => {
+    shareViaEmail(referralLink);
   };
 
-  if (!userProfile?.referralCode) {
-    return (
-      <Card className="border-ifind-aqua/10 h-full">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center">
-            <Gift className="mr-2 h-5 w-5 text-ifind-aqua" />
-            Referral Program
-          </CardTitle>
-          <CardDescription>Your referral code is not available yet.</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="border-ifind-aqua/10 h-full">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center">
-          <Gift className="mr-2 h-5 w-5 text-ifind-aqua" />
+    <Card className="border-ifind-aqua/10">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium flex items-center">
+          <Users className="mr-2 h-4 w-4 text-ifind-aqua" />
           Referral Program
         </CardTitle>
-        <CardDescription>Invite friends and earn rewards!</CardDescription>
+        <Share2 className="h-4 w-4 text-gray-500" />
       </CardHeader>
-      
-      <CardContent className="pb-2">
-        <div className="mb-4">
-          <span className="text-sm text-gray-500">Your Referral Code</span>
-          <div className="flex items-center mt-1">
-            <div className="bg-gray-50 px-3 py-1.5 rounded-md font-mono text-sm font-medium flex-grow">
-              {userProfile.referralCode}
-            </div>
+      <CardContent>
+        <div className="text-2xl font-bold">{userProfile?.referralCode || 'No code yet'}</div>
+        <p className="text-xs text-gray-500 mb-4">
+          Invite friends and earn rewards. You get {referralSettings?.referrerReward} credits when someone joins!
+        </p>
+        
+        <div className="space-y-4">
+          <div className="flex space-x-2">
+            <Input 
+              value={referralLink} 
+              readOnly 
+              className="text-sm" 
+            />
             <Button 
-              variant="ghost" 
-              size="sm" 
+              size="icon" 
+              variant="outline"
               onClick={handleCopyLink}
-              className="ml-2"
+              title="Copy referral link"
             >
               <Copy className="h-4 w-4" />
             </Button>
           </div>
+          
+          <div className="text-center text-sm text-gray-500">Share via</div>
+          
+          <div className="flex justify-center space-x-4">
+            <Button 
+              size="icon" 
+              variant="ghost"
+              className="rounded-full hover:bg-blue-50 hover:text-blue-600"
+              onClick={handleShareViaTwitter}
+              title="Share on Twitter"
+            >
+              <Twitter className="h-5 w-5" />
+            </Button>
+            <Button 
+              size="icon" 
+              variant="ghost"
+              className="rounded-full hover:bg-blue-100 hover:text-blue-800"
+              onClick={handleShareViaFacebook}
+              title="Share on Facebook"
+            >
+              <Facebook className="h-5 w-5" />
+            </Button>
+            <Button 
+              size="icon" 
+              variant="ghost"
+              className="rounded-full hover:bg-green-50 hover:text-green-600"
+              onClick={handleShareViaWhatsApp}
+              title="Share via WhatsApp"
+            >
+              <MessageCircle className="h-5 w-5" />
+            </Button>
+            <Button 
+              size="icon" 
+              variant="ghost"
+              className="rounded-full hover:bg-red-50 hover:text-red-600"
+              onClick={handleShareViaEmail}
+              title="Share via Email"
+            >
+              <Mail className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
         
-        {settings && (
-          <div className="rounded-md bg-gradient-to-r from-ifind-teal/5 to-ifind-aqua/5 p-3 grid grid-cols-2 gap-2 text-sm mt-2">
-            <div>
-              <p className="text-gray-500">You get</p>
-              <p className="font-semibold">${settings.referrer_reward}</p>
-            </div>
-            <div>
-              <p className="text-gray-500">Friend gets</p>
-              <p className="font-semibold">${settings.referred_reward}</p>
-            </div>
-          </div>
-        )}
+        <div className="mt-4 text-xs text-center text-gray-500">
+          Your friend gets {referralSettings?.referredReward} credits too!
+        </div>
       </CardContent>
-      
-      <CardFooter className="pt-1">
-        <Button asChild className="w-full mt-2" variant="outline">
-          <Link to="/referrals">
-            <Share className="mr-2 h-4 w-4" />
-            Manage Referrals
-          </Link>
-        </Button>
-      </CardFooter>
     </Card>
   );
 };

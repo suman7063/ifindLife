@@ -1,7 +1,8 @@
 
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, Report } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
+import { adaptReportsToUI } from '@/utils/dataAdapters';
 
 const useReports = () => {
   // Add a new report
@@ -38,10 +39,13 @@ const useReports = () => {
         
       if (reportsError) throw reportsError;
       
+      // Convert reports to the correct format
+      const reports = adaptReportsToUI(reportsData || []);
+      
       // Update the user object with the reports
       return {
         ...user,
-        reports: reportsData
+        reports
       };
     } catch (error) {
       console.error('Error adding report:', error);
@@ -60,7 +64,7 @@ const useReports = () => {
         
       if (error) throw error;
       
-      return data || [];
+      return adaptReportsToUI(data || []);
     } catch (error) {
       console.error('Error fetching user reports:', error);
       return [];
