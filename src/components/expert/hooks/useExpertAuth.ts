@@ -30,6 +30,7 @@ export const useExpertAuth = (): ExpertAuthReturnType => {
           navigate('/expert-login');
         }
       } catch (error) {
+        console.error('Error loading expert data:', error);
         toast.error('Error loading your data. Please login again.');
         localStorage.removeItem('ifindlife-expert-email');
         navigate('/expert-login');
@@ -78,6 +79,7 @@ export const useExpertAuth = (): ExpertAuthReturnType => {
       
       toast.success('User reported successfully');
     } catch (error) {
+      console.error('Error reporting user:', error);
       toast.error('Failed to report user. Please try again.');
     }
   };

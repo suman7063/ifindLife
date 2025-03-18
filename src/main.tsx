@@ -6,7 +6,7 @@ import './index.css'
 import { ThemeProvider } from 'next-themes'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
-import { UserAuthProvider } from './contexts/UserAuthProvider'
+import { UserAuthProvider } from './contexts/UserAuthContext'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

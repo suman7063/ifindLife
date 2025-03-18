@@ -2,17 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
-import { PhoneOff } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAgora } from '@/hooks/auth/useAgora';
-import { useUserAuth } from '@/hooks/useUserAuth';
-import VideoCall from './VideoCall';
-import AgoraRTC, { IAgoraRTCClient, IMicrophoneAudioTrack, ICameraVideoTrack } from 'agora-rtc-sdk-ng';
+import { PhoneCall, PhoneOff, Mic, MicOff, Video, VideoOff, Camera, CameraOff } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
 
 interface CallModalProps {
   isOpen: boolean;
   onClose: () => void;
-  expert: {
+  astrologer: {
     id: number;
     name: string;
     imageUrl: string;
@@ -20,105 +16,30 @@ interface CallModalProps {
   };
 }
 
-const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, expert }) => {
+const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, astrologer }) => {
   const [callStatus, setCallStatus] = useState<'connecting' | 'connected' | 'ended'>('connecting');
   const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isCameraOn, setIsCameraOn] = useState(true);
   const [balance, setBalance] = useState(500); // Dummy balance in wallet (₹)
-  const { currentUser } = useUserAuth();
-  const agora = useAgora();
   
-  const [videoSession, setVideoSession] = useState<any>(null);
-  const [inCall, setInCall] = useState(false);
-  const [tracks, setTracks] = useState<[IMicrophoneAudioTrack, ICameraVideoTrack] | null>(null);
-  
-  // Initialize Agora client
-  const [client, setClient] = useState<IAgoraRTCClient | null>(null);
-  
-  // Create client and tracks when modal opens
+  // Handle call connection
   useEffect(() => {
-    if (isOpen) {
-      // Create Agora client
-      const agoraClient = agora.createClient();
-      setClient(agoraClient);
-      
-      // Initialize session data
-      if (currentUser && expert.id) {
-        const channelName = agora.generateChannelName(expert.id.toString(), currentUser.id);
-        const token = agora.generateToken(channelName);
-        
-        setVideoSession({
-          channelName,
-          token,
-          uid: Date.now()
-        });
-      }
-      
-      // Create tracks
-      const initTracks = async () => {
-        try {
-          const audioTrack = await agora.createMicrophoneTrack();
-          const videoTrack = await agora.createCameraTrack();
-          setTracks([audioTrack, videoTrack]);
-        } catch (error) {
-          console.error("Error creating tracks:", error);
-          toast.error("Failed to initialize audio/video. Please check your camera and microphone.");
-        }
-      };
-      
-      initTracks();
-    }
+    let timer: ReturnType<typeof setTimeout>;
     
-    return () => {
-      // Clean up when component unmounts
-      if (inCall && client) {
-        client.leave();
-        setInCall(false);
-        if (tracks) {
-          tracks[0].close();
-          tracks[1].close();
-        }
-      }
-    };
-  }, [isOpen, currentUser, expert.id, agora]);
-  
-  // Join channel when client and tracks are ready
-  useEffect(() => {
-    if (client && tracks && videoSession && !inCall) {
-      const joinChannel = async () => {
-        // Set up event handlers
-        client.on('user-published', async (user, mediaType) => {
-          await client.subscribe(user, mediaType);
-          if (mediaType === 'video') {
-            setCallStatus('connected');
-          }
-          if (mediaType === 'audio') {
-            user.audioTrack?.play();
-          }
+    if (isOpen && callStatus === 'connecting') {
+      timer = setTimeout(() => {
+        setCallStatus('connected');
+        toast({
+          title: "Video Call Connected",
+          description: `You are now connected with ${astrologer.name}`,
         });
-        
-        try {
-          // Join the channel
-          await client.join(
-            'your-agora-app-id', // Replace with your Agora app ID
-            videoSession.channelName,
-            videoSession.token || null,
-            videoSession.uid || null
-          );
-          
-          // Publish local tracks
-          await client.publish(tracks);
-          setInCall(true);
-          setCallStatus('connected');
-          toast.success(`Connected with ${expert.name}`);
-        } catch (error) {
-          console.error('Error joining Agora channel:', error);
-          toast.error('Failed to connect video call');
-        }
-      };
+      }, 2000);
       
-      joinChannel();
+      return () => clearTimeout(timer);
     }
-  }, [client, tracks, videoSession, inCall, expert.name]);
+  }, [isOpen, callStatus, astrologer.name]);
   
   // Handle call duration and balance update
   useEffect(() => {
@@ -129,11 +50,15 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, expert }) => {
         setDuration(prev => prev + 1);
         // Deduct balance based on price per minute (converting to per second)
         setBalance(prev => {
-          const newBalance = prev - (expert.price / 60);
+          const newBalance = prev - (astrologer.price / 60);
           // End call if balance is low
           if (newBalance <= 50) {
-            handleEndCall();
-            toast.error("Call ended due to low balance");
+            setCallStatus('ended');
+            toast({
+              title: "Low Balance",
+              description: "Call ended due to low balance",
+              variant: "destructive"
+            });
             clearInterval(intervalId);
           }
           return newBalance;
@@ -144,7 +69,7 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, expert }) => {
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [callStatus, expert.price]);
+  }, [callStatus, astrologer.price]);
   
   // Format duration to MM:SS
   const formatDuration = (seconds: number) => {
@@ -155,15 +80,11 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, expert }) => {
   
   // Handle end call
   const handleEndCall = () => {
-    if (inCall && client) {
-      client.leave();
-      tracks?.[0].close();
-      tracks?.[1].close();
-      setInCall(false);
-    }
-    
     setCallStatus('ended');
-    toast.success(`Call duration: ${formatDuration(duration)}`);
+    toast({
+      title: "Call Ended",
+      description: `Call duration: ${formatDuration(duration)}`,
+    });
     
     // Close modal after a brief delay
     setTimeout(() => {
@@ -171,43 +92,84 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, expert }) => {
       // Reset state for next call
       setCallStatus('connecting');
       setDuration(0);
-      setVideoSession(null);
+      setIsMuted(false);
+      setIsVideoOn(true);
+      setIsCameraOn(true);
     }, 1500);
+  };
+  
+  // Toggle mute
+  const toggleMute = () => {
+    setIsMuted(!isMuted);
+    toast({
+      description: isMuted ? "Microphone unmuted" : "Microphone muted",
+    });
+  };
+  
+  // Toggle video
+  const toggleVideo = () => {
+    setIsVideoOn(!isVideoOn);
+    toast({
+      description: isVideoOn ? "Video paused" : "Video resumed",
+    });
+  };
+  
+  // Toggle camera
+  const toggleCamera = () => {
+    setIsCameraOn(!isCameraOn);
+    toast({
+      description: isCameraOn ? "Camera turned off" : "Camera turned on",
+    });
   };
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleEndCall()}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-center">
             {callStatus === 'connecting' ? 'Connecting...' : 
-             callStatus === 'connected' ? 'Video Call' : 
-             'Call Ended'}
+             callStatus === 'connected' ? 'Video Call' : 'Call Ended'}
           </DialogTitle>
           <DialogDescription className="text-center">
             {callStatus === 'connected' ? 
-              `Connected with ${expert.name} (₹${expert.price}/min)` : 
+              `Connected with ${astrologer.name} (₹${astrologer.price}/min)` : 
               callStatus === 'ended' ? 
-              `Call with ${expert.name} ended` : 
-              `Connecting to ${expert.name}...`}
+              `Call with ${astrologer.name} ended` : 
+              `Connecting to ${astrologer.name}...`}
           </DialogDescription>
         </DialogHeader>
         
-        <div className="flex flex-col items-center py-4 space-y-4">
-          {callStatus === 'connecting' && !inCall && (
-            <div className="w-16 h-16 border-4 border-ifind-aqua border-t-transparent rounded-full animate-spin"></div>
-          )}
-          
-          {callStatus === 'connected' && inCall && client && tracks && (
-            <div className="w-full h-64 md:h-80">
-              <VideoCall 
-                client={client} 
-                tracks={tracks} 
-                setStart={setInCall} 
-                channelName={videoSession?.channelName} 
-              />
-            </div>
-          )}
+        <div className="flex flex-col items-center py-6 space-y-4">
+          <div className="relative w-full max-w-sm aspect-video bg-slate-900 rounded-lg overflow-hidden">
+            {/* Astrologer video (simulated) */}
+            {callStatus !== 'ended' && isVideoOn && (
+              <div className="w-full h-full">
+                <img 
+                  src={astrologer.imageUrl} 
+                  alt={astrologer.name}
+                  className="w-full h-full object-cover opacity-90"
+                />
+                <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 text-xs rounded">
+                  {astrologer.name}
+                </div>
+              </div>
+            )}
+            
+            {(!isVideoOn || callStatus === 'ended') && (
+              <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                <VideoOff className="h-12 w-12 text-white/50" />
+              </div>
+            )}
+            
+            {/* User camera (simulated) */}
+            {callStatus !== 'ended' && isCameraOn && (
+              <div className="absolute bottom-2 right-2 w-24 h-32 bg-slate-700 rounded overflow-hidden border-2 border-white/20">
+                <div className="w-full h-full flex items-center justify-center">
+                  <Camera className="h-8 w-8 text-white/70" />
+                </div>
+              </div>
+            )}
+          </div>
           
           {callStatus === 'connected' && (
             <>
@@ -226,14 +188,54 @@ const CallModal: React.FC<CallModalProps> = ({ isOpen, onClose, expert }) => {
         </div>
         
         <DialogFooter className="flex justify-center space-x-4">
-          <Button 
-            onClick={handleEndCall} 
-            variant="destructive" 
-            className="rounded-full p-3"
-            title="End call"
-          >
-            <PhoneOff className="h-5 w-5" />
-          </Button>
+          {callStatus === 'connected' && (
+            <>
+              <Button 
+                onClick={toggleMute} 
+                variant="outline" 
+                className={`rounded-full p-3 ${isMuted ? 'bg-red-100 border-red-300' : ''}`}
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+              </Button>
+              
+              <Button 
+                onClick={toggleCamera} 
+                variant="outline" 
+                className={`rounded-full p-3 ${!isCameraOn ? 'bg-red-100 border-red-300' : ''}`}
+                title={isCameraOn ? "Turn off camera" : "Turn on camera"}
+              >
+                {isCameraOn ? <Camera className="h-5 w-5" /> : <CameraOff className="h-5 w-5" />}
+              </Button>
+              
+              <Button 
+                onClick={toggleVideo} 
+                variant="outline" 
+                className={`rounded-full p-3 ${!isVideoOn ? 'bg-red-100 border-red-300' : ''}`}
+                title={isVideoOn ? "Pause video" : "Resume video"}
+              >
+                {isVideoOn ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
+              </Button>
+            </>
+          )}
+          
+          {callStatus !== 'ended' ? (
+            <Button 
+              onClick={handleEndCall} 
+              variant="destructive" 
+              className="rounded-full p-3"
+              title="End call"
+            >
+              <PhoneOff className="h-5 w-5" />
+            </Button>
+          ) : (
+            <Button 
+              onClick={onClose} 
+              className="bg-astro-purple hover:bg-astro-violet"
+            >
+              Close
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

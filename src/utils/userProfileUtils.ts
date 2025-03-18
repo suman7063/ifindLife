@@ -11,7 +11,7 @@ import {
   adaptReviewsToDB,
   adaptReportsToDB
 } from './dataAdapters';
-import { fetchUserProfile, fetchUserReviews, fetchUserReports } from './profileFetcher';
+import { fetchUserProfile } from './profileFetcher';
 import { updateUserProfile, updateProfilePicture } from './profileUpdater';
 
 export {
@@ -28,8 +28,6 @@ export {
   
   // From profileFetcher.ts
   fetchUserProfile,
-  fetchUserReviews,
-  fetchUserReports,
   
   // From profileUpdater.ts
   updateUserProfile,

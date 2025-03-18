@@ -1,5 +1,6 @@
 
-import { useNavigate } from 'react-router-dom'; 
+// Import the correct router package based on the framework
+import { useNavigate } from 'react-router-dom'; // Using react-router instead of next
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -18,11 +19,13 @@ export const useSupabaseExpertAuth = () => {
         .single();
       
       if (error) {
+        console.error('Error fetching expert:', error);
         return null;
       }
       
       return data as Expert;
     } catch (error) {
+      console.error('Error in getExpert:', error);
       return null;
     }
   };
@@ -56,6 +59,7 @@ export const useSupabaseExpertAuth = () => {
         return false;
       }
     } catch (error) {
+      console.error('Login failed:', error);
       toast.error('Login failed. Please try again.');
       return false;
     } finally {

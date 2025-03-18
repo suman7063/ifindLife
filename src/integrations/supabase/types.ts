@@ -9,87 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_users: {
-        Row: {
-          created_at: string
-          id: string
-          role: string
-        }
-        Insert: {
-          created_at?: string
-          id: string
-          role: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: string
-        }
-        Relationships: []
-      }
-      appointments: {
-        Row: {
-          appointment_date: string
-          channel_name: string | null
-          created_at: string
-          duration: number
-          expert_id: string
-          expert_name: string
-          id: string
-          notes: string | null
-          service_id: number | null
-          status: string
-          token: string | null
-          uid: number | null
-          user_id: string
-        }
-        Insert: {
-          appointment_date: string
-          channel_name?: string | null
-          created_at?: string
-          duration: number
-          expert_id: string
-          expert_name: string
-          id?: string
-          notes?: string | null
-          service_id?: number | null
-          status: string
-          token?: string | null
-          uid?: number | null
-          user_id: string
-        }
-        Update: {
-          appointment_date?: string
-          channel_name?: string | null
-          created_at?: string
-          duration?: number
-          expert_id?: string
-          expert_name?: string
-          id?: string
-          notes?: string | null
-          service_id?: number | null
-          status?: string
-          token?: string | null
-          uid?: number | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appointments_expert_id_fkey"
-            columns: ["expert_id"]
-            isOneToOne: false
-            referencedRelation: "experts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "appointments_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       expert_reports: {
         Row: {
           date: string | null
@@ -134,7 +53,6 @@ export type Database = {
       experts: {
         Row: {
           address: string | null
-          average_rating: number | null
           bio: string | null
           certificate_urls: string[] | null
           city: string | null
@@ -146,14 +64,12 @@ export type Database = {
           name: string
           phone: string | null
           profile_picture: string | null
-          reviews_count: number | null
           selected_services: number[] | null
           specialization: string | null
           state: string | null
         }
         Insert: {
           address?: string | null
-          average_rating?: number | null
           bio?: string | null
           certificate_urls?: string[] | null
           city?: string | null
@@ -165,14 +81,12 @@ export type Database = {
           name: string
           phone?: string | null
           profile_picture?: string | null
-          reviews_count?: number | null
           selected_services?: number[] | null
           specialization?: string | null
           state?: string | null
         }
         Update: {
           address?: string | null
-          average_rating?: number | null
           bio?: string | null
           certificate_urls?: string[] | null
           city?: string | null
@@ -184,90 +98,9 @@ export type Database = {
           name?: string
           phone?: string | null
           profile_picture?: string | null
-          reviews_count?: number | null
           selected_services?: number[] | null
           specialization?: string | null
           state?: string | null
-        }
-        Relationships: []
-      }
-      moderation_actions: {
-        Row: {
-          action_type: Database["public"]["Enums"]["moderation_action_type"]
-          admin_id: string
-          created_at: string
-          id: string
-          message: string
-          notes: string | null
-          report_id: string
-        }
-        Insert: {
-          action_type: Database["public"]["Enums"]["moderation_action_type"]
-          admin_id: string
-          created_at?: string
-          id?: string
-          message: string
-          notes?: string | null
-          report_id: string
-        }
-        Update: {
-          action_type?: Database["public"]["Enums"]["moderation_action_type"]
-          admin_id?: string
-          created_at?: string
-          id?: string
-          message?: string
-          notes?: string | null
-          report_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "moderation_actions_report_id_fkey"
-            columns: ["report_id"]
-            isOneToOne: false
-            referencedRelation: "moderation_reports"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      moderation_reports: {
-        Row: {
-          created_at: string
-          details: string | null
-          id: string
-          reason: Database["public"]["Enums"]["report_reason"]
-          reporter_id: string
-          reporter_type: string
-          session_id: string | null
-          status: Database["public"]["Enums"]["report_status"]
-          target_id: string
-          target_type: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          reason: Database["public"]["Enums"]["report_reason"]
-          reporter_id: string
-          reporter_type: string
-          session_id?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          target_id: string
-          target_type: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          details?: string | null
-          id?: string
-          reason?: Database["public"]["Enums"]["report_reason"]
-          reporter_id?: string
-          reporter_type?: string
-          session_id?: string | null
-          status?: Database["public"]["Enums"]["report_status"]
-          target_id?: string
-          target_type?: string
-          updated_at?: string
         }
         Relationships: []
       }
@@ -438,44 +271,6 @@ export type Database = {
           },
         ]
       }
-      user_expert_services: {
-        Row: {
-          amount: number
-          created_at: string
-          expert_id: string
-          id: string
-          service_id: number
-          status: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          expert_id: string
-          id?: string
-          service_id: number
-          status?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          expert_id?: string
-          id?: string
-          service_id?: number
-          status?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_expert_services_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_favorites: {
         Row: {
           expert_id: number
@@ -548,7 +343,6 @@ export type Database = {
           id: string
           rating: number
           user_id: string | null
-          verified: boolean | null
         }
         Insert: {
           comment?: string | null
@@ -557,7 +351,6 @@ export type Database = {
           id?: string
           rating: number
           user_id?: string | null
-          verified?: boolean | null
         }
         Update: {
           comment?: string | null
@@ -566,7 +359,6 @@ export type Database = {
           id?: string
           rating?: number
           user_id?: string | null
-          verified?: boolean | null
         }
         Relationships: [
           {
@@ -675,21 +467,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      get_user_reviews_with_experts: {
-        Args: {
-          user_id_param: string
-        }
-        Returns: {
-          review_id: string
-          expert_id: number
-          rating: number
-          comment: string
-          date: string
-          verified: boolean
-          user_name: string
-          expert_name: string
-        }[]
-      }
       handle_completed_referral: {
         Args: {
           p_referral_id: string
@@ -698,15 +475,7 @@ export type Database = {
       }
     }
     Enums: {
-      moderation_action_type: "warning" | "suspension" | "ban" | "no_action"
-      report_reason:
-        | "misleading_information"
-        | "off_platform_redirection"
-        | "inappropriate_behavior"
-        | "bad_behavior"
-        | "foul_language"
-        | "other"
-      report_status: "pending" | "under_review" | "resolved" | "dismissed"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never

@@ -110,6 +110,7 @@ const RazorPayCheckout: React.FC<RazorPayCheckoutProps> = ({
             
             onSuccess();
           } catch (error: any) {
+            console.error('Payment verification error:', error);
             toast({
               title: "Payment Verification Failed",
               description: error.message || "There was an issue verifying your payment.",
@@ -131,6 +132,7 @@ const RazorPayCheckout: React.FC<RazorPayCheckoutProps> = ({
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error: any) {
+      console.error('Razorpay error:', error);
       toast({
         title: "Payment Failed",
         description: error.message || "There was an issue with your payment.",

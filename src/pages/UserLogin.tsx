@@ -1,48 +1,72 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { useUserAuth } from '@/hooks/useUserAuth';
-import { Link } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
+import { fetchReferralSettings } from '@/utils/referralUtils';
+import { ReferralSettings } from '@/types/supabase';
+import LoginForm from '@/components/auth/LoginForm';
+import RegisterForm from '@/components/auth/RegisterForm';
+import { Link } from 'react-router-dom';
 
 const UserLogin = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { login, signup, isAuthenticated } = useUserAuth();
+  const [loading, setLoading] = useState(false);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
 
-  const redirectPath = location.state?.path || '/';
+  // Get referral code from URL if available
+  const queryParams = new URLSearchParams(location.search);
+  const referralCodeFromUrl = queryParams.get('ref');
 
-  // Use the correct function names from UserAuthContext
-  const { login, signup } = useUserAuth();
-  
-  // Update the handleLogin function
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/user-dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Load referral settings
+  useEffect(() => {
+    const loadReferralSettings = async () => {
+      const settings = await fetchReferralSettings();
+      setReferralSettings(settings);
+    };
+    
+    loadReferralSettings();
+  }, []);
+
+  // Switch to registration tab if referral code is in URL
+  useEffect(() => {
+    if (referralCodeFromUrl) {
+      // Find the register tab trigger and click it
+      const registerTab = document.querySelector('[data-value="register"]');
+      if (registerTab && registerTab instanceof HTMLElement) {
+        registerTab.click();
+      }
+    }
+  }, [referralCodeFromUrl]);
+
   const handleLogin = async (email: string, password: string) => {
     setLoading(true);
+    
     try {
       const success = await login(email, password);
-      
       if (success) {
-        navigate(redirectPath || '/');
-        toast.success('Login successful');
-      } else {
-        toast.error('Login failed');
+        navigate('/user-dashboard');
       }
     } catch (error) {
-      toast.error('An error occurred during login');
+      console.error('Login error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // Update the handleRegister function
-  const handleRegister = async (userData: {
+  const handleSignup = async (userData: {
     name: string;
     email: string;
     phone: string;
@@ -52,57 +76,62 @@ const UserLogin = () => {
     referralCode?: string;
   }) => {
     setLoading(true);
+    
     try {
       const success = await signup(userData);
       
       if (success) {
-        navigate('/');
-        toast.success('Registration successful!');
-      } else {
-        toast.error('Registration failed');
+        toast.success('Please check your email to confirm your account');
+        // Optional: Switch to login tab after successful signup
+        const loginTab = document.querySelector('[data-state="inactive"][data-value="login"]');
+        if (loginTab) {
+          (loginTab as HTMLElement).click();
+        }
       }
     } catch (error) {
-      toast.error('An error occurred during registration');
+      console.error('Signup error:', error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">User Login</CardTitle>
-          <CardDescription className="text-center">Enter your email and password to login</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4">
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="m@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1 py-10 flex items-center justify-center bg-stars">
+        <div className="container max-w-md">
+          <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-ifind-aqua/10">
+            <Link to="/" className="flex items-center justify-center space-x-2 mb-8">
+              <div className="relative w-8 h-8">
+                <div className="absolute w-8 h-8 bg-ifind-aqua rounded-full opacity-70"></div>
+                <div className="absolute w-4 h-4 bg-ifind-teal rounded-full top-1 left-2"></div>
+              </div>
+              <span className="font-bold text-2xl text-gradient">iFindLife</span>
+            </Link>
+            
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Register</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <LoginForm onLogin={handleLogin} loading={loading} userType="user" />
+              </TabsContent>
+              
+              <TabsContent value="register">
+                <RegisterForm 
+                  onRegister={handleSignup} 
+                  loading={loading} 
+                  initialReferralCode={referralCodeFromUrl}
+                  referralSettings={referralSettings}
+                />
+              </TabsContent>
+            </Tabs>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <Button onClick={() => handleLogin(email, password)} className="bg-blue-500 text-white" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </Button>
-          <div className="text-sm text-center">
-            Don't have an account? <Link to="/signup" className="text-blue-500">Sign up</Link>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };

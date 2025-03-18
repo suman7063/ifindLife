@@ -52,6 +52,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
+    console.error("Error creating RazorPay order:", error.message);
     return new Response(
       JSON.stringify({ error: error.message || "Internal server error" }),
       {

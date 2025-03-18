@@ -1,133 +1,195 @@
 
 import { supabase } from '@/lib/supabase';
+import { ReferralSettings, Referral, ReferralUI } from '@/types/supabase';
+import { toast } from 'sonner';
 
-/**
- * Generates a unique referral code.
- * @returns {string} A unique referral code.
- */
-export const generateReferralCode = (): string => {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let referralCode = '';
-  for (let i = 0; i < 6; i++) {
-    referralCode += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return referralCode;
-};
-
-/**
- * Creates a referral link using the generated referral code.
- * @param {string} referralCode - The referral code to be included in the link.
- * @returns {string} The referral link.
- */
-export const createReferralLink = (referralCode: string): string => {
-  const baseUrl = window.location.origin;
-  return `${baseUrl}/signup?referralCode=${referralCode}`;
-};
-
-/**
- * Gets the referral link for a user
- * @param {string} referralCode - The referral code to generate link from
- * @returns {string} The formatted referral link
- */
-export const getReferralLink = (referralCode: string): string => {
-  return createReferralLink(referralCode);
-};
-
-/**
- * Copies the referral link to clipboard
- * @param {string} referralCode - The referral code to be copied
- * @returns {Promise<boolean>} - Success status of the copy operation
- */
-export const copyReferralLink = async (referralCode: string): Promise<boolean> => {
-  try {
-    const link = createReferralLink(referralCode);
-    await navigator.clipboard.writeText(link);
-    return true;
-  } catch (error) {
-    return false;
-  }
-};
-
-/**
- * Processes the referral code during user signup.
- * @param {string} referralCode - The referral code entered by the user.
- * @returns {Promise<boolean>} - Returns true if the referral code is valid and processed, false otherwise.
- */
-export const processReferralCode = async (referralCode: string): Promise<boolean> => {
-  if (!referralCode) {
-    return false;
-  }
-
-  try {
-    // Check if the referral code exists in the database
-    const { data, error } = await supabase
-      .from('users')
-      .select('id')
-      .eq('referral_code', referralCode)
-      .single();
-
-    if (error) {
-      return false;
-    }
-
-    if (!data) {
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    return false;
-  }
-};
-
-/**
- * Gets the current referral settings from the database
- * @returns {Promise<any>} - Referral settings object
- */
-export const getReferralSettings = async () => {
+// Fetch the current referral program settings
+export const fetchReferralSettings = async (): Promise<ReferralSettings | null> => {
   try {
     const { data, error } = await supabase
       .from('referral_settings')
       .select('*')
+      .limit(1)
       .single();
-    
+
     if (error) {
+      console.error('Error fetching referral settings:', error);
       return null;
     }
-    
+
     return data;
   } catch (error) {
+    console.error('Error fetching referral settings:', error);
     return null;
   }
 };
 
-/**
- * Gets the referrals for a user
- * @param {string} userId - The user ID to get referrals for
- * @returns {Promise<any[]>} - Array of referrals
- */
-export const getUserReferrals = async (userId: string) => {
+// Fetch referrals made by a user
+export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> => {
   try {
+    // First fetch basic referral data
     const { data, error } = await supabase
       .from('referrals')
       .select(`
         id,
         referrer_id,
         referred_id,
+        referral_code,
         status,
-        created_at,
-        completed_at,
         reward_claimed,
-        users!referred_id(name, email, created_at)
+        created_at,
+        completed_at
       `)
       .eq('referrer_id', userId);
-    
+
     if (error) {
+      console.error('Error fetching user referrals:', error);
       return [];
     }
-    
-    return data || [];
+
+    // Then fetch the names of referred users separately
+    const referralUIs: ReferralUI[] = await Promise.all(
+      data.map(async (item) => {
+        let referredName = 'Anonymous';
+        
+        // Only try to fetch the name if we have a referred_id
+        if (item.referred_id) {
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', item.referred_id)
+            .single();
+            
+          if (!userError && userData) {
+            referredName = userData.name || 'Anonymous';
+          }
+        }
+        
+        return {
+          id: item.id,
+          referrerId: item.referrer_id,
+          referredId: item.referred_id,
+          referredName: referredName,
+          referralCode: item.referral_code,
+          status: item.status as 'pending' | 'completed' | 'expired',
+          rewardClaimed: item.reward_claimed,
+          createdAt: item.created_at,
+          completedAt: item.completed_at
+        };
+      })
+    );
+
+    return referralUIs;
   } catch (error) {
+    console.error('Error fetching user referrals:', error);
     return [];
   }
+};
+
+// Generate a shareable referral link
+export const getReferralLink = (code: string): string => {
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/signup?ref=${code}`;
+};
+
+// Process a referral code during signup
+export const processReferralCode = async (
+  referralCode: string,
+  userId: string
+): Promise<boolean> => {
+  try {
+    // Find the user who owns this referral code
+    const { data: referrerData, error: referrerError } = await supabase
+      .from('users')
+      .select('id')
+      .eq('referral_code', referralCode)
+      .single();
+
+    if (referrerError || !referrerData) {
+      console.error('Invalid referral code', referrerError);
+      return false;
+    }
+
+    const referrerId = referrerData.id;
+
+    // Create a new referral record
+    const { error: referralError } = await supabase
+      .from('referrals')
+      .insert({
+        referrer_id: referrerId,
+        referred_id: userId,
+        referral_code: referralCode,
+        status: 'pending',
+        reward_claimed: false
+      });
+
+    if (referralError) {
+      console.error('Error creating referral record:', referralError.message || referralError);
+      return false;
+    }
+
+    return true;
+  } catch (error: any) {
+    console.error('Error processing referral code:', error.message || error);
+    return false;
+  }
+};
+
+// Complete a referral after first purchase
+export const completeReferral = async (referralId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .rpc('handle_completed_referral', { p_referral_id: referralId });
+
+    if (error) {
+      console.error('Error completing referral:', error);
+      return false;
+    }
+
+    return !!data;
+  } catch (error) {
+    console.error('Error completing referral:', error);
+    return false;
+  }
+};
+
+// Copy referral link to clipboard
+export const copyReferralLink = (link: string): void => {
+  navigator.clipboard.writeText(link)
+    .then(() => {
+      toast.success('Referral link copied to clipboard!');
+    })
+    .catch(err => {
+      console.error('Failed to copy text: ', err);
+      toast.error('Failed to copy referral link');
+    });
+};
+
+// Share referral via different platforms
+export const shareViaEmail = (referralCode: string, userName: string = 'I'): void => {
+  const subject = encodeURIComponent('Join iFindLife with my referral code');
+  const referralLink = getReferralLink(referralCode);
+  const body = encodeURIComponent(
+    `Hi there,\n\n${userName} thought you might be interested in iFindLife. Sign up using my referral code ${referralCode} or click this link: ${referralLink}\n\nYou'll get a bonus credit in your wallet after your first purchase!\n\nRegards,\n${userName}`
+  );
+  
+  window.open(`mailto:?subject=${subject}&body=${body}`);
+};
+
+export const shareViaWhatsApp = (referralCode: string, userName: string = 'I'): void => {
+  const referralLink = getReferralLink(referralCode);
+  const text = encodeURIComponent(
+    `Hey! ${userName} invites you to join iFindLife. Use my referral code ${referralCode} or sign up with this link: ${referralLink} to get bonus credits!`
+  );
+  
+  window.open(`https://wa.me/?text=${text}`);
+};
+
+export const shareViaTwitter = (referralCode: string): void => {
+  const referralLink = getReferralLink(referralCode);
+  const text = encodeURIComponent(
+    `Join iFindLife using my referral code ${referralCode} and get bonus credits! Sign up here: ${referralLink}`
+  );
+  
+  window.open(`https://twitter.com/intent/tweet?text=${text}`);
 };

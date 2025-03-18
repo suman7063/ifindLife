@@ -1,110 +1,89 @@
 
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
-import { convertExpertIdToString, convertExpertIdToNumber } from '@/types/supabase/expertId';
+import { UserProfile, User, Referral, ReferralUI } from '@/types/supabase';
+import { convertUserToUserProfile } from '@/utils/profileConverters';
+import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
+import { fetchUserReferrals } from '@/utils/referralUtils';
 
-// Function to fetch user profile
-export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+export const fetchUserProfile = async (
+  user: User
+): Promise<UserProfile | null> => {
+  if (!user || !user.id) return null;
+  
   try {
-    const { data: userData, error } = await supabase
+    const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('id', userId)
+      .eq('id', user.id)
       .single();
+      
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
     
-    if (error) throw error;
+    const userProfile = convertUserToUserProfile(data);
     
-    // Create base user profile
-    const userProfile: UserProfile = {
-      id: userData.id,
-      name: userData.name,
-      email: userData.email,
-      phone: userData.phone,
-      country: userData.country,
-      city: userData.city,
-      currency: userData.currency,
-      profilePicture: userData.profile_picture,
-      walletBalance: userData.wallet_balance,
-      createdAt: userData.created_at,
-      referralCode: userData.referral_code,
-      referredBy: userData.referred_by,
-      referralLink: userData.referral_link
-    };
+    const { data: favorites } = await supabase
+      .from('user_favorites')
+      .select('expert_id')
+      .eq('user_id', user.id);
     
-    return userProfile;
-  } catch (error: any) {
-    toast.error(error.message || 'Failed to load user profile');
-    return null;
-  }
-};
-
-// Function to fetch user reviews
-export const fetchUserReviews = async (userId: string) => {
-  try {
-    const { data: reviews, error } = await supabase
+    if (favorites && favorites.length > 0) {
+      const expertIds = favorites.map(fav => fav.expert_id);
+      const { data: expertsData } = await supabase
+        .from('experts')
+        .select('*')
+        .in('id', expertIds as any);
+        
+      userProfile.favoriteExperts = expertsData || [];
+    }
+    
+    const { data: courses } = await supabase
+      .from('user_courses')
+      .select('*')
+      .eq('user_id', user.id);
+      
+    userProfile.enrolledCourses = adaptCoursesToUI(courses || []);
+    
+    const { data: reviews } = await supabase
       .from('user_reviews')
       .select('*')
-      .eq('user_id', userId);
-    
-    if (error) {
-      toast.error('Error fetching user reviews');
-      return [];
-    }
-    
-    const reviewsWithDetails = await Promise.all((reviews || []).map(async (review) => {
-      const { data: expertData } = await supabase
-        .from('experts')
-        .select('name')
-        .eq('id', convertExpertIdToString(review.expert_id))
-        .single();
+      .eq('user_id', user.id);
       
-      return {
-        id: review.id,
-        expertId: convertExpertIdToString(review.expert_id),
-        rating: review.rating,
-        comment: review.comment || '',
-        date: review.date,
-        verified: review.verified || false,
-        userId: review.user_id || '',
-        userName: 'Anonymous User', // Will be updated from user profile
-        expertName: expertData?.name || 'Unknown Expert'
-      };
-    }));
+    userProfile.reviews = adaptReviewsToUI(reviews || []);
     
-    return reviewsWithDetails;
-  } catch (error) {
-    toast.error('Error fetching user reviews');
-    return [];
-  }
-};
-
-// Function to fetch user reports
-export const fetchUserReports = async (userId: string) => {
-  try {
-    const { data: reports, error } = await supabase
+    const { data: reports } = await supabase
       .from('user_reports')
       .select('*')
-      .eq('user_id', userId);
+      .eq('user_id', user.id);
+      
+    userProfile.reports = adaptReportsToUI(reports || []);
     
-    if (error) {
-      toast.error('Error fetching user reports');
-      return [];
-    }
+    const { data: transactions } = await supabase
+      .from('user_transactions')
+      .select('*')
+      .eq('user_id', user.id);
+      
+    userProfile.transactions = transactions || [];
     
-    // Map the data to the Report interface
-    return (reports || []).map(report => ({
-      id: report.id,
-      expertId: convertExpertIdToString(report.expert_id),
-      reason: report.reason || '',
-      details: report.details || '',
-      date: report.date || new Date().toISOString(),
-      status: report.status || 'pending',
-      userId: report.user_id,
-      userName: 'User' // Will be updated from profile
+    const referrals = await fetchUserReferrals(user.id);
+    
+    // Convert the ReferralUI[] to the format expected by UserProfile.referrals
+    userProfile.referrals = referrals.map(ref => ({
+      id: ref.id,
+      referrer_id: ref.referrerId,
+      referred_id: ref.referredId,
+      referral_code: ref.referralCode,
+      status: ref.status,
+      reward_claimed: ref.rewardClaimed,
+      created_at: ref.createdAt,
+      completed_at: ref.completedAt
     }));
+    
+    return userProfile;
   } catch (error) {
-    toast.error('Error fetching user reports');
-    return [];
+    console.error('Error fetching user profile:', error);
+    return null;
   }
 };

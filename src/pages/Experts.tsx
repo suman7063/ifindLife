@@ -1,373 +1,252 @@
-
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import SearchSort from '@/components/experts/SearchSort';
+import FilterPanel from '@/components/experts/FilterPanel';
 import ExpertsGrid from '@/components/experts/ExpertsGrid';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Slider } from '@/components/ui/slider';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Expert, ExpertFilterParams } from '@/types/expert';
+import { Expert } from '@/types/expert';
 
-const ExpertsPage: React.FC = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<ExpertFilterParams>({});
-  const [experts, setExperts] = useState<Expert[]>([]);
-  const [filteredExperts, setFilteredExperts] = useState<Expert[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 200]);
-  const [isLoading, setIsLoading] = useState(true);
+const Experts = () => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 100]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterCount, setFilterCount] = useState(0);
+  
+  // Filter state
+  const [specialties, setSpecialties] = useState({
+    anxiety: false,
+    depression: false,
+    stress: false,
+    relationships: false,
+    trauma: false,
+    selfEsteem: false,
+  });
+  
+  const [languages, setLanguages] = useState({
+    english: false,
+    hindi: false,
+    tamil: false,
+    telugu: false,
+    kannada: false,
+  });
 
-  // Mock data for demonstration
-  const mockExperts: Expert[] = [
+  const [experience, setExperience] = useState({
+    lessThan5: false,
+    between5And10: false,
+    moreThan10: false,
+  });
+
+  // Sample expert data
+  const expertData: Expert[] = [
     {
       id: 1,
-      name: "Dr. Sarah Johnson",
-      email: "sarah.johnson@example.com",
-      experience: 8,
-      specialties: ["Anxiety", "Depression", "Relationships"],
+      name: "Dr. Raman Sharma",
+      experience: 15,
+      specialties: ["Anxiety", "Depression", "CBT"],
       rating: 4.9,
-      consultations: 243,
-      price: 85,
-      waitTime: "2-3 days",
-      imageUrl: "https://randomuser.me/api/portraits/women/54.jpg",
+      consultations: 2300,
+      price: 30,
+      waitTime: "Available",
+      imageUrl: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=2070&auto=format&fit=crop",
       online: true,
-      languages: ["English", "Spanish"]
+      languages: ["English", "Hindi"],
     },
     {
       id: 2,
-      name: "Dr. Michael Chen",
-      email: "michael.chen@example.com",
-      experience: 12,
-      specialties: ["Trauma", "PTSD", "Anxiety"],
+      name: "Dr. Maya Patel",
+      experience: 10,
+      specialties: ["Trauma", "EMDR"],
       rating: 4.8,
-      consultations: 349,
-      price: 95,
-      waitTime: "1-2 days",
-      imageUrl: "https://randomuser.me/api/portraits/men/32.jpg",
+      consultations: 1800,
+      price: 25,
+      waitTime: "5 min wait",
+      imageUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=1976&auto=format&fit=crop",
       online: true,
-      languages: ["English", "Mandarin"]
+      languages: ["English", "Hindi", "Tamil"],
     },
     {
       id: 3,
-      name: "Dr. Olivia Rodriguez",
-      email: "olivia.rodriguez@example.com",
-      experience: 6,
-      specialties: ["Couples Therapy", "Family Counseling"],
+      name: "Dr. Pranav Gupta",
+      experience: 12,
+      specialties: ["Stress", "Mindfulness"],
       rating: 4.7,
-      consultations: 187,
-      price: 75,
-      waitTime: "Same day",
-      imageUrl: "https://randomuser.me/api/portraits/women/25.jpg",
+      consultations: 1500,
+      price: 35,
+      waitTime: "Available",
+      imageUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=1974&auto=format&fit=crop",
       online: true,
-      languages: ["English", "Spanish", "Portuguese"]
+      languages: ["English", "Hindi"],
     },
     {
       id: 4,
-      name: "Dr. James Wilson",
-      email: "james.wilson@example.com",
-      experience: 15,
-      specialties: ["Addiction", "Substance Abuse", "Recovery"],
-      rating: 4.9,
-      consultations: 412,
-      price: 100,
-      waitTime: "3-4 days",
-      imageUrl: "https://randomuser.me/api/portraits/men/45.jpg",
+      name: "Dr. Kavita Joshi",
+      experience: 8,
+      specialties: ["Relationships", "Family Therapy"],
+      rating: 4.6,
+      consultations: 1200,
+      price: 28,
+      waitTime: "10 min wait",
+      imageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1976&auto=format&fit=crop",
       online: true,
-      languages: ["English", "French"]
+      languages: ["English", "Hindi", "Kannada"],
     },
     {
       id: 5,
-      name: "Dr. Emily Patel",
-      email: "emily.patel@example.com",
-      experience: 9,
-      specialties: ["Child Psychology", "ADHD", "Autism"],
-      rating: 4.8,
-      consultations: 256,
-      price: 90,
-      waitTime: "2 days",
-      imageUrl: "https://randomuser.me/api/portraits/women/37.jpg",
+      name: "Dr. Vijay Kumar",
+      experience: 20,
+      specialties: ["Anxiety", "Self-Esteem", "Depression"],
+      rating: 4.9,
+      consultations: 3000,
+      price: 45,
+      waitTime: "Available",
+      imageUrl: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=1974&auto=format&fit=crop",
       online: true,
-      languages: ["English", "Hindi", "Gujarati"]
+      languages: ["English", "Hindi", "Telugu"],
     },
     {
       id: 6,
-      name: "Dr. Robert Kim",
-      email: "robert.kim@example.com",
-      experience: 11,
-      specialties: ["Stress Management", "Work-Life Balance", "Burnout"],
-      rating: 4.6,
-      consultations: 198,
-      price: 80,
-      waitTime: "1-2 days",
-      imageUrl: "https://randomuser.me/api/portraits/men/52.jpg",
+      name: "Dr. Lakshmi Iyer",
+      experience: 7,
+      specialties: ["Youth Counseling", "Behavioral Therapy"],
+      rating: 4.5,
+      consultations: 980,
+      price: 22,
+      waitTime: "Available",
+      imageUrl: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=2071&auto=format&fit=crop",
       online: true,
-      languages: ["English", "Korean"]
+      languages: ["English", "Tamil", "Telugu"],
     },
   ];
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setExperts(mockExperts);
-      setFilteredExperts(mockExperts);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+  const handleResetFilters = () => {
+    setSpecialties({
+      anxiety: false,
+      depression: false,
+      stress: false,
+      relationships: false,
+      trauma: false,
+      selfEsteem: false,
+    });
+    setLanguages({
+      english: false,
+      hindi: false,
+      tamil: false,
+      telugu: false,
+      kannada: false,
+    });
+    setExperience({
+      lessThan5: false,
+      between5And10: false,
+      moreThan10: false,
+    });
+    setPriceRange([0, 100]);
+    setFilterCount(0);
+  };
 
-  useEffect(() => {
-    applyFilters();
-  }, [filters, searchQuery, experts]);
-
-  const applyFilters = () => {
-    let filtered = [...experts];
-
-    // Apply search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(expert => 
-        expert.name.toLowerCase().includes(query) || 
-        expert.specialties?.some(s => s.toLowerCase().includes(query))
-      );
+  // Filter function
+  const filteredExperts = expertData.filter((expert) => {
+    // Apply search filter
+    if (searchTerm && !expert.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
     }
-
-    // Apply specialty filter
-    if (filters.specialty) {
-      filtered = filtered.filter(expert => 
-        expert.specialties?.some(s => 
-          s.toLowerCase() === filters.specialty?.toLowerCase()
-        )
-      );
-    }
-
-    // Apply rating filter
-    if (filters.rating) {
-      const ratingValue = Number(filters.rating);
-      filtered = filtered.filter(expert => 
-        (expert.rating || 0) >= ratingValue
-      );
-    }
-
+    
     // Apply price filter
-    if (filters.price) {
-      const [min, max] = priceRange;
-      filtered = filtered.filter(expert => 
-        (expert.price || 0) >= min && 
-        (expert.price || 0) <= max
-      );
+    if (expert.price < priceRange[0] || expert.price > priceRange[1]) {
+      return false;
     }
-
+    
+    // Apply specialties filter
+    const hasSelectedSpecialty = Object.values(specialties).some(value => value);
+    if (hasSelectedSpecialty) {
+      const expertSpecialtiesLower = expert.specialties.map(s => s.toLowerCase());
+      const matchesSpecialty = Object.entries(specialties).some(([key, value]) => {
+        return value && expertSpecialtiesLower.includes(key.toLowerCase());
+      });
+      if (!matchesSpecialty) return false;
+    }
+    
     // Apply language filter
-    if (filters.language) {
-      filtered = filtered.filter(expert => 
-        expert.languages?.some(l => 
-          l.toLowerCase() === filters.language?.toLowerCase()
-        )
-      );
+    const hasSelectedLanguage = Object.values(languages).some(value => value);
+    if (hasSelectedLanguage) {
+      const expertLanguagesLower = expert.languages.map(l => l.toLowerCase());
+      const matchesLanguage = Object.entries(languages).some(([key, value]) => {
+        return value && expertLanguagesLower.includes(key);
+      });
+      if (!matchesLanguage) return false;
     }
-
-    // Apply sort
-    if (filters.sort) {
-      switch (filters.sort) {
-        case 'rating':
-          filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
-          break;
-        case 'experience':
-          filtered.sort((a, b) => {
-            const expA = typeof a.experience === 'string' ? parseInt(a.experience) : a.experience;
-            const expB = typeof b.experience === 'string' ? parseInt(b.experience) : b.experience;
-            return Number(expB) - Number(expA);
-          });
-          break;
-        case 'price':
-          filtered.sort((a, b) => (a.price || 0) - (b.price || 0));
-          break;
-        case 'name':
-          filtered.sort((a, b) => a.name.localeCompare(b.name));
-          break;
+    
+    // Apply experience filter
+    const hasSelectedExperience = Object.values(experience).some(value => value);
+    if (hasSelectedExperience) {
+      if (experience.lessThan5 && expert.experience >= 5) {
+        if (!experience.between5And10 && !experience.moreThan10) return false;
+      }
+      if (experience.between5And10 && (expert.experience < 5 || expert.experience > 10)) {
+        if (!experience.lessThan5 && !experience.moreThan10) return false;
+      }
+      if (experience.moreThan10 && expert.experience <= 10) {
+        if (!experience.lessThan5 && !experience.between5And10) return false;
       }
     }
+    
+    return true;
+  });
 
-    setFilteredExperts(filtered);
-  };
-
-  const handleFilterChange = (key: keyof ExpertFilterParams, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value
-    }));
-  };
-
-  const clearFilters = () => {
-    setFilters({});
-    setSearchQuery('');
-    setPriceRange([0, 200]);
-  };
+  // Count active filters
+  useEffect(() => {
+    let count = 0;
+    Object.values(specialties).forEach(value => { if (value) count++; });
+    Object.values(languages).forEach(value => { if (value) count++; });
+    Object.values(experience).forEach(value => { if (value) count++; });
+    if (priceRange[0] > 0 || priceRange[1] < 100) count++;
+    setFilterCount(count);
+  }, [specialties, languages, experience, priceRange]);
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex flex-col md:flex-row gap-8">
-        {/* Filters Sidebar */}
-        <div className="w-full md:w-1/4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-xl">Filters</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Search */}
-              <div className="space-y-2">
-                <Label htmlFor="search">Search</Label>
-                <Input 
-                  id="search" 
-                  placeholder="Search experts..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <Separator />
-
-              {/* Specialty */}
-              <div className="space-y-2">
-                <Label>Specialty</Label>
-                <Select
-                  value={filters.specialty || ''}
-                  onValueChange={(value) => handleFilterChange('specialty', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose specialty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All</SelectItem>
-                    <SelectItem value="Anxiety">Anxiety</SelectItem>
-                    <SelectItem value="Depression">Depression</SelectItem>
-                    <SelectItem value="Relationships">Relationships</SelectItem>
-                    <SelectItem value="Trauma">Trauma</SelectItem>
-                    <SelectItem value="PTSD">PTSD</SelectItem>
-                    <SelectItem value="Addiction">Addiction</SelectItem>
-                    <SelectItem value="Child Psychology">Child Psychology</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Rating */}
-              <div className="space-y-2">
-                <Label>Minimum Rating</Label>
-                <Select
-                  value={filters.rating?.toString() || ''}
-                  onValueChange={(value) => handleFilterChange('rating', value ? Number(value) : undefined)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select minimum rating" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
-                    <SelectItem value="4.5">4.5+</SelectItem>
-                    <SelectItem value="4.0">4.0+</SelectItem>
-                    <SelectItem value="3.5">3.5+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Price Range */}
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <Label>Price Range</Label>
-                  <span className="text-sm text-gray-500">
-                    ${priceRange[0]} - ${priceRange[1]}
-                  </span>
-                </div>
-                <Slider
-                  value={priceRange}
-                  min={0}
-                  max={200}
-                  step={5}
-                  onValueChange={(value) => {
-                    setPriceRange(value as [number, number]);
-                    handleFilterChange('price', 'custom');
-                  }}
-                />
-              </div>
-
-              {/* Languages */}
-              <div className="space-y-2">
-                <Label>Language</Label>
-                <Select
-                  value={filters.language || ''}
-                  onValueChange={(value) => handleFilterChange('language', value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select language" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">Any</SelectItem>
-                    <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Spanish">Spanish</SelectItem>
-                    <SelectItem value="Mandarin">Mandarin</SelectItem>
-                    <SelectItem value="French">French</SelectItem>
-                    <SelectItem value="Hindi">Hindi</SelectItem>
-                    <SelectItem value="Korean">Korean</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Sort */}
-              <div className="space-y-2">
-                <Label>Sort By</Label>
-                <Select
-                  value={filters.sort || ''}
-                  onValueChange={(value) => handleFilterChange('sort', value as 'rating' | 'experience' | 'price' | 'name')}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sort by..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="rating">Highest Rated</SelectItem>
-                    <SelectItem value="experience">Most Experienced</SelectItem>
-                    <SelectItem value="price">Lowest Price</SelectItem>
-                    <SelectItem value="name">Name (A-Z)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={clearFilters}
-              >
-                Clear Filters
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold">Expert Counselors</h1>
-            <p className="text-gray-600 mt-2">
-              Connect with licensed professionals ready to help you navigate life's challenges
-            </p>
-          </div>
-
-          <ExpertsGrid experts={filteredExperts} isLoading={isLoading} />
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div className="bg-ifind-charcoal text-white py-10">
+        <div className="container">
+          <h1 className="text-3xl font-bold mb-2">Our Mental Health Experts</h1>
+          <p className="text-ifind-offwhite/80">Connect with licensed professionals for personalized support</p>
         </div>
       </div>
+      
+      <main className="flex-1 py-10">
+        <div className="container">
+          <div className="flex flex-col lg:flex-row gap-8">
+            <FilterPanel
+              priceRange={priceRange}
+              setPriceRange={setPriceRange}
+              specialties={specialties}
+              setSpecialties={setSpecialties}
+              languages={languages}
+              setLanguages={setLanguages}
+              experience={experience}
+              setExperience={setExperience}
+              filterCount={filterCount}
+              onResetFilters={handleResetFilters}
+              showFilters={showFilters}
+              setShowFilters={setShowFilters}
+            />
+            
+            <div className="lg:w-3/4">
+              <SearchSort
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+              />
+              
+              <ExpertsGrid
+                experts={filteredExperts}
+                onResetFilters={handleResetFilters}
+              />
+            </div>
+          </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   );
 };
 
-export default ExpertsPage;
+export default Experts;
