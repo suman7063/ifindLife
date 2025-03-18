@@ -121,8 +121,8 @@ const Admin = () => {
             {/* Therapists Editor */}
             <TabsContent value="therapists" className="p-6">
               <TherapistsEditor 
-                therapists={therapists} 
-                setTherapists={setTherapists} 
+                experts={therapists} 
+                setExperts={setTherapists} 
               />
             </TabsContent>
 

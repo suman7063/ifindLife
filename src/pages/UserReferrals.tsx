@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { ReferralUI, ReferralSettings } from '@/types/supabase';
-import { fetchReferralSettings, fetchUserReferrals } from '@/utils/referralUtils';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { ReferralUI } from '@/types/supabase';
+import { fetchUserReferrals } from '@/utils/referralUtils';
 import ReferralCard from '@/components/user/ReferralCard';
 import ReferralsList from '@/components/user/ReferralsList';
 import Navbar from '@/components/Navbar';

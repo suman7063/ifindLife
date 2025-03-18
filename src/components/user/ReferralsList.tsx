@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Referral, ReferralUI } from '@/types/supabase';
+import { ReferralUI } from '@/types/supabase';
 import { Badge } from '@/components/ui/badge';
 import { Users, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 

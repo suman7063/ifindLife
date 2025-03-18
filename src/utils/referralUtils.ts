@@ -1,7 +1,8 @@
 
 import { supabase } from '@/lib/supabase';
-import { ReferralSettings, Referral, ReferralUI } from '@/types/supabase';
+import { ReferralSettings, ReferralUI, Referral } from '@/types/supabase';
 import { toast } from 'sonner';
+import { adaptReferralsToUI, adaptReferralSettingsToUI } from './dataAdapters';
 
 // Fetch the current referral program settings
 export const fetchReferralSettings = async (): Promise<ReferralSettings | null> => {
@@ -48,7 +49,7 @@ export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> 
     }
 
     // Then fetch the names of referred users separately
-    const referralUIs: ReferralUI[] = await Promise.all(
+    const referralsWithNames = await Promise.all(
       data.map(async (item) => {
         let referredName = 'Anonymous';
         
@@ -66,20 +67,13 @@ export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> 
         }
         
         return {
-          id: item.id,
-          referrerId: item.referrer_id,
-          referredId: item.referred_id,
-          referredName: referredName,
-          referralCode: item.referral_code,
-          status: item.status as 'pending' | 'completed' | 'expired',
-          rewardClaimed: item.reward_claimed,
-          createdAt: item.created_at,
-          completedAt: item.completed_at
+          ...item,
+          referred_name: referredName
         };
       })
     );
 
-    return referralUIs;
+    return adaptReferralsToUI(referralsWithNames);
   } catch (error) {
     console.error('Error fetching user referrals:', error);
     return [];
