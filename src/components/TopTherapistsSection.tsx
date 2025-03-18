@@ -4,19 +4,18 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import ExpertCard from '@/components/ExpertCard';
-import { therapistData as defaultTherapistData } from '@/data/homePageData';
+import { Expert } from '@/types/expert';
 
 const TopTherapistsSection = () => {
-  const [therapists, setTherapists] = useState(defaultTherapistData);
+  const [experts, setExperts] = useState<Expert[]>([]);
 
-  // Load content from localStorage on component mount
   useEffect(() => {
     try {
       const savedContent = localStorage.getItem('ifindlife-content');
       if (savedContent) {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.therapists) {
-          setTherapists(parsedContent.therapists);
+          setExperts(parsedContent.therapists);
         }
       }
     } catch (error) {
@@ -32,7 +31,7 @@ const TopTherapistsSection = () => {
           <div>
             <h2 className="text-3xl font-bold mb-2">Top Mental Wellness Experts</h2>
             <p className="text-muted-foreground max-w-2xl">
-              Connect with our highly-rated, verified therapists for a personalized consultation.
+              Connect with our highly-rated, verified experts for a personalized consultation.
             </p>
           </div>
           <Link to="/experts">
@@ -44,8 +43,8 @@ const TopTherapistsSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {therapists.map((therapist) => (
-            <ExpertCard key={therapist.id} {...therapist} />
+          {experts.map((expert) => (
+            <ExpertCard key={expert.id} expert={expert} />
           ))}
         </div>
       </div>

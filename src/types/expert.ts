@@ -1,14 +1,24 @@
 
 export interface Expert {
-  id: number;
+  id: string;
   name: string;
-  experience: number;
-  specialties: string[];
-  rating: number;
-  consultations: number;
-  price: number;
-  waitTime?: string;
-  imageUrl: string;
-  online?: boolean;
-  languages: string[];
+  email: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  bio?: string;
+  certificate_urls?: string[];
+  profile_picture?: string;
+  available?: boolean;
+  average_rating?: number;
+  reviews_count?: number;
+  favorites?: string[];
+}
+
+export interface ExpertCardProps {
+  expert: Expert;
 }
