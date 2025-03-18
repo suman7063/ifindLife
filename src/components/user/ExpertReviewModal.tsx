@@ -35,12 +35,10 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
         const canTakeService = await hasTakenServiceFrom(expertId);
         
         // Create a ReviewStatus object
-        const status: ReviewStatus = {
+        setReviewStatus({
           canReview: Boolean(canTakeService),
           hasReviewed: false // We'll set this separately
-        };
-        
-        setReviewStatus(status);
+        });
       } catch (error) {
         console.error('Error checking review status:', error);
       } finally {
@@ -66,7 +64,10 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
     setOpen(false);
     setRating(0);
     setComment('');
-    setReviewStatus({...reviewStatus, hasReviewed: true});
+    setReviewStatus({
+      ...reviewStatus,
+      hasReviewed: true
+    });
   };
   
   // Get appropriate button state

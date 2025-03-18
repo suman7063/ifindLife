@@ -8,10 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { TimeSlot } from '@/types/supabase/appointments';
-import { getTable } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useExpertAuth } from './hooks/useExpertAuth';
 import { format } from "date-fns";
 import { toast } from 'sonner';
+import { 
+  fetchExpertAvailability, 
+  updateExpertAvailability, 
+  createExpertAvailability, 
+  deleteExpertAvailability 
+} from '@/utils/expertAvailabilityUtils';
 
 const timeSlots = [
   "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
@@ -45,28 +51,7 @@ const ExpertAvailability: React.FC = () => {
       setIsLoading(true);
       const formattedDate = formatDate(date);
       
-      // Using the getTable helper function to access the expert_availability table
-      const { data, error } = await getTable('expert_availability')
-        .select()
-        .eq('expert_id', expert.id.toString())
-        .eq('date', formattedDate);
-      
-      if (error) {
-        console.error("Error fetching availability:", error);
-        toast.error("Failed to load availability");
-        return;
-      }
-      
-      // Map the data to TimeSlot format
-      const slots: TimeSlot[] = data ? data.map(slot => ({
-        id: String(slot.id),
-        expertId: slot.expert_id,
-        date: slot.date,
-        startTime: slot.start_time,
-        endTime: slot.end_time,
-        isAvailable: slot.is_available
-      })) : [];
-      
+      const slots = await fetchExpertAvailability(expert.id.toString(), formattedDate);
       setAvailableSlots(slots);
     } catch (error) {
       console.error("Error in fetchAvailableSlots:", error);
@@ -110,13 +95,9 @@ const ExpertAvailability: React.FC = () => {
       
       if (currentSlot) {
         // Update existing slot
-        const { error } = await getTable('expert_availability')
-          .update({ 
-            is_available: !currentSlot.isAvailable 
-          })
-          .eq('id', currentSlot.id);
-          
-        if (error) throw error;
+        const success = await updateExpertAvailability(currentSlot.id, !currentSlot.isAvailable);
+        
+        if (!success) throw new Error("Failed to update availability");
         
         setAvailableSlots(prev => 
           prev.map(slot => 
@@ -133,33 +114,18 @@ const ExpertAvailability: React.FC = () => {
         endTime[0] += 1;
         const endTimeString = `${endTime[0].toString().padStart(2, '0')}:00`;
         
-        const newSlot = {
-          expert_id: expert.id.toString(),
-          date: formattedDate,
-          start_time: time,
-          end_time: endTimeString,
-          is_available: true
-        };
+        const newSlot = await createExpertAvailability(
+          expert.id.toString(),
+          formattedDate,
+          time,
+          endTimeString,
+          true
+        );
         
-        const { data, error } = await getTable('expert_availability')
-          .insert(newSlot)
-          .select();
-          
-        if (error) throw error;
+        if (!newSlot) throw new Error("Failed to create availability");
         
-        if (data && data[0]) {
-          const addedSlot: TimeSlot = {
-            id: String(data[0].id),
-            expertId: data[0].expert_id,
-            date: data[0].date,
-            startTime: data[0].start_time,
-            endTime: data[0].end_time,
-            isAvailable: data[0].is_available
-          };
-          
-          setAvailableSlots(prev => [...prev, addedSlot]);
-          toast.success('Time slot added as available');
-        }
+        setAvailableSlots(prev => [...prev, newSlot]);
+        toast.success('Time slot added as available');
       }
     } catch (error) {
       console.error("Error toggling availability:", error);
@@ -190,19 +156,12 @@ const ExpertAvailability: React.FC = () => {
           const formattedDate = formatDate(targetDate);
           
           // Check if slot already exists
-          const { data: existingSlots } = await getTable('expert_availability')
-            .select()
-            .eq('expert_id', expert.id.toString())
-            .eq('date', formattedDate)
-            .eq('start_time', selectedTime);
-            
-          if (existingSlots && existingSlots.length > 0) {
+          const existingSlots = await fetchExpertAvailability(expert.id.toString(), formattedDate);
+          const existingSlot = existingSlots.find(slot => slot.startTime === selectedTime);
+          
+          if (existingSlot) {
             // Update existing slot
-            promises.push(
-              getTable('expert_availability')
-                .update({ is_available: true })
-                .eq('id', existingSlots[0].id)
-            );
+            promises.push(updateExpertAvailability(existingSlot.id, true));
           } else {
             // Create new slot
             const endTime = selectedTime.split(':').map(Number);
@@ -210,20 +169,19 @@ const ExpertAvailability: React.FC = () => {
             const endTimeString = `${endTime[0].toString().padStart(2, '0')}:00`;
             
             promises.push(
-              getTable('expert_availability')
-                .insert({
-                  expert_id: expert.id.toString(),
-                  date: formattedDate,
-                  start_time: selectedTime,
-                  end_time: endTimeString,
-                  is_available: true
-                })
+              createExpertAvailability(
+                expert.id.toString(),
+                formattedDate,
+                selectedTime,
+                endTimeString,
+                true
+              )
             );
           }
         }
       }
       
-      await Promise.all(promises);
+      await Promise.allSettled(promises);
       setOpenDialog(false);
       fetchAvailableSlots();
       toast.success('Recurring availability set successfully');
@@ -235,31 +193,26 @@ const ExpertAvailability: React.FC = () => {
     }
   };
 
-  const handleDeleteSlot = () => {
+  const handleDeleteSlot = async () => {
     if (!slotToDelete) return;
     
     setIsLoading(true);
-    getTable('expert_availability')
-      .delete()
-      .eq('id', slotToDelete.id)
-      .then(({ error }) => {
-        if (error) {
-          throw error;
-        }
-        setAvailableSlots(prev => 
-          prev.filter(slot => slot.id !== slotToDelete.id)
-        );
-        toast.success('Time slot removed');
-      })
-      .catch(error => {
-        console.error("Error deleting slot:", error);
-        toast.error("Failed to delete time slot");
-      })
-      .finally(() => {
-        setDeleteDialogOpen(false);
-        setSlotToDelete(null);
-        setIsLoading(false);
-      });
+    try {
+      const success = await deleteExpertAvailability(slotToDelete.id);
+      
+      if (!success) throw new Error("Failed to delete availability");
+      
+      setAvailableSlots(prev => prev.filter(slot => slot.id !== slotToDelete.id));
+      toast.success('Time slot removed');
+      
+    } catch (error) {
+      console.error("Error deleting slot:", error);
+      toast.error("Failed to delete time slot");
+    } finally {
+      setDeleteDialogOpen(false);
+      setSlotToDelete(null);
+      setIsLoading(false);
+    }
   };
 
   const confirmDeleteSlot = (slot: TimeSlot) => {

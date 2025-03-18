@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ReportUI, ModerationType } from '@/types/supabase/moderation';
+import { ModerationActionType, ReportUI } from '@/types/supabase/reviews';
 
 interface ActionDialogProps {
   report: ReportUI;
@@ -27,10 +27,10 @@ interface ActionDialogProps {
 }
 
 const ACTIONS = [
-  { value: 'warning', label: 'Issue Warning' },
-  { value: 'suspension', label: 'Suspend Account' },
-  { value: 'ban', label: 'Ban Account' },
-  { value: 'no_action', label: 'No Action Required' },
+  { value: ModerationActionType.WARNING, label: 'Issue Warning' },
+  { value: ModerationActionType.SUSPENSION, label: 'Suspend Account' },
+  { value: ModerationActionType.BAN, label: 'Ban Account' },
+  { value: ModerationActionType.NO_ACTION, label: 'No Action Required' },
 ];
 
 const ActionDialog: React.FC<ActionDialogProps> = ({
@@ -39,7 +39,7 @@ const ActionDialog: React.FC<ActionDialogProps> = ({
   onOpenChange,
   onAction,
 }) => {
-  const [actionType, setActionType] = useState<ModerationType>('warning');
+  const [actionType, setActionType] = useState<ModerationActionType>(ModerationActionType.WARNING);
   const [message, setMessage] = useState('');
   const [notes, setNotes] = useState('');
   
@@ -52,7 +52,7 @@ const ActionDialog: React.FC<ActionDialogProps> = ({
     onOpenChange(false);
     
     // Reset form
-    setActionType('warning');
+    setActionType(ModerationActionType.WARNING);
     setMessage('');
     setNotes('');
   };
@@ -74,7 +74,7 @@ const ActionDialog: React.FC<ActionDialogProps> = ({
             </label>
             <Select
               value={actionType}
-              onValueChange={(value) => setActionType(value as ModerationType)}
+              onValueChange={(value) => setActionType(value as ModerationActionType)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select action" />

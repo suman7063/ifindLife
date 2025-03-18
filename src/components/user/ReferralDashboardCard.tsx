@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Users, Share2, Twitter, Facebook, Copy, Mail, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { UserProfile, ReferralSettings as ReferralSettingsUI } from '@/types/supabase';
-import { fetchReferralSettings, shareViaFacebook, shareViaTwitter, shareViaWhatsApp, shareViaEmail, getReferralLink, copyReferralLink } from '@/utils/referralUtils';
+import { UserProfile } from '@/types/supabase/user';
+import { ReferralSettings } from '@/types/supabase/referrals';
+import { getReferralLink, copyReferralLink, getReferralSettings } from '@/utils/referralUtils';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface ReferralDashboardCardProps {
@@ -15,11 +16,11 @@ interface ReferralDashboardCardProps {
 
 const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfile }) => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  const [referralSettings, setReferralSettings] = useState<ReferralSettingsUI | null>(null);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   
   useEffect(() => {
     const loadSettings = async () => {
-      const settings = await fetchReferralSettings();
+      const settings = await getReferralSettings();
       setReferralSettings(settings);
     };
     
@@ -33,27 +34,25 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
   };
   
   const handleShareViaTwitter = () => {
-    if (userProfile?.referralCode) {
-      shareViaTwitter(userProfile.referralCode);
-    }
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Join me on iFindLife! Use my referral code ${userProfile?.referralCode} and get credits when you sign up: ${referralLink}`)}`);
+    toast.success('Sharing via Twitter');
   };
   
   const handleShareViaFacebook = () => {
-    if (userProfile?.referralCode) {
-      shareViaFacebook(userProfile.referralCode);
-    }
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`);
+    toast.success('Sharing via Facebook');
   };
   
   const handleShareViaWhatsApp = () => {
-    if (userProfile?.referralCode) {
-      shareViaWhatsApp(userProfile.referralCode);
-    }
+    window.open(`https://wa.me/?text=${encodeURIComponent(`Join me on iFindLife! Use my referral code ${userProfile?.referralCode} and get credits when you sign up: ${referralLink}`)}`);
+    toast.success('Sharing via WhatsApp');
   };
   
   const handleShareViaEmail = () => {
-    if (userProfile?.referralCode) {
-      shareViaEmail(userProfile.referralCode);
-    }
+    const subject = 'Join me on iFindLife';
+    const body = `I thought you might be interested in iFindLife. Sign up using my referral code ${userProfile?.referralCode} and get credits when you join! ${referralLink}`;
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    toast.success('Opening email client');
   };
 
   return (

@@ -1,26 +1,22 @@
 
 import { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/supabase/user';
-import { ReferralSettingsUI } from '@/types/supabase/referrals';
+import { ReferralSettings } from '@/types/supabase/referrals';
 import { 
-  fetchReferralSettings, 
+  getReferralSettings, 
   getReferralLink, 
-  copyReferralLink,
-  shareViaEmail,
-  shareViaWhatsApp,
-  shareViaTwitter,
-  shareViaFacebook
+  copyReferralLink
 } from '@/utils/referralUtils';
 
 export const useReferral = (userProfile: UserProfile) => {
-  const [settings, setSettings] = useState<ReferralSettingsUI | null>(null);
+  const [settings, setSettings] = useState<ReferralSettings | null>(null);
   const [referralLink, setReferralLink] = useState<string>('');
   const [customText, setCustomText] = useState<string>('');
   const [isGettingLink, setIsGettingLink] = useState<boolean>(false);
 
   useEffect(() => {
     const loadSettings = async () => {
-      const data = await fetchReferralSettings();
+      const data = await getReferralSettings();
       setSettings(data);
     };
 
@@ -37,19 +33,23 @@ export const useReferral = (userProfile: UserProfile) => {
   };
 
   const handleEmailShare = () => {
-    shareViaEmail(userProfile.referralCode || '');
+    const subject = 'Join me on iFindLife';
+    const body = `I thought you might be interested in iFindLife. Sign up using my referral code ${userProfile.referralCode} and get credits when you join! ${referralLink}`;
+    window.open(`mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
   const handleWhatsAppShare = () => {
-    shareViaWhatsApp(userProfile.referralCode || '');
+    const text = `Join me on iFindLife! Sign up using my referral code ${userProfile.referralCode} and get credits when you join: ${referralLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`);
   };
 
   const handleTwitterShare = () => {
-    shareViaTwitter(userProfile.referralCode || '');
+    const text = `Join me on iFindLife! Sign up using my referral code ${userProfile.referralCode} and get credits when you join: ${referralLink}`;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`);
   };
 
   const handleFacebookShare = () => {
-    shareViaFacebook(userProfile.referralCode || '');
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralLink)}`);
   };
 
   const handleCustomLink = () => {

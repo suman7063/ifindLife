@@ -38,7 +38,6 @@ export interface TimeSlot {
 }
 
 export interface AppointmentInsert {
-  id?: string;
   userId: string;
   expertId: string;
   serviceId: number;
@@ -49,4 +48,7 @@ export interface AppointmentInsert {
   currency?: string;
   notes?: string;
   expertName: string;
+  channelName?: string;
+  token?: string;
+  uid?: number;
 }

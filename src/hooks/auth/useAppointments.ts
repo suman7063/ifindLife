@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase, tables } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { Appointment, AppointmentInsert, AppointmentStatus } from '@/types/supabase/appointments';
+import { Appointment, AppointmentStatus, AppointmentInsert } from '@/types/supabase/appointments';
 import { useAgora } from './useAgora';
 
 export const useAppointments = () => {
@@ -40,24 +40,41 @@ export const useAppointments = () => {
       const uid = Math.floor(Math.random() * 1000000);
       
       // Insert the appointment into the database
-      const appointmentData: AppointmentInsert = {
-        user_id: user.id,
-        expert_id: expertId,
-        expert_name: expertName,
-        appointment_date: appointmentDate,
-        duration,
-        status: 'scheduled' as AppointmentStatus,
-        service_id: serviceId,
-        channel_name: channelName,
-        token,
-        uid,
-        price,
-        currency,
-        notes
+      const appointmentData = {
+        userId: user.id,
+        expertId: expertId,
+        expertName: expertName,
+        appointmentDate: appointmentDate,
+        duration: duration,
+        status: AppointmentStatus.SCHEDULED,
+        serviceId: serviceId,
+        channelName: channelName,
+        token: token,
+        uid: uid,
+        price: price,
+        currency: currency,
+        notes: notes
+      };
+
+      // Convert UI format to DB format
+      const dbAppointmentData = {
+        user_id: appointmentData.userId,
+        expert_id: appointmentData.expertId,
+        expert_name: appointmentData.expertName,
+        appointment_date: appointmentData.appointmentDate,
+        duration: appointmentData.duration,
+        status: appointmentData.status,
+        service_id: appointmentData.serviceId,
+        channel_name: appointmentData.channelName,
+        token: appointmentData.token,
+        uid: appointmentData.uid,
+        price: appointmentData.price,
+        currency: appointmentData.currency,
+        notes: appointmentData.notes
       };
       
       const { data, error } = await tables.appointments()
-        .insert(appointmentData)
+        .insert(dbAppointmentData)
         .select()
         .single();
       
@@ -92,35 +109,23 @@ export const useAppointments = () => {
       // Transform the data to include both snake_case and camelCase properties
       const appointments: Appointment[] = (data || []).map(item => ({
         id: item.id,
-        user_id: item.user_id,
-        expert_id: item.expert_id,
-        expert_name: item.expert_name,
-        appointment_date: item.appointment_date,
-        duration: item.duration,
-        status: item.status as AppointmentStatus,
-        service_id: item.service_id,
-        notes: item.notes,
-        channel_name: item.channel_name,
-        token: item.token,
-        uid: item.uid,
-        created_at: item.created_at,
-        price: item.price,
-        currency: item.currency,
-        extension_count: item.extension_count,
-        actual_duration: item.actual_duration,
-        refunded: item.refunded,
-        calendar_event_id: item.calendar_event_id,
-        
-        // Add camelCase versions for UI components
         userId: item.user_id,
         expertId: item.expert_id,
         expertName: item.expert_name,
         appointmentDate: item.appointment_date,
+        duration: item.duration,
+        status: item.status as AppointmentStatus,
         serviceId: item.service_id,
+        notes: item.notes,
         channelName: item.channel_name,
+        token: item.token,
+        uid: item.uid,
+        createdAt: item.created_at || new Date().toISOString(),
+        price: item.price,
+        currency: item.currency,
         extensionCount: item.extension_count,
         actualDuration: item.actual_duration,
-        calendarEventId: item.calendar_event_id
+        refunded: item.refunded
       }));
       
       return appointments;

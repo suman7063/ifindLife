@@ -54,8 +54,8 @@ export enum ModerationActionType {
   NO_ACTION = 'no_action'
 }
 
-export enum ReviewStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected'
+// New interface for the review status
+export interface ReviewStatus {
+  canReview: boolean;
+  hasReviewed: boolean;
 }

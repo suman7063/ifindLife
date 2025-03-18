@@ -1,137 +1,138 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import { useNavigate, Link } from 'react-router-dom';
 import { useUserAuth } from '@/hooks/useUserAuth';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { toast } from 'sonner';
-import { fetchReferralSettings } from '@/utils/referralUtils';
-import { ReferralSettings } from '@/types/supabase';
-import LoginForm from '@/components/auth/LoginForm';
-import RegisterForm from '@/components/auth/RegisterForm';
-import { Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
+import { ReferralSettings } from '@/types/supabase/referrals';
+import { getReferralSettings } from '@/utils/referralUtils';
 
 const UserLogin = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login, signup, isAuthenticated } = useUserAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const navigate = useNavigate();
+  const { signUp, logIn } = useUserAuth();
 
-  // Get referral code from URL if available
-  const queryParams = new URLSearchParams(location.search);
-  const referralCodeFromUrl = queryParams.get('ref');
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/user-dashboard');
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await signUp(email, password);
+      toast.success('Signed up successfully! Please verify your email.');
+      navigate('/profile');
+    } catch (error: any) {
+      console.error('Signup failed:', error.message);
+      toast.error(`Signup failed: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [isAuthenticated, navigate]);
+  };
 
-  // Load referral settings
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await logIn(email, password);
+      toast.success('Logged in successfully!');
+      navigate('/profile');
+    } catch (error: any) {
+      console.error('Login failed:', error.message);
+      toast.error(`Login failed: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load referral settings for the registration form
   useEffect(() => {
     const loadReferralSettings = async () => {
-      const settings = await fetchReferralSettings();
-      setReferralSettings(settings);
+      try {
+        const settings = await getReferralSettings();
+        setReferralSettings(settings || {
+          id: '',
+          referrerReward: 10,
+          referredReward: 5,
+          active: true,
+          description: 'Default referral program'
+        });
+      } catch (error) {
+        console.error('Error loading referral settings:', error);
+      }
     };
-    
+
     loadReferralSettings();
   }, []);
 
-  // Switch to registration tab if referral code is in URL
-  useEffect(() => {
-    if (referralCodeFromUrl) {
-      // Find the register tab trigger and click it
-      const registerTab = document.querySelector('[data-value="register"]');
-      if (registerTab && registerTab instanceof HTMLElement) {
-        registerTab.click();
-      }
-    }
-  }, [referralCodeFromUrl]);
-
-  const handleLogin = async (email: string, password: string) => {
-    setLoading(true);
-    
-    try {
-      const success = await login(email, password);
-      if (success) {
-        navigate('/user-dashboard');
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignup = async (userData: {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-    country: string;
-    city: string;
-    referralCode?: string;
-  }) => {
-    setLoading(true);
-    
-    try {
-      const success = await signup(userData);
-      
-      if (success) {
-        toast.success('Please check your email to confirm your account');
-        // Optional: Switch to login tab after successful signup
-        const loginTab = document.querySelector('[data-state="inactive"][data-value="login"]');
-        if (loginTab) {
-          (loginTab as HTMLElement).click();
-        }
-      }
-    } catch (error) {
-      console.error('Signup error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 py-10 flex items-center justify-center bg-stars">
-        <div className="container max-w-md">
-          <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-ifind-aqua/10">
-            <Link to="/" className="flex items-center justify-center space-x-2 mb-8">
-              <div className="relative w-8 h-8">
-                <div className="absolute w-8 h-8 bg-ifind-aqua rounded-full opacity-70"></div>
-                <div className="absolute w-4 h-4 bg-ifind-teal rounded-full top-1 left-2"></div>
-              </div>
-              <span className="font-bold text-2xl text-gradient">iFindLife</span>
-            </Link>
-            
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <LoginForm onLogin={handleLogin} loading={loading} userType="user" />
-              </TabsContent>
-              
-              <TabsContent value="register">
-                <RegisterForm 
-                  onRegister={handleSignup} 
-                  loading={loading} 
-                  initialReferralCode={referralCodeFromUrl}
-                  referralSettings={referralSettings}
+    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+      <Card className="w-full max-w-md p-4">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl text-center">User Login</CardTitle>
+          <CardDescription className="text-center">Enter your email and password to sign in</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <form onSubmit={handleLogin}>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
-              </TabsContent>
-            </Tabs>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+            <Button type="submit" className="w-full mt-4 bg-ifind-aqua hover:bg-ifind-teal" disabled={loading}>
+              {loading ? 'Logging in...' : 'Log In'}
+            </Button>
+          </form>
+          <div className="text-sm text-center">
+            Don't have an account?{' '}
+            <Link to="/register" className="text-ifind-aqua hover:underline">
+              Sign Up
+            </Link>
           </div>
-        </div>
-      </main>
-      <Footer />
+          <div className="text-sm text-center">
+            Forgot password?{' '}
+            <Link to="/forgot-password" className="text-ifind-aqua hover:underline">
+              Reset Password
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
