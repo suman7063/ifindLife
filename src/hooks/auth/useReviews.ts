@@ -79,9 +79,44 @@ export const useReviews = () => {
       };
     }
   };
-  
-  // Separate function to fetch user reviews to avoid deep nesting
+
+  // Fetch reviews for a specific user
   const fetchUserReviews = async (userId: string): Promise<{success: boolean, reviews: Review[]}> => {
+    try {
+      // Simple JOIN query to get reviews with expert data in a single query
+      const { data, error } = await supabase.rpc('get_user_reviews_with_experts', {
+        user_id_param: userId
+      });
+      
+      if (error) throw error;
+      
+      if (!data || data.length === 0) {
+        return { success: true, reviews: [] };
+      }
+      
+      // Map the joined data directly to Review objects
+      const reviews: Review[] = data.map((item): Review => ({
+        id: item.review_id,
+        expertId: String(item.expert_id),
+        rating: item.rating,
+        comment: item.comment || '',
+        date: item.date,
+        verified: Boolean(item.verified),
+        userId: userId,
+        userName: item.user_name || 'Anonymous User',
+        expertName: item.expert_name || 'Unknown Expert'
+      }));
+      
+      return { success: true, reviews };
+      
+    } catch (error: any) {
+      console.error('Error fetching reviews:', error);
+      return { success: false, reviews: [] };
+    }
+  };
+  
+  // Alternative implementation if the RPC function is not available
+  const fetchUserReviewsLegacy = async (userId: string): Promise<{success: boolean, reviews: Review[]}> => {
     try {
       // Fetch reviews
       const { data: dbReviews, error: reviewsError } = await supabase
@@ -181,6 +216,7 @@ export const useReviews = () => {
   
   return {
     addReview,
-    hasTakenServiceFrom
+    hasTakenServiceFrom,
+    fetchUserReviews
   };
 };
