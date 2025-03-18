@@ -56,66 +56,70 @@ export const useReviews = () => {
         toast.success('Review added successfully');
       }
       
-      // Return updated reviews for this user
-      const { data: updatedUserReviews } = await supabase
+      // Fetch updated reviews for this user
+      const { data: updatedUserReviews, error: reviewsError } = await supabase
         .from('user_reviews')
         .select('*')
         .eq('user_id', userProfile.id);
       
-      if (!updatedUserReviews) {
+      if (reviewsError) throw reviewsError;
+      
+      if (!updatedUserReviews || updatedUserReviews.length === 0) {
         return { success: true, reviews: [] };
       }
       
-      // Convert expert IDs to strings first
-      const expertIdsString: string[] = [];
+      // Prepare a simple array of expert IDs as strings for the query
+      const expertIds: string[] = [];
       for (const review of updatedUserReviews) {
-        expertIdsString.push(convertExpertIdToString(review.expert_id));
+        expertIds.push(convertExpertIdToString(review.expert_id));
       }
       
       // Get expert names in a single batch query
-      const { data: expertsData } = await supabase
+      const { data: expertsData, error: expertsError } = await supabase
         .from('experts')
         .select('id, name')
-        .in('id', expertIdsString);
+        .in('id', expertIds);
       
-      // Create a lookup object for expert names
-      const expertNameLookup: Record<string, string> = {};
+      if (expertsError) throw expertsError;
       
+      // Create a simple lookup object for expert names
+      const expertNames: {[key: string]: string} = {};
       if (expertsData) {
         for (const expert of expertsData) {
-          expertNameLookup[expert.id] = expert.name;
+          expertNames[expert.id] = expert.name;
         }
       }
       
-      // Build the formatted reviews array
+      // Create formatted reviews array manually
       const formattedReviews: Review[] = [];
       
-      // Process each review individually to avoid deep type instantiation
-      for (const review of updatedUserReviews) {
-        const expertIdString = convertExpertIdToString(review.expert_id);
-        const expertName = expertNameLookup[expertIdString] || 'Unknown Expert';
-        const userName = userProfile.name || 'Anonymous User';
+      // Add each review manually without complex transformations
+      for (const dbReview of updatedUserReviews) {
+        // Convert ID to string first and store it
+        const expertIdStr = convertExpertIdToString(dbReview.expert_id);
         
-        // Explicitly create the review object without any complex mapping
-        const formattedReview: Review = {
-          id: review.id,
-          expertId: expertIdString,
-          rating: review.rating,
-          comment: review.comment || '',
-          date: review.date,
-          verified: review.verified || false,
-          userId: review.user_id || '',
-          userName: userName,
-          expertName: expertName
+        // Create a simple review object with manual assignments
+        const review: Review = {
+          id: dbReview.id,
+          expertId: expertIdStr,
+          rating: dbReview.rating,
+          comment: dbReview.comment || '',
+          date: dbReview.date,
+          verified: Boolean(dbReview.verified),
+          userId: userProfile.id,
+          userName: userProfile.name || 'Anonymous User',
+          expertName: expertNames[expertIdStr] || 'Unknown Expert'
         };
         
-        formattedReviews.push(formattedReview);
+        // Add to array
+        formattedReviews.push(review);
       }
       
       return {
         success: true,
         reviews: formattedReviews
       };
+      
     } catch (error: any) {
       console.error('Error adding review:', error);
       toast.error(error.message || 'Failed to add review');
