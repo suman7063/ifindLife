@@ -71,11 +71,31 @@ export const useDoxyme = () => {
       return null;
     }
   };
+
+  // Join a scheduled appointment
+  const joinScheduledSession = (appointmentRoomUrl: string, expertName: string) => {
+    if (!appointmentRoomUrl) {
+      toast.error('Invalid appointment room URL');
+      return false;
+    }
+    
+    try {
+      // Open the Doxy.me room in a new tab
+      window.open(appointmentRoomUrl, '_blank');
+      toast.success(`Joining scheduled session with ${expertName}`);
+      return true;
+    } catch (error) {
+      console.error('Error joining scheduled session:', error);
+      toast.error('Failed to join video session');
+      return false;
+    }
+  };
   
   return {
     joinDoxymeRoom,
     startProviderSession,
     getProviderRoomUrl,
+    joinScheduledSession,
     isLoading
   };
 };

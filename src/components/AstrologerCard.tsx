@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, Clock, PhoneCall, Video, Award, Heart, ExternalLink } from 'lucide-react';
+import { Star, Clock, PhoneCall, Video, Award, Heart, ExternalLink, Calendar } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import CallModal from './CallModal';
-import { toast } from '@/hooks/use-toast';
+import BookingModal from './BookingModal';
+import { toast } from 'sonner';
 import { useDoxyme } from '@/hooks/auth/useDoxyme';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
@@ -38,6 +39,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   const navigate = useNavigate();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const { currentUser } = useUserAuth();
   const { startProviderSession, joinDoxymeRoom, isLoading } = useDoxyme();
   
@@ -88,6 +90,19 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
     if (room) {
       joinDoxymeRoom(room.roomUrl);
     }
+  };
+
+  const handleBookSession = () => {
+    if (!currentUser) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to book a session",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setIsBookingModalOpen(true);
   };
   
   return (
@@ -165,7 +180,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
             Video
           </Button>
         </CardFooter>
-        <CardFooter className="pt-0 pb-3 px-4 border-t-0">
+        <CardFooter className="pt-0 pb-1 px-4 border-t-0">
           <Button 
             variant="outline" 
             className="w-full border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10"
@@ -173,7 +188,17 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
             disabled={isLoading}
           >
             <ExternalLink className="h-4 w-4 mr-1" />
-            {isLoading ? 'Loading...' : 'Doxy.me Session'}
+            {isLoading ? 'Loading...' : 'Doxy.me Now'}
+          </Button>
+        </CardFooter>
+        <CardFooter className="pt-0 pb-3 px-4 border-t-0">
+          <Button 
+            variant="outline" 
+            className="w-full border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10"
+            onClick={handleBookSession}
+          >
+            <Calendar className="h-4 w-4 mr-1" />
+            Book Session
           </Button>
         </CardFooter>
       </Card>
@@ -184,6 +209,12 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
           setIsCallModalOpen(false);
           setIsVideoCallModalOpen(false);
         }}
+        astrologer={{ id, name, imageUrl, price }}
+      />
+
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
         astrologer={{ id, name, imageUrl, price }}
       />
     </>

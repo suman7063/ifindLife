@@ -8,11 +8,13 @@ import { ArrowLeft, Star, Calendar, Clock, Award, PhoneCall, MessageCircle } fro
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CallModal from '@/components/CallModal';
+import BookingModal from '@/components/BookingModal';
 import { toast } from '@/hooks/use-toast';
 
 const AstrologerDetail = () => {
   const { id } = useParams();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   
   // This would normally come from an API call using the ID
   // For now, we'll use dummy data
@@ -65,6 +67,10 @@ const AstrologerDetail = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const handleBookSession = () => {
+    setIsBookingModalOpen(true);
   };
   
   return (
@@ -136,7 +142,7 @@ const AstrologerDetail = () => {
                     </span>
                   </div>
                   
-                  <div className="flex gap-4 w-full">
+                  <div className="flex gap-4 w-full mb-3">
                     <Button 
                       onClick={handleCallClick}
                       variant="outline" 
@@ -150,6 +156,15 @@ const AstrologerDetail = () => {
                       Chat
                     </Button>
                   </div>
+                  
+                  <Button 
+                    onClick={handleBookSession}
+                    variant="outline" 
+                    className="w-full border-astro-gold text-astro-gold hover:bg-astro-gold/10"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Book Session
+                  </Button>
                 </div>
               </div>
             </div>
@@ -231,6 +246,17 @@ const AstrologerDetail = () => {
       <CallModal 
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
+        astrologer={{
+          id: astrologer.id,
+          name: astrologer.name,
+          imageUrl: astrologer.imageUrl,
+          price: astrologer.price
+        }}
+      />
+
+      <BookingModal 
+        isOpen={isBookingModalOpen}
+        onClose={() => setIsBookingModalOpen(false)}
         astrologer={{
           id: astrologer.id,
           name: astrologer.name,
