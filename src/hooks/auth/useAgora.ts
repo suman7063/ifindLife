@@ -1,6 +1,12 @@
 
 import { useState, useEffect } from 'react';
-import { createClient, createMicrophoneAndCameraTracks, ClientConfig } from 'agora-rtc-react';
+import { 
+  IAgoraRTCClient, 
+  IAgoraRTCRemoteUser, 
+  ICameraVideoTrack, 
+  IMicrophoneAudioTrack 
+} from 'agora-rtc-sdk-ng';
+import AgoraRTC from 'agora-rtc-react';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 
@@ -9,7 +15,7 @@ import { UserProfile } from '@/types/supabase';
 const appId = 'your-agora-app-id'; // Replace with your Agora App ID
 
 // Configure Agora client
-const config: ClientConfig = {
+const config = {
   mode: 'rtc',
   codec: 'vp8',
 };
@@ -26,8 +32,55 @@ export const useAgora = () => {
   const [isLoading, setIsLoading] = useState(false);
   
   // Create Agora client and tracks hooks
-  const useClient = createClient(config);
-  const useMicrophoneAndCameraTracks = createMicrophoneAndCameraTracks();
+  const useClient = () => {
+    const [client, setClient] = useState<IAgoraRTCClient | null>(null);
+    
+    useEffect(() => {
+      const agoraClient = AgoraRTC.createClient(config);
+      setClient(agoraClient);
+      
+      return () => {
+        if (client) {
+          client.removeAllListeners();
+        }
+      };
+    }, []);
+    
+    return client;
+  };
+  
+  const useMicrophoneAndCameraTracks = () => {
+    const [tracks, setTracks] = useState<[IMicrophoneAudioTrack, ICameraVideoTrack] | null>(null);
+    const [ready, setReady] = useState(false);
+    
+    useEffect(() => {
+      let tracksPromise: Promise<[IMicrophoneAudioTrack, ICameraVideoTrack]>;
+      
+      // Create tracks
+      const createTracks = async () => {
+        try {
+          tracksPromise = AgoraRTC.createMicrophoneAndCameraTracks();
+          const audioAndVideoTracks = await tracksPromise;
+          setTracks(audioAndVideoTracks);
+          setReady(true);
+        } catch (error) {
+          console.error('Error creating tracks:', error);
+          toast.error('Could not access camera and microphone');
+        }
+      };
+      
+      createTracks();
+      
+      return () => {
+        if (tracks) {
+          tracks[0].close();
+          tracks[1].close();
+        }
+      };
+    }, []);
+    
+    return { tracks, ready };
+  };
   
   // Generate a token for joining a channel
   // In a production app, this would be done on the backend for security

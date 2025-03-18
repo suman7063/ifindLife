@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -57,20 +58,6 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
     }
   };
   
-  const handleStartVideoCall = () => {
-    if (!online || waitTime !== 'Available') {
-      toast.error("This expert is currently offline or busy. Please try again later.");
-      return;
-    }
-    
-    if (!currentUser) {
-      toast.error("Please log in to start a video session");
-      return;
-    }
-    
-    setIsVideoCallModalOpen(true);
-  };
-
   const handleBookSession = () => {
     if (!currentUser) {
       toast.error("Please log in to book a session");

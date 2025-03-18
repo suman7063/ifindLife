@@ -21,6 +21,23 @@ export interface Appointment {
   createdAt: string;
 }
 
+// Define the shape of our appointments table row
+interface AppointmentRow {
+  id: string;
+  user_id: string;
+  expert_id: string;
+  expert_name: string;
+  appointment_date: string;
+  duration: number;
+  status: 'scheduled' | 'completed' | 'cancelled';
+  service_id?: number;
+  notes?: string;
+  channel_name?: string;
+  token?: string;
+  uid?: number;
+  created_at: string;
+}
+
 export const useAppointments = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -32,16 +49,18 @@ export const useAppointments = () => {
     
     setIsLoading(true);
     try {
+      // Using 'appointments' as a string literal to avoid type issues
+      // This assumes the table exists in your Supabase database
       const { data, error } = await supabase
         .from('appointments')
         .select('*')
         .eq('user_id', userId)
-        .order('appointment_date', { ascending: true });
+        .order('appointment_date', { ascending: true }) as { data: AppointmentRow[] | null, error: any };
         
       if (error) throw error;
       
       // Transform from snake_case to camelCase
-      const formattedAppointments = data.map(appointment => ({
+      const formattedAppointments: Appointment[] = (data || []).map(appointment => ({
         id: appointment.id,
         userId: appointment.user_id,
         expertId: appointment.expert_id,
@@ -105,8 +124,7 @@ export const useAppointments = () => {
           token: token,
           uid: uid
         })
-        .select()
-        .single();
+        .select() as { data: AppointmentRow[] | null, error: any };
         
       if (error) throw error;
       
@@ -114,19 +132,19 @@ export const useAppointments = () => {
       
       // Transform to camelCase
       const appointment: Appointment = {
-        id: data.id,
-        userId: data.user_id,
-        expertId: data.expert_id,
-        expertName: data.expert_name,
-        appointmentDate: data.appointment_date,
-        duration: data.duration,
-        status: data.status,
-        serviceId: data.service_id,
-        notes: data.notes,
-        channelName: data.channel_name,
-        token: data.token,
-        uid: data.uid,
-        createdAt: data.created_at
+        id: data?.[0].id ?? '',
+        userId: data?.[0].user_id ?? '',
+        expertId: data?.[0].expert_id ?? '',
+        expertName: data?.[0].expert_name ?? '',
+        appointmentDate: data?.[0].appointment_date ?? '',
+        duration: data?.[0].duration ?? 0,
+        status: data?.[0].status ?? 'scheduled',
+        serviceId: data?.[0].service_id,
+        notes: data?.[0].notes,
+        channelName: data?.[0].channel_name,
+        token: data?.[0].token,
+        uid: data?.[0].uid,
+        createdAt: data?.[0].created_at ?? new Date().toISOString()
       };
       
       return appointment;
@@ -146,7 +164,7 @@ export const useAppointments = () => {
       const { error } = await supabase
         .from('appointments')
         .update({ status: 'cancelled' })
-        .eq('id', appointmentId);
+        .eq('id', appointmentId) as { error: any };
         
       if (error) throw error;
       

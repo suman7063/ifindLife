@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { IAgoraRTCRemoteUser, ICameraVideoTrack, IMicrophoneAudioTrack } from 'agora-rtc-sdk-ng';
-import { AgoraVideoPlayer } from 'agora-rtc-react';
 import { Mic, MicOff, Video, VideoOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -91,10 +90,14 @@ const VideoCall: React.FC<VideoCallProps> = ({ client, tracks, setStart, channel
         {/* Local Video */}
         <div className="relative rounded-lg overflow-hidden bg-slate-900 aspect-video">
           {tracks && !isVideoDisabled && (
-            <AgoraVideoPlayer
-              videoTrack={tracks[1]}
-              style={{ height: '100%', width: '100%' }}
-            />
+            <div className="h-full w-full">
+              {/* Use the videoTrack's play method instead of AgoraVideoPlayer */}
+              <div id="local-video" ref={(el) => {
+                if (el && tracks) {
+                  tracks[1].play(el);
+                }
+              }} className="h-full w-full"></div>
+            </div>
           )}
           {(!tracks || isVideoDisabled) && (
             <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
@@ -110,10 +113,14 @@ const VideoCall: React.FC<VideoCallProps> = ({ client, tracks, setStart, channel
         {users.length > 0 && users.map((user) => (
           <div key={user.uid} className="relative rounded-lg overflow-hidden bg-slate-900 aspect-video">
             {user.videoTrack && (
-              <AgoraVideoPlayer
-                videoTrack={user.videoTrack}
-                style={{ height: '100%', width: '100%' }}
-              />
+              <div className="h-full w-full">
+                {/* Use the videoTrack's play method */}
+                <div id={`remote-video-${user.uid}`} ref={(el) => {
+                  if (el && user.videoTrack) {
+                    user.videoTrack.play(el);
+                  }
+                }} className="h-full w-full"></div>
+              </div>
             )}
             {!user.videoTrack && (
               <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
