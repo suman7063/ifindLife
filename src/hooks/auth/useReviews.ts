@@ -5,6 +5,18 @@ import { UserProfile } from '@/types/supabase';
 import { convertExpertIdToNumber, convertExpertIdToString } from '@/types/supabase/expertId';
 import { Review } from '@/types/supabase/reviews';
 
+// Define database review type to avoid excessive type inference
+interface DbReview {
+  id: string;
+  expert_id: number;
+  rating: number;
+  comment: string | null;
+  date: string;
+  verified: boolean | null;
+  user_id: string;
+  user_name: string | null;
+}
+
 export const useReviews = () => {
   // Add a review to an expert
   const addReview = async (
@@ -56,35 +68,47 @@ export const useReviews = () => {
         toast.success('Review added successfully');
       }
       
-      // Fetch all reviews from this user
-      const { data: updatedReviews, error: reviewsError } = await supabase
+      return await fetchUserReviews(userProfile.id);
+      
+    } catch (error: any) {
+      console.error('Error adding review:', error);
+      toast.error(error.message || 'Failed to add review');
+      return {
+        success: false,
+        reviews: []
+      };
+    }
+  };
+  
+  // Separate function to fetch user reviews to avoid deep nesting
+  const fetchUserReviews = async (userId: string): Promise<{success: boolean, reviews: Review[]}> => {
+    try {
+      // Fetch reviews
+      const { data: dbReviews, error: reviewsError } = await supabase
         .from('user_reviews')
         .select('*')
-        .eq('user_id', userProfile.id);
+        .eq('user_id', userId);
       
       if (reviewsError) throw reviewsError;
       
       // Early return if no reviews
-      if (!updatedReviews || updatedReviews.length === 0) {
+      if (!dbReviews || dbReviews.length === 0) {
         return {
           success: true,
           reviews: []
         };
       }
       
-      // Extract unique expert IDs as numbers
+      // Extract expert IDs
       const expertIdNumbers: number[] = [];
-      updatedReviews.forEach(review => {
+      for (const review of dbReviews) {
         if (!expertIdNumbers.includes(review.expert_id)) {
           expertIdNumbers.push(review.expert_id);
         }
-      });
+      }
       
-      // Convert IDs to strings for the query - do this separately
-      const expertIdStrings: string[] = [];
-      expertIdNumbers.forEach(idNumber => {
-        expertIdStrings.push(convertExpertIdToString(idNumber));
-      });
+      // Convert to string IDs for query
+      const expertIdStrings: string[] = expertIdNumbers.map(convertExpertIdToString);
       
       // Get expert data
       const { data: experts } = await supabase
@@ -92,45 +116,38 @@ export const useReviews = () => {
         .select('id, name')
         .in('id', expertIdStrings);
       
-      // Create a simple lookup object
-      const expertNameMap: {[key: string]: string} = {};
+      // Create expert name lookup
+      const expertNameMap: Record<string, string> = {};
       
       if (experts) {
-        experts.forEach(expert => {
+        for (const expert of experts) {
           expertNameMap[expert.id] = expert.name;
-        });
+        }
       }
       
-      // Create the reviews array manually
-      const formattedReviews: Review[] = [];
-      
-      updatedReviews.forEach(dbReview => {
+      // Create review objects with explicit typing
+      const reviews: Review[] = dbReviews.map((dbReview: DbReview) => {
         const expertIdStr = convertExpertIdToString(dbReview.expert_id);
         
-        // Build the review object with direct property assignments
-        const review: Review = {
+        return {
           id: dbReview.id,
           expertId: expertIdStr,
           rating: dbReview.rating,
           comment: dbReview.comment || '',
           date: dbReview.date,
           verified: Boolean(dbReview.verified),
-          userId: userProfile.id,
-          userName: userProfile.name || 'Anonymous User',
+          userId: userId,
+          userName: dbReview.user_name || 'Anonymous User',
           expertName: expertNameMap[expertIdStr] || 'Unknown Expert'
         };
-        
-        formattedReviews.push(review);
       });
       
       return {
         success: true,
-        reviews: formattedReviews
+        reviews
       };
-      
     } catch (error: any) {
-      console.error('Error adding review:', error);
-      toast.error(error.message || 'Failed to add review');
+      console.error('Error fetching reviews:', error);
       return {
         success: false,
         reviews: []
