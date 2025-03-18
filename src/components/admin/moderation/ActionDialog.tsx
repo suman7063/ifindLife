@@ -39,7 +39,7 @@ const ActionDialog: React.FC<ActionDialogProps> = ({
   onOpenChange,
   onAction,
 }) => {
-  const [actionType, setActionType] = useState<ModerationActionType>(ModerationActionType.WARNING);
+  const [actionType, setActionType] = useState<string>(ModerationActionType.WARNING);
   const [message, setMessage] = useState('');
   const [notes, setNotes] = useState('');
   
@@ -74,7 +74,7 @@ const ActionDialog: React.FC<ActionDialogProps> = ({
             </label>
             <Select
               value={actionType}
-              onValueChange={(value) => setActionType(value as ModerationActionType)}
+              onValueChange={(value) => setActionType(value)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select action" />

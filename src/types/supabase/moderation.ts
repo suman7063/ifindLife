@@ -16,7 +16,14 @@ export type TargetType = 'user' | 'expert' | 'content' | 'appointment' | 'review
 
 export type ModerationStatus = 'pending' | 'in_review' | 'dismissed' | 'actioned';
 
-export type ModerationActionType = 'warn' | 'suspend' | 'ban' | 'dismiss' | 'hide' | 'delete';
+export enum ModerationActionType {
+  WARNING = 'warn',
+  SUSPENSION = 'suspend',
+  BAN = 'ban',
+  NO_ACTION = 'dismiss',
+  HIDE = 'hide',
+  DELETE = 'delete'
+}
 
 export interface ReportUI {
   id: string;

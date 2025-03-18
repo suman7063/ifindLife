@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import ReportsList from './ReportsList';
 import FeedbackList from './FeedbackList';
 import { useModeration } from '@/hooks/admin/useModeration';
-import { ModerationActionType } from '@/types/supabase';
+import { ModerationActionType } from '@/types/supabase/moderation';
 
 const ModerationDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('reports');
@@ -15,7 +15,8 @@ const ModerationDashboard: React.FC = () => {
     error,
     assignReport,
     dismissReport,
-    takeAction
+    takeAction,
+    fetchReports
   } = useModeration();
 
   // Mock feedback data since it's not implemented in the hook yet
@@ -33,9 +34,9 @@ const ModerationDashboard: React.FC = () => {
     return dismissReport(reportId, mockAdminId);
   };
   
-  const handleTakeAction = (reportId: string, actionType: string) => {
+  const handleTakeAction = (reportId: string, actionType: string, message: string, notes?: string) => {
     const mockAdminId = 'admin-123';
-    return takeAction(reportId, mockAdminId, actionType as ModerationActionType);
+    return takeAction(reportId, mockAdminId, actionType as unknown as ModerationActionType, message, notes);
   };
   
   const handleDeleteFeedback = () => {
@@ -63,7 +64,7 @@ const ModerationDashboard: React.FC = () => {
               isLoading={loading}
               onReview={handleReviewReport}
               onDismiss={handleDismissReport}
-              onAction={(reportId) => handleTakeAction(reportId, 'warn')}
+              onAction={handleTakeAction}
             />
           </TabsContent>
           

@@ -1,101 +1,64 @@
-
 import { 
-  UserCourse, 
-  UserReview, 
-  UserReport, 
-  Review, 
-  Report 
+  UserProfile, 
+  ReportUI,
+  Review,
+  UserReview,
+  ReviewUI,
+  ReferralSettingsUI,
+  ReferralUI
 } from '@/types/supabase';
 
-// Adapter functions to convert DB format to UI format
-export const adaptCoursesToUI = (courses: any[]): UserCourse[] => {
-  return courses.map(course => ({
-    id: course.id,
-    userId: course.user_id,
-    expertId: course.expert_id,
-    expertName: course.expert_name,
-    title: course.title,
-    enrollmentDate: course.enrollment_date,
-    completed: course.completed || false,
-    progress: course.progress || 0,
-    
-    // DB fields for compatibility
-    user_id: course.user_id,
-    expert_id: course.expert_id,
-    expert_name: course.expert_name,
-    enrollment_date: course.enrollment_date
-  }));
-};
-
-export const adaptReviewsToUI = (reviews: any[]): Review[] => {
+// Convert DB format to UI format
+export const adaptReviewsForUI = (reviews: any[]): Review[] => {
   return reviews.map(review => ({
     id: review.id,
     userId: review.user_id,
-    userName: review.user_name || 'Anonymous',
+    userName: review.user_name,
     expertId: review.expert_id,
-    rating: review.rating,
-    comment: review.comment || '',
-    date: review.date,
-    verified: review.verified || false,
-    
-    // DB fields for compatibility
-    user_id: review.user_id,
-    expert_id: review.expert_id,
-    user_name: review.user_name || 'Anonymous'
-  }));
-};
-
-export const adaptReportsToUI = (reports: any[]): Report[] => {
-  return reports.map(report => ({
-    id: report.id,
-    userId: report.user_id,
-    expertId: report.expert_id,
-    reason: report.reason,
-    details: report.details || '',
-    date: report.date,
-    status: report.status,
-    
-    // DB fields for compatibility
-    user_id: report.user_id,
-    expert_id: report.expert_id
-  }));
-};
-
-// Adapter functions to convert UI format to DB format
-export const adaptCoursesToDB = (courses: UserCourse[]): any[] => {
-  return courses.map(course => ({
-    id: course.id,
-    user_id: course.userId,
-    expert_id: course.expertId,
-    expert_name: course.expertName,
-    title: course.title,
-    enrollment_date: course.enrollmentDate,
-    completed: course.completed,
-    progress: course.progress
-  }));
-};
-
-export const adaptReviewsToDB = (reviews: Review[]): any[] => {
-  return reviews.map(review => ({
-    id: review.id,
-    user_id: review.userId,
-    user_name: review.userName,
-    expert_id: review.expertId,
+    expertName: 'Expert', // Default value, should be populated later
     rating: review.rating,
     comment: review.comment,
     date: review.date,
-    verified: review.verified
+    verified: review.verified,
+    // Keep DB fields for compatibility
+    user_id: review.user_id,
+    expert_id: review.expert_id,
+    user_name: review.user_name
   }));
 };
 
-export const adaptReportsToDB = (reports: Report[]): any[] => {
-  return reports.map(report => ({
-    id: report.id,
-    user_id: report.userId,
-    expert_id: report.expertId,
-    reason: report.reason,
-    details: report.details,
-    date: report.date,
-    status: report.status
+export const adaptReferralSettings = (settings: any): ReferralSettingsUI => {
+  return {
+    id: settings.id,
+    referrerReward: settings.referrer_reward,
+    referredReward: settings.referred_reward,
+    active: settings.active,
+    description: settings.description,
+    updatedAt: settings.updated_at,
+    // Keep DB fields for compatibility
+    referrer_reward: settings.referrer_reward,
+    referred_reward: settings.referred_reward,
+    updated_at: settings.updated_at
+  };
+};
+
+export const adaptReferrals = (referrals: any[]): ReferralUI[] => {
+  return referrals.map(referral => ({
+    id: referral.id,
+    referrerId: referral.referrer_id,
+    referredId: referral.referred_id,
+    referralCode: referral.referral_code || '',
+    status: referral.status,
+    createdAt: referral.created_at,
+    completedAt: referral.completed_at,
+    rewardClaimed: referral.reward_claimed,
+    referredName: referral.referred_name || 'Unknown User',
+    // Keep DB fields for compatibility
+    referrer_id: referral.referrer_id,
+    referred_id: referral.referred_id,
+    referral_code: referral.referral_code,
+    created_at: referral.created_at,
+    completed_at: referral.completed_at,
+    reward_claimed: referral.reward_claimed
   }));
 };

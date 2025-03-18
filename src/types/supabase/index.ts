@@ -8,16 +8,7 @@ export * from './referrals';
 export * from './expertId';
 export * from './transaction';
 export * from './userObjects';
-
-// Use 'export type' to avoid TS1205 errors with types from moderation
-export type { 
-  ReportReason, 
-  ReportUI,
-  ReporterType,
-  TargetType,
-  ModerationStatus,
-  ModerationActionType
-} from './moderation';
+export * from './moderation';
 
 // Use 'export type' to avoid TS1205 errors with types from reviews
 export type {

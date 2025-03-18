@@ -1,94 +1,92 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserProfile, Report } from '@/types/supabase';
 import { toast } from 'sonner';
+import { ReportUI } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/user';
 
 export const useReports = () => {
-  const [loading, setLoading] = useState(false);
-
-  const addReport = async (
-    user: UserProfile, 
-    expertId: string,
-    reason: string,
-    details: string
-  ) => {
-    setLoading(true);
+  // Add a report to a user
+  const addReport = async (user: UserProfile, expertId: string, reason: string, details: string) => {
     try {
-      const newReport = {
-        user_id: user.id,
-        expert_id: expertId,
-        reason,
-        details,
-        date: new Date().toISOString(),
-        status: 'pending'
-      };
-
-      const { error } = await supabase
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
         .from('user_reports')
-        .insert(newReport);
-
-      if (error) throw error;
-
-      // Update user's reports list
-      const updatedReports = [...(user.reports || []), {
-        id: 'pending', // Will be updated when we fetch again
-        userId: user.id,
-        expertId,
-        reason,
-        details,
-        date: new Date().toISOString(),
-        status: 'pending',
-        user_id: user.id,
-        expert_id: expertId
-      } as Report];
-
-      toast.success('Report submitted successfully');
+        .insert({
+          user_id: user.id,
+          expert_id: parseInt(expertId),
+          reason,
+          details,
+          date: now,
+          status: 'pending'
+        });
+        
+      if (error) {
+        throw error;
+      }
       
-      return {
-        ...user,
-        reports: updatedReports
-      };
+      toast.success('Report submitted successfully');
+      return { ...user, reports: [...(user.reports || [])] };
     } catch (error: any) {
-      toast.error(error.message || 'Failed to submit report');
+      toast.error('Failed to submit report: ' + error.message);
       return user;
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Get all reports by a user
   const getUserReports = async (userId: string) => {
-    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('user_reports')
         .select('*')
         .eq('user_id', userId);
-
-      if (error) throw error;
-
-      return data;
+      
+      if (error) {
+        throw error;
+      }
+      
+      return data || [];
     } catch (error: any) {
-      toast.error(error.message || 'Failed to fetch reports');
+      toast.error('Failed to fetch reports: ' + error.message);
       return [];
-    } finally {
-      setLoading(false);
     }
   };
 
+  // Submit a report for any content (expert, review, etc.)
   const submitReport = async (
-    user: UserProfile,
-    expertId: string,
+    reporterId: string,
+    reporterType: string,
+    targetId: string,
+    targetType: string,
     reason: string,
     details: string
   ) => {
-    return addReport(user, expertId, reason, details);
+    try {
+      const now = new Date().toISOString();
+      const { data, error } = await supabase
+        .from('moderation_reports')
+        .insert({
+          reporter_id: reporterId,
+          reporter_type: reporterType,
+          target_id: targetId,
+          target_type: targetType,
+          reason,
+          details,
+          created_at: now,
+          status: 'pending'
+        });
+        
+      if (error) {
+        throw error;
+      }
+      
+      toast.success('Report submitted successfully');
+      return true;
+    } catch (error: any) {
+      toast.error('Failed to submit report: ' + error.message);
+      return false;
+    }
   };
 
-  return {
-    addReport,
-    getUserReports,
-    submitReport,
-    loading
-  };
+  return { addReport, getUserReports, submitReport };
 };

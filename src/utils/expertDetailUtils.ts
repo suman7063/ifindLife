@@ -1,46 +1,47 @@
 
-import { Expert } from '@/types/supabase';
+import { Expert } from '@/types/expert';
 
-/**
- * Normalizes expert data from various formats into a consistent shape
- * for the expert detail page.
- */
-export const normalizeExpertForDetail = (expert: any): Expert => {
-  // Ensure we have the standard properties in both camelCase and snake_case
+export const normalizeExpertData = (expert: any): Expert => {
+  if (!expert) return {} as Expert;
+  
   return {
     ...expert,
-    // Ensure these properties exist for the UI components
+    // Add missing properties with defaults
     average_rating: expert.average_rating || 0,
     reviews_count: expert.reviews_count || 0,
     selected_services: expert.selected_services || [],
-    certificate_urls: expert.certificate_urls || [],
-    profile_picture: expert.profile_picture || '/placeholder.svg',
-    
-    // Add camelCase versions if they don't exist
-    averageRating: expert.averageRating || expert.average_rating || 0,
-    reviewsCount: expert.reviewsCount || expert.reviews_count || 0,
-    selectedServices: expert.selectedServices || expert.selected_services || [],
-    certificateUrls: expert.certificateUrls || expert.certificate_urls || [],
-    profilePicture: expert.profilePicture || expert.profile_picture || '/placeholder.svg',
+    // Make sure all required fields exist
+    bio: expert.bio || '',
+    name: expert.name || 'Anonymous Expert',
+    specialties: expert.specialties || [],
+    wait_time: expert.wait_time || '1-2 days',
+    city: expert.city || '',
+    country: expert.country || '',
+    image_url: expert.image_url || '/placeholder.svg',
+    languages: expert.languages || ['English'],
+    license_number: expert.license_number || '',
+    id: expert.id || '0',
+    education: expert.education || [],
+    experience: expert.experience || 0,
+    consultations: expert.consultations || 0,
+    rate: expert.rate || 0
   };
 };
 
-/**
- * Get display ready rating string
- */
-export const formatRating = (rating?: number): string => {
-  if (!rating) return "No ratings yet";
-  return rating.toFixed(1);
+export const getExpertAvailability = (expertId: string) => {
+  // This would be replaced with a real API call to get expert availability
+  return {
+    monday: ['9:00 AM - 12:00 PM', '2:00 PM - 5:00 PM'],
+    tuesday: ['9:00 AM - 12:00 PM', '2:00 PM - 5:00 PM'],
+    wednesday: ['9:00 AM - 12:00 PM', '2:00 PM - 5:00 PM'],
+    thursday: ['9:00 AM - 12:00 PM', '2:00 PM - 5:00 PM'],
+    friday: ['9:00 AM - 12:00 PM'],
+    saturday: [],
+    sunday: []
+  };
 };
 
-/**
- * Format price for display
- */
-export const formatPrice = (price?: number, currency: string = "USD"): string => {
-  if (!price) return "Price unavailable";
-  
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency
-  }).format(price);
+export default {
+  normalizeExpertData,
+  getExpertAvailability
 };

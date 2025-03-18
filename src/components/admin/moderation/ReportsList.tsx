@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Table,
@@ -73,8 +72,10 @@ const ReportsList: React.FC<ReportsListProps> = ({
       case 'pending':
         return <Badge variant="outline" className="bg-yellow-50 text-yellow-600">Pending</Badge>;
       case 'under_review':
+      case 'in_review':
         return <Badge variant="outline" className="bg-blue-50 text-blue-600">Under Review</Badge>;
       case 'resolved':
+      case 'actioned':
         return <Badge variant="outline" className="bg-green-50 text-green-600">Resolved</Badge>;
       case 'dismissed':
         return <Badge variant="outline" className="bg-gray-50 text-gray-600">Dismissed</Badge>;
@@ -99,8 +100,8 @@ const ReportsList: React.FC<ReportsListProps> = ({
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="under_review">Under Review</SelectItem>
-            <SelectItem value="resolved">Resolved</SelectItem>
+            <SelectItem value="in_review">Under Review</SelectItem>
+            <SelectItem value="actioned">Resolved</SelectItem>
             <SelectItem value="dismissed">Dismissed</SelectItem>
           </SelectContent>
         </Select>
@@ -184,7 +185,7 @@ const ReportsList: React.FC<ReportsListProps> = ({
                           Review
                         </Button>
                       )}
-                      {report.status !== 'resolved' && report.status !== 'dismissed' && (
+                      {report.status !== 'actioned' && report.status !== 'dismissed' && (
                         <>
                           <Button
                             variant="outline"
