@@ -95,9 +95,9 @@ export const useReviews = () => {
   // Fetch reviews for a specific user using the RPC function
   const fetchUserReviews = async (userId: string): Promise<{success: boolean, reviews: Review[]}> => {
     try {
-      // Call the RPC function directly using the function name
+      // Call the RPC function with explicit typing
       const { data, error } = await supabase
-        .rpc('get_user_reviews_with_experts', {
+        .rpc<UserReviewWithExpert[]>('get_user_reviews_with_experts', {
           user_id_param: userId
         });
       
@@ -107,9 +107,8 @@ export const useReviews = () => {
         return { success: true, reviews: [] };
       }
       
-      // Map the joined data to Review objects with proper type assertion
-      const reviewsData = data as UserReviewWithExpert[];
-      const reviews: Review[] = reviewsData.map((item): Review => ({
+      // Map the data to Review objects with proper type handling
+      const reviews: Review[] = data.map((item): Review => ({
         id: item.review_id,
         expertId: String(item.expert_id),
         rating: item.rating,
@@ -151,7 +150,9 @@ export const useReviews = () => {
       
       // Extract expert IDs
       const expertIdNumbers: number[] = [];
-      for (const review of dbReviews) {
+      const typedReviews = dbReviews as DbReview[];
+      
+      for (const review of typedReviews) {
         if (!expertIdNumbers.includes(review.expert_id)) {
           expertIdNumbers.push(review.expert_id);
         }
@@ -175,8 +176,8 @@ export const useReviews = () => {
         }
       }
       
-      // Create review objects with explicit typing
-      const reviews: Review[] = dbReviews.map((dbReview: DbReview) => {
+      // Create review objects
+      const reviews: Review[] = typedReviews.map((dbReview: DbReview) => {
         const expertIdStr = convertExpertIdToString(dbReview.expert_id);
         
         return {
