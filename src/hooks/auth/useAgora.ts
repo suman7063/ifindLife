@@ -1,12 +1,10 @@
 
 import { useState, useEffect } from 'react';
-import { 
+import AgoraRTC, { 
   IAgoraRTCClient, 
   IAgoraRTCRemoteUser, 
   ICameraVideoTrack, 
-  IMicrophoneAudioTrack,
-  createClient,
-  createMicrophoneAndCameraTracks
+  IMicrophoneAudioTrack
 } from 'agora-rtc-sdk-ng';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
@@ -37,7 +35,7 @@ export const useAgora = () => {
     const [client, setClient] = useState<IAgoraRTCClient | null>(null);
     
     useEffect(() => {
-      const agoraClient = createClient(config);
+      const agoraClient = AgoraRTC.createClient(config);
       setClient(agoraClient);
       
       return () => {
@@ -58,8 +56,9 @@ export const useAgora = () => {
       // Create tracks
       const createAudioAndVideoTracks = async () => {
         try {
-          const audioAndVideoTracks = await createMicrophoneAndCameraTracks();
-          setTracks(audioAndVideoTracks);
+          const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+          const videoTrack = await AgoraRTC.createCameraVideoTrack();
+          setTracks([audioTrack, videoTrack]);
           setReady(true);
         } catch (error) {
           console.error('Error creating tracks:', error);

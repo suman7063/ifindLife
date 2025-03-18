@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase, from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { useAgora } from './useAgora';
 import { Appointment, AppointmentRow } from '@/types/supabase/appointments';
+
+export { Appointment } from '@/types/supabase/appointments';
 
 export const useAppointments = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +24,7 @@ export const useAppointments = () => {
         .from('appointments')
         .select('*')
         .eq('user_id', userId)
-        .order('appointment_date', { ascending: true }) as { data: AppointmentRow[] | null, error: any };
+        .order('appointment_date', { ascending: true });
         
       if (error) throw error;
       
@@ -91,7 +93,7 @@ export const useAppointments = () => {
           token: token,
           uid: uid
         })
-        .select() as { data: AppointmentRow[] | null, error: any };
+        .select();
         
       if (error) throw error;
       
@@ -131,7 +133,7 @@ export const useAppointments = () => {
       const { error } = await supabase
         .from('appointments')
         .update({ status: 'cancelled' })
-        .eq('id', appointmentId) as { error: any };
+        .eq('id', appointmentId);
         
       if (error) throw error;
       

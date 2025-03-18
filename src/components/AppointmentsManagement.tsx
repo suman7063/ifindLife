@@ -1,10 +1,12 @@
+
 import React, { useEffect, useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Clock, Video, X } from 'lucide-react';
 import { useUserAuth } from '@/hooks/useUserAuth';
-import { useAppointments, Appointment } from '@/hooks/auth/useAppointments';
+import { useAppointments } from '@/hooks/auth/useAppointments';
+import { Appointment } from '@/types/supabase/appointments';
 import { useAgora } from '@/hooks/auth/useAgora';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';

@@ -16,5 +16,5 @@ export function from<T extends keyof CustomTable>(
 ) {
   // This is a helper that would have been useful, but due to typing issues,
   // we're going with direct supabase client calls with type assertions
-  return supabase.from(table as string);
+  return supabase.from(table);
 }
