@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { 
   fetchUserProfile, 
-  updateUserProfile, 
-  updateProfilePicture 
+  updateUserProfile as updateProfile,
+  updateProfilePicture as updateUserProfilePicture 
 } from '@/utils/userProfileUtils';
 import { UserProfile, Expert, Review, Report, Course, UserTransaction, User } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
@@ -115,10 +115,10 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  const updateProfile = async (profileData: Partial<UserProfile>) => {
+  const handleUpdateProfile = async (profileData: Partial<UserProfile>) => {
     if (!currentUser || !currentUser.id) return;
 
-    const result = await updateUserProfile(currentUser.id, profileData);
+    const result = await updateProfile(currentUser.id, profileData);
     if (result) {
       setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
     }
@@ -127,7 +127,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const handleUpdateProfilePicture = async (file: File): Promise<string> => {
     if (!currentUser || !currentUser.id) throw new Error('User not authenticated');
 
-    const publicUrl = await updateProfilePicture(currentUser.id, file);
+    const publicUrl = await updateUserProfilePicture(currentUser.id, file);
     setCurrentUser(prev => {
       if (!prev) return null;
       return { 
@@ -185,7 +185,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         login,
         signup,
         logout,
-        updateProfile,
+        updateProfile: handleUpdateProfile,
         updateProfilePicture: handleUpdateProfilePicture,
         addToFavorites,
         removeFromFavorites,

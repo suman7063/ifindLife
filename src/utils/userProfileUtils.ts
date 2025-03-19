@@ -7,6 +7,142 @@ import {
   adaptReportsToUI 
 } from './dataAdapters';
 
+// Function to convert database user object to UserProfile
+export const convertUserToUserProfile = (data: any): UserProfile => {
+  return {
+    id: data.id,
+    name: data.name,
+    email: data.email,
+    phone: data.phone,
+    country: data.country,
+    city: data.city,
+    currency: data.currency,
+    profilePicture: data.profile_picture,
+    walletBalance: data.wallet_balance || 0,
+    createdAt: data.created_at,
+    referralCode: data.referral_code,
+    referredBy: data.referred_by,
+    referralLink: data.referral_link,
+    favoriteExperts: [],
+    enrolledCourses: [],
+    transactions: [],
+    reviews: [],
+    reports: [],
+    referrals: []
+  };
+};
+
+// Function to fetch user profile
+export const fetchUserProfile = async (user: any): Promise<UserProfile | null> => {
+  if (!user || !user.id) return null;
+  
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+      
+    if (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
+    }
+    
+    const userProfile = convertUserToUserProfile(data);
+    
+    const { data: favorites } = await supabase
+      .from('user_favorites')
+      .select('expert_id')
+      .eq('user_id', user.id);
+    
+    if (favorites && favorites.length > 0) {
+      const expertIds = favorites.map(fav => fav.expert_id);
+      const { data: expertsData } = await supabase
+        .from('experts')
+        .select('*')
+        .in('id', expertIds);
+        
+      userProfile.favoriteExperts = expertsData || [];
+    }
+    
+    return userProfile;
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    return null;
+  }
+};
+
+// Function to update the user profile
+export const updateUserProfile = async (userId: string, profile: Partial<UserProfile>): Promise<boolean> => {
+  try {
+    // Convert from camelCase to snake_case for the database
+    const dbProfile: any = {
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+      country: profile.country,
+      city: profile.city,
+      currency: profile.currency,
+      profile_picture: profile.profilePicture
+    };
+
+    const { error } = await supabase
+      .from('users')
+      .update(dbProfile)
+      .eq('id', userId);
+
+    if (error) {
+      console.error('Error updating user profile:', error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    return false;
+  }
+};
+
+// Function to upload and update profile picture
+export const updateProfilePicture = async (userId: string, file: File): Promise<string> => {
+  try {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `profile-pictures/${fileName}`;
+    
+    // Upload file to storage
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, file);
+      
+    if (uploadError) {
+      throw uploadError;
+    }
+    
+    // Get public URL
+    const { data } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(filePath);
+      
+    const publicUrl = data.publicUrl;
+    
+    // Update user profile with the new profile picture URL
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ profile_picture: publicUrl })
+      .eq('id', userId);
+      
+    if (updateError) {
+      throw updateError;
+    }
+    
+    return publicUrl;
+  } catch (error) {
+    console.error('Error updating profile picture:', error);
+    throw error;
+  }
+};
+
 // Function to fetch the user's complete profile with related data
 export const fetchUserCompleteProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
@@ -62,7 +198,7 @@ export const fetchUserCompleteProfile = async (userId: string): Promise<UserProf
       const { data: expertsData } = await supabase
         .from('experts')
         .select('*')
-        .in('id', expertIds);
+        .in('id', expertIds.map(id => id.toString()));
         
       if (expertsData) {
         userProfile.favoriteExperts = expertsData as Expert[];
@@ -110,50 +246,9 @@ export const fetchUserCompleteProfile = async (userId: string): Promise<UserProf
       userProfile.reports = adaptReportsToUI(reportsData);
     }
 
-    // Fetch user's referrals
-    const { data: referralsData, error: referralsError } = await supabase
-      .from('referrals')
-      .select('*')
-      .eq('referrer_id', userId);
-
-    if (!referralsError && referralsData) {
-      userProfile.referrals = referralsData;
-    }
-
     return userProfile;
   } catch (error) {
     console.error('Error fetching complete user profile:', error);
     return null;
-  }
-};
-
-// Function to update the user profile
-export const updateUserProfile = async (userId: string, profile: Partial<UserProfile>): Promise<boolean> => {
-  try {
-    // Convert from camelCase to snake_case for the database
-    const dbProfile: any = {
-      name: profile.name,
-      email: profile.email,
-      phone: profile.phone,
-      country: profile.country,
-      city: profile.city,
-      currency: profile.currency,
-      profile_picture: profile.profilePicture
-    };
-
-    const { error } = await supabase
-      .from('users')
-      .update(dbProfile)
-      .eq('id', userId);
-
-    if (error) {
-      console.error('Error updating user profile:', error);
-      return false;
-    }
-
-    return true;
-  } catch (error) {
-    console.error('Error updating user profile:', error);
-    return false;
   }
 };
