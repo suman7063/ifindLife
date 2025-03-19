@@ -9,7 +9,7 @@ import CallModal from './CallModal';
 import { toast } from '@/hooks/use-toast';
 
 interface AstrologerCardProps {
-  id: number;
+  id: string;
   name: string;
   experience: number;
   specialties: string[];

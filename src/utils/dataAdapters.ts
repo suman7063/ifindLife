@@ -25,8 +25,6 @@ export const adaptReviewsToUI = (reviews: any[]): Review[] => {
   }));
 };
 
-export const adaptReviewsForUI = adaptReviewsToUI; // Alias for backward compatibility
-
 // Function to adapt database reports to UI format
 export const adaptReportsToUI = (reports: any[]): Report[] => {
   return reports.map(report => ({
@@ -107,13 +105,10 @@ export const adaptReferralsToDB = (referrals: ReferralUI[]): any[] => {
 export const adaptReferralSettingsToUI = (settings: ReferralSettings): ReferralSettingsUI => {
   return {
     id: settings.id,
-    referrer_reward: settings.referrer_reward,
-    referred_reward: settings.referred_reward,
     referrerReward: settings.referrer_reward,
     referredReward: settings.referred_reward,
     active: settings.active,
     description: settings.description,
-    updated_at: settings.updated_at,
     updatedAt: settings.updated_at
   };
 };
@@ -121,11 +116,11 @@ export const adaptReferralSettingsToUI = (settings: ReferralSettings): ReferralS
 export const adaptReferralSettingsToDB = (settings: ReferralSettingsUI): ReferralSettings => {
   return {
     id: settings.id,
-    referrer_reward: settings.referrer_reward || settings.referrerReward || 0,
-    referred_reward: settings.referred_reward || settings.referredReward || 0,
+    referrer_reward: settings.referrerReward,
+    referred_reward: settings.referredReward,
     active: settings.active,
     description: settings.description,
-    updated_at: settings.updated_at || settings.updatedAt
+    updated_at: settings.updatedAt
   };
 };
 
@@ -139,10 +134,8 @@ export const adaptExpertsToUI = (experts: any[]): Expert[] => {
     rating: expert.average_rating || 0,
     consultations: expert.consultations || 0,
     price: expert.price || 0,
-    waitTime: expert.wait_time,
-    wait_time: expert.wait_time,
+    waitTime: expert.wait_time || 'Available',
     imageUrl: expert.profile_picture || '',
-    image_url: expert.profile_picture || '',
     online: expert.online || false,
     languages: expert.languages || ['English'],
     bio: expert.bio,
@@ -150,13 +143,12 @@ export const adaptExpertsToUI = (experts: any[]): Expert[] => {
     city: expert.city,
     state: expert.state,
     country: expert.country,
-    certificate_urls: expert.certificate_urls,
-    created_at: expert.created_at,
-    profile_picture: expert.profile_picture,
+    certificateUrls: expert.certificate_urls,
+    createdAt: expert.created_at,
     email: expert.email,
     phone: expert.phone,
-    selected_services: expert.selected_services,
-    average_rating: expert.average_rating,
-    reviews_count: expert.reviews_count
+    selectedServices: expert.selected_services,
+    averageRating: expert.average_rating,
+    reviewsCount: expert.reviews_count
   }));
 };

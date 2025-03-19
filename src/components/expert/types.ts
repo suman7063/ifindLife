@@ -18,7 +18,7 @@ export type ReportUserType = {
 };
 
 export interface ExpertFormData {
-  id: number;
+  id: string;
   name: string;
   email: string;
   phone: string;

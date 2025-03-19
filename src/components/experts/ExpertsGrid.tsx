@@ -31,15 +31,15 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
       {experts.map((expert) => (
         <AstrologerCard 
           key={expert.id} 
-          id={typeof expert.id === 'string' ? parseInt(expert.id, 10) : expert.id as number}
+          id={expert.id}
           name={expert.name}
           experience={expert.experience}
           specialties={expert.specialties}
           rating={expert.rating}
           consultations={expert.consultations}
           price={expert.price}
-          waitTime={expert.waitTime || expert.wait_time}
-          imageUrl={expert.imageUrl || expert.image_url || ''}
+          waitTime={expert.waitTime}
+          imageUrl={expert.imageUrl}
           online={expert.online}
         />
       ))}
