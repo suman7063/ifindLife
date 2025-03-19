@@ -1,5 +1,5 @@
 
-import { Course, Review, Report, ReferralUI, ReferralSettings, ReferralSettingsUI, Expert } from '@/types/supabase';
+import { Course, Review, Report } from '@/types/supabase';
 
 // Function to adapt database courses to UI format
 export const adaptCoursesToUI = (courses: any[]): Course[] => {
@@ -70,85 +70,5 @@ export const adaptReportsToDB = (reports: Report[]): any[] => {
     details: report.details,
     date: report.date,
     status: report.status
-  }));
-};
-
-// Functions for referrals
-export const adaptReferralsToUI = (referrals: any[]): ReferralUI[] => {
-  return referrals.map(referral => ({
-    id: referral.id,
-    referrerId: referral.referrer_id,
-    referredId: referral.referred_id,
-    referredName: referral.referred_name,
-    referralCode: referral.referral_code,
-    status: referral.status as 'pending' | 'completed' | 'expired',
-    rewardClaimed: referral.reward_claimed,
-    createdAt: referral.created_at,
-    completedAt: referral.completed_at
-  }));
-};
-
-export const adaptReferralsToDB = (referrals: ReferralUI[]): any[] => {
-  return referrals.map(referral => ({
-    id: referral.id,
-    referrer_id: referral.referrerId,
-    referred_id: referral.referredId,
-    referral_code: referral.referralCode,
-    status: referral.status,
-    reward_claimed: referral.rewardClaimed,
-    created_at: referral.createdAt,
-    completed_at: referral.completedAt
-  }));
-};
-
-// Functions for referral settings
-export const adaptReferralSettingsToUI = (settings: ReferralSettings): ReferralSettingsUI => {
-  return {
-    id: settings.id,
-    referrerReward: settings.referrer_reward,
-    referredReward: settings.referred_reward,
-    active: settings.active,
-    description: settings.description,
-    updatedAt: settings.updated_at
-  };
-};
-
-export const adaptReferralSettingsToDB = (settings: ReferralSettingsUI): ReferralSettings => {
-  return {
-    id: settings.id,
-    referrer_reward: settings.referrerReward,
-    referred_reward: settings.referredReward,
-    active: settings.active,
-    description: settings.description,
-    updated_at: settings.updatedAt
-  };
-};
-
-// Function to convert experts for UI
-export const adaptExpertsToUI = (experts: any[]): Expert[] => {
-  return experts.map(expert => ({
-    id: expert.id,
-    name: expert.name,
-    experience: expert.experience || 0,
-    specialties: expert.specialization ? expert.specialization.split(',') : [],
-    rating: expert.average_rating || 0,
-    consultations: expert.consultations || 0,
-    price: expert.price || 0,
-    waitTime: expert.wait_time || 'Available',
-    imageUrl: expert.profile_picture || '',
-    online: expert.online || false,
-    languages: expert.languages || ['English'],
-    bio: expert.bio,
-    address: expert.address,
-    city: expert.city,
-    state: expert.state,
-    country: expert.country,
-    certificateUrls: expert.certificate_urls,
-    createdAt: expert.created_at,
-    email: expert.email,
-    phone: expert.phone,
-    selectedServices: expert.selected_services,
-    averageRating: expert.average_rating,
-    reviewsCount: expert.reviews_count
   }));
 };

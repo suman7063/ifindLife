@@ -29,19 +29,7 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {experts.map((expert) => (
-        <AstrologerCard 
-          key={expert.id} 
-          id={expert.id}
-          name={expert.name}
-          experience={expert.experience}
-          specialties={expert.specialties}
-          rating={expert.rating}
-          consultations={expert.consultations}
-          price={expert.price}
-          waitTime={expert.waitTime}
-          imageUrl={expert.imageUrl}
-          online={expert.online}
-        />
+        <AstrologerCard key={expert.id} {...expert} />
       ))}
     </div>
   );

@@ -174,15 +174,10 @@ export interface Course {
 
 // For referral program
 export interface ReferralSettingsUI {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  referrerReward?: number;
-  referredReward?: number;
+  referrerReward: number;
+  referredReward: number;
   active: boolean;
   description?: string;
-  updated_at?: string;
-  updatedAt?: string;
 }
 
 export interface ReferralUI {
@@ -199,55 +194,3 @@ export interface ReferralUI {
 
 // For backward compatibility
 export type ExpertProfile = Expert;
-
-// Moderation related types
-export enum ReporterType {
-  USER = 'user',
-  EXPERT = 'expert',
-  ADMIN = 'admin'
-}
-
-export enum TargetType {
-  USER = 'user',
-  EXPERT = 'expert',
-  CONTENT = 'content'
-}
-
-export enum ModerationStatus {
-  PENDING = 'pending',
-  ASSIGNED = 'assigned',
-  DISMISSED = 'dismissed',
-  RESOLVED = 'resolved'
-}
-
-export enum ModerationAction {
-  WARNING = 'warning',
-  SUSPENSION = 'suspension',
-  BAN = 'ban',
-  OTHER = 'other'
-}
-
-export interface ReportUI {
-  id: string;
-  reporterId: string;
-  reporterType: ReporterType;
-  reporterName?: string;
-  targetId: string;
-  targetType: TargetType;
-  targetName?: string;
-  reason: string;
-  details?: string;
-  status: ModerationStatus;
-  date: string;
-  sessionId?: string;
-}
-
-export interface ModerationActionUI {
-  id: string;
-  reportId: string;
-  adminId: string;
-  actionType: ModerationAction;
-  message: string;
-  notes?: string;
-  createdAt: string;
-}

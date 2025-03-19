@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import CallModal from './CallModal';
 import { toast } from '@/hooks/use-toast';
 
 interface AstrologerCardProps {
-  id: string;
+  id: number;
   name: string;
   experience: number;
   specialties: string[];
