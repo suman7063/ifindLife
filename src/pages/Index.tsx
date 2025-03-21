@@ -39,6 +39,9 @@ const Index = () => {
         
         {/* Stay In Touch Section */}
         <StayInTouchSection />
+
+        {/* CTA Section */}
+        <CTASection />
       </main>
       <Footer />
     </div>

@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CategoryCard from '@/components/CategoryCard';
 import { categoryData as defaultCategoryData } from '@/data/homePageData';
-import { Heart, Brain, Users } from 'lucide-react';
+import { Heart, Brain, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
 
 const ServicesSection = () => {
   const [categories, setCategories] = useState(defaultCategoryData);
@@ -23,37 +23,58 @@ const ServicesSection = () => {
     }
   }, []);
 
-  // Hardcoded categories that match the design
+  // Hardcoded categories that match the Visily design
   const designCategories = [
     {
-      icon: <Heart className="h-8 w-8 text-ifind-aqua" />,
-      title: "Relationship Programs",
-      description: "Tackle all kinds of relationship problems and understand their dynamics better.",
-      href: "/relationship-programs",
-      color: "bg-red-100"
-    },
-    {
       icon: <Brain className="h-8 w-8 text-ifind-aqua" />,
-      title: "Emotional Problems",
-      description: "Understand and process your feelings and emotional responses better.",
-      href: "/emotional-problems",
+      title: "Anxiety & Depression",
+      description: "Get help managing anxiety, depression, and stress from licensed therapists.",
+      href: "/anxiety-depression",
       color: "bg-blue-100"
     },
     {
-      icon: <Users className="h-8 w-8 text-ifind-aqua" />,
-      title: "Parenting Counseling",
-      description: "Get expert guidance on effective parenting approaches and child psychology.",
-      href: "/parenting-counseling",
+      icon: <Heart className="h-8 w-8 text-ifind-aqua" />,
+      title: "Relationship Counseling",
+      description: "Improve communication and resolve conflicts in all types of relationships.",
+      href: "/relationship-counseling",
+      color: "bg-red-100"
+    },
+    {
+      icon: <Lightbulb className="h-8 w-8 text-ifind-aqua" />,
+      title: "Career Guidance",
+      description: "Navigate work stress, career transitions, and professional development.",
+      href: "/career-guidance",
       color: "bg-yellow-100"
+    },
+    {
+      icon: <Users className="h-8 w-8 text-ifind-aqua" />,
+      title: "Family Therapy",
+      description: "Address family dynamics, parenting challenges, and intergenerational issues.",
+      href: "/family-therapy",
+      color: "bg-green-100"
+    },
+    {
+      icon: <Sparkles className="h-8 w-8 text-ifind-aqua" />,
+      title: "Trauma Recovery",
+      description: "Process and heal from past trauma with specialized therapeutic approaches.",
+      href: "/trauma-recovery",
+      color: "bg-purple-100"
+    },
+    {
+      icon: <MessageCircle className="h-8 w-8 text-ifind-aqua" />,
+      title: "Teen Counseling",
+      description: "Support for adolescents facing academic pressure, identity, and social challenges.",
+      href: "/teen-counseling",
+      color: "bg-orange-100"
     }
   ];
 
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-2xl font-bold mb-6">Mental & Emotional Wellness Solutions</h2>
+        <h2 className="text-3xl font-bold mb-6">Our Mental Health Services</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">
-          Find the right fit and talk to a mental healthcare professional who specializes in what you're dealing with. We are here for you.
+          Professional support for your mental health needs. Our licensed therapists specialize in a wide range of issues.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

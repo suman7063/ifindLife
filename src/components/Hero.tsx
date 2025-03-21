@@ -5,9 +5,9 @@ import FreeAssessmentCTA from './FreeAssessmentCTA';
 
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
-    title: "YOU ARE NOT ALONE",
+    title: "Mental Health Solutions that Work",
     subtitle: "Is there a situation you want immediate help with?",
-    description: "Connect with our certified experts with a simple consultation. We're here on demand 24x7.",
+    description: "Expert guidance from licensed therapists available 24/7",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" // Default video URL with autoplay
   });
 
@@ -40,41 +40,46 @@ const Hero = () => {
   return (
     <div className="relative">
       {/* Banner Image Section */}
-      <div className="relative w-full h-[400px] bg-gray-800">
+      <div className="relative w-full h-[400px] bg-gradient-to-r from-gray-900 to-gray-800">
         <img 
           src="public/lovable-uploads/6fdf43ed-732a-4659-a397-a7d061440bc2.png" 
           alt="Woman with sunglasses" 
           className="w-full h-full object-cover opacity-60"
         />
         <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-20">
-          <h1 className="text-white text-4xl md:text-5xl font-bold">
+          <h1 className="text-white text-4xl md:text-5xl font-bold mb-4 max-w-2xl">
             {heroSettings.title}
           </h1>
+          <p className="text-white text-xl max-w-xl">
+            {heroSettings.description}
+          </p>
         </div>
       </div>
       
       {/* Help Section */}
-      <div className="bg-gray-600 text-white py-6 px-6 sm:px-12 md:px-20">
+      <div className="bg-gray-800 text-white py-6 px-6 sm:px-12 md:px-20">
         <div className="container mx-auto">
           <h2 className="text-lg font-medium mb-2">
             {heroSettings.subtitle}
           </h2>
-          <p className="text-sm mb-4">
-            {heroSettings.description}
-          </p>
-          <FreeAssessmentCTA />
+          <div className="flex flex-wrap gap-4">
+            <FreeAssessmentCTA />
+            <Button className="bg-white text-gray-800 hover:bg-gray-100">
+              Book a Session
+            </Button>
+          </div>
         </div>
       </div>
       
       {/* Discover Section */}
-      <div className="py-10 bg-white">
+      <div className="py-16 bg-white">
         <div className="container mx-auto px-6 sm:px-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
             <div>
               <h2 className="text-3xl font-bold mb-2">
-                Discover Your <br />
-                <span className="text-ifind-aqua">Mental & Emotional</span> <br />
-                <span className="text-ifind-aqua">Wellness</span>
+                Take Control of Your <br />
+                <span className="text-ifind-aqua">Mental Health</span> <br />
+                <span className="text-ifind-aqua">Journey</span>
               </h2>
               <p className="text-gray-700 mb-6">
                 Connect with qualified mental health professionals who offer insightful guidance to address your emotional wellbeing, relationships, and personal growth. Get answers when you need it the most.

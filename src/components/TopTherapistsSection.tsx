@@ -6,8 +6,25 @@ import { ChevronRight } from 'lucide-react';
 import AstrologerCard from '@/components/AstrologerCard';
 import { therapistData as defaultTherapistData } from '@/data/homePageData';
 
+// Update the interface to include missing properties
+interface TherapistData {
+  id: number;
+  name: string;
+  experience: number;
+  specialties: string[];
+  rating: number;
+  consultations: number;
+  price: number;
+  waitTime: string;
+  imageUrl: string;
+  online: boolean;
+  availability?: string; // Added property
+  expertise?: string; // Added property
+  reviewCount?: number; // Added property
+}
+
 const TopTherapistsSection = () => {
-  const [therapists, setTherapists] = useState(defaultTherapistData);
+  const [therapists, setTherapists] = useState<TherapistData[]>(defaultTherapistData as TherapistData[]);
 
   // Load content from localStorage on component mount
   useEffect(() => {
@@ -44,10 +61,10 @@ const TopTherapistsSection = () => {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-semibold">Dr. {therapist.name}</h3>
                   <div className="bg-ifind-aqua/10 text-ifind-aqua px-2 py-1 rounded text-xs">
-                    {therapist.availability}
+                    {therapist.availability || 'Available'}
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mb-2">{therapist.expertise}</p>
+                <p className="text-sm text-gray-500 mb-2">{therapist.expertise || therapist.specialties.join(', ')}</p>
                 <div className="flex items-center text-sm mb-3">
                   <div className="flex items-center text-yellow-400 mr-1">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -56,7 +73,7 @@ const TopTherapistsSection = () => {
                       </svg>
                     ))}
                   </div>
-                  <span className="text-gray-500">({therapist.reviewCount})</span>
+                  <span className="text-gray-500">({therapist.reviewCount || therapist.consultations})</span>
                 </div>
                 <div className="flex items-center justify-between mb-3">
                   <div>
