@@ -1,14 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, Star, Phone } from 'lucide-react';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
 
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
-    title: "Mental Wellness",
-    subtitle: "For a Balanced Life",
-    description: "Connect with verified mental health experts for personalized guidance, support, and solutions.",
+    title: "YOU ARE NOT ALONE",
+    subtitle: "Is there a situation you want immediate help with?",
+    description: "Connect with our certified experts with a simple consultation. We're here on demand 24x7.",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" // Default video URL with autoplay
   });
 
@@ -39,46 +38,70 @@ const Hero = () => {
   }, []);
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-b from-white to-ifind-offwhite pt-8 pb-16">
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-          {/* Left side content */}
-          <div className="space-y-6">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-              {heroSettings.title} <br /> 
-              <span className="text-gradient">{heroSettings.subtitle}</span>
-            </h1>
-            
-            <p className="text-lg md:text-xl text-ifind-charcoal/80 max-w-lg">
-              {heroSettings.description}
-            </p>
-            
-            <div className="flex items-center space-x-1 text-ifind-teal">
-              <Star className="h-5 w-5 fill-ifind-teal" />
-              <Star className="h-5 w-5 fill-ifind-teal" />
-              <Star className="h-5 w-5 fill-ifind-teal" />
-              <Star className="h-5 w-5 fill-ifind-teal" />
-              <Star className="h-5 w-5 fill-ifind-teal" />
-              <span className="ml-1 text-ifind-charcoal/90">Trusted by 2M+ clients worldwide</span>
-            </div>
-            
-            <div className="pt-4 flex flex-col sm:flex-row gap-4">
-              <Button className="bg-ifind-teal text-white hover:bg-ifind-teal/90 transition-colors px-6 py-6 h-auto">
-                <Phone className="h-5 w-5 mr-2" />
-                <span className="font-medium">Talk to an Expert</span>
+    <div className="relative">
+      {/* Banner Image Section */}
+      <div className="relative w-full h-[400px] bg-gray-800">
+        <img 
+          src="public/lovable-uploads/6fdf43ed-732a-4659-a397-a7d061440bc2.png" 
+          alt="Woman with sunglasses" 
+          className="w-full h-full object-cover opacity-60"
+        />
+        <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-20">
+          <h1 className="text-white text-4xl md:text-5xl font-bold">
+            {heroSettings.title}
+          </h1>
+        </div>
+      </div>
+      
+      {/* Help Section */}
+      <div className="bg-gray-600 text-white py-6 px-6 sm:px-12 md:px-20">
+        <div className="container mx-auto">
+          <h2 className="text-lg font-medium mb-2">
+            {heroSettings.subtitle}
+          </h2>
+          <p className="text-sm mb-4">
+            {heroSettings.description}
+          </p>
+          <FreeAssessmentCTA />
+        </div>
+      </div>
+      
+      {/* Discover Section */}
+      <div className="py-10 bg-white">
+        <div className="container mx-auto px-6 sm:px-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">
+                Discover Your <br />
+                <span className="text-ifind-aqua">Mental & Emotional</span> <br />
+                <span className="text-ifind-aqua">Wellness</span>
+              </h2>
+              <p className="text-gray-700 mb-6">
+                Connect with qualified mental health professionals who offer insightful guidance to address your emotional wellbeing, relationships, and personal growth. Get answers when you need it the most.
+              </p>
+              <div className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
+                <div className="flex items-center">
+                  <span className="font-bold mr-1">4.8/5.0</span>
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((_, index) => (
+                      <svg key={index} className="w-4 h-4 text-ifind-teal fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                      </svg>
+                    ))}
+                  </div>
+                </div>
+                <span>•</span>
+                <span>Based on 2.5k+ Reviews</span>
+              </div>
+              <Button className="bg-ifind-purple hover:bg-ifind-purple/90 text-white">
+                Take Free Mental Health Assessment
               </Button>
-              
-              <FreeAssessmentCTA />
             </div>
-          </div>
-          
-          {/* Right side video/image */}
-          <div className="relative h-full flex items-center justify-center">
-            <div className="relative z-10 rounded-lg overflow-hidden border-8 border-white shadow-xl animate-float w-full">
+            <div className="relative rounded-lg overflow-hidden">
               {heroSettings.videoUrl ? (
                 <iframe
                   src={heroSettings.videoUrl}
-                  className="w-full aspect-video"
+                  className="w-full aspect-video rounded-lg shadow-lg"
                   title="Mental Health Video"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -87,14 +110,10 @@ const Hero = () => {
                 <img 
                   src="https://images.unsplash.com/photo-1569437061238-3cf61084f487?q=80&w=2070&auto=format&fit=crop" 
                   alt="Mental Health Expert" 
-                  className="w-full h-auto"
+                  className="w-full h-auto rounded-lg shadow-lg"
                 />
               )}
             </div>
-            
-            {/* Decorative elements */}
-            <div className="absolute top-1/4 right-10 -z-0 w-40 h-40 bg-ifind-purple/30 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-1/4 -left-10 -z-0 w-32 h-32 bg-ifind-aqua/30 rounded-full blur-3xl"></div>
           </div>
         </div>
       </div>

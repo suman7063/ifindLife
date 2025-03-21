@@ -7,7 +7,7 @@ import FreeAssessmentCTA from '@/components/FreeAssessmentCTA';
 const CTASection = () => {
   return (
     <section className="py-16 bg-gradient-to-r from-ifind-aqua to-ifind-teal text-white">
-      <div className="container">
+      <div className="container mx-auto px-6 sm:px-12">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold mb-4">Ready for Mental Wellness Support?</h2>
           <p className="text-lg mb-8">

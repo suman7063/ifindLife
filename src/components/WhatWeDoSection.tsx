@@ -1,0 +1,72 @@
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+const WhatWeDoSection = () => {
+  const services = [
+    {
+      title: "For Wellness Seekers",
+      items: [
+        "Free personalized mental health assessment",
+        "One-on-one therapy sessions with licensed professionals",
+        "Relationship counseling",
+        "Stress management techniques",
+        "Personalized wellness plans"
+      ],
+      color: "bg-purple-400",
+      href: "/wellness-seekers"
+    },
+    {
+      title: "For Academic Institutes",
+      items: [
+        "Student counseling programs",
+        "Teacher mental health support",
+        "Crisis intervention resources",
+        "Bullying prevention strategies",
+        "Wellness workshops for campus life"
+      ],
+      color: "bg-blue-400",
+      href: "/academic-institutes"
+    },
+    {
+      title: "For Business",
+      items: [
+        "Employee wellness programs",
+        "Leadership mental fitness training",
+        "Workplace stress management",
+        "Team building for psychological safety",
+        "Burnout prevention strategies"
+      ],
+      color: "bg-green-400",
+      href: "/business"
+    }
+  ];
+
+  return (
+    <section className="py-16 bg-white">
+      <div className="container mx-auto px-6 sm:px-12">
+        <h2 className="text-2xl font-bold mb-8">What We do</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {services.map((service, index) => (
+            <Link key={index} to={service.href} className="block">
+              <div className={`${service.color} rounded-lg p-6 text-white h-full`}>
+                <h3 className="font-semibold text-xl mb-4">{service.title}</h3>
+                <ul className="space-y-2">
+                  {service.items.map((item, i) => (
+                    <li key={i} className="flex items-start">
+                      <span className="mr-2">•</span>
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default WhatWeDoSection;

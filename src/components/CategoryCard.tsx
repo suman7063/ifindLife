@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
 interface CategoryCardProps {
@@ -16,19 +15,17 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   title,
   description,
   href,
-  color = 'bg-astro-light-purple/10'
+  color = 'bg-ifind-aqua/10'
 }) => {
   return (
     <Link to={href}>
-      <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 border border-border/50 hover:border-astro-light-purple/50">
-        <CardContent className="p-6 flex flex-col items-center text-center">
-          <div className={`w-16 h-16 ${color} rounded-full flex items-center justify-center mb-4`}>
-            {icon}
-          </div>
-          <h3 className="font-semibold text-lg mb-2">{title}</h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 p-6 h-full">
+        <div className={`${color} w-16 h-16 rounded-full flex items-center justify-center mb-4`}>
+          {icon}
+        </div>
+        <h3 className="font-semibold text-lg mb-2">{title}</h3>
+        <p className="text-sm text-gray-600">{description}</p>
+      </div>
     </Link>
   );
 };

@@ -8,6 +8,9 @@ import TestimonialsSection from '@/components/TestimonialsSection';
 import WhyChooseUsSection from '@/components/WhyChooseUsSection';
 import CTASection from '@/components/CTASection';
 import Footer from '@/components/Footer';
+import WhatWeDoSection from '@/components/WhatWeDoSection';
+import BlogSection from '@/components/BlogSection';
+import StayInTouchSection from '@/components/StayInTouchSection';
 
 const Index = () => {
   return (
@@ -27,9 +30,15 @@ const Index = () => {
 
         {/* Testimonials Section */}
         <TestimonialsSection />
-
-        {/* CTA Section */}
-        <CTASection />
+        
+        {/* What We Do Section */}
+        <WhatWeDoSection />
+        
+        {/* Blog Section */}
+        <BlogSection />
+        
+        {/* Stay In Touch Section */}
+        <StayInTouchSection />
       </main>
       <Footer />
     </div>

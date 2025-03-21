@@ -23,17 +23,38 @@ const TestimonialsSection = () => {
 
   return (
     <section className="py-16 bg-white">
-      <div className="container">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="text-3xl font-bold mb-4">What Our Clients Say</h2>
-          <p className="text-muted-foreground">
-            Hear from people who have found guidance and clarity through our mental wellness services.
-          </p>
-        </div>
+      <div className="container mx-auto px-6 sm:px-12">
+        <h2 className="text-2xl font-bold mb-8">Testimonials</h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((testimonial, index) => (
-            <TestimonialCard key={index} {...testimonial} />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <h3 className="font-bold mb-1">Amisha M.</h3>
+            <p className="text-gray-500 text-sm mb-2">Delhi, India</p>
+            <div className="flex text-yellow-400 mb-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <svg key={i} className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+              ))}
+            </div>
+            <p className="text-sm">
+              "The guidance I received here transformed my relationship with my teenage son. Dr. Kumar's approach was practical and effective."
+            </p>
+          </div>
+          
+          {testimonials.slice(0, 3).map((testimonial, index) => (
+            <div key={index} className="bg-gray-50 p-6 rounded-lg">
+              <h3 className="font-bold mb-1">{testimonial.name}</h3>
+              <p className="text-gray-500 text-sm mb-2">{testimonial.location}</p>
+              <div className="flex text-yellow-400 mb-3">
+                {Array.from({ length: testimonial.rating }).map((_, i) => (
+                  <svg key={i} className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-sm">"{testimonial.text}"</p>
+            </div>
           ))}
         </div>
       </div>
