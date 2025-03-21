@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
+import { Link } from 'react-router-dom';
 
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
@@ -98,9 +99,11 @@ const Hero = () => {
                 <span>•</span>
                 <span>Based on 2.5k+ Reviews</span>
               </div>
-              <Button className="bg-ifind-purple hover:bg-ifind-purple/90 text-white">
-                Take Free Mental Health Assessment
-              </Button>
+              <Link to="/mental-health-assessment">
+                <Button className="bg-ifind-purple hover:bg-ifind-purple/90 text-white">
+                  Take Free Mental Health Assessment
+                </Button>
+              </Link>
             </div>
             <div className="relative rounded-lg overflow-hidden">
               {heroSettings.videoUrl ? (

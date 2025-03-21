@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { BrainCircuit, MessageCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 const FreeAssessmentCTA = () => {
   return (

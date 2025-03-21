@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Phone, MessageCircle, Calendar } from 'lucide-react';
-import FreeAssessmentCTA from '@/components/FreeAssessmentCTA';
+import { Link } from 'react-router-dom';
 
 const CTASection = () => {
   return (
@@ -25,9 +25,11 @@ const CTASection = () => {
           </div>
           
           <div className="mt-8">
-            <Button variant="outline" className="border-white text-white hover:bg-white/20 transition-colors">
-              Take Free Assessment
-            </Button>
+            <Link to="/mental-health-assessment">
+              <Button variant="outline" className="border-white text-white hover:bg-white/20 transition-colors">
+                Take Free Assessment
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
