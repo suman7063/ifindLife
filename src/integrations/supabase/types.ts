@@ -9,16 +9,704 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
+      appointments: {
+        Row: {
+          appointment_date: string
+          channel_name: string | null
+          created_at: string
+          duration: number
+          expert_id: string
+          expert_name: string
+          id: string
+          notes: string | null
+          service_id: number | null
+          status: string
+          token: string | null
+          uid: number | null
+          user_id: string
+        }
+        Insert: {
+          appointment_date: string
+          channel_name?: string | null
+          created_at?: string
+          duration: number
+          expert_id: string
+          expert_name: string
+          id?: string
+          notes?: string | null
+          service_id?: number | null
+          status: string
+          token?: string | null
+          uid?: number | null
+          user_id: string
+        }
+        Update: {
+          appointment_date?: string
+          channel_name?: string | null
+          created_at?: string
+          duration?: number
+          expert_id?: string
+          expert_name?: string
+          id?: string
+          notes?: string | null
+          service_id?: number | null
+          status?: string
+          token?: string | null
+          uid?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expert_reports: {
+        Row: {
+          date: string | null
+          details: string | null
+          expert_id: string | null
+          id: string
+          reason: string | null
+          status: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          date?: string | null
+          details?: string | null
+          expert_id?: string | null
+          id?: string
+          reason?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          date?: string | null
+          details?: string | null
+          expert_id?: string | null
+          id?: string
+          reason?: string | null
+          status?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_reports_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      experts: {
+        Row: {
+          address: string | null
+          average_rating: number | null
+          bio: string | null
+          certificate_urls: string[] | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          experience: string | null
+          id: string
+          name: string
+          phone: string | null
+          profile_picture: string | null
+          reviews_count: number | null
+          selected_services: number[] | null
+          specialization: string | null
+          state: string | null
+        }
+        Insert: {
+          address?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          certificate_urls?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          experience?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          profile_picture?: string | null
+          reviews_count?: number | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          state?: string | null
+        }
+        Update: {
+          address?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          certificate_urls?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          experience?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          profile_picture?: string | null
+          reviews_count?: number | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          state?: string | null
+        }
+        Relationships: []
+      }
+      moderation_actions: {
+        Row: {
+          action_type: Database["public"]["Enums"]["moderation_action_type"]
+          admin_id: string
+          created_at: string
+          id: string
+          message: string
+          notes: string | null
+          report_id: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["moderation_action_type"]
+          admin_id: string
+          created_at?: string
+          id?: string
+          message: string
+          notes?: string | null
+          report_id: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["moderation_action_type"]
+          admin_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          notes?: string | null
+          report_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_actions_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "moderation_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moderation_reports: {
+        Row: {
+          created_at: string
+          details: string | null
+          id: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reporter_id: string
+          reporter_type: string
+          session_id: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason: Database["public"]["Enums"]["report_reason"]
+          reporter_id: string
+          reporter_type: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id: string
+          target_type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          id?: string
+          reason?: Database["public"]["Enums"]["report_reason"]
+          reporter_id?: string
+          reporter_type?: string
+          session_id?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          profile_picture: string | null
+          updated_at: string | null
+          wallet_balance: number | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          profile_picture?: string | null
+          updated_at?: string | null
+          wallet_balance?: number | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          profile_picture?: string | null
+          updated_at?: string | null
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
+      referral_settings: {
+        Row: {
+          active: boolean
+          description: string | null
+          id: string
+          referred_reward: number
+          referrer_reward: number
+          updated_at: string | null
+        }
+        Insert: {
+          active?: boolean
+          description?: string | null
+          id?: string
+          referred_reward?: number
+          referrer_reward?: number
+          updated_at?: string | null
+        }
+        Update: {
+          active?: boolean
+          description?: string | null
+          id?: string
+          referred_reward?: number
+          referrer_reward?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      referrals: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed: boolean
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code: string
+          referred_id: string
+          referrer_id: string
+          reward_claimed?: boolean
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referred_id?: string
+          referrer_id?: string
+          reward_claimed?: boolean
+          status?: string
+        }
+        Relationships: []
+      }
+      services: {
+        Row: {
+          description: string | null
+          id: number
+          name: string
+          rate_inr: number
+          rate_usd: number
+        }
+        Insert: {
+          description?: string | null
+          id: number
+          name: string
+          rate_inr: number
+          rate_usd: number
+        }
+        Update: {
+          description?: string | null
+          id?: number
+          name?: string
+          rate_inr?: number
+          rate_usd?: number
+        }
+        Relationships: []
+      }
+      user_courses: {
+        Row: {
+          completed: boolean | null
+          enrollment_date: string
+          expert_id: number
+          expert_name: string
+          id: string
+          progress: number | null
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          enrollment_date: string
+          expert_id: number
+          expert_name: string
+          id?: string
+          progress?: number | null
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          enrollment_date?: string
+          expert_id?: number
+          expert_name?: string
+          id?: string
+          progress?: number | null
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_courses_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_expert_services: {
+        Row: {
+          amount: number
+          created_at: string
+          expert_id: string
+          id: string
+          service_id: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          expert_id: string
+          id?: string
+          service_id: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          expert_id?: string
+          id?: string
+          service_id?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_expert_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_favorites: {
+        Row: {
+          expert_id: number
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          expert_id: number
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          expert_id?: number
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_reports: {
+        Row: {
+          date: string
+          details: string | null
+          expert_id: number
+          id: string
+          reason: string
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          date: string
+          details?: string | null
+          expert_id: number
+          id?: string
+          reason: string
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          date?: string
+          details?: string | null
+          expert_id?: number
+          id?: string
+          reason?: string
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reports_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_reviews: {
+        Row: {
+          comment: string | null
+          date: string
+          expert_id: number
+          id: string
+          rating: number
+          user_id: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          comment?: string | null
+          date: string
+          expert_id: number
+          id?: string
+          rating: number
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          comment?: string | null
+          date?: string
+          expert_id?: number
+          id?: string
+          rating?: number
+          user_id?: string | null
+          verified?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reviews_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_transactions: {
+        Row: {
+          amount: number
+          currency: string
+          date: string
+          description: string | null
+          id: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          currency: string
+          date: string
+          description?: string | null
+          id?: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          currency?: string
+          date?: string
+          description?: string | null
+          id?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string | null
+          currency: string | null
+          email: string | null
+          id: string
+          name: string | null
+          phone: string | null
+          profile_picture: string | null
+          referral_code: string | null
+          referral_link: string | null
+          referred_by: string | null
+          wallet_balance: number | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          id: string
+          name?: string | null
+          phone?: string | null
+          profile_picture?: string | null
+          referral_code?: string | null
+          referral_link?: string | null
+          referred_by?: string | null
+          wallet_balance?: number | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          currency?: string | null
+          email?: string | null
+          id?: string
+          name?: string | null
+          phone?: string | null
+          profile_picture?: string | null
+          referral_code?: string | null
+          referral_link?: string | null
+          referred_by?: string | null
+          wallet_balance?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_if_table_exists: {
+        Args: {
+          table_name: string
+        }
+        Returns: boolean
+      }
+      get_user_reviews_with_experts: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: {
+          review_id: string
+          expert_id: number
+          rating: number
+          comment: string
+          date: string
+          verified: boolean
+          user_name: string
+          expert_name: string
+        }[]
+      }
+      handle_completed_referral: {
+        Args: {
+          p_referral_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      moderation_action_type: "warning" | "suspension" | "ban" | "no_action"
+      report_reason:
+        | "misleading_information"
+        | "off_platform_redirection"
+        | "inappropriate_behavior"
+        | "bad_behavior"
+        | "foul_language"
+        | "other"
+      report_status: "pending" | "under_review" | "resolved" | "dismissed"
     }
     CompositeTypes: {
       [_ in never]: never
