@@ -7,8 +7,8 @@ import { Link } from 'react-router-dom';
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
     title: "You Are Not Alone!",
-    subtitle: "Is there a situation you want immediate help with?",
-    description: "Expert guidance from licensed therapists available 24/7",
+    subtitle: "Mental & Emotional Wellness",
+    description: "Connect with our currently online experts through an instant call",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" // Default video URL with autoplay
   });
 
@@ -30,6 +30,8 @@ const Hero = () => {
           setHeroSettings({
             ...parsedContent.heroSettings,
             title: "You Are Not Alone!", // Override title with the new text
+            subtitle: "Mental & Emotional Wellness", // Set consistent subtitle
+            description: "Connect with our currently online experts through an instant call", // Add description
             videoUrl
           });
         }
@@ -83,9 +85,12 @@ const Hero = () => {
       {/* Help Section - Center aligned button with link */}
       <div className="bg-gray-800 text-white py-6 px-6 sm:px-12 md:px-20">
         <div className="container mx-auto flex flex-col items-center">
-          <h2 className="text-lg font-medium mb-4 text-center">
+          <h2 className="text-lg font-medium mb-2 text-center">
             {heroSettings.subtitle}
           </h2>
+          <p className="text-sm text-center text-gray-300 mb-4">
+            {heroSettings.description}
+          </p>
           <div className="flex justify-center">
             <FreeAssessmentCTA />
           </div>

@@ -95,7 +95,7 @@ const ServicesSection = () => {
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-ifind-offwhite">
       <div className="container mx-auto px-6 sm:px-12">
         <h2 className="text-3xl font-bold mb-6">IFL Programs</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">
