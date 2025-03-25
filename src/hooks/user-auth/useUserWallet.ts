@@ -8,10 +8,10 @@ export const useUserWallet = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const rechargeWallet = async (amount: number) => {
+  const rechargeWallet = async (amount: number): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to recharge your wallet');
-      return;
+      return false;
     }
 
     try {
@@ -56,8 +56,10 @@ export const useUserWallet = (
       setCurrentUser(updatedUser);
 
       toast.success(`Successfully added ${amount} ${currentUser.currency || 'USD'} to your wallet`);
+      return true;
     } catch (error: any) {
       toast.error(error.message || 'Failed to recharge wallet');
+      return false;
     }
   };
 

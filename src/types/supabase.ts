@@ -1,3 +1,4 @@
+
 // This file defines custom table types for Supabase
 
 export interface CustomTable {
@@ -47,7 +48,7 @@ export interface CustomTable {
   user_favorites: {
     id: string;
     user_id?: string;
-    expert_id: string;
+    expert_id: number;
   };
   user_transactions: {
     id: string;
@@ -61,7 +62,7 @@ export interface CustomTable {
   user_reviews: {
     id: string;
     user_id?: string;
-    expert_id: string;
+    expert_id: number;
     rating: number;
     comment?: string;
     date: string;
@@ -69,7 +70,7 @@ export interface CustomTable {
   user_reports: {
     id: string;
     user_id?: string;
-    expert_id: string;
+    expert_id: number;
     reason: string;
     details?: string;
     date: string;
@@ -79,7 +80,7 @@ export interface CustomTable {
     id: string;
     user_id?: string;
     title: string;
-    expert_id: string;
+    expert_id: number;
     expert_name: string;
     enrollment_date: string;
     progress?: number;
@@ -117,7 +118,17 @@ export type Expert = CustomTable['experts'];
 export type User = CustomTable['users'];
 export type UserTransaction = CustomTable['user_transactions'];
 export type ReferralSettings = CustomTable['referral_settings'];
-export type Referral = CustomTable['referrals'];
+export type Referral = {
+  id: string;
+  referrerId: string;
+  referredId: string;
+  referredName?: string;
+  referralCode: string;
+  status: 'pending' | 'completed' | 'expired';
+  rewardClaimed: boolean;
+  createdAt?: string;
+  completedAt?: string;
+};
 
 // UI-friendly interfaces with camelCase properties
 export interface UserProfile {
@@ -141,7 +152,7 @@ export interface UserProfile {
   transactions?: UserTransaction[];
   reviews?: Review[];
   reports?: Report[];
-  referrals?: Referral[]; // This expects Referral type, not ReferralUI
+  referrals?: Referral[];
 }
 
 // Using interfaces for UI-friendly models
@@ -149,7 +160,7 @@ export interface Review {
   id: string;
   expertId: string;
   rating: number;
-  comment?: string;
+  comment: string;
   date: string;
 }
 
@@ -178,18 +189,6 @@ export interface ReferralSettingsUI {
   referredReward: number;
   active: boolean;
   description?: string;
-}
-
-export interface ReferralUI {
-  id: string;
-  referrerId: string;
-  referredId: string;
-  referredName?: string;
-  referralCode: string;
-  status: 'pending' | 'completed' | 'expired';
-  rewardClaimed: boolean;
-  createdAt?: string;
-  completedAt?: string;
 }
 
 // For backward compatibility

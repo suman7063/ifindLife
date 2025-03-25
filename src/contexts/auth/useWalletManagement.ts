@@ -1,18 +1,21 @@
 
-import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
+import { useUserWallet } from '@/hooks/user-auth/useUserWallet';
 
 export const useWalletManagement = (
-  currentUser: UserProfile | null
+  currentUser: UserProfile | null,
+  setCurrentUser?: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const rechargeWallet = (amount: number) => {
-    if (!currentUser) return;
-    toast.info('This feature will be implemented with Supabase soon');
-  };
+  const { rechargeWallet } = useUserWallet(
+    currentUser, 
+    setCurrentUser || ((() => {}) as React.Dispatch<React.SetStateAction<UserProfile | null>>)
+  );
 
   const getReferralLink = (): string => {
-    if (!currentUser?.referralCode) return '';
-    return `${window.location.origin}/signup?ref=${currentUser.referralCode}`;
+    if (!currentUser || !currentUser.referralLink) return '';
+    
+    const baseUrl = window.location.origin;
+    return `${baseUrl}${currentUser.referralLink}`;
   };
 
   return {

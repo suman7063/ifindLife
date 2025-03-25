@@ -59,7 +59,9 @@ export const useUserDataFetcher = (
       if (transactionsError) throw transactionsError;
 
       // Convert expert_id to strings for favorites
-      const favorites = favoritesData.map(fav => fav.expert_id.toString());
+      const favoriteExperts = favoritesData ? favoritesData.map(fav => ({ 
+        id: fav.expert_id.toString() 
+      })) : [];
 
       // Create UserProfile object
       const userProfile: UserProfile = {
@@ -73,9 +75,10 @@ export const useUserDataFetcher = (
         walletBalance: userData.wallet_balance || 0,
         currency: userData.currency || 'USD',
         referralCode: userData.referral_code,
+        referredBy: userData.referred_by,
         referralLink: userData.referral_link,
-        favorites: favorites,
-        courses: adaptCoursesToUI(coursesData || []),
+        favoriteExperts: favoriteExperts,
+        enrolledCourses: adaptCoursesToUI(coursesData || []),
         reviews: adaptReviewsToUI(reviewsData || []),
         reports: adaptReportsToUI(reportsData || []),
         transactions: transactionsData || [],

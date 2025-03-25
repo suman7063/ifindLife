@@ -27,7 +27,7 @@ export const useUserFavorites = (
 
       const updatedUser = {
         ...currentUser,
-        favorites: [...(currentUser.favorites || []), expertId],
+        favoriteExperts: [...(currentUser.favoriteExperts || []), { id: expertId }],
       };
       
       setCurrentUser(updatedUser);
@@ -54,7 +54,7 @@ export const useUserFavorites = (
 
       const updatedUser = {
         ...currentUser,
-        favorites: (currentUser.favorites || []).filter(id => id !== expertId),
+        favoriteExperts: (currentUser.favoriteExperts || []).filter(expert => expert.id !== expertId),
       };
       
       setCurrentUser(updatedUser);

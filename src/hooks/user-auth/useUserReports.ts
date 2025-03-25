@@ -2,7 +2,6 @@
 import { toast } from 'sonner';
 import { UserProfile, Report } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
-import { adaptReportsToDB } from '@/utils/dataAdapters';
 
 export const useUserReports = (
   currentUser: UserProfile | null,
@@ -54,6 +53,7 @@ export const useUserReports = (
   };
 
   return {
-    addReport
+    addReport,
+    reportExpert: addReport // Alias for consistency with UserAuthContext
   };
 };

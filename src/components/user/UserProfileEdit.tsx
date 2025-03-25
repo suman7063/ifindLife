@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -63,10 +64,9 @@ const UserProfileEdit: React.FC = () => {
     }
   };
 
-  const handleImageUpload = async (file: File) => {
+  const handleImageUpload = async (file: File): Promise<string> => {
     try {
-      const url = await updateProfilePicture(file);
-      return url;
+      return await updateProfilePicture(file);
     } catch (error) {
       console.error('Error uploading image:', error);
       throw error;
