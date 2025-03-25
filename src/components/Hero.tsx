@@ -44,7 +44,7 @@ const Hero = () => {
       {/* Banner Image Section with new styling */}
       <div className="relative w-full h-[504px]">
         <img 
-          src="public/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
+          src="/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
           alt="Woman with sunglasses" 
           className="w-full h-full object-cover"
           style={{
@@ -93,9 +93,9 @@ const Hero = () => {
                 <span className="font-medium">Talk to an Expert</span>
               </Button>
             </Link>
-            <Link to="/mental-health-assessment">
-              <Button className="bg-white text-gray-800 hover:bg-gray-100">
-                Book a Session
+            <Link to="/experts">
+              <Button className="bg-ifind-teal hover:bg-ifind-teal/90 transition-opacity text-white px-6 py-2 rounded-full flex items-center gap-2">
+                <span className="font-medium">Book a Session</span>
               </Button>
             </Link>
           </div>
@@ -129,7 +129,7 @@ const Hero = () => {
                 <span>•</span>
                 <span>Based on 2.5k+ Reviews</span>
               </div>
-              <Link to="/mental-health-assessment">
+              <Link to="/mental-health-assessment#top">
                 <Button className="bg-ifind-purple hover:bg-ifind-purple/90 text-white">
                   Take Free Mental Health Assessment
                 </Button>
