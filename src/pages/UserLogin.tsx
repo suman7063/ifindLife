@@ -65,6 +65,7 @@ const UserLogin = () => {
     try {
       const success = await login(email, password);
       if (success) {
+        toast.success('Login successful');
         navigate('/user-dashboard');
       }
     } catch (error) {
@@ -86,7 +87,9 @@ const UserLogin = () => {
     setLoading(true);
     
     try {
+      console.log("Attempting to sign up with:", userData);
       const success = await signup(userData);
+      console.log("Signup result:", success);
       
       if (success) {
         setVerificationSent(true);
@@ -94,6 +97,7 @@ const UserLogin = () => {
       }
     } catch (error) {
       console.error('Signup error:', error);
+      toast.error('Failed to register account');
     } finally {
       setLoading(false);
     }
@@ -116,7 +120,7 @@ const UserLogin = () => {
       }
     } catch (error: any) {
       console.error(`${provider} login error:`, error);
-      toast.error(`${provider} login is not currently enabled. Please contact support.`);
+      toast.error(`${provider} login failed: ${error.message || 'Please try again later'}`);
     } finally {
       setSocialLoading(null);
     }

@@ -17,6 +17,7 @@ export const useAuthSignup = (setLoading: (value: boolean) => void) => {
   const signup = async (userData: SignupData): Promise<boolean> => {
     try {
       setLoading(true);
+      console.log("Starting signup process:", userData.email);
       
       // Validate required fields
       if (!userData.email || !userData.password || !userData.name || !userData.phone || !userData.country) {
@@ -26,6 +27,7 @@ export const useAuthSignup = (setLoading: (value: boolean) => void) => {
       
       // Determine currency based on country
       const currency = getCurrencyByCountry(userData.country);
+      console.log("Determined currency:", currency);
 
       // Create new user
       const { data, error } = await supabase.auth.signUp({
@@ -43,6 +45,8 @@ export const useAuthSignup = (setLoading: (value: boolean) => void) => {
           emailRedirectTo: `${window.location.origin}/login?verified=true`,
         }
       });
+
+      console.log("Signup response:", data ? "Data received" : "No data", error ? "Error:" + error.message : "No error");
 
       if (error) {
         // Handle specific error cases
@@ -65,6 +69,7 @@ export const useAuthSignup = (setLoading: (value: boolean) => void) => {
       // Process referral if provided
       if (userData.referralCode && data.user) {
         try {
+          console.log("Processing referral code:", userData.referralCode);
           // Attempt to verify referral code
           const { error: referralError } = await supabase
             .from('referrals')
@@ -87,6 +92,7 @@ export const useAuthSignup = (setLoading: (value: boolean) => void) => {
       toast.success('Account created successfully! Please check your email for verification.');
       return true;
     } catch (error: any) {
+      console.error("Unexpected signup error:", error);
       handleAuthError(error, 'Registration failed');
       return false;
     } finally {

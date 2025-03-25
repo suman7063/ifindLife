@@ -39,8 +39,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
     },
   });
 
-  const onSubmit = (data: z.infer<typeof loginFormSchema>) => {
-    onLogin(data.email, data.password);
+  const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
+    console.log("Login form submitted with:", data);
+    try {
+      await onLogin(data.email, data.password);
+    } catch (error) {
+      console.error("Error during login form submission:", error);
+    }
   };
 
   return (

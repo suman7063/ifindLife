@@ -12,23 +12,30 @@ export const useAuthLogin = (
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
+      console.log("Attempting login with email:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error:", error);
         toast.error(error.message);
         return false;
       }
 
       if (data.user) {
+        console.log("Login successful, user:", data.user.email);
         setSession(data.session);
         toast.success(`Welcome back, ${data.user.email}!`);
         return true;
       }
+      
+      console.log("No user returned from login attempt");
       return false;
     } catch (error: any) {
+      console.error("Unexpected login error:", error);
       handleAuthError(error, 'Login failed');
       return false;
     } finally {
