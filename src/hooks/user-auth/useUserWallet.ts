@@ -42,7 +42,7 @@ export const useUserWallet = (
 
       // Create a new transaction object to add to the user's transactions
       const newTransaction = {
-        id: transactionResult && transactionResult[0] ? transactionResult[0].id : `temp_${Date.now()}`,
+        id: transactionResult && transactionResult[0] && transactionResult[0].id ? transactionResult[0].id : `temp_${Date.now()}`,
         ...transactionData
       };
 

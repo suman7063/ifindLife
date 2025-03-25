@@ -1,5 +1,5 @@
 
-import { User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { UserProfile as SupabaseUserProfile, Review as SupabaseReview, Report as SupabaseReport, Course as SupabaseCourse } from '@/types/supabase';
 
 // Re-export the basic types directly from supabase types

@@ -31,7 +31,7 @@ export const useUserReports = (
 
       // Optimistically update the local state
       const adaptedReport: Report = {
-        id: data && data[0] ? data[0].id : `temp_${Date.now()}`,
+        id: data && data[0] && data[0].id ? data[0].id : `temp_${Date.now()}`,
         expertId: expertId,
         reason: reason,
         details: details,

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -9,10 +8,12 @@ import Footer from '@/components/Footer';
 import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import { useExpertAuth } from '@/components/expert/hooks/useExpertAuth';
-import { User } from '@/contexts/UserAuthContext';
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import type { User } from '@supabase/auth-js';
 
 const ExpertDashboard = () => {
   const { expert, loading } = useExpertAuth();
+  const { user } = useUserAuth();
   const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>([]);
   
