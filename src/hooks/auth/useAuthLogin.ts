@@ -23,6 +23,7 @@ export const useAuthLogin = (
       }
 
       if (data.user) {
+        setSession(data.session);
         toast.success(`Welcome back, ${data.user.email}!`);
         return true;
       }

@@ -3,15 +3,23 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, UserPlus, User } from "lucide-react";
+import { Menu, UserPlus, User, UserCircle, LogOut } from "lucide-react";
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const { isAuthenticated } = useAuth();
-  const { isAuthenticated: isUserAuthenticated } = useUserAuth();
+  const { isAuthenticated: isAdminAuthenticated } = useAuth();
+  const { isAuthenticated: isUserAuthenticated, currentUser, logout } = useUserAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,6 +34,10 @@ const Navbar = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [scrolled]);
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${scrolled ? 'bg-background/90 shadow-sm' : 'bg-transparent'}`}>
@@ -57,11 +69,37 @@ const Navbar = () => {
               <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
             </Link>
           </Button>
-          <Button variant="ghost" asChild>
-            <Link to={isUserAuthenticated ? "/user-dashboard" : "/login"} className="text-ifind-teal">
-              <User className="h-4 w-4 mr-1" /> {isUserAuthenticated ? "Dashboard" : "Login"}
-            </Link>
-          </Button>
+          
+          {isUserAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-ifind-teal">
+                  <UserCircle className="h-4 w-4 mr-1" /> 
+                  {currentUser?.name || 'Account'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/user-dashboard" className="w-full cursor-pointer">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/referrals" className="w-full cursor-pointer">My Referrals</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
+                  <LogOut className="h-4 w-4 mr-1" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" asChild>
+              <Link to="/user-login" className="text-ifind-teal">
+                <User className="h-4 w-4 mr-1" /> Login
+              </Link>
+            </Button>
+          )}
         </div>
         
         <div className="md:hidden">
@@ -99,11 +137,30 @@ const Navbar = () => {
                     <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
                   </Link>
                 </Button>
-                <Button variant="ghost" className="justify-start" asChild>
-                  <Link to={isUserAuthenticated ? "/user-dashboard" : "/login"}>
-                    <User className="h-4 w-4 mr-1" /> {isUserAuthenticated ? "User Dashboard" : "Login"}
-                  </Link>
-                </Button>
+                
+                {isUserAuthenticated ? (
+                  <>
+                    <Button variant="ghost" className="justify-start" asChild>
+                      <Link to="/user-dashboard">
+                        <User className="h-4 w-4 mr-1" /> Dashboard
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" className="justify-start" asChild>
+                      <Link to="/referrals">
+                        <User className="h-4 w-4 mr-1" /> My Referrals
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" className="justify-start text-red-500" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-1" /> Logout
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="ghost" className="justify-start" asChild>
+                    <Link to="/user-login">
+                      <User className="h-4 w-4 mr-1" /> Login
+                    </Link>
+                  </Button>
+                )}
               </div>
             </SheetContent>
           </Sheet>

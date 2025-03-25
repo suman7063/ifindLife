@@ -29,14 +29,14 @@ const UserLogin = () => {
   // Get referral code from URL if available
   const queryParams = new URLSearchParams(location.search);
   const referralCodeFromUrl = queryParams.get('ref');
+  const redirectPath = location.state?.from || '/user-dashboard';
 
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      const redirectTo = location.state?.from || '/user-dashboard';
-      navigate(redirectTo);
+      navigate(redirectPath);
     }
-  }, [isAuthenticated, navigate, location.state]);
+  }, [isAuthenticated, navigate, redirectPath]);
 
   // Load referral settings
   useEffect(() => {
@@ -102,6 +102,8 @@ const UserLogin = () => {
   const handleSocialLogin = async (provider: 'google' | 'facebook' | 'apple') => {
     try {
       setSocialLoading(provider);
+      toast.info(`Logging in with ${provider}...`);
+      
       let { error } = await supabase.auth.signInWithOAuth({ 
         provider,
         options: {
@@ -114,7 +116,7 @@ const UserLogin = () => {
       }
     } catch (error: any) {
       console.error(`${provider} login error:`, error);
-      toast.error(`Error logging in with ${provider}: ${error.message}`);
+      toast.error(`${provider} login is not currently enabled. Please contact support.`);
     } finally {
       setSocialLoading(null);
     }

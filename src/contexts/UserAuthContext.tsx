@@ -47,36 +47,40 @@ export const UserAuthContext = createContext<UserAuthContextType | undefined>(un
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
-  const { login: authLogin, signup: authSignup, logout: authLogout, getSession } = useSupabaseAuth();
+  const { login: authLogin, signup: authSignup, logout: authLogout, getSession, user, session } = useSupabaseAuth();
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
+    // This useEffect will run whenever the session or user changes
+    const fetchProfile = async () => {
+      if (user) {
+        console.log("Fetching user profile for:", user.id);
+        try {
+          const userProfile = await fetchUserProfile(user);
+          if (userProfile) {
+            console.log("User profile fetched:", userProfile);
+            setCurrentUser(userProfile);
+          } else {
+            console.error("No user profile found for:", user.id);
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      } else {
         setCurrentUser(null);
       }
-    });
-
-    const initializeAuth = async () => {
-      const session = await getSession();
-      
-      if (session?.user) {
-        const userProfile = await fetchUserProfile(session.user);
-        if (userProfile) {
-          setCurrentUser(userProfile);
-        }
-      }
     };
 
-    initializeAuth();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+    fetchProfile();
+  }, [user, session]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    const success = await authLogin(email, password);
-    return success;
+    try {
+      const success = await authLogin(email, password);
+      return success;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
+    }
   };
 
   const signup = async (userData: {
