@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Phone, Mail, MapPin } from 'lucide-react';
+import { Mail, MapPin } from 'lucide-react';
 
 const StayInTouchSection = () => {
   return (
@@ -10,20 +10,12 @@ const StayInTouchSection = () => {
         <h2 className="text-2xl font-bold mb-8">Stay Always in Touch</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-6">
-            <div className="flex items-start">
-              <Phone className="h-5 w-5 mr-3 mt-1 text-ifind-aqua" />
-              <div>
-                <h3 className="font-semibold mb-1">Toll-Free</h3>
-                <p className="text-gray-300">1800-123-4567</p>
-              </div>
-            </div>
-            
+          <div className="space-y-6">            
             <div className="flex items-start">
               <Mail className="h-5 w-5 mr-3 mt-1 text-ifind-aqua" />
               <div>
                 <h3 className="font-semibold mb-1">Email Us</h3>
-                <p className="text-gray-300">support@ifindlife.com</p>
+                <p className="text-gray-300">connect@ifindlife.com</p>
               </div>
             </div>
             
@@ -32,9 +24,10 @@ const StayInTouchSection = () => {
               <div>
                 <h3 className="font-semibold mb-1">Head Office</h3>
                 <p className="text-gray-300">
-                  123 Mental Wellness Street<br />
-                  Mindful City, MC 12345<br />
-                  India
+                  3rd Floor, Indian Accelerator,<br />
+                  Iconic Tower, A 13 A, Block A,<br />
+                  Industrial Area, Sector 62,<br />
+                  Noida, Uttar Pradesh 201309
                 </p>
               </div>
             </div>

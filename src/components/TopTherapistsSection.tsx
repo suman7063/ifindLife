@@ -43,7 +43,7 @@ const TopTherapistsSection = () => {
   }, []);
 
   return (
-    <section className="py-16 bg-ifind-teal/10">
+    <section className="py-16 bg-gray-100">
       <div className="container mx-auto px-6 sm:px-12">
         <h2 className="text-2xl font-bold mb-6">Top Mental Wellness Experts</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">

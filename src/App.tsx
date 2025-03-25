@@ -24,6 +24,9 @@ import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import Programs from './pages/Programs';
 import AboutUs from './pages/AboutUs';
 import CareerGuidance from './pages/CareerGuidance';
+import BlogEmotionalIntelligence from './pages/BlogEmotionalIntelligence';
+import BlogManagingThoughts from './pages/BlogManagingThoughts';
+import BlogTeenageAnger from './pages/BlogTeenageAnger';
 
 function App() {
   return (
@@ -46,6 +49,9 @@ function App() {
       <Route path="/programs" element={<Programs />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/career-guidance" element={<CareerGuidance />} />
+      <Route path="/blog/emotional-intelligence" element={<BlogEmotionalIntelligence />} />
+      <Route path="/blog/managing-thoughts" element={<BlogManagingThoughts />} />
+      <Route path="/blog/teenage-anger" element={<BlogTeenageAnger />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

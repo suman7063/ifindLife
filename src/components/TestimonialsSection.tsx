@@ -28,8 +28,19 @@ const TestimonialsSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="font-bold mb-1">Amisha M.</h3>
-            <p className="text-gray-500 text-sm mb-2">Delhi, India</p>
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
+                <img 
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop" 
+                  alt="Amisha M." 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div>
+                <h3 className="font-bold">Amisha M.</h3>
+                <p className="text-gray-500 text-sm">Delhi, India</p>
+              </div>
+            </div>
             <div className="flex text-yellow-400 mb-3">
               {Array.from({ length: 5 }).map((_, i) => (
                 <svg key={i} className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -44,8 +55,19 @@ const TestimonialsSection = () => {
           
           {testimonials.slice(0, 3).map((testimonial, index) => (
             <div key={index} className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="font-bold mb-1">{testimonial.name}</h3>
-              <p className="text-gray-500 text-sm mb-2">{testimonial.location}</p>
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
+                  <img 
+                    src={testimonial.imageUrl} 
+                    alt={testimonial.name} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-bold">{testimonial.name}</h3>
+                  <p className="text-gray-500 text-sm">{testimonial.location}</p>
+                </div>
+              </div>
               <div className="flex text-yellow-400 mb-3">
                 {Array.from({ length: testimonial.rating }).map((_, i) => (
                   <svg key={i} className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">

@@ -13,7 +13,7 @@ const WhatWeDoSection = () => {
         "Stress management techniques",
         "Personalized wellness plans"
       ],
-      color: "bg-ifind-purple",
+      color: "bg-purple-200",
       href: "/wellness-seekers"
     },
     {
@@ -25,7 +25,7 @@ const WhatWeDoSection = () => {
         "Bullying prevention strategies",
         "Wellness workshops for campus life"
       ],
-      color: "bg-ifind-aqua",
+      color: "bg-blue-200",
       href: "/academic-institutes"
     },
     {
@@ -37,7 +37,7 @@ const WhatWeDoSection = () => {
         "Team building for psychological safety",
         "Burnout prevention strategies"
       ],
-      color: "bg-ifind-teal",
+      color: "bg-green-200",
       href: "/business"
     }
   ];
@@ -50,9 +50,9 @@ const WhatWeDoSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {services.map((service, index) => (
             <Link key={index} to={service.href} className="block">
-              <div className={`${service.color} rounded-lg p-6 text-white h-full shadow-md hover:shadow-lg transition-all duration-300`}>
-                <h3 className="font-semibold text-xl mb-4">{service.title}</h3>
-                <ul className="space-y-2">
+              <div className={`${service.color} rounded-lg p-6 h-full shadow-md hover:shadow-lg transition-all duration-300`}>
+                <h3 className="font-semibold text-xl mb-4 text-gray-800">{service.title}</h3>
+                <ul className="space-y-2 text-gray-700">
                   {service.items.map((item, i) => (
                     <li key={i} className="flex items-start">
                       <span className="mr-2">•</span>
