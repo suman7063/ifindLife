@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AssessmentData } from '@/types/assessment';
 
 enum AssessmentStep {
   INTRO = 'intro',
@@ -18,23 +19,70 @@ enum AssessmentStep {
 
 const MentalHealthAssessment = () => {
   const [currentStep, setCurrentStep] = useState<AssessmentStep>(AssessmentStep.INTRO);
-  const [assessmentResults, setAssessmentResults] = useState<any>(null);
+  const [assessmentData, setAssessmentData] = useState<AssessmentData>({
+    emotionalWellbeing: {
+      depression: [0, 0],
+      anxiety: [0, 0],
+    },
+    stressCoping: [0, 0, 0, 0],
+    lifestyleHealth: [0, 0, 0],
+    openEndedReflection: '',
+  });
 
   const handleStartAssessment = () => {
     setCurrentStep(AssessmentStep.QUESTIONS);
     window.scrollTo(0, 0);
   };
 
-  const handleCompleteAssessment = (results: any) => {
-    setAssessmentResults(results);
+  const handleAnswerChange = (section: keyof AssessmentData, index: number, value: number) => {
+    setAssessmentData(prevData => {
+      const newData = { ...prevData };
+      
+      if (section === 'emotionalWellbeing') {
+        if (index < 2) {
+          newData.emotionalWellbeing.depression[index] = value;
+        } else {
+          newData.emotionalWellbeing.anxiety[index - 2] = value;
+        }
+      } else if (section === 'stressCoping') {
+        newData.stressCoping[index] = value;
+      } else if (section === 'lifestyleHealth') {
+        newData.lifestyleHealth[index] = value;
+      }
+      
+      return newData;
+    });
+  };
+
+  const handleOpenEndedResponse = (text: string) => {
+    setAssessmentData(prevData => ({
+      ...prevData,
+      openEndedReflection: text
+    }));
+  };
+
+  const handleCompleteAssessment = () => {
     setCurrentStep(AssessmentStep.RESULTS);
     window.scrollTo(0, 0);
   };
 
-  const handleRestartAssessment = () => {
+  const handleRetake = () => {
     setCurrentStep(AssessmentStep.INTRO);
-    setAssessmentResults(null);
+    setAssessmentData({
+      emotionalWellbeing: {
+        depression: [0, 0],
+        anxiety: [0, 0],
+      },
+      stressCoping: [0, 0, 0, 0],
+      lifestyleHealth: [0, 0, 0],
+      openEndedReflection: '',
+    });
     window.scrollTo(0, 0);
+  };
+
+  const handleExit = () => {
+    // Navigate to home page
+    window.location.href = '/';
   };
 
   return (
@@ -59,13 +107,19 @@ const MentalHealthAssessment = () => {
               )}
               
               {currentStep === AssessmentStep.QUESTIONS && (
-                <AssessmentQuestions onComplete={handleCompleteAssessment} />
+                <AssessmentQuestions 
+                  assessmentData={assessmentData}
+                  onAnswerChange={handleAnswerChange}
+                  onOpenEndedResponse={handleOpenEndedResponse}
+                  onSubmit={handleCompleteAssessment}
+                />
               )}
               
-              {currentStep === AssessmentStep.RESULTS && assessmentResults && (
+              {currentStep === AssessmentStep.RESULTS && (
                 <AssessmentResults 
-                  results={assessmentResults} 
-                  onRestart={handleRestartAssessment}
+                  assessmentData={assessmentData}
+                  onRetake={handleRetake}
+                  onExit={handleExit}
                 />
               )}
             </CardContent>

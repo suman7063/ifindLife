@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 const FreeAssessmentCTA = () => {
   return (
-    <Link to="/mental-health-assessment#top">
+    <Link to="/experts">
       <Button 
         className="bg-ifind-aqua hover:bg-ifind-aqua/90 transition-opacity text-white px-6 py-2 rounded-full group relative overflow-hidden flex items-center gap-2"
       >
