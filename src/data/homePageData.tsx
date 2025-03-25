@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Brain, Users, HeartHandshake, ArrowUpRight } from 'lucide-react';
 
@@ -67,7 +66,7 @@ export const therapistData = [
     consultations: 2100,
     price: 40,
     waitTime: "10 min",
-    imageUrl: "https://images.unsplash.com/photo-1614608682850-e0d6ed316d52?q=80&w=1976&auto=format&fit=crop",
+    imageUrl: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop",
     online: false
   }
 ];
@@ -87,7 +86,7 @@ export const testimonialData = [
     rating: 5,
     text: "Dr. Chen helped my wife and I improve our communication in ways we never thought possible. Our relationship is stronger than ever because of his guidance.",
     date: "1 month ago",
-    imageUrl: "https://images.unsplash.com/photo-1566492031773-4f4e44671857?q=80&w=1974&auto=format&fit=crop"
+    imageUrl: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop"
   },
   {
     name: "Samantha J.",

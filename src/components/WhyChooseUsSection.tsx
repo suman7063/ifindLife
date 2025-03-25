@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Clock, Users, FileText, Shield, HeartPulse, Activity } from 'lucide-react';
+import { Clock, Users, Shield, HeartPulse, Activity } from 'lucide-react';
 
 const WhyChooseUsSection = () => {
   return (
@@ -25,12 +25,13 @@ const WhyChooseUsSection = () => {
             <p className="text-gray-600">Your privacy is our top priority with end-to-end encryption</p>
           </div>
           
-          <div className="bg-white rounded-lg p-8 text-center">
+          {/* Added background color to the third block */}
+          <div className="bg-ifind-purple/90 rounded-lg p-8 text-center">
             <div className="flex justify-center mb-4">
-              <HeartPulse className="h-12 w-12 text-ifind-aqua" />
+              <HeartPulse className="h-12 w-12 text-white" />
             </div>
-            <h3 className="font-semibold text-xl mb-2 text-gray-800">Certified Professionals</h3>
-            <p className="text-gray-600">Licensed therapists with years of clinical experience</p>
+            <h3 className="font-semibold text-xl mb-2 text-white">Certified Professionals</h3>
+            <p className="text-white/90">Licensed therapists with years of clinical experience</p>
           </div>
         </div>
       </div>

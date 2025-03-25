@@ -3,7 +3,7 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Separator } from '@/components/ui/separator';
-import { Calendar, User, Heart, ArrowLeft } from 'lucide-react';
+import { Brain, Calendar, User, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -41,7 +41,7 @@ const BlogTeenageAnger = () => {
               {/* Featured image */}
               <div className="h-80 rounded-lg overflow-hidden mb-8">
                 <img 
-                  src="https://images.unsplash.com/photo-1523496897114-5b77cc0c4c42?q=80&w=2070&auto=format&fit=crop" 
+                  src="https://images.unsplash.com/photo-1581271940096-99d6d544eb34?q=80&w=2068&auto=format&fit=crop" 
                   alt="Teenage Anger" 
                   className="w-full h-full object-cover"
                 />
@@ -50,122 +50,102 @@ const BlogTeenageAnger = () => {
               {/* Blog content */}
               <div className="prose prose-lg max-w-none">
                 <p className="lead text-xl mb-6">
-                  Parenting a teenager can feel like navigating a minefield, especially when anger erupts seemingly out of nowhere. One moment, your child is calm and collected; the next, they're slamming doors and refusing to speak. While teenage anger is a normal part of development, understanding its roots and responding effectively can make this challenging period easier for the entire family.
+                  Adolescence is a time of intense emotions. As teenagers navigate the complex journey from childhood to adulthood, anger can often become a challenging emotion to manage—both for teens and their parents.
                 </p>
                 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">Understanding Teenage Anger</h2>
                 <p>
-                  Adolescence is a time of significant change—physically, emotionally, socially, and neurologically. The teenage brain, particularly the prefrontal cortex responsible for impulse control and emotional regulation, is still developing. Meanwhile, hormonal fluctuations can intensify emotions and make them harder to manage.
+                  Anger in teenagers is normal and often stems from the significant developmental changes they're experiencing. Their brains are still developing, particularly the prefrontal cortex, which is responsible for impulse control and rational decision-making. This biological reality, combined with hormonal changes and increasing social pressures, can create the perfect storm for emotional outbursts.
                 </p>
                 
                 <p>
-                  Beyond these biological factors, teenagers face numerous stressors:
+                  Common triggers for teenage anger include:
                 </p>
                 
                 <ul className="list-disc pl-6 space-y-2 my-4">
-                  <li>Academic pressure and expectations</li>
-                  <li>Social challenges and peer relationships</li>
-                  <li>Identity formation and independence struggles</li>
-                  <li>Family conflicts and changing dynamics</li>
-                  <li>Exposure to social media and global issues</li>
+                  <li>Feeling misunderstood or not listened to</li>
+                  <li>Struggling with academic or social pressures</li>
+                  <li>Seeking independence while still needing guidance</li>
+                  <li>Experiencing relationship conflicts with peers</li>
+                  <li>Hormonal changes affecting emotional regulation</li>
                 </ul>
                 
+                <h2 className="text-2xl font-semibold mt-8 mb-4">Strategies for Parents</h2>
                 <p>
-                  It's important to recognize that anger often serves as a secondary emotion—one that masks more vulnerable feelings like fear, disappointment, embarrassment, or insecurity. When teens don't have the emotional vocabulary or confidence to express these underlying emotions, anger becomes the default response.
+                  Helping your teenager manage anger effectively requires patience, understanding, and consistent support. Here are some approaches that can help:
+                </p>
+                
+                <h3 className="text-xl font-medium mt-6 mb-3">Stay Calm and Model Healthy Anger Management</h3>
+                <p>
+                  When your teen is angry, maintaining your own composure is crucial. By modeling calm responses to frustrating situations, you demonstrate healthy emotional regulation. Remember, teens learn more from what you do than what you say.
+                </p>
+                
+                <h3 className="text-xl font-medium mt-6 mb-3">Listen Actively Without Judgment</h3>
+                <p>
+                  Create a safe space for your teen to express their feelings without fear of criticism. Practice active listening by giving your full attention, acknowledging their feelings, and asking clarifying questions to understand their perspective better.
+                </p>
+                
+                <h3 className="text-xl font-medium mt-6 mb-3">Establish Clear Boundaries</h3>
+                <p>
+                  While it's important to validate your teen's emotions, it's equally important to set clear boundaries around behavior. Make it clear that while feeling angry is okay, aggressive or destructive actions are not acceptable.
+                </p>
+                
+                <h3 className="text-xl font-medium mt-6 mb-3">Teach De-escalation Techniques</h3>
+                <p>
+                  Help your teenager develop strategies to cool down when emotions run high. These might include deep breathing exercises, temporarily removing themselves from triggering situations, or engaging in physical activity to release tension.
+                </p>
+                
+                <h2 className="text-2xl font-semibold mt-8 mb-4">Strategies for Teenagers</h2>
+                <p>
+                  If you're a teenager struggling with anger, these approaches can help you gain more control over your emotions:
+                </p>
+                
+                <h3 className="text-xl font-medium mt-6 mb-3">Recognize Your Anger Cues</h3>
+                <p>
+                  Learn to identify the physical signs that indicate your anger is escalating. These might include a racing heart, clenched fists, or feeling hot. Recognizing these early warning signs gives you the opportunity to intervene before your anger takes over.
+                </p>
+                
+                <h3 className="text-xl font-medium mt-6 mb-3">Develop a "Cooling Off" Routine</h3>
+                <p>
+                  Create a personal ritual for calming down when you feel anger building. This might involve listening to music, taking a walk, practicing mindfulness, or using visualization techniques to imagine a peaceful scene.
+                </p>
+                
+                <h3 className="text-xl font-medium mt-6 mb-3">Challenge Negative Thought Patterns</h3>
+                <p>
+                  Anger often stems from perception. Practice questioning thoughts like "they always disrespect me" or "nothing ever goes my way." Look for evidence that contradicts these absolute statements and try to reframe situations in a more balanced way.
                 </p>
                 
                 <div className="bg-ifind-aqua/10 p-6 rounded-lg my-8">
-                  <h4 className="text-lg font-medium mb-3">Remember This</h4>
+                  <h4 className="text-lg font-medium mb-3">Key Takeaway</h4>
                   <p className="italic">
-                    "Behind every angry outburst is an unmet need or unexpressed emotion. Our job as parents is not to control the anger, but to help our teens discover and address what lies beneath it."
+                    "Anger itself isn't the problem—it's a normal human emotion. The goal isn't to eliminate anger but to express it in healthy, constructive ways that don't damage relationships or lead to regrettable actions."
                   </p>
-                </div>
-                
-                <h2 className="text-2xl font-semibold mt-8 mb-4">Signs of Unhealthy Anger in Teenagers</h2>
-                <p>
-                  While occasional anger is normal, certain patterns may indicate a need for intervention:
-                </p>
-                
-                <ul className="list-disc pl-6 space-y-2 my-4">
-                  <li>Frequent explosive outbursts disproportionate to triggers</li>
-                  <li>Physical aggression toward people, animals, or property</li>
-                  <li>Chronic irritability affecting daily functioning</li>
-                  <li>Self-destructive behaviors connected to anger</li>
-                  <li>Social withdrawal and relationship problems</li>
-                  <li>Academic decline related to emotional struggles</li>
-                </ul>
-                
-                <h2 className="text-2xl font-semibold mt-8 mb-4">Effective Strategies for Parents</h2>
-                <p>
-                  As a parent, you play a crucial role in helping your teenager manage anger effectively. Here are evidence-based approaches:
-                </p>
-                
-                <h3 className="text-xl font-medium mt-6 mb-3">1. Maintain Calm During Outbursts</h3>
-                <p>
-                  Your response sets the emotional tone. When your teen is angry, remain calm and composed—even if it's challenging. Take deep breaths, speak in a measured tone, and avoid matching their intensity.
-                </p>
-                
-                <div className="bg-gray-50 p-4 rounded-lg my-4">
-                  <p><strong>Try saying:</strong> "I can see you're really upset right now. I want to understand what's going on, but it might be better to talk when we're both calmer."</p>
-                </div>
-                
-                <h3 className="text-xl font-medium mt-6 mb-3">2. Create a Cooling-Off Protocol</h3>
-                <p>
-                  Work with your teen (during a calm moment) to establish an agreed-upon protocol for when emotions run high. This might include taking space, using breathing techniques, or engaging in a physical activity to release tension.
-                </p>
-                
-                <div className="bg-gray-50 p-4 rounded-lg my-4">
-                  <p><strong>Example:</strong> "When either of us feels too angry to talk productively, we'll say 'I need some space' and take 20 minutes to cool down before continuing the conversation."</p>
-                </div>
-                
-                <h3 className="text-xl font-medium mt-6 mb-3">3. Look Beyond the Behavior</h3>
-                <p>
-                  Approach anger as a symptom rather than the core issue. When your teen has calmed down, help them identify what might be beneath the anger—disappointment, fear, embarrassment, or another emotion.
-                </p>
-                
-                <div className="bg-gray-50 p-4 rounded-lg my-4">
-                  <p><strong>Try asking:</strong> "Before you got angry, what was going through your mind? How were you feeling about the situation?"</p>
-                </div>
-                
-                <h3 className="text-xl font-medium mt-6 mb-3">4. Teach Emotional Vocabulary</h3>
-                <p>
-                  Many teens lack the language to articulate complex emotions. Help expand their emotional vocabulary by naming feelings and normalizing emotional experiences.
-                </p>
-                
-                <div className="bg-gray-50 p-4 rounded-lg my-4">
-                  <p><strong>Example:</strong> "It sounds like you might be feeling disappointed about not making the team, but also worried about what your friends will think. That's a lot to handle at once."</p>
-                </div>
-                
-                <h3 className="text-xl font-medium mt-6 mb-3">5. Establish Clear Boundaries</h3>
-                <p>
-                  While anger is normal, certain expressions of it aren't acceptable. Establish and consistently enforce boundaries around behavior (not feelings), explaining the rationale behind them.
-                </p>
-                
-                <div className="bg-gray-50 p-4 rounded-lg my-4">
-                  <p><strong>Try saying:</strong> "It's completely okay to feel angry, but it's not okay to throw things or use hurtful language. If you need to release anger physically, you can go for a run or punch your pillow."</p>
                 </div>
                 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">When to Seek Professional Help</h2>
                 <p>
-                  While many anger issues can be addressed at home, some situations warrant professional support. Consider consulting a mental health professional if your teen:
+                  While anger is a normal emotion, some situations warrant professional intervention. Consider seeking help if:
                 </p>
                 
                 <ul className="list-disc pl-6 space-y-2 my-4">
-                  <li>Shows persistent anger that interferes with daily functioning</li>
-                  <li>Engages in violent or destructive behavior</li>
-                  <li>Expresses thoughts of harming themselves or others</li>
-                  <li>Shows signs of depression or anxiety alongside anger</li>
-                  <li>Uses substances to cope with emotions</li>
-                  <li>Experiences significant academic or social decline</li>
+                  <li>Anger regularly leads to aggressive or violent behavior</li>
+                  <li>Anger issues are affecting school performance or relationships</li>
+                  <li>Your teen expresses feelings of being out of control</li>
+                  <li>Anger coincides with symptoms of depression or anxiety</li>
+                  <li>Your family's efforts to address the issue haven't been successful</li>
                 </ul>
+                
+                <p>
+                  Mental health professionals can provide valuable tools and perspectives that help teenagers manage their emotions more effectively. Therapy approaches like Cognitive Behavioral Therapy (CBT) have proven particularly effective for anger management.
+                </p>
                 
                 <h2 className="text-2xl font-semibold mt-8 mb-4">Conclusion</h2>
                 <p>
-                  Helping your teenager navigate anger is not about eliminating this normal emotion but rather teaching them to express and channel it constructively. With patience, consistency, and compassion, you can guide your teen toward emotional resilience that will serve them well beyond adolescence.
+                  Navigating teenage anger requires patience, understanding, and consistent support. By approaching anger as a normal emotion that needs healthy expression rather than suppression, parents and teens can work together to develop healthier emotional regulation skills.
                 </p>
                 
                 <p>
-                  Remember that this developmental stage is temporary. By maintaining a supportive relationship through these challenging moments, you're building a foundation of trust and emotional intelligence that will benefit your child for years to come.
+                  Remember that this phase of development is temporary. With the right support and strategies, teenagers can learn to manage their anger effectively, establishing emotional regulation skills that will serve them well throughout their lives.
                 </p>
               </div>
             </div>
