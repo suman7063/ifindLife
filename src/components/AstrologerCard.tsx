@@ -1,12 +1,9 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Star, Clock, PhoneCall, Calendar, Award, Heart } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import CallModal from './CallModal';
-import { toast } from '@/hooks/use-toast';
+import { Card } from '@/components/ui/card';
+import { Star } from 'lucide-react';
 
 interface AstrologerCardProps {
   id: number;
@@ -16,9 +13,9 @@ interface AstrologerCardProps {
   rating: number;
   consultations: number;
   price: number;
-  waitTime?: string;
+  waitTime: string;
   imageUrl: string;
-  online?: boolean;
+  online: boolean;
 }
 
 const AstrologerCard: React.FC<AstrologerCardProps> = ({
@@ -29,124 +26,75 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   rating,
   consultations,
   price,
-  waitTime = 'Available',
+  waitTime,
   imageUrl,
-  online = true
+  online
 }) => {
-  const navigate = useNavigate();
-  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
-  const [isVideoCallModalOpen, setIsVideoCallModalOpen] = useState(false);
-  
-  const handleCallClick = () => {
-    if (online && waitTime === 'Available') {
-      setIsCallModalOpen(true);
-    } else {
-      toast({
-        title: "Expert Unavailable",
-        description: "This expert is currently offline or busy. Please try again later.",
-        variant: "destructive"
-      });
-    }
-  };
-  
-  const handleBookNowClick = () => {
-    if (online && waitTime === 'Available') {
-      setIsVideoCallModalOpen(true);
-    } else {
-      toast({
-        title: "Expert Unavailable",
-        description: "This expert is currently offline or busy. Please try again later.",
-        variant: "destructive"
-      });
-    }
-  };
-  
+  // Format specialties for display
+  const formattedSpecialties = specialties?.length > 0 
+    ? specialties.slice(0, 2).join(', ') + (specialties.length > 2 ? '...' : '')
+    : 'Mental Health Specialist';
+
   return (
-    <>
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md group border border-border/50 hover:border-ifind-teal/50">
-        <div className="relative">
-          <div className="aspect-[4/3] overflow-hidden bg-muted">
-            <img
-              src={imageUrl}
-              alt={name}
-              className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
-            />
+    <Card className="overflow-hidden">
+      <div className="relative">
+        <img 
+          src={imageUrl || 'https://via.placeholder.com/300x200'} 
+          alt={name}
+          className="w-full h-48 object-cover"
+        />
+        <div className={`absolute top-2 right-2 px-2 py-1 rounded-full text-xs font-medium ${online ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700'}`}>
+          {online ? 'Online' : 'Offline'}
+        </div>
+      </div>
+      
+      <div className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-semibold">Dr. {name}</h3>
+          <div className="bg-ifind-aqua/10 text-ifind-aqua px-2 py-1 rounded text-xs">
+            {waitTime}
           </div>
-          {online && (
-            <div className="absolute top-3 right-3">
-              <Badge className="bg-ifind-teal text-white hover:bg-ifind-teal/80">Online</Badge>
-            </div>
-          )}
         </div>
         
-        <CardContent className="p-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <h3 className="font-poppins font-semibold text-xl">{name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {experience} yrs exp
-              </p>
-            </div>
-            <div className="flex items-center bg-ifind-aqua/10 px-2 py-1 rounded text-sm font-medium text-ifind-charcoal">
-              <Star className="h-3.5 w-3.5 fill-ifind-aqua text-ifind-aqua mr-1" />
-              {rating}
-            </div>
-          </div>
-          
-          <div className="mt-3 flex flex-wrap gap-1">
-            {specialties.map((specialty, index) => (
-              <Badge key={index} variant="outline" className="bg-muted/50">
-                {specialty}
-              </Badge>
+        <p className="text-sm text-gray-500 mb-2">{formattedSpecialties}</p>
+        
+        <div className="flex items-center text-sm mb-3">
+          <div className="flex items-center text-yellow-400 mr-1">
+            {[...Array(5)].map((_, i) => (
+              <Star 
+                key={i} 
+                className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-yellow-400' : 'fill-gray-200'}`} 
+              />
             ))}
           </div>
-          
-          <div className="mt-4 flex justify-between items-center">
-            <div className="flex items-center text-sm">
-              <Clock className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
-              <span className={waitTime === 'Available' ? 'text-ifind-teal' : 'text-muted-foreground'}>
-                {waitTime}
-              </span>
-            </div>
-            <div className="text-sm">
-              <span className="font-medium text-ifind-purple">₹{price}</span>
-              <span className="text-muted-foreground">/min</span>
-            </div>
-          </div>
-          
-          <div className="mt-2 text-xs text-muted-foreground">
-            {consultations.toLocaleString()}+ consultations
-          </div>
-        </CardContent>
+          <span className="text-gray-500">({consultations})</span>
+        </div>
         
-        <CardFooter className="px-4 py-3 border-t flex gap-2">
-          <Button 
-            variant="outline" 
-            className="flex-1 border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua hover:text-white transition-all"
-            onClick={handleCallClick}
-          >
-            <PhoneCall className="h-4 w-4 mr-1" />
-            Call
-          </Button>
-          <Button 
-            className="flex-1 bg-ifind-purple hover:bg-ifind-purple/80 transition-colors"
-            onClick={handleBookNowClick}
-          >
-            <Calendar className="h-4 w-4 mr-1" />
-            Book Now
-          </Button>
-        </CardFooter>
-      </Card>
-      
-      <CallModal 
-        isOpen={isCallModalOpen || isVideoCallModalOpen}
-        onClose={() => {
-          setIsCallModalOpen(false);
-          setIsVideoCallModalOpen(false);
-        }}
-        astrologer={{ id, name, imageUrl, price }}
-      />
-    </>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <span className="text-gray-500 text-sm">Experience:</span>
+            <span className="text-sm ml-1">{experience} years</span>
+          </div>
+          <div>
+            <span className="font-bold">₹{price}</span>
+            <span className="text-xs text-gray-500">/min</span>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2">
+          <Link to={`/experts/${id}`}>
+            <Button className="bg-ifind-aqua hover:bg-ifind-aqua/90 text-white w-full" size="sm">
+              View Profile
+            </Button>
+          </Link>
+          <Link to={`/experts/${id}?booking=true`}>
+            <Button variant="outline" className="border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua/10 w-full" size="sm">
+              Book Now
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </Card>
   );
 };
 

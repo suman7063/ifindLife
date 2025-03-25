@@ -22,6 +22,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import UserReferrals from './pages/UserReferrals';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import Programs from './pages/Programs';
+import AboutUs from './pages/AboutUs';
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
       <Route path="/referrals" element={<ProtectedRoute><UserReferrals /></ProtectedRoute>} />
       <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
       <Route path="/programs" element={<Programs />} />
+      <Route path="/about" element={<AboutUs />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
