@@ -3,7 +3,7 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Separator } from '@/components/ui/separator';
-import { Brain, Calendar, User, ArrowLeft } from 'lucide-react';
+import { Calendar, User, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -41,7 +41,7 @@ const BlogTeenageAnger = () => {
               {/* Featured image */}
               <div className="h-80 rounded-lg overflow-hidden mb-8">
                 <img 
-                  src="https://images.unsplash.com/photo-1581271940096-99d6d544eb34?q=80&w=2068&auto=format&fit=crop" 
+                  src="https://images.unsplash.com/photo-1581271940096-99d6d544eb34?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2068&q=80" 
                   alt="Teenage Anger" 
                   className="w-full h-full object-cover"
                 />
