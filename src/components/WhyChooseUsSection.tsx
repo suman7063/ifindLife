@@ -25,7 +25,6 @@ const WhyChooseUsSection = () => {
             <p className="text-gray-600">Your privacy is our top priority with end-to-end encryption</p>
           </div>
           
-          {/* Added background color to the third block */}
           <div className="bg-ifind-purple/90 rounded-lg p-8 text-center">
             <div className="flex justify-center mb-4">
               <HeartPulse className="h-12 w-12 text-white" />

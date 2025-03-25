@@ -23,28 +23,31 @@ const ServicesSection = () => {
     }
   }, []);
 
-  // Featured program cards from the image
+  // Featured program cards with gradient colors to show intensity
   const featuredPrograms = [
     {
-      icon: <Brain className="h-8 w-8 text-pink-500" />,
+      icon: <Brain className="h-8 w-8 text-white" />,
       title: "QuickEase Programs",
       description: "Short-term solutions for immediate stress and anxiety relief",
       href: "/programs/quickease",
-      color: "bg-blue-100"
+      color: "bg-gradient-to-r from-ifind-aqua/60 to-ifind-aqua/80", // Lightest gradient
+      textColor: "text-white"
     },
     {
-      icon: <CircleDot className="h-8 w-8 text-green-600" />,
+      icon: <CircleDot className="h-8 w-8 text-white" />,
       title: "Emotional Resilience",
       description: "Build psychological strength to handle life's challenges",
       href: "/programs/emotional-resilience",
-      color: "bg-teal-100"
+      color: "bg-gradient-to-r from-ifind-aqua/80 to-ifind-teal", // Medium gradient
+      textColor: "text-white"
     },
     {
-      icon: <Star className="h-8 w-8 text-yellow-500" />,
+      icon: <Star className="h-8 w-8 text-white" />,
       title: "Super Human Life",
       description: "Achieve your highest potential through mental optimization",
       href: "/programs/superhuman-life",
-      color: "bg-cyan-500"
+      color: "bg-gradient-to-r from-ifind-purple/80 to-ifind-purple", // Darkest gradient
+      textColor: "text-white"
     }
   ];
 
@@ -112,6 +115,7 @@ const ServicesSection = () => {
               description={program.description}
               href={program.href}
               color={program.color}
+              textColor={program.textColor}
               cardStyle="program"
             />
           ))}

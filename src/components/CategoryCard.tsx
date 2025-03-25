@@ -8,6 +8,7 @@ interface CategoryCardProps {
   description: string;
   href: string;
   color?: string;
+  textColor?: string;
   cardStyle?: 'program' | 'session';
 }
 
@@ -17,16 +18,25 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   description,
   href,
   color = 'bg-ifind-aqua/10',
+  textColor = 'text-gray-800',
   cardStyle = 'program'
 }) => {
   // Different styles for programs vs sessions
   const cardClasses = cardStyle === 'program'
-    ? "bg-white rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-all duration-300 p-6 h-full"
+    ? `${color} rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 h-full`
     : "bg-white/80 backdrop-filter backdrop-blur-sm rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 p-6 h-full";
   
   const iconClasses = cardStyle === 'program'
-    ? `${color} w-16 h-16 rounded-full flex items-center justify-center mb-4`
+    ? `w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-white/20`
     : `${color} w-12 h-12 rounded-full flex items-center justify-center mb-3`;
+
+  const titleClasses = cardStyle === 'program'
+    ? `font-semibold text-lg mb-2 ${textColor}`
+    : 'font-semibold text-base mb-2 text-gray-800';
+
+  const descriptionClasses = cardStyle === 'program'
+    ? `text-sm ${textColor}/90`
+    : 'text-sm text-gray-600';
 
   return (
     <Link to={href}>
@@ -34,10 +44,10 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
         <div className={iconClasses}>
           {icon}
         </div>
-        <h3 className={`font-semibold ${cardStyle === 'program' ? 'text-lg' : 'text-base'} mb-2`}>
+        <h3 className={titleClasses}>
           {title}
         </h3>
-        <p className="text-sm text-gray-600">{description}</p>
+        <p className={descriptionClasses}>{description}</p>
       </div>
     </Link>
   );

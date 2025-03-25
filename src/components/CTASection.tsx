@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Phone, MessageCircle, Calendar } from 'lucide-react';
+import { Phone, MessageCircle, Calendar, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const CTASection = () => {
@@ -13,21 +13,23 @@ const CTASection = () => {
           <p className="text-lg mb-8">
             Take the first step towards better mental health today. Our experts are ready to help you navigate your challenges.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
-              <Phone className="mr-2 h-5 w-5" />
-              Talk to a Therapist
-            </Button>
-            <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
-              <Calendar className="mr-2 h-5 w-5" />
-              Book an Appointment
-            </Button>
-          </div>
-          
-          <div className="mt-8">
-            <Link to="/mental-health-assessment">
-              <Button variant="outline" className="border-white text-white hover:bg-white/20 transition-colors">
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link to="/mental-health-assessment#top">
+              <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
+                <FileText className="mr-2 h-5 w-5" />
                 Take Free Assessment
+              </Button>
+            </Link>
+            <Link to="/experts">
+              <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
+                <Phone className="mr-2 h-5 w-5" />
+                Talk to a Therapist
+              </Button>
+            </Link>
+            <Link to="/programs">
+              <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
+                <Calendar className="mr-2 h-5 w-5" />
+                Book an Appointment
               </Button>
             </Link>
           </div>
