@@ -1,18 +1,16 @@
 
-import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from 'react';
+import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useForm, FormProvider } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Form } from '@/components/ui/form';
 import { ReferralSettings } from '@/types/supabase';
-
-// Import form components
 import UserInfoFields from './form/UserInfoFields';
 import PasswordFields from './form/PasswordFields';
 import ReferralCodeField from './form/ReferralCodeField';
 import TermsCheckbox from './form/TermsCheckbox';
-import { registerFormSchema, RegisterFormValues } from './form/types';
+import CaptchaField from './form/CaptchaField';
+import { validatePasswordStrength } from '@/utils/passwordValidation';
 
 interface RegisterFormProps {
   onRegister: (userData: {
@@ -26,70 +24,60 @@ interface RegisterFormProps {
   }) => Promise<void>;
   loading: boolean;
   initialReferralCode?: string | null;
-  referralSettings: ReferralSettings | null;
-  setCaptchaVerified?: (verified: boolean) => void;
+  referralSettings?: ReferralSettings | null;
+  setCaptchaVerified?: () => void;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ 
-  onRegister, 
-  loading, 
+const RegisterForm: React.FC<RegisterFormProps> = ({
+  onRegister,
+  loading,
   initialReferralCode,
   referralSettings,
   setCaptchaVerified
 }) => {
-  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [showCityField, setShowCityField] = useState(false);
+
+  // Create registration schema with zod
+  const registerSchema = z.object({
+    name: z.string().min(2, { message: "Name must be at least 2 characters" }),
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    phone: z.string().min(7, { message: "Please enter a valid phone number" }),
+    country: z.string().min(1, { message: "Please select your country" }),
+    city: z.string().optional(),
+    password: z.string().refine(
+      (password) => validatePasswordStrength(password).isValid,
+      { message: "Password must be at least 8 characters with a mix of letters, numbers, and symbols" }
+    ),
+    confirmPassword: z.string(),
+    referralCode: z.string().optional(),
+    terms: z.boolean().refine((value) => value === true, {
+      message: "You must accept the terms and conditions",
+    }),
+    captcha: z.string().min(1, { message: "Please verify that you are not a robot" }),
+  }).refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+  type RegisterFormValues = z.infer<typeof registerSchema>;
 
   // Set up form with validation
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerFormSchema),
+    resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
       email: "",
       phone: "",
       country: "",
       city: "",
-      referralCode: initialReferralCode || "",
       password: "",
       confirmPassword: "",
-      termsAccepted: false,
+      referralCode: initialReferralCode || "",
+      terms: false,
+      captcha: "",
     },
   });
 
-  useEffect(() => {
-    if (initialReferralCode) {
-      form.setValue("referralCode", initialReferralCode);
-    }
-  }, [initialReferralCode, form]);
-
-  // Update password strength when password changes
-  useEffect(() => {
-    const password = form.watch("password");
-    if (!password) {
-      setPasswordStrength(0);
-      return;
-    }
-
-    let strength = 0;
-    
-    // Length check
-    if (password.length >= 8) strength += 1;
-    
-    // Uppercase check
-    if (/[A-Z]/.test(password)) strength += 1;
-    
-    // Lowercase check
-    if (/[a-z]/.test(password)) strength += 1;
-    
-    // Number check
-    if (/[0-9]/.test(password)) strength += 1;
-    
-    // Special character check
-    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    
-    setPasswordStrength(strength);
-  }, [form.watch("password")]);
-
-  // Submit handler
   const onSubmit = (data: RegisterFormValues) => {
     onRegister({
       name: data.name,
@@ -103,35 +91,33 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   };
 
   return (
-    <Form {...form}>
+    <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        {/* User information fields */}
-        <UserInfoFields form={form} />
+        <UserInfoFields 
+          showCityField={showCityField} 
+          setShowCityField={setShowCityField} 
+        />
         
-        {/* Referral code field */}
-        <ReferralCodeField form={form} referralSettings={referralSettings} />
+        <PasswordFields />
         
-        {/* Password fields */}
-        <PasswordFields form={form} passwordStrength={passwordStrength} />
+        <ReferralCodeField 
+          initialReferralCode={initialReferralCode} 
+          referralSettings={referralSettings} 
+        />
         
-        {/* Terms checkbox */}
-        <TermsCheckbox form={form} />
+        <TermsCheckbox />
         
-        <Alert className="bg-blue-50 text-blue-700 border-blue-200">
-          <AlertDescription>
-            By clicking "Create Account", you agree to receive a verification email to confirm your email address.
-          </AlertDescription>
-        </Alert>
+        <CaptchaField name="captcha" />
         
         <Button 
           type="submit" 
           className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
           disabled={loading}
         >
-          {loading ? 'Creating Account...' : 'Create Account'}
+          {loading ? 'Creating account...' : 'Create Account'}
         </Button>
       </form>
-    </Form>
+    </FormProvider>
   );
 };
 

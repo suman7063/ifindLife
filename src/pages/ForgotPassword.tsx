@@ -1,165 +1,146 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { z } from 'zod';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import { Mail, ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { InfoIcon, Mail } from 'lucide-react';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-
-// Create form validation schema
-const forgotPasswordSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-});
+import { useAuthPassword } from '@/hooks/auth/useAuthPassword';
+import { toast } from 'sonner';
+import CaptchaField from '@/components/auth/form/CaptchaField';
 
 const ForgotPassword = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const userType = searchParams.get('type') || 'user';
-
-  // Set up form with validation
-  const form = useForm<z.infer<typeof forgotPasswordSchema>>({
-    resolver: zodResolver(forgotPasswordSchema),
+  const location = useLocation();
+  const { resetPassword } = useAuthPassword(setLoading);
+  
+  // Get user type from URL query params
+  const queryParams = new URLSearchParams(location.search);
+  const userType = queryParams.get('type') || 'user';
+  
+  // Create form schema with validation
+  const schema = z.object({
+    email: z.string().email({ message: "Please enter a valid email address" }),
+    captcha: z.string().min(1, { message: "Please verify that you are not a robot" })
+  });
+  
+  type FormValues = z.infer<typeof schema>;
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
     defaultValues: {
       email: "",
-    },
+      captcha: ""
+    }
   });
-
-  const getRedirectPage = () => {
-    switch (userType) {
+  
+  const getBackLink = () => {
+    switch(userType) {
       case 'expert':
         return '/expert-login';
       case 'admin':
         return '/admin-login';
-      case 'user':
       default:
-        return '/login';
+        return '/user-login';
     }
   };
-
-  const getPageTitle = () => {
-    switch (userType) {
-      case 'expert':
-        return 'Expert Password Reset';
-      case 'admin':
-        return 'Admin Password Reset';
-      case 'user':
-      default:
-        return 'Password Reset';
-    }
-  };
-
-  const onSubmit = async (data: z.infer<typeof forgotPasswordSchema>) => {
-    setIsLoading(true);
-    
+  
+  const handleSubmit = async (data: FormValues) => {
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password?type=${userType}`,
-      });
-      
-      if (error) {
-        throw error;
+      const success = await resetPassword(data.email);
+      if (success) {
+        setEmailSent(true);
       }
-      
-      setSubmitted(true);
-      toast.success('Password reset instructions sent to your email');
-    } catch (error: any) {
-      console.error('Error resetting password:', error);
-      toast.error(error.message || 'Failed to send reset instructions');
-    } finally {
-      setIsLoading(false);
+    } catch (error) {
+      console.error("Error sending reset email:", error);
+      toast.error("Failed to send reset instructions");
     }
   };
-
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 container py-16 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>{getPageTitle()}</CardTitle>
-            <CardDescription>
-              Enter your email address and we'll send you instructions to reset your password.
-            </CardDescription>
-          </CardHeader>
-          
-          {submitted ? (
-            <CardContent className="space-y-4">
-              <div className="p-4 bg-green-50 text-green-800 rounded-md">
-                <p>Password reset instructions have been sent to your email address.</p>
-                <p className="mt-2">Please check your inbox and follow the link to reset your password.</p>
+      <main className="flex-1 py-10 flex items-center justify-center">
+        <div className="container max-w-md">
+          <div className="bg-background/95 backdrop-blur-sm rounded-xl shadow-xl p-8 border border-ifind-teal/10">
+            
+            <Link to={getBackLink()} className="flex items-center text-ifind-aqua hover:text-ifind-teal mb-6">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to login
+            </Link>
+            
+            {emailSent ? (
+              <div className="text-center space-y-4">
+                <div className="inline-block p-3 bg-green-100 rounded-full">
+                  <Mail className="h-8 w-8 text-green-600" />
+                </div>
+                <h1 className="text-2xl font-bold">Check your email</h1>
+                <p className="text-gray-600">
+                  We've sent password reset instructions to your email address. Please check your inbox.
+                </p>
+                <Button 
+                  variant="outline" 
+                  className="mt-6 w-full"
+                  onClick={() => navigate(getBackLink())}
+                >
+                  Return to Login
+                </Button>
               </div>
-              <Alert className="bg-blue-50 text-blue-700 border-blue-200">
-                <InfoIcon className="h-4 w-4" />
-                <AlertDescription>
-                  If you don't receive an email, please check your spam folder or try another email address you might have used.
-                </AlertDescription>
-              </Alert>
-            </CardContent>
-          ) : (
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)}>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem className="space-y-2">
-                        <FormLabel>Email</FormLabel>
-                        <div className="relative">
-                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <>
+                <h1 className="text-2xl font-bold text-center mb-6">Reset your password</h1>
+                <p className="text-gray-600 mb-6">
+                  Enter your email address and we'll send you instructions to reset your password.
+                </p>
+                
+                <FormProvider {...form}>
+                  <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address</FormLabel>
+                          <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <FormControl>
+                              <Input
+                                type="email"
+                                placeholder="your@email.com"
+                                className="pl-10"
+                                {...field}
+                              />
+                            </FormControl>
                           </div>
-                          <FormControl>
-                            <Input
-                              type="email"
-                              placeholder="email@example.com"
-                              className="pl-10"
-                              {...field}
-                            />
-                          </FormControl>
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Alert className="bg-blue-50 text-blue-700 border-blue-200">
-                    <InfoIcon className="h-4 w-4" />
-                    <AlertDescription>
-                      Not sure which email you used? For security reasons, we won't confirm if an email exists. 
-                      Try with different emails you typically use for registrations.
-                    </AlertDescription>
-                  </Alert>
-                </CardContent>
-                <CardFooter className="flex flex-col space-y-2">
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Sending...' : 'Send Reset Instructions'}
-                  </Button>
-                  <div className="text-sm text-center mt-2">
-                    <Link to={getRedirectPage()} className="text-ifind-aqua hover:text-ifind-teal transition-colors">
-                      Back to Login
-                    </Link>
-                  </div>
-                </CardFooter>
-              </form>
-            </Form>
-          )}
-        </Card>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <CaptchaField name="captcha" />
+                    
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-ifind-aqua hover:bg-ifind-teal"
+                      disabled={loading}
+                    >
+                      {loading ? 'Sending...' : 'Send Reset Instructions'}
+                    </Button>
+                  </form>
+                </FormProvider>
+              </>
+            )}
+          </div>
+        </div>
       </main>
       <Footer />
     </div>

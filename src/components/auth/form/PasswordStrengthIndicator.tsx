@@ -1,76 +1,52 @@
 
-import React from 'react';
-import { Check, AlertCircle } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { validatePasswordStrength } from '@/utils/passwordValidation';
 
 interface PasswordStrengthIndicatorProps {
   password: string;
-  passwordStrength: number;
 }
 
-const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({ 
-  password, 
-  passwordStrength 
-}) => {
-  // Determine password strength color and label
-  const getPasswordStrengthInfo = () => {
-    if (passwordStrength === 0) return { color: "bg-gray-200", label: "Password strength" };
-    if (passwordStrength < 3) return { color: "bg-red-500", label: "Weak" };
-    if (passwordStrength < 5) return { color: "bg-yellow-500", label: "Medium" };
-    return { color: "bg-green-500", label: "Strong" };
-  };
-
-  const passwordStrengthInfo = getPasswordStrengthInfo();
+const PasswordStrengthIndicator: React.FC<PasswordStrengthIndicatorProps> = ({ password }) => {
+  const { score, feedback } = useMemo(() => validatePasswordStrength(password), [password]);
+  
+  const strengthClasses = [
+    'h-2 rounded transition-all duration-300',
+  ];
+  
+  const strengthColors = [
+    'bg-red-500',     // Very Weak
+    'bg-orange-500',  // Weak
+    'bg-yellow-500',  // Medium
+    'bg-blue-500',    // Strong
+    'bg-green-500',   // Very Strong
+  ];
+  
+  const strengthLabels = [
+    'Very Weak',
+    'Weak',
+    'Medium',
+    'Strong',
+    'Very Strong',
+  ];
+  
+  const selectedColor = strengthColors[Math.min(score, 4)];
+  const selectedLabel = strengthLabels[Math.min(score, 4)];
+  const width = `${Math.max(5, Math.min(100, score * 20))}%`;
 
   return (
-    <div className="space-y-2">
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-muted-foreground">{passwordStrengthInfo.label}</span>
-        <span className="text-xs text-muted-foreground">{passwordStrength}/5</span>
-      </div>
-      <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+    <div className="space-y-1 w-full">
+      <div className="h-2 w-full bg-gray-200 rounded">
         <div 
-          className={`h-full ${passwordStrengthInfo.color} transition-all duration-300`} 
-          style={{ width: `${(passwordStrength / 5) * 100}%` }}
-        ></div>
+          className={`${strengthClasses.join(' ')} ${selectedColor}`} 
+          style={{ width }} 
+        />
       </div>
-      
-      <ul className="text-xs space-y-1 text-muted-foreground">
-        <li className="flex items-center">
-          {/[A-Z]/.test(password) ? 
-            <Check className="h-3 w-3 text-green-500 mr-1" /> : 
-            <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
-          }
-          One uppercase letter
-        </li>
-        <li className="flex items-center">
-          {/[a-z]/.test(password) ? 
-            <Check className="h-3 w-3 text-green-500 mr-1" /> : 
-            <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
-          }
-          One lowercase letter
-        </li>
-        <li className="flex items-center">
-          {/[0-9]/.test(password) ? 
-            <Check className="h-3 w-3 text-green-500 mr-1" /> : 
-            <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
-          }
-          One number
-        </li>
-        <li className="flex items-center">
-          {/[^A-Za-z0-9]/.test(password) ? 
-            <Check className="h-3 w-3 text-green-500 mr-1" /> : 
-            <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
-          }
-          One special character
-        </li>
-        <li className="flex items-center">
-          {password.length >= 8 ? 
-            <Check className="h-3 w-3 text-green-500 mr-1" /> : 
-            <AlertCircle className="h-3 w-3 text-muted-foreground mr-1" />
-          }
-          Minimum 8 characters
-        </li>
-      </ul>
+      <div className="flex justify-between items-center text-xs">
+        <span className={`font-medium ${score > 0 ? `text-${selectedColor.replace('bg-', '')}` : 'text-gray-500'}`}>
+          {password ? selectedLabel : 'Enter password'}
+        </span>
+        <span className="text-gray-500">{password ? feedback : ''}</span>
+      </div>
     </div>
   );
 };
