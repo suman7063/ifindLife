@@ -23,6 +23,7 @@ import UserReferrals from './pages/UserReferrals';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import Programs from './pages/Programs';
 import AboutUs from './pages/AboutUs';
+import CareerGuidance from './pages/CareerGuidance';
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
       <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
       <Route path="/programs" element={<Programs />} />
       <Route path="/about" element={<AboutUs />} />
+      <Route path="/career-guidance" element={<CareerGuidance />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
