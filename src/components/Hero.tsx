@@ -124,8 +124,8 @@ const Hero = () => {
                 <span>•</span>
                 <span>Based on 2.5k+ Reviews</span>
               </div>
-              <Link to="/mental-health-assessment#top">
-                <Button className="bg-ifind-purple hover:bg-ifind-purple/90 text-white">
+              <Link to="/mental-health-assessment">
+                <Button className="bg-gradient-to-r from-ifind-aqua to-ifind-teal text-white hover:opacity-90 transition-opacity">
                   Take Free Mental Health Assessment
                 </Button>
               </Link>

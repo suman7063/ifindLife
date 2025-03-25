@@ -14,7 +14,7 @@ const CTASection = () => {
             Take the first step towards better mental health today. Our experts are ready to help you navigate your challenges.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/mental-health-assessment#top">
+            <Link to="/mental-health-assessment">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
                 Take Free Assessment

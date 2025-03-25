@@ -13,7 +13,7 @@ const WhatWeDoSection = () => {
         "Stress management techniques",
         "Personalized wellness plans"
       ],
-      color: "bg-purple-200",
+      color: "bg-gray-200",
       href: "/wellness-seekers"
     },
     {
@@ -25,7 +25,7 @@ const WhatWeDoSection = () => {
         "Bullying prevention strategies",
         "Wellness workshops for campus life"
       ],
-      color: "bg-blue-200",
+      color: "bg-gray-300",
       href: "/academic-institutes"
     },
     {
@@ -37,7 +37,7 @@ const WhatWeDoSection = () => {
         "Team building for psychological safety",
         "Burnout prevention strategies"
       ],
-      color: "bg-green-200",
+      color: "bg-gray-400",
       href: "/business"
     }
   ];
