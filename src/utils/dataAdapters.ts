@@ -1,12 +1,12 @@
 
 import { Course, Review, Report } from '@/types/supabase';
 
-// Function to adapt database courses to UI format
+// Adapters for converting database objects to UI-friendly objects
 export const adaptCoursesToUI = (courses: any[]): Course[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
-    expertId: course.expert_id,
+    expertId: course.expert_id.toString(),
     expertName: course.expert_name,
     enrollmentDate: course.enrollment_date,
     progress: course.progress,
@@ -14,22 +14,20 @@ export const adaptCoursesToUI = (courses: any[]): Course[] => {
   }));
 };
 
-// Function to adapt database reviews to UI format
 export const adaptReviewsToUI = (reviews: any[]): Review[] => {
   return reviews.map(review => ({
     id: review.id,
-    expertId: review.expert_id,
+    expertId: review.expert_id.toString(),
     rating: review.rating,
     comment: review.comment,
     date: review.date
   }));
 };
 
-// Function to adapt database reports to UI format
 export const adaptReportsToUI = (reports: any[]): Report[] => {
   return reports.map(report => ({
     id: report.id,
-    expertId: report.expert_id,
+    expertId: report.expert_id.toString(),
     reason: report.reason,
     details: report.details,
     date: report.date,
@@ -37,12 +35,12 @@ export const adaptReportsToUI = (reports: any[]): Report[] => {
   }));
 };
 
-// Function to convert UI format back to database format for courses
+// Adapters for converting UI objects to database format
 export const adaptCoursesToDB = (courses: Course[]): any[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
-    expert_id: course.expertId,
+    expert_id: parseInt(course.expertId, 10),
     expert_name: course.expertName,
     enrollment_date: course.enrollmentDate,
     progress: course.progress,
@@ -50,22 +48,20 @@ export const adaptCoursesToDB = (courses: Course[]): any[] => {
   }));
 };
 
-// Function to convert UI format back to database format for reviews
 export const adaptReviewsToDB = (reviews: Review[]): any[] => {
   return reviews.map(review => ({
     id: review.id,
-    expert_id: review.expertId,
+    expert_id: parseInt(review.expertId, 10),
     rating: review.rating,
     comment: review.comment,
     date: review.date
   }));
 };
 
-// Function to convert UI format back to database format for reports
 export const adaptReportsToDB = (reports: Report[]): any[] => {
   return reports.map(report => ({
     id: report.id,
-    expert_id: report.expertId,
+    expert_id: parseInt(report.expertId, 10),
     reason: report.reason,
     details: report.details,
     date: report.date,

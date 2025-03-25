@@ -69,6 +69,9 @@ export const useUserAuth = () => {
     }
   };
 
+  // Rename addReport to reportExpert for consistency with the interface
+  const reportExpert = addReport;
+
   return {
     currentUser,
     loading,
@@ -76,7 +79,7 @@ export const useUserAuth = () => {
     addToFavorites,
     removeFromFavorites,
     addReview,
-    addReport: addReport,
+    reportExpert,
     rechargeWallet,
     hasTakenServiceFrom,
     getExpertShareLink,

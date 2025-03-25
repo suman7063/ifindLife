@@ -36,7 +36,7 @@ export const useUserDataFetcher = (
         .eq('user_id', userId);
       
       if (favorites && favorites.length > 0) {
-        const expertIds = favorites.map(fav => fav.expert_id);
+        const expertIds = favorites.map(fav => fav.expert_id.toString());
         const { data: expertsData } = await supabase
           .from('experts')
           .select('*')

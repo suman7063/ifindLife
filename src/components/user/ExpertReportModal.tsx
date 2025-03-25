@@ -27,7 +27,7 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
   const [details, setDetails] = useState('');
   const [open, setOpen] = useState(false);
   
-  const { reportExpert, hasTakenServiceFrom } = useUserAuth();
+  const { currentUser, reportExpert, hasTakenServiceFrom } = useUserAuth();
   
   const handleSubmit = () => {
     if (reason === '') {

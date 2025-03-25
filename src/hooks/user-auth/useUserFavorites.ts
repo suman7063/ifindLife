@@ -16,14 +16,18 @@ export const useUserFavorites = (
     try {
       const { data, error } = await supabase
         .from('user_favorites')
-        .insert([{ user_id: currentUser.id, expert_id: expertId }]);
+        .insert({
+          user_id: currentUser.id,
+          expert_id: parseInt(expertId, 10) // Convert string to number
+        });
 
       if (error) throw error;
 
       // Optimistically update the local state
+      const expert = { id: expertId } as Expert;
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: [...currentUser.favoriteExperts, { id: expertId } as any],
+        favoriteExperts: [...(currentUser.favoriteExperts || []), expert],
       };
       setCurrentUser(updatedUser);
 
@@ -44,14 +48,16 @@ export const useUserFavorites = (
         .from('user_favorites')
         .delete()
         .eq('user_id', currentUser.id)
-        .eq('expert_id', expertId);
+        .eq('expert_id', parseInt(expertId, 10)); // Convert string to number
 
       if (error) throw error;
 
       // Optimistically update the local state
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: currentUser.favoriteExperts.filter((expert) => expert.id !== expertId),
+        favoriteExperts: (currentUser.favoriteExperts || []).filter(
+          (expert) => expert.id !== expertId
+        ),
       };
       setCurrentUser(updatedUser);
 

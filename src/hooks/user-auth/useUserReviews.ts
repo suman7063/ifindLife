@@ -14,23 +14,24 @@ export const useUserReviews = (
     }
 
     try {
+      const newReview = {
+        user_id: currentUser.id,
+        expert_id: parseInt(expertId, 10), // Convert string to number
+        rating: rating,
+        comment: comment,
+        date: new Date().toISOString(),
+      };
+
       const { data, error } = await supabase
         .from('user_reviews')
-        .insert([{
-          user_id: currentUser.id,
-          expert_id: expertId,
-          rating: rating,
-          comment: comment,
-          date: new Date().toISOString(),
-        }]);
+        .insert(newReview);
 
       if (error) throw error;
 
       // Optimistically update the local state
-      const newReview = {
-        id: data ? data[0].id : 'temp_id', // Use a temporary ID
-        user_id: currentUser.id,
-        expert_id: expertId,
+      const adaptedReview = {
+        id: data?.[0]?.id || `temp_${Date.now()}`,
+        expertId: expertId,
         rating: rating,
         comment: comment,
         date: new Date().toISOString(),
@@ -38,7 +39,7 @@ export const useUserReviews = (
 
       const updatedUser = {
         ...currentUser,
-        reviews: [...currentUser.reviews, newReview],
+        reviews: [...(currentUser.reviews || []), adaptedReview],
       };
       setCurrentUser(updatedUser);
 

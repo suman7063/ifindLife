@@ -14,24 +14,25 @@ export const useUserReports = (
     }
 
     try {
+      const newReport = {
+        user_id: currentUser.id,
+        expert_id: parseInt(expertId, 10), // Convert string to number
+        reason: reason,
+        details: details,
+        date: new Date().toISOString(),
+        status: 'pending',
+      };
+
       const { data, error } = await supabase
         .from('user_reports')
-        .insert([{
-          user_id: currentUser.id,
-          expert_id: expertId,
-          reason: reason,
-          details: details,
-          date: new Date().toISOString(),
-          status: 'pending',
-        }]);
+        .insert(newReport);
 
       if (error) throw error;
 
       // Optimistically update the local state
-      const newReport = {
-        id: data ? data[0].id : 'temp_id', // Use a temporary ID
-        user_id: currentUser.id,
-        expert_id: expertId,
+      const adaptedReport = {
+        id: data?.[0]?.id || `temp_${Date.now()}`,
+        expertId: expertId,
         reason: reason,
         details: details,
         date: new Date().toISOString(),
@@ -40,8 +41,9 @@ export const useUserReports = (
 
       const updatedUser = {
         ...currentUser,
-        reports: [...currentUser.reports, newReport],
+        reports: [...(currentUser.reports || []), adaptedReport],
       };
+      
       setCurrentUser(updatedUser);
 
       toast.success('Report added successfully!');

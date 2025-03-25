@@ -1,7 +1,8 @@
 
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { supabase } from '@/lib/supabase';
 
 export const useUserWallet = (
   currentUser: UserProfile | null,
@@ -14,40 +15,47 @@ export const useUserWallet = (
     }
 
     try {
-      // Simulate a successful transaction
-      const newBalance = currentUser.walletBalance + amount;
-
-      // Create a new transaction record
       const { data, error } = await supabase
-        .from('user_transactions')
-        .insert([{
-          user_id: currentUser.id,
-          date: new Date().toISOString(),
-          type: 'recharge',
-          amount: amount,
-          currency: currentUser.currency || 'USD',
-          description: 'Wallet recharge',
-        }]);
+        .from('users')
+        .update({
+          wallet_balance: (currentUser.walletBalance || 0) + amount
+        })
+        .eq('id', currentUser.id);
 
       if (error) throw error;
+
+      // Add transaction record
+      const transactionData = {
+        user_id: currentUser.id,
+        date: new Date().toISOString(),
+        type: 'deposit',
+        amount: amount,
+        currency: currentUser.currency || 'USD',
+        description: 'Wallet recharge'
+      };
+
+      const { data: transactionResult, error: transactionError } = await supabase
+        .from('user_transactions')
+        .insert(transactionData);
+
+      if (transactionError) throw transactionError;
+
+      // Create a new transaction object to add to the user's transactions
+      const newTransaction = {
+        id: transactionResult?.[0]?.id || `temp_${Date.now()}`,
+        ...transactionData
+      };
 
       // Optimistically update the local state
       const updatedUser = {
         ...currentUser,
-        walletBalance: newBalance,
-        transactions: [...currentUser.transactions, {
-          id: data ? data[0].id : 'temp_id', // Use a temporary ID
-          user_id: currentUser.id,
-          date: new Date().toISOString(),
-          type: 'recharge',
-          amount: amount,
-          currency: currentUser.currency || 'USD',
-          description: 'Wallet recharge',
-        }],
+        walletBalance: (currentUser.walletBalance || 0) + amount,
+        transactions: [...(currentUser.transactions || []), newTransaction]
       };
+      
       setCurrentUser(updatedUser);
 
-      toast.success('Wallet recharged successfully!');
+      toast.success(`Successfully added ${amount} ${currentUser.currency || 'USD'} to your wallet`);
     } catch (error: any) {
       toast.error(error.message || 'Failed to recharge wallet');
     }
