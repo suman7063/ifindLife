@@ -41,25 +41,21 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with new styling */}
+      {/* Banner Image Section with right-aligned image */}
       <div className="relative w-full h-[504px]">
-        <img 
-          src="public/lovable-uploads/ecbf2820-5b78-4dd3-a131-2f931529ade3.png" 
-          alt="Woman with sunglasses" 
-          className="w-full h-full object-cover"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '504px',
-            borderRadius: '0px'
-          }}
-        />
+        <div className="absolute top-0 right-0 h-full w-3/5">
+          <img 
+            src="public/lovable-uploads/ecbf2820-5b78-4dd3-a131-2f931529ade3.png" 
+            alt="Woman with sunglasses" 
+            className="w-full h-full object-cover object-right"
+            style={{
+              borderRadius: '0px'
+            }}
+          />
+        </div>
         <div 
-          className="absolute px-[60px] flex flex-col justify-end h-full pb-16"
+          className="absolute px-[60px] flex flex-col justify-center h-full"
           style={{
-            position: 'absolute',
             width: '100%',
             height: '100%'
           }}
@@ -75,19 +71,22 @@ const Hero = () => {
               maxWidth: '449px'
             }}
           >
-            {heroSettings.title}
+            You Are<br />
+            Not Alone!
           </h1>
         </div>
       </div>
       
-      {/* Help Section */}
+      {/* Help Section - Center aligned buttons with no links */}
       <div className="bg-gray-800 text-white py-6 px-6 sm:px-12 md:px-20">
-        <div className="container mx-auto">
-          <h2 className="text-lg font-medium mb-2">
+        <div className="container mx-auto flex flex-col items-center">
+          <h2 className="text-lg font-medium mb-4 text-center">
             {heroSettings.subtitle}
           </h2>
-          <div className="flex flex-wrap gap-4">
-            <FreeAssessmentCTA />
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Button className="bg-ifind-aqua hover:bg-ifind-aqua/90 transition-opacity text-white px-6 py-2 rounded-full flex items-center gap-2">
+              <span className="font-medium">Talk to an Expert</span>
+            </Button>
             <Button className="bg-white text-gray-800 hover:bg-gray-100">
               Book a Session
             </Button>
