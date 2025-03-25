@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
     title: "You Are Not Alone!",
-    subtitle: "Mental & Emotional Wellness",
+    subtitle: "Is there a situation, you need immediate help with?",
     description: "Connect with our currently online experts through an instant call",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" // Default video URL with autoplay
   });
@@ -30,7 +30,7 @@ const Hero = () => {
           setHeroSettings({
             ...parsedContent.heroSettings,
             title: "You Are Not Alone!", // Override title with the new text
-            subtitle: "Mental & Emotional Wellness", // Set consistent subtitle
+            subtitle: "Is there a situation, you need immediate help with?", // Update the subtitle
             description: "Connect with our currently online experts through an instant call", // Add description
             videoUrl
           });
