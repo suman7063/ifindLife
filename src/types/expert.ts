@@ -7,7 +7,7 @@ export interface Expert {
   rating: number;
   consultations: number;
   price: number;
-  waitTime?: string;
+  waitTime?: string; // Made optional to match AstrologerCardProps
   imageUrl: string;
   online?: boolean;
   languages: string[];

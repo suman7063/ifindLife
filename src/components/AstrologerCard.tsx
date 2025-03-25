@@ -13,9 +13,9 @@ interface AstrologerCardProps {
   rating: number;
   consultations: number;
   price: number;
-  waitTime: string;
+  waitTime?: string; // Made optional with the ? mark
   imageUrl: string;
-  online: boolean;
+  online?: boolean;
 }
 
 const AstrologerCard: React.FC<AstrologerCardProps> = ({
@@ -26,7 +26,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   rating,
   consultations,
   price,
-  waitTime,
+  waitTime = "Available", // Added default value
   imageUrl,
   online
 }) => {

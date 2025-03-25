@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import AstrologerCard from '@/components/AstrologerCard';
 import { therapistData as defaultTherapistData } from '@/data/homePageData';
+import { Expert } from '@/types/expert';
 
 // Update the interface to include missing properties
 interface TherapistData {
@@ -15,12 +16,12 @@ interface TherapistData {
   rating: number;
   consultations: number;
   price: number;
-  waitTime: string;
+  waitTime?: string; // Made optional to match AstrologerCardProps
   imageUrl: string;
   online: boolean;
-  availability?: string; // Added property
-  expertise?: string; // Added property
-  reviewCount?: number; // Added property
+  availability?: string;
+  expertise?: string;
+  reviewCount?: number;
 }
 
 const TopTherapistsSection = () => {
