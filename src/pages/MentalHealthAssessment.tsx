@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import AssessmentIntro from '@/components/assessment/AssessmentIntro';
 import AssessmentQuestions from '@/components/assessment/AssessmentQuestions';
@@ -28,6 +27,10 @@ const MentalHealthAssessment = () => {
     lifestyleHealth: [0, 0, 0],
     openEndedReflection: '',
   });
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleStartAssessment = () => {
     setCurrentStep(AssessmentStep.QUESTIONS);
@@ -81,7 +84,6 @@ const MentalHealthAssessment = () => {
   };
 
   const handleExit = () => {
-    // Navigate to home page
     window.location.href = '/';
   };
 
