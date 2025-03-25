@@ -203,5 +203,18 @@ export interface ReferralSettingsUI {
   description?: string;
 }
 
+// Define the ReferralUI interface which was missing
+export interface ReferralUI {
+  id: string;
+  referrerId: string;
+  referredId: string;
+  referredName?: string;
+  referralCode: string;
+  status: 'pending' | 'completed' | 'expired';
+  rewardClaimed: boolean;
+  createdAt?: string;
+  completedAt?: string;
+}
+
 // For backward compatibility
 export type ExpertProfile = Expert;

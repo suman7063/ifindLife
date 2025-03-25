@@ -35,4 +35,5 @@ export interface UserAuthContextType {
   getExpertShareLink: (expertId: string) => string;
   hasTakenServiceFrom: (expertId: string) => boolean;
   getReferralLink: () => string;
+  user?: User; // Add user property that might be needed in some components
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -8,14 +9,18 @@ import Footer from '@/components/Footer';
 import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import { useExpertAuth } from '@/components/expert/hooks/useExpertAuth';
-import { useUserAuth } from '@/contexts/UserAuthContext';
 import type { User } from '@supabase/auth-js';
+
+// Define a basic user type that includes the required properties
+interface UserBasic {
+  id: string;
+  name: string;
+}
 
 const ExpertDashboard = () => {
   const { expert, loading } = useExpertAuth();
-  const { user } = useUserAuth();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserBasic[]>([]);
   
   useEffect(() => {
     // Check if user is authenticated
