@@ -45,6 +45,9 @@ const Navbar = () => {
           <Button variant="ghost" asChild>
             <Link to="/experts">Experts</Link>
           </Button>
+          <Button variant="ghost" asChild>
+            <Link to="/programs">Programs</Link>
+          </Button>
           <Button variant="ghost">About</Button>
           <Button variant="ghost">Blog</Button>
           <Button variant="ghost" asChild>
@@ -79,6 +82,9 @@ const Navbar = () => {
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/experts">Experts</Link>
+                </Button>
+                <Button variant="ghost" className="justify-start" asChild>
+                  <Link to="/programs">Programs</Link>
                 </Button>
                 <Button variant="ghost" className="justify-start">
                   About

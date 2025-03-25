@@ -46,6 +46,10 @@ export const Login = () => {
     }
   };
 
+  const handleRegisterRedirect = () => {
+    navigate('/user-registration');
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -99,9 +103,13 @@ export const Login = () => {
               </Button>
               <div className="text-sm text-center mt-2">
                 Don't have an account?{' '}
-                <Link to="/user-registration" className="text-ifind-aqua hover:text-ifind-teal transition-colors">
+                <Button 
+                  variant="link" 
+                  className="p-0 h-auto text-ifind-aqua hover:text-ifind-teal"
+                  onClick={handleRegisterRedirect}
+                >
                   Register here
-                </Link>
+                </Button>
               </div>
             </CardFooter>
           </form>

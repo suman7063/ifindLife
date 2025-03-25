@@ -57,9 +57,8 @@ const Hero = () => {
           }}
         />
         <div 
-          className="absolute px-[60px] flex flex-col justify-end h-full pb-16"
+          className="absolute inset-0 flex flex-col justify-center px-[60px]"
           style={{
-            position: 'absolute',
             width: '100%',
             height: '100%'
           }}
@@ -81,23 +80,14 @@ const Hero = () => {
         </div>
       </div>
       
-      {/* Help Section - Center aligned buttons with links */}
+      {/* Help Section - Center aligned button with link */}
       <div className="bg-gray-800 text-white py-6 px-6 sm:px-12 md:px-20">
         <div className="container mx-auto flex flex-col items-center">
           <h2 className="text-lg font-medium mb-4 text-center">
             {heroSettings.subtitle}
           </h2>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/experts">
-              <Button className="bg-ifind-aqua hover:bg-ifind-aqua/90 transition-opacity text-white px-6 py-2 rounded-full flex items-center gap-2">
-                <span className="font-medium">Talk to an Expert</span>
-              </Button>
-            </Link>
-            <Link to="/experts">
-              <Button className="bg-ifind-teal hover:bg-ifind-teal/90 transition-opacity text-white px-6 py-2 rounded-full flex items-center gap-2">
-                <span className="font-medium">Book a Session</span>
-              </Button>
-            </Link>
+          <div className="flex justify-center">
+            <FreeAssessmentCTA />
           </div>
         </div>
       </div>

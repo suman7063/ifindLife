@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, Clock, PhoneCall, Video, Award, Heart } from 'lucide-react';
+import { Star, Clock, PhoneCall, Calendar, Award, Heart } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import CallModal from './CallModal';
 import { toast } from '@/hooks/use-toast';
@@ -48,7 +49,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
     }
   };
   
-  const handleVideoCallClick = () => {
+  const handleBookNowClick = () => {
     if (online && waitTime === 'Available') {
       setIsVideoCallModalOpen(true);
     } else {
@@ -129,10 +130,10 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
           </Button>
           <Button 
             className="flex-1 bg-ifind-purple hover:bg-ifind-purple/80 transition-colors"
-            onClick={handleVideoCallClick}
+            onClick={handleBookNowClick}
           >
-            <Video className="h-4 w-4 mr-1" />
-            Video
+            <Calendar className="h-4 w-4 mr-1" />
+            Book Now
           </Button>
         </CardFooter>
       </Card>
