@@ -3,12 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { FormField, FormItem, FormControl, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
-import { UseFormReturn } from 'react-hook-form';
-import { RegisterFormValues } from './types';
-
-interface TermsCheckboxProps {
-  form: UseFormReturn<RegisterFormValues>;
-}
+import { TermsCheckboxProps } from './types';
 
 const TermsCheckbox: React.FC<TermsCheckboxProps> = ({ form }) => {
   return (

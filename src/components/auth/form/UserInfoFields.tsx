@@ -4,8 +4,8 @@ import { Mail, Phone, User, MapPin } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UseFormReturn } from 'react-hook-form';
-import { RegisterFormValues } from './types';
+import { useFormContext } from 'react-hook-form';
+import { UserInfoFieldsProps } from './types';
 
 // List of common countries
 const COUNTRIES = [
@@ -21,11 +21,11 @@ const COUNTRIES = [
   'Brazil',
 ];
 
-interface UserInfoFieldsProps {
-  form: UseFormReturn<RegisterFormValues>;
-}
-
-const UserInfoFields: React.FC<UserInfoFieldsProps> = ({ form }) => {
+const UserInfoFields: React.FC<UserInfoFieldsProps> = ({ 
+  showCityField, 
+  setShowCityField,
+  form 
+}) => {
   return (
     <>
       <FormField

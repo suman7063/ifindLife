@@ -3,16 +3,13 @@ import React from 'react';
 import { Gift } from 'lucide-react';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { ReferralSettings } from '@/types/supabase';
-import { UseFormReturn } from 'react-hook-form';
-import { RegisterFormValues } from './types';
+import { ReferralCodeFieldProps } from './types';
 
-interface ReferralCodeFieldProps {
-  form: UseFormReturn<RegisterFormValues>;
-  referralSettings: ReferralSettings | null;
-}
-
-const ReferralCodeField: React.FC<ReferralCodeFieldProps> = ({ form, referralSettings }) => {
+const ReferralCodeField: React.FC<ReferralCodeFieldProps> = ({ 
+  form, 
+  initialReferralCode,
+  referralSettings 
+}) => {
   return (
     <FormField
       control={form.control}
@@ -29,6 +26,7 @@ const ReferralCodeField: React.FC<ReferralCodeFieldProps> = ({ form, referralSet
                 placeholder="Enter referral code"
                 className="pl-10"
                 {...field}
+                value={field.value || initialReferralCode || ''}
               />
             </FormControl>
           </div>

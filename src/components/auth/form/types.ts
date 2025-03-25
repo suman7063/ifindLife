@@ -1,5 +1,8 @@
 
 import { z } from 'zod';
+import { UseFormReturn } from 'react-hook-form';
+import { ReferralSettings } from '@/types/supabase';
+import { Dispatch, SetStateAction } from 'react';
 
 // Create form validation schema
 export const registerFormSchema = z.object({
@@ -17,9 +20,35 @@ export const registerFormSchema = z.object({
     .refine(val => /[^A-Za-z0-9]/.test(val), { message: "Password must contain at least one special character" }),
   confirmPassword: z.string(),
   termsAccepted: z.boolean().refine(val => val === true, { message: "You must accept the terms and conditions" }),
+  captcha: z.string().min(1, { message: "Please verify that you are not a robot" }),
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
 });
 
 export type RegisterFormValues = z.infer<typeof registerFormSchema>;
+
+// Component prop types
+export interface UserInfoFieldsProps {
+  form: UseFormReturn<RegisterFormValues>;
+  showCityField: boolean;
+  setShowCityField: Dispatch<SetStateAction<boolean>>;
+}
+
+export interface PasswordFieldsProps {
+  form: UseFormReturn<RegisterFormValues>;
+}
+
+export interface ReferralCodeFieldProps {
+  form: UseFormReturn<RegisterFormValues>;
+  initialReferralCode?: string | null;
+  referralSettings?: ReferralSettings | null;
+}
+
+export interface TermsCheckboxProps {
+  form: UseFormReturn<RegisterFormValues>;
+}
+
+export interface PasswordStrengthIndicatorProps {
+  password: string;
+}
