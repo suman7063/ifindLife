@@ -6,7 +6,7 @@ const BlogSection = () => {
   const blogPosts = [
     {
       title: "Unlocking the Secrets of Emotional Intelligence",
-      imageUrl: "https://images.unsplash.com/photo-1559029881-7cfd01ac1f10?q=80&w=2069&auto=format&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?q=80&w=2070&auto=format&fit=crop",
       category: "Mental Health",
       date: "June 15, 2023",
       href: "/blog/emotional-intelligence"
@@ -20,7 +20,7 @@ const BlogSection = () => {
     },
     {
       title: "Steps to Overcoming Teenage Anger",
-      imageUrl: "https://images.unsplash.com/photo-1535056995008-48d3c6b8e89c?q=80&w=2071&auto=format&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1523496897114-5b77cc0c4c42?q=80&w=2070&auto=format&fit=crop",
       category: "Parenting",
       date: "August 10, 2023",
       href: "/blog/teenage-anger"
