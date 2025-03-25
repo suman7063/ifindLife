@@ -95,7 +95,7 @@ const ServicesSection = () => {
   ];
 
   return (
-    <section className="py-16 bg-ifind-offwhite">
+    <section className="py-16 bg-ifind-purple/5">
       <div className="container mx-auto px-6 sm:px-12">
         <h2 className="text-3xl font-bold mb-6">IFL Programs</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">
@@ -112,15 +112,23 @@ const ServicesSection = () => {
               description={program.description}
               href={program.href}
               color={program.color}
+              cardStyle="program"
             />
           ))}
         </div>
 
-        {/* Issue/Situation Based Sessions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {designCategories.map((category, index) => (
-            <CategoryCard key={`category-${index}`} {...category} />
-          ))}
+        {/* Issue/Situation Based Sessions with heading */}
+        <div className="mt-16">
+          <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {designCategories.map((category, index) => (
+              <CategoryCard 
+                key={`category-${index}`} 
+                {...category}
+                cardStyle="session" 
+              />
+            ))}
+          </div>
         </div>
       </div>
     </section>

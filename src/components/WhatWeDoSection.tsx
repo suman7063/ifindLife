@@ -13,7 +13,7 @@ const WhatWeDoSection = () => {
         "Stress management techniques",
         "Personalized wellness plans"
       ],
-      color: "bg-purple-400",
+      color: "bg-ifind-purple",
       href: "/wellness-seekers"
     },
     {
@@ -25,7 +25,7 @@ const WhatWeDoSection = () => {
         "Bullying prevention strategies",
         "Wellness workshops for campus life"
       ],
-      color: "bg-blue-400",
+      color: "bg-ifind-aqua",
       href: "/academic-institutes"
     },
     {
@@ -37,7 +37,7 @@ const WhatWeDoSection = () => {
         "Team building for psychological safety",
         "Burnout prevention strategies"
       ],
-      color: "bg-green-400",
+      color: "bg-ifind-teal",
       href: "/business"
     }
   ];
@@ -50,7 +50,7 @@ const WhatWeDoSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {services.map((service, index) => (
             <Link key={index} to={service.href} className="block">
-              <div className={`${service.color} rounded-lg p-6 text-white h-full`}>
+              <div className={`${service.color} rounded-lg p-6 text-white h-full shadow-md hover:shadow-lg transition-all duration-300`}>
                 <h3 className="font-semibold text-xl mb-4">{service.title}</h3>
                 <ul className="space-y-2">
                   {service.items.map((item, i) => (
