@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -15,12 +15,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, currentUser } = useUserAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/admin-login" replace />;
+    return <Navigate to="/user-login" replace />;
   }
 
   // We need to check for admin role differently as it may not exist directly on UserProfile
   if (requireSuperAdmin && currentUser?.email !== 'admin@ifindlife.com') {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

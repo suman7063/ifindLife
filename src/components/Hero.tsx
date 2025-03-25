@@ -81,19 +81,23 @@ const Hero = () => {
         </div>
       </div>
       
-      {/* Help Section - Center aligned buttons with no links */}
+      {/* Help Section - Center aligned buttons with links */}
       <div className="bg-gray-800 text-white py-6 px-6 sm:px-12 md:px-20">
         <div className="container mx-auto flex flex-col items-center">
           <h2 className="text-lg font-medium mb-4 text-center">
             {heroSettings.subtitle}
           </h2>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Button className="bg-ifind-aqua hover:bg-ifind-aqua/90 transition-opacity text-white px-6 py-2 rounded-full flex items-center gap-2">
-              <span className="font-medium">Talk to an Expert</span>
-            </Button>
-            <Button className="bg-white text-gray-800 hover:bg-gray-100">
-              Book a Session
-            </Button>
+            <Link to="/experts">
+              <Button className="bg-ifind-aqua hover:bg-ifind-aqua/90 transition-opacity text-white px-6 py-2 rounded-full flex items-center gap-2">
+                <span className="font-medium">Talk to an Expert</span>
+              </Button>
+            </Link>
+            <Link to="/mental-health-assessment">
+              <Button className="bg-white text-gray-800 hover:bg-gray-100">
+                Book a Session
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
