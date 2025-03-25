@@ -34,6 +34,7 @@ const UserLogin = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("User is authenticated, redirecting to:", redirectPath);
       navigate(redirectPath);
     }
   }, [isAuthenticated, navigate, redirectPath]);
@@ -60,10 +61,15 @@ const UserLogin = () => {
   }, [referralCodeFromUrl]);
 
   const handleLogin = async (email: string, password: string) => {
+    if (loading) return; // Prevent multiple clicks
+    
     setLoading(true);
     
     try {
+      console.log("Login handler called with:", email);
       const success = await login(email, password);
+      console.log("Login result:", success);
+      
       if (success) {
         toast.success('Login successful');
         navigate('/user-dashboard');
@@ -84,6 +90,8 @@ const UserLogin = () => {
     city: string;
     referralCode?: string;
   }) => {
+    if (loading) return; // Prevent multiple clicks
+    
     setLoading(true);
     
     try {

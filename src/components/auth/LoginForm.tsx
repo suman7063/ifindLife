@@ -41,6 +41,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
 
   const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
     console.log("Login form submitted with:", data);
+    if (loading) return; // Prevent double submission
+    
     try {
       await onLogin(data.email, data.password);
     } catch (error) {

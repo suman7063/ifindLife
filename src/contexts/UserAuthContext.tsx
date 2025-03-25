@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { 
@@ -46,39 +46,45 @@ export const UserAuthContext = createContext<UserAuthContextType | undefined>(un
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
   const navigate = useNavigate();
   const { login: authLogin, signup: authSignup, logout: authLogout, getSession, user, session } = useSupabaseAuth();
 
+  const fetchProfile = useCallback(async () => {
+    if (user) {
+      console.log("Fetching user profile for:", user.id);
+      try {
+        const userProfile = await fetchUserProfile(user);
+        if (userProfile) {
+          console.log("User profile fetched:", userProfile);
+          setCurrentUser(userProfile);
+        } else {
+          console.error("No user profile found for:", user.id);
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setAuthInitialized(true);
+      }
+    } else {
+      setCurrentUser(null);
+      setAuthInitialized(true);
+    }
+  }, [user]);
+
   useEffect(() => {
     // This useEffect will run whenever the session or user changes
-    const fetchProfile = async () => {
-      if (user) {
-        console.log("Fetching user profile for:", user.id);
-        try {
-          const userProfile = await fetchUserProfile(user);
-          if (userProfile) {
-            console.log("User profile fetched:", userProfile);
-            setCurrentUser(userProfile);
-          } else {
-            console.error("No user profile found for:", user.id);
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-        }
-      } else {
-        setCurrentUser(null);
-      }
-    };
-
     fetchProfile();
-  }, [user, session]);
+  }, [user, session, fetchProfile]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log("Attempting login in context with:", email);
       const success = await authLogin(email, password);
+      console.log("Login in context result:", success);
       return success;
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Login error in context:", error);
       return false;
     }
   };
@@ -92,7 +98,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     city?: string;
     referralCode?: string;
   }): Promise<boolean> => {
+    console.log("Context: Attempting signup with:", userData.email);
     const success = await authSignup(userData);
+    console.log("Context: Signup result:", success);
     
     // If signup was successful and there's a referral code, process it
     if (success && userData.referralCode) {
