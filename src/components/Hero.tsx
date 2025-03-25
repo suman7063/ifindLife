@@ -41,21 +41,25 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with right-aligned image */}
+      {/* Banner Image Section with new styling */}
       <div className="relative w-full h-[504px]">
-        <div className="absolute top-0 right-0 h-full w-3/5">
-          <img 
-            src="public/lovable-uploads/ecbf2820-5b78-4dd3-a131-2f931529ade3.png" 
-            alt="Woman with sunglasses" 
-            className="w-full h-full object-cover object-right"
-            style={{
-              borderRadius: '0px'
-            }}
-          />
-        </div>
-        <div 
-          className="absolute px-[60px] flex flex-col justify-center h-full"
+        <img 
+          src="public/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
+          alt="Woman with sunglasses" 
+          className="w-full h-full object-cover"
           style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '504px',
+            borderRadius: '0px'
+          }}
+        />
+        <div 
+          className="absolute px-[60px] flex flex-col justify-end h-full pb-16"
+          style={{
+            position: 'absolute',
             width: '100%',
             height: '100%'
           }}
