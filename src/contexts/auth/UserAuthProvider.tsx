@@ -15,6 +15,7 @@ import { useWalletManagement } from './useWalletManagement';
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
   const navigate = useNavigate();
   const { login: authLogin, signup: authSignup, logout: authLogout, getSession, user, session } = useSupabaseAuth();
 
@@ -59,13 +60,24 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      setAuthLoading(true);
       console.log("Attempting login in context with:", email);
       const success = await authLogin(email, password);
       console.log("Login in context result:", success);
-      return success;
+      
+      if (success) {
+        toast.success('Login successful');
+        return true;
+      } else {
+        toast.error('Login failed. Please check your credentials.');
+        return false;
+      }
     } catch (error) {
       console.error("Login error in context:", error);
+      toast.error('An error occurred during login');
       return false;
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -79,31 +91,55 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     referralCode?: string;
   }): Promise<boolean> => {
     console.log("Context: Attempting signup with:", userData.email);
-    const success = await authSignup(userData);
-    console.log("Context: Signup result:", success);
+    setAuthLoading(true);
     
-    // If signup was successful and there's a referral code, process it
-    if (success && userData.referralCode) {
-      try {
-        const { data } = await supabase.auth.getUser();
-        if (data?.user) {
-          await processReferralCode(userData.referralCode, data.user.id);
+    try {
+      const success = await authSignup(userData);
+      console.log("Context: Signup result:", success);
+      
+      // If signup was successful and there's a referral code, process it
+      if (success && userData.referralCode) {
+        try {
+          const { data } = await supabase.auth.getUser();
+          if (data?.user) {
+            await processReferralCode(userData.referralCode, data.user.id);
+          }
+        } catch (error) {
+          console.error("Error processing referral:", error);
+          // Don't fail the signup if referral processing fails
         }
-      } catch (error) {
-        console.error("Error processing referral:", error);
-        // Don't fail the signup if referral processing fails
       }
+      
+      if (success) {
+        toast.success('Account created successfully! Please check your email to confirm your account');
+      }
+      
+      return success;
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error('Registration failed. Please try again.');
+      return false;
+    } finally {
+      setAuthLoading(false);
     }
-    
-    return success;
   };
 
   const logout = async () => {
-    const success = await authLogout();
-    if (success) {
-      setCurrentUser(null);
-      navigate('/login');
-      toast.info('You have been logged out');
+    setAuthLoading(true);
+    try {
+      const success = await authLogout();
+      if (success) {
+        setCurrentUser(null);
+        navigate('/login');
+        toast.info('You have been logged out');
+      } else {
+        toast.error('Logout failed. Please try again.');
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error('An error occurred during logout');
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -115,6 +151,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         login,
         signup,
         logout,
+        authLoading,
         updateProfile,
         updateProfilePicture,
         addToFavorites,

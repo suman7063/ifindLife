@@ -10,12 +10,13 @@ import { supabase } from '@/lib/supabase';
 import LoginForm from '@/components/auth/LoginForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 export const Login = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { login, isAuthenticated, authLoading } = useUserAuth();
   
   // Check if user is coming from email verification
   const queryParams = new URLSearchParams(location.search);
@@ -27,26 +28,22 @@ export const Login = () => {
     }
   }, [verified]);
 
-  const handleLogin = async (email: string, password: string) => {
-    setIsLoading(true);
-    
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast.success('Login successful');
+  useEffect(() => {
+    if (isAuthenticated) {
       navigate('/user-dashboard');
+    }
+  }, [isAuthenticated, navigate]);
+
+  const handleLogin = async (email: string, password: string) => {
+    try {
+      const success = await login(email, password);
+      
+      if (success) {
+        navigate('/user-dashboard');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || 'Failed to login');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -92,7 +89,7 @@ export const Login = () => {
               </TabsList>
               
               <TabsContent value="email">
-                <LoginForm onLogin={handleLogin} loading={isLoading} />
+                <LoginForm onLogin={handleLogin} loading={authLoading} />
               </TabsContent>
               
               <TabsContent value="social">
@@ -101,7 +98,7 @@ export const Login = () => {
                     variant="outline" 
                     className="w-full flex items-center justify-center space-x-2" 
                     onClick={() => handleSocialLogin('google')}
-                    disabled={!!socialLoading}
+                    disabled={!!socialLoading || authLoading}
                   >
                     {socialLoading === 'google' ? (
                       <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -115,7 +112,7 @@ export const Login = () => {
                     variant="outline" 
                     className="w-full flex items-center justify-center space-x-2" 
                     onClick={() => handleSocialLogin('facebook')}
-                    disabled={!!socialLoading}
+                    disabled={!!socialLoading || authLoading}
                   >
                     {socialLoading === 'facebook' ? (
                       <Loader2 className="h-5 w-5 animate-spin mr-2" />
@@ -129,7 +126,7 @@ export const Login = () => {
                     variant="outline" 
                     className="w-full flex items-center justify-center space-x-2" 
                     onClick={() => handleSocialLogin('apple')}
-                    disabled={!!socialLoading}
+                    disabled={!!socialLoading || authLoading}
                   >
                     {socialLoading === 'apple' ? (
                       <Loader2 className="h-5 w-5 animate-spin mr-2" />

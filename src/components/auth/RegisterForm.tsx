@@ -12,6 +12,8 @@ import TermsCheckbox from './form/TermsCheckbox';
 import CaptchaField from './form/CaptchaField';
 import { validatePasswordStrength } from '@/utils/passwordValidation';
 import { registerFormSchema, RegisterFormValues } from './form/types';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2 } from 'lucide-react';
 
 interface RegisterFormProps {
   onRegister: (userData: {
@@ -37,6 +39,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
   setCaptchaVerified
 }) => {
   const [showCityField, setShowCityField] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Set up form with validation
   const form = useForm<RegisterFormValues>({
@@ -55,21 +58,36 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     },
   });
 
-  const onSubmit = (data: RegisterFormValues) => {
-    onRegister({
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      password: data.password,
-      country: data.country,
-      city: data.city || "",
-      referralCode: data.referralCode,
-    });
+  const onSubmit = async (data: RegisterFormValues) => {
+    if (loading) return;
+    
+    setFormError(null);
+    
+    try {
+      await onRegister({
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+        country: data.country,
+        city: data.city || "",
+        referralCode: data.referralCode,
+      });
+    } catch (error: any) {
+      console.error("Registration error:", error);
+      setFormError(error.message || "Registration failed. Please try again.");
+    }
   };
 
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {formError && (
+          <Alert variant="destructive">
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+        
         <UserInfoFields 
           showCityField={showCityField} 
           setShowCityField={setShowCityField}
@@ -93,7 +111,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
           className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
           disabled={loading}
         >
-          {loading ? 'Creating account...' : 'Create Account'}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              Creating account...
+            </>
+          ) : 'Create Account'}
         </Button>
       </form>
     </FormProvider>

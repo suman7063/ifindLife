@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import { UserProfile, Expert } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 
 export const useUserFavorites = (
@@ -14,24 +14,24 @@ export const useUserFavorites = (
     }
 
     try {
-      const { data, error } = await supabase
+      const newFavorite = {
+        user_id: currentUser.id,
+        expert_id: parseInt(expertId, 10), // Convert string to number
+      };
+
+      const { error } = await supabase
         .from('user_favorites')
-        .insert({
-          user_id: currentUser.id,
-          expert_id: parseInt(expertId, 10) // Convert string to number
-        });
+        .insert(newFavorite);
 
       if (error) throw error;
 
-      // Optimistically update the local state
-      const expert = { id: expertId } as Expert;
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: [...(currentUser.favoriteExperts || []), expert],
+        favorites: [...(currentUser.favorites || []), expertId],
       };
+      
       setCurrentUser(updatedUser);
-
-      toast.success('Added to favorites!');
+      toast.success('Added to favorites');
     } catch (error: any) {
       toast.error(error.message || 'Failed to add to favorites');
     }
@@ -39,12 +39,12 @@ export const useUserFavorites = (
 
   const removeFromFavorites = async (expertId: string) => {
     if (!currentUser) {
-      toast.error('Please log in to remove from favorites');
+      toast.error('Please log in to manage favorites');
       return;
     }
 
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('user_favorites')
         .delete()
         .eq('user_id', currentUser.id)
@@ -52,16 +52,13 @@ export const useUserFavorites = (
 
       if (error) throw error;
 
-      // Optimistically update the local state
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: (currentUser.favoriteExperts || []).filter(
-          (expert) => expert.id !== expertId
-        ),
+        favorites: (currentUser.favorites || []).filter(id => id !== expertId),
       };
+      
       setCurrentUser(updatedUser);
-
-      toast.success('Removed from favorites!');
+      toast.success('Removed from favorites');
     } catch (error: any) {
       toast.error(error.message || 'Failed to remove from favorites');
     }

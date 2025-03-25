@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Eye, EyeOff, Mail } from 'lucide-react';
+import { Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -28,6 +28,7 @@ const loginFormSchema = z.object({
 
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'user' }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const location = useLocation();
 
   // Set up form with validation
@@ -43,16 +44,25 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
     console.log("Login form submitted with:", data);
     if (loading) return; // Prevent double submission
     
+    setFormError(null);
+    
     try {
       await onLogin(data.email, data.password);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error during login form submission:", error);
+      setFormError(error.message || "Login failed. Please check your credentials.");
     }
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {formError && (
+          <div className="p-3 text-sm rounded-md bg-red-50 text-red-500 border border-red-200">
+            {formError}
+          </div>
+        )}
+        
         <FormField
           control={form.control}
           name="email"
@@ -118,7 +128,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
           className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
           disabled={loading}
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              Signing in...
+            </>
+          ) : 'Sign In'}
         </Button>
       </form>
     </Form>

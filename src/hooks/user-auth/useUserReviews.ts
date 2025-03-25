@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, Review } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 
 export const useUserReviews = (
@@ -29,7 +29,7 @@ export const useUserReviews = (
       if (error) throw error;
 
       // Optimistically update the local state
-      const adaptedReview = {
+      const adaptedReview: Review = {
         id: data?.[0]?.id || `temp_${Date.now()}`,
         expertId: expertId,
         rating: rating,

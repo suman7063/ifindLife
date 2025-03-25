@@ -1,7 +1,8 @@
 
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, Report } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
+import { adaptReportsToDB } from '@/utils/dataAdapters';
 
 export const useUserReports = (
   currentUser: UserProfile | null,
@@ -30,7 +31,7 @@ export const useUserReports = (
       if (error) throw error;
 
       // Optimistically update the local state
-      const adaptedReport = {
+      const adaptedReport: Report = {
         id: data?.[0]?.id || `temp_${Date.now()}`,
         expertId: expertId,
         reason: reason,

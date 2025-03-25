@@ -19,8 +19,7 @@ import { supabase } from '@/lib/supabase';
 const UserLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signup, isAuthenticated } = useUserAuth();
-  const [loading, setLoading] = useState(false);
+  const { login, signup, isAuthenticated, authLoading } = useUserAuth();
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [showCaptcha, setShowCaptcha] = useState(false);
@@ -61,23 +60,16 @@ const UserLogin = () => {
   }, [referralCodeFromUrl]);
 
   const handleLogin = async (email: string, password: string) => {
-    if (loading) return; // Prevent multiple clicks
-    
-    setLoading(true);
-    
     try {
       console.log("Login handler called with:", email);
       const success = await login(email, password);
       console.log("Login result:", success);
       
       if (success) {
-        toast.success('Login successful');
         navigate('/user-dashboard');
       }
     } catch (error) {
       console.error('Login error:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -90,10 +82,6 @@ const UserLogin = () => {
     city: string;
     referralCode?: string;
   }) => {
-    if (loading) return; // Prevent multiple clicks
-    
-    setLoading(true);
-    
     try {
       console.log("Attempting to sign up with:", userData);
       const success = await signup(userData);
@@ -101,13 +89,9 @@ const UserLogin = () => {
       
       if (success) {
         setVerificationSent(true);
-        toast.success('Please check your email to confirm your account');
       }
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error('Failed to register account');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -183,7 +167,7 @@ const UserLogin = () => {
                 
                 <TabsContent value="login">
                   <div className="space-y-4">
-                    <LoginForm onLogin={handleLogin} loading={loading} userType="user" />
+                    <LoginForm onLogin={handleLogin} loading={authLoading} userType="user" />
                     
                     <div className="relative flex items-center py-2">
                       <div className="flex-grow border-t border-gray-300"></div>
@@ -196,7 +180,7 @@ const UserLogin = () => {
                         variant="outline" 
                         className="flex items-center justify-center" 
                         onClick={() => handleSocialLogin('google')}
-                        disabled={!!socialLoading}
+                        disabled={!!socialLoading || authLoading}
                       >
                         {socialLoading === 'google' ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -208,7 +192,7 @@ const UserLogin = () => {
                         variant="outline" 
                         className="flex items-center justify-center" 
                         onClick={() => handleSocialLogin('facebook')}
-                        disabled={!!socialLoading}
+                        disabled={!!socialLoading || authLoading}
                       >
                         {socialLoading === 'facebook' ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -220,7 +204,7 @@ const UserLogin = () => {
                         variant="outline" 
                         className="flex items-center justify-center" 
                         onClick={() => handleSocialLogin('apple')}
-                        disabled={!!socialLoading}
+                        disabled={!!socialLoading || authLoading}
                       >
                         {socialLoading === 'apple' ? (
                           <Loader2 className="h-5 w-5 animate-spin" />
@@ -235,7 +219,7 @@ const UserLogin = () => {
                 <TabsContent value="register">
                   <RegisterForm 
                     onRegister={handleSignup} 
-                    loading={loading} 
+                    loading={authLoading}
                     initialReferralCode={referralCodeFromUrl}
                     referralSettings={referralSettings}
                     setCaptchaVerified={() => setShowCaptcha(true)}

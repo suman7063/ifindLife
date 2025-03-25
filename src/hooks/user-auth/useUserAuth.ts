@@ -20,7 +20,7 @@ export const useUserAuth = () => {
   const { updateProfileData } = useUserProfileManagement(currentUser, setCurrentUser);
   const { addToFavorites, removeFromFavorites } = useUserFavorites(currentUser, setCurrentUser);
   const { addReview } = useUserReviews(currentUser, setCurrentUser);
-  const { addReport } = useUserReports(currentUser, setCurrentUser);
+  const { addReport: reportExpert } = useUserReports(currentUser, setCurrentUser);
   const { rechargeWallet } = useUserWallet(currentUser, setCurrentUser);
   const { hasTakenServiceFrom, getExpertShareLink } = useExpertInteraction(currentUser);
 
@@ -68,9 +68,6 @@ export const useUserAuth = () => {
       toast.error(error.message || 'Logout failed');
     }
   };
-
-  // Rename addReport to reportExpert for consistency with the interface
-  const reportExpert = addReport;
 
   return {
     currentUser,
