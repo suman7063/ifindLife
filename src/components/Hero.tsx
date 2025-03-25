@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
-    title: "Mental Health Solutions that Work",
+    title: "You Are Not Alone!",
     subtitle: "Is there a situation you want immediate help with?",
     description: "Expert guidance from licensed therapists available 24/7",
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" // Default video URL with autoplay
@@ -29,6 +29,7 @@ const Hero = () => {
           
           setHeroSettings({
             ...parsedContent.heroSettings,
+            title: "You Are Not Alone!", // Override title with the new text
             videoUrl
           });
         }
@@ -40,20 +41,42 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section */}
-      <div className="relative w-full h-[400px] bg-gradient-to-r from-gray-900 to-gray-800">
+      {/* Banner Image Section with new styling */}
+      <div className="relative w-full h-[504px]">
         <img 
-          src="public/lovable-uploads/6fdf43ed-732a-4659-a397-a7d061440bc2.png" 
+          src="public/lovable-uploads/ecbf2820-5b78-4dd3-a131-2f931529ade3.png" 
           alt="Woman with sunglasses" 
-          className="w-full h-full object-cover opacity-60"
+          className="w-full h-full object-cover"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '504px',
+            borderRadius: '0px'
+          }}
         />
-        <div className="absolute inset-0 flex flex-col justify-center px-6 sm:px-12 md:px-20">
-          <h1 className="text-white text-4xl md:text-5xl font-bold mb-4 max-w-2xl">
+        <div 
+          className="absolute px-[60px] flex flex-col justify-end h-full pb-16"
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%'
+          }}
+        >
+          <h1 
+            className="text-white font-bold"
+            style={{
+              fontFamily: 'Roboto, sans-serif',
+              fontSize: '80px',
+              lineHeight: '104px',
+              fontWeight: 700,
+              color: '#FFFFFF',
+              maxWidth: '449px'
+            }}
+          >
             {heroSettings.title}
           </h1>
-          <p className="text-white text-xl max-w-xl">
-            {heroSettings.description}
-          </p>
         </div>
       </div>
       
