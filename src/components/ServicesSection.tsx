@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CategoryCard from '@/components/CategoryCard';
 import { categoryData as defaultCategoryData } from '@/data/homePageData';
-import { Heart, Brain, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
+import { Heart, Brain, Users, MessageCircle, Sparkles, Lightbulb, Star, CircleDot } from 'lucide-react';
 
 const ServicesSection = () => {
   const [categories, setCategories] = useState(defaultCategoryData);
@@ -22,6 +22,31 @@ const ServicesSection = () => {
       console.error('Error loading content from localStorage:', error);
     }
   }, []);
+
+  // Featured program cards from the image
+  const featuredPrograms = [
+    {
+      icon: <Brain className="h-8 w-8 text-pink-500" />,
+      title: "QuickEase Programs",
+      description: "Short-term solutions for immediate stress and anxiety relief",
+      href: "/programs/quickease",
+      color: "bg-blue-100"
+    },
+    {
+      icon: <CircleDot className="h-8 w-8 text-green-600" />,
+      title: "Emotional Resilience",
+      description: "Build psychological strength to handle life's challenges",
+      href: "/programs/emotional-resilience",
+      color: "bg-teal-100"
+    },
+    {
+      icon: <Star className="h-8 w-8 text-yellow-500" />,
+      title: "Super Human Life",
+      description: "Achieve your highest potential through mental optimization",
+      href: "/programs/superhuman-life",
+      color: "bg-cyan-500"
+    }
+  ];
 
   // Hardcoded categories that match the Visily design
   const designCategories = [
@@ -72,14 +97,29 @@ const ServicesSection = () => {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-3xl font-bold mb-6">Our Mental Health Services</h2>
+        <h2 className="text-3xl font-bold mb-6">IFL Programs</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">
-          Professional support for your mental health needs. Our licensed therapists specialize in a wide range of issues.
+          IFL provides 3 kind of programs in addition to issue/situation based sessions
         </p>
 
+        {/* Featured Programs Section */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+          {featuredPrograms.map((program, index) => (
+            <CategoryCard 
+              key={`program-${index}`} 
+              icon={program.icon}
+              title={program.title}
+              description={program.description}
+              href={program.href}
+              color={program.color}
+            />
+          ))}
+        </div>
+
+        {/* Issue/Situation Based Sessions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {designCategories.map((category, index) => (
-            <CategoryCard key={index} {...category} />
+            <CategoryCard key={`category-${index}`} {...category} />
           ))}
         </div>
       </div>
