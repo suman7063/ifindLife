@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, Expert } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 
 export const useUserFavorites = (
@@ -25,9 +25,18 @@ export const useUserFavorites = (
 
       if (error) throw error;
 
+      // Fetch the expert details to add to favoriteExperts
+      const { data: expertData, error: expertError } = await supabase
+        .from('experts')
+        .select('*')
+        .eq('id', expertId)
+        .single();
+
+      if (expertError) throw expertError;
+
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: [...(currentUser.favoriteExperts || []), { id: expertId }],
+        favoriteExperts: [...(currentUser.favoriteExperts || []), expertData],
       };
       
       setCurrentUser(updatedUser);

@@ -30,7 +30,7 @@ export const useUserReviews = (
 
       // Optimistically update the local state
       const adaptedReview: Review = {
-        id: data?.[0]?.id || `temp_${Date.now()}`,
+        id: data && data[0] ? data[0].id : `temp_${Date.now()}`,
         expertId: expertId,
         rating: rating,
         comment: comment,

@@ -1,4 +1,3 @@
-
 // This file defines custom table types for Supabase
 
 export interface CustomTable {
@@ -130,7 +129,20 @@ export type Referral = {
   completedAt?: string;
 };
 
-// UI-friendly interfaces with camelCase properties
+// Add ReferralUI type that was missing
+export interface ReferralUI {
+  id: string;
+  referrerId: string;
+  referredId: string;
+  referredName?: string;
+  referralCode: string;
+  status: 'pending' | 'completed' | 'expired';
+  rewardClaimed: boolean;
+  createdAt?: string;
+  completedAt?: string;
+}
+
+// Using interfaces for UI-friendly models
 export interface UserProfile {
   id: string;
   name?: string;

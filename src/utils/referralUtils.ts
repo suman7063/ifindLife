@@ -1,6 +1,5 @@
-
 import { supabase } from '@/lib/supabase';
-import { ReferralSettings, Referral, ReferralUI } from '@/types/supabase';
+import { ReferralSettings, ReferralUI } from '@/types/supabase';
 import { toast } from 'sonner';
 
 // Fetch the current referral program settings

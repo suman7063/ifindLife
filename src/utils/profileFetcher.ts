@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile, User, Referral, ReferralUI } from '@/types/supabase';
+import { UserProfile, User, Referral } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
@@ -67,18 +67,19 @@ export const fetchUserProfile = async (
       
     userProfile.transactions = transactions || [];
     
-    const referrals = await fetchUserReferrals(user.id);
+    const referralsData = await fetchUserReferrals(user.id);
     
-    // Convert the ReferralUI[] to the format expected by UserProfile.referrals
-    userProfile.referrals = referrals.map(ref => ({
+    // Convert to the Referral type format
+    userProfile.referrals = referralsData.map(ref => ({
       id: ref.id,
-      referrer_id: ref.referrerId,
-      referred_id: ref.referredId,
-      referral_code: ref.referralCode,
+      referrerId: ref.referrerId,
+      referredId: ref.referredId,
+      referredName: ref.referredName,
+      referralCode: ref.referralCode,
       status: ref.status,
-      reward_claimed: ref.rewardClaimed,
-      created_at: ref.createdAt,
-      completed_at: ref.completedAt
+      rewardClaimed: ref.rewardClaimed,
+      createdAt: ref.createdAt,
+      completedAt: ref.completedAt
     }));
     
     return userProfile;

@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, Expert } from '@/types/supabase';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 
 export const useUserDataFetcher = (
@@ -58,10 +58,19 @@ export const useUserDataFetcher = (
 
       if (transactionsError) throw transactionsError;
 
-      // Convert expert_id to strings for favorites
-      const favoriteExperts = favoritesData ? favoritesData.map(fav => ({ 
-        id: fav.expert_id.toString() 
-      })) : [];
+      // Convert expert_id to strings for favorites and fetch expert details
+      let favoriteExperts: Expert[] = [];
+      if (favoritesData && favoritesData.length > 0) {
+        const expertIds = favoritesData.map(fav => fav.expert_id.toString());
+        
+        // Fetch the full expert details
+        const { data: expertsData } = await supabase
+          .from('experts')
+          .select('*')
+          .in('id', expertIds);
+          
+        favoriteExperts = expertsData || [];
+      }
 
       // Create UserProfile object
       const userProfile: UserProfile = {
