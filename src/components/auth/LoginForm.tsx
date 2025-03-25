@@ -5,6 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Mail } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -12,75 +16,101 @@ interface LoginFormProps {
   userType?: 'user' | 'expert' | 'admin';
 }
 
+// Create form validation schema
+const loginFormSchema = z.object({
+  email: z.string().email({ message: "Please enter a valid email address" }),
+  password: z.string().min(1, { message: "Password is required" }),
+});
+
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'user' }) => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const location = useLocation();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onLogin(email, password);
+  // Set up form with validation
+  const form = useForm<z.infer<typeof loginFormSchema>>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = (data: z.infer<typeof loginFormSchema>) => {
+    onLogin(data.email, data.password);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email Address</Label>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <Input
-            id="email"
-            type="email"
-            placeholder="your@email.com"
-            className="pl-10"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
-          <Link to={`/forgot-password?type=${userType}`} className="text-xs text-ifind-aqua hover:underline">
-            Forgot password?
-          </Link>
-        </div>
-        <div className="relative">
-          <Input
-            id="password"
-            type={showPassword ? "text" : "password"}
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            )}
-          </button>
-        </div>
-      </div>
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-        disabled={loading}
-      >
-        {loading ? 'Signing in...' : 'Sign In'}
-      </Button>
-    </form>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <FormLabel>Email Address</FormLabel>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="your@email.com"
+                    className="pl-10"
+                    {...field}
+                  />
+                </FormControl>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <div className="flex items-center justify-between">
+                <FormLabel>Password</FormLabel>
+                <Link to={`/forgot-password?type=${userType}`} className="text-xs text-ifind-aqua hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+              <div className="relative">
+                <FormControl>
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    {...field}
+                  />
+                </FormControl>
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <Button 
+          type="submit" 
+          className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+          disabled={loading}
+        >
+          {loading ? 'Signing in...' : 'Sign In'}
+        </Button>
+      </form>
+    </Form>
   );
 };
 
