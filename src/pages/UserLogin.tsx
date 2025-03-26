@@ -27,6 +27,7 @@ const UserLogin = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   // Get referral code from URL if available
   const queryParams = new URLSearchParams(location.search);
@@ -64,6 +65,7 @@ const UserLogin = () => {
 
   const handleLogin = async (email: string, password: string) => {
     setLoginError(null); // Clear any previous errors
+    setIsLoggingIn(true);
     
     try {
       console.log("Login handler called with:", email);
@@ -71,7 +73,7 @@ const UserLogin = () => {
       console.log("Login result:", success);
       
       if (success) {
-        navigate('/user-dashboard');
+        // The redirect will be handled in UserAuthProvider after profile is fetched
       } else {
         // If login returned false but didn't throw an error, show a generic message
         setLoginError("Login failed. Please check your credentials and try again.");
@@ -80,8 +82,10 @@ const UserLogin = () => {
       console.error('Login error:', error);
       // Set error message to be displayed in the form
       setLoginError(error.message || "An unexpected error occurred during login.");
-      // We're not throwing here because we want to handle the error in the LoginForm component
+      // We're throwing the error so it can be handled in the LoginForm component
       throw error;
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -137,6 +141,23 @@ const UserLogin = () => {
       setSocialLoading(null);
     }
   };
+
+  // Show a loading indicator if we're in the process of authenticating
+  if (authLoading && !isLoggingIn && !isRegistering) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 py-10 flex items-center justify-center bg-stars">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-ifind-aqua" />
+            <h2 className="text-xl font-medium">Authenticating...</h2>
+            <p className="text-muted-foreground">Please wait while we verify your credentials</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -195,7 +216,7 @@ const UserLogin = () => {
 
                     <LoginForm 
                       onLogin={handleLogin} 
-                      loading={authLoading} 
+                      loading={authLoading || isLoggingIn} 
                       userType="user" 
                     />
                     

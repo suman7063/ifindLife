@@ -30,6 +30,7 @@ const loginFormSchema = z.object({
 const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'user' }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const location = useLocation();
 
   // Set up form with validation
@@ -43,9 +44,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
 
   const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
     console.log("Login form submitted with:", data);
-    if (loading) return; // Prevent double submission
+    if (loading || isSubmitting) return; // Prevent double submission
     
     setFormError(null);
+    setIsSubmitting(true);
     
     try {
       await onLogin(data.email, data.password);
@@ -57,6 +59,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
       } else {
         setFormError(error.message || "Login failed. Please check your credentials.");
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -133,9 +137,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
         <Button 
           type="submit" 
           className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-          disabled={loading}
+          disabled={loading || isSubmitting}
         >
-          {loading ? (
+          {loading || isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
               Signing in...

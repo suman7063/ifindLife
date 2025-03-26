@@ -39,19 +39,24 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (userProfile) {
           console.log("User profile fetched:", userProfile);
           setCurrentUser(userProfile);
+          // If user has successfully logged in and we have their profile, navigate to dashboard
+          navigate('/user-dashboard');
         } else {
           console.error("No user profile found for:", user.id);
+          // If we can't find a profile, we might need to create one or handle this case
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
       } finally {
         setAuthInitialized(true);
+        setAuthLoading(false);
       }
     } else {
       setCurrentUser(null);
       setAuthInitialized(true);
+      setAuthLoading(false);
     }
-  }, [user]);
+  }, [user, navigate]);
 
   useEffect(() => {
     // This useEffect will run whenever the session or user changes
@@ -77,7 +82,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       toast.error(error.message || 'Login failed. Please try again.');
       throw error;
     } finally {
-      setAuthLoading(false);
+      // Note: Don't set authLoading to false here, as we'll do that after fetchProfile completes
     }
   };
 

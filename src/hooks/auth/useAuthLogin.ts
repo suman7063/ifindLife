@@ -34,6 +34,7 @@ export const useAuthLogin = (
       }
       
       console.log("No user returned from login attempt");
+      toast.error("Login failed. Please try again.");
       return false;
     } catch (error: any) {
       console.error("Unexpected login error:", error);
