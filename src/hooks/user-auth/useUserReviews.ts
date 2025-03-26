@@ -30,7 +30,9 @@ export const useUserReviews = (
 
       // Optimistically update the local state
       const adaptedReview: Review = {
-        id: data && Array.isArray(data) && data.length > 0 && data[0] && 'id' in data[0] ? data[0].id : `temp_${Date.now()}`,
+        id: data && Array.isArray(data) && data.length > 0 && data[0] ?
+            typeof data[0] === 'object' && 'id' in data[0] ?
+            data[0].id : `temp_${Date.now()}` : `temp_${Date.now()}`,
         expertId: expertId,
         rating: rating,
         comment: comment,
