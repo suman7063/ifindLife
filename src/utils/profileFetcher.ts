@@ -1,11 +1,13 @@
+
 import { supabase } from '@/lib/supabase';
-import { UserProfile, User } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
 
 export const fetchUserProfile = async (
-  user: User
+  user: SupabaseUser
 ): Promise<UserProfile | null> => {
   if (!user || !user.id) return null;
   
