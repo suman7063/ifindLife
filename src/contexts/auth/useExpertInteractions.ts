@@ -13,9 +13,9 @@ export const useExpertInteractions = (
   const { addReview } = useUserReviews(currentUser, setCurrentUser);
   const { reportExpert } = useUserReports(currentUser, setCurrentUser);
 
-  const hasTakenServiceFrom = (expertId: string): boolean => {
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
     // In a real app, this would check if the user has purchased services from this expert
-    return false; // Placeholder implementation
+    return true; // Placeholder implementation
   };
 
   const getExpertShareLink = (expertId: string): string => {

@@ -7,16 +7,16 @@ export const useUserFavorites = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const addToFavorites = async (expertId: string) => {
+  const addToFavorites = async (expertId: string): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to add to favorites');
-      return;
+      return false;
     }
 
     try {
       const newFavorite = {
         user_id: currentUser.id,
-        expert_id: parseInt(expertId, 10), // Convert string to number
+        expert_id: expertId
       };
 
       const { error } = await supabase
@@ -41,15 +41,17 @@ export const useUserFavorites = (
       
       setCurrentUser(updatedUser);
       toast.success('Added to favorites');
+      return true;
     } catch (error: any) {
       toast.error(error.message || 'Failed to add to favorites');
+      return false;
     }
   };
 
-  const removeFromFavorites = async (expertId: string) => {
+  const removeFromFavorites = async (expertId: string): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to manage favorites');
-      return;
+      return false;
     }
 
     try {
@@ -57,7 +59,7 @@ export const useUserFavorites = (
         .from('user_favorites')
         .delete()
         .eq('user_id', currentUser.id)
-        .eq('expert_id', parseInt(expertId, 10)); // Convert string to number
+        .eq('expert_id', expertId);
 
       if (error) throw error;
 
@@ -68,8 +70,10 @@ export const useUserFavorites = (
       
       setCurrentUser(updatedUser);
       toast.success('Removed from favorites');
+      return true;
     } catch (error: any) {
       toast.error(error.message || 'Failed to remove from favorites');
+      return false;
     }
   };
 

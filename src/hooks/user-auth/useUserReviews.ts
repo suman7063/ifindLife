@@ -7,16 +7,16 @@ export const useUserReviews = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const addReview = async (expertId: string, rating: number, comment: string) => {
+  const addReview = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to add a review');
-      return;
+      return false;
     }
 
     try {
       const newReview = {
         user_id: currentUser.id,
-        expert_id: parseInt(expertId, 10), // Convert string to number
+        expert_id: expertId,
         rating: rating,
         comment: comment,
         date: new Date().toISOString(),
@@ -59,8 +59,10 @@ export const useUserReviews = (
       setCurrentUser(updatedUser);
 
       toast.success('Review added successfully!');
+      return true;
     } catch (error: any) {
       toast.error(error.message || 'Failed to add review');
+      return false;
     }
   };
 

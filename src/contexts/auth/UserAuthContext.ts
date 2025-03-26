@@ -21,13 +21,13 @@ export interface UserAuthContextType {
   logout: () => Promise<void>;
   updateProfile: (profileData: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture: (file: File) => Promise<string | null>;
-  addToFavorites: (expertId: number) => Promise<boolean>;
-  removeFromFavorites: (expertId: number) => Promise<boolean>;
+  addToFavorites: (expertId: string) => Promise<boolean>;
+  removeFromFavorites: (expertId: string) => Promise<boolean>;
   rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (expertId: number, rating: number, comment: string) => Promise<boolean>;
-  reportExpert: (expertId: number, reason: string, details: string) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: number) => Promise<boolean>;
-  getExpertShareLink: (expertId: number) => string;
+  addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
+  getExpertShareLink: (expertId: string) => string;
   getReferralLink: () => string | null;
 }
 

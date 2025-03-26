@@ -7,16 +7,16 @@ export const useUserReports = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const addReport = async (expertId: string, reason: string, details: string) => {
+  const addReport = async (expertId: string, reason: string, details: string): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to add a report');
-      return;
+      return false;
     }
 
     try {
       const newReport = {
         user_id: currentUser.id,
-        expert_id: parseInt(expertId, 10), // Convert string to number
+        expert_id: expertId,
         reason: reason,
         details: details,
         date: new Date().toISOString(),
@@ -62,8 +62,10 @@ export const useUserReports = (
       setCurrentUser(updatedUser);
 
       toast.success('Report added successfully!');
+      return true;
     } catch (error: any) {
       toast.error(error.message || 'Failed to add report');
+      return false;
     }
   };
 

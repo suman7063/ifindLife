@@ -14,6 +14,7 @@ export interface UserAuthContextType {
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
   authLoading: boolean;
+  profileNotFound: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (userData: {
     name: string;
@@ -25,15 +26,15 @@ export interface UserAuthContextType {
     referralCode?: string;
   }) => Promise<boolean>;
   logout: () => Promise<void>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<void>;
-  updateProfilePicture: (file: File) => Promise<string>;
-  addToFavorites: (expertId: string) => Promise<void>;
-  removeFromFavorites: (expertId: string) => Promise<void>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updateProfilePicture: (file: File) => Promise<string | null>;
+  addToFavorites: (expertId: string) => Promise<boolean>;
+  removeFromFavorites: (expertId: string) => Promise<boolean>;
   rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (expertId: string, rating: number, comment: string) => Promise<void>;
-  reportExpert: (expertId: string, reason: string, details: string) => Promise<void>;
+  addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
   getExpertShareLink: (expertId: string) => string;
-  hasTakenServiceFrom: (expertId: string) => boolean;
-  getReferralLink: () => string;
-  user?: User; // Add user property that might be needed in some components
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
+  getReferralLink: () => string | null;
+  user: User | null;
 }
