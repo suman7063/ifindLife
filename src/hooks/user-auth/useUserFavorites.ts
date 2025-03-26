@@ -14,18 +14,24 @@ export const useUserFavorites = (
     }
 
     try {
-      const newFavorite = {
-        user_id: currentUser.id,
-        expert_id: parseInt(expertId, 10) // Convert to number for database
-      };
+      // Check if already in favorites
+      const existingFavorite = currentUser.favoriteExperts?.find(e => e.id.toString() === expertId);
+      if (existingFavorite) {
+        toast.info('This expert is already in your favorites');
+        return false;
+      }
 
+      // Add to favorites in the database
       const { error } = await supabase
         .from('user_favorites')
-        .insert(newFavorite);
+        .insert({
+          user_id: currentUser.id,
+          expert_id: parseInt(expertId, 10) // Convert to number for database
+        });
 
       if (error) throw error;
 
-      // Fetch the expert details to add to favoriteExperts
+      // Get the expert details to add to the local state
       const { data: expertData, error: expertError } = await supabase
         .from('experts')
         .select('*')
@@ -34,13 +40,15 @@ export const useUserFavorites = (
 
       if (expertError) throw expertError;
 
+      // Update the local state
+      const updatedFavorites = [...(currentUser.favoriteExperts || []), expertData as Expert];
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: [...(currentUser.favoriteExperts || []), expertData],
+        favoriteExperts: updatedFavorites
       };
-      
       setCurrentUser(updatedUser);
-      toast.success('Added to favorites');
+
+      toast.success('Added to favorites!');
       return true;
     } catch (error: any) {
       toast.error(error.message || 'Failed to add to favorites');
@@ -50,11 +58,11 @@ export const useUserFavorites = (
 
   const removeFromFavorites = async (expertId: string): Promise<boolean> => {
     if (!currentUser) {
-      toast.error('Please log in to manage favorites');
       return false;
     }
 
     try {
+      // Remove from database
       const { error } = await supabase
         .from('user_favorites')
         .delete()
@@ -63,12 +71,17 @@ export const useUserFavorites = (
 
       if (error) throw error;
 
+      // Update local state
+      const updatedFavorites = currentUser.favoriteExperts?.filter(
+        expert => expert.id.toString() !== expertId
+      ) || [];
+      
       const updatedUser = {
         ...currentUser,
-        favoriteExperts: (currentUser.favoriteExperts || []).filter(expert => expert.id !== expertId),
+        favoriteExperts: updatedFavorites
       };
-      
       setCurrentUser(updatedUser);
+
       toast.success('Removed from favorites');
       return true;
     } catch (error: any) {

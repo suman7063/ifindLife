@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, UserPlus, User, UserCircle, LogOut } from "lucide-react";
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { 
@@ -20,6 +20,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated: isAdminAuthenticated } = useAuth();
   const { isAuthenticated: isUserAuthenticated, currentUser, logout } = useUserAuth();
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,6 +39,10 @@ const Navbar = () => {
   const handleLogout = () => {
     logout();
   };
+
+  // Check if the current page is user dashboard or related pages
+  const isUserDashboardPage = location.pathname.includes('user-dashboard') || 
+                              location.pathname.includes('referrals');
 
   return (
     <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${scrolled ? 'bg-background/90 shadow-sm' : 'bg-transparent'}`}>

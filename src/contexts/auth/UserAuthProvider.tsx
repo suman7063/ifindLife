@@ -15,7 +15,7 @@ import { useWalletManagement } from './useWalletManagement';
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
-  const [authLoading, setAuthLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const [profileNotFound, setProfileNotFound] = useState(false);
   const navigate = useNavigate();
   const { login: authLogin, signup: authSignup, logout: authLogout, getSession, user, session } = useSupabaseAuth();
@@ -44,8 +44,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           setCurrentUser(userProfile);
           setProfileNotFound(false);
           
-          // If user has successfully logged in and we have their profile, navigate to dashboard
-          if (!window.location.pathname.includes('/user-dashboard')) {
+          // If user is on login or user-login page, and has successfully logged in,
+          // redirect to dashboard
+          if (window.location.pathname.includes('/login') || window.location.pathname.includes('/user-login')) {
             console.log("Redirecting to dashboard after successful profile fetch");
             navigate('/user-dashboard');
           }
@@ -89,6 +90,16 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     // This useEffect will run whenever the session or user changes
     fetchProfile();
+    
+    // Set a timeout to force loading to complete after 5 seconds if it's stuck
+    const timeoutId = setTimeout(() => {
+      if (authLoading) {
+        console.log("Auth loading timeout reached, forcing completion");
+        setAuthLoading(false);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timeoutId);
   }, [user, session, fetchProfile]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -163,17 +174,17 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const logout = async () => {
     setAuthLoading(true);
     try {
-      const success = await authLogout();
-      if (success) {
-        setCurrentUser(null);
-        navigate('/login');
-        toast.info('You have been logged out');
-      } else {
-        toast.error('Logout failed. Please try again.');
-      }
+      await authLogout();
+      setCurrentUser(null);
+      
+      // Redirect to home page instead of login
+      navigate('/');
+      toast.info('You have been logged out');
+      return true;
     } catch (error) {
       console.error("Logout error:", error);
       toast.error('An error occurred during logout');
+      return false;
     } finally {
       setAuthLoading(false);
     }

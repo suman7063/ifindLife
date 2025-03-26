@@ -14,5 +14,4 @@ export const useUserAuth = (): UserAuthContextType => {
 };
 
 export { UserAuthContext, UserAuthProvider };
-export type { UserAuthContextType };
 export * from './types';

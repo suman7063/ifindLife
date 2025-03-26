@@ -108,9 +108,10 @@ const UserDashboard = () => {
       clearTimeout(timer);
     }
 
-    // If not authenticated, redirect to login
+    // If not authenticated and finished loading, redirect to login
     if (!isAuthenticated && !authLoading) {
-      navigate('/login');
+      console.log("Not authenticated, redirecting to login");
+      navigate('/user-login');
     }
 
     return () => clearTimeout(timer);
@@ -159,8 +160,36 @@ const UserDashboard = () => {
 
   // Safety check - if somehow we get here without being authenticated, redirect to login
   if (!isAuthenticated && !user) {
-    navigate('/login');
+    console.log("Not authenticated (safety check), redirecting to login");
+    navigate('/user-login');
     return null;
+  }
+
+  // This renders a basic dashboard if we have a user but not a current user profile yet
+  if (!currentUser && user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 py-10">
+          <div className="container max-w-6xl">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gradient mb-2">Welcome, {user.email?.split('@')[0] || 'User'}!</h1>
+              <p className="text-gray-600">Your profile is being set up.</p>
+            </div>
+            
+            <Card className="border-ifind-aqua/10 p-6">
+              <CardTitle className="mb-4">Setting Up Your Profile</CardTitle>
+              <CardDescription className="text-base">
+                We're currently setting up your user profile. This may take a moment. If this persists,
+                please try logging out and logging back in.
+              </CardDescription>
+              <Button onClick={handleLogout} className="mt-6 bg-ifind-aqua hover:bg-ifind-teal transition-colors">Logout</Button>
+            </Card>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (

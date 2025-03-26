@@ -9,7 +9,7 @@ export const useUserReports = (
 ) => {
   const addReport = async (expertId: string, reason: string, details: string): Promise<boolean> => {
     if (!currentUser) {
-      toast.error('Please log in to add a report');
+      toast.error('Please log in to report an expert');
       return false;
     }
 
@@ -20,7 +20,7 @@ export const useUserReports = (
         reason: reason,
         details: details,
         date: new Date().toISOString(),
-        status: 'pending',
+        status: 'pending'
       };
 
       const { data, error } = await supabase
@@ -51,26 +51,24 @@ export const useUserReports = (
         reason: reason,
         details: details,
         date: new Date().toISOString(),
-        status: 'pending',
+        status: 'pending'
       };
 
       const updatedUser = {
         ...currentUser,
         reports: [...(currentUser.reports || []), adaptedReport],
       };
-      
       setCurrentUser(updatedUser);
 
-      toast.success('Report added successfully!');
+      toast.success('Report submitted successfully!');
       return true;
     } catch (error: any) {
-      toast.error(error.message || 'Failed to add report');
+      toast.error(error.message || 'Failed to submit report');
       return false;
     }
   };
 
   return {
-    addReport,
-    reportExpert: addReport // Alias for consistency with UserAuthContext
+    addReport
   };
 };

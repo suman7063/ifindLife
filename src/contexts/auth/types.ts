@@ -25,7 +25,7 @@ export interface UserAuthContextType {
     city?: string;
     referralCode?: string;
   }) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture: (file: File) => Promise<string | null>;
   addToFavorites: (expertId: string) => Promise<boolean>;
