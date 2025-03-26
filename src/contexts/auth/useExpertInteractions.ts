@@ -4,6 +4,7 @@ import { UserProfile } from '@/types/supabase';
 import { useUserFavorites } from '@/hooks/user-auth/useUserFavorites';
 import { useUserReviews } from '@/hooks/user-auth/useUserReviews';
 import { useUserReports } from '@/hooks/user-auth/useUserReports';
+import { useExpertInteraction } from '@/hooks/user-auth/useExpertInteraction';
 
 export const useExpertInteractions = (
   currentUser: UserProfile | null,
@@ -12,23 +13,14 @@ export const useExpertInteractions = (
   const { addToFavorites, removeFromFavorites } = useUserFavorites(currentUser, setCurrentUser);
   const { addReview } = useUserReviews(currentUser, setCurrentUser);
   const { addReport } = useUserReports(currentUser, setCurrentUser);
-
-  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
-    // In a real app, this would check if the user has purchased services from this expert
-    return true; // Placeholder implementation
-  };
-
-  const getExpertShareLink = (expertId: string): string => {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/experts/${expertId}`;
-  };
+  const { hasTakenServiceFrom, getExpertShareLink } = useExpertInteraction(currentUser);
 
   // When returning, explicitly define addReport as reportExpert for the UserAuthContext
   return {
     addToFavorites,
     removeFromFavorites,
     addReview,
-    reportExpert: addReport, // Aliasing addReport as reportExpert
+    reportExpert: addReport, // Aliasing addReport as reportExpert 
     hasTakenServiceFrom,
     getExpertShareLink
   };
