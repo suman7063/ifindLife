@@ -22,7 +22,8 @@ export const useAuthLogin = (
       if (error) {
         console.error("Login error:", error);
         toast.error(error.message);
-        return false;
+        // Throw the error so it can be caught and handled by the caller
+        throw error;
       }
 
       if (data.user) {
@@ -37,7 +38,7 @@ export const useAuthLogin = (
     } catch (error: any) {
       console.error("Unexpected login error:", error);
       handleAuthError(error, 'Login failed');
-      return false;
+      throw error; // Rethrow the error to be handled by the caller
     } finally {
       setLoading(false);
     }

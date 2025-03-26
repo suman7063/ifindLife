@@ -3,12 +3,13 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Loader2, AlertCircle } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginFormProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -50,7 +51,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
       await onLogin(data.email, data.password);
     } catch (error: any) {
       console.error("Error during login form submission:", error);
-      setFormError(error.message || "Login failed. Please check your credentials.");
+      // Set a more user-friendly error message
+      if (error.code === 'invalid_credentials') {
+        setFormError("Invalid email or password. Please check your credentials and try again.");
+      } else {
+        setFormError(error.message || "Login failed. Please check your credentials.");
+      }
     }
   };
 
@@ -58,9 +64,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         {formError && (
-          <div className="p-3 text-sm rounded-md bg-red-50 text-red-500 border border-red-200">
-            {formError}
-          </div>
+          <Alert variant="destructive" className="text-sm">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
         )}
         
         <FormField

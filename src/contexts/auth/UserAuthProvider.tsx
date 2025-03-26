@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -69,13 +68,11 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toast.success('Login successful');
         return true;
       } else {
-        toast.error('Login failed. Please check your credentials.');
         return false;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error in context:", error);
-      toast.error('An error occurred during login');
-      return false;
+      throw error;
     } finally {
       setAuthLoading(false);
     }
@@ -106,7 +103,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
         } catch (error) {
           console.error("Error processing referral:", error);
-          // Don't fail the signup if referral processing fails
         }
       }
       
@@ -161,7 +157,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         reportExpert,
         getExpertShareLink,
         hasTakenServiceFrom,
-        getReferralLink
+        getReferralLink,
+        user
       }}
     >
       {children}

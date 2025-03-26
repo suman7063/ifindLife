@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,6 +23,7 @@ const UserLogin = () => {
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // Get referral code from URL if available
   const queryParams = new URLSearchParams(location.search);
@@ -60,6 +60,8 @@ const UserLogin = () => {
   }, [referralCodeFromUrl]);
 
   const handleLogin = async (email: string, password: string) => {
+    setLoginError(null); // Clear any previous errors
+    
     try {
       console.log("Login handler called with:", email);
       const success = await login(email, password);
@@ -67,9 +69,16 @@ const UserLogin = () => {
       
       if (success) {
         navigate('/user-dashboard');
+      } else {
+        // If login returned false but didn't throw an error, show a generic message
+        setLoginError("Login failed. Please check your credentials and try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
+      // Set error message to be displayed in the form
+      setLoginError(error.message || "An unexpected error occurred during login.");
+      // We're not throwing here because we want to handle the error in the LoginForm component
+      throw error;
     }
   };
 
@@ -167,7 +176,11 @@ const UserLogin = () => {
                 
                 <TabsContent value="login">
                   <div className="space-y-4">
-                    <LoginForm onLogin={handleLogin} loading={authLoading} userType="user" />
+                    <LoginForm 
+                      onLogin={handleLogin} 
+                      loading={authLoading} 
+                      userType="user" 
+                    />
                     
                     <div className="relative flex items-center py-2">
                       <div className="flex-grow border-t border-gray-300"></div>
