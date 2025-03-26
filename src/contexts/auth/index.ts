@@ -1,8 +1,8 @@
 
 import { UserAuthContext } from './UserAuthContext';
 import { UserAuthProvider } from './UserAuthProvider';
-import { UserAuthContextType } from './types';
 import { useContext } from 'react';
+import type { UserAuthContextType } from './types';
 
 // Hook for using the auth context
 export const useUserAuth = (): UserAuthContextType => {

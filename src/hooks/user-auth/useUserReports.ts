@@ -16,7 +16,7 @@ export const useUserReports = (
     try {
       const newReport = {
         user_id: currentUser.id,
-        expert_id: expertId,
+        expert_id: parseInt(expertId, 10), // Convert to number for database
         reason: reason,
         details: details,
         date: new Date().toISOString(),

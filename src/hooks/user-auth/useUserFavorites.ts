@@ -16,7 +16,7 @@ export const useUserFavorites = (
     try {
       const newFavorite = {
         user_id: currentUser.id,
-        expert_id: expertId
+        expert_id: parseInt(expertId, 10) // Convert to number for database
       };
 
       const { error } = await supabase
@@ -59,7 +59,7 @@ export const useUserFavorites = (
         .from('user_favorites')
         .delete()
         .eq('user_id', currentUser.id)
-        .eq('expert_id', expertId);
+        .eq('expert_id', parseInt(expertId, 10)); // Convert to number for database
 
       if (error) throw error;
 

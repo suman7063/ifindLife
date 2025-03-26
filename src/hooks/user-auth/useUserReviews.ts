@@ -16,7 +16,7 @@ export const useUserReviews = (
     try {
       const newReview = {
         user_id: currentUser.id,
-        expert_id: expertId,
+        expert_id: parseInt(expertId, 10), // Convert to number for database
         rating: rating,
         comment: comment,
         date: new Date().toISOString(),
