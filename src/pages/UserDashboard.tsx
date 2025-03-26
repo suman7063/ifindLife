@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard, Wallet, Users, ShoppingBag, MessageSquare, ShieldCheck } from 'lucide-react';
+import { CreditCard, Wallet, Users, ShoppingBag, MessageSquare, ShieldCheck, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Label } from '@/components/ui/label';
@@ -88,17 +88,33 @@ const RecentTransactionsCard: React.FC<{ transactions: UserTransaction[] }> = ({
 };
 
 const UserDashboard = () => {
-  const { currentUser, isAuthenticated, logout } = useUserAuth();
+  const { currentUser, isAuthenticated, logout, authLoading, user } = useUserAuth();
   const navigate = useNavigate();
   const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    // Set a timer to stop showing the loading state after a maximum time
+    // This prevents an indefinite loading state if something goes wrong
+    const timer = setTimeout(() => {
+      setDashboardLoading(false);
+    }, 3000);
+
+    // If we have a user or a current user, stop loading
+    if ((isAuthenticated && currentUser) || user) {
+      setDashboardLoading(false);
+      clearTimeout(timer);
+    }
+
+    // If not authenticated, redirect to login
+    if (!isAuthenticated && !authLoading) {
       navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, navigate, currentUser, authLoading, user]);
 
   const handleLogout = async () => {
     await logout();
@@ -124,8 +140,27 @@ const UserDashboard = () => {
     setIsProcessingPayment(false);
   };
 
-  if (!currentUser) {
-    return <div>Loading...</div>;
+  // Show loading state if dashboard is still initializing
+  if (dashboardLoading || authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-4">
+            <Loader2 className="mx-auto h-10 w-10 animate-spin text-ifind-aqua" />
+            <h2 className="text-2xl font-semibold">Loading your dashboard...</h2>
+            <p className="text-gray-500">Please wait while we fetch your information</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Safety check - if somehow we get here without being authenticated, redirect to login
+  if (!isAuthenticated && !user) {
+    navigate('/login');
+    return null;
   }
 
   return (
@@ -134,14 +169,14 @@ const UserDashboard = () => {
       <main className="flex-1 py-10">
         <div className="container max-w-6xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gradient mb-2">Welcome, {currentUser.name}!</h1>
+            <h1 className="text-3xl font-bold text-gradient mb-2">Welcome, {currentUser?.name || user?.email?.split('@')[0] || 'User'}!</h1>
             <p className="text-gray-600">Here's an overview of your account.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
             <WalletBalanceCard userProfile={currentUser} onRecharge={handleOpenRechargeDialog} />
             <RecentTransactionsCard transactions={currentUser?.transactions || []} />
-            <ReferralDashboardCard userProfile={currentUser} />
+            <ReferralDashboardCard userProfile={currentUser || { id: user?.id || '', referralCode: '', email: user?.email || '' } as UserProfile} />
           </div>
 
           <Dialog open={isRechargeDialogOpen} onOpenChange={setIsRechargeDialogOpen}>

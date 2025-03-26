@@ -38,8 +38,19 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
             <Gift className="mr-2 h-5 w-5 text-ifind-aqua" />
             Referral Program
           </CardTitle>
-          <CardDescription>Your referral code is not available yet.</CardDescription>
+          <CardDescription>
+            Your referral code will be available soon.
+            Please complete your profile to participate in our referral program.
+          </CardDescription>
         </CardHeader>
+        <CardFooter className="pt-1">
+          <Button asChild className="w-full mt-2" variant="outline">
+            <Link to="/profile">
+              <Share className="mr-2 h-4 w-4" />
+              Complete Profile
+            </Link>
+          </Button>
+        </CardFooter>
       </Card>
     );
   }

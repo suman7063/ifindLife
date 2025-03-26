@@ -11,6 +11,7 @@ export const fetchUserProfile = async (
   if (!user || !user.id) return null;
   
   try {
+    // Try to fetch the user profile
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -18,12 +19,39 @@ export const fetchUserProfile = async (
       .single();
       
     if (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
+      console.log("Error fetching user profile, attempting to create one:", error);
+      
+      // If no profile exists, create one
+      const userData = {
+        id: user.id,
+        name: user.user_metadata?.name || '',
+        email: user.email || '',
+        phone: user.user_metadata?.phone || '',
+        country: user.user_metadata?.country || '',
+        city: user.user_metadata?.city || '',
+        currency: user.user_metadata?.currency || 'USD',
+        wallet_balance: 0,
+        profile_picture: user.user_metadata?.avatar_url || '',
+      };
+      
+      const { data: newProfile, error: createError } = await supabase
+        .from('users')
+        .insert([userData])
+        .select()
+        .single();
+        
+      if (createError) {
+        console.error('Error creating user profile:', createError);
+        return null;
+      }
+      
+      console.log("Created new profile:", newProfile);
+      return convertUserToUserProfile(newProfile);
     }
     
     const userProfile = convertUserToUserProfile(data);
     
+    // Fetch additional user data
     const { data: favorites } = await supabase
       .from('user_favorites')
       .select('expert_id')
@@ -84,7 +112,7 @@ export const fetchUserProfile = async (
     
     return userProfile;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    console.error('Error in fetchUserProfile:', error);
     return null;
   }
 };

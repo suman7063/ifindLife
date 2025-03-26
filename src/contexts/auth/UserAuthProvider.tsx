@@ -46,18 +46,57 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
         } else {
           console.error("No user profile found for:", user.id);
-          // If we can't find a profile, we might need to create one or handle this case
-          // For now, we'll still consider the user as authenticated, even without a profile
+          // Even if we couldn't get a profile, we'll still redirect
+          // The user is authenticated, so they should be able to access protected routes
           if (!window.location.pathname.includes('/user-dashboard') && 
               window.location.pathname.includes('/user-login')) {
             console.log("Redirecting to dashboard even without profile");
             navigate('/user-dashboard');
           }
+          
+          // Set a minimal user profile based on auth data
+          const minimalProfile: UserProfile = {
+            id: user.id,
+            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+            email: user.email || '',
+            phone: user.user_metadata?.phone || '',
+            country: user.user_metadata?.country || '',
+            city: user.user_metadata?.city || '',
+            profilePicture: user.user_metadata?.avatar_url || '',
+            walletBalance: 0,
+            currency: 'USD',
+            favoriteExperts: [],
+            enrolledCourses: [],
+            reviews: [],
+            reports: [],
+            transactions: [],
+            referrals: []
+          };
+          setCurrentUser(minimalProfile);
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
+        // Create a minimal user profile from auth data
+        const minimalProfile: UserProfile = {
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          phone: user.user_metadata?.phone || '',
+          country: user.user_metadata?.country || '',
+          city: user.user_metadata?.city || '',
+          profilePicture: user.user_metadata?.avatar_url || '',
+          walletBalance: 0,
+          currency: 'USD',
+          favoriteExperts: [],
+          enrolledCourses: [],
+          reviews: [],
+          reports: [],
+          transactions: [],
+          referrals: []
+        };
+        setCurrentUser(minimalProfile);
+        
         // Even if there's an error fetching the profile, we'll still redirect
-        // This is a fallback to ensure users don't get stuck on the login page
         if (!window.location.pathname.includes('/user-dashboard') && 
             window.location.pathname.includes('/user-login')) {
           console.log("Redirecting to dashboard despite profile fetch error");
