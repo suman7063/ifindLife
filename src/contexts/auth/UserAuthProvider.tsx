@@ -89,18 +89,34 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     // This useEffect will run whenever the session or user changes
-    fetchProfile();
+    if (user) {
+      fetchProfile();
+    } else {
+      setAuthLoading(false);
+    }
     
-    // Set a timeout to force loading to complete after 5 seconds if it's stuck
+    // Set a timeout to force loading to complete after 3 seconds if it's stuck
     const timeoutId = setTimeout(() => {
       if (authLoading) {
         console.log("Auth loading timeout reached, forcing completion");
         setAuthLoading(false);
       }
-    }, 5000);
+    }, 3000);
     
     return () => clearTimeout(timeoutId);
   }, [user, session, fetchProfile]);
+
+  // Add an additional effect to handle loading state when logged out
+  useEffect(() => {
+    if (!user && authLoading) {
+      // If no user is present but still loading, force complete
+      const timeoutId = setTimeout(() => {
+        setAuthLoading(false);
+      }, 1000);
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [user, authLoading]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {

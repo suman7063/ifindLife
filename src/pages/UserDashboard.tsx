@@ -94,28 +94,40 @@ const UserDashboard = () => {
   const [rechargeAmount, setRechargeAmount] = useState('');
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
   useEffect(() => {
+    console.log("Dashboard loading status:", {
+      authLoading,
+      isAuthenticated,
+      hasCurrentUser: !!currentUser,
+      hasUser: !!user,
+      dashboardLoading
+    });
+    
     // Set a timer to stop showing the loading state after a maximum time
-    // This prevents an indefinite loading state if something goes wrong
-    const timer = setTimeout(() => {
-      setDashboardLoading(false);
+    const maxLoadingTimer = setTimeout(() => {
+      if (dashboardLoading) {
+        console.log("Dashboard max loading time reached, forcing display");
+        setDashboardLoading(false);
+        setLoadingTimedOut(true);
+      }
     }, 3000);
 
-    // If we have a user or a current user, stop loading
-    if ((isAuthenticated && currentUser) || user) {
+    // If we have user data, stop loading
+    if ((isAuthenticated && currentUser) || (user && !authLoading)) {
+      console.log("User data available, stopping dashboard loading");
       setDashboardLoading(false);
-      clearTimeout(timer);
     }
-
-    // If not authenticated and finished loading, redirect to login
+    
+    // If auth loading finished but we're not authenticated, redirect to login
     if (!isAuthenticated && !authLoading) {
       console.log("Not authenticated, redirecting to login");
       navigate('/user-login');
     }
 
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, navigate, currentUser, authLoading, user]);
+    return () => clearTimeout(maxLoadingTimer);
+  }, [isAuthenticated, navigate, currentUser, authLoading, user, dashboardLoading]);
 
   const handleLogout = async () => {
     await logout();
@@ -142,7 +154,7 @@ const UserDashboard = () => {
   };
 
   // Show loading state if dashboard is still initializing
-  if (dashboardLoading || authLoading) {
+  if (dashboardLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -158,8 +170,40 @@ const UserDashboard = () => {
     );
   }
 
+  // If loading timed out but we're still waiting for data
+  if (loadingTimedOut && !currentUser && user) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 py-10">
+          <div className="container max-w-6xl">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold text-gradient mb-2">Welcome, {user.email?.split('@')[0] || 'User'}!</h1>
+              <p className="text-gray-600">We're still retrieving your profile data.</p>
+            </div>
+            
+            <Card className="border-ifind-aqua/10 p-6">
+              <CardTitle className="mb-4">Setting Up Your Profile</CardTitle>
+              <CardDescription className="text-base">
+                We're taking a bit longer than expected to load your profile. You can wait a moment 
+                or try refreshing the page.
+              </CardDescription>
+              <div className="flex space-x-4 mt-6">
+                <Button onClick={() => window.location.reload()} className="bg-ifind-aqua hover:bg-ifind-teal transition-colors">
+                  Refresh Page
+                </Button>
+                <Button onClick={handleLogout} variant="outline">Logout</Button>
+              </div>
+            </Card>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   // Safety check - if somehow we get here without being authenticated, redirect to login
-  if (!isAuthenticated && !user) {
+  if (!isAuthenticated && !authLoading && !user) {
     console.log("Not authenticated (safety check), redirecting to login");
     navigate('/user-login');
     return null;

@@ -23,11 +23,12 @@ export const useExpertInteractions = (
     return `${baseUrl}/experts/${expertId}`;
   };
 
+  // When returning, explicitly define addReport as reportExpert for the UserAuthContext
   return {
     addToFavorites,
     removeFromFavorites,
     addReview,
-    reportExpert: addReport, // Alias addReport as reportExpert for consistency in the API
+    reportExpert: addReport, // Aliasing addReport as reportExpert
     hasTakenServiceFrom,
     getExpertShareLink
   };

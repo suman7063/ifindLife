@@ -36,12 +36,13 @@ export const fetchUserProfile = async (
       };
       
       // For Auth users with metadata, use that data if available
-      if (user.user_metadata) {
-        userData.name = user.user_metadata.name || userData.name;
-        userData.phone = user.user_metadata.phone || userData.phone;
-        userData.country = user.user_metadata.country || userData.country;
-        userData.city = user.user_metadata.city || userData.city;
-        userData.profile_picture = user.user_metadata.avatar_url || userData.profile_picture;
+      const metadata = user.user_metadata;
+      if (metadata) {
+        userData.name = metadata.name || userData.name;
+        userData.phone = metadata.phone || userData.phone;
+        userData.country = metadata.country || userData.country;
+        userData.city = metadata.city || userData.city;
+        userData.profile_picture = metadata.avatar_url || userData.profile_picture;
       }
       
       const { data: newProfile, error: createError } = await supabase
