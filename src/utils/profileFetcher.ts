@@ -1,6 +1,5 @@
-
 import { supabase } from '@/lib/supabase';
-import { UserProfile, User, Referral } from '@/types/supabase';
+import { UserProfile, User } from '@/types/supabase';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';

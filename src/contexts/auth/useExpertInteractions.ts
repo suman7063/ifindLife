@@ -11,7 +11,7 @@ export const useExpertInteractions = (
 ) => {
   const { addToFavorites, removeFromFavorites } = useUserFavorites(currentUser, setCurrentUser);
   const { addReview } = useUserReviews(currentUser, setCurrentUser);
-  const { reportExpert } = useUserReports(currentUser, setCurrentUser);
+  const { addReport } = useUserReports(currentUser, setCurrentUser);
 
   const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
     // In a real app, this would check if the user has purchased services from this expert
@@ -27,7 +27,7 @@ export const useExpertInteractions = (
     addToFavorites,
     removeFromFavorites,
     addReview,
-    reportExpert,
+    reportExpert: addReport, // Alias addReport as reportExpert for consistency in the API
     hasTakenServiceFrom,
     getExpertShareLink
   };
