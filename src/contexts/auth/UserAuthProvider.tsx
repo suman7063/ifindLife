@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { fetchUserProfile } from '@/utils/userProfileUtils';
+import { fetchUserProfile } from '@/utils/profileFetcher';
 import { UserProfile } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+  const [profileNotFound, setProfileNotFound] = useState(false);
   const navigate = useNavigate();
   const { login: authLogin, signup: authSignup, logout: authLogout, getSession, user, session } = useSupabaseAuth();
 
@@ -35,10 +36,14 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (user) {
       console.log("Fetching user profile for:", user.id);
       try {
+        setAuthLoading(true);
         const userProfile = await fetchUserProfile(user);
+        
         if (userProfile) {
           console.log("User profile fetched:", userProfile);
           setCurrentUser(userProfile);
+          setProfileNotFound(false);
+          
           // If user has successfully logged in and we have their profile, navigate to dashboard
           if (!window.location.pathname.includes('/user-dashboard')) {
             console.log("Redirecting to dashboard after successful profile fetch");
@@ -46,72 +51,40 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
         } else {
           console.error("No user profile found for:", user.id);
-          // Even if we couldn't get a profile, we'll still redirect
-          // The user is authenticated, so they should be able to access protected routes
-          if (!window.location.pathname.includes('/user-dashboard') && 
-              window.location.pathname.includes('/user-login')) {
-            console.log("Redirecting to dashboard even without profile");
-            navigate('/user-dashboard');
+          setProfileNotFound(true);
+          toast.error("Profile not found. Please register to create an account.");
+          
+          // Redirect back to login page if no profile
+          if (!window.location.pathname.includes('/user-login')) {
+            navigate('/user-login');
           }
           
-          // Set a minimal user profile based on auth data
-          const minimalProfile: UserProfile = {
-            id: user.id,
-            name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-            email: user.email || '',
-            phone: user.user_metadata?.phone || '',
-            country: user.user_metadata?.country || '',
-            city: user.user_metadata?.city || '',
-            profilePicture: user.user_metadata?.avatar_url || '',
-            walletBalance: 0,
-            currency: 'USD',
-            favoriteExperts: [],
-            enrolledCourses: [],
-            reviews: [],
-            reports: [],
-            transactions: [],
-            referrals: []
-          };
-          setCurrentUser(minimalProfile);
+          // Log out the user since they don't have a profile
+          setTimeout(() => {
+            authLogout();
+          }, 500);
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        // Create a minimal user profile from auth data
-        const minimalProfile: UserProfile = {
-          id: user.id,
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-          email: user.email || '',
-          phone: user.user_metadata?.phone || '',
-          country: user.user_metadata?.country || '',
-          city: user.user_metadata?.city || '',
-          profilePicture: user.user_metadata?.avatar_url || '',
-          walletBalance: 0,
-          currency: 'USD',
-          favoriteExperts: [],
-          enrolledCourses: [],
-          reviews: [],
-          reports: [],
-          transactions: [],
-          referrals: []
-        };
-        setCurrentUser(minimalProfile);
+        setProfileNotFound(true);
+        toast.error("Could not load your profile. Please try again or register for a new account.");
         
-        // Even if there's an error fetching the profile, we'll still redirect
-        if (!window.location.pathname.includes('/user-dashboard') && 
-            window.location.pathname.includes('/user-login')) {
-          console.log("Redirecting to dashboard despite profile fetch error");
-          navigate('/user-dashboard');
+        // Redirect back to login page if profile fetch fails
+        if (!window.location.pathname.includes('/user-login')) {
+          navigate('/user-login');
         }
+        
       } finally {
         setAuthInitialized(true);
         setAuthLoading(false);
       }
     } else {
       setCurrentUser(null);
+      setProfileNotFound(false);
       setAuthInitialized(true);
       setAuthLoading(false);
     }
-  }, [user, navigate]);
+  }, [user, navigate, authLogout]);
 
   useEffect(() => {
     // This useEffect will run whenever the session or user changes
@@ -126,15 +99,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log("Login in context result:", success);
       
       if (success) {
-        console.log("Login successful, navigating to dashboard");
+        // Login successful, but we'll let the fetchProfile handle redirection
+        // based on whether a profile exists or not
         toast.success('Login successful');
-        // Forcefully navigate to dashboard after a brief timeout
-        // This ensures the user isn't stuck on the login page
-        setTimeout(() => {
-          if (window.location.pathname.includes('/user-login')) {
-            navigate('/user-dashboard');
-          }
-        }, 1500);
         return true;
       } else {
         toast.error('Login failed. Please check your credentials.');
@@ -221,6 +188,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         signup,
         logout,
         authLoading,
+        profileNotFound,
         updateProfile,
         updateProfilePicture,
         addToFavorites,

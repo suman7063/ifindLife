@@ -13,11 +13,13 @@ import LoginHeader from '@/components/auth/LoginHeader';
 import LoginTab from '@/components/auth/LoginTab';
 import RegisterTab from '@/components/auth/RegisterTab';
 import VerificationScreen from '@/components/auth/VerificationScreen';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const UserLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signup, isAuthenticated, authLoading, currentUser, user } = useUserAuth();
+  const { login, signup, isAuthenticated, authLoading, currentUser, user, profileNotFound } = useUserAuth();
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [showCaptcha, setShowCaptcha] = useState(false);
@@ -37,12 +39,13 @@ const UserLogin = () => {
     console.log("Auth status:", isAuthenticated);
     console.log("Current user:", currentUser);
     console.log("Supabase user:", user);
+    console.log("Profile not found:", profileNotFound);
     
-    if (isAuthenticated || user) {
-      console.log("User is authenticated, redirecting to:", redirectPath);
+    if (isAuthenticated && !profileNotFound && currentUser) {
+      console.log("User is authenticated with a profile, redirecting to:", redirectPath);
       navigate(redirectPath);
     }
-  }, [isAuthenticated, navigate, redirectPath, currentUser, user]);
+  }, [isAuthenticated, navigate, redirectPath, currentUser, user, profileNotFound]);
 
   // Load referral settings
   useEffect(() => {
@@ -54,16 +57,16 @@ const UserLogin = () => {
     loadReferralSettings();
   }, []);
 
-  // Switch to registration tab if referral code is in URL
+  // Switch to registration tab if referral code is in URL or profile not found
   useEffect(() => {
-    if (referralCodeFromUrl) {
+    if (referralCodeFromUrl || profileNotFound) {
       // Find the register tab trigger and click it
       const registerTab = document.querySelector('[data-value="register"]');
       if (registerTab && registerTab instanceof HTMLElement) {
         registerTab.click();
       }
     }
-  }, [referralCodeFromUrl]);
+  }, [referralCodeFromUrl, profileNotFound]);
 
   const handleLogin = async (email: string, password: string) => {
     setLoginError(null); // Clear any previous errors
@@ -75,16 +78,14 @@ const UserLogin = () => {
       console.log("Login result:", success);
       
       if (success) {
-        console.log("Login successful, waiting for redirect to dashboard");
+        console.log("Login successful, waiting for redirect or profile check");
         // The redirect will be handled in UserAuthProvider after profile is fetched
         // Adding a safety timeout to ensure we don't leave users hanging
         setTimeout(() => {
           if (window.location.pathname.includes('/user-login')) {
-            console.log("Safety timeout triggered, redirecting to dashboard");
-            navigate('/user-dashboard');
             setIsLoggingIn(false);
           }
-        }, 3000);
+        }, 5000);
       } else {
         // If login returned false but didn't throw an error, show a generic message
         setLoginError("Login failed. Please check your credentials and try again.");
@@ -152,6 +153,17 @@ const UserLogin = () => {
         <div className="container max-w-md">
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-ifind-aqua/10">
             <LoginHeader />
+            
+            {/* Profile Not Found Alert */}
+            {profileNotFound && (
+              <Alert variant="destructive" className="mb-6">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Profile Not Found</AlertTitle>
+                <AlertDescription>
+                  No user profile found for your account. Please register to create a profile.
+                </AlertDescription>
+              </Alert>
+            )}
             
             {verificationSent ? (
               <VerificationScreen 

@@ -24,15 +24,24 @@ export const fetchUserProfile = async (
       // If no profile exists, create one
       const userData = {
         id: user.id,
-        name: user.user_metadata?.name || '',
+        name: user.email?.split('@')[0] || '',
         email: user.email || '',
-        phone: user.user_metadata?.phone || '',
-        country: user.user_metadata?.country || '',
-        city: user.user_metadata?.city || '',
-        currency: user.user_metadata?.currency || 'USD',
+        phone: '',
+        country: '',
+        city: '',
+        currency: 'USD',
         wallet_balance: 0,
-        profile_picture: user.user_metadata?.avatar_url || '',
+        profile_picture: ''
       };
+      
+      // For Auth users with metadata, use that data if available
+      if (user.user_metadata) {
+        userData.name = user.user_metadata.name || userData.name;
+        userData.phone = user.user_metadata.phone || userData.phone;
+        userData.country = user.user_metadata.country || userData.country;
+        userData.city = user.user_metadata.city || userData.city;
+        userData.profile_picture = user.user_metadata.avatar_url || userData.profile_picture;
+      }
       
       const { data: newProfile, error: createError } = await supabase
         .from('users')
