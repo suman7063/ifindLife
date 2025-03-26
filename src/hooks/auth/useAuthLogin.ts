@@ -26,7 +26,7 @@ export const useAuthLogin = (
         throw error;
       }
 
-      if (data.user) {
+      if (data.user && data.session) {
         console.log("Login successful, user:", data.user.email);
         setSession(data.session);
         toast.success(`Welcome back, ${data.user.email}!`);

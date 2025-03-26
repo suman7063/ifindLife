@@ -17,7 +17,7 @@ import VerificationScreen from '@/components/auth/VerificationScreen';
 const UserLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signup, isAuthenticated, authLoading } = useUserAuth();
+  const { login, signup, isAuthenticated, authLoading, currentUser } = useUserAuth();
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [showCaptcha, setShowCaptcha] = useState(false);
@@ -34,11 +34,13 @@ const UserLogin = () => {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    console.log("Auth status:", isAuthenticated);
+    console.log("Current user:", currentUser);
+    if (isAuthenticated && currentUser) {
       console.log("User is authenticated, redirecting to:", redirectPath);
       navigate(redirectPath);
     }
-  }, [isAuthenticated, navigate, redirectPath]);
+  }, [isAuthenticated, navigate, redirectPath, currentUser]);
 
   // Load referral settings
   useEffect(() => {
@@ -71,18 +73,17 @@ const UserLogin = () => {
       console.log("Login result:", success);
       
       if (success) {
+        console.log("Login successful, waiting for redirect to dashboard");
         // The redirect will be handled in UserAuthProvider after profile is fetched
       } else {
         // If login returned false but didn't throw an error, show a generic message
         setLoginError("Login failed. Please check your credentials and try again.");
+        setIsLoggingIn(false);
       }
     } catch (error: any) {
       console.error('Login error:', error);
       // Set error message to be displayed in the form
       setLoginError(error.message || "An unexpected error occurred during login.");
-      // We're throwing the error so it can be handled in the LoginForm component
-      throw error;
-    } finally {
       setIsLoggingIn(false);
     }
   };
@@ -161,6 +162,7 @@ const UserLogin = () => {
                     loginError={loginError}
                     socialLoading={socialLoading}
                     authLoading={authLoading}
+                    setSocialLoading={setSocialLoading}
                   />
                 </TabsContent>
                 

@@ -11,6 +11,7 @@ interface LoginTabProps {
   loginError: string | null;
   socialLoading: string | null;
   authLoading: boolean;
+  setSocialLoading?: (provider: string | null) => void;
 }
 
 const LoginTab: React.FC<LoginTabProps> = ({
@@ -19,7 +20,8 @@ const LoginTab: React.FC<LoginTabProps> = ({
   isLoggingIn,
   loginError,
   socialLoading,
-  authLoading
+  authLoading,
+  setSocialLoading
 }) => {
   return (
     <div className="space-y-4">
@@ -31,13 +33,14 @@ const LoginTab: React.FC<LoginTabProps> = ({
 
       <LoginForm 
         onLogin={onLogin} 
-        loading={loading || isLoggingIn} 
+        loading={loading || isLoggingIn || authLoading} 
         userType="user" 
       />
       
       <SocialLogin 
         socialLoading={socialLoading}
         authLoading={authLoading}
+        setSocialLoading={setSocialLoading}
       />
     </div>
   );

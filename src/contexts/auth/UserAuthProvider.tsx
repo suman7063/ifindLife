@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -40,7 +39,10 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           console.log("User profile fetched:", userProfile);
           setCurrentUser(userProfile);
           // If user has successfully logged in and we have their profile, navigate to dashboard
-          navigate('/user-dashboard');
+          if (!window.location.pathname.includes('/user-dashboard')) {
+            console.log("Redirecting to dashboard after successful profile fetch");
+            navigate('/user-dashboard');
+          }
         } else {
           console.error("No user profile found for:", user.id);
           // If we can't find a profile, we might need to create one or handle this case
@@ -71,18 +73,20 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       console.log("Login in context result:", success);
       
       if (success) {
+        console.log("Login successful, navigating to dashboard");
         toast.success('Login successful');
+        // The actual navigation will happen in the fetchProfile callback
         return true;
       } else {
         toast.error('Login failed. Please check your credentials.');
+        setAuthLoading(false);
         return false;
       }
     } catch (error: any) {
       console.error("Login error in context:", error);
       toast.error(error.message || 'Login failed. Please try again.');
+      setAuthLoading(false);
       throw error;
-    } finally {
-      // Note: Don't set authLoading to false here, as we'll do that after fetchProfile completes
     }
   };
 
