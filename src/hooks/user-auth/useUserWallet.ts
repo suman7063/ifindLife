@@ -40,11 +40,24 @@ export const useUserWallet = (
 
       if (transactionError) throw transactionError;
 
+      // Create a safer way to get the transaction ID
+      let newTransactionId = `temp_${Date.now()}`;
+      
+      if (transactionResult) {
+        // Ensure transactionResult is an array
+        const resultArray = Array.isArray(transactionResult) ? transactionResult : [];
+        // Check if array has items and first item has an id
+        if (resultArray.length > 0 && typeof resultArray[0] === 'object') {
+          const firstItem = resultArray[0] as Record<string, any>;
+          if ('id' in firstItem) {
+            newTransactionId = firstItem.id;
+          }
+        }
+      }
+
       // Create a new transaction object to add to the user's transactions
       const newTransaction = {
-        id: transactionResult && Array.isArray(transactionResult) && transactionResult.length > 0 && transactionResult[0] ?
-            typeof transactionResult[0] === 'object' && 'id' in transactionResult[0] ?
-            transactionResult[0].id : `temp_${Date.now()}` : `temp_${Date.now()}`,
+        id: newTransactionId,
         ...transactionData
       };
 

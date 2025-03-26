@@ -28,11 +28,24 @@ export const useUserReviews = (
 
       if (error) throw error;
 
+      // Create a safer way to get the ID
+      let newId = `temp_${Date.now()}`;
+      
+      if (data) {
+        // Ensure data is an array
+        const dataArray = Array.isArray(data) ? data : [];
+        // Check if array has items and first item has an id
+        if (dataArray.length > 0 && typeof dataArray[0] === 'object') {
+          const firstItem = dataArray[0] as Record<string, any>;
+          if ('id' in firstItem) {
+            newId = firstItem.id;
+          }
+        }
+      }
+
       // Optimistically update the local state
       const adaptedReview: Review = {
-        id: data && Array.isArray(data) && data.length > 0 && data[0] ?
-            typeof data[0] === 'object' && 'id' in data[0] ?
-            data[0].id : `temp_${Date.now()}` : `temp_${Date.now()}`,
+        id: newId,
         expertId: expertId,
         rating: rating,
         comment: comment,
