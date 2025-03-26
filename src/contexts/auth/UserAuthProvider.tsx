@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -68,10 +69,12 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toast.success('Login successful');
         return true;
       } else {
+        toast.error('Login failed. Please check your credentials.');
         return false;
       }
     } catch (error: any) {
       console.error("Login error in context:", error);
+      toast.error(error.message || 'Login failed. Please try again.');
       throw error;
     } finally {
       setAuthLoading(false);
@@ -108,12 +111,14 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       if (success) {
         toast.success('Account created successfully! Please check your email to confirm your account');
+      } else {
+        toast.error('Registration failed. Please try again.');
       }
       
       return success;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error('Registration failed. Please try again.');
+      toast.error(error.message || 'Registration failed. Please try again.');
       return false;
     } finally {
       setAuthLoading(false);

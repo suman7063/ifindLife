@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -24,6 +25,8 @@ const UserLogin = () => {
   const [showCaptcha, setShowCaptcha] = useState(false);
   const [verificationSent, setVerificationSent] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
 
   // Get referral code from URL if available
   const queryParams = new URLSearchParams(location.search);
@@ -91,6 +94,9 @@ const UserLogin = () => {
     city: string;
     referralCode?: string;
   }) => {
+    setRegisterError(null);
+    setIsRegistering(true);
+    
     try {
       console.log("Attempting to sign up with:", userData);
       const success = await signup(userData);
@@ -98,9 +104,14 @@ const UserLogin = () => {
       
       if (success) {
         setVerificationSent(true);
+      } else {
+        setRegisterError("Registration failed. Please check your information and try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Signup error:', error);
+      setRegisterError(error.message || "An unexpected error occurred during registration.");
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -176,6 +187,12 @@ const UserLogin = () => {
                 
                 <TabsContent value="login">
                   <div className="space-y-4">
+                    {loginError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>{loginError}</AlertDescription>
+                      </Alert>
+                    )}
+
                     <LoginForm 
                       onLogin={handleLogin} 
                       loading={authLoading} 
@@ -230,9 +247,15 @@ const UserLogin = () => {
                 </TabsContent>
                 
                 <TabsContent value="register">
+                  {registerError && (
+                    <Alert variant="destructive" className="mb-4">
+                      <AlertDescription>{registerError}</AlertDescription>
+                    </Alert>
+                  )}
+                
                   <RegisterForm 
                     onRegister={handleSignup} 
-                    loading={authLoading}
+                    loading={authLoading || isRegistering}
                     initialReferralCode={referralCodeFromUrl}
                     referralSettings={referralSettings}
                     setCaptchaVerified={() => setShowCaptcha(true)}

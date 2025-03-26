@@ -49,7 +49,7 @@ export const useAuthSignup = (setLoading: (value: boolean) => void) => {
       console.log("Signup response:", data ? "Data received" : "No data", error ? "Error:" + error.message : "No error");
 
       if (error) {
-        // Handle specific error cases
+        // Handle specific error cases with user-friendly messages
         if (error.message.includes('already registered')) {
           toast.error('This email is already registered. Please login instead.');
         } else if (error.message.includes('password')) {
