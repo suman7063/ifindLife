@@ -17,7 +17,7 @@ import VerificationScreen from '@/components/auth/VerificationScreen';
 const UserLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, signup, isAuthenticated, authLoading, currentUser } = useUserAuth();
+  const { login, signup, isAuthenticated, authLoading, currentUser, user } = useUserAuth();
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [showCaptcha, setShowCaptcha] = useState(false);
@@ -36,11 +36,13 @@ const UserLogin = () => {
   useEffect(() => {
     console.log("Auth status:", isAuthenticated);
     console.log("Current user:", currentUser);
-    if (isAuthenticated && currentUser) {
+    console.log("Supabase user:", user);
+    
+    if (isAuthenticated || user) {
       console.log("User is authenticated, redirecting to:", redirectPath);
       navigate(redirectPath);
     }
-  }, [isAuthenticated, navigate, redirectPath, currentUser]);
+  }, [isAuthenticated, navigate, redirectPath, currentUser, user]);
 
   // Load referral settings
   useEffect(() => {
@@ -75,6 +77,14 @@ const UserLogin = () => {
       if (success) {
         console.log("Login successful, waiting for redirect to dashboard");
         // The redirect will be handled in UserAuthProvider after profile is fetched
+        // Adding a safety timeout to ensure we don't leave users hanging
+        setTimeout(() => {
+          if (window.location.pathname.includes('/user-login')) {
+            console.log("Safety timeout triggered, redirecting to dashboard");
+            navigate('/user-dashboard');
+            setIsLoggingIn(false);
+          }
+        }, 3000);
       } else {
         // If login returned false but didn't throw an error, show a generic message
         setLoginError("Login failed. Please check your credentials and try again.");

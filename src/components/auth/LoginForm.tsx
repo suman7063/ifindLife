@@ -43,7 +43,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
   });
 
   const onSubmit = async (data: z.infer<typeof loginFormSchema>) => {
-    console.log("Login form submitted with:", data);
     if (loading || isSubmitting) return; // Prevent double submission
     
     setFormError(null);
@@ -51,6 +50,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
     
     try {
       await onLogin(data.email, data.password);
+      // Note: We're not setting isSubmitting to false here because
+      // the parent component should handle redirecting or showing errors
     } catch (error: any) {
       console.error("Error during login form submission:", error);
       // Set a more user-friendly error message
@@ -59,7 +60,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
       } else {
         setFormError(error.message || "Login failed. Please check your credentials.");
       }
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -90,6 +90,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
                     placeholder="your@email.com"
                     className="pl-10"
                     {...field}
+                    disabled={loading || isSubmitting}
                   />
                 </FormControl>
               </div>
@@ -115,12 +116,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     {...field}
+                    disabled={loading || isSubmitting}
                   />
                 </FormControl>
                 <button
                   type="button"
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={loading || isSubmitting}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4 text-muted-foreground" />

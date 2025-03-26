@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
@@ -46,9 +47,22 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         } else {
           console.error("No user profile found for:", user.id);
           // If we can't find a profile, we might need to create one or handle this case
+          // For now, we'll still consider the user as authenticated, even without a profile
+          if (!window.location.pathname.includes('/user-dashboard') && 
+              window.location.pathname.includes('/user-login')) {
+            console.log("Redirecting to dashboard even without profile");
+            navigate('/user-dashboard');
+          }
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
+        // Even if there's an error fetching the profile, we'll still redirect
+        // This is a fallback to ensure users don't get stuck on the login page
+        if (!window.location.pathname.includes('/user-dashboard') && 
+            window.location.pathname.includes('/user-login')) {
+          console.log("Redirecting to dashboard despite profile fetch error");
+          navigate('/user-dashboard');
+        }
       } finally {
         setAuthInitialized(true);
         setAuthLoading(false);
@@ -75,7 +89,13 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (success) {
         console.log("Login successful, navigating to dashboard");
         toast.success('Login successful');
-        // The actual navigation will happen in the fetchProfile callback
+        // Forcefully navigate to dashboard after a brief timeout
+        // This ensures the user isn't stuck on the login page
+        setTimeout(() => {
+          if (window.location.pathname.includes('/user-login')) {
+            navigate('/user-dashboard');
+          }
+        }, 1500);
         return true;
       } else {
         toast.error('Login failed. Please check your credentials.');
@@ -157,7 +177,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     <UserAuthContext.Provider
       value={{
         currentUser,
-        isAuthenticated: !!currentUser,
+        isAuthenticated: !!user, // Use Supabase user directly
         login,
         signup,
         logout,

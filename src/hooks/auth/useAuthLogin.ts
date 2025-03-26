@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Session } from '@supabase/supabase-js';
@@ -22,8 +21,8 @@ export const useAuthLogin = (
       if (error) {
         console.error("Login error:", error);
         toast.error(error.message);
-        // Throw the error so it can be caught and handled by the caller
-        throw error;
+        setLoading(false);
+        return false;
       }
 
       if (data.user && data.session) {
@@ -35,13 +34,13 @@ export const useAuthLogin = (
       
       console.log("No user returned from login attempt");
       toast.error("Login failed. Please try again.");
+      setLoading(false);
       return false;
     } catch (error: any) {
       console.error("Unexpected login error:", error);
       handleAuthError(error, 'Login failed');
-      throw error; // Rethrow the error to be handled by the caller
-    } finally {
       setLoading(false);
+      return false;
     }
   };
 

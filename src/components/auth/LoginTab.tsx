@@ -3,6 +3,7 @@ import React from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import LoginForm from '@/components/auth/LoginForm';
 import SocialLogin from '@/components/auth/SocialLogin';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface LoginTabProps {
   onLogin: (email: string, password: string) => Promise<void>;
@@ -37,11 +38,22 @@ const LoginTab: React.FC<LoginTabProps> = ({
         userType="user" 
       />
       
-      <SocialLogin 
-        socialLoading={socialLoading}
-        authLoading={authLoading}
-        setSocialLoading={setSocialLoading}
-      />
+      {authLoading && !isLoggingIn ? (
+        <div className="space-y-4 mt-6">
+          <Skeleton className="h-4 w-full" />
+          <div className="grid grid-cols-3 gap-3">
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        </div>
+      ) : (
+        <SocialLogin 
+          socialLoading={socialLoading}
+          authLoading={authLoading || isLoggingIn}
+          setSocialLoading={setSocialLoading}
+        />
+      )}
     </div>
   );
 };
