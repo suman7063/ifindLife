@@ -1,9 +1,9 @@
 
-import type { User } from '@supabase/supabase-js';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { UserProfile as SupabaseUserProfile, Review as SupabaseReview, Report as SupabaseReport, Course as SupabaseCourse } from '@/types/supabase';
 
-// Re-export the basic types directly from supabase types
-export type { User };
+// Re-export the User type directly from supabase-js
+export type User = SupabaseUser;
 export type UserProfile = SupabaseUserProfile;
 export type Review = SupabaseReview;
 export type Report = SupabaseReport;
@@ -36,5 +36,5 @@ export interface UserAuthContextType {
   getExpertShareLink: (expertId: string) => string;
   hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
   getReferralLink: () => string | null;
-  user: User | null;
+  user: SupabaseUser | null;
 }
