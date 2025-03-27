@@ -1,10 +1,9 @@
 
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { MapPin, Building, Globe } from 'lucide-react';
+import { FormItem, FormMessage } from '@/components/ui/form';
 import { ExpertFormData } from './types';
-import { FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface AddressInfoStepProps {
   formData: ExpertFormData;
@@ -14,121 +13,96 @@ interface AddressInfoStepProps {
   errors: Record<string, string>;
 }
 
-const AddressInfoStep = ({ 
-  formData, 
-  handleChange, 
-  nextStep, 
+const AddressInfoStep = ({
+  formData,
+  handleChange,
+  nextStep,
   prevStep,
   errors
 }: AddressInfoStepProps) => {
+  const formContext = useFormContext();
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Address Information</h2>
+      <h2 className="text-lg font-semibold mb-2">Address Information</h2>
       
-      <FormItem className="space-y-2">
-        <FormLabel htmlFor="address" className={errors.address ? "text-destructive" : ""}>
-          Street Address <span className="text-destructive">*</span>
-        </FormLabel>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <MapPin className={`h-4 w-4 ${errors.address ? "text-destructive" : "text-muted-foreground"}`} />
-          </div>
+      <div className="space-y-4">
+        <FormItem className="space-y-2">
+          <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+            Address <span className="text-destructive">*</span>
+          </label>
           <Input
             id="address"
             name="address"
+            type="text"
             value={formData.address}
             onChange={handleChange}
-            placeholder="123 Main St"
-            className={`pl-10 ${errors.address ? "border-destructive focus-visible:ring-destructive" : ""}`}
-            required
+            className={errors.address ? "border-destructive" : ""}
           />
-        </div>
-        {errors.address && (
-          <FormMessage>{errors.address}</FormMessage>
-        )}
-      </FormItem>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormItem className="space-y-2">
-          <FormLabel htmlFor="city" className={errors.city ? "text-destructive" : ""}>
-            City <span className="text-destructive">*</span>
-          </FormLabel>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Building className={`h-4 w-4 ${errors.city ? "text-destructive" : "text-muted-foreground"}`} />
-            </div>
-            <Input
-              id="city"
-              name="city"
-              value={formData.city}
-              onChange={handleChange}
-              placeholder="Mumbai"
-              className={`pl-10 ${errors.city ? "border-destructive focus-visible:ring-destructive" : ""}`}
-              required
-            />
-          </div>
-          {errors.city && (
-            <FormMessage>{errors.city}</FormMessage>
-          )}
+          {errors.address && <FormMessage>{errors.address}</FormMessage>}
         </FormItem>
         
         <FormItem className="space-y-2">
-          <FormLabel htmlFor="state" className={errors.state ? "text-destructive" : ""}>
-            State/Province <span className="text-destructive">*</span>
-          </FormLabel>
+          <label htmlFor="city" className="block text-sm font-medium text-gray-700">
+            City <span className="text-destructive">*</span>
+          </label>
+          <Input
+            id="city"
+            name="city"
+            type="text"
+            value={formData.city}
+            onChange={handleChange}
+            className={errors.city ? "border-destructive" : ""}
+          />
+          {errors.city && <FormMessage>{errors.city}</FormMessage>}
+        </FormItem>
+        
+        <FormItem className="space-y-2">
+          <label htmlFor="state" className="block text-sm font-medium text-gray-700">
+            State <span className="text-destructive">*</span>
+          </label>
           <Input
             id="state"
             name="state"
+            type="text"
             value={formData.state}
             onChange={handleChange}
-            placeholder="Maharashtra"
-            className={errors.state ? "border-destructive focus-visible:ring-destructive" : ""}
-            required
+            className={errors.state ? "border-destructive" : ""}
           />
-          {errors.state && (
-            <FormMessage>{errors.state}</FormMessage>
-          )}
+          {errors.state && <FormMessage>{errors.state}</FormMessage>}
         </FormItem>
-      </div>
-      
-      <FormItem className="space-y-2">
-        <FormLabel htmlFor="country" className={errors.country ? "text-destructive" : ""}>
-          Country <span className="text-destructive">*</span>
-        </FormLabel>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Globe className={`h-4 w-4 ${errors.country ? "text-destructive" : "text-muted-foreground"}`} />
-          </div>
+        
+        <FormItem className="space-y-2">
+          <label htmlFor="country" className="block text-sm font-medium text-gray-700">
+            Country <span className="text-destructive">*</span>
+          </label>
           <Input
             id="country"
             name="country"
+            type="text"
             value={formData.country}
             onChange={handleChange}
-            placeholder="India"
-            className={`pl-10 ${errors.country ? "border-destructive focus-visible:ring-destructive" : ""}`}
-            required
+            className={errors.country ? "border-destructive" : ""}
           />
-        </div>
-        {errors.country && (
-          <FormMessage>{errors.country}</FormMessage>
-        )}
-      </FormItem>
+          {errors.country && <FormMessage>{errors.country}</FormMessage>}
+        </FormItem>
+      </div>
       
-      <div className="flex justify-between">
-        <Button
+      <div className="flex justify-between pt-4">
+        <button
           type="button"
           onClick={prevStep}
           className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
         >
           Previous
-        </Button>
-        <Button
+        </button>
+        <button
           type="button"
           onClick={nextStep}
-          className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ifind-aqua hover:bg-ifind-teal transition-colors"
         >
           Next
-        </Button>
+        </button>
       </div>
     </div>
   );

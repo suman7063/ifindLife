@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ServiceType, ExpertFormData } from './types';
@@ -21,6 +22,8 @@ const ServiceSelectionStep = ({
   handleCheckboxChange,
   errors
 }: ServiceSelectionStepProps) => {
+  const formContext = useFormContext();
+  
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold mb-2">Service Selection</h2>

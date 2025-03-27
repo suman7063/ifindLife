@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { User, Mail, Phone, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
+import { FormItem, FormMessage } from '@/components/ui/form';
 import { ExpertFormData } from './types';
-import { FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface PersonalInfoStepProps {
   formData: ExpertFormData;
@@ -13,129 +13,130 @@ interface PersonalInfoStepProps {
   errors: Record<string, string>;
 }
 
-const PersonalInfoStep = ({ formData, handleChange, nextStep, errors }: PersonalInfoStepProps) => {
+const PersonalInfoStep = ({
+  formData,
+  handleChange,
+  nextStep,
+  errors
+}: PersonalInfoStepProps) => {
+  const [showPassword, setShowPassword] = useState(false);
+  const formContext = useFormContext();
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Personal Information</h2>
+      <h2 className="text-lg font-semibold mb-2">Personal Information</h2>
       
-      <FormItem className="space-y-2">
-        <FormLabel htmlFor="name" className={errors.name ? "text-destructive" : ""}>
-          Full Name <span className="text-destructive">*</span>
-        </FormLabel>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <User className={`h-4 w-4 ${errors.name ? "text-destructive" : "text-muted-foreground"}`} />
-          </div>
+      <div className="space-y-4">
+        <FormItem className="space-y-2">
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+            Full Name <span className="text-destructive">*</span>
+          </label>
           <Input
             id="name"
             name="name"
+            type="text"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Dr. Jane Smith"
-            className={`pl-10 ${errors.name ? "border-destructive focus-visible:ring-destructive" : ""}`}
-            required
+            className={errors.name ? "border-destructive" : ""}
           />
-        </div>
-        {errors.name && (
-          <FormMessage>{errors.name}</FormMessage>
-        )}
-      </FormItem>
-      
-      <FormItem className="space-y-2">
-        <FormLabel htmlFor="email" className={errors.email ? "text-destructive" : ""}>
-          Email Address <span className="text-destructive">*</span>
-        </FormLabel>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className={`h-4 w-4 ${errors.email ? "text-destructive" : "text-muted-foreground"}`} />
-          </div>
+          {errors.name && <FormMessage>{errors.name}</FormMessage>}
+        </FormItem>
+        
+        <FormItem className="space-y-2">
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+            Email Address <span className="text-destructive">*</span>
+          </label>
           <Input
             id="email"
             name="email"
             type="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="your@email.com"
-            className={`pl-10 ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
-            required
+            className={errors.email ? "border-destructive" : ""}
           />
-        </div>
-        {errors.email && (
-          <FormMessage>{errors.email}</FormMessage>
-        )}
-      </FormItem>
-      
-      <FormItem className="space-y-2">
-        <FormLabel htmlFor="phone" className={errors.phone ? "text-destructive" : ""}>
-          Phone Number <span className="text-destructive">*</span>
-        </FormLabel>
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Phone className={`h-4 w-4 ${errors.phone ? "text-destructive" : "text-muted-foreground"}`} />
-          </div>
-          <Input
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="+91 9876543210"
-            className={`pl-10 ${errors.phone ? "border-destructive focus-visible:ring-destructive" : ""}`}
-            required
-          />
-        </div>
-        {errors.phone && (
-          <FormMessage>{errors.phone}</FormMessage>
-        )}
-      </FormItem>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormItem className="space-y-2">
-          <FormLabel htmlFor="password" className={errors.password ? "text-destructive" : ""}>
-            Password <span className="text-destructive">*</span>
-          </FormLabel>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="••••••••"
-            className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
-            required
-          />
-          {errors.password && (
-            <FormMessage>{errors.password}</FormMessage>
-          )}
+          {errors.email && <FormMessage>{errors.email}</FormMessage>}
         </FormItem>
         
         <FormItem className="space-y-2">
-          <FormLabel htmlFor="confirmPassword" className={errors.confirmPassword ? "text-destructive" : ""}>
-            Confirm Password <span className="text-destructive">*</span>
-          </FormLabel>
+          <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+            Phone Number <span className="text-destructive">*</span>
+          </label>
           <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            value={formData.confirmPassword}
+            id="phone"
+            name="phone"
+            type="tel"
+            value={formData.phone}
             onChange={handleChange}
-            placeholder="••••••••"
-            className={errors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}
-            required
+            className={errors.phone ? "border-destructive" : ""}
           />
-          {errors.confirmPassword && (
-            <FormMessage>{errors.confirmPassword}</FormMessage>
-          )}
+          {errors.phone && <FormMessage>{errors.phone}</FormMessage>}
+        </FormItem>
+        
+        <FormItem className="space-y-2">
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+            Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              value={formData.password}
+              onChange={handleChange}
+              className={errors.password ? "border-destructive" : ""}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          </div>
+          {errors.password && <FormMessage>{errors.password}</FormMessage>}
+        </FormItem>
+        
+        <FormItem className="space-y-2">
+          <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+            Confirm Password <span className="text-destructive">*</span>
+          </label>
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className={errors.confirmPassword ? "border-destructive" : ""}
+            />
+            <button
+              type="button"
+              className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? (
+                <EyeOff className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              )}
+            </button>
+          </div>
+          {errors.confirmPassword && <FormMessage>{errors.confirmPassword}</FormMessage>}
         </FormItem>
       </div>
       
-      <div className="flex justify-end">
-        <Button
+      <div className="pt-4">
+        <button
           type="button"
           onClick={nextStep}
-          className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ifind-aqua hover:bg-ifind-teal transition-colors"
         >
           Next
-        </Button>
+        </button>
       </div>
     </div>
   );

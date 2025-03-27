@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { ExpertFormData, formDataToRegistrationData } from '../types';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
@@ -16,6 +16,12 @@ export const useExpertRegistration = () => {
   const [services, setServices] = useState<ServiceType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const form = useForm({
+    defaultValues: {
+      // Add default values as needed
+    }
+  });
   
   const initialFormData: ExpertFormData = {
     name: '',
@@ -93,7 +99,6 @@ export const useExpertRegistration = () => {
     let isValid = true;
     
     if (step === 1) {
-      // Personal information validation
       ['name', 'email', 'phone', 'password', 'confirmPassword'].forEach(field => {
         const error = validateField(field, formData[field as keyof ExpertFormData] as string);
         if (error) {
@@ -102,7 +107,6 @@ export const useExpertRegistration = () => {
         }
       });
     } else if (step === 2) {
-      // Address validation
       ['address', 'city', 'state', 'country'].forEach(field => {
         const error = validateField(field, formData[field as keyof ExpertFormData] as string);
         if (error) {
@@ -111,7 +115,6 @@ export const useExpertRegistration = () => {
         }
       });
     } else if (step === 3) {
-      // Professional information validation
       ['specialization', 'experience', 'bio'].forEach(field => {
         const error = validateField(field, formData[field as keyof ExpertFormData] as string);
         if (error) {
@@ -120,7 +123,6 @@ export const useExpertRegistration = () => {
         }
       });
     } else if (step === 4) {
-      // Service selection validation
       if (formData.selectedServices.length === 0) {
         newErrors.selectedServices = 'Please select at least one service';
         isValid = false;
@@ -148,10 +150,8 @@ export const useExpertRegistration = () => {
     }
     
     try {
-      // Convert formData to registration data
       const registrationData = formDataToRegistrationData(formData);
       
-      // Attempt to register the expert
       const success = await register(registrationData);
       
       if (success) {
@@ -188,6 +188,7 @@ export const useExpertRegistration = () => {
     nextStep,
     prevStep,
     setFormData,
-    isSubmitting
+    isSubmitting,
+    form
   };
 };
