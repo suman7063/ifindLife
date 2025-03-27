@@ -1,14 +1,18 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { ExpertFormData, ServiceType } from '../types';
+import { ExpertFormData, ServiceType, formDataToRegistrationData } from '../types';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { supabase } from '@/lib/supabase';
 
 export const useExpertRegistration = () => {
   const navigate = useNavigate();
+  const { register } = useExpertAuth();
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<ServiceType[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ExpertFormData>({
-    id: Date.now(),
     name: '',
     email: '',
     phone: '',
@@ -28,31 +32,38 @@ export const useExpertRegistration = () => {
   });
 
   useEffect(() => {
-    const storedContent = localStorage.getItem('ifindlife-content');
-    if (storedContent) {
+    const fetchServices = async () => {
       try {
-        const parsedContent = JSON.parse(storedContent);
-        if (parsedContent.categories) {
-          const servicesFromCategories = parsedContent.categories.map((category: any, index: number) => ({
-            id: index + 1,
-            name: category.title,
-            description: category.description,
-            rateUSD: 30 + (index * 5),
-            rateINR: (30 + (index * 5)) * 80,
+        const { data, error } = await supabase
+          .from('services')
+          .select('*');
+        
+        if (error) {
+          console.error("Error fetching services:", error);
+          createSampleServices();
+          return;
+        }
+        
+        if (data && data.length > 0) {
+          const servicesData = data.map(service => ({
+            id: service.id,
+            name: service.name,
+            description: service.description,
+            rateUSD: service.rate_usd,
+            rateINR: service.rate_inr,
           }));
-          setServices(servicesFromCategories);
+          setServices(servicesData);
         } else {
-          console.warn("No categories found in stored content");
+          console.warn("No services found in database");
           createSampleServices();
         }
       } catch (e) {
-        console.error("Error parsing saved content", e);
+        console.error("Error fetching services", e);
         createSampleServices();
       }
-    } else {
-      console.warn("No stored content found");
-      createSampleServices();
-    }
+    };
+    
+    fetchServices();
   }, []);
 
   const createSampleServices = () => {
@@ -115,8 +126,8 @@ export const useExpertRegistration = () => {
       const files = Array.from(e.target.files);
       setFormData(prev => ({
         ...prev,
-        certificates: [...prev.certificates, ...files],
-        certificateUrls: [...prev.certificateUrls, ...files.map(file => URL.createObjectURL(file))]
+        certificates: [...prev.certificates || [], ...files],
+        certificateUrls: [...prev.certificateUrls || [], ...files.map(file => URL.createObjectURL(file))]
       }));
     }
   };
@@ -124,8 +135,8 @@ export const useExpertRegistration = () => {
   const handleRemoveCertificate = (index: number) => {
     setFormData(prev => ({
       ...prev,
-      certificates: prev.certificates.filter((_, i) => i !== index),
-      certificateUrls: prev.certificateUrls.filter((_, i) => i !== index)
+      certificates: prev.certificates ? prev.certificates.filter((_, i) => i !== index) : [],
+      certificateUrls: prev.certificateUrls ? prev.certificateUrls.filter((_, i) => i !== index) : []
     }));
   };
 
@@ -158,38 +169,47 @@ export const useExpertRegistration = () => {
     return true;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords don't match");
+      setIsSubmitting(false);
       return;
     }
     
     if (!formData.acceptedTerms) {
       toast.error("Please accept the terms and conditions");
+      setIsSubmitting(false);
       return;
     }
     
     if (formData.selectedServices.length === 0) {
       toast.error("Please select at least one service");
+      setIsSubmitting(false);
       return;
     }
     
-    const experts = localStorage.getItem('ifindlife-experts')
-      ? JSON.parse(localStorage.getItem('ifindlife-experts')!)
-      : [];
-    
-    if (experts.some((expert: any) => expert.email === formData.email)) {
-      toast.error("Email already registered");
-      return;
+    try {
+      // Convert formData to registration data
+      const registrationData = formDataToRegistrationData(formData);
+      
+      // Attempt to register the expert
+      const success = await register(registrationData);
+      
+      if (success) {
+        toast.success("Registration successful! Please check your email for verification and then log in.");
+        navigate('/expert-login');
+      }
+    } catch (error) {
+      console.error('Error during registration:', error);
+      toast.error("Registration failed. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    const newExperts = [...experts, formData];
-    localStorage.setItem('ifindlife-experts', JSON.stringify(newExperts));
-    
-    toast.success("Registration successful! Please login.");
-    navigate('/expert-login');
   };
 
   const nextStep = () => {
@@ -212,6 +232,7 @@ export const useExpertRegistration = () => {
     handleSubmit,
     nextStep,
     prevStep,
-    setFormData
+    setFormData,
+    isSubmitting
   };
 };

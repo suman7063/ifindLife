@@ -1,52 +1,74 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, EyeOff, Mail } from 'lucide-react';
+import { Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import ExpertRegistrationForm from '@/components/expert/ExpertRegistrationForm';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const ExpertLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  
+  const { login, expert, loading } = useExpertAuth();
   const navigate = useNavigate();
   
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    // If already logged in, redirect to dashboard
+    if (expert && !loading) {
+      navigate('/expert-dashboard');
+    }
+  }, [expert, loading, navigate]);
+  
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // In a real application, this would authenticate against a backend
-    const storedExperts = localStorage.getItem('ifindlife-experts');
-    if (storedExperts) {
-      const experts = JSON.parse(storedExperts);
-      const expert = experts.find(
-        (exp: any) => exp.email === loginEmail && exp.password === loginPassword
-      );
+    if (isLoggingIn) return;
+    
+    setLoginError(null);
+    setIsLoggingIn(true);
+    
+    try {
+      const success = await login(loginEmail, loginPassword);
       
-      if (expert) {
-        // Store the expert's email in localStorage for session management
-        localStorage.setItem('ifindlife-expert-email', expert.email);
-        
-        // This was storing an auth object instead of just the email
-        localStorage.setItem('ifindlife-expert-auth', JSON.stringify({
-          id: expert.id,
-          name: expert.name,
-          email: expert.email
-        }));
-        
-        toast.success('Login successful!');
-        navigate('/expert-dashboard');
+      if (success) {
+        // The redirection will happen automatically in the useEffect
+        setIsLoggingIn(false);
       } else {
-        toast.error('Invalid email or password');
+        setLoginError('Login failed. Please check your credentials and try again.');
+        setIsLoggingIn(false);
       }
-    } else {
-      toast.error('Invalid email or password');
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('An unexpected error occurred. Please try again.');
+      setIsLoggingIn(false);
     }
   };
+  
+  if (loading && !isLoggingIn) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-1 py-10 flex items-center justify-center bg-stars">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-ifind-aqua" />
+            <h2 className="text-xl font-medium">Loading...</h2>
+            <p className="text-muted-foreground">Please wait</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
@@ -70,6 +92,12 @@ const ExpertLogin = () => {
               
               <TabsContent value="login">
                 <form onSubmit={handleLogin} className="space-y-4">
+                  {loginError && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{loginError}</AlertDescription>
+                    </Alert>
+                  )}
+                
                   <div className="space-y-2">
                     <label htmlFor="email" className="text-sm font-medium">
                       Email Address
@@ -86,6 +114,7 @@ const ExpertLogin = () => {
                         value={loginEmail}
                         onChange={(e) => setLoginEmail(e.target.value)}
                         required
+                        disabled={isLoggingIn}
                       />
                     </div>
                   </div>
@@ -107,6 +136,7 @@ const ExpertLogin = () => {
                         value={loginPassword}
                         onChange={(e) => setLoginPassword(e.target.value)}
                         required
+                        disabled={isLoggingIn}
                       />
                       <button
                         type="button"
@@ -122,8 +152,19 @@ const ExpertLogin = () => {
                     </div>
                   </div>
                   
-                  <Button type="submit" className="w-full bg-ifind-aqua hover:bg-ifind-teal">
-                    Sign In as Expert
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-ifind-aqua hover:bg-ifind-teal"
+                    disabled={isLoggingIn}
+                  >
+                    {isLoggingIn ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      'Sign In as Expert'
+                    )}
                   </Button>
                 </form>
               </TabsContent>

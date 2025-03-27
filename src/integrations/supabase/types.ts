@@ -90,6 +90,75 @@ export type Database = {
           },
         ]
       }
+      expert_accounts: {
+        Row: {
+          address: string | null
+          auth_id: string | null
+          average_rating: number | null
+          bio: string | null
+          certificate_urls: string[] | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          email: string
+          experience: string | null
+          id: string
+          name: string
+          phone: string | null
+          profile_picture: string | null
+          reviews_count: number | null
+          selected_services: number[] | null
+          specialization: string | null
+          state: string | null
+          status: string | null
+          verified: boolean | null
+        }
+        Insert: {
+          address?: string | null
+          auth_id?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          certificate_urls?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email: string
+          experience?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          profile_picture?: string | null
+          reviews_count?: number | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          state?: string | null
+          status?: string | null
+          verified?: boolean | null
+        }
+        Update: {
+          address?: string | null
+          auth_id?: string | null
+          average_rating?: number | null
+          bio?: string | null
+          certificate_urls?: string[] | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          email?: string
+          experience?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          profile_picture?: string | null
+          reviews_count?: number | null
+          selected_services?: number[] | null
+          specialization?: string | null
+          state?: string | null
+          status?: string | null
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       expert_reports: {
         Row: {
           date: string | null
