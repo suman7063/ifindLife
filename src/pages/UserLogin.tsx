@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -29,12 +28,10 @@ const UserLogin = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
-  // Get referral code from URL if available
   const queryParams = new URLSearchParams(location.search);
   const referralCodeFromUrl = queryParams.get('ref');
   const redirectPath = location.state?.from || '/user-dashboard';
 
-  // Redirect if already authenticated
   useEffect(() => {
     console.log("Auth status:", isAuthenticated);
     console.log("Current user:", currentUser);
@@ -47,20 +44,21 @@ const UserLogin = () => {
     }
   }, [isAuthenticated, navigate, redirectPath, currentUser, user, profileNotFound]);
 
-  // Load referral settings
   useEffect(() => {
     const loadReferralSettings = async () => {
-      const settings = await fetchReferralSettings();
-      setReferralSettings(settings);
+      try {
+        const settings = await fetchReferralSettings();
+        setReferralSettings(settings);
+      } catch (error) {
+        console.error("Error loading referral settings:", error);
+      }
     };
     
     loadReferralSettings();
   }, []);
 
-  // Switch to registration tab if referral code is in URL or profile not found
   useEffect(() => {
     if (referralCodeFromUrl || profileNotFound) {
-      // Find the register tab trigger and click it
       const registerTab = document.querySelector('[data-value="register"]');
       if (registerTab && registerTab instanceof HTMLElement) {
         registerTab.click();
@@ -69,7 +67,7 @@ const UserLogin = () => {
   }, [referralCodeFromUrl, profileNotFound]);
 
   const handleLogin = async (email: string, password: string) => {
-    setLoginError(null); // Clear any previous errors
+    setLoginError(null);
     setIsLoggingIn(true);
     
     try {
@@ -79,21 +77,17 @@ const UserLogin = () => {
       
       if (success) {
         console.log("Login successful, waiting for redirect or profile check");
-        // The redirect will be handled in UserAuthProvider after profile is fetched
-        // Adding a safety timeout to ensure we don't leave users hanging
         setTimeout(() => {
           if (window.location.pathname.includes('/user-login')) {
             setIsLoggingIn(false);
           }
         }, 5000);
       } else {
-        // If login returned false but didn't throw an error, show a generic message
         setLoginError("Login failed. Please check your credentials and try again.");
         setIsLoggingIn(false);
       }
     } catch (error: any) {
       console.error('Login error:', error);
-      // Set error message to be displayed in the form
       setLoginError(error.message || "An unexpected error occurred during login.");
       setIsLoggingIn(false);
     }
@@ -129,7 +123,6 @@ const UserLogin = () => {
     }
   };
 
-  // Show a loading indicator if we're in the process of authenticating
   if (authLoading && !isLoggingIn && !isRegistering) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -154,7 +147,6 @@ const UserLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-ifind-aqua/10">
             <LoginHeader />
             
-            {/* Profile Not Found Alert */}
             {profileNotFound && (
               <Alert variant="destructive" className="mb-6">
                 <AlertCircle className="h-4 w-4" />

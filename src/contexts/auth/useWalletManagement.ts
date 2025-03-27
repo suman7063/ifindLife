@@ -6,6 +6,7 @@ import { getReferralLink as generateReferralLink } from '@/utils/referralUtils';
 
 export const useWalletManagement = (currentUser: UserProfile | null) => {
   const [walletLoading, setWalletLoading] = useState(false);
+  const [referralLinkCache, setReferralLinkCache] = useState<string | null>(null);
 
   const rechargeWallet = async (amount: number): Promise<boolean> => {
     if (!currentUser) {
@@ -31,6 +32,11 @@ export const useWalletManagement = (currentUser: UserProfile | null) => {
 
   // Get the referral link for the current user with caching
   const getReferralLink = (): string | null => {
+    // Return cached link if available
+    if (referralLinkCache) {
+      return referralLinkCache;
+    }
+    
     if (!currentUser?.referralCode) {
       return null;
     }
@@ -38,11 +44,15 @@ export const useWalletManagement = (currentUser: UserProfile | null) => {
     try {
       // If the user already has a persisted referral link, use that
       if (currentUser.referralLink) {
-        return currentUser.referralLink;
+        const link = currentUser.referralLink;
+        setReferralLinkCache(link);
+        return link;
       }
       
       // Otherwise generate a new one
-      return generateReferralLink(currentUser.referralCode);
+      const link = generateReferralLink(currentUser.referralCode);
+      setReferralLinkCache(link);
+      return link;
     } catch (error) {
       console.error('Error generating referral link:', error);
       return null;

@@ -18,7 +18,7 @@ export const useAuthInitialization = (): [
   AuthInitializationState,
   React.Dispatch<React.SetStateAction<UserProfile | null>>,
   () => Promise<void>,
-  (loading: boolean) => void // Added function to set loading state directly
+  (loading: boolean) => void
 ] => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
@@ -33,53 +33,62 @@ export const useAuthInitialization = (): [
   }, []);
 
   const fetchProfile = useCallback(async () => {
-    if (user) {
-      console.log("Fetching user profile for:", user.id);
-      try {
-        setAuthLoading(true);
-        const userProfile = await fetchUserProfile(user);
-        
-        if (userProfile) {
-          console.log("User profile fetched:", userProfile.id);
-          setCurrentUser(userProfile);
-          setProfileNotFound(false);
-          
-          // If user is on login or user-login page, and has successfully logged in,
-          // redirect to dashboard
-          if (window.location.pathname.includes('/login') || window.location.pathname.includes('/user-login')) {
-            console.log("Redirecting to dashboard after successful profile fetch");
-            navigate('/user-dashboard');
-          }
-        } else {
-          console.error("No user profile found for:", user.id);
-          setProfileNotFound(true);
-          toast.error("Profile not found. Please register to create an account.");
-          
-          // Redirect back to login page if no profile
-          if (!window.location.pathname.includes('/user-login')) {
-            navigate('/user-login');
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        setProfileNotFound(true);
-        toast.error("Could not load your profile. Please try again or register for a new account.");
-        
-        // Redirect back to login page if profile fetch fails
-        if (!window.location.pathname.includes('/user-login')) {
-          navigate('/user-login');
-        }
-      } finally {
-        setAuthInitialized(true);
-        setAuthLoading(false);
-      }
-    } else {
+    if (!user) {
       setCurrentUser(null);
       setProfileNotFound(false);
       setAuthInitialized(true);
       setAuthLoading(false);
+      return;
     }
-  }, [user, navigate]);
+    
+    console.log("Fetching user profile for:", user.id);
+    try {
+      setAuthLoading(true);
+      const userProfile = await fetchUserProfile(user);
+      
+      if (userProfile) {
+        console.log("User profile fetched:", userProfile.id);
+        setCurrentUser(userProfile);
+        setProfileNotFound(false);
+        
+        // If user is on login or user-login page, and has successfully logged in,
+        // redirect to dashboard
+        if (window.location.pathname.includes('/login') || window.location.pathname.includes('/user-login')) {
+          console.log("Redirecting to dashboard after successful profile fetch");
+          navigate('/user-dashboard');
+        }
+      } else {
+        console.error("No user profile found for:", user.id);
+        setProfileNotFound(true);
+        
+        // Don't toast error on initial load
+        if (authInitialized) {
+          toast.error("Profile not found. Please register to create an account.");
+        }
+        
+        // Redirect back to login page if no profile
+        if (!window.location.pathname.includes('/user-login')) {
+          navigate('/user-login');
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      setProfileNotFound(true);
+      
+      // Don't toast error on initial load
+      if (authInitialized) {
+        toast.error("Could not load your profile. Please try again or register for a new account.");
+      }
+      
+      // Redirect back to login page if profile fetch fails
+      if (!window.location.pathname.includes('/user-login')) {
+        navigate('/user-login');
+      }
+    } finally {
+      setAuthInitialized(true);
+      setAuthLoading(false);
+    }
+  }, [user, navigate, authInitialized]);
 
   return [
     { currentUser, authInitialized, authLoading, profileNotFound }, 
