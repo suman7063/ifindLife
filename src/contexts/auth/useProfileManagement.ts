@@ -61,7 +61,7 @@ export const useProfileManagement = (
   };
 
   const updateProfilePicture = async (file: File): Promise<string> => {
-    console.log("updateProfilePicture called with file:", { 
+    console.log("updateProfilePicture in useProfileManagement called with file:", { 
       name: file.name, 
       size: file.size, 
       type: file.type 

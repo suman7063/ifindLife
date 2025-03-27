@@ -32,6 +32,7 @@ const ProfilePictureSection: React.FC = () => {
       console.log("Calling updateProfilePicture with:", { userId: currentUser.id, fileName: file.name });
       const url = await updateProfilePicture(file);
       console.log("Image uploaded successfully, received URL:", url);
+      toast.success('Profile picture updated successfully!');
       return url;
     } catch (error) {
       console.error('Error uploading image:', error);

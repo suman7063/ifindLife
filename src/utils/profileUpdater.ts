@@ -52,7 +52,7 @@ export const updateUserProfile = async (
 // Function to upload and update profile picture
 export const updateProfilePicture = async (userId: string, file: File): Promise<string> => {
   try {
-    console.log("updateProfilePicture called with:", { 
+    console.log("updateProfilePicture utility called with:", { 
       userId, 
       fileName: file.name,
       fileSize: file.size,
@@ -105,7 +105,7 @@ export const updateProfilePicture = async (userId: string, file: File): Promise<
     console.log("Profile picture URL updated in database successfully");
     return publicUrl;
   } catch (error) {
-    console.error('Error in updateProfilePicture function:', error);
+    console.error('Error in updateProfilePicture utility function:', error);
     throw error;
   }
 };

@@ -27,6 +27,7 @@ import CareerGuidance from './pages/CareerGuidance';
 import BlogEmotionalIntelligence from './pages/BlogEmotionalIntelligence';
 import BlogManagingThoughts from './pages/BlogManagingThoughts';
 import BlogTeenageAnger from './pages/BlogTeenageAnger';
+import UserProfileEdit from './components/user/UserProfileEdit';
 
 function App() {
   return (
@@ -52,6 +53,7 @@ function App() {
       <Route path="/blog/emotional-intelligence" element={<BlogEmotionalIntelligence />} />
       <Route path="/blog/managing-thoughts" element={<BlogManagingThoughts />} />
       <Route path="/blog/teenage-anger" element={<BlogTeenageAnger />} />
+      <Route path="/user-profile-edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
