@@ -39,28 +39,23 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
     try {
       setIsUploading(true);
       
-      // Create a temporary preview URL immediately from the file
+      // Create a temporary preview URL immediately for better UX
       const tempUrl = URL.createObjectURL(file);
       setPreviewUrl(tempUrl);
       
-      console.log("Created temporary preview URL:", tempUrl);
-      
-      // Call the actual upload function (happens in background)
+      // Call the actual upload function
       const imageUrl = await onImageUpload(file);
       
-      console.log("Upload complete, server returned URL:", imageUrl);
-      
+      // Update with the server URL
       if (imageUrl) {
-        // We keep the temp URL for display until we confirm the server URL is working
-        // This prevents flickering during the transition
         setPreviewUrl(imageUrl);
         toast.success("Profile picture updated successfully!");
       }
       
-      // Release the temporary object URL after a delay to avoid flickering
+      // Release the temporary object URL
       setTimeout(() => {
         URL.revokeObjectURL(tempUrl);
-      }, 5000);
+      }, 3000);
       
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -69,7 +64,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
       setPreviewUrl(currentImage);
     } finally {
       setIsUploading(false);
-      // Reset file input to allow selecting the same file again
+      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }

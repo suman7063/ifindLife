@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Star } from 'lucide-react';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
 
 interface ExpertReviewModalProps {
@@ -17,10 +17,11 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
   const [hoveredRating, setHoveredRating] = useState(0);
   const [comment, setComment] = useState('');
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { addReview, hasTakenServiceFrom } = useUserAuth();
+  const { addReview, hasTakenServiceFrom, currentUser } = useUserAuth();
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (rating === 0) {
       toast.error('Please select a rating');
       return;
@@ -31,24 +32,39 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
       return;
     }
     
-    addReview(expertId, rating, comment);
-    setOpen(false);
-    setRating(0);
-    setComment('');
+    setIsSubmitting(true);
+    try {
+      const success = await addReview(expertId, rating, comment);
+      if (success) {
+        setOpen(false);
+        setRating(0);
+        setComment('');
+        toast.success('Review submitted successfully');
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   // Check if the user has taken service from this expert
   const canReview = hasTakenServiceFrom(expertId);
+  
+  if (!currentUser) {
+    return null;
+  }
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          onClick={() => {
+          onClick={(e) => {
             if (!canReview) {
+              e.preventDefault();
               toast.error('You can only review experts after taking their service');
-              return;
             }
           }}
           disabled={!canReview}
@@ -98,8 +114,9 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
             <Button 
               onClick={handleSubmit}
               className="bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+              disabled={isSubmitting}
             >
-              Submit Review
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
             </Button>
           </DialogFooter>
         </DialogContent>

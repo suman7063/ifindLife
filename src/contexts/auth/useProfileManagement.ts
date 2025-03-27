@@ -4,7 +4,7 @@ import { UserProfile } from '@/types/supabase';
 import { 
   updateUserProfile, 
   updateProfilePicture as updateProfilePic
-} from '@/utils/userProfileUtils';
+} from '@/utils/profileUpdater';
 import { toast } from 'sonner';
 
 export const useProfileManagement = (

@@ -10,6 +10,13 @@ const ProfilePictureSection: React.FC = () => {
   const handleImageUpload = async (file: File): Promise<string> => {
     try {
       console.log("Starting image upload process");
+      
+      // Make sure we have a valid user before attempting to upload
+      if (!currentUser || !currentUser.id) {
+        toast.error('You must be logged in to update your profile picture');
+        throw new Error("User not authenticated");
+      }
+      
       const url = await updateProfilePicture(file);
       console.log("Image uploaded successfully, URL:", url);
       return url;
