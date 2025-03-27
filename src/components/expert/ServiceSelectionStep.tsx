@@ -1,89 +1,64 @@
 
 import React from 'react';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import { ExpertFormData, ServiceType } from './types';
+import { Label } from "@/components/ui/label";
+import { ServiceType, ExpertFormData } from './types';
+import { FormItem, FormMessage } from '@/components/ui/form';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface ServiceSelectionStepProps {
   formData: ExpertFormData;
   services: ServiceType[];
-  handleCheckboxChange: (serviceId: number) => void;
+  handleCheckboxChange: (serviceId: number, checked: boolean) => void;
   setFormData: React.Dispatch<React.SetStateAction<ExpertFormData>>;
+  errors: Record<string, string>;
 }
 
-const ServiceSelectionStep = ({ 
-  formData, 
-  services, 
-  handleCheckboxChange, 
-  setFormData
+const ServiceSelectionStep = ({
+  formData,
+  services,
+  handleCheckboxChange,
+  errors
 }: ServiceSelectionStepProps) => {
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold">Services Offered</h2>
+      <h2 className="text-lg font-semibold mb-2">Service Selection</h2>
       <p className="text-sm text-muted-foreground mb-4">
-        Select the services you would like to offer. Rates are pre-defined by the admin.
+        Select the services you want to offer to clients <span className="text-destructive">*</span>
       </p>
       
-      {services.length === 0 ? (
-        <div className="p-6 text-center border border-dashed rounded-lg">
-          <p className="text-muted-foreground">No services are currently available. Please contact the administrator.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {services.map((service) => (
-            <Card key={service.id} className={`overflow-hidden transition-all border-2 ${
-              formData.selectedServices.includes(service.id) ? 'border-astro-purple' : 'border-transparent'
-            }`}>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`service-${service.id}`}
-                        checked={formData.selectedServices.includes(service.id)}
-                        onCheckedChange={() => handleCheckboxChange(service.id)}
-                      />
-                      <label
-                        htmlFor={`service-${service.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {service.name}
-                      </label>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {service.description}
-                    </p>
-                    <div className="mt-2 flex justify-between text-xs font-medium">
-                      <span>${service.rateUSD}/hour</span>
-                      <span>₹{service.rateINR}/hour</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+      {errors.selectedServices && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertDescription>{errors.selectedServices}</AlertDescription>
+        </Alert>
       )}
       
-      <div className="flex items-start space-x-3 pt-4">
-        <Checkbox
-          id="terms"
-          checked={formData.acceptedTerms}
-          onCheckedChange={(checked) => 
-            setFormData(prev => ({ ...prev, acceptedTerms: checked as boolean }))
-          }
-        />
-        <div className="grid gap-1.5 leading-none">
-          <label
-            htmlFor="terms"
-            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      <div className="space-y-2">
+        {services.map((service) => (
+          <div
+            key={service.id}
+            className="flex items-start space-x-3 p-3 rounded-md bg-muted/50 border"
           >
-            Accept terms and conditions
-          </label>
-          <p className="text-xs text-muted-foreground">
-            By submitting this form, you agree to our terms of service and privacy policy.
-          </p>
-        </div>
+            <Checkbox
+              id={`service-${service.id}`}
+              checked={formData.selectedServices.includes(service.id)}
+              onCheckedChange={(checked) => handleCheckboxChange(service.id, checked as boolean)}
+              className={errors.selectedServices ? "border-destructive data-[state=checked]:bg-destructive" : ""}
+            />
+            <div className="space-y-1">
+              <Label htmlFor={`service-${service.id}`} className="font-medium">
+                {service.name}
+              </Label>
+              <p className="text-sm text-muted-foreground">{service.description}</p>
+              <div className="flex space-x-4 text-sm">
+                <span>USD: ${service.rate_usd}</span>
+                <span>INR: ₹{service.rate_inr}</span>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

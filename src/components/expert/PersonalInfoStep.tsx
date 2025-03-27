@@ -2,25 +2,29 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { User, Mail, Phone } from 'lucide-react';
+import { User, Mail, Phone, AlertCircle } from 'lucide-react';
 import { ExpertFormData } from './types';
+import { FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 interface PersonalInfoStepProps {
   formData: ExpertFormData;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   nextStep: () => void;
+  errors: Record<string, string>;
 }
 
-const PersonalInfoStep = ({ formData, handleChange, nextStep }: PersonalInfoStepProps) => {
+const PersonalInfoStep = ({ formData, handleChange, nextStep, errors }: PersonalInfoStepProps) => {
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-semibold">Personal Information</h2>
       
-      <div className="space-y-2">
-        <label htmlFor="name" className="text-sm font-medium">Full Name</label>
+      <FormItem className="space-y-2">
+        <FormLabel htmlFor="name" className={errors.name ? "text-destructive" : ""}>
+          Full Name <span className="text-destructive">*</span>
+        </FormLabel>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <User className="h-4 w-4 text-muted-foreground" />
+            <User className={`h-4 w-4 ${errors.name ? "text-destructive" : "text-muted-foreground"}`} />
           </div>
           <Input
             id="name"
@@ -28,17 +32,22 @@ const PersonalInfoStep = ({ formData, handleChange, nextStep }: PersonalInfoStep
             value={formData.name}
             onChange={handleChange}
             placeholder="Dr. Jane Smith"
-            className="pl-10"
+            className={`pl-10 ${errors.name ? "border-destructive focus-visible:ring-destructive" : ""}`}
             required
           />
         </div>
-      </div>
+        {errors.name && (
+          <FormMessage>{errors.name}</FormMessage>
+        )}
+      </FormItem>
       
-      <div className="space-y-2">
-        <label htmlFor="email" className="text-sm font-medium">Email Address</label>
+      <FormItem className="space-y-2">
+        <FormLabel htmlFor="email" className={errors.email ? "text-destructive" : ""}>
+          Email Address <span className="text-destructive">*</span>
+        </FormLabel>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Mail className="h-4 w-4 text-muted-foreground" />
+            <Mail className={`h-4 w-4 ${errors.email ? "text-destructive" : "text-muted-foreground"}`} />
           </div>
           <Input
             id="email"
@@ -47,17 +56,22 @@ const PersonalInfoStep = ({ formData, handleChange, nextStep }: PersonalInfoStep
             value={formData.email}
             onChange={handleChange}
             placeholder="your@email.com"
-            className="pl-10"
+            className={`pl-10 ${errors.email ? "border-destructive focus-visible:ring-destructive" : ""}`}
             required
           />
         </div>
-      </div>
+        {errors.email && (
+          <FormMessage>{errors.email}</FormMessage>
+        )}
+      </FormItem>
       
-      <div className="space-y-2">
-        <label htmlFor="phone" className="text-sm font-medium">Phone Number</label>
+      <FormItem className="space-y-2">
+        <FormLabel htmlFor="phone" className={errors.phone ? "text-destructive" : ""}>
+          Phone Number <span className="text-destructive">*</span>
+        </FormLabel>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Phone className="h-4 w-4 text-muted-foreground" />
+            <Phone className={`h-4 w-4 ${errors.phone ? "text-destructive" : "text-muted-foreground"}`} />
           </div>
           <Input
             id="phone"
@@ -65,15 +79,20 @@ const PersonalInfoStep = ({ formData, handleChange, nextStep }: PersonalInfoStep
             value={formData.phone}
             onChange={handleChange}
             placeholder="+91 9876543210"
-            className="pl-10"
+            className={`pl-10 ${errors.phone ? "border-destructive focus-visible:ring-destructive" : ""}`}
             required
           />
         </div>
-      </div>
+        {errors.phone && (
+          <FormMessage>{errors.phone}</FormMessage>
+        )}
+      </FormItem>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">Password</label>
+        <FormItem className="space-y-2">
+          <FormLabel htmlFor="password" className={errors.password ? "text-destructive" : ""}>
+            Password <span className="text-destructive">*</span>
+          </FormLabel>
           <Input
             id="password"
             name="password"
@@ -81,12 +100,18 @@ const PersonalInfoStep = ({ formData, handleChange, nextStep }: PersonalInfoStep
             value={formData.password}
             onChange={handleChange}
             placeholder="••••••••"
+            className={errors.password ? "border-destructive focus-visible:ring-destructive" : ""}
             required
           />
-        </div>
+          {errors.password && (
+            <FormMessage>{errors.password}</FormMessage>
+          )}
+        </FormItem>
         
-        <div className="space-y-2">
-          <label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</label>
+        <FormItem className="space-y-2">
+          <FormLabel htmlFor="confirmPassword" className={errors.confirmPassword ? "text-destructive" : ""}>
+            Confirm Password <span className="text-destructive">*</span>
+          </FormLabel>
           <Input
             id="confirmPassword"
             name="confirmPassword"
@@ -94,9 +119,13 @@ const PersonalInfoStep = ({ formData, handleChange, nextStep }: PersonalInfoStep
             value={formData.confirmPassword}
             onChange={handleChange}
             placeholder="••••••••"
+            className={errors.confirmPassword ? "border-destructive focus-visible:ring-destructive" : ""}
             required
           />
-        </div>
+          {errors.confirmPassword && (
+            <FormMessage>{errors.confirmPassword}</FormMessage>
+          )}
+        </FormItem>
       </div>
       
       <div className="flex justify-end">
