@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { UserProfile } from '@/types/supabase';
@@ -12,12 +12,12 @@ import { useAuthActions } from './hooks/useAuthActions';
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Get authentication state using our custom hooks
-  const [authState, setCurrentUser, fetchProfile] = useAuthInitialization();
+  const [authState, setCurrentUser, fetchProfile, setAuthLoading] = useAuthInitialization();
   const { login, signup, logout, actionLoading } = useAuthActions(fetchProfile);
   const { user } = useSupabaseAuth();
   
-  // Set up session effects
-  useAuthSessionEffects(authState, fetchProfile);
+  // Set up session effects - pass the setAuthLoading function to allow direct control
+  useAuthSessionEffects(authState, fetchProfile, setAuthLoading);
 
   // Import functionality from separate hooks
   const { updateProfile, updateProfilePicture } = useProfileManagement(authState.currentUser, setCurrentUser);
@@ -41,16 +41,14 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (authState.authLoading) {
       timeoutId = setTimeout(() => {
         console.log("Force completing auth loading after timeout");
-        if (authState.authLoading) {
-          setCurrentUser(prevUser => prevUser); // Trigger state update without changing value
-        }
-      }, 5000); // 5 second maximum loading time
+        setAuthLoading(false);
+      }, 3000); // 3 second maximum loading time
     }
     
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
-  }, [authState.authLoading, setCurrentUser]);
+  }, [authState.authLoading, setAuthLoading]);
 
   return (
     <UserAuthContext.Provider

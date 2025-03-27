@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,50 +25,90 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile }) => {
   const [referralLink, setReferralLink] = useState<string>('');
   const [customText, setCustomText] = useState<string>('');
   const [isGettingLink, setIsGettingLink] = useState<boolean>(false);
+  const [isCopying, setIsCopying] = useState<boolean>(false);
 
   useEffect(() => {
     const loadSettings = async () => {
-      const data = await fetchReferralSettings();
-      setSettings(data);
+      try {
+        const data = await fetchReferralSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error('Error loading referral settings:', error);
+      }
     };
 
     if (userProfile?.referralCode) {
-      const link = getReferralLink(userProfile.referralCode);
-      setReferralLink(link);
+      try {
+        const link = getReferralLink(userProfile.referralCode);
+        setReferralLink(link);
+      } catch (error) {
+        console.error('Error generating referral link:', error);
+      }
     }
 
     loadSettings();
   }, [userProfile]);
 
   const handleCopyLink = () => {
-    copyReferralLink(referralLink);
+    if (isCopying) return;
+    
+    setIsCopying(true);
+    try {
+      copyReferralLink(referralLink);
+    } catch (error) {
+      console.error('Error copying link:', error);
+      toast.error('Failed to copy link');
+    } finally {
+      setIsCopying(false);
+    }
   };
 
   const handleEmailShare = () => {
-    shareViaEmail(userProfile.referralCode || '', userProfile.name);
+    try {
+      shareViaEmail(userProfile.referralCode || '', userProfile.name);
+    } catch (error) {
+      console.error('Error sharing via email:', error);
+      toast.error('Failed to share via email');
+    }
   };
 
   const handleWhatsAppShare = () => {
-    shareViaWhatsApp(userProfile.referralCode || '', userProfile.name);
+    try {
+      shareViaWhatsApp(userProfile.referralCode || '', userProfile.name);
+    } catch (error) {
+      console.error('Error sharing via WhatsApp:', error);
+      toast.error('Failed to share via WhatsApp');
+    }
   };
 
   const handleTwitterShare = () => {
-    shareViaTwitter(userProfile.referralCode || '');
+    try {
+      shareViaTwitter(userProfile.referralCode || '');
+    } catch (error) {
+      console.error('Error sharing via Twitter:', error);
+      toast.error('Failed to share via Twitter');
+    }
   };
 
   const handleCustomLink = () => {
+    if (isGettingLink) return;
+    
     setIsGettingLink(true);
     
     try {
       // Generate personalized link with custom text
-      let customLink = referralLink;
-      if (customText.trim()) {
-        // Replace spaces with hyphens for URL, make lowercase
-        const urlFriendlyText = customText.trim().toLowerCase().replace(/\s+/g, '-');
-        customLink = `${window.location.origin}/r/${urlFriendlyText}?ref=${userProfile.referralCode}`;
+      if (!customText.trim()) {
+        copyReferralLink(referralLink);
+        toast.success('Referral link copied to clipboard');
+        return;
       }
       
+      // Replace spaces with hyphens for URL, make lowercase
+      const urlFriendlyText = customText.trim().toLowerCase().replace(/\s+/g, '-');
+      const customLink = `${window.location.origin}/r/${urlFriendlyText}?ref=${userProfile.referralCode}`;
+      
       copyReferralLink(customLink);
+      toast.success('Custom referral link copied to clipboard');
     } catch (error) {
       console.error('Error generating custom link:', error);
       toast.error('Failed to generate custom link');
@@ -115,6 +156,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile }) => {
                 size="icon" 
                 onClick={() => copyReferralLink(userProfile.referralCode || '')}
                 className="min-w-10 shrink-0"
+                disabled={isCopying}
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -132,6 +174,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile }) => {
                 size="icon" 
                 onClick={handleCopyLink}
                 className="min-w-10 shrink-0"
+                disabled={isCopying}
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -148,6 +191,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile }) => {
                 placeholder="e.g. join-my-community" 
                 value={customText} 
                 onChange={(e) => setCustomText(e.target.value)}
+                disabled={isGettingLink}
               />
               <Button 
                 variant="outline" 

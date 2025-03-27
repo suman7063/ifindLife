@@ -20,8 +20,12 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
   
   useEffect(() => {
     const loadSettings = async () => {
-      const data = await fetchReferralSettings();
-      setSettings(data);
+      try {
+        const data = await fetchReferralSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error('Error loading referral settings:', error);
+      }
     };
     
     loadSettings();
@@ -32,11 +36,27 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
     
     setIsCopying(true);
     try {
-      // Use the context function if available, otherwise fallback to the utility
-      const link = getUserReferralLink() || getReferralLink(userProfile.referralCode);
-      copyReferralLink(link);
+      let link = null;
+      
+      // First try the context function
+      if (typeof getUserReferralLink === 'function') {
+        link = getUserReferralLink();
+      }
+      
+      // If that fails, use the utility function
+      if (!link) {
+        link = getReferralLink(userProfile.referralCode);
+      }
+      
+      if (link) {
+        copyReferralLink(link);
+        toast.success('Referral link copied to clipboard');
+      } else {
+        throw new Error('Could not generate referral link');
+      }
     } catch (error) {
       console.error('Error copying referral link:', error);
+      toast.error('Failed to copy referral link');
     } finally {
       setIsCopying(false);
     }

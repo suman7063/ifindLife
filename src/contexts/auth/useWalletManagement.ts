@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { UserProfile } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
@@ -30,14 +29,24 @@ export const useWalletManagement = (currentUser: UserProfile | null) => {
     }
   };
 
-  // Get the referral link for the current user
+  // Get the referral link for the current user with caching
   const getReferralLink = (): string | null => {
     if (!currentUser?.referralCode) {
       return null;
     }
     
-    // Generate the link using the utility function
-    return generateReferralLink(currentUser.referralCode);
+    try {
+      // If the user already has a persisted referral link, use that
+      if (currentUser.referralLink) {
+        return currentUser.referralLink;
+      }
+      
+      // Otherwise generate a new one
+      return generateReferralLink(currentUser.referralCode);
+    } catch (error) {
+      console.error('Error generating referral link:', error);
+      return null;
+    }
   };
 
   return {

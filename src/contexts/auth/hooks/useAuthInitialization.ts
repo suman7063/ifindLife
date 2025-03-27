@@ -17,7 +17,8 @@ export interface AuthInitializationState {
 export const useAuthInitialization = (): [
   AuthInitializationState,
   React.Dispatch<React.SetStateAction<UserProfile | null>>,
-  () => Promise<void>
+  () => Promise<void>,
+  (loading: boolean) => void // Added function to set loading state directly
 ] => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [authInitialized, setAuthInitialized] = useState(false);
@@ -25,6 +26,11 @@ export const useAuthInitialization = (): [
   const [profileNotFound, setProfileNotFound] = useState(false);
   const navigate = useNavigate();
   const { user, session } = useSupabaseAuth();
+
+  // Function to directly control loading state
+  const setLoading = useCallback((loading: boolean) => {
+    setAuthLoading(loading);
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     if (user) {
@@ -34,7 +40,7 @@ export const useAuthInitialization = (): [
         const userProfile = await fetchUserProfile(user);
         
         if (userProfile) {
-          console.log("User profile fetched:", userProfile);
+          console.log("User profile fetched:", userProfile.id);
           setCurrentUser(userProfile);
           setProfileNotFound(false);
           
@@ -78,6 +84,7 @@ export const useAuthInitialization = (): [
   return [
     { currentUser, authInitialized, authLoading, profileNotFound }, 
     setCurrentUser,
-    fetchProfile
+    fetchProfile,
+    setLoading
   ];
 };

@@ -30,6 +30,9 @@ export const fetchUserProfile = async (
       // Extract relevant metadata for user creation
       const userMetadata = user.user_metadata || {};
       
+      // Generate a unique referral code for the user
+      const referralCode = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
       // If no profile exists, create one
       const userData = {
         id: user.id,
@@ -40,7 +43,8 @@ export const fetchUserProfile = async (
         city: userMetadata.city || '',
         currency: 'USD',
         wallet_balance: 0,
-        profile_picture: userMetadata.avatar_url || ''
+        profile_picture: userMetadata.avatar_url || '',
+        referral_code: referralCode
       };
       
       console.log("Creating new user profile with data:", userData);
@@ -113,21 +117,43 @@ export const fetchUserProfile = async (
       
     userProfile.transactions = transactions || [];
     
-    console.log("Fetching user referrals");
-    const referralsData = await fetchUserReferrals(user.id);
+    // Ensure all users have a referral code
+    if (!userProfile.referralCode) {
+      const referralCode = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      console.log("User missing referral code, generating new one:", referralCode);
+      
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ referral_code: referralCode })
+        .eq('id', user.id);
+        
+      if (!updateError) {
+        userProfile.referralCode = referralCode;
+      } else {
+        console.error("Error updating user with referral code:", updateError);
+      }
+    }
     
-    // Convert to the Referral type format
-    userProfile.referrals = referralsData.map(ref => ({
-      id: ref.id,
-      referrerId: ref.referrerId,
-      referredId: ref.referredId,
-      referredName: ref.referredName,
-      referralCode: ref.referralCode,
-      status: ref.status,
-      rewardClaimed: ref.rewardClaimed,
-      createdAt: ref.createdAt,
-      completedAt: ref.completedAt
-    }));
+    console.log("Fetching user referrals");
+    try {
+      const referralsData = await fetchUserReferrals(user.id);
+      
+      // Convert to the Referral type format
+      userProfile.referrals = referralsData.map(ref => ({
+        id: ref.id,
+        referrerId: ref.referrerId,
+        referredId: ref.referredId,
+        referredName: ref.referredName,
+        referralCode: ref.referralCode,
+        status: ref.status,
+        rewardClaimed: ref.rewardClaimed,
+        createdAt: ref.createdAt,
+        completedAt: ref.completedAt
+      }));
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      userProfile.referrals = [];
+    }
     
     console.log("Profile data retrieval complete");
     return userProfile;
