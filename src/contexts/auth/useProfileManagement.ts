@@ -21,11 +21,15 @@ export const useProfileManagement = (
     return false;
   };
 
-  const updateProfilePicture = async (file: File): Promise<string | null> => {
-    if (!currentUser || !currentUser.id) return null;
+  const updateProfilePicture = async (file: File): Promise<string> => {
+    if (!currentUser || !currentUser.id) throw new Error("User not authenticated");
 
     try {
+      console.log("Starting profile picture update for user:", currentUser.id);
       const publicUrl = await updateProfilePic(currentUser.id, file);
+      console.log("Received public URL:", publicUrl);
+      
+      // Update the current user state with the new profile picture URL
       setCurrentUser(prev => {
         if (!prev) return null;
         return { 
@@ -33,10 +37,11 @@ export const useProfileManagement = (
           profilePicture: publicUrl 
         };
       });
+      
       return publicUrl;
     } catch (error) {
       console.error('Error updating profile picture:', error);
-      return null;
+      throw error; // Re-throw to allow component to handle the error
     }
   };
 

@@ -44,18 +44,28 @@ export const updateUserProfile = async (
 // Function to upload and update profile picture
 export const updateProfilePicture = async (userId: string, file: File): Promise<string> => {
   try {
+    console.log("Starting file upload process for user:", userId);
+    
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
     const filePath = `profile-pictures/${fileName}`;
     
+    console.log("Generated file path:", filePath);
+    
     // Upload file to storage
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError, data: uploadData } = await supabase.storage
       .from('avatars')
-      .upload(filePath, file);
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
       
     if (uploadError) {
+      console.error("Upload error:", uploadError);
       throw uploadError;
     }
+    
+    console.log("File uploaded successfully:", uploadData?.path);
     
     // Get public URL
     const { data } = supabase.storage
@@ -63,6 +73,7 @@ export const updateProfilePicture = async (userId: string, file: File): Promise<
       .getPublicUrl(filePath);
       
     const publicUrl = data.publicUrl;
+    console.log("Generated public URL:", publicUrl);
     
     // Update user profile with the new profile picture URL
     const { error: updateError } = await supabase
@@ -71,9 +82,11 @@ export const updateProfilePicture = async (userId: string, file: File): Promise<
       .eq('id', userId);
       
     if (updateError) {
+      console.error("Database update error:", updateError);
       throw updateError;
     }
     
+    console.log("Profile picture URL updated in database");
     return publicUrl;
   } catch (error) {
     console.error('Error updating profile picture:', error);

@@ -39,19 +39,29 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
     try {
       setIsUploading(true);
       
-      // Create a temporary preview URL
+      // Create a preview URL immediately from the file
       const tempUrl = URL.createObjectURL(file);
       setPreviewUrl(tempUrl);
       
-      // Call the actual upload function
+      console.log("Created temporary preview URL:", tempUrl);
+      console.log("Starting upload to server...");
+      
+      // Call the actual upload function (happens in background)
       const imageUrl = await onImageUpload(file);
+      console.log("Received server URL:", imageUrl);
       
-      // Update with the permanent URL from server
-      setPreviewUrl(imageUrl);
-      toast.success("Profile picture updated successfully!");
+      // Only update with the permanent URL if upload succeeded
+      if (imageUrl) {
+        setPreviewUrl(imageUrl);
+        toast.success("Profile picture updated successfully!");
+      }
       
-      // Release the temporary object URL
-      URL.revokeObjectURL(tempUrl);
+      // Release the temporary object URL to avoid memory leaks
+      // We do this after setting the new URL to avoid flicker
+      setTimeout(() => {
+        URL.revokeObjectURL(tempUrl);
+        console.log("Revoked temporary URL");
+      }, 1000);
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image. Please try again.");
@@ -90,7 +100,9 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
     <div className="flex flex-col items-center space-y-4">
       <div className="relative group">
         <Avatar className="h-24 w-24 border-2 border-ifind-aqua/20">
-          <AvatarImage src={previewUrl} alt={name} />
+          {previewUrl ? (
+            <AvatarImage src={previewUrl} alt={name} />
+          ) : null}
           <AvatarFallback className="text-lg bg-ifind-aqua/10 text-ifind-teal">
             {getInitials(name || "User")}
           </AvatarFallback>
