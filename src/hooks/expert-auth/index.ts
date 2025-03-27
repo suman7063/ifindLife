@@ -2,11 +2,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
 import { 
   ExpertProfile, 
   UseExpertAuthReturn, 
-  ExpertRegistrationData 
+  ExpertAuthState 
 } from './types';
 import { useExpertAuthentication } from './useExpertAuthentication';
 import { useExpertProfile } from './useExpertProfile';

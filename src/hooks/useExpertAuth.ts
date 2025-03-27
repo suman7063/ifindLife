@@ -1,6 +1,7 @@
 
 // Re-export the useExpertAuth hook and types from the refactored module
-export { useExpertAuth, ExpertProfile } from './expert-auth';
+export { useExpertAuth } from './expert-auth';
+export { ExpertProfile } from './expert-auth/types';
 export type { 
   ExpertAuthState, 
   UseExpertAuthReturn, 
