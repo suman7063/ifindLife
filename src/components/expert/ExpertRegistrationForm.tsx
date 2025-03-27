@@ -88,6 +88,7 @@ const ExpertRegistrationForm = () => {
               formData={formData}
               services={services}
               handleCheckboxChange={handleCheckboxChange}
+              setFormData={setFormData}
               errors={errors}
             />
             

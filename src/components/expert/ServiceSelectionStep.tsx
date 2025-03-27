@@ -19,6 +19,7 @@ const ServiceSelectionStep = ({
   formData,
   services,
   handleCheckboxChange,
+  setFormData,
   errors
 }: ServiceSelectionStepProps) => {
   return (
