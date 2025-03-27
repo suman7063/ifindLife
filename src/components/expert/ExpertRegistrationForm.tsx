@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FormProvider } from 'react-hook-form';
+import { useForm, FormProvider } from 'react-hook-form';
 import PersonalInfoStep from './PersonalInfoStep';
 import AddressInfoStep from './AddressInfoStep';
 import ProfessionalInfoStep from './ProfessionalInfoStep';
@@ -30,9 +30,34 @@ const ExpertRegistrationForm = () => {
     form
   } = useExpertRegistration();
 
+  // Ensure form object exists with necessary properties
+  const methods = useForm({
+    defaultValues: {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      confirmPassword: formData.confirmPassword,
+      address: formData.address,
+      city: formData.city,
+      state: formData.state,
+      country: formData.country,
+      specialization: formData.specialization,
+      experience: formData.experience,
+      bio: formData.bio,
+      acceptedTerms: formData.acceptedTerms
+    }
+  });
+
+  // Use the actual form instance from methods rather than the potentially undefined form from useExpertRegistration
   return (
-    <FormProvider {...form}>
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <FormProvider {...methods}>
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        if (step === 4) {
+          handleSubmit(e);
+        }
+      }} className="space-y-6">
         {step === 1 && (
           <PersonalInfoStep 
             formData={formData} 

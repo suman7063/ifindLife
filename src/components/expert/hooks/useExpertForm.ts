@@ -29,14 +29,18 @@ export const useExpertForm = (initialFormData: ExpertFormData) => {
   };
 
   const handleFileUpload = async (file: File): Promise<void> => {
-    // Create a fake URL for the file for preview purposes
-    const fileUrl = URL.createObjectURL(file);
-    
-    setFormData(prev => ({
-      ...prev,
-      certificates: [...(prev.certificates || []), file],
-      certificateUrls: [...(prev.certificateUrls || []), fileUrl]
-    }));
+    try {
+      // Create a fake URL for the file for preview purposes
+      const fileUrl = URL.createObjectURL(file);
+      
+      setFormData(prev => ({
+        ...prev,
+        certificates: [...(prev.certificates || []), file],
+        certificateUrls: [...(prev.certificateUrls || []), fileUrl]
+      }));
+    } catch (error) {
+      console.error("Error uploading file:", error);
+    }
   };
 
   const handleRemoveCertificate = (index: number) => {

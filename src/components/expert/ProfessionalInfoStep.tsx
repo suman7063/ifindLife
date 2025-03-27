@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormItem, FormMessage } from '@/components/ui/form';
-import { X } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { X, Upload } from 'lucide-react';
 import { ExpertFormData } from './types';
 
 interface ProfessionalInfoStepProps {
@@ -26,12 +26,16 @@ const ProfessionalInfoStep = ({
   prevStep,
   errors
 }: ProfessionalInfoStepProps) => {
-  const formContext = useFormContext();
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       handleFileUpload(e.target.files[0]);
     }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -88,15 +92,28 @@ const ProfessionalInfoStep = ({
           <label className="block text-sm font-medium text-gray-700">
             Certificates / Qualifications
           </label>
-          <div className="flex items-center space-x-2">
-            <Input
-              id="certificate"
-              name="certificate"
-              type="file"
-              onChange={onFileChange}
-              accept=".pdf,.png,.jpg,.jpeg"
-            />
-          </div>
+          
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            id="certificate"
+            name="certificate"
+            type="file"
+            onChange={onFileChange}
+            accept=".pdf,.png,.jpg,.jpeg"
+            className="hidden"
+          />
+          
+          {/* Custom styled upload button */}
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={triggerFileInput}
+            className="w-full flex items-center justify-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Browse for Certificate
+          </Button>
           
           {formData.certificateUrls && formData.certificateUrls.length > 0 && (
             <div className="mt-3 space-y-2">
