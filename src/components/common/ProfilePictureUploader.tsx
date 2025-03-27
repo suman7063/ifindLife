@@ -38,19 +38,42 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
 
     try {
       setIsUploading(true);
+      
+      // Create a temporary preview URL
+      const tempUrl = URL.createObjectURL(file);
+      setPreviewUrl(tempUrl);
+      
+      // Call the actual upload function
       const imageUrl = await onImageUpload(file);
+      
+      // Update with the permanent URL from server
       setPreviewUrl(imageUrl);
       toast.success("Profile picture updated successfully!");
+      
+      // Release the temporary object URL
+      URL.revokeObjectURL(tempUrl);
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image. Please try again.");
+      setPreviewUrl(currentImage); // Revert to previous image on error
     } finally {
       setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''; // Reset file input
+      }
     }
   };
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleRemoveImage = () => {
+    setPreviewUrl(undefined);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    toast.success("Profile picture removed");
   };
 
   // Generate initials for the avatar fallback
@@ -69,7 +92,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
         <Avatar className="h-24 w-24 border-2 border-ifind-aqua/20">
           <AvatarImage src={previewUrl} alt={name} />
           <AvatarFallback className="text-lg bg-ifind-aqua/10 text-ifind-teal">
-            {getInitials(name)}
+            {getInitials(name || "User")}
           </AvatarFallback>
         </Avatar>
         
@@ -77,6 +100,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
           type="button"
           onClick={triggerFileInput}
           className="absolute bottom-0 right-0 bg-ifind-aqua hover:bg-ifind-teal text-white p-1.5 rounded-full shadow-md transition-colors"
+          disabled={isUploading}
         >
           <Camera className="h-4 w-4" />
         </button>
@@ -100,7 +124,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
           disabled={isUploading}
         >
           <ImageIcon className="h-3.5 w-3.5 mr-1" />
-          Change Picture
+          {isUploading ? 'Uploading...' : 'Change Picture'}
         </Button>
         
         {previewUrl && (
@@ -109,7 +133,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
             variant="destructive"
             size="sm"
             className="text-xs"
-            onClick={() => setPreviewUrl(undefined)}
+            onClick={handleRemoveImage}
             disabled={isUploading}
           >
             <Trash2 className="h-3.5 w-3.5 mr-1" />
