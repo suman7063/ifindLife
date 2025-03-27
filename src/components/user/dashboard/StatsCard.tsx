@@ -1,34 +1,46 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { LucideIcon } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 
 interface StatsCardProps {
   title: string;
-  value: number;
-  description: string;
-  icon: LucideIcon;
-  className?: string;
+  value: string | number;
+  icon: React.ReactNode;
+  description?: string;
+  link?: string;
+  linkText?: string;
 }
 
 const StatsCard: React.FC<StatsCardProps> = ({ 
   title, 
   value, 
-  description, 
-  icon: Icon,
-  className = ""
+  icon, 
+  description,
+  link,
+  linkText
 }) => {
   return (
-    <Card className={`border-ifind-aqua/10 transition-all duration-300 hover:shadow-md ${className}`}>
-      <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center">
-          <Icon className="mr-2 h-4 w-4 text-ifind-aqua" />
-          {title}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+          <div className="text-muted-foreground">{icon}</div>
+        </div>
         <div className="text-2xl font-bold">{value}</div>
-        <p className="text-xs text-gray-500 mt-1">{description}</p>
+        {description && (
+          <p className="text-sm text-muted-foreground mt-1">{description}</p>
+        )}
+        {link && linkText && (
+          <div className="mt-3">
+            <Link 
+              to={link}
+              className="text-sm text-primary hover:underline"
+            >
+              {linkText}
+            </Link>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

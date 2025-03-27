@@ -30,6 +30,14 @@ const ProfilePictureSection: React.FC = () => {
       }
       
       console.log("Calling updateProfilePicture with:", { userId: currentUser.id, fileName: file.name });
+      
+      // Check if updateProfilePicture exists
+      if (!updateProfilePicture) {
+        console.error("updateProfilePicture function is not available");
+        toast.error('Unable to update profile picture due to a system error');
+        throw new Error("updateProfilePicture function is not available");
+      }
+      
       const url = await updateProfilePicture(file);
       console.log("Image uploaded successfully, received URL:", url);
       toast.success('Profile picture updated successfully!');

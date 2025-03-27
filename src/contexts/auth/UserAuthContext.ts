@@ -4,6 +4,7 @@ import { User } from '@supabase/supabase-js';
 import type { UserProfile } from '@/types/supabase';
 import type { UserAuthContextType } from './types';
 
+// Ensure the context provides all necessary properties and functions for profile management
 export const UserAuthContext = createContext<UserAuthContextType>({
   currentUser: null,
   isAuthenticated: false,
@@ -14,7 +15,10 @@ export const UserAuthContext = createContext<UserAuthContextType>({
   signup: async () => false,
   logout: async () => {},
   updateProfile: async () => false,
-  updateProfilePicture: async () => null,
+  updateProfilePicture: async (file: File) => {
+    console.error("Default updateProfilePicture implementation called");
+    return '';
+  }, // Ensure this is properly typed
   updatePassword: async () => false,
   addToFavorites: async () => false,
   removeFromFavorites: async () => false,
