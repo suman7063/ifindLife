@@ -2,11 +2,12 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { LucideIcon } from 'lucide-react';
 
 interface StatsCardProps {
   title: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon: LucideIcon;
   description?: string;
   link?: string;
   linkText?: string;
@@ -15,7 +16,7 @@ interface StatsCardProps {
 const StatsCard: React.FC<StatsCardProps> = ({ 
   title, 
   value, 
-  icon, 
+  icon: Icon, 
   description,
   link,
   linkText
@@ -25,7 +26,9 @@ const StatsCard: React.FC<StatsCardProps> = ({
       <CardContent className="p-6">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-          <div className="text-muted-foreground">{icon}</div>
+          <div className="text-muted-foreground">
+            <Icon size={20} />
+          </div>
         </div>
         <div className="text-2xl font-bold">{value}</div>
         {description && (

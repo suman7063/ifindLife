@@ -5,11 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { Link } from 'react-router-dom';
+import { UserProfile } from '@/types/supabase';
 
-const UserProfileCard: React.FC = () => {
+interface UserProfileCardProps {
+  userProfile?: UserProfile | null;
+}
+
+const UserProfileCard: React.FC<UserProfileCardProps> = ({ userProfile }) => {
   const { currentUser } = useUserAuth();
+  
+  // Use provided userProfile or fall back to the currentUser from context
+  const userData = userProfile || currentUser;
 
-  if (!currentUser) {
+  if (!userData) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -34,27 +42,27 @@ const UserProfileCard: React.FC = () => {
       <CardContent className="space-y-4">
         <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
           <div className="flex-shrink-0">
-            {currentUser.profilePicture ? (
+            {userData.profilePicture ? (
               <img
-                src={currentUser.profilePicture}
-                alt={currentUser.name || 'User'}
+                src={userData.profilePicture}
+                alt={userData.name || 'User'}
                 className="h-24 w-24 rounded-full object-cover border-2 border-primary/20"
               />
             ) : (
               <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-500">
-                {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                {userData.name ? userData.name.charAt(0).toUpperCase() : 'U'}
               </div>
             )}
           </div>
           <div className="flex-grow text-center md:text-left">
-            <h3 className="text-xl font-medium">{currentUser.name || 'User'}</h3>
-            <p className="text-muted-foreground">{currentUser.email}</p>
-            {currentUser.phone && (
-              <p className="text-muted-foreground">{currentUser.phone}</p>
+            <h3 className="text-xl font-medium">{userData.name || 'User'}</h3>
+            <p className="text-muted-foreground">{userData.email}</p>
+            {userData.phone && (
+              <p className="text-muted-foreground">{userData.phone}</p>
             )}
-            {currentUser.country && (
+            {userData.country && (
               <p className="text-muted-foreground">
-                {currentUser.city ? `${currentUser.city}, ` : ''}{currentUser.country}
+                {userData.city ? `${userData.city}, ` : ''}{userData.country}
               </p>
             )}
           </div>
