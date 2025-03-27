@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -6,7 +7,6 @@ import { ExpertFormData, formDataToRegistrationData } from '../types';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
 import { useExpertForm } from './useExpertForm';
 import { fetchServices } from '../services/expertServicesService';
-import { validateStep, validateSubmission } from '../utils/formValidation';
 import { ServiceType } from '../types';
 
 export const useExpertRegistration = () => {
@@ -16,12 +16,6 @@ export const useExpertRegistration = () => {
   const [services, setServices] = useState<ServiceType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  
-  const form = useForm({
-    defaultValues: {
-      // Add default values as needed
-    }
-  });
   
   const initialFormData: ExpertFormData = {
     name: '',
@@ -53,14 +47,19 @@ export const useExpertRegistration = () => {
 
   useEffect(() => {
     const loadServices = async () => {
-      const servicesData = await fetchServices();
-      setServices(servicesData);
+      try {
+        const servicesData = await fetchServices();
+        setServices(servicesData);
+      } catch (error) {
+        console.error('Error loading services:', error);
+        toast.error('Failed to load services');
+      }
     };
     
     loadServices();
   }, []);
 
-  const validateField = (name: string, value: string): string => {
+  const validateField = (name: string, value: any): string => {
     switch(name) {
       case 'name':
         return !value ? 'Name is required' : '';
@@ -89,6 +88,10 @@ export const useExpertRegistration = () => {
         return !value && step >= 3 ? 'Experience information is required' : '';
       case 'bio':
         return !value && step >= 3 ? 'Bio is required' : '';
+      case 'selectedServices':
+        return (!value || value.length === 0) && step === 4 ? 'Please select at least one service' : '';
+      case 'acceptedTerms':
+        return (!value) && step === 4 ? 'You must accept the terms and conditions' : '';
       default:
         return '';
     }
@@ -100,7 +103,7 @@ export const useExpertRegistration = () => {
     
     if (step === 1) {
       ['name', 'email', 'phone', 'password', 'confirmPassword'].forEach(field => {
-        const error = validateField(field, formData[field as keyof ExpertFormData] as string);
+        const error = validateField(field, formData[field as keyof ExpertFormData]);
         if (error) {
           newErrors[field] = error;
           isValid = false;
@@ -108,7 +111,7 @@ export const useExpertRegistration = () => {
       });
     } else if (step === 2) {
       ['address', 'city', 'state', 'country'].forEach(field => {
-        const error = validateField(field, formData[field as keyof ExpertFormData] as string);
+        const error = validateField(field, formData[field as keyof ExpertFormData]);
         if (error) {
           newErrors[field] = error;
           isValid = false;
@@ -116,20 +119,24 @@ export const useExpertRegistration = () => {
       });
     } else if (step === 3) {
       ['specialization', 'experience', 'bio'].forEach(field => {
-        const error = validateField(field, formData[field as keyof ExpertFormData] as string);
+        const error = validateField(field, formData[field as keyof ExpertFormData]);
         if (error) {
           newErrors[field] = error;
           isValid = false;
         }
       });
     } else if (step === 4) {
-      if (formData.selectedServices.length === 0) {
-        newErrors.selectedServices = 'Please select at least one service';
+      // Check for selected services
+      const servicesError = validateField('selectedServices', formData.selectedServices);
+      if (servicesError) {
+        newErrors.selectedServices = servicesError;
         isValid = false;
       }
       
-      if (!formData.acceptedTerms) {
-        newErrors.acceptedTerms = 'You must accept the terms and conditions';
+      // Check for terms acceptance
+      const termsError = validateField('acceptedTerms', formData.acceptedTerms);
+      if (termsError) {
+        newErrors.acceptedTerms = termsError;
         isValid = false;
       }
     }
@@ -142,21 +149,31 @@ export const useExpertRegistration = () => {
     e.preventDefault();
     
     if (isSubmitting) return;
-    setIsSubmitting(true);
     
+    // Validate the current step (which is the final step)
     if (!validateCurrentStep()) {
-      setIsSubmitting(false);
+      // Show toast for validation errors
+      toast.error('Please correct the errors before submitting');
       return;
     }
     
+    setIsSubmitting(true);
+    
     try {
+      console.log('Submitting form with data:', formData);
+      
+      // Convert form data to registration data
       const registrationData = formDataToRegistrationData(formData);
       
+      // Attempt to register the expert
+      console.log('Registering with data:', registrationData);
       const success = await register(registrationData);
       
       if (success) {
         toast.success("Registration successful! Please check your email for verification and then log in.");
         navigate('/expert-login');
+      } else {
+        toast.error("Registration failed. Please try again.");
       }
     } catch (error) {
       console.error('Error during registration:', error);
@@ -167,7 +184,11 @@ export const useExpertRegistration = () => {
   };
 
   const nextStep = () => {
-    if (!validateCurrentStep()) return;
+    if (!validateCurrentStep()) {
+      // Show validation errors
+      toast.error('Please correct the errors before proceeding');
+      return;
+    }
     setStep(step + 1);
   };
 
@@ -188,7 +209,6 @@ export const useExpertRegistration = () => {
     nextStep,
     prevStep,
     setFormData,
-    isSubmitting,
-    form
+    isSubmitting
   };
 };

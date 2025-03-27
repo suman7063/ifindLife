@@ -27,10 +27,9 @@ const ExpertRegistrationForm = () => {
     prevStep,
     setFormData,
     isSubmitting,
-    form
   } = useExpertRegistration();
 
-  // Ensure form object exists with necessary properties
+  // Initialize form with form data
   const methods = useForm({
     defaultValues: {
       name: formData.name,
@@ -49,15 +48,17 @@ const ExpertRegistrationForm = () => {
     }
   });
 
-  // Use the actual form instance from methods rather than the potentially undefined form from useExpertRegistration
+  // Function to handle form submission
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (step === 4) {
+      handleSubmit(e);
+    }
+  };
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={(e) => {
-        e.preventDefault();
-        if (step === 4) {
-          handleSubmit(e);
-        }
-      }} className="space-y-6">
+      <form onSubmit={onSubmit} className="space-y-6">
         {step === 1 && (
           <PersonalInfoStep 
             formData={formData} 
