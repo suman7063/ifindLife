@@ -14,6 +14,7 @@ import { Link, Navigate } from 'react-router-dom';
 const UserReferrals: React.FC = () => {
   const { currentUser, isAuthenticated } = useUserAuth();
   const [referrals, setReferrals] = useState<ReferralUI[]>([]);
+  const [settings, setSettings] = useState<ReferralSettings | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -31,7 +32,17 @@ const UserReferrals: React.FC = () => {
       }
     };
 
+    const loadSettings = async () => {
+      try {
+        const data = await fetchReferralSettings();
+        setSettings(data);
+      } catch (error) {
+        console.error("Error loading referral settings:", error);
+      }
+    };
+
     loadReferrals();
+    loadSettings();
   }, [currentUser]);
 
   if (!isAuthenticated) {
@@ -56,7 +67,7 @@ const UserReferrals: React.FC = () => {
             </p>
           </div>
 
-          {currentUser && <ReferralCard userProfile={currentUser} />}
+          {currentUser && <ReferralCard userProfile={currentUser} settings={settings} />}
           
           <div className="mt-8">
             <ReferralsList referrals={referrals} isLoading={isLoading} />

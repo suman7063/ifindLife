@@ -4,28 +4,29 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
-import { ReferralSettings } from '@/types/supabase';
+import { ReferralSettings, UserProfile } from '@/types/supabase';
 import { toast } from 'sonner';
 
 interface ReferralCardProps {
   settings?: ReferralSettings | null;
+  userProfile: UserProfile;
 }
 
-const ReferralCard: React.FC<ReferralCardProps> = ({ settings }) => {
-  const { currentUser, getReferralLink } = useUserAuth();
+const ReferralCard: React.FC<ReferralCardProps> = ({ settings, userProfile }) => {
+  const { getReferralLink } = useUserAuth();
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Get the referral link using the hook from UserAuthContext
-  const referralLink = currentUser?.referralCode ? getReferralLink() : null;
+  const referralLink = userProfile?.referralCode ? getReferralLink() : null;
 
   // Format the reward amount with currency symbol
-  const formattedAmount = settings?.rewardAmount
+  const formattedAmount = settings?.referrer_reward
     ? new Intl.NumberFormat('en-IN', {
         style: 'currency',
-        currency: settings.currency || 'INR',
+        currency: 'INR', // Using INR as default since settings doesn't have currency
         minimumFractionDigits: 0,
-      }).format(settings.rewardAmount)
+      }).format(settings.referrer_reward)
     : '₹500';
 
   const copyToClipboard = () => {
@@ -77,7 +78,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ settings }) => {
             </div>
           </div>
           
-          {!referralLink && currentUser?.referralCode && (
+          {!referralLink && userProfile?.referralCode && (
             <div className="text-center">
               <Button 
                 variant="outline" 
