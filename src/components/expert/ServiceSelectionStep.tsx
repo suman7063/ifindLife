@@ -53,8 +53,8 @@ const ServiceSelectionStep = ({
               </Label>
               <p className="text-sm text-muted-foreground">{service.description}</p>
               <div className="flex space-x-4 text-sm">
-                <span>USD: ${service.rate_usd}</span>
-                <span>INR: ₹{service.rate_inr}</span>
+                <span>USD: ${service.rateUSD}</span>
+                <span>INR: ₹{service.rateINR}</span>
               </div>
             </div>
           </div>
