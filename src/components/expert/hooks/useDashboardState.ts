@@ -1,58 +1,51 @@
-
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-import type { UserBasic } from '@/types/user';
+import { fetchServices } from '../services/expertServicesService';
+import { ServiceType } from '../types';
 
-export const useDashboardState = () => {
+const useDashboardState = () => {
   const { expert, loading } = useExpertAuth();
-  const navigate = useNavigate();
-  const [users, setUsers] = useState<UserBasic[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [services, setServices] = useState<ServiceType[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [earnings, setEarnings] = useState<any[]>([]);
   
   useEffect(() => {
-    // Check if user is authenticated
-    if (!loading && !expert) {
-      toast.error('Please log in to access the expert dashboard');
-      navigate('/expert-login');
-      return;
-    }
-    
-    // Load users from database for reporting functionality
-    const fetchUsers = async () => {
-      try {
-        setLoadingUsers(true);
-        const { data, error } = await supabase
-          .from('users')
-          .select('id, name')
-          .order('name', { ascending: true });
-        
-        if (error) {
-          console.error("Error loading users:", error);
-          return;
-        }
-        
-        if (data) {
-          setUsers(data as UserBasic[]);
-        }
-      } catch (e) {
-        console.error("Error loading users:", e);
-      } finally {
-        setLoadingUsers(false);
-      }
+    const loadServices = async () => {
+      const servicesData = await fetchServices();
+      setServices(servicesData);
     };
     
-    if (expert) {
-      fetchUsers();
-    }
-  }, [expert, loading, navigate]);
-
+    loadServices();
+    
+    // In a real app, these would be API calls
+    // For now, we'll use mock data
+    setUsers([
+      { id: 1, name: 'John Doe', email: 'john@example.com', lastSession: '2023-05-15' },
+      { id: 2, name: 'Jane Smith', email: 'jane@example.com', lastSession: '2023-05-10' },
+      { id: 3, name: 'Bob Johnson', email: 'bob@example.com', lastSession: '2023-05-05' },
+    ]);
+    
+    setAppointments([
+      { id: 1, user: 'John Doe', date: '2023-05-20', time: '10:00 AM', status: 'confirmed' },
+      { id: 2, user: 'Jane Smith', date: '2023-05-22', time: '2:00 PM', status: 'pending' },
+      { id: 3, user: 'Bob Johnson', date: '2023-05-25', time: '11:30 AM', status: 'confirmed' },
+    ]);
+    
+    setEarnings([
+      { id: 1, user: 'John Doe', amount: 50, date: '2023-05-15', service: 'Therapy Session' },
+      { id: 2, user: 'Jane Smith', amount: 35, date: '2023-05-10', service: 'Anxiety Management' },
+      { id: 3, user: 'Bob Johnson', amount: 45, date: '2023-05-05', service: 'Depression Counseling' },
+    ]);
+  }, []);
+  
   return {
     expert,
-    loading: loading || loadingUsers,
-    users
+    loading,
+    services,
+    users,
+    appointments,
+    earnings
   };
 };
 
