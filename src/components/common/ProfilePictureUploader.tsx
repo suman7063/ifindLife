@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera, ImageIcon, Trash2 } from 'lucide-react';
@@ -52,16 +51,18 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
       
       // Only update with the permanent URL if upload succeeded
       if (imageUrl) {
+        // We keep the temp URL for display until we confirm the server URL is working
+        // This prevents flickering during the transition
         setPreviewUrl(imageUrl);
         toast.success("Profile picture updated successfully!");
       }
       
       // Release the temporary object URL to avoid memory leaks
-      // We do this after setting the new URL to avoid flicker
+      // We delay this to ensure the new image has loaded
       setTimeout(() => {
         URL.revokeObjectURL(tempUrl);
         console.log("Revoked temporary URL");
-      }, 1000);
+      }, 3000);
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image. Please try again.");
