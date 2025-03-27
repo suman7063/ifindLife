@@ -20,49 +20,80 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
   const [previewUrl, setPreviewUrl] = useState<string | undefined>(currentImage);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  console.log('ProfilePictureUploader rendering:', { 
+    currentImage, 
+    previewUrl, 
+    name, 
+    isUploading,
+    onImageUploadExists: !!onImageUpload
+  });
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input change event triggered", { 
+      filesLength: e.target.files?.length 
+    });
+    
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log("No file selected");
+      return;
+    }
+
+    console.log("File selected", { 
+      name: file.name, 
+      type: file.type, 
+      size: `${(file.size / 1024).toFixed(2)} KB` 
+    });
 
     // Check file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
+      console.log("File too large", { size: file.size });
       toast.error("File is too large. Maximum size is 5MB.");
       return;
     }
 
     // Check file type
     if (!file.type.startsWith('image/')) {
+      console.log("Invalid file type", { type: file.type });
       toast.error("Please upload an image file.");
       return;
     }
 
     try {
+      console.log("Starting upload process");
       setIsUploading(true);
       
       // Create a temporary preview URL immediately for better UX
       const tempUrl = URL.createObjectURL(file);
+      console.log("Created temporary preview URL", { tempUrl });
       setPreviewUrl(tempUrl);
       
       // Call the actual upload function
+      console.log("Calling onImageUpload with file");
       const imageUrl = await onImageUpload(file);
       
+      console.log("Upload completed", { imageUrl });
       // Update with the server URL
       if (imageUrl) {
+        console.log("Setting preview URL to server URL", { imageUrl });
         setPreviewUrl(imageUrl);
         toast.success("Profile picture updated successfully!");
       }
       
       // Release the temporary object URL
       setTimeout(() => {
+        console.log("Revoking temporary URL");
         URL.revokeObjectURL(tempUrl);
       }, 3000);
       
     } catch (error) {
-      console.error("Error uploading image:", error);
+      console.error("Error in handleFileChange:", error);
       toast.error("Failed to upload image. Please try again.");
       // Revert to previous image on error
+      console.log("Reverting to previous image", { currentImage });
       setPreviewUrl(currentImage);
     } finally {
+      console.log("Upload process finished");
       setIsUploading(false);
       // Reset file input
       if (fileInputRef.current) {
@@ -72,12 +103,14 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
   };
 
   const triggerFileInput = () => {
+    console.log("Triggering file input click");
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
   const handleRemoveImage = () => {
+    console.log("Remove image button clicked");
     setPreviewUrl(undefined);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
