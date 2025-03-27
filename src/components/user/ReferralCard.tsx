@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,7 @@ import {
   shareViaTwitter
 } from '@/utils/referralUtils';
 import { Gift, Copy, Share, Mail, Twitter, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ReferralCardProps {
   userProfile: UserProfile;
