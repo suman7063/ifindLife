@@ -115,15 +115,17 @@ export const useExpertAuthentication = (
       });
 
       if (authError) {
-        toast.error(authError.message);
-        setLoading(false);
-        return false;
+        console.error('Auth signup error:', authError);
+        
+        if (authError.message.includes('User already registered')) {
+          throw new Error('Email is already registered. Please use a different email or try logging in.');
+        }
+        
+        throw authError;
       }
 
       if (!authData.user) {
-        toast.error('Failed to create user');
-        setLoading(false);
-        return false;
+        throw new Error('Failed to create user account');
       }
 
       // 2. Create expert profile
@@ -149,17 +151,16 @@ export const useExpertAuthentication = (
         console.error('Error creating expert profile:', profileError);
         // Try to clean up the auth user since profile creation failed
         await supabase.auth.signOut();
-        toast.error('Failed to create expert profile');
-        setLoading(false);
-        return false;
+        throw new Error('Failed to create expert profile: ' + profileError.message);
       }
 
       toast.success('Registration successful! Please check your email for verification.');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error('An unexpected error occurred during registration');
-      return false;
+      
+      // Propagate the error to be handled upstream
+      throw error;
     } finally {
       setLoading(false);
     }

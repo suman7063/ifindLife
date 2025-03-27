@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { ExpertFormData, formDataToRegistrationData } from '../types';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
@@ -48,11 +47,13 @@ export const useExpertRegistration = () => {
   useEffect(() => {
     const loadServices = async () => {
       try {
+        console.log('Fetching services...');
         const servicesData = await fetchServices();
+        console.log('Services fetched successfully:', servicesData);
         setServices(servicesData);
       } catch (error) {
         console.error('Error loading services:', error);
-        toast.error('Failed to load services');
+        toast.error('Failed to load services. Using default service list.');
       }
     };
     
@@ -70,7 +71,7 @@ export const useExpertRegistration = () => {
         return !value ? 'Phone number is required' : '';
       case 'password':
         return !value ? 'Password is required' : 
-               value.length < 8 ? 'Password must be at least 8 characters' : '';
+               value.length < 6 ? 'Password must be at least 6 characters' : '';
       case 'confirmPassword':
         return !value ? 'Please confirm your password' : 
                value !== formData.password ? 'Passwords do not match' : '';
@@ -175,9 +176,19 @@ export const useExpertRegistration = () => {
       } else {
         toast.error("Registration failed. Please try again.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during registration:', error);
-      toast.error("Registration failed. Please try again.");
+      
+      // Check if it's a 422 error (validation error or user already exists)
+      if (error.message && error.message.includes('422')) {
+        if (error.message.includes('already registered')) {
+          toast.error("This email is already registered. Please try logging in or use a different email.");
+        } else {
+          toast.error("Registration validation failed. Please check your form and try again.");
+        }
+      } else {
+        toast.error("Registration failed. Please try again later.");
+      }
     } finally {
       setIsSubmitting(false);
     }

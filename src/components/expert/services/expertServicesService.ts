@@ -1,5 +1,6 @@
 
 import { ServiceType } from '../types';
+import { supabase } from '@/lib/supabase';
 
 // Simulated data for local development
 const mockServices: ServiceType[] = [
@@ -28,30 +29,34 @@ const mockServices: ServiceType[] = [
 
 export const fetchServices = async (): Promise<ServiceType[]> => {
   try {
-    // For local development without a backend, return mock data
-    if (process.env.NODE_ENV === 'development') {
+    // First try to fetch from Supabase
+    const { data, error } = await supabase
+      .from('services')
+      .select('*');
+    
+    if (error) {
+      console.error('Error fetching services from Supabase:', error);
+      console.log('Falling back to mock data');
       return mockServices;
     }
     
-    // If connected to a real backend, fetch data
-    const response = await fetch('/api/services');
-    
-    if (!response.ok) {
-      throw new Error('Failed to fetch services');
+    if (data && data.length > 0) {
+      // Map the backend field names to our frontend field names if needed
+      return data.map((service: any) => ({
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        rateUSD: service.rate_usd || service.rateUSD || 0,
+        rateINR: service.rate_inr || service.rateINR || 0
+      }));
     }
     
-    const services = await response.json();
-    
-    // Map the backend field names to our frontend field names
-    return services.map((service: any) => ({
-      id: service.id,
-      name: service.name,
-      description: service.description,
-      rateUSD: service.rate_usd,
-      rateINR: service.rate_inr
-    }));
+    // If no data from Supabase, use mock data
+    console.log('No services found in Supabase, using mock data');
+    return mockServices;
   } catch (error) {
-    console.error('Error fetching services:', error);
+    console.error('Exception fetching services:', error);
+    console.log('Falling back to mock data due to exception');
     return mockServices; // Fallback to mock data in case of error
   }
 };

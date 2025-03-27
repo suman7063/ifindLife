@@ -7,7 +7,7 @@ import ProfessionalInfoStep from './ProfessionalInfoStep';
 import ServiceSelectionStep from './ServiceSelectionStep';
 import { useExpertRegistration } from './hooks/useExpertRegistration';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { FormMessage } from '@/components/ui/form';
@@ -48,17 +48,9 @@ const ExpertRegistrationForm = () => {
     }
   });
 
-  // Function to handle form submission
-  const onSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (step === 4) {
-      handleSubmit(e);
-    }
-  };
-
   return (
     <FormProvider {...methods}>
-      <form onSubmit={onSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {step === 1 && (
           <PersonalInfoStep 
             formData={formData} 
@@ -96,7 +88,6 @@ const ExpertRegistrationForm = () => {
               formData={formData}
               services={services}
               handleCheckboxChange={handleCheckboxChange}
-              setFormData={setFormData}
               errors={errors}
             />
             
@@ -141,7 +132,14 @@ const ExpertRegistrationForm = () => {
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ifind-aqua hover:bg-ifind-teal transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Processing...' : 'Complete Registration'}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="inline mr-2 h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  'Complete Registration'
+                )}
               </button>
             </div>
           </div>
