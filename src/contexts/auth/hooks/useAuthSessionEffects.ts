@@ -7,7 +7,7 @@ export const useAuthSessionEffects = (
   authState: AuthInitializationState,
   fetchProfile: () => Promise<void>
 ) => {
-  const { user, authLoading } = useSupabaseAuth();
+  const { user, loading } = useSupabaseAuth();
 
   // Main effect to fetch profile when auth state changes
   useEffect(() => {
