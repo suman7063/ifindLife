@@ -20,11 +20,11 @@ export type UserAuthContextType = {
   updatePassword: (newPassword: string) => Promise<boolean>;
   
   // Expert interactions
-  addToFavorites: (expert: Expert) => Promise<boolean>;
+  addToFavorites: (expertId: string) => Promise<boolean>;
   removeFromFavorites: (expertId: string) => Promise<boolean>;
   addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
   reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string) => boolean;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
   getExpertShareLink: (expertId: string) => string;
   
   // Wallet & referrals

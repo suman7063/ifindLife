@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -107,7 +108,18 @@ const UserLogin = () => {
     
     try {
       console.log("Attempting to sign up with:", userData);
-      const success = await signup(userData);
+      // Update this line to match the expected signature
+      const success = await signup(
+        userData.email, 
+        userData.password, 
+        {
+          name: userData.name,
+          phone: userData.phone,
+          country: userData.country,
+          city: userData.city
+        }, 
+        userData.referralCode
+      );
       console.log("Signup result:", success);
       
       if (success) {

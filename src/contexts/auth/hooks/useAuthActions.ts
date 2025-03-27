@@ -5,6 +5,7 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { processReferralCode } from '@/utils/referralUtils';
+import { UserProfile } from '@/types/supabase';
 
 export const useAuthActions = (fetchProfile: () => Promise<void>) => {
   const [actionLoading, setActionLoading] = useState(false);
@@ -80,7 +81,7 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     setActionLoading(true);
     try {
       await authLogout();
@@ -88,11 +89,9 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       // Redirect to home page instead of login
       navigate('/');
       toast.info('You have been logged out');
-      return true;
     } catch (error) {
       console.error("Logout error:", error);
       toast.error('An error occurred during logout');
-      return false;
     } finally {
       setActionLoading(false);
     }

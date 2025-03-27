@@ -12,7 +12,7 @@ export const UserAuthContext = createContext<UserAuthContextType>({
   user: null,
   login: async () => false,
   signup: async () => false,
-  logout: async () => false,
+  logout: async () => {},
   updateProfile: async () => false,
   updateProfilePicture: async () => null,
   updatePassword: async () => false,

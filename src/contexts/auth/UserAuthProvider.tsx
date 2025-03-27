@@ -50,13 +50,26 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     };
   }, [authState.authLoading, setAuthLoading]);
 
+  // Create the modified signup function to match our type definition
+  const handleSignup = async (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => {
+    return await signup({
+      name: userData.name || '',
+      email: email,
+      phone: userData.phone || '',
+      password: password,
+      country: userData.country || '',
+      city: userData.city,
+      referralCode: referralCode
+    });
+  };
+
   return (
     <UserAuthContext.Provider
       value={{
         currentUser: authState.currentUser,
         isAuthenticated: !!user, // Use Supabase user directly
         login,
-        signup,
+        signup: handleSignup,
         logout,
         authLoading: isLoading,
         profileNotFound: authState.profileNotFound,
