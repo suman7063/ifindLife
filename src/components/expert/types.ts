@@ -20,6 +20,7 @@ export type ExpertFormData = {
   selectedServices: number[];
   acceptedTerms?: boolean;
   reportedUsers?: ReportUserType[];
+  profilePicture?: string;
 };
 
 export type ReportUserType = {
@@ -55,6 +56,7 @@ export const profileToFormData = (profile: ExpertProfile): ExpertFormData => ({
   certificateUrls: profile.certificate_urls || [],
   bio: profile.bio || '',
   selectedServices: profile.selected_services || [],
+  profilePicture: profile.profile_picture,
 });
 
 // Function to convert ExpertFormData to data for registration
