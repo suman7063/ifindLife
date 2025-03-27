@@ -15,6 +15,7 @@ export const UserAuthContext = createContext<UserAuthContextType>({
   logout: async () => false,
   updateProfile: async () => false,
   updateProfilePicture: async () => null,
+  updatePassword: async () => false,
   addToFavorites: async () => false,
   removeFromFavorites: async () => false,
   rechargeWallet: async () => false,

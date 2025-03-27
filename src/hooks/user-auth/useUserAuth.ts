@@ -51,6 +51,14 @@ export const useUserAuth = () => {
         }
       } else if (event === 'SIGNED_OUT') {
         setCurrentUser(null);
+      } else if (event === 'PASSWORD_RECOVERY') {
+        // Handle password recovery flow
+        console.log('Password recovery event received');
+      } else if (event === 'USER_UPDATED') {
+        // Refresh user data when user is updated
+        if (session?.user?.id) {
+          fetchUserData(session.user.id);
+        }
       }
     });
 
@@ -69,10 +77,30 @@ export const useUserAuth = () => {
     }
   };
 
+  // Password management
+  const updatePassword = async (newPassword: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) {
+        toast.error(error.message || 'Failed to update password');
+        return false;
+      }
+      
+      toast.success('Password updated successfully');
+      return true;
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      toast.error(error.message || 'Failed to update password');
+      return false;
+    }
+  };
+
   return {
     currentUser,
     loading,
     logout,
+    updatePassword,
     addToFavorites,
     removeFromFavorites,
     addReview,

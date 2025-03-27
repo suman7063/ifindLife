@@ -14,7 +14,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Get authentication state using our custom hooks
   const [authState, setCurrentUser, fetchProfile, setAuthLoading] = useAuthInitialization();
   const { login, signup, logout, actionLoading } = useAuthActions(fetchProfile);
-  const { user } = useSupabaseAuth();
+  const { user, updatePassword } = useSupabaseAuth();
   
   // Set up session effects - pass the setAuthLoading function to allow direct control
   useAuthSessionEffects(authState, fetchProfile, setAuthLoading);
@@ -62,6 +62,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         profileNotFound: authState.profileNotFound,
         updateProfile,
         updateProfilePicture,
+        updatePassword,
         addToFavorites,
         removeFromFavorites,
         rechargeWallet,

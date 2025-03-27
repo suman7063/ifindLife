@@ -1,15 +1,15 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Mail, Phone, Building, MapPin } from 'lucide-react';
+import { User, Mail, Phone, Building, MapPin, ArrowLeft } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import ProfilePictureUploader from '../common/ProfilePictureUploader';
 import { Label } from '@/components/ui/label';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-// List of common countries
 const COUNTRIES = [
   'India',
   'United States',
@@ -21,12 +21,12 @@ const COUNTRIES = [
   'Japan',
   'China',
   'Brazil',
-  // Add more as needed
 ];
 
 const UserProfileEdit: React.FC = () => {
   const { currentUser, updateProfile, updateProfilePicture } = useUserAuth();
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
@@ -57,8 +57,10 @@ const UserProfileEdit: React.FC = () => {
         country: formData.country,
         city: formData.city
       });
+      toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast.error('Failed to update profile. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -66,21 +68,30 @@ const UserProfileEdit: React.FC = () => {
 
   const handleImageUpload = async (file: File): Promise<string> => {
     try {
-      return await updateProfilePicture(file);
+      const url = await updateProfilePicture(file);
+      if (url) {
+        toast.success('Profile picture updated successfully');
+        return url;
+      }
+      throw new Error('Failed to upload image');
     } catch (error) {
       console.error('Error uploading image:', error);
+      toast.error('Failed to upload image. Please try again.');
       throw error;
     }
   };
 
   if (!currentUser) return null;
 
-  // Use the profilePicture property from UserProfile
-  const currentImage = currentUser.profilePicture;
-
   return (
     <Card>
       <CardHeader>
+        <div className="flex items-center mb-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate('/user-dashboard')} className="mr-2">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Dashboard
+          </Button>
+        </div>
         <CardTitle>Edit Profile</CardTitle>
         <CardDescription>
           Update your personal information
@@ -90,7 +101,7 @@ const UserProfileEdit: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-center mb-6">
             <ProfilePictureUploader
-              currentImage={currentImage}
+              currentImage={currentUser.profilePicture}
               onImageUpload={handleImageUpload}
               name={currentUser.name || ''}
             />

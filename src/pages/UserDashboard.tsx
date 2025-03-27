@@ -23,6 +23,8 @@ import {
 import { UserProfile, UserTransaction } from '@/types/supabase';
 import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
 import RazorPayCheckout from '@/components/user/RazorPayCheckout';
+import UserProfileCard from '@/components/user/UserProfileCard';
+import UserReviewsCard from '@/components/user/UserReviewsCard';
 
 const WalletBalanceCard: React.FC<{ userProfile: UserProfile | null; onRecharge: () => void }> = ({ userProfile, onRecharge }) => {
   return (
@@ -104,7 +106,6 @@ const UserDashboard = () => {
       dashboardLoading
     });
     
-    // Set a timer to stop showing the loading state after a maximum time
     const maxLoadingTimer = setTimeout(() => {
       if (dashboardLoading) {
         console.log("Dashboard max loading time reached, forcing display");
@@ -113,12 +114,10 @@ const UserDashboard = () => {
       }
     }, 3000);
 
-    // If we have user data, stop loading immediately
     if (user && !authLoading) {
       console.log("User data available, stopping dashboard loading");
       setDashboardLoading(false);
       
-      // If we have the user but not the profile yet, wait a bit and then force continue
       if (!currentUser) {
         const profileTimer = setTimeout(() => {
           setLoadingTimedOut(true);
@@ -128,7 +127,6 @@ const UserDashboard = () => {
       }
     }
     
-    // If auth loading finished but we're not authenticated, redirect to login
     if (!isAuthenticated && !authLoading) {
       console.log("Not authenticated, redirecting to login");
       navigate('/user-login');
@@ -153,7 +151,6 @@ const UserDashboard = () => {
   const handlePaymentSuccess = () => {
     toast.success('Payment successful! Your wallet has been recharged.');
     handleCloseRechargeDialog();
-    // The wallet balance will be updated by the edge function
   };
 
   const handlePaymentCancel = () => {
@@ -161,7 +158,6 @@ const UserDashboard = () => {
     setIsProcessingPayment(false);
   };
 
-  // Show loading state if dashboard is still initializing
   if (dashboardLoading) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -178,7 +174,6 @@ const UserDashboard = () => {
     );
   }
 
-  // If loading timed out but we're still waiting for data
   if (loadingTimedOut && !currentUser && user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -210,14 +205,12 @@ const UserDashboard = () => {
     );
   }
 
-  // Safety check - if somehow we get here without being authenticated, redirect to login
   if (!isAuthenticated && !authLoading && !user) {
     console.log("Not authenticated (safety check), redirecting to login");
     navigate('/user-login');
     return null;
   }
 
-  // This renders a basic dashboard if we have a user but not a current user profile yet
   if (!currentUser && user) {
     return (
       <div className="min-h-screen flex flex-col">
@@ -255,9 +248,14 @@ const UserDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
+            <UserProfileCard userProfile={currentUser} />
             <WalletBalanceCard userProfile={currentUser} onRecharge={handleOpenRechargeDialog} />
             <RecentTransactionsCard transactions={currentUser?.transactions || []} />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
             <ReferralDashboardCard userProfile={currentUser || { id: user?.id || '', referralCode: '', email: user?.email || '' } as UserProfile} />
+            <UserReviewsCard userProfile={currentUser} />
           </div>
 
           <Dialog open={isRechargeDialogOpen} onOpenChange={setIsRechargeDialogOpen}>
