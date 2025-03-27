@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { UserProfile } from '@/types/supabase';
@@ -33,6 +33,24 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Combine loading states
   const isLoading = authState.authLoading || actionLoading;
+
+  // Add a timeout effect to prevent infinite loading
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (authState.authLoading) {
+      timeoutId = setTimeout(() => {
+        console.log("Force completing auth loading after timeout");
+        if (authState.authLoading) {
+          setCurrentUser(prevUser => prevUser); // Trigger state update without changing value
+        }
+      }, 5000); // 5 second maximum loading time
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [authState.authLoading, setCurrentUser]);
 
   return (
     <UserAuthContext.Provider

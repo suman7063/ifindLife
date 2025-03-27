@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
@@ -114,10 +113,19 @@ const UserDashboard = () => {
       }
     }, 3000);
 
-    // If we have user data, stop loading
-    if ((isAuthenticated && currentUser) || (user && !authLoading)) {
+    // If we have user data, stop loading immediately
+    if (user && !authLoading) {
       console.log("User data available, stopping dashboard loading");
       setDashboardLoading(false);
+      
+      // If we have the user but not the profile yet, wait a bit and then force continue
+      if (!currentUser) {
+        const profileTimer = setTimeout(() => {
+          setLoadingTimedOut(true);
+        }, 2000);
+        
+        return () => clearTimeout(profileTimer);
+      }
     }
     
     // If auth loading finished but we're not authenticated, redirect to login

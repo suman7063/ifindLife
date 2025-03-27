@@ -6,6 +6,7 @@ import { UserProfile, ReferralSettings } from '@/types/supabase';
 import { fetchReferralSettings, copyReferralLink, getReferralLink } from '@/utils/referralUtils';
 import { Link } from 'react-router-dom';
 import { Gift, Share, ExternalLink, Copy } from 'lucide-react';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 interface ReferralDashboardCardProps {
   userProfile: UserProfile;
@@ -13,6 +14,7 @@ interface ReferralDashboardCardProps {
 
 const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfile }) => {
   const [settings, setSettings] = useState<ReferralSettings | null>(null);
+  const { getReferralLink: getUserReferralLink } = useUserAuth();
   
   useEffect(() => {
     const loadSettings = async () => {
@@ -25,7 +27,8 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
   
   const handleCopyLink = () => {
     if (userProfile?.referralCode) {
-      const link = getReferralLink(userProfile.referralCode);
+      // Use the context function if available, otherwise fallback to the utility
+      const link = getUserReferralLink() || getReferralLink(userProfile.referralCode);
       copyReferralLink(link);
     }
   };

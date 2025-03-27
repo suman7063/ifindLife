@@ -13,24 +13,29 @@ export const useAuthSessionEffects = (
   useEffect(() => {
     // This useEffect will run whenever the session or user changes
     if (user) {
-      fetchProfile();
-    } else {
-      // Force loading to complete if no user is found
-      // This helps prevent infinite loading states
+      // If we have a user, attempt to fetch their profile
+      console.log("User detected, fetching profile");
+      fetchProfile().catch(error => {
+        console.error("Error fetching profile:", error);
+      });
+    } else if (loading === false) {
+      // If Supabase has completed loading and still no user, force loading to complete
+      console.log("No user found after Supabase loading completed");
+      
       const timeoutId = setTimeout(() => {
         if (authState.authLoading) {
           console.log("Auth loading timeout reached, forcing completion");
         }
-      }, 3000);
+      }, 2000);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [user, fetchProfile, authState.authLoading]);
+  }, [user, fetchProfile, authState.authLoading, loading]);
 
   // Additional effect to handle loading state when logged out
   useEffect(() => {
     if (!user && authState.authLoading) {
-      // If no user is present but still loading, force complete
+      // If no user is present but still loading, force complete after short timeout
       const timeoutId = setTimeout(() => {
         console.log("No user found, completing auth loading");
       }, 1000);

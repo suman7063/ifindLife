@@ -9,9 +9,14 @@ import { fetchUserReferrals } from '@/utils/referralUtils';
 export const fetchUserProfile = async (
   user: SupabaseUser
 ): Promise<UserProfile | null> => {
-  if (!user || !user.id) return null;
+  if (!user || !user.id) {
+    console.log("No user provided to fetchUserProfile");
+    return null;
+  }
   
   try {
+    console.log("Fetching profile for user:", user.id);
+    
     // Try to fetch the user profile
     const { data, error } = await supabase
       .from('users')
@@ -22,27 +27,23 @@ export const fetchUserProfile = async (
     if (error) {
       console.log("Error fetching user profile, attempting to create one:", error);
       
+      // Extract relevant metadata for user creation
+      const userMetadata = user.user_metadata || {};
+      
       // If no profile exists, create one
       const userData = {
         id: user.id,
-        name: user.email?.split('@')[0] || '',
+        name: userMetadata.name || user.email?.split('@')[0] || '',
         email: user.email || '',
-        phone: '',
-        country: '',
-        city: '',
+        phone: userMetadata.phone || '',
+        country: userMetadata.country || '',
+        city: userMetadata.city || '',
         currency: 'USD',
         wallet_balance: 0,
-        profile_picture: ''
+        profile_picture: userMetadata.avatar_url || ''
       };
       
-      // For Auth users with metadata, use that data if available
-      if (user.user_metadata) {
-        userData.name = user.user_metadata.name || userData.name;
-        userData.phone = user.user_metadata.phone || userData.phone;
-        userData.country = user.user_metadata.country || userData.country;
-        userData.city = user.user_metadata.city || userData.city;
-        userData.profile_picture = user.user_metadata.avatar_url || userData.profile_picture;
-      }
+      console.log("Creating new user profile with data:", userData);
       
       const { data: newProfile, error: createError } = await supabase
         .from('users')
@@ -59,9 +60,11 @@ export const fetchUserProfile = async (
       return convertUserToUserProfile(newProfile);
     }
     
+    console.log("Found existing user profile, retrieving full data.");
     const userProfile = convertUserToUserProfile(data);
     
     // Fetch additional user data
+    console.log("Fetching user favorites");
     const { data: favorites } = await supabase
       .from('user_favorites')
       .select('expert_id')
@@ -69,6 +72,7 @@ export const fetchUserProfile = async (
     
     if (favorites && favorites.length > 0) {
       const expertIds = favorites.map(fav => fav.expert_id);
+      console.log("Fetching expert details for favorites:", expertIds);
       const { data: expertsData } = await supabase
         .from('experts')
         .select('*')
@@ -77,6 +81,7 @@ export const fetchUserProfile = async (
       userProfile.favoriteExperts = expertsData || [];
     }
     
+    console.log("Fetching user courses");
     const { data: courses } = await supabase
       .from('user_courses')
       .select('*')
@@ -84,6 +89,7 @@ export const fetchUserProfile = async (
       
     userProfile.enrolledCourses = adaptCoursesToUI(courses || []);
     
+    console.log("Fetching user reviews");
     const { data: reviews } = await supabase
       .from('user_reviews')
       .select('*')
@@ -91,6 +97,7 @@ export const fetchUserProfile = async (
       
     userProfile.reviews = adaptReviewsToUI(reviews || []);
     
+    console.log("Fetching user reports");
     const { data: reports } = await supabase
       .from('user_reports')
       .select('*')
@@ -98,6 +105,7 @@ export const fetchUserProfile = async (
       
     userProfile.reports = adaptReportsToUI(reports || []);
     
+    console.log("Fetching user transactions");
     const { data: transactions } = await supabase
       .from('user_transactions')
       .select('*')
@@ -105,6 +113,7 @@ export const fetchUserProfile = async (
       
     userProfile.transactions = transactions || [];
     
+    console.log("Fetching user referrals");
     const referralsData = await fetchUserReferrals(user.id);
     
     // Convert to the Referral type format
@@ -120,6 +129,7 @@ export const fetchUserProfile = async (
       completedAt: ref.completedAt
     }));
     
+    console.log("Profile data retrieval complete");
     return userProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
