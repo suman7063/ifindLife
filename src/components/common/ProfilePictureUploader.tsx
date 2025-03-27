@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Camera, ImageIcon, Trash2 } from 'lucide-react';
@@ -38,18 +39,17 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
     try {
       setIsUploading(true);
       
-      // Create a preview URL immediately from the file
+      // Create a temporary preview URL immediately from the file
       const tempUrl = URL.createObjectURL(file);
       setPreviewUrl(tempUrl);
       
       console.log("Created temporary preview URL:", tempUrl);
-      console.log("Starting upload to server...");
       
       // Call the actual upload function (happens in background)
       const imageUrl = await onImageUpload(file);
-      console.log("Received server URL:", imageUrl);
       
-      // Only update with the permanent URL if upload succeeded
+      console.log("Upload complete, server returned URL:", imageUrl);
+      
       if (imageUrl) {
         // We keep the temp URL for display until we confirm the server URL is working
         // This prevents flickering during the transition
@@ -57,26 +57,29 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
         toast.success("Profile picture updated successfully!");
       }
       
-      // Release the temporary object URL to avoid memory leaks
-      // We delay this to ensure the new image has loaded
+      // Release the temporary object URL after a delay to avoid flickering
       setTimeout(() => {
         URL.revokeObjectURL(tempUrl);
-        console.log("Revoked temporary URL");
-      }, 3000);
+      }, 5000);
+      
     } catch (error) {
       console.error("Error uploading image:", error);
       toast.error("Failed to upload image. Please try again.");
-      setPreviewUrl(currentImage); // Revert to previous image on error
+      // Revert to previous image on error
+      setPreviewUrl(currentImage);
     } finally {
       setIsUploading(false);
+      // Reset file input to allow selecting the same file again
       if (fileInputRef.current) {
-        fileInputRef.current.value = ''; // Reset file input
+        fileInputRef.current.value = '';
       }
     }
   };
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   };
 
   const handleRemoveImage = () => {
@@ -89,6 +92,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
 
   // Generate initials for the avatar fallback
   const getInitials = (name: string) => {
+    if (!name) return "U";
     return name
       .split(' ')
       .map((n) => n[0])
@@ -102,7 +106,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
       <div className="relative group">
         <Avatar className="h-24 w-24 border-2 border-ifind-aqua/20">
           {previewUrl ? (
-            <AvatarImage src={previewUrl} alt={name} />
+            <AvatarImage src={previewUrl} alt={name || "User"} />
           ) : null}
           <AvatarFallback className="text-lg bg-ifind-aqua/10 text-ifind-teal">
             {getInitials(name || "User")}
@@ -114,6 +118,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
           onClick={triggerFileInput}
           className="absolute bottom-0 right-0 bg-ifind-aqua hover:bg-ifind-teal text-white p-1.5 rounded-full shadow-md transition-colors"
           disabled={isUploading}
+          aria-label="Change profile picture"
         >
           <Camera className="h-4 w-4" />
         </button>
@@ -125,6 +130,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
         accept="image/*"
         className="hidden"
         onChange={handleFileChange}
+        aria-label="Upload profile picture"
       />
       
       <div className="flex gap-2">
@@ -136,8 +142,17 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
           onClick={triggerFileInput}
           disabled={isUploading}
         >
-          <ImageIcon className="h-3.5 w-3.5 mr-1" />
-          {isUploading ? 'Uploading...' : 'Change Picture'}
+          {isUploading ? (
+            <span className="flex items-center">
+              <span className="mr-1 h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+              Uploading...
+            </span>
+          ) : (
+            <span className="flex items-center">
+              <ImageIcon className="h-3.5 w-3.5 mr-1" />
+              Change Picture
+            </span>
+          )}
         </Button>
         
         {previewUrl && (
@@ -156,7 +171,7 @@ const ProfilePictureUploader: React.FC<ProfilePictureUploaderProps> = ({
       </div>
       
       {isUploading && (
-        <div className="text-sm text-muted-foreground">Uploading...</div>
+        <div className="text-sm text-muted-foreground">Uploading your image...</div>
       )}
     </div>
   );

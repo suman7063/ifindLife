@@ -56,7 +56,7 @@ const UserReviewsCard: React.FC<UserReviewsCardProps> = ({ userProfile }) => {
                           <Star
                             key={i}
                             className={`h-4 w-4 ${
-                              i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
+                              i < (review.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
                             }`}
                           />
                         ))}
@@ -84,12 +84,12 @@ const UserReviewsCard: React.FC<UserReviewsCardProps> = ({ userProfile }) => {
                 onClick={() => setExpanded(!expanded)}
               >
                 {expanded ? (
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-center w-full">
                     <span>Show less</span>
                     <ChevronUp className="ml-1 h-4 w-4" />
                   </div>
                 ) : (
-                  <div className="flex items-center">
+                  <div className="flex items-center justify-center w-full">
                     <span>Show all {reviews.length} reviews</span>
                     <ChevronDown className="ml-1 h-4 w-4" />
                   </div>

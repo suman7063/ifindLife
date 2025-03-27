@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -29,12 +30,25 @@ const UserProfileEdit: React.FC = () => {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
-    name: currentUser?.name || '',
-    email: currentUser?.email || '',
-    phone: currentUser?.phone || '',
-    country: currentUser?.country || '',
-    city: currentUser?.city || '',
+    name: '',
+    email: '',
+    phone: '',
+    country: '',
+    city: '',
   });
+
+  // Initialize form data when user data is available
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+        phone: currentUser.phone || '',
+        country: currentUser.country || '',
+        city: currentUser.city || '',
+      });
+    }
+  }, [currentUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -50,14 +64,18 @@ const UserProfileEdit: React.FC = () => {
     setLoading(true);
     
     try {
-      await updateProfile({
+      const success = await updateProfile({
         name: formData.name,
-        email: formData.email,
         phone: formData.phone,
         country: formData.country,
         city: formData.city
       });
-      toast.success('Profile updated successfully');
+      
+      if (success) {
+        toast.success('Profile updated successfully');
+      } else {
+        toast.error('Failed to update profile');
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       toast.error('Failed to update profile. Please try again.');
@@ -68,12 +86,10 @@ const UserProfileEdit: React.FC = () => {
 
   const handleImageUpload = async (file: File): Promise<string> => {
     try {
+      console.log("Starting image upload process");
       const url = await updateProfilePicture(file);
-      if (url) {
-        toast.success('Profile picture updated successfully');
-        return url;
-      }
-      throw new Error('Failed to upload image');
+      console.log("Image uploaded successfully, URL:", url);
+      return url;
     } catch (error) {
       console.error('Error uploading image:', error);
       toast.error('Failed to upload image. Please try again.');
@@ -81,7 +97,20 @@ const UserProfileEdit: React.FC = () => {
     }
   };
 
-  if (!currentUser) return null;
+  if (!currentUser) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <p>Please log in to edit your profile</p>
+            <Button onClick={() => navigate('/user-login')} className="mt-4">
+              Go to Login
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -209,7 +238,14 @@ const UserProfileEdit: React.FC = () => {
             className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
             disabled={loading}
           >
-            {loading ? 'Updating...' : 'Update Profile'}
+            {loading ? (
+              <span className="flex items-center justify-center">
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
+                Updating...
+              </span>
+            ) : (
+              'Update Profile'
+            )}
           </Button>
         </form>
       </CardContent>

@@ -8,6 +8,8 @@ export const updateUserProfile = async (
   data: Partial<UserProfile>
 ): Promise<boolean> => {
   try {
+    console.log("Updating profile for user:", userId, "with data:", data);
+    
     // Convert camelCase to snake_case for database
     const dbData: any = {
       name: data.name,
@@ -34,6 +36,7 @@ export const updateUserProfile = async (
       return false;
     }
     
+    console.log("Profile updated successfully");
     return true;
   } catch (error) {
     console.error('Error updating user profile:', error);
