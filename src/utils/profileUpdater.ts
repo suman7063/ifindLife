@@ -61,11 +61,12 @@ export const updateProfilePicture = async (userId: string, file: File): Promise<
     
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `profile-pictures/${fileName}`;
+    // Simplify the file path - just use the filename directly in the avatars bucket
+    const filePath = fileName;
     
     console.log("Generated file path for storage:", filePath);
     
-    // Upload file to storage
+    // Upload file to storage - use the avatars bucket directly
     console.log("Uploading file to 'avatars' bucket");
     const { error: uploadError, data: uploadData } = await supabase.storage
       .from('avatars')
