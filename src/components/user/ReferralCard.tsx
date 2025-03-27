@@ -58,16 +58,22 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile }) => {
   const handleCustomLink = () => {
     setIsGettingLink(true);
     
-    // Generate personalized link with custom text
-    let customLink = referralLink;
-    if (customText.trim()) {
-      // Replace spaces with hyphens for URL, make lowercase
-      const urlFriendlyText = customText.trim().toLowerCase().replace(/\s+/g, '-');
-      customLink = `${window.location.origin}/r/${urlFriendlyText}?ref=${userProfile.referralCode}`;
+    try {
+      // Generate personalized link with custom text
+      let customLink = referralLink;
+      if (customText.trim()) {
+        // Replace spaces with hyphens for URL, make lowercase
+        const urlFriendlyText = customText.trim().toLowerCase().replace(/\s+/g, '-');
+        customLink = `${window.location.origin}/r/${urlFriendlyText}?ref=${userProfile.referralCode}`;
+      }
+      
+      copyReferralLink(customLink);
+    } catch (error) {
+      console.error('Error generating custom link:', error);
+      toast.error('Failed to generate custom link');
+    } finally {
+      setIsGettingLink(false);
     }
-    
-    copyReferralLink(customLink);
-    setIsGettingLink(false);
   };
 
   if (!userProfile.referralCode) {

@@ -36,7 +36,7 @@ export const useWalletManagement = (currentUser: UserProfile | null) => {
       return null;
     }
     
-    // Use the utility function to generate the link
+    // Generate the link using the utility function
     return generateReferralLink(currentUser.referralCode);
   };
 

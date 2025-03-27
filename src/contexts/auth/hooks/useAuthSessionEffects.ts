@@ -34,13 +34,13 @@ export const useAuthSessionEffects = (
 
   // Additional effect to handle loading state when logged out
   useEffect(() => {
-    if (!user && authState.authLoading) {
-      // If no user is present but still loading, force complete after short timeout
+    if (!user && loading === false && authState.authLoading) {
+      // If no user is present and not loading, force complete after short timeout
       const timeoutId = setTimeout(() => {
         console.log("No user found, completing auth loading");
       }, 1000);
       
       return () => clearTimeout(timeoutId);
     }
-  }, [user, authState.authLoading]);
+  }, [user, authState.authLoading, loading]);
 };

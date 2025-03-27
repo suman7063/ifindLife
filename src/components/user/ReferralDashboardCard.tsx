@@ -7,6 +7,7 @@ import { fetchReferralSettings, copyReferralLink, getReferralLink } from '@/util
 import { Link } from 'react-router-dom';
 import { Gift, Share, ExternalLink, Copy } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
+import { toast } from 'sonner';
 
 interface ReferralDashboardCardProps {
   userProfile: UserProfile;
@@ -14,6 +15,7 @@ interface ReferralDashboardCardProps {
 
 const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfile }) => {
   const [settings, setSettings] = useState<ReferralSettings | null>(null);
+  const [isCopying, setIsCopying] = useState(false);
   const { getReferralLink: getUserReferralLink } = useUserAuth();
   
   useEffect(() => {
@@ -26,10 +28,17 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
   }, []);
   
   const handleCopyLink = () => {
-    if (userProfile?.referralCode) {
+    if (!userProfile?.referralCode || isCopying) return;
+    
+    setIsCopying(true);
+    try {
       // Use the context function if available, otherwise fallback to the utility
       const link = getUserReferralLink() || getReferralLink(userProfile.referralCode);
       copyReferralLink(link);
+    } catch (error) {
+      console.error('Error copying referral link:', error);
+    } finally {
+      setIsCopying(false);
     }
   };
 
@@ -79,6 +88,7 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
               variant="ghost" 
               size="sm" 
               onClick={handleCopyLink}
+              disabled={isCopying}
               className="ml-2"
             >
               <Copy className="h-4 w-4" />
