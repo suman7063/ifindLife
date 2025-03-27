@@ -102,6 +102,11 @@ export const useExpertAuthentication = (
     setLoading(true);
     
     try {
+      // Check for any validation issues before proceeding
+      if (!expertData.email || !expertData.password || !expertData.name) {
+        throw new Error('Missing required fields: name, email or password');
+      }
+      
       // 1. Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: expertData.email,
@@ -117,7 +122,9 @@ export const useExpertAuthentication = (
       if (authError) {
         console.error('Auth signup error:', authError);
         
+        // Handle the specific case of already registered users
         if (authError.message.includes('User already registered')) {
+          console.log('Email already registered:', expertData.email);
           throw new Error('Email is already registered. Please use a different email or try logging in.');
         }
         
@@ -159,7 +166,7 @@ export const useExpertAuthentication = (
     } catch (error: any) {
       console.error('Registration error:', error);
       
-      // Propagate the error to be handled upstream
+      // Make sure to propagate the error message
       throw error;
     } finally {
       setLoading(false);

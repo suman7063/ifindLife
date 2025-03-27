@@ -18,6 +18,7 @@ const ExpertRegistrationForm = () => {
     services,
     formData,
     errors,
+    formError,
     handleChange,
     handleCheckboxChange,
     handleFileUpload,
@@ -51,6 +52,13 @@ const ExpertRegistrationForm = () => {
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit} className="space-y-6">
+        {formError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+        
         {step === 1 && (
           <PersonalInfoStep 
             formData={formData} 

@@ -18,6 +18,7 @@ const ExpertLogin = () => {
   const [loginPassword, setLoginPassword] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('login');
   
   const { login, expert, loading } = useExpertAuth();
   const navigate = useNavigate();
@@ -33,6 +34,17 @@ const ExpertLogin = () => {
     e.preventDefault();
     
     if (isLoggingIn) return;
+    
+    // Basic validation
+    if (!loginEmail.trim()) {
+      setLoginError('Email is required');
+      return;
+    }
+    
+    if (!loginPassword.trim()) {
+      setLoginError('Password is required');
+      return;
+    }
     
     setLoginError(null);
     setIsLoggingIn(true);
@@ -52,6 +64,13 @@ const ExpertLogin = () => {
       setLoginError('An unexpected error occurred. Please try again.');
       setIsLoggingIn(false);
     }
+  };
+
+  // Handle tab change - this is useful to set state when user clicks on Register tab
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Clear any errors when switching tabs
+    setLoginError(null);
   };
   
   if (loading && !isLoggingIn) {
@@ -84,7 +103,12 @@ const ExpertLogin = () => {
               <span className="font-bold text-2xl text-gradient">For Mental Health Experts</span>
             </Link>
             
-            <Tabs defaultValue="login" className="w-full">
+            <Tabs 
+              defaultValue="login" 
+              value={activeTab} 
+              onValueChange={handleTabChange}
+              className="w-full"
+            >
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Join as Expert</TabsTrigger>
@@ -166,6 +190,17 @@ const ExpertLogin = () => {
                       'Sign In as Expert'
                     )}
                   </Button>
+
+                  <p className="text-center text-sm text-muted-foreground mt-4">
+                    Don't have an account?{' '}
+                    <button 
+                      type="button"
+                      className="text-ifind-aqua hover:underline"
+                      onClick={() => setActiveTab('register')}
+                    >
+                      Sign up
+                    </button>
+                  </p>
                 </form>
               </TabsContent>
               

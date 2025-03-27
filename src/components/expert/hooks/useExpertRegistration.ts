@@ -15,6 +15,7 @@ export const useExpertRegistration = () => {
   const [services, setServices] = useState<ServiceType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
   
   const initialFormData: ExpertFormData = {
     name: '',
@@ -151,6 +152,9 @@ export const useExpertRegistration = () => {
     
     if (isSubmitting) return;
     
+    // Clear any previous form errors
+    setFormError(null);
+    
     // Validate the current step (which is the final step)
     if (!validateCurrentStep()) {
       // Show toast for validation errors
@@ -174,18 +178,20 @@ export const useExpertRegistration = () => {
         toast.success("Registration successful! Please check your email for verification and then log in.");
         navigate('/expert-login');
       } else {
-        toast.error("Registration failed. Please try again.");
+        setFormError("Registration failed. Please try again with a different email.");
+        toast.error("Registration failed. Please try again with a different email.");
       }
     } catch (error: any) {
       console.error('Error during registration:', error);
       
+      // Set the error message to be displayed in the form
+      setFormError(error.message || "Registration failed. Please try again later.");
+      
       // Check if it's a 422 error (validation error or user already exists)
-      if (error.message && error.message.includes('422')) {
-        if (error.message.includes('already registered')) {
-          toast.error("This email is already registered. Please try logging in or use a different email.");
-        } else {
-          toast.error("Registration validation failed. Please check your form and try again.");
-        }
+      if (error.message && error.message.includes('Email is already registered')) {
+        toast.error("This email is already registered. Please try logging in or use a different email.");
+      } else if (error.message && error.message.includes('422')) {
+        toast.error("Registration validation failed. Please check your form and try again.");
       } else {
         toast.error("Registration failed. Please try again later.");
       }
@@ -212,6 +218,7 @@ export const useExpertRegistration = () => {
     services,
     formData,
     errors,
+    formError,
     handleChange,
     handleCheckboxChange,
     handleFileUpload,
