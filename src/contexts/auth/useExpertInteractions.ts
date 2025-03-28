@@ -10,19 +10,40 @@ export const useExpertInteractions = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  // Update these hooks to handle number type for expertId
+  // Convert function parameter types to handle number type for expertId
   const { addToFavorites, removeFromFavorites } = useUserFavorites(currentUser, setCurrentUser);
   const { addReview } = useUserReviews(currentUser, setCurrentUser);
   const { addReport } = useUserReports(currentUser, setCurrentUser);
   const { hasTakenServiceFrom, getExpertShareLink } = useExpertInteraction(currentUser);
 
-  // When returning, explicitly define addReport as reportExpert for the UserAuthContext
+  // Create wrapper functions to handle number type
+  const addToFavoritesWrapper = async (expertId: number) => {
+    return addToFavorites(String(expertId));
+  };
+
+  const removeFromFavoritesWrapper = async (expertId: number) => {
+    return removeFromFavorites(String(expertId));
+  };
+
+  const addReviewWrapper = async (expertId: number, rating: number, comment: string) => {
+    return addReview(String(expertId), rating, comment);
+  };
+
+  const addReportWrapper = async (expertId: number, reason: string, details: string) => {
+    return addReport(String(expertId), reason, details);
+  };
+
+  const hasTakenServiceFromWrapper = async (expertId: number) => {
+    return hasTakenServiceFrom(String(expertId));
+  };
+
+  // Return the wrapped functions with the correct types
   return {
-    addToFavorites,
-    removeFromFavorites,
-    addReview,
-    reportExpert: addReport, // Aliasing addReport as reportExpert 
-    hasTakenServiceFrom,
+    addToFavorites: addToFavoritesWrapper,
+    removeFromFavorites: removeFromFavoritesWrapper,
+    addReview: addReviewWrapper,
+    reportExpert: addReportWrapper,
+    hasTakenServiceFrom: hasTakenServiceFromWrapper,
     getExpertShareLink
   };
 };
