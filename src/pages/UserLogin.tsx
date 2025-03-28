@@ -16,10 +16,14 @@ import { LogOut } from 'lucide-react';
 
 const UserLogin = () => {
   const [activeTab, setActiveTab] = useState('login');
-  const [socialLoginLoading, setSocialLoginLoading] = useState(false);
+  const [socialLoginLoading, setSocialLoginLoading] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, loading, signup, login } = useUserAuth();
+  const { currentUser, isAuthenticated, authLoading, login, signup } = useUserAuth();
   const { expert, loading: expertLoading, logout: expertLogout } = useExpertAuth();
   
   // Check if redirected to register tab
@@ -32,13 +36,66 @@ const UserLogin = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (isAuthenticated && !loading) {
+    if (isAuthenticated && !authLoading) {
       navigate('/user-dashboard');
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+  };
+
+  const handleLogin = async (email: string, password: string): Promise<void> => {
+    setIsLoggingIn(true);
+    setLoginError(null);
+    
+    try {
+      const success = await login(email, password);
+      if (!success) {
+        setLoginError('Login failed. Please check your credentials and try again.');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setLoginError(error.message || 'An unexpected error occurred');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleRegister = async (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    country: string;
+    city?: string;
+    referralCode?: string;
+  }): Promise<void> => {
+    setIsRegistering(true);
+    setRegisterError(null);
+    
+    try {
+      const success = await signup(
+        userData.email, 
+        userData.password, 
+        {
+          name: userData.name,
+          phone: userData.phone,
+          country: userData.country,
+          city: userData.city
+        }, 
+        userData.referralCode
+      );
+      
+      if (!success) {
+        setRegisterError('Registration failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setRegisterError(error.message || 'An unexpected error occurred');
+    } finally {
+      setIsRegistering(false);
+    }
   };
 
   const handleExpertLogout = async () => {
@@ -48,7 +105,7 @@ const UserLogin = () => {
     window.location.reload();
   };
 
-  if (loading || expertLoading) {
+  if (authLoading || expertLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -90,17 +147,25 @@ const UserLogin = () => {
                   
                   <TabsContent value="login">
                     <LoginTab 
-                      onLogin={login} 
-                      setSocialLoading={setSocialLoginLoading}
+                      onLogin={handleLogin} 
+                      loading={authLoading}
+                      isLoggingIn={isLoggingIn}
+                      loginError={loginError}
                       socialLoading={socialLoginLoading}
-                      loading={loading}
+                      authLoading={authLoading}
+                      setSocialLoading={(provider) => setSocialLoginLoading(provider)}
                     />
                   </TabsContent>
                   
                   <TabsContent value="register">
                     <RegisterTab 
-                      onRegister={signup}
-                      loading={loading}
+                      onRegister={handleRegister}
+                      loading={authLoading}
+                      isRegistering={isRegistering}
+                      registerError={registerError}
+                      initialReferralCode={null}
+                      referralSettings={null}
+                      setCaptchaVerified={() => {}}
                     />
                   </TabsContent>
                 </Tabs>

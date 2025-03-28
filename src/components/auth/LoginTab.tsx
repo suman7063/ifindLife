@@ -12,7 +12,7 @@ interface LoginTabProps {
   loginError: string | null;
   socialLoading: string | null;
   authLoading: boolean;
-  setSocialLoading?: (provider: string | null) => void;
+  setSocialLoading: (provider: string | null) => void;
 }
 
 const LoginTab: React.FC<LoginTabProps> = ({

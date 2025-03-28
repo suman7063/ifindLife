@@ -17,8 +17,8 @@ export const UserAuthContext = createContext<UserAuthContextType>({
   updateProfile: async () => false,
   updateProfilePicture: async (file: File) => {
     console.error("Default updateProfilePicture implementation called");
-    return '';
-  }, // Ensure this is properly typed
+    return null;
+  },
   updatePassword: async () => false,
   addToFavorites: async () => false,
   removeFromFavorites: async () => false,
