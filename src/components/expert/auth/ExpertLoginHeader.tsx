@@ -9,7 +9,7 @@ const ExpertLoginHeader: React.FC = () => {
         <div className="absolute w-8 h-8 bg-ifind-aqua rounded-full opacity-70"></div>
         <div className="absolute w-4 h-4 bg-ifind-teal rounded-full top-1 left-2"></div>
       </div>
-      <span className="font-bold text-2xl text-gradient">For Mental Health Experts</span>
+      <span className="font-bold text-2xl text-gradient">For Mental Health Professionals</span>
     </Link>
   );
 };
