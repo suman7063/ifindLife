@@ -27,12 +27,20 @@ const mockServices: ServiceType[] = [
   }
 ];
 
-// Using a more direct approach with minimal typing to avoid deep instantiation
+// Interface to match database table schema exactly
+interface ServiceRecord {
+  id: number;
+  name: string | null;
+  description: string | null;
+  rate_usd: number | null;
+  rate_inr: number | null;
+}
+
 export const fetchServices = async (): Promise<ServiceType[]> => {
   try {
     console.log('Fetching services from Supabase...');
     
-    // First try to fetch from services table (admin configured services)
+    // First try to fetch from services table
     const { data: servicesData, error: servicesError } = await supabase
       .from('services')
       .select('id, name, description, rate_usd, rate_inr');
@@ -40,29 +48,7 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesError) {
       console.error('Error fetching services from Supabase:', servicesError);
       
-      // Try an alternative approach to fetch home categories
-      try {
-        const { data: homeServices, error: homeServicesError } = await supabase
-          .from('services')
-          .select('id, name, title, description, rate_usd, rate_inr')
-          .eq('type', 'home_category');
-          
-        if (!homeServicesError && homeServices && homeServices.length > 0) {
-          console.log('Found home services/categories:', homeServices.length);
-          
-          // Explicitly map to ServiceType without intermediate typing
-          return homeServices.map(service => ({
-            id: service.id,
-            name: service.name || service.title || 'Service',
-            description: service.description || '',
-            rateUSD: service.rate_usd || 50,
-            rateINR: service.rate_inr || 3500
-          }));
-        }
-      } catch (homeError) {
-        console.error('Error fetching home categories:', homeError);
-      }
-      
+      // Fallback to mock data
       console.log('No services found, using mock data');
       return mockServices;
     }
@@ -70,7 +56,7 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesData && servicesData.length > 0) {
       console.log('Services found in Supabase:', servicesData.length);
       
-      // Directly map to ServiceType to avoid type complexity
+      // Safe type conversion and mapping
       return servicesData.map(service => ({
         id: service.id,
         name: service.name || 'Service',
