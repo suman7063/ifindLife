@@ -27,6 +27,19 @@ const mockServices: ServiceType[] = [
   }
 ];
 
+// Define a type for service data from Supabase to avoid deep type instantiation
+interface ServiceDBRecord {
+  id: number;
+  name: string;
+  description?: string;
+  rate_usd?: number;
+  rate_inr?: number;
+  rateUSD?: number;
+  rateINR?: number;
+  title?: string;
+  [key: string]: any; // For any other fields that might exist
+}
+
 export const fetchServices = async (): Promise<ServiceType[]> => {
   try {
     console.log('Fetching services from Supabase...');
@@ -34,7 +47,7 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     // First try to fetch from services table (admin configured services)
     const { data: servicesData, error: servicesError } = await supabase
       .from('services')
-      .select('id, name, description, rate_usd, rate_inr, rateUSD, rateINR');
+      .select('id, name, description, rate_usd, rate_inr');
     
     if (servicesError) {
       console.error('Error fetching services from Supabase:', servicesError);
@@ -43,17 +56,18 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
       try {
         const { data: homeServices, error: homeServicesError } = await supabase
           .from('services')
-          .select('id, name, title, description, rate_usd, rate_inr, rateUSD, rateINR')
+          .select('id, name, title, description, rate_usd, rate_inr')
           .eq('type', 'home_category');
           
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
-          return homeServices.map((service) => ({
+          // Explicitly cast the data to our intermediate type
+          return (homeServices as ServiceDBRecord[]).map((service) => ({
             id: service.id,
             name: service.name || service.title || 'Service',
             description: service.description,
-            rateUSD: service.rate_usd || service.rateUSD || 50,
-            rateINR: service.rate_inr || service.rateINR || 3500
+            rateUSD: service.rate_usd || 50,
+            rateINR: service.rate_inr || 3500
           }));
         }
       } catch (homeError) {
@@ -66,13 +80,14 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     
     if (servicesData && servicesData.length > 0) {
       console.log('Services found in Supabase:', servicesData.length);
-      // Map the backend field names to our frontend field names if needed
-      return servicesData.map((service) => ({
+      // Map the backend field names to our frontend field names
+      // Explicitly cast to avoid type errors
+      return (servicesData as ServiceDBRecord[]).map((service) => ({
         id: service.id,
         name: service.name,
         description: service.description,
-        rateUSD: service.rate_usd || service.rateUSD || 0,
-        rateINR: service.rate_inr || service.rateINR || 0
+        rateUSD: service.rate_usd || 0,
+        rateINR: service.rate_inr || 0
       }));
     }
     
