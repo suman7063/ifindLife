@@ -40,14 +40,15 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
       return;
     }
     
-    reportExpert(expertId, reason, details);
+    reportExpert(parseInt(expertId, 10), reason, details);
     setOpen(false);
     setReason('');
     setDetails('');
   };
   
   // Check if the user has taken service from this expert
-  const canReport = hasTakenServiceFrom(expertId);
+  // Convert expertId from string to number before passing to hasTakenServiceFrom
+  const canReport = hasTakenServiceFrom(parseInt(expertId, 10));
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
