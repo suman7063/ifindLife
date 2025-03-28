@@ -1,76 +1,70 @@
 
-import { ExpertProfile } from '@/hooks/useExpertAuth';
+import { Expert } from '@/types/expert';
 
-export type ExpertFormData = {
-  id?: string;
+export interface ServiceType {
+  id: number;
+  name: string;
+  description?: string;
+  rateUSD: number;
+  rateINR: number;
+}
+
+export interface ExpertFormData {
   name: string;
   email: string;
   phone: string;
-  password?: string;
-  confirmPassword?: string;
+  password: string;
+  confirmPassword: string;
   address: string;
   city: string;
   state: string;
   country: string;
   specialization: string;
   experience: string;
-  certificates?: File[];
-  certificateUrls?: string[];
+  certificates: File[];
+  certificateUrls: string[];
   bio: string;
   selectedServices: number[];
-  acceptedTerms?: boolean;
-  reportedUsers?: ReportUserType[];
-  profilePicture?: string;
-};
+  acceptedTerms: boolean;
+  [key: string]: any; // To allow dynamic property access
+}
 
-export type ReportUserType = {
-  id: string;
-  userId: string;
-  userName: string;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-};
-
-export type ServiceType = {
-  id: number;
+export interface ExpertRegistrationData {
   name: string;
-  description?: string;
-  rateUSD: number;
-  rateINR: number;
+  email: string;
+  password: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  bio?: string;
+  certificate_urls?: string[];
+  selected_services?: number[];
+}
+
+export const formDataToRegistrationData = (formData: ExpertFormData): ExpertRegistrationData => {
+  console.log('Converting form data to registration data:', formData);
+  
+  return {
+    name: formData.name,
+    email: formData.email,
+    password: formData.password,
+    phone: formData.phone,
+    address: formData.address,
+    city: formData.city,
+    state: formData.state,
+    country: formData.country,
+    specialization: formData.specialization,
+    experience: formData.experience,
+    bio: formData.bio,
+    certificate_urls: formData.certificateUrls, // Convert to backend format
+    selected_services: formData.selectedServices // Convert to backend format
+  };
 };
 
-// Function to convert ExpertProfile to ExpertFormData
-export const profileToFormData = (profile: ExpertProfile): ExpertFormData => ({
-  id: profile.id,
-  name: profile.name,
-  email: profile.email,
-  phone: profile.phone || '',
-  address: profile.address || '',
-  city: profile.city || '',
-  state: profile.state || '',
-  country: profile.country || '',
-  specialization: profile.specialization || '',
-  experience: profile.experience || '',
-  certificateUrls: profile.certificate_urls || [],
-  bio: profile.bio || '',
-  selectedServices: profile.selected_services || [],
-  profilePicture: profile.profile_picture,
-});
-
-// Function to convert ExpertFormData to data for registration
-export const formDataToRegistrationData = (formData: ExpertFormData) => ({
-  name: formData.name,
-  email: formData.email,
-  password: formData.password || '',
-  phone: formData.phone,
-  address: formData.address,
-  city: formData.city,
-  state: formData.state,
-  country: formData.country,
-  specialization: formData.specialization,
-  experience: formData.experience,
-  bio: formData.bio,
-  selected_services: formData.selectedServices
-});
+export type ExpertProps = {
+  expert: Expert;
+};

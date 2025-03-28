@@ -107,6 +107,12 @@ export const useExpertAuthentication = (
         throw new Error('Missing required fields: name, email or password');
       }
       
+      console.log('Starting registration process with data:', { 
+        name: expertData.name, 
+        email: expertData.email,
+        // Don't log password for security
+      });
+      
       // 1. Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: expertData.email,
@@ -134,9 +140,11 @@ export const useExpertAuthentication = (
       if (!authData.user) {
         throw new Error('Failed to create user account');
       }
+      
+      console.log('Auth user created with ID:', authData.user.id);
 
       // 2. Create expert profile
-      const { error: profileError } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('expert_accounts')
         .insert({
           auth_id: authData.user.id,
@@ -152,14 +160,22 @@ export const useExpertAuthentication = (
           bio: expertData.bio,
           certificate_urls: expertData.certificate_urls || [],
           selected_services: expertData.selected_services || []
-        });
+        })
+        .select();
 
       if (profileError) {
         console.error('Error creating expert profile:', profileError);
         // Try to clean up the auth user since profile creation failed
-        await supabase.auth.signOut();
+        try {
+          await supabase.auth.signOut();
+          console.log('Cleaned up auth user after profile creation failure');
+        } catch (cleanupError) {
+          console.error('Failed to clean up auth user:', cleanupError);
+        }
         throw new Error('Failed to create expert profile: ' + profileError.message);
       }
+      
+      console.log('Expert profile created successfully:', profileData);
 
       toast.success('Registration successful! Please check your email for verification.');
       return true;

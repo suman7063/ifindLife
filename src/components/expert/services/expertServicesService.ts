@@ -2,7 +2,7 @@
 import { ServiceType } from '../types';
 import { supabase } from '@/lib/supabase';
 
-// Simulated data for local development
+// Simulated data for local development as a fallback
 const mockServices: ServiceType[] = [
   {
     id: 1,
@@ -29,20 +29,40 @@ const mockServices: ServiceType[] = [
 
 export const fetchServices = async (): Promise<ServiceType[]> => {
   try {
-    // First try to fetch from Supabase
-    const { data, error } = await supabase
+    console.log('Fetching services from Supabase...');
+    
+    // First try to fetch from services table (admin configured services)
+    const { data: servicesData, error: servicesError } = await supabase
       .from('services')
       .select('*');
     
-    if (error) {
-      console.error('Error fetching services from Supabase:', error);
-      console.log('Falling back to mock data');
-      return mockServices;
+    if (servicesError) {
+      console.error('Error fetching services from Supabase:', servicesError);
+      
+      // Try to fetch from categories/services from homepage as a fallback
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select('*');
+      
+      if (categoriesError || !categoriesData || categoriesData.length === 0) {
+        console.log('No services or categories found, using mock data');
+        return mockServices;
+      }
+      
+      // Map the categories data to service format
+      return categoriesData.map((category: any, index) => ({
+        id: category.id || index + 1,
+        name: category.title || category.name,
+        description: category.description,
+        rateUSD: category.rate_usd || 50,
+        rateINR: category.rate_inr || 3500
+      }));
     }
     
-    if (data && data.length > 0) {
+    if (servicesData && servicesData.length > 0) {
+      console.log('Services found in Supabase:', servicesData.length);
       // Map the backend field names to our frontend field names if needed
-      return data.map((service: any) => ({
+      return servicesData.map((service: any) => ({
         id: service.id,
         name: service.name,
         description: service.description,
