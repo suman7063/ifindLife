@@ -27,16 +27,7 @@ const mockServices: ServiceType[] = [
   }
 ];
 
-// Define a simple interface that matches exactly what we get from the database
-interface ServiceRecord {
-  id: number;
-  name?: string;
-  title?: string;
-  description?: string;
-  rate_usd?: number;
-  rate_inr?: number;
-}
-
+// Using a more direct approach with minimal typing to avoid deep instantiation
 export const fetchServices = async (): Promise<ServiceType[]> => {
   try {
     console.log('Fetching services from Supabase...');
@@ -59,10 +50,8 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
           
-          // Cast to any first to avoid typescript errors
-          const services = homeServices as any as ServiceRecord[];
-          
-          return services.map(service => ({
+          // Explicitly map to ServiceType without intermediate typing
+          return homeServices.map(service => ({
             id: service.id,
             name: service.name || service.title || 'Service',
             description: service.description || '',
@@ -81,10 +70,8 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesData && servicesData.length > 0) {
       console.log('Services found in Supabase:', servicesData.length);
       
-      // Cast to any first to avoid typescript errors
-      const services = servicesData as any as ServiceRecord[];
-      
-      return services.map(service => ({
+      // Directly map to ServiceType to avoid type complexity
+      return servicesData.map(service => ({
         id: service.id,
         name: service.name || 'Service',
         description: service.description || '',
