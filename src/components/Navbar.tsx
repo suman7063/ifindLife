@@ -3,10 +3,11 @@ import React from 'react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, UserPlus, User, UserCircle, LogOut } from "lucide-react";
+import { Menu, UserPlus, User, UserCircle, LogOut, BriefcaseBusiness } from "lucide-react";
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useExpertAuth } from '@/hooks/expert-auth';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +20,8 @@ import {
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated: isAdminAuthenticated } = useAuth();
-  const { isAuthenticated: isUserAuthenticated, currentUser, logout } = useUserAuth();
+  const { isAuthenticated: isUserAuthenticated, currentUser, logout: userLogout } = useUserAuth();
+  const { expert, logout: expertLogout } = useExpertAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -36,13 +38,20 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
-  const handleLogout = () => {
-    logout();
+  const handleUserLogout = () => {
+    userLogout();
+  };
+
+  const handleExpertLogout = () => {
+    expertLogout();
   };
 
   // Check if the current page is user dashboard or related pages
   const isUserDashboardPage = location.pathname.includes('user-dashboard') || 
                               location.pathname.includes('referrals');
+
+  // Check if the current page is expert dashboard or related pages
+  const isExpertDashboardPage = location.pathname.includes('expert-dashboard');
 
   return (
     <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${scrolled ? 'bg-background/90 shadow-sm' : 'bg-transparent'}`}>
@@ -69,11 +78,33 @@ const Navbar = () => {
             <Link to="/about">About</Link>
           </Button>
           <Button variant="ghost">Blog</Button>
-          <Button variant="ghost" asChild>
-            <Link to="/expert-login" className="text-ifind-teal">
-              <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
-            </Link>
-          </Button>
+          
+          {expert ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-ifind-teal">
+                  <BriefcaseBusiness className="h-4 w-4 mr-1" /> 
+                  Expert Portal
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Expert Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/expert-dashboard" className="w-full cursor-pointer">Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExpertLogout} className="text-red-500 cursor-pointer">
+                  <LogOut className="h-4 w-4 mr-1" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" asChild>
+              <Link to="/expert-login" className="text-ifind-teal">
+                <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
+              </Link>
+            </Button>
+          )}
           
           {isUserAuthenticated ? (
             <DropdownMenu>
@@ -93,7 +124,7 @@ const Navbar = () => {
                   <Link to="/referrals" className="w-full cursor-pointer">My Referrals</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
+                <DropdownMenuItem onClick={handleUserLogout} className="text-red-500 cursor-pointer">
                   <LogOut className="h-4 w-4 mr-1" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -137,11 +168,25 @@ const Navbar = () => {
                 <Button variant="ghost" className="justify-start">
                   Blog
                 </Button>
-                <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/expert-login">
-                    <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
-                  </Link>
-                </Button>
+                
+                {expert ? (
+                  <>
+                    <Button variant="ghost" className="justify-start" asChild>
+                      <Link to="/expert-dashboard">
+                        <BriefcaseBusiness className="h-4 w-4 mr-1" /> Expert Dashboard
+                      </Link>
+                    </Button>
+                    <Button variant="ghost" className="justify-start text-red-500" onClick={handleExpertLogout}>
+                      <LogOut className="h-4 w-4 mr-1" /> Logout as Expert
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="ghost" className="justify-start" asChild>
+                    <Link to="/expert-login">
+                      <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
+                    </Link>
+                  </Button>
+                )}
                 
                 {isUserAuthenticated ? (
                   <>
@@ -155,8 +200,8 @@ const Navbar = () => {
                         <User className="h-4 w-4 mr-1" /> My Referrals
                       </Link>
                     </Button>
-                    <Button variant="ghost" className="justify-start text-red-500" onClick={handleLogout}>
-                      <LogOut className="h-4 w-4 mr-1" /> Logout
+                    <Button variant="ghost" className="justify-start text-red-500" onClick={handleUserLogout}>
+                      <LogOut className="h-4 w-4 mr-1" /> Logout as User
                     </Button>
                   </>
                 ) : (
