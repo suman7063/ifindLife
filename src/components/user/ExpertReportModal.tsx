@@ -40,7 +40,7 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
       return;
     }
     
-    reportExpert(parseInt(expertId, 10), reason, details);
+    reportExpert(expertId, reason, details);
     setOpen(false);
     setReason('');
     setDetails('');

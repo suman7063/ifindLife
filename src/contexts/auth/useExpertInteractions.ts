@@ -16,7 +16,7 @@ export const useExpertInteractions = (
   const { addReport } = useUserReports(currentUser, setCurrentUser);
   const { hasTakenServiceFrom, getExpertShareLink } = useExpertInteraction(currentUser);
 
-  // Create wrapper functions to handle number type
+  // Create wrapper functions to handle both string and number types
   const addToFavoritesWrapper = async (expertId: number) => {
     return addToFavorites(String(expertId));
   };
@@ -29,7 +29,7 @@ export const useExpertInteractions = (
     return addReview(String(expertId), rating, comment);
   };
 
-  const addReportWrapper = async (expertId: number, reason: string, details: string) => {
+  const addReportWrapper = async (expertId: string, reason: string, details: string) => {
     return addReport(String(expertId), reason, details);
   };
 
