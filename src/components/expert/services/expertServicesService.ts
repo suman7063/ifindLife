@@ -34,10 +34,7 @@ interface ServiceDBRecord {
   description?: string;
   rate_usd?: number;
   rate_inr?: number;
-  rateUSD?: number;
-  rateINR?: number;
   title?: string;
-  [key: string]: any; // For any other fields that might exist
 }
 
 export const fetchServices = async (): Promise<ServiceType[]> => {
@@ -61,8 +58,9 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
           
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
-          // Explicitly cast the data to our intermediate type
-          return (homeServices as ServiceDBRecord[]).map((service) => ({
+          
+          // Use a safer approach: first convert to unknown, then to our type
+          return (homeServices as unknown as ServiceDBRecord[]).map((service) => ({
             id: service.id,
             name: service.name || service.title || 'Service',
             description: service.description,
@@ -80,9 +78,9 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     
     if (servicesData && servicesData.length > 0) {
       console.log('Services found in Supabase:', servicesData.length);
-      // Map the backend field names to our frontend field names
-      // Explicitly cast to avoid type errors
-      return (servicesData as ServiceDBRecord[]).map((service) => ({
+      
+      // Use the same safer conversion approach here
+      return (servicesData as unknown as ServiceDBRecord[]).map((service) => ({
         id: service.id,
         name: service.name,
         description: service.description,
