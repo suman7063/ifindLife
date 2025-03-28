@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import CallModal from '@/components/CallModal';
-import { toast } from '@/hooks/use-toast';
+import AgoraCallModal from '@/components/AgoraCallModal';
+import { toast } from 'sonner';
 import ExpertHeader from '@/components/expert/ExpertHeader';
 import ExpertProfile from '@/components/expert/ExpertProfile';
 import ExpertDetailTabs from '@/components/expert/ExpertDetailTabs';
@@ -63,10 +63,8 @@ const ExpertDetail = () => {
     if (expert.online && expert.waitTime === "Available") {
       setIsCallModalOpen(true);
     } else {
-      toast({
-        title: "Expert Unavailable",
-        description: "This expert is currently offline or busy. Please try again later.",
-        variant: "destructive"
+      toast.error("Expert Unavailable", {
+        description: "This expert is currently offline or busy. Please try again later."
       });
     }
   };
@@ -95,10 +93,10 @@ const ExpertDetail = () => {
       
       <Footer />
       
-      <CallModal 
+      <AgoraCallModal 
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
-        astrologer={{
+        expert={{
           id: expert.id,
           name: expert.name,
           imageUrl: expert.imageUrl,
