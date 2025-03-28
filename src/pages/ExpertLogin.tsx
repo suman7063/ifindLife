@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { useExpertAuth } from '@/hooks/expert-auth';
 import ExpertLoginHeader from '@/components/expert/auth/ExpertLoginHeader';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import LoadingView from '@/components/expert/auth/LoadingView';
