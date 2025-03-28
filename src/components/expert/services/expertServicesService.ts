@@ -41,26 +41,14 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
       
       // Try an alternative approach to fetch home categories
       try {
-        // Define a more specific interface to avoid deep type instantiation
-        interface ServiceResponse {
-          id: number;
-          name?: string;
-          title?: string;
-          description?: string;
-          rate_usd?: number;
-          rate_inr?: number;
-          rateUSD?: number;
-          rateINR?: number;
-        }
-        
         const { data: homeServices, error: homeServicesError } = await supabase
           .from('services')
-          .select('*')
+          .select('id, name, title, description, rate_usd, rate_inr, rateUSD, rateINR')
           .eq('type', 'home_category');
           
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
-          return homeServices.map((service: ServiceResponse) => ({
+          return homeServices.map((service: any) => ({
             id: service.id,
             name: service.name || service.title || 'Service',
             description: service.description,
