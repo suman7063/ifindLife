@@ -39,11 +39,19 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesError) {
       console.error('Error fetching services from Supabase:', servicesError);
       
-      // Since we can't use .from("categories") directly, use a more generic approach
-      // that works with the existing schema
+      // Try an alternative approach to fetch home categories
       try {
-        // Try to look for categories in another table that might be storing
-        // the admin-configured categories from the home page
+        type ServiceResponse = {
+          id: number;
+          name?: string;
+          title?: string;
+          description?: string;
+          rate_usd?: number;
+          rate_inr?: number;
+          rateUSD?: number;
+          rateINR?: number;
+        };
+        
         const { data: homeServices, error: homeServicesError } = await supabase
           .from('services')
           .select('*')
@@ -51,12 +59,12 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
           
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
-          return homeServices.map((service: any) => ({
+          return homeServices.map((service: ServiceResponse) => ({
             id: service.id,
-            name: service.name || service.title,
+            name: service.name || service.title || 'Service',
             description: service.description,
-            rateUSD: service.rate_usd || 50,
-            rateINR: service.rate_inr || 3500
+            rateUSD: service.rate_usd || service.rateUSD || 50,
+            rateINR: service.rate_inr || service.rateINR || 3500
           }));
         }
       } catch (homeError) {

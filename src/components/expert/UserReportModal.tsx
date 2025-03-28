@@ -54,10 +54,11 @@ const UserReportModal: React.FC<UserReportModalProps> = ({ user, onReport }) => 
     }
     
     onReport({
-      userId: user.id,
-      userName: user.name,
+      user_id: user.id,
+      expert_id: 0, // This will be filled by the service
       reason,
-      details
+      details,
+      userName: user.name // For display purposes
     });
     
     setOpen(false);

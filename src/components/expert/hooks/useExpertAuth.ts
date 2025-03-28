@@ -54,7 +54,10 @@ export const useExpertAuth = (): ExpertAuthReturnType => {
       id: `report_${Date.now()}`,
       date: new Date().toISOString(),
       status: 'pending',
-      ...reportData
+      ...reportData,
+      user_id: reportData.user_id,
+      expert_id: expert.id ? parseInt(expert.id.toString(), 10) : 0,
+      userName: reportData.userName // For display compatibility
     };
 
     try {

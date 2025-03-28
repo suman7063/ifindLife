@@ -53,6 +53,7 @@ export interface ReportUserType {
   details?: string;
   date: string;
   status: string;
+  userName?: string; // Added for backward compatibility
 }
 
 export const formDataToRegistrationData = (formData: ExpertFormData): ExpertRegistrationData => {

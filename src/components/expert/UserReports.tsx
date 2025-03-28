@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -42,12 +41,13 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
         if (data) {
           const formattedReports: ReportUserType[] = data.map(report => ({
             id: report.id,
-            userId: report.user_id || '',
-            userName: report.user_name || '',
+            user_id: report.user_id || '',
+            expert_id: parseInt(report.expert_id || '0', 10),
             reason: report.reason || '',
             details: report.details || '',
             date: report.date || new Date().toISOString(),
-            status: report.status || 'pending'
+            status: report.status || 'pending',
+            userName: report.user_name // For display compatibility
           }));
           setReports(formattedReports);
         }
@@ -108,12 +108,13 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
         // Format the report for display
         const formattedReport: ReportUserType = {
           id: data.id,
-          userId: data.user_id || '',
-          userName: data.user_name || '',
+          user_id: data.user_id || '',
+          expert_id: parseInt(data.expert_id || '0', 10),
           reason: data.reason || '',
           details: data.details || '',
           date: data.date || new Date().toISOString(),
-          status: data.status || 'pending'
+          status: data.status || 'pending',
+          userName: data.user_name
         };
         
         // Update local state
@@ -241,7 +242,7 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
                 <div key={report.id} className="border rounded-lg p-4">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-medium">{report.userName}</h4>
+                      <h4 className="font-medium">{report.userName || 'Unknown User'}</h4>
                       <p className="text-sm text-muted-foreground">
                         Reported on {formatDate(report.date)}
                       </p>
