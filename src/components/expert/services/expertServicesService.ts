@@ -41,7 +41,8 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
       
       // Try an alternative approach to fetch home categories
       try {
-        type ServiceResponse = {
+        // Define a more specific interface to avoid deep type instantiation
+        interface ServiceResponse {
           id: number;
           name?: string;
           title?: string;
@@ -50,7 +51,7 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
           rate_inr?: number;
           rateUSD?: number;
           rateINR?: number;
-        };
+        }
         
         const { data: homeServices, error: homeServicesError } = await supabase
           .from('services')
