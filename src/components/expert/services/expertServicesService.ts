@@ -34,7 +34,7 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     // First try to fetch from services table (admin configured services)
     const { data: servicesData, error: servicesError } = await supabase
       .from('services')
-      .select('*');
+      .select('id, name, description, rate_usd, rate_inr, rateUSD, rateINR');
     
     if (servicesError) {
       console.error('Error fetching services from Supabase:', servicesError);
@@ -48,7 +48,7 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
           
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
-          return homeServices.map((service: any) => ({
+          return homeServices.map((service) => ({
             id: service.id,
             name: service.name || service.title || 'Service',
             description: service.description,
@@ -67,7 +67,7 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesData && servicesData.length > 0) {
       console.log('Services found in Supabase:', servicesData.length);
       // Map the backend field names to our frontend field names if needed
-      return servicesData.map((service: any) => ({
+      return servicesData.map((service) => ({
         id: service.id,
         name: service.name,
         description: service.description,

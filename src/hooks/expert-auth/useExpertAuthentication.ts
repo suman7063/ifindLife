@@ -15,24 +15,27 @@ export const useExpertAuthentication = (
   const fetchExpertProfile = async (userId: string) => {
     try {
       console.log("Fetching expert profile for user ID:", userId);
+      
+      // Use standard select without attempting to get a single row
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('auth_id', userId)
-        .single();
+        .eq('auth_id', userId);
 
       if (error) {
         console.error('Error fetching expert profile:', error);
         return null;
       }
 
-      if (!data) {
+      if (!data || data.length === 0) {
         console.log('No expert profile found for this user');
         return null;
       }
 
-      console.log('Expert profile retrieved:', data);
-      return data as ExpertProfile;
+      // Take the first record if multiple exist
+      const expertProfile = data[0] as ExpertProfile;
+      console.log('Expert profile retrieved:', expertProfile);
+      return expertProfile;
     } catch (error) {
       console.error('Exception in fetchExpertProfile:', error);
       return null;
@@ -144,7 +147,7 @@ export const useExpertAuthentication = (
       console.log('Auth user created with ID:', authData.user.id);
 
       // 2. Create expert profile
-      const { data: profileData, error: profileError } = await supabase
+      const { error: profileError } = await supabase
         .from('expert_accounts')
         .insert([{
           auth_id: authData.user.id,
@@ -160,8 +163,7 @@ export const useExpertAuthentication = (
           bio: expertData.bio,
           certificate_urls: expertData.certificate_urls || [],
           selected_services: expertData.selected_services || []
-        }])
-        .select();
+        }]);
 
       if (profileError) {
         console.error('Error creating expert profile:', profileError);
@@ -175,7 +177,7 @@ export const useExpertAuthentication = (
         throw new Error('Failed to create expert profile: ' + profileError.message);
       }
       
-      console.log('Expert profile created successfully:', profileData);
+      console.log('Expert profile created successfully');
 
       toast.success('Registration successful! Please check your email for verification.');
       return true;
