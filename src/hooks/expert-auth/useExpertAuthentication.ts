@@ -153,21 +153,21 @@ export const useExpertAuthentication = (
       // 2. Create expert profile with explicit auth_id
       const { error: profileError } = await supabase
         .from('expert_accounts')
-        .insert([{
+        .insert({
           auth_id: authData.user.id,
           name: expertData.name,
           email: expertData.email,
-          phone: expertData.phone,
-          address: expertData.address,
-          city: expertData.city,
-          state: expertData.state,
-          country: expertData.country,
-          specialization: expertData.specialization,
-          experience: expertData.experience,
-          bio: expertData.bio,
+          phone: expertData.phone || null,
+          address: expertData.address || null,
+          city: expertData.city || null,
+          state: expertData.state || null,
+          country: expertData.country || null,
+          specialization: expertData.specialization || null,
+          experience: expertData.experience || null,
+          bio: expertData.bio || null,
           certificate_urls: expertData.certificate_urls || [],
           selected_services: expertData.selected_services || []
-        }]);
+        });
 
       if (profileError) {
         console.error('Error creating expert profile:', profileError);

@@ -27,15 +27,6 @@ const mockServices: ServiceType[] = [
   }
 ];
 
-// Interface to match database table schema exactly
-interface ServiceRecord {
-  id: number;
-  name: string | null;
-  description: string | null;
-  rate_usd: number | null;
-  rate_inr: number | null;
-}
-
 export const fetchServices = async (): Promise<ServiceType[]> => {
   try {
     console.log('Fetching services from Supabase...');
