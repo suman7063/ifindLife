@@ -59,8 +59,9 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
           
-          // Use a safer approach: first convert to unknown, then to our type
-          return (homeServices as unknown as ServiceDBRecord[]).map((service) => ({
+          // Use a two-step type assertion to avoid deep instantiation errors
+          const safeData = homeServices as any;
+          return safeData.map((service: ServiceDBRecord) => ({
             id: service.id,
             name: service.name || service.title || 'Service',
             description: service.description,
@@ -79,8 +80,9 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesData && servicesData.length > 0) {
       console.log('Services found in Supabase:', servicesData.length);
       
-      // Use the same safer conversion approach here
-      return (servicesData as unknown as ServiceDBRecord[]).map((service) => ({
+      // Use the same two-step type assertion approach
+      const safeData = servicesData as any;
+      return safeData.map((service: ServiceDBRecord) => ({
         id: service.id,
         name: service.name,
         description: service.description,

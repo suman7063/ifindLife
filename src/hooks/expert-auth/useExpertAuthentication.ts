@@ -66,14 +66,18 @@ export const useExpertAuthentication = (
       const expertProfile = await fetchExpertProfile(data.user.id);
       
       if (!expertProfile) {
+        // This is the key change - we handle the case where the user is authenticated
+        // but doesn't have an expert profile
         toast.error('No expert profile found. Please register as an expert.');
         await supabase.auth.signOut();
         setLoading(false);
+        navigate('/expert-login?register=true');
         return false;
       }
       
       setExpert(expertProfile);
       toast.success('Login successful!');
+      navigate('/expert-dashboard');
       return true;
     } catch (error) {
       console.error('Login error:', error);

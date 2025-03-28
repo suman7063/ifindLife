@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -22,6 +21,15 @@ const ExpertLogin = () => {
   
   const { login, expert, loading } = useExpertAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('register') === 'true') {
+      setActiveTab('register');
+      toast.info('Please complete your expert registration to continue');
+    }
+  }, [location]);
   
   useEffect(() => {
     // If already logged in, redirect to dashboard
