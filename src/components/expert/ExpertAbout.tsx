@@ -3,8 +3,8 @@ import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Award } from 'lucide-react';
 
-interface AstrologerAboutProps {
-  astrologer: {
+interface ExpertAboutProps {
+  expert: {
     name: string;
     description: string;
     specialties: string[];
@@ -12,18 +12,18 @@ interface AstrologerAboutProps {
   };
 }
 
-const AstrologerAbout: React.FC<AstrologerAboutProps> = ({ astrologer }) => {
+const ExpertAbout: React.FC<ExpertAboutProps> = ({ expert }) => {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-xl font-semibold mb-4">About {astrologer.name}</h2>
-        <p className="text-muted-foreground">{astrologer.description}</p>
+        <h2 className="text-xl font-semibold mb-4">About {expert.name}</h2>
+        <p className="text-muted-foreground">{expert.description}</p>
       </div>
       
       <div>
         <h2 className="text-xl font-semibold mb-4">Specialities</h2>
         <div className="flex flex-wrap gap-2">
-          {astrologer.specialties.map((specialty, index) => (
+          {expert.specialties.map((specialty, index) => (
             <Badge key={index} className="bg-astro-light-purple/10 text-astro-purple hover:bg-astro-light-purple/20 px-3 py-1">
               {specialty}
             </Badge>
@@ -36,8 +36,8 @@ const AstrologerAbout: React.FC<AstrologerAboutProps> = ({ astrologer }) => {
         <div className="flex items-start gap-3">
           <Award className="h-5 w-5 text-astro-purple mt-0.5" />
           <div>
-            <div className="font-medium">{astrologer.education}</div>
-            <div className="text-sm text-muted-foreground">Certified Astrologer</div>
+            <div className="font-medium">{expert.education}</div>
+            <div className="text-sm text-muted-foreground">Certified Expert</div>
           </div>
         </div>
       </div>
@@ -45,4 +45,4 @@ const AstrologerAbout: React.FC<AstrologerAboutProps> = ({ astrologer }) => {
   );
 };
 
-export default AstrologerAbout;
+export default ExpertAbout;

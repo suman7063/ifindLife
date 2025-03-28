@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 
-const AstrologerHeader = () => {
+const ExpertHeader = () => {
   return (
     <div className="bg-astro-deep-blue text-white py-6">
       <div className="container">
@@ -16,4 +16,4 @@ const AstrologerHeader = () => {
   );
 };
 
-export default AstrologerHeader;
+export default ExpertHeader;

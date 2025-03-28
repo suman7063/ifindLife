@@ -5,11 +5,11 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CallModal from '@/components/CallModal';
 import { toast } from '@/hooks/use-toast';
-import AstrologerHeader from '@/components/astrologer/AstrologerHeader';
-import AstrologerProfile from '@/components/astrologer/AstrologerProfile';
-import AstrologerDetailTabs from '@/components/astrologer/AstrologerDetailTabs';
+import ExpertHeader from '@/components/expert/ExpertHeader';
+import ExpertProfile from '@/components/expert/ExpertProfile';
+import ExpertDetailTabs from '@/components/expert/ExpertDetailTabs';
 
-const AstrologerDetail = () => {
+const ExpertDetail = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
@@ -20,7 +20,7 @@ const AstrologerDetail = () => {
     }
   }, [searchParams]);
   
-  const astrologer = {
+  const expert = {
     id: Number(id),
     name: "Acharya Raman",
     experience: 15,
@@ -32,7 +32,7 @@ const AstrologerDetail = () => {
     imageUrl: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=2070&auto=format&fit=crop",
     online: true,
     languages: ["English", "Hindi"],
-    description: "Acharya Raman is an experienced astrologer with over 15 years of experience in Vedic astrology, palmistry, and tarot reading. He has helped thousands of people find clarity and direction in their lives through his accurate predictions and spiritual guidance.",
+    description: "Acharya Raman is an experienced expert with over 15 years of experience in Vedic astrology, palmistry, and tarot reading. He has helped thousands of people find clarity and direction in their lives through his accurate predictions and spiritual guidance.",
     education: "Master's in Vedic Astrology, Banaras Hindu University",
     reviews: [
       {
@@ -60,12 +60,12 @@ const AstrologerDetail = () => {
   };
   
   const handleCallClick = () => {
-    if (astrologer.online && astrologer.waitTime === "Available") {
+    if (expert.online && expert.waitTime === "Available") {
       setIsCallModalOpen(true);
     } else {
       toast({
-        title: "Astrologer Unavailable",
-        description: "This astrologer is currently offline or busy. Please try again later.",
+        title: "Expert Unavailable",
+        description: "This expert is currently offline or busy. Please try again later.",
         variant: "destructive"
       });
     }
@@ -74,20 +74,20 @@ const AstrologerDetail = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <AstrologerHeader />
+      <ExpertHeader />
       
       <main className="flex-1 py-8">
         <div className="container">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-1">
-              <AstrologerProfile 
-                astrologer={astrologer} 
+              <ExpertProfile 
+                expert={expert} 
                 onCallClick={handleCallClick} 
               />
             </div>
             
             <div className="md:col-span-2">
-              <AstrologerDetailTabs astrologer={astrologer} />
+              <ExpertDetailTabs expert={expert} />
             </div>
           </div>
         </div>
@@ -99,14 +99,14 @@ const AstrologerDetail = () => {
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
         astrologer={{
-          id: astrologer.id,
-          name: astrologer.name,
-          imageUrl: astrologer.imageUrl,
-          price: astrologer.price
+          id: expert.id,
+          name: expert.name,
+          imageUrl: expert.imageUrl,
+          price: expert.price
         }}
       />
     </div>
   );
 };
 
-export default AstrologerDetail;
+export default ExpertDetail;

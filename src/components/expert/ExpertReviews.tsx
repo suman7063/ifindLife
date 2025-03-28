@@ -10,12 +10,12 @@ interface Review {
   comment: string;
 }
 
-interface AstrologerReviewsProps {
+interface ExpertReviewsProps {
   reviews: Review[];
   rating: number;
 }
 
-const AstrologerReviews: React.FC<AstrologerReviewsProps> = ({ reviews, rating }) => {
+const ExpertReviews: React.FC<ExpertReviewsProps> = ({ reviews, rating }) => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -49,4 +49,4 @@ const AstrologerReviews: React.FC<AstrologerReviewsProps> = ({ reviews, rating }
   );
 };
 
-export default AstrologerReviews;
+export default ExpertReviews;

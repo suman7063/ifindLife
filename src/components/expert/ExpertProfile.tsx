@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 
-interface AstrologerProfileProps {
-  astrologer: {
+interface ExpertProfileProps {
+  expert: {
     id: number;
     name: string;
     experience: number;
@@ -22,35 +22,35 @@ interface AstrologerProfileProps {
   onCallClick: () => void;
 }
 
-const AstrologerProfile: React.FC<AstrologerProfileProps> = ({ astrologer, onCallClick }) => {
+const ExpertProfile: React.FC<ExpertProfileProps> = ({ expert, onCallClick }) => {
   return (
     <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-20">
       <div className="flex flex-col items-center text-center mb-6">
         <div className="relative mb-4">
           <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-astro-light-purple">
             <img 
-              src={astrologer.imageUrl} 
-              alt={astrologer.name} 
+              src={expert.imageUrl} 
+              alt={expert.name} 
               className="h-full w-full object-cover"
             />
           </div>
-          {astrologer.online && (
+          {expert.online && (
             <span className="absolute bottom-2 right-2 h-4 w-4 bg-green-500 rounded-full border-2 border-white"></span>
           )}
         </div>
         
-        <h1 className="text-xl font-bold mb-1">{astrologer.name}</h1>
+        <h1 className="text-xl font-bold mb-1">{expert.name}</h1>
         
         <div className="flex items-center justify-center mb-2">
           <Star className="h-4 w-4 fill-astro-gold text-astro-gold mr-1" />
-          <span className="font-medium">{astrologer.rating}</span>
+          <span className="font-medium">{expert.rating}</span>
           <span className="text-sm text-muted-foreground ml-1">
-            ({astrologer.consultations.toLocaleString()}+ consultations)
+            ({expert.consultations.toLocaleString()}+ consultations)
           </span>
         </div>
         
         <div className="flex flex-wrap justify-center gap-1 mb-6">
-          {astrologer.languages.map((language, index) => (
+          {expert.languages.map((language, index) => (
             <Badge key={index} variant="outline" className="bg-muted/50">
               {language}
             </Badge>
@@ -59,19 +59,19 @@ const AstrologerProfile: React.FC<AstrologerProfileProps> = ({ astrologer, onCal
         
         <div className="grid grid-cols-2 gap-4 w-full mb-6">
           <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="font-medium">{astrologer.experience} Years</div>
+            <div className="font-medium">{expert.experience} Years</div>
             <div className="text-sm text-muted-foreground">Experience</div>
           </div>
           <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="font-medium">₹{astrologer.price}</div>
+            <div className="font-medium">₹{expert.price}</div>
             <div className="text-sm text-muted-foreground">Per Minute</div>
           </div>
         </div>
         
         <div className="flex items-center justify-center mb-6">
           <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-          <span className={astrologer.waitTime === "Available" ? "text-green-600" : "text-muted-foreground"}>
-            {astrologer.waitTime}
+          <span className={expert.waitTime === "Available" ? "text-green-600" : "text-muted-foreground"}>
+            {expert.waitTime}
           </span>
         </div>
         
@@ -94,4 +94,4 @@ const AstrologerProfile: React.FC<AstrologerProfileProps> = ({ astrologer, onCal
   );
 };
 
-export default AstrologerProfile;
+export default ExpertProfile;

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Routes,
@@ -13,7 +12,7 @@ import ExpertLogin from "./pages/ExpertLogin";
 import UserDashboard from "./pages/UserDashboard";
 import ExpertDashboard from "./pages/ExpertDashboard";
 import Experts from "./pages/Experts";
-import AstrologerDetail from "./pages/AstrologerDetail";
+import ExpertDetail from "./pages/ExpertDetail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import MigrateData from "./pages/MigrateData";
@@ -22,11 +21,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import UserReferrals from './pages/UserReferrals';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import Programs from './pages/Programs';
-import AboutUs from './pages/AboutUs';
-import CareerGuidance from './pages/CareerGuidance';
-import BlogEmotionalIntelligence from './pages/BlogEmotionalIntelligence';
-import BlogManagingThoughts from './pages/BlogManagingThoughts';
-import BlogTeenageAnger from './pages/BlogTeenageAnger';
+import AboutUs from "./pages/AboutUs";
+import CareerGuidance from "./pages/CareerGuidance";
+import BlogEmotionalIntelligence from "./pages/BlogEmotionalIntelligence";
+import BlogManagingThoughts from "./pages/BlogManagingThoughts";
+import BlogTeenageAnger from "./pages/BlogTeenageAnger";
 import UserProfileEdit from './components/user/UserProfileEdit';
 
 function App() {
@@ -41,7 +40,7 @@ function App() {
       <Route path="/user-dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
       <Route path="/expert-dashboard" element={<ProtectedRoute><ExpertDashboard /></ProtectedRoute>} />
       <Route path="/experts" element={<Experts />} />
-      <Route path="/experts/:id" element={<AstrologerDetail />} />
+      <Route path="/experts/:id" element={<ExpertDetail />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/migrate-data" element={<MigrateData />} />

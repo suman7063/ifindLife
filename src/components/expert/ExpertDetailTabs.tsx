@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AstrologerAbout from './AstrologerAbout';
-import AstrologerReviews from './AstrologerReviews';
+import ExpertAbout from './ExpertAbout';
+import ExpertReviews from './ExpertReviews';
 
-interface AstrologerDetailTabsProps {
-  astrologer: {
+interface ExpertDetailTabsProps {
+  expert: {
     name: string;
     description: string;
     specialties: string[];
@@ -21,7 +21,7 @@ interface AstrologerDetailTabsProps {
   };
 }
 
-const AstrologerDetailTabs: React.FC<AstrologerDetailTabsProps> = ({ astrologer }) => {
+const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
   return (
     <Tabs defaultValue="about">
       <TabsList className="mb-6">
@@ -30,14 +30,14 @@ const AstrologerDetailTabs: React.FC<AstrologerDetailTabsProps> = ({ astrologer 
       </TabsList>
       
       <TabsContent value="about">
-        <AstrologerAbout astrologer={astrologer} />
+        <ExpertAbout expert={expert} />
       </TabsContent>
       
       <TabsContent value="reviews">
-        <AstrologerReviews reviews={astrologer.reviews} rating={astrologer.rating} />
+        <ExpertReviews reviews={expert.reviews} rating={expert.rating} />
       </TabsContent>
     </Tabs>
   );
 };
 
-export default AstrologerDetailTabs;
+export default ExpertDetailTabs;

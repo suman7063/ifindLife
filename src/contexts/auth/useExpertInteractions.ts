@@ -34,7 +34,7 @@ export const useExpertInteractions = (
   };
 
   const hasTakenServiceFromWrapper = async (expertId: number) => {
-    return hasTakenServiceFrom(String(expertId));
+    return hasTakenServiceFrom(expertId);
   };
 
   // Return the wrapped functions with the correct types
