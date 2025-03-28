@@ -27,14 +27,14 @@ const mockServices: ServiceType[] = [
   }
 ];
 
-// Define a type for service data from Supabase to avoid deep type instantiation
-interface ServiceDBRecord {
+// Define a simple interface that matches exactly what we get from the database
+interface ServiceRecord {
   id: number;
-  name: string;
+  name?: string;
+  title?: string;
   description?: string;
   rate_usd?: number;
   rate_inr?: number;
-  title?: string;
 }
 
 export const fetchServices = async (): Promise<ServiceType[]> => {
@@ -59,12 +59,13 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
         if (!homeServicesError && homeServices && homeServices.length > 0) {
           console.log('Found home services/categories:', homeServices.length);
           
-          // Use a two-step type assertion to avoid deep instantiation errors
-          const safeData = homeServices as any;
-          return safeData.map((service: ServiceDBRecord) => ({
+          // Cast to any first to avoid typescript errors
+          const services = homeServices as any as ServiceRecord[];
+          
+          return services.map(service => ({
             id: service.id,
             name: service.name || service.title || 'Service',
-            description: service.description,
+            description: service.description || '',
             rateUSD: service.rate_usd || 50,
             rateINR: service.rate_inr || 3500
           }));
@@ -80,12 +81,13 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesData && servicesData.length > 0) {
       console.log('Services found in Supabase:', servicesData.length);
       
-      // Use the same two-step type assertion approach
-      const safeData = servicesData as any;
-      return safeData.map((service: ServiceDBRecord) => ({
+      // Cast to any first to avoid typescript errors
+      const services = servicesData as any as ServiceRecord[];
+      
+      return services.map(service => ({
         id: service.id,
-        name: service.name,
-        description: service.description,
+        name: service.name || 'Service',
+        description: service.description || '',
         rateUSD: service.rate_usd || 0,
         rateINR: service.rate_inr || 0
       }));
