@@ -1,35 +1,48 @@
 
 import { User } from '@supabase/supabase-js';
-import { UserProfile, Expert, Review, Report, Course, UserTransaction } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase';
 
-export type UserAuthContextType = {
+export interface UserAuthContextType {
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
   authLoading: boolean;
   profileNotFound: boolean;
   user: User | null;
-  
-  // Authentication methods
+  loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
+  signup: (
+    email: string, 
+    password: string, 
+    userData: Partial<UserProfile>, 
+    referralCode?: string
+  ) => Promise<boolean>;
   logout: () => Promise<void>;
-  
-  // Profile management
-  updateProfile: (profileData: Partial<UserProfile>) => Promise<boolean>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture: (file: File) => Promise<string | null>;
   updatePassword: (newPassword: string) => Promise<boolean>;
-  
-  // Expert interactions
-  addToFavorites: (expertId: string) => Promise<boolean>;
-  removeFromFavorites: (expertId: string) => Promise<boolean>;
-  addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
-  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
-  getExpertShareLink: (expertId: string) => string;
-  
-  // Wallet & referrals
+  addToFavorites: (expertId: number) => Promise<boolean>;
+  removeFromFavorites: (expertId: number) => Promise<boolean>;
   rechargeWallet: (amount: number) => Promise<boolean>;
+  addReview: (expertId: number, rating: number, comment: string) => Promise<boolean>;
+  reportExpert: (expertId: number, reason: string, details: string) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: number) => Promise<boolean>;
+  getExpertShareLink: (expertId: number) => string;
   getReferralLink: () => string | null;
-};
+}
 
-export type { User, UserProfile, Expert, Review, Report, Course, UserTransaction };
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface RegisterFormData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  name: string;
+  phone: string;
+  country: string;
+  city?: string;
+  referralCode?: string;
+  acceptTerms: boolean;
+}

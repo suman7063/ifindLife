@@ -38,7 +38,7 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
           rating={expert.rating}
           consultations={expert.consultations}
           price={expert.price}
-          waitTime={expert.waitTime} // Now this is optional in AstrologerCardProps
+          waitTime={expert.waitTime}
           imageUrl={expert.imageUrl}
           online={expert.online}
         />

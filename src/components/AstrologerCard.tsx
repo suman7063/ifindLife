@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Star } from 'lucide-react';
+import { Star, PhoneCall, Calendar } from 'lucide-react';
 
 interface AstrologerCardProps {
   id: number;
@@ -13,7 +13,7 @@ interface AstrologerCardProps {
   rating: number;
   consultations: number;
   price: number;
-  waitTime?: string; // Made optional with the ? mark
+  waitTime?: string;
   imageUrl: string;
   online?: boolean;
 }
@@ -26,7 +26,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   rating,
   consultations,
   price,
-  waitTime = "Available", // Added default value
+  waitTime = "Available",
   imageUrl,
   online
 }) => {
@@ -50,7 +50,9 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
       
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold">Dr. {name}</h3>
+          <Link to={`/experts/${id}`} className="font-semibold hover:text-ifind-aqua transition-colors">
+            Dr. {name}
+          </Link>
           <div className="bg-ifind-aqua/10 text-ifind-aqua px-2 py-1 rounded text-xs">
             {waitTime}
           </div>
@@ -82,14 +84,14 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
         </div>
         
         <div className="grid grid-cols-2 gap-2">
-          <Link to={`/experts/${id}`}>
+          <Link to={`/experts/${id}?call=true`}>
             <Button className="bg-ifind-aqua hover:bg-ifind-aqua/90 text-white w-full" size="sm">
-              View Profile
+              <PhoneCall className="h-4 w-4 mr-1" /> Call Now
             </Button>
           </Link>
           <Link to={`/experts/${id}?booking=true`}>
             <Button variant="outline" className="border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua/10 w-full" size="sm">
-              Book Now
+              <Calendar className="h-4 w-4 mr-1" /> Book Now
             </Button>
           </Link>
         </div>

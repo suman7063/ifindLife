@@ -1,6 +1,5 @@
-
-import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,10 +11,15 @@ import { toast } from '@/hooks/use-toast';
 
 const AstrologerDetail = () => {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   
-  // This would normally come from an API call using the ID
-  // For now, we'll use dummy data
+  useEffect(() => {
+    if (searchParams.get('call') === 'true') {
+      setIsCallModalOpen(true);
+    }
+  }, [searchParams]);
+  
   const astrologer = {
     id: Number(id),
     name: "Acharya Raman",
@@ -73,9 +77,9 @@ const AstrologerDetail = () => {
       
       <div className="bg-astro-deep-blue text-white py-6">
         <div className="container">
-          <Link to="/astrologers" className="inline-flex items-center text-astro-stardust hover:text-white transition-colors mb-4">
+          <Link to="/experts" className="inline-flex items-center text-astro-stardust hover:text-white transition-colors mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Astrologers
+            Back to Experts
           </Link>
         </div>
       </div>
@@ -83,7 +87,6 @@ const AstrologerDetail = () => {
       <main className="flex-1 py-8">
         <div className="container">
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Profile Card */}
             <div className="md:col-span-1">
               <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-20">
                 <div className="flex flex-col items-center text-center mb-6">
@@ -154,7 +157,6 @@ const AstrologerDetail = () => {
               </div>
             </div>
             
-            {/* Details Section */}
             <div className="md:col-span-2">
               <Tabs defaultValue="about">
                 <TabsList className="mb-6">
