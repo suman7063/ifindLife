@@ -10,6 +10,7 @@ export const useExpertInteractions = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
+  // Update these hooks to handle number type for expertId
   const { addToFavorites, removeFromFavorites } = useUserFavorites(currentUser, setCurrentUser);
   const { addReview } = useUserReviews(currentUser, setCurrentUser);
   const { addReport } = useUserReports(currentUser, setCurrentUser);
