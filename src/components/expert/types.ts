@@ -45,6 +45,16 @@ export interface ExpertRegistrationData {
   selected_services?: number[];
 }
 
+export interface ReportUserType {
+  id: string;
+  user_id: string;
+  expert_id: number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+}
+
 export const formDataToRegistrationData = (formData: ExpertFormData): ExpertRegistrationData => {
   console.log('Converting form data to registration data:', formData);
   

@@ -116,7 +116,7 @@ const ProfessionalInfoStep = ({
           </Button>
           
           {formData.certificateUrls && formData.certificateUrls.length > 0 && (
-            <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
+            <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
               <p className="text-sm text-gray-500">Uploaded Certificates:</p>
               <div className="space-y-2">
                 {formData.certificateUrls.map((url, index) => (
@@ -144,7 +144,8 @@ const ProfessionalInfoStep = ({
         </FormItem>
       </div>
       
-      <div className="flex justify-between pt-6 sticky bottom-0 bg-white pb-2 mt-8">
+      {/* Fixed positioning for navigation buttons to ensure they're always visible */}
+      <div className="flex justify-between pt-10 pb-4 mt-8">
         <button
           type="button"
           onClick={prevStep}

@@ -204,7 +204,7 @@ const ExpertLogin = () => {
                 </form>
               </TabsContent>
               
-              <TabsContent value="register" className="max-h-[70vh] overflow-y-auto">
+              <TabsContent value="register" className="max-h-[70vh] overflow-y-auto pb-8">
                 <ExpertRegistrationForm />
               </TabsContent>
             </Tabs>

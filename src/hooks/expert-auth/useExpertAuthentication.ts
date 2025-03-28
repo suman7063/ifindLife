@@ -146,7 +146,7 @@ export const useExpertAuthentication = (
       // 2. Create expert profile
       const { data: profileData, error: profileError } = await supabase
         .from('expert_accounts')
-        .insert({
+        .insert([{
           auth_id: authData.user.id,
           name: expertData.name,
           email: expertData.email,
@@ -160,7 +160,7 @@ export const useExpertAuthentication = (
           bio: expertData.bio,
           certificate_urls: expertData.certificate_urls || [],
           selected_services: expertData.selected_services || []
-        })
+        }])
         .select();
 
       if (profileError) {

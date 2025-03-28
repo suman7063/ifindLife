@@ -39,24 +39,32 @@ export const fetchServices = async (): Promise<ServiceType[]> => {
     if (servicesError) {
       console.error('Error fetching services from Supabase:', servicesError);
       
-      // Try to fetch from categories/services from homepage as a fallback
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('categories')
-        .select('*');
-      
-      if (categoriesError || !categoriesData || categoriesData.length === 0) {
-        console.log('No services or categories found, using mock data');
-        return mockServices;
+      // Since we can't use .from("categories") directly, use a more generic approach
+      // that works with the existing schema
+      try {
+        // Try to look for categories in another table that might be storing
+        // the admin-configured categories from the home page
+        const { data: homeServices, error: homeServicesError } = await supabase
+          .from('services')
+          .select('*')
+          .eq('type', 'home_category');
+          
+        if (!homeServicesError && homeServices && homeServices.length > 0) {
+          console.log('Found home services/categories:', homeServices.length);
+          return homeServices.map((service: any) => ({
+            id: service.id,
+            name: service.name || service.title,
+            description: service.description,
+            rateUSD: service.rate_usd || 50,
+            rateINR: service.rate_inr || 3500
+          }));
+        }
+      } catch (homeError) {
+        console.error('Error fetching home categories:', homeError);
       }
       
-      // Map the categories data to service format
-      return categoriesData.map((category: any, index) => ({
-        id: category.id || index + 1,
-        name: category.title || category.name,
-        description: category.description,
-        rateUSD: category.rate_usd || 50,
-        rateINR: category.rate_inr || 3500
-      }));
+      console.log('No services found, using mock data');
+      return mockServices;
     }
     
     if (servicesData && servicesData.length > 0) {
