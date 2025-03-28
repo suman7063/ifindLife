@@ -150,7 +150,7 @@ export const useExpertAuthentication = (
       
       console.log('Auth user created with ID:', authData.user.id);
 
-      // 2. Create expert profile
+      // 2. Create expert profile with explicit auth_id
       const { error: profileError } = await supabase
         .from('expert_accounts')
         .insert([{
