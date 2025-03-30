@@ -9,15 +9,51 @@ import {
   VideoOff, 
   MessageCircle,
   Maximize,
+  Minimize,
   PlusCircle
 } from 'lucide-react';
 import { CallState } from '@/utils/agoraService';
 import { toast } from 'sonner';
 
+interface AgoraCallControlButtonProps {
+  onClick: () => void;
+  active?: boolean;
+  icon: React.ReactNode;
+  activeIcon?: React.ReactNode;
+  title: string;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  className?: string;
+}
+
+const AgoraCallControlButton: React.FC<AgoraCallControlButtonProps> = ({
+  onClick,
+  active = false,
+  icon,
+  activeIcon,
+  title,
+  variant = "outline",
+  className = ""
+}) => {
+  const displayIcon = active && activeIcon ? activeIcon : icon;
+  const buttonClass = `rounded-full p-3 ${className} ${active ? 'bg-red-100 border-red-300' : ''}`;
+  
+  return (
+    <Button
+      onClick={onClick}
+      variant={variant}
+      className={buttonClass}
+      title={title}
+    >
+      {displayIcon}
+    </Button>
+  );
+};
+
 interface AgoraCallControlsProps {
   callState: CallState;
   callType: 'audio' | 'video';
   isExtending: boolean;
+  isFullscreen: boolean;
   onToggleMute: () => void;
   onToggleVideo: () => void;
   onEndCall: () => void;
@@ -30,6 +66,7 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
   callState,
   callType,
   isExtending,
+  isFullscreen,
   onToggleMute,
   onToggleVideo,
   onEndCall,
@@ -38,68 +75,56 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
   onToggleFullscreen
 }) => {
   return (
-    <div className="flex justify-center space-x-4">
+    <div className="flex justify-center items-center space-x-4 p-2 bg-background/80 rounded-lg backdrop-blur-sm">
       {callState.isJoined && (
         <>
-          <Button 
-            onClick={onToggleMute} 
-            variant="outline" 
-            className={`rounded-full p-3 ${callState.isMuted ? 'bg-red-100 border-red-300' : ''}`}
-            title={callState.isMuted ? "Unmute" : "Mute"}
-          >
-            {callState.isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-          </Button>
+          <AgoraCallControlButton
+            onClick={onToggleMute}
+            active={callState.isMuted}
+            icon={<Mic className="h-5 w-5" />}
+            activeIcon={<MicOff className="h-5 w-5" />}
+            title={callState.isMuted ? "Unmute microphone" : "Mute microphone"}
+          />
           
           {callType === 'video' && (
-            <Button 
-              onClick={onToggleVideo} 
-              variant="outline" 
-              className={`rounded-full p-3 ${!callState.isVideoEnabled ? 'bg-red-100 border-red-300' : ''}`}
+            <AgoraCallControlButton
+              onClick={onToggleVideo}
+              active={!callState.isVideoEnabled}
+              icon={<Video className="h-5 w-5" />}
+              activeIcon={<VideoOff className="h-5 w-5" />}
               title={callState.isVideoEnabled ? "Turn off camera" : "Turn on camera"}
-            >
-              {callState.isVideoEnabled ? <Video className="h-5 w-5" /> : <VideoOff className="h-5 w-5" />}
-            </Button>
+            />
           )}
           
-          <Button 
-            onClick={onToggleChat} 
-            variant="outline" 
-            className="rounded-full p-3"
-            title="Open chat"
-          >
-            <MessageCircle className="h-5 w-5" />
-          </Button>
+          <AgoraCallControlButton
+            onClick={onToggleChat}
+            icon={<MessageCircle className="h-5 w-5" />}
+            title="Toggle chat"
+          />
           
-          <Button 
-            onClick={onToggleFullscreen} 
-            variant="outline" 
-            className="rounded-full p-3"
-            title="Fullscreen"
-          >
-            <Maximize className="h-5 w-5" />
-          </Button>
+          <AgoraCallControlButton
+            onClick={onToggleFullscreen}
+            icon={isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          />
           
           {isExtending && (
-            <Button 
-              onClick={onExtendCall} 
-              variant="outline" 
-              className="rounded-full p-3 bg-green-100 border-green-300"
+            <AgoraCallControlButton
+              onClick={onExtendCall}
+              icon={<PlusCircle className="h-5 w-5 text-green-600" />}
+              className="bg-green-100 border-green-300"
               title="Extend call by 15 minutes"
-            >
-              <PlusCircle className="h-5 w-5 text-green-600" />
-            </Button>
+            />
           )}
         </>
       )}
       
-      <Button 
-        onClick={onEndCall} 
-        variant="destructive" 
-        className="rounded-full p-3"
+      <AgoraCallControlButton
+        onClick={onEndCall}
+        icon={<PhoneOff className="h-5 w-5" />}
+        variant="destructive"
         title="End call"
-      >
-        <PhoneOff className="h-5 w-5" />
-      </Button>
+      />
     </div>
   );
 };
