@@ -28,6 +28,7 @@ export const useCallState = () => {
     }));
   }, [callState.client]);
 
+  // Fix: Ensure handleUserUnpublished accepts both user and mediaType parameters
   const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
     console.log("Remote user unpublished:", user.uid, mediaType);
     setCallState(prevState => ({
