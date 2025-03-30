@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useExpertAuth } from '@/hooks/expert-auth';
 import { toast } from 'sonner';
@@ -12,45 +12,74 @@ export const useAuthSynchronization = () => {
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   
   // Access both auth contexts
-  const { isAuthenticated: isUserAuthenticated, currentUser, logout: userLogout } = useUserAuth();
-  const { expert, loading: expertLoading, logout: expertLogout } = useExpertAuth();
+  const { isAuthenticated: isUserAuthenticatedContext, currentUser, logout: userLogout, user: supabaseUser } = useUserAuth();
+  const { expert, loading: expertLoading, logout: expertLogout, authInitialized: expertAuthInitialized } = useExpertAuth();
   
-  // Derived state
-  const isExpertAuthenticated = !!expert && !expertLoading;
+  // Derived state - ensure we check for both user session and profile
+  const isUserAuthenticated = !!supabaseUser && !!currentUser && isUserAuthenticatedContext;
+  const isExpertAuthenticated = !!expert && !expertLoading && expertAuthInitialized;
   
-  // Track synchronization attempts to prevent infinite loops
-  const [syncAttempts, setSyncAttempts] = useState(0);
-  
-  // Effect to handle logout synchronization
-  useEffect(() => {
-    // Limit synchronization attempts to prevent potential infinite loops
-    if (syncAttempts > 3) {
-      console.error("Too many synchronization attempts, aborting");
-      return;
-    }
+  // Enhance logout functions with better error handling and state updates
+  const handleUserLogout = useCallback(async () => {
+    if (isSynchronizing) return false;
     
-    // If we're already handling a sync operation, skip this effect cycle
-    if (isSynchronizing) return;
+    try {
+      setIsSynchronizing(true);
+      console.log("useAuthSynchronization: Executing user logout");
+      const success = await userLogout();
+      
+      if (success) {
+        console.log("useAuthSynchronization: User logout successful");
+        return true;
+      } else {
+        console.error("useAuthSynchronization: User logout failed");
+        return false;
+      }
+    } catch (error) {
+      console.error("useAuthSynchronization: Error during user logout:", error);
+      return false;
+    } finally {
+      setIsSynchronizing(false);
+    }
+  }, [userLogout, isSynchronizing]);
+
+  const handleExpertLogout = useCallback(async () => {
+    if (isSynchronizing) return false;
+    
+    try {
+      setIsSynchronizing(true);
+      console.log("useAuthSynchronization: Executing expert logout");
+      await expertLogout();
+      console.log("useAuthSynchronization: Expert logout successful");
+      return true;
+    } catch (error) {
+      console.error("useAuthSynchronization: Error during expert logout:", error);
+      return false;
+    } finally {
+      setIsSynchronizing(false);
+    }
+  }, [expertLogout, isSynchronizing]);
+  
+  // Effect to handle auth conflict resolution
+  useEffect(() => {
+    // Skip if not fully initialized or already handling a sync operation
+    if (isSynchronizing || expertLoading) return;
     
     const handleConflictingAuth = async () => {
-      try {
-        setIsSynchronizing(true);
+      if (isUserAuthenticated && isExpertAuthenticated) {
+        console.log("Conflicting auth detected: User and Expert are both authenticated");
         
-        if (isUserAuthenticated && isExpertAuthenticated) {
-          console.log("Conflicting auth detected: User and Expert are both authenticated");
-          // Choose which one to log out based on current route
-          // For now, prioritize the user auth
-          
+        try {
+          setIsSynchronizing(true);
           // For simplicity, we'll log out of expert account if both are logged in
           console.log("Logging out of expert account to resolve auth conflict");
           await expertLogout();
           toast.info("You've been logged out as an expert to avoid conflict with your user account");
+        } catch (error) {
+          console.error("Error during auth synchronization:", error);
+        } finally {
+          setIsSynchronizing(false);
         }
-      } catch (error) {
-        console.error("Error during auth synchronization:", error);
-      } finally {
-        setIsSynchronizing(false);
-        setSyncAttempts(prev => prev + 1);
       }
     };
     
@@ -62,9 +91,8 @@ export const useAuthSynchronization = () => {
     isUserAuthenticated, 
     isExpertAuthenticated, 
     expertLogout, 
-    userLogout, 
     isSynchronizing,
-    syncAttempts
+    expertLoading
   ]);
   
   return {
@@ -72,6 +100,8 @@ export const useAuthSynchronization = () => {
     isExpertAuthenticated,
     isSynchronizing,
     currentUser,
-    expertProfile: expert
+    expertProfile: expert,
+    userLogout: handleUserLogout,
+    expertLogout: handleExpertLogout
   };
 };

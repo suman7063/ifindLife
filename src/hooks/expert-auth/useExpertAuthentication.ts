@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -76,7 +75,7 @@ export const useExpertAuthentication = (
   };
 
   // Logout function
-  const logout = async (): Promise<void> => {
+  const logout = async (): Promise<boolean> => {
     setLoading(true);
     try {
       // Ensure a complete logout using scope: 'global'
@@ -94,7 +93,11 @@ export const useExpertAuthentication = (
       toast.success('Logged out successfully');
       
       // Force a full page reload to clear any lingering state
-      window.location.href = '/expert-login';
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      
+      return true;
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to log out');
@@ -103,6 +106,8 @@ export const useExpertAuthentication = (
       setTimeout(() => {
         window.location.href = '/';
       }, 1500);
+      
+      return false;
     } finally {
       setLoading(false);
     }

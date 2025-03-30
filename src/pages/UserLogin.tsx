@@ -10,10 +10,9 @@ import RegisterTab from '@/components/auth/RegisterTab';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import { toast } from 'sonner';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { useExpertAuth } from '@/hooks/expert-auth';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import UserLoginHeader from '@/components/auth/UserLoginHeader';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLogin = () => {
   const [activeTab, setActiveTab] = useState('login');
@@ -29,8 +28,14 @@ const UserLogin = () => {
   
   // Get auth state from context
   const { login, signup, authLoading } = useUserAuth();
-  const { isUserAuthenticated, isExpertAuthenticated, currentUser, isSynchronizing, expertProfile } = useAuthSynchronization();
-  const { logout: expertLogout } = useExpertAuth();
+  const { 
+    isUserAuthenticated, 
+    isExpertAuthenticated, 
+    currentUser, 
+    isSynchronizing, 
+    expertProfile,
+    expertLogout 
+  } = useAuthSynchronization();
   
   // Log auth state for debugging
   useEffect(() => {
@@ -144,10 +149,19 @@ const UserLogin = () => {
   const handleExpertLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await expertLogout();
-      toast.success('Successfully logged out as expert');
-      // Force a full page reload to ensure clean state
-      window.location.href = '/user-login';
+      const success = await expertLogout();
+      
+      if (success) {
+        toast.success('Successfully logged out as expert');
+        // Force a full page reload to ensure clean state
+        window.location.href = '/user-login';
+      } else {
+        toast.error('Failed to log out as expert. Please try again.');
+        // Force a page reload as a last resort
+        setTimeout(() => {
+          window.location.href = '/user-login';
+        }, 1500);
+      }
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.');

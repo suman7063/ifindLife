@@ -5,7 +5,6 @@ import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { processReferralCode } from '@/utils/referralUtils';
-import { UserProfile } from '@/types/supabase';
 
 export const useAuthActions = (fetchProfile: () => Promise<void>) => {
   const [actionLoading, setActionLoading] = useState(false);
@@ -99,10 +98,11 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       
       console.log("Supabase signOut completed");
       
-      // Clear any local state that might be holding user info
-      // navigate directly in this function, since we want immediate response
-      // Don't redirect to home page, let the calling component decide
-      toast.success('You have been logged out');
+      // Force a full page reload to clear any lingering state
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+      
       return true;
     } catch (error: any) {
       console.error("Logout error:", error);

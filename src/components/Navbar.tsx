@@ -1,8 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { useExpertAuth } from '@/hooks/expert-auth';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { toast } from 'sonner';
@@ -10,9 +8,15 @@ import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const { logout: userLogout } = useUserAuth();
-  const { logout: expertLogout } = useExpertAuth();
-  const { isUserAuthenticated, isExpertAuthenticated, currentUser, expertProfile } = useAuthSynchronization();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { 
+    isUserAuthenticated, 
+    isExpertAuthenticated, 
+    currentUser, 
+    expertProfile,
+    userLogout,
+    expertLogout
+  } = useAuthSynchronization();
   const location = useLocation();
 
   useEffect(() => {
@@ -30,14 +34,16 @@ const Navbar = () => {
   }, [scrolled]);
 
   const handleUserLogout = async () => {
+    if (isLoggingOut) return;
+    
     try {
+      setIsLoggingOut(true);
       console.log("Navbar: Initiating user logout...");
       const success = await userLogout();
       
       if (success) {
         console.log("Navbar: User logout successful");
         toast.success('Successfully logged out');
-        
         // Force page reload to ensure clean state
         window.location.href = '/';
       } else {
@@ -52,18 +58,29 @@ const Navbar = () => {
       setTimeout(() => {
         window.location.href = '/';
       }, 1500);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
   const handleExpertLogout = async () => {
+    if (isLoggingOut) return;
+    
     try {
+      setIsLoggingOut(true);
       console.log("Navbar: Initiating expert logout...");
-      await expertLogout();
-      console.log("Navbar: Expert logout completed");
-      toast.success('Successfully logged out as expert');
+      const success = await expertLogout();
       
-      // Force page reload to ensure clean state
-      window.location.href = '/';
+      if (success) {
+        console.log("Navbar: Expert logout completed");
+        toast.success('Successfully logged out as expert');
+        
+        // Force page reload to ensure clean state
+        window.location.href = '/';
+      } else {
+        console.error("Navbar: Expert logout failed");
+        toast.error('Failed to log out as expert. Please try again.');
+      }
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.');
@@ -72,6 +89,8 @@ const Navbar = () => {
       setTimeout(() => {
         window.location.href = '/';
       }, 1500);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 

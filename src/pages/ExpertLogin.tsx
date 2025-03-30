@@ -5,7 +5,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
 import { useExpertAuth } from '@/hooks/expert-auth';
-import { useUserAuth } from '@/contexts/UserAuthContext';
 import ExpertLoginHeader from '@/components/expert/auth/ExpertLoginHeader';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import LoadingView from '@/components/expert/auth/LoadingView';
@@ -19,8 +18,7 @@ const ExpertLogin = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const { login, expert, loading, authInitialized } = useExpertAuth();
-  const { isUserAuthenticated, currentUser, isSynchronizing } = useAuthSynchronization();
-  const { logout: userLogout } = useUserAuth();
+  const { isUserAuthenticated, currentUser, isSynchronizing, userLogout } = useAuthSynchronization();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -103,12 +101,23 @@ const ExpertLogin = () => {
     
     try {
       console.log('Attempting to log out user...');
-      await userLogout();
-      console.log('User logout completed');
-      toast.success('Successfully logged out as user');
+      const success = await userLogout();
       
-      // Force a full page reload to ensure clean state
-      window.location.href = '/expert-login';
+      if (success) {
+        console.log('User logout completed');
+        toast.success('Successfully logged out as user');
+        
+        // Force a full page reload to ensure clean state
+        window.location.href = '/expert-login';
+      } else {
+        console.error('User logout failed');
+        toast.error('Failed to log out as user. Please try again.');
+        
+        // Force a page reload as a last resort
+        setTimeout(() => {
+          window.location.href = '/expert-login';
+        }, 1500);
+      }
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out as user. Please try again.');
