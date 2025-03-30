@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
 import { CallState, createClient } from '@/utils/agoraService';
 
@@ -14,29 +14,8 @@ export const useCallState = () => {
     isVideoEnabled: true
   });
   
-  useEffect(() => {
-    const client = createClient();
-    console.log("Agora client initialized:", client);
-    setCallState(prev => ({ ...prev, client }));
-
-    // Here we need to ensure we're passing the correct function reference with the right number of parameters
-    client.on('user-published', async (user, mediaType) => handleUserPublished(user, mediaType));
-    client.on('user-unpublished', handleUserUnpublished);
-    client.on('user-left', handleUserLeft);
-    
-    client.on('error', (err) => {
-      console.error("Agora client error:", err);
-    });
-
-    return () => {
-      client.off('user-published', async (user, mediaType) => handleUserPublished(user, mediaType));
-      client.off('user-unpublished', handleUserUnpublished);
-      client.off('user-left', handleUserLeft);
-      client.off('error');
-    };
-  }, []);
-
-  const handleUserPublished = async (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
+  // Define handleUserPublished as a useCallback to maintain consistent function reference
+  const handleUserPublished = useCallback(async (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
     if (!callState.client) return;
     
     console.log("Remote user published:", user.uid, mediaType);
@@ -47,23 +26,55 @@ export const useCallState = () => {
       ...prevState,
       remoteUsers: [...prevState.remoteUsers.filter(u => u.uid !== user.uid), user]
     }));
-  };
+  }, [callState.client]);
 
-  const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
+  const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser) => {
     console.log("Remote user unpublished:", user.uid);
     setCallState(prevState => ({
       ...prevState,
       remoteUsers: prevState.remoteUsers.filter(u => u.uid !== user.uid)
     }));
-  };
+  }, []);
 
-  const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
+  const handleUserLeft = useCallback((user: IAgoraRTCRemoteUser) => {
     console.log("Remote user left:", user.uid);
     setCallState(prevState => ({
       ...prevState,
       remoteUsers: prevState.remoteUsers.filter(u => u.uid !== user.uid)
     }));
-  };
+  }, []);
+  
+  useEffect(() => {
+    const client = createClient();
+    console.log("Agora client initialized:", client);
+    setCallState(prev => ({ ...prev, client }));
+
+    return () => {
+      // Cleanup will happen in the useEffect below
+    };
+  }, []);
+  
+  // Separate useEffect for event listeners to avoid stale callbacks
+  useEffect(() => {
+    const { client } = callState;
+    if (!client) return;
+    
+    // Use the current version of the callback functions
+    client.on('user-published', handleUserPublished);
+    client.on('user-unpublished', handleUserUnpublished);
+    client.on('user-left', handleUserLeft);
+    
+    client.on('error', (err) => {
+      console.error("Agora client error:", err);
+    });
+    
+    return () => {
+      client.off('user-published', handleUserPublished);
+      client.off('user-unpublished', handleUserUnpublished);
+      client.off('user-left', handleUserLeft);
+      client.off('error');
+    };
+  }, [callState.client, handleUserPublished, handleUserUnpublished, handleUserLeft]);
 
   return {
     callState,
