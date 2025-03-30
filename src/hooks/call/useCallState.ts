@@ -19,7 +19,8 @@ export const useCallState = () => {
     console.log("Agora client initialized:", client);
     setCallState(prev => ({ ...prev, client }));
 
-    client.on('user-published', handleUserPublished);
+    // Here we need to ensure we're passing the correct function reference with the right number of parameters
+    client.on('user-published', async (user, mediaType) => handleUserPublished(user, mediaType));
     client.on('user-unpublished', handleUserUnpublished);
     client.on('user-left', handleUserLeft);
     
@@ -28,7 +29,7 @@ export const useCallState = () => {
     });
 
     return () => {
-      client.off('user-published', handleUserPublished);
+      client.off('user-published', async (user, mediaType) => handleUserPublished(user, mediaType));
       client.off('user-unpublished', handleUserUnpublished);
       client.off('user-left', handleUserLeft);
       client.off('error');

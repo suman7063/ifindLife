@@ -1,4 +1,3 @@
-
 import { useState, useRef, useCallback } from 'react';
 import { calculateCallCost } from '@/utils/agoraService';
 
@@ -18,6 +17,7 @@ export const useCallTimer = (expertPrice: number) => {
         const newDuration = prev + 1;
         
         if (newDuration > initialSlot) {
+          // Ensure we're passing all required arguments to calculateCallCost
           setCost(calculateCallCost(newDuration, expertPrice, initialSlotMinutes));
         }
         
@@ -58,6 +58,7 @@ export const useCallTimer = (expertPrice: number) => {
       return 0;
     }
     
+    // Ensure we're passing all required arguments here as well
     return calculateCallCost(duration, expertPrice, initialSlotMinutes);
   }, [duration, expertPrice, initialSlot, initialSlotMinutes]);
 

@@ -1,4 +1,3 @@
-
 import AgoraRTC, {
   IAgoraRTCClient,
   IAgoraRTCRemoteUser,
