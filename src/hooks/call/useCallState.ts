@@ -69,9 +69,13 @@ export const useCallState = () => {
     const { client } = callState;
     if (!client) return;
     
-    // Fix: Use the correct event handler syntax that matches the Agora SDK expectations
+    // The event handler for user-published takes two arguments: user and mediaType
     client.on('user-published', handleUserPublished);
+    
+    // The event handler for user-unpublished also takes two arguments: user and mediaType
     client.on('user-unpublished', handleUserUnpublished);
+    
+    // The event handler for user-left takes one argument: user
     client.on('user-left', handleUserLeft);
     
     client.on('error', (err) => {
@@ -79,7 +83,7 @@ export const useCallState = () => {
     });
     
     return () => {
-      // Fix: Ensure we're using the same reference to the handlers when removing listeners
+      // Make sure to use the same reference to the handlers when removing them
       client.off('user-published', handleUserPublished);
       client.off('user-unpublished', handleUserUnpublished);
       client.off('user-left', handleUserLeft);
