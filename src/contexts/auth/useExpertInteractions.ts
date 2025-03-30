@@ -10,40 +10,45 @@ export const useExpertInteractions = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  // Convert function parameter types to handle number type for expertId
+  // Get the original functions
   const { addToFavorites, removeFromFavorites } = useUserFavorites(currentUser, setCurrentUser);
   const { addReview } = useUserReviews(currentUser, setCurrentUser);
   const { addReport } = useUserReports(currentUser, setCurrentUser);
   const { hasTakenServiceFrom, getExpertShareLink } = useExpertInteraction(currentUser);
 
-  // Create wrapper functions to handle both string and number types
-  const addToFavoritesWrapper = async (expertId: number) => {
-    return addToFavorites(String(expertId));
+  // Create string-compatible versions of these functions
+  const addToFavoritesWrapper = async (expertId: string) => {
+    return addToFavorites(expertId);
   };
 
-  const removeFromFavoritesWrapper = async (expertId: number) => {
-    return removeFromFavorites(String(expertId));
+  const removeFromFavoritesWrapper = async (expertId: string) => {
+    return removeFromFavorites(expertId);
   };
 
-  const addReviewWrapper = async (expertId: number, rating: number, comment: string) => {
-    return addReview(String(expertId), rating, comment);
+  const addReviewWrapper = async (expertId: string, rating: number, comment: string) => {
+    return addReview(expertId, rating, comment);
   };
 
-  const addReportWrapper = async (expertId: string, reason: string, details: string) => {
-    return addReport(String(expertId), reason, details);
+  const reportExpertWrapper = async (expertId: string, reason: string, details: string) => {
+    return addReport(expertId, reason, details);
   };
 
-  const hasTakenServiceFromWrapper = async (expertId: number) => {
+  const hasTakenServiceFromWrapper = (expertId: string) => {
+    // Convert to number if the hook expects a number, or handle string directly
     return hasTakenServiceFrom(expertId);
   };
 
-  // Return the wrapped functions with the correct types
+  const getExpertShareLinkWrapper = (expertId: string) => {
+    return getExpertShareLink(expertId);
+  };
+
+  // Return the wrapped functions
   return {
     addToFavorites: addToFavoritesWrapper,
     removeFromFavorites: removeFromFavoritesWrapper,
     addReview: addReviewWrapper,
-    reportExpert: addReportWrapper,
+    reportExpert: reportExpertWrapper,
     hasTakenServiceFrom: hasTakenServiceFromWrapper,
-    getExpertShareLink
+    getExpertShareLink: getExpertShareLinkWrapper
   };
 };

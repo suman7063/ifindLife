@@ -8,12 +8,14 @@ export interface UserAuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
+  authLoading: boolean;
+  profileNotFound?: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updatePassword: (newPassword: string) => Promise<boolean>;
   updateProfile: (userData: Partial<UserProfile>) => Promise<boolean>;
-  updateProfilePicture?: (file: File) => Promise<boolean>;
+  updateProfilePicture: (file: File) => Promise<string | null>;
   addToFavorites: (expertId: string) => Promise<boolean>;
   removeFromFavorites: (expertId: string) => Promise<boolean>;
   rechargeWallet?: (amount: number) => Promise<boolean>;
@@ -21,8 +23,6 @@ export interface UserAuthContextType {
   reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
   getExpertShareLink: (expertId: string) => string;
   hasTakenServiceFrom: (expertId: string) => boolean;
-  authLoading?: boolean;
-  profileNotFound?: boolean;
   getReferralLink?: () => string;
 }
 

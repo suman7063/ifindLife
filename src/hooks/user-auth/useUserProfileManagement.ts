@@ -8,10 +8,10 @@ export const useUserProfileManagement = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const updateProfileData = async (profileData: Partial<UserProfile>) => {
+  const updateProfileData = async (profileData: Partial<UserProfile>): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to update your profile');
-      return;
+      return false;
     }
 
     try {
@@ -20,7 +20,10 @@ export const useUserProfileManagement = (
         .update(profileData)
         .eq('id', currentUser.id);
 
-      if (error) throw error;
+      if (error) {
+        toast.error(error.message || 'Failed to update profile');
+        return false;
+      }
 
       // Optimistically update the local state
       const updatedUser = {
@@ -30,8 +33,10 @@ export const useUserProfileManagement = (
       setCurrentUser(updatedUser);
 
       toast.success('Profile updated successfully!');
+      return true;
     } catch (error: any) {
       toast.error(error.message || 'Failed to update profile');
+      return false;
     }
   };
 
