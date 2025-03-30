@@ -84,10 +84,13 @@ export const useCallState = () => {
     
     return () => {
       // Make sure to use the same reference to the handlers when removing them
-      // FIXED: Ensure we're passing both event name and the handler function with correct signature
+      // When using client.off(), we need to pass the same event type and handler function
       client.off('user-published', handleUserPublished);
+      // For user-unpublished event, we need to specify the event name and the handler function
       client.off('user-unpublished', handleUserUnpublished);
+      // For user-left event, we need to specify the event name and the handler function
       client.off('user-left', handleUserLeft);
+      // For error event, simply passing the event name is sufficient as it has no specific handler
       client.off('error');
     };
   }, [callState.client, handleUserPublished, handleUserUnpublished, handleUserLeft]);
