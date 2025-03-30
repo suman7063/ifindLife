@@ -22,7 +22,7 @@ export interface UserAuthContextType {
   addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
   reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
   getExpertShareLink: (expertId: string) => string;
-  hasTakenServiceFrom: (expertId: string) => boolean;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
   getReferralLink?: () => string;
 }
 

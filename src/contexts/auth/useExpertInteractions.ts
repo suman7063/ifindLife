@@ -33,9 +33,9 @@ export const useExpertInteractions = (
     return addReport(expertId, reason, details);
   };
 
-  const hasTakenServiceFromWrapper = (expertId: string) => {
+  const hasTakenServiceFromWrapper = async (expertId: string) => {
     // Convert to number if the hook expects a number, or handle string directly
-    return hasTakenServiceFrom(expertId);
+    return await hasTakenServiceFrom(expertId);
   };
 
   const getExpertShareLinkWrapper = (expertId: string) => {

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,7 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 interface ExpertReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  expertId: number;
+  expertId: string;
   expertName: string;
 }
 
