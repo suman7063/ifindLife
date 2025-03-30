@@ -14,7 +14,8 @@ import {
   leaveCall, 
   toggleMute, 
   toggleVideo,
-  CallType
+  CallType,
+  calculateCallCost
 } from '@/utils/agoraService';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
@@ -280,8 +281,8 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
     const billableSeconds = duration - initialSlot;
     const billableMinutes = billableSeconds / 60;
     
-    // Calculate cost
-    return expertPrice * billableMinutes;
+    // Calculate cost using the utility function from agoraService
+    return calculateCallCost(duration, expertPrice, initialSlot / 60);
   };
 
   // Format time (HH:MM:SS)
