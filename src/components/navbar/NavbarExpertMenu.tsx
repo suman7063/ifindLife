@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 
 interface NavbarExpertMenuProps {
-  onLogout: () => Promise<void>;
+  onLogout: () => Promise<boolean>;
 }
 
 const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({ onLogout }) => {
@@ -26,7 +26,12 @@ const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({ onLogout }) => {
     
     try {
       console.log("NavbarExpertMenu: Initiating expert logout...");
-      await onLogout();
+      const success = await onLogout();
+      
+      if (!success) {
+        console.error("NavbarExpertMenu: Expert logout failed");
+        toast.error('Failed to log out as expert. Please try again.');
+      }
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.');

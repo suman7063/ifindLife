@@ -49,9 +49,10 @@ export const useAuthSynchronization = () => {
     try {
       setIsSynchronizing(true);
       console.log("useAuthSynchronization: Executing expert logout");
-      await expertLogout();
-      console.log("useAuthSynchronization: Expert logout successful");
-      return true;
+      // Handle the boolean return value from expertLogout
+      const success = await expertLogout();
+      console.log("useAuthSynchronization: Expert logout successful:", success);
+      return success;
     } catch (error) {
       console.error("useAuthSynchronization: Error during expert logout:", error);
       return false;
