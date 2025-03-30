@@ -4,6 +4,7 @@ import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 interface CallAuthMessageProps {
   expertName: string;
@@ -12,6 +13,12 @@ interface CallAuthMessageProps {
 
 const CallAuthMessage: React.FC<CallAuthMessageProps> = ({ expertName, onClose }) => {
   const navigate = useNavigate();
+  const { isAuthenticated, loading } = useUserAuth();
+  
+  // If user is authenticated or still loading, don't show the login message
+  if (isAuthenticated || loading) {
+    return null;
+  }
   
   return (
     <div className="flex flex-col items-center space-y-4 py-6">

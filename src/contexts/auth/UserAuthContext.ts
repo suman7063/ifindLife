@@ -1,34 +1,39 @@
 
 import { createContext, useContext } from 'react';
+import { UserProfile } from '@/types/supabase';
 import { User } from '@supabase/supabase-js';
-import type { UserProfile } from '@/types/supabase';
-import type { UserAuthContextType } from './types';
 
-// Ensure the context provides all necessary properties and functions for profile management
-export const UserAuthContext = createContext<UserAuthContextType>({
-  currentUser: null,
-  isAuthenticated: false,
-  authLoading: false,
-  profileNotFound: false,
-  user: null,
-  loading: false,
-  login: async () => false,
-  signup: async () => false,
-  logout: async () => {},
-  updateProfile: async () => false,
-  updateProfilePicture: async (file: File) => {
-    console.error("Default updateProfilePicture implementation called");
-    return null;
-  },
-  updatePassword: async () => false,
-  addToFavorites: async () => false,
-  removeFromFavorites: async () => false,
-  rechargeWallet: async () => false,
-  addReview: async () => false,
-  reportExpert: async () => false,
-  hasTakenServiceFrom: async () => false,
-  getExpertShareLink: () => '',
-  getReferralLink: () => null
-});
+export interface UserAuthContextType {
+  currentUser: UserProfile | null;
+  user: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
+  updateProfile: (userData: Partial<UserProfile>) => Promise<boolean>;
+  updateProfilePicture?: (file: File) => Promise<boolean>;
+  addToFavorites: (expertId: string) => Promise<boolean>;
+  removeFromFavorites: (expertId: string) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  getExpertShareLink: (expertId: string) => string;
+  hasTakenServiceFrom: (expertId: string) => boolean;
+  authLoading?: boolean;
+  profileNotFound?: boolean;
+  getReferralLink?: () => string;
+}
 
-export const useUserAuth = () => useContext(UserAuthContext);
+export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
+
+export const useUserAuth = (): UserAuthContextType => {
+  const context = useContext(UserAuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useUserAuth must be used within a UserAuthProvider');
+  }
+  
+  return context;
+};
