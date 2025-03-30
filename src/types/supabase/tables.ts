@@ -1,4 +1,5 @@
-// This file defines custom table types for Supabase
+
+// This file defines the database table interfaces
 
 export interface CustomTable {
   experts: {
@@ -17,7 +18,7 @@ export interface CustomTable {
     profile_picture?: string;
     selected_services?: number[];
     created_at?: string;
-    rating?: number; // Added for expert ratings
+    rating?: number;
   };
   expert_reports: {
     id: string;
@@ -117,104 +118,3 @@ export type Expert = CustomTable['experts'];
 export type User = CustomTable['users'];
 export type UserTransaction = CustomTable['user_transactions'];
 export type ReferralSettings = CustomTable['referral_settings'];
-export type Referral = {
-  id: string;
-  referrerId: string;
-  referredId: string;
-  referredName?: string;
-  referralCode: string;
-  status: 'pending' | 'completed' | 'expired';
-  rewardClaimed: boolean;
-  createdAt?: string;
-  completedAt?: string;
-};
-
-// Add ReferralUI type that was missing
-export interface ReferralUI {
-  id: string;
-  referrerId: string;
-  referredId: string;
-  referredName?: string;
-  referralCode: string;
-  status: 'pending' | 'completed' | 'expired';
-  rewardClaimed: boolean;
-  createdAt?: string;
-  completedAt?: string;
-}
-
-// Using interfaces for UI-friendly models
-export interface UserProfile {
-  id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  currency?: string;
-  profilePicture?: string;
-  walletBalance?: number;
-  createdAt?: string;
-  referralCode?: string;
-  referredBy?: string;
-  referralLink?: string;
-  
-  // Related data collections
-  favoriteExperts?: Expert[];
-  enrolledCourses?: Course[];
-  transactions?: UserTransaction[];
-  reviews?: Review[];
-  reports?: Report[];
-  referrals?: Referral[];
-}
-
-// Using interfaces for UI-friendly models
-export interface Review {
-  id: string;
-  expertId: string;
-  rating: number;
-  comment: string;
-  date: string;
-}
-
-export interface Report {
-  id: string;
-  expertId: string;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-}
-
-export interface Course {
-  id: string;
-  title: string;
-  expertId: string;
-  expertName: string;
-  enrollmentDate: string;
-  progress?: number;
-  completed?: boolean;
-}
-
-// For referral program
-export interface ReferralSettingsUI {
-  referrerReward: number;
-  referredReward: number;
-  active: boolean;
-  description?: string;
-}
-
-// Define the ReferralUI interface which was missing
-export interface ReferralUI {
-  id: string;
-  referrerId: string;
-  referredId: string;
-  referredName?: string;
-  referralCode: string;
-  status: 'pending' | 'completed' | 'expired';
-  rewardClaimed: boolean;
-  createdAt?: string;
-  completedAt?: string;
-}
-
-// For backward compatibility
-export type ExpertProfile = Expert;
