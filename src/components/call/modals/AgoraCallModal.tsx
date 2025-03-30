@@ -134,7 +134,10 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
     
     if (callStatus === 'choosing') {
       return (
-        <AgoraCallTypeSelector onSelectCallType={handleStartCall} />
+        <AgoraCallTypeSelector 
+          expert={expert} 
+          onSelectCallType={handleStartCall} 
+        />
       );
     }
     

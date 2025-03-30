@@ -28,8 +28,8 @@ export const useCallState = () => {
     }));
   }, [callState.client]);
 
-  const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser) => {
-    console.log("Remote user unpublished:", user.uid);
+  const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
+    console.log("Remote user unpublished:", user.uid, mediaType);
     setCallState(prevState => ({
       ...prevState,
       remoteUsers: prevState.remoteUsers.filter(u => u.uid !== user.uid)
