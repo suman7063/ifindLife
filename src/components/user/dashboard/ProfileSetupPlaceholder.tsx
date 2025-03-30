@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { User } from '@supabase/supabase-js';
+import { Loader2 } from 'lucide-react';
 
 interface ProfileSetupPlaceholderProps {
   user: User | null;
@@ -28,10 +29,13 @@ const ProfileSetupPlaceholder: React.FC<ProfileSetupPlaceholderProps> = ({
           </div>
           
           <Card className="border-ifind-aqua/10 p-6">
-            <CardTitle className="mb-4">Setting Up Your Profile</CardTitle>
+            <CardTitle className="mb-4 flex items-center">
+              Setting Up Your Profile
+              {!isTimedOut && <Loader2 className="animate-spin ml-2 h-4 w-4" />}
+            </CardTitle>
             <CardDescription className="text-base">
               {isTimedOut 
-                ? "We're taking a bit longer than expected to load your profile. You can wait a moment or try refreshing the page."
+                ? "We're taking a bit longer than expected to load your profile. This could happen when you've just registered or logged in for the first time. You can wait a moment or try refreshing the page."
                 : "We're currently setting up your user profile. This may take a moment. If this persists, please try logging out and logging back in."}
             </CardDescription>
             <div className="flex space-x-4 mt-6">

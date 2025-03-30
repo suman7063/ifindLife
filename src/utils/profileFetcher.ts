@@ -49,73 +49,103 @@ export const fetchUserProfile = async (
       
       console.log("Creating new user profile with data:", userData);
       
-      const { data: newProfile, error: createError } = await supabase
-        .from('users')
-        .insert([userData])
-        .select()
-        .single();
-        
-      if (createError) {
-        console.error('Error creating user profile:', createError);
-        return null;
+      // Add retry logic for profile creation
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          const { data: newProfile, error: createError } = await supabase
+            .from('users')
+            .insert([userData])
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error(`Error creating user profile (attempt ${retries + 1}):`, createError);
+            retries++;
+            if (retries === maxRetries) {
+              return null;
+            }
+            // Add a small delay before retrying
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            console.log("Created new profile:", newProfile);
+            return convertUserToUserProfile(newProfile);
+          }
+        } catch (innerError) {
+          console.error(`Exception in profile creation (attempt ${retries + 1}):`, innerError);
+          retries++;
+          if (retries === maxRetries) {
+            return null;
+          }
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
       
-      console.log("Created new profile:", newProfile);
-      return convertUserToUserProfile(newProfile);
+      return null;
     }
     
     console.log("Found existing user profile, retrieving full data.");
     const userProfile = convertUserToUserProfile(data);
     
-    // Fetch additional user data
-    console.log("Fetching user favorites");
-    const { data: favorites } = await supabase
-      .from('user_favorites')
-      .select('expert_id')
-      .eq('user_id', user.id);
+    // Use Promise.allSettled to prevent one failing request from failing everything
+    const results = await Promise.allSettled([
+      // Fetch user favorites
+      supabase.from('user_favorites').select('expert_id').eq('user_id', user.id),
+      // Fetch user courses
+      supabase.from('user_courses').select('*').eq('user_id', user.id),
+      // Fetch user reviews
+      supabase.from('user_reviews').select('*').eq('user_id', user.id),
+      // Fetch user reports
+      supabase.from('user_reports').select('*').eq('user_id', user.id),
+      // Fetch user transactions
+      supabase.from('user_transactions').select('*').eq('user_id', user.id)
+    ]);
     
-    if (favorites && favorites.length > 0) {
-      const expertIds = favorites.map(fav => fav.expert_id);
-      console.log("Fetching expert details for favorites:", expertIds);
-      const { data: expertsData } = await supabase
-        .from('experts')
-        .select('*')
-        .in('id', expertIds as any);
-        
-      userProfile.favoriteExperts = expertsData || [];
+    // Process favorites if successful
+    if (results[0].status === 'fulfilled') {
+      const favorites = results[0].value.data;
+      if (favorites && favorites.length > 0) {
+        const expertIds = favorites.map(fav => fav.expert_id);
+        const { data: expertsData } = await supabase
+          .from('experts')
+          .select('*')
+          .in('id', expertIds as any);
+          
+        userProfile.favoriteExperts = expertsData || [];
+      } else {
+        userProfile.favoriteExperts = [];
+      }
     }
     
-    console.log("Fetching user courses");
-    const { data: courses } = await supabase
-      .from('user_courses')
-      .select('*')
-      .eq('user_id', user.id);
-      
-    userProfile.enrolledCourses = adaptCoursesToUI(courses || []);
+    // Process courses if successful
+    if (results[1].status === 'fulfilled') {
+      userProfile.enrolledCourses = adaptCoursesToUI(results[1].value.data || []);
+    } else {
+      userProfile.enrolledCourses = [];
+    }
     
-    console.log("Fetching user reviews");
-    const { data: reviews } = await supabase
-      .from('user_reviews')
-      .select('*')
-      .eq('user_id', user.id);
-      
-    userProfile.reviews = adaptReviewsToUI(reviews || []);
+    // Process reviews if successful
+    if (results[2].status === 'fulfilled') {
+      userProfile.reviews = adaptReviewsToUI(results[2].value.data || []);
+    } else {
+      userProfile.reviews = [];
+    }
     
-    console.log("Fetching user reports");
-    const { data: reports } = await supabase
-      .from('user_reports')
-      .select('*')
-      .eq('user_id', user.id);
-      
-    userProfile.reports = adaptReportsToUI(reports || []);
+    // Process reports if successful
+    if (results[3].status === 'fulfilled') {
+      userProfile.reports = adaptReportsToUI(results[3].value.data || []);
+    } else {
+      userProfile.reports = [];
+    }
     
-    console.log("Fetching user transactions");
-    const { data: transactions } = await supabase
-      .from('user_transactions')
-      .select('*')
-      .eq('user_id', user.id);
-      
-    userProfile.transactions = transactions || [];
+    // Process transactions if successful
+    if (results[4].status === 'fulfilled') {
+      userProfile.transactions = results[4].value.data || [];
+    } else {
+      userProfile.transactions = [];
+    }
     
     // Ensure all users have a referral code
     if (!userProfile.referralCode) {
@@ -134,7 +164,7 @@ export const fetchUserProfile = async (
       }
     }
     
-    console.log("Fetching user referrals");
+    // Fetch user referrals with error handling
     try {
       const referralsData = await fetchUserReferrals(user.id);
       

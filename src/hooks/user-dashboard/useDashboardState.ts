@@ -20,20 +20,24 @@ export const useDashboardState = () => {
       dashboardLoading
     });
     
+    // Set a more reasonable maximum loading time (5 seconds instead of 3)
     const maxLoadingTimer = setTimeout(() => {
       if (dashboardLoading) {
         console.log("Dashboard max loading time reached, forcing display");
         setDashboardLoading(false);
         setLoadingTimedOut(true);
       }
-    }, 3000);
+    }, 5000);
 
-    if (user && !authLoading) {
+    // If we have user data, stop loading immediately
+    if (user || currentUser) {
       console.log("User data available, stopping dashboard loading");
       setDashboardLoading(false);
       
-      if (!currentUser) {
+      // If we have a user but no profile, set loading timed out flag after shorter delay
+      if (!currentUser && user) {
         const profileTimer = setTimeout(() => {
+          console.log("Profile data not found after delay, showing placeholder");
           setLoadingTimedOut(true);
         }, 2000);
         
@@ -41,7 +45,8 @@ export const useDashboardState = () => {
       }
     }
     
-    if (!isAuthenticated && !authLoading) {
+    // Only redirect to login if truly not authenticated and not in loading state
+    if (!isAuthenticated && !authLoading && !user) {
       console.log("Not authenticated, redirecting to login");
       navigate('/user-login');
     }
