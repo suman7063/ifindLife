@@ -7,6 +7,8 @@ import AgoraCallControls from './call/AgoraCallControls';
 import AgoraCallTypeSelector from './call/AgoraCallTypeSelector';
 import AgoraCallContent from './call/AgoraCallContent';
 import { useUserAuth } from '@/hooks/useUserAuth';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AgoraCallModalProps {
   isOpen: boolean;
@@ -21,7 +23,7 @@ interface AgoraCallModalProps {
 
 const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert }) => {
   const { currentUser } = useUserAuth();
-  const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended'>('choosing');
+  const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [showChat, setShowChat] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,6 +35,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
     cost,
     remainingTime,
     isExtending,
+    callError,
     startCall,
     endCall,
     handleToggleMute,
@@ -49,6 +52,16 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
       setIsFullscreen(false);
     }
   }, [isOpen]);
+  
+  // Handle errors
+  useEffect(() => {
+    if (callError) {
+      setCallStatus('error');
+      toast.error('Call Error', {
+        description: callError
+      });
+    }
+  }, [callError]);
   
   // Handle fullscreen toggle
   useEffect(() => {
@@ -68,15 +81,19 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
   // Initiate call
   const handleInitiateCall = async (selectedCallType: 'audio' | 'video') => {
     setCallStatus('connecting');
+    console.log("Initiating call of type:", selectedCallType);
     
     const success = await startCall(selectedCallType);
+    console.log("Call initiation result:", success);
     
     if (success) {
       setCallStatus('connected');
       toast.success(`${selectedCallType.charAt(0).toUpperCase() + selectedCallType.slice(1)} call connected`);
     } else {
-      setCallStatus('choosing');
-      toast.error('Failed to connect call');
+      setCallStatus('error');
+      toast.error('Failed to connect call', { 
+        description: callError || 'Check your microphone and camera permissions' 
+      });
     }
   };
   
@@ -104,12 +121,17 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
   // Toggle fullscreen
   const handleToggleFullscreen = () => {
     if (isFullscreen) {
-      document.exitFullscreen();
+      document.exitFullscreen().catch(err => console.error("Error exiting fullscreen:", err));
       setIsFullscreen(false);
     } else if (containerRef.current) {
-      containerRef.current.requestFullscreen();
+      containerRef.current.requestFullscreen().catch(err => console.error("Error entering fullscreen:", err));
       setIsFullscreen(true);
     }
+  };
+  
+  // Reset the call state
+  const handleRetry = () => {
+    setCallStatus('choosing');
   };
   
   return (
@@ -136,17 +158,20 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
             {callStatus === 'choosing' ? 'Choose Call Type' : 
              callStatus === 'connecting' ? 'Connecting...' : 
              callStatus === 'connected' ? `Call with ${expert.name}` : 
+             callStatus === 'error' ? 'Call Failed' :
              'Call Ended'}
           </DialogTitle>
-          {callStatus !== 'choosing' && (
-            <DialogDescription className="text-center">
-              {callStatus === 'connecting' ? 
-                `Connecting to ${expert.name}...` : 
-                callStatus === 'connected' ? 
-                `Connected with ${expert.name} (₹${expert.price}/min)` : 
-                `Call with ${expert.name} ended`}
-            </DialogDescription>
-          )}
+          <DialogDescription className="text-center">
+            {callStatus === 'choosing' ? 
+              `Connect with ${expert.name} via audio or video call` :
+             callStatus === 'connecting' ? 
+              `Connecting to ${expert.name}...` : 
+             callStatus === 'connected' ? 
+              `Connected with ${expert.name} (₹${expert.price}/min)` : 
+             callStatus === 'error' ?
+              'There was a problem connecting your call' :
+              `Call with ${expert.name} ended`}
+          </DialogDescription>
         </DialogHeader>
         
         {callStatus === 'choosing' ? (
@@ -154,6 +179,21 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
             expert={expert}
             onSelectCallType={handleInitiateCall}
           />
+        ) : callStatus === 'error' ? (
+          <div className="flex flex-col items-center space-y-4 py-6">
+            <Alert variant="destructive" className="max-w-md">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {callError || 'Failed to connect the call. Please check your camera and microphone permissions.'}
+              </AlertDescription>
+            </Alert>
+            <button 
+              onClick={handleRetry}
+              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
         ) : (
           <AgoraCallContent 
             callState={callState}
@@ -169,7 +209,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
           />
         )}
         
-        {callStatus !== 'choosing' && (
+        {callStatus !== 'choosing' && callStatus !== 'error' && (
           <DialogFooter className="flex justify-center space-x-4">
             <AgoraCallControls 
               callState={callState}

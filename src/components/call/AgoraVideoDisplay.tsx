@@ -2,18 +2,20 @@
 import React, { useEffect, useRef } from 'react';
 import { IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
 import { CallState } from '@/utils/agoraService';
-import { VideoOff, UserIcon } from 'lucide-react';
+import { VideoOff, UserIcon, Loader2 } from 'lucide-react';
 
 interface AgoraVideoDisplayProps {
   callState: CallState;
   userName: string;
   expertName: string;
+  callStatus: 'choosing' | 'connecting' | 'connected' | 'ended' | 'error';
 }
 
 const AgoraVideoDisplay: React.FC<AgoraVideoDisplayProps> = ({ 
   callState, 
   userName, 
-  expertName 
+  expertName,
+  callStatus
 }) => {
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideosRef = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -64,8 +66,35 @@ const AgoraVideoDisplay: React.FC<AgoraVideoDisplayProps> = ({
     }
   };
 
+  const renderStatusMessage = () => {
+    if (callStatus === 'connecting') {
+      return (
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 text-white/70 animate-spin mb-2" />
+          <span className="text-white text-center">Connecting to {expertName}...</span>
+          <span className="text-white/60 text-sm mt-1 text-center">Please grant camera and microphone permissions if prompted</span>
+        </div>
+      );
+    } else if (callStatus === 'ended') {
+      return (
+        <div className="flex flex-col items-center">
+          <UserIcon className="h-16 w-16 text-white/50 mb-2" />
+          <span className="text-white text-center">Call ended</span>
+          <span className="text-white/60 text-sm mt-1 text-center">Thank you for using our service</span>
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex flex-col items-center">
+          <UserIcon className="h-20 w-20 text-white/50" />
+          <span className="text-white mt-2">Waiting for {expertName}...</span>
+        </div>
+      );
+    }
+  };
+
   return (
-    <div className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden">
+    <div className="relative w-full h-full min-h-[300px] bg-slate-900 rounded-lg overflow-hidden">
       {/* Remote videos (usually expert) */}
       {callState.remoteUsers.length > 0 ? (
         callState.remoteUsers.map(user => (
@@ -90,10 +119,7 @@ const AgoraVideoDisplay: React.FC<AgoraVideoDisplayProps> = ({
         ))
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-slate-800">
-          <div className="flex flex-col items-center">
-            <UserIcon className="h-20 w-20 text-white/50" />
-            <span className="text-white mt-2">Waiting for {expertName}...</span>
-          </div>
+          {renderStatusMessage()}
         </div>
       )}
       

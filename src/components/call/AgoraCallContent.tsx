@@ -7,7 +7,7 @@ import AgoraCallChat from './AgoraCallChat';
 
 interface AgoraCallContentProps {
   callState: CallState;
-  callStatus: 'choosing' | 'connecting' | 'connected' | 'ended';
+  callStatus: 'choosing' | 'connecting' | 'connected' | 'ended' | 'error';
   showChat: boolean;
   duration: number;
   remainingTime: number;
@@ -37,6 +37,7 @@ const AgoraCallContent: React.FC<AgoraCallContentProps> = ({
           callState={callState}
           userName={userName}
           expertName={expertName}
+          callStatus={callStatus}
         />
         
         {callStatus === 'connected' && (
