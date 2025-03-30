@@ -36,6 +36,7 @@ export interface UseExpertAuthReturn extends ExpertAuthState {
   updateProfile: (profileData: Partial<ExpertProfile>) => Promise<boolean>;
   uploadCertificate: (file: File) => Promise<string | null>;
   removeCertificate: (certificateUrl: string) => Promise<boolean>;
+  fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>;
 }
 
 export interface ExpertRegistrationData {

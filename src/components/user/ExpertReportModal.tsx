@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle } from 'lucide-react';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
 
 interface ExpertReportModalProps {
@@ -27,7 +27,7 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
   const [details, setDetails] = useState('');
   const [open, setOpen] = useState(false);
   
-  const { currentUser, reportExpert, hasTakenServiceFrom } = useUserAuth();
+  const { reportExpert, hasTakenServiceFrom } = useUserAuth();
   
   const handleSubmit = () => {
     if (reason === '') {

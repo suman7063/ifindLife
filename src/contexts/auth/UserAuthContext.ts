@@ -24,6 +24,7 @@ export interface UserAuthContextType {
   getExpertShareLink: (expertId: string) => string;
   hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
   getReferralLink?: () => string;
+  fetchUserProfile?: (userId: string) => Promise<UserProfile | null>;
 }
 
 export const UserAuthContext = createContext<UserAuthContextType | undefined>(undefined);
