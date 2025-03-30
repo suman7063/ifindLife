@@ -84,6 +84,7 @@ export const useCallState = () => {
     
     return () => {
       // Make sure to use the same reference to the handlers when removing them
+      // FIXED: Ensure we're passing both event name and the handler function with correct signature
       client.off('user-published', handleUserPublished);
       client.off('user-unpublished', handleUserUnpublished);
       client.off('user-left', handleUserLeft);
