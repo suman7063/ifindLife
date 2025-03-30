@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
@@ -15,6 +16,7 @@ interface AstrologerCardProps {
   imageUrl: string;
   waitTime: string;
   online: boolean;
+  consultations?: number; // Added the consultations property
 }
 
 const AstrologerCard: React.FC<AstrologerCardProps> = ({
@@ -26,7 +28,8 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   price,
   imageUrl,
   waitTime,
-  online
+  online,
+  consultations // Added to destructuring
 }) => {
   const navigate = useNavigate();
   
