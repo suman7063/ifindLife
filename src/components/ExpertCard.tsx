@@ -6,7 +6,7 @@ import { Badge } from './ui/badge';
 import { StarIcon, PhoneIcon, CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-interface AstrologerCardProps {
+interface ExpertCardProps {
   id: number;
   name: string;
   experience: number;
@@ -16,10 +16,10 @@ interface AstrologerCardProps {
   imageUrl: string;
   waitTime: string;
   online: boolean;
-  consultations?: number; // Added the consultations property
+  consultations?: number;
 }
 
-const AstrologerCard: React.FC<AstrologerCardProps> = ({
+const ExpertCard: React.FC<ExpertCardProps> = ({
   id,
   name,
   experience,
@@ -29,7 +29,7 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   imageUrl,
   waitTime,
   online,
-  consultations // Added to destructuring
+  consultations
 }) => {
   const navigate = useNavigate();
   
@@ -122,4 +122,4 @@ const AstrologerCard: React.FC<AstrologerCardProps> = ({
   );
 };
 
-export default AstrologerCard;
+export default ExpertCard;

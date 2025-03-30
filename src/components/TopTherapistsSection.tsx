@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
-import AstrologerCard from '@/components/AstrologerCard';
+import ExpertCard from '@/components/ExpertCard';
 import { therapistData as defaultTherapistData } from '@/data/homePageData';
 import { Expert } from '@/types/expert';
 
@@ -16,7 +16,7 @@ interface TherapistData {
   rating: number;
   consultations: number;
   price: number;
-  waitTime?: string; // Made optional to match AstrologerCardProps
+  waitTime?: string; // Made optional to match ExpertCardProps
   imageUrl: string;
   online: boolean;
   availability?: string;
@@ -52,7 +52,7 @@ const TopTherapistsSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {therapists.slice(0, 3).map((therapist) => (
-            <AstrologerCard 
+            <ExpertCard 
               key={therapist.id}
               id={therapist.id}
               name={therapist.name}
