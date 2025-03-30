@@ -47,16 +47,31 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
   };
   
   // Check if the user has taken service from this expert
-  // Convert expertId from string to number before passing to hasTakenServiceFrom
-  const canReport = hasTakenServiceFrom(parseInt(expertId, 10));
+  // Pass expertId directly as a string to hasTakenServiceFrom
+  const [canReport, setCanReport] = useState(false);
+  
+  React.useEffect(() => {
+    const checkServiceHistory = async () => {
+      try {
+        const hasService = await hasTakenServiceFrom(expertId);
+        setCanReport(hasService);
+      } catch (error) {
+        console.error("Error checking service history:", error);
+        setCanReport(false);
+      }
+    };
+    
+    checkServiceHistory();
+  }, [expertId, hasTakenServiceFrom]);
   
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          onClick={() => {
+          onClick={(e) => {
             if (!canReport) {
+              e.preventDefault();
               toast.error('You can only report experts after taking their service');
               return;
             }
