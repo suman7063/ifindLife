@@ -11,8 +11,8 @@ interface NavbarMobileMenuProps {
   isAuthenticated: boolean;
   currentUser: UserProfile | null;
   hasExpertProfile: boolean;
-  userLogout: () => Promise<void>;
-  expertLogout: () => Promise<void>;
+  userLogout: () => Promise<boolean>;
+  expertLogout: () => Promise<boolean>;
 }
 
 const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({ 
@@ -30,7 +30,12 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
     
     try {
       console.log("NavbarMobileMenu: Initiating user logout...");
-      await userLogout();
+      const success = await userLogout();
+      
+      if (!success) {
+        console.error("NavbarMobileMenu: User logout failed");
+        toast.error('Failed to log out as user. Please try again.');
+      }
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out as user. Please try again.');
@@ -45,7 +50,12 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
     
     try {
       console.log("NavbarMobileMenu: Initiating expert logout...");
-      await expertLogout();
+      const success = await expertLogout();
+      
+      if (!success) {
+        console.error("NavbarMobileMenu: Expert logout failed");
+        toast.error('Failed to log out as expert. Please try again.');
+      }
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.');

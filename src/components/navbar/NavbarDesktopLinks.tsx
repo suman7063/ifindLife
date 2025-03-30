@@ -11,8 +11,8 @@ interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
   currentUser: UserProfile | null;
   hasExpertProfile: boolean;
-  userLogout: () => Promise<void>;
-  expertLogout: () => Promise<void>;
+  userLogout: () => Promise<boolean>;
+  expertLogout: () => Promise<boolean>;
 }
 
 const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({

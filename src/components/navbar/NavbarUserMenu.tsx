@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 interface NavbarUserMenuProps {
   currentUser: UserProfile | null;
-  onLogout: () => Promise<void>;
+  onLogout: () => Promise<boolean>;
 }
 
 const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({ currentUser, onLogout }) => {
@@ -28,7 +28,12 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({ currentUser, onLogout }
     
     try {
       console.log("NavbarUserMenu: Initiating user logout...");
-      await onLogout();
+      const success = await onLogout();
+      
+      if (!success) {
+        console.error("NavbarUserMenu: User logout failed");
+        toast.error('Failed to log out. Please try again.');
+      }
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out. Please try again.');

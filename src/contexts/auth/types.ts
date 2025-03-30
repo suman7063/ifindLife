@@ -1,3 +1,4 @@
+
 import { User } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/supabase';
 
@@ -15,7 +16,7 @@ export interface UserAuthContextType {
     userData: Partial<UserProfile>, 
     referralCode?: string
   ) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture: (file: File) => Promise<string | null>;
   updatePassword: (newPassword: string) => Promise<boolean>;
