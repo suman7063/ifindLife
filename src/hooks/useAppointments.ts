@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { from } from '@/lib/supabase'; // Add this import for type-safe custom table access
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 
@@ -49,21 +50,22 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     try {
       setLoading(true);
       
-      // Use a custom query since the tables might not be in the TypeScript definitions yet
+      // Use raw query approach for the tables not in TypeScript definitions
       const { data: availabilityData, error: availabilityError } = await supabase
-        .from('expert_availability')
-        .select('*')
-        .eq('expert_id', expertId);
+        .rpc('query_expert_availability', { expert_id_param: expertId });
       
       if (availabilityError) throw availabilityError;
       
-      // For each availability, fetch time slots
+      if (!availabilityData || availabilityData.length === 0) {
+        setAvailabilities([]);
+        return [];
+      }
+
+      // For each availability, fetch time slots using a custom query
       const availabilitiesWithSlots = await Promise.all(
-        availabilityData.map(async (availability) => {
+        availabilityData.map(async (availability: any) => {
           const { data: timeSlots, error: timeSlotsError } = await supabase
-            .from('expert_time_slots')
-            .select('*')
-            .eq('availability_id', availability.id);
+            .rpc('query_expert_time_slots', { availability_id_param: availability.id });
           
           if (timeSlotsError) throw timeSlotsError;
           
@@ -96,32 +98,29 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     try {
       setLoading(true);
       
-      const { data, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('*')
+      let query = supabase.from('appointments').select('*');
+      
+      if (userId) {
+        query = query.eq('user_id', userId);
+      }
+      
+      if (expId) {
+        query = query.eq('expert_id', expId);
+      }
+      
+      const { data, error: appointmentsError } = await query
         .in('status', ['pending', 'confirmed', 'cancelled', 'completed']);
       
       if (appointmentsError) throw appointmentsError;
       
-      // Filter client-side for now until we update the TypeScript definitions
-      let filteredAppointments = data || [];
-      
-      if (userId) {
-        filteredAppointments = filteredAppointments.filter(apt => apt.user_id === userId);
-      }
-      
-      if (expId) {
-        filteredAppointments = filteredAppointments.filter(apt => apt.expert_id === expId);
-      }
-      
       // Map to the correct shape for our interface
-      const formattedAppointments = filteredAppointments.map(apt => ({
+      const formattedAppointments = (data || []).map(apt => ({
         id: apt.id,
         expert_id: apt.expert_id,
         user_id: apt.user_id,
         appointment_date: apt.appointment_date,
-        start_time: apt.start_time || '00:00',  // Provide defaults
-        end_time: apt.end_time || '00:00',      // Provide defaults
+        start_time: apt.start_time || '00:00',  // These fields will be added to the table
+        end_time: apt.end_time || '00:00',      // These fields will be added to the table
         status: apt.status,
         google_calendar_event_id: apt.google_calendar_event_id,
         user_calendar_event_id: apt.user_calendar_event_id,
@@ -152,41 +151,42 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     try {
       setLoading(true);
       
-      // Insert availability
+      // Insert availability using RPC
       const { data: availabilityData, error: availabilityError } = await supabase
-        .from('expert_availability')
-        .insert({
-          expert_id: expertId,
-          start_date: startDate,
-          end_date: endDate,
-          availability_type: availabilityType
-        })
-        .select()
-        .single();
+        .rpc('create_expert_availability', {
+          p_expert_id: expertId,
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_availability_type: availabilityType
+        });
       
       if (availabilityError) throw availabilityError;
       
-      // Insert time slots
-      const formattedTimeSlots = timeSlots.map(slot => ({
-        start_time: slot.start_time,
-        end_time: slot.end_time,
-        day_of_week: slot.day_of_week,
-        specific_date: slot.specific_date,
-        availability_id: availabilityData.id
-      }));
+      if (!availabilityData) {
+        throw new Error('Failed to create availability');
+      }
       
-      const { data: slotsData, error: slotsError } = await supabase
-        .from('expert_time_slots')
-        .insert(formattedTimeSlots)
-        .select();
+      const availabilityId = availabilityData;
       
-      if (slotsError) throw slotsError;
+      // Insert time slots using RPC for each slot
+      for (const slot of timeSlots) {
+        const { error: slotError } = await supabase
+          .rpc('create_expert_time_slot', {
+            p_availability_id: availabilityId,
+            p_start_time: slot.start_time,
+            p_end_time: slot.end_time,
+            p_day_of_week: slot.day_of_week,
+            p_specific_date: slot.specific_date
+          });
+        
+        if (slotError) throw slotError;
+      }
       
       // Fetch updated availabilities
       await fetchAvailabilities(expertId);
       
       toast.success('Availability created successfully');
-      return { availability: availabilityData, slots: slotsData };
+      return { availability: availabilityId };
     } catch (error: any) {
       console.error('Error creating availability:', error);
       setError(error.message);
@@ -210,39 +210,33 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     try {
       setLoading(true);
       
-      // We need to use a custom RPC call to check availability
-      // Since the is_time_slot_available function is new, we'll need to handle it manually
-      // by checking for overlapping appointments
-      const { data: existingAppointments, error: checkError } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('expert_id', expertId)
-        .eq('appointment_date', date)
-        .in('status', ['pending', 'confirmed'])
-        .or(`start_time.lte.${startTime},end_time.gt.${startTime},start_time.lt.${endTime},end_time.gte.${endTime}`);
+      // Check availability using RPC
+      const { data: isAvailable, error: checkError } = await supabase
+        .rpc('is_time_slot_available', {
+          p_expert_id: expertId,
+          p_date: date,
+          p_start_time: startTime,
+          p_end_time: endTime
+        });
       
       if (checkError) throw checkError;
       
-      if (existingAppointments && existingAppointments.length > 0) {
+      if (!isAvailable) {
         toast.error('This time slot is no longer available');
         return null;
       }
       
-      // Insert appointment
-      const { data, error: appointmentError } = await supabase
-        .from('appointments')
-        .insert({
-          expert_id: expertId,
-          user_id: userId,
-          appointment_date: date,
-          start_time: startTime,
-          end_time: endTime,
-          time_slot_id: timeSlotId,
-          notes: notes,
-          status: 'pending'
-        })
-        .select()
-        .single();
+      // Insert appointment using RPC
+      const { data: appointmentId, error: appointmentError } = await supabase
+        .rpc('create_appointment', {
+          p_expert_id: expertId,
+          p_user_id: userId,
+          p_appointment_date: date,
+          p_start_time: startTime,
+          p_end_time: endTime,
+          p_time_slot_id: timeSlotId,
+          p_notes: notes
+        });
       
       if (appointmentError) throw appointmentError;
       
@@ -250,7 +244,7 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
       await fetchAppointments(userId, expertId);
       
       toast.success('Appointment booked successfully');
-      return data;
+      return appointmentId;
     } catch (error: any) {
       console.error('Error booking appointment:', error);
       setError(error.message);
@@ -267,11 +261,10 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
       setLoading(true);
       
       const { data, error } = await supabase
-        .from('appointments')
-        .update({ status })
-        .eq('id', appointmentId)
-        .select()
-        .single();
+        .rpc('update_appointment_status', {
+          p_appointment_id: appointmentId,
+          p_status: status
+        });
       
       if (error) throw error;
       

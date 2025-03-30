@@ -16,11 +16,9 @@ const ExpertAvailabilityList = () => {
   
   const deleteAvailability = async (availabilityId: string) => {
     try {
-      // Delete the availability (will cascade to time slots)
+      // Delete the availability using RPC
       const { error } = await supabase
-        .from('expert_availability')
-        .delete()
-        .eq('id', availabilityId);
+        .rpc('delete_expert_availability', { availability_id_param: availabilityId });
       
       if (error) throw error;
       
