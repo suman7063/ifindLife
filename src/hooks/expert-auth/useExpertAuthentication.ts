@@ -16,7 +16,8 @@ export const useExpertAuthentication = (
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
-      // First check if there's a previous session and sign out
+      console.log('Expert auth: Starting login process for', email);
+      // First ensure we're signed out
       await supabase.auth.signOut();
       
       // Now perform the login
@@ -26,22 +27,27 @@ export const useExpertAuthentication = (
       });
 
       if (error) {
+        console.error('Expert auth login error:', error);
         toast.error(error.message);
         setLoading(false);
         return false;
       }
 
       if (!data.session) {
+        console.error('Expert auth: No session created');
         toast.error('No session created');
         setLoading(false);
         return false;
       }
 
+      console.log('Expert auth: Successfully authenticated, fetching expert profile');
+      
+      // Fetch expert profile
       const expertProfile = await fetchExpertProfile(data.user.id);
       
       if (!expertProfile) {
-        // This is the key change - we handle the case where the user is authenticated
-        // but doesn't have an expert profile
+        console.error('Expert auth: No expert profile found for user ID', data.user.id);
+        // This user is authenticated but doesn't have an expert profile
         toast.error('No expert profile found. Please register as an expert.');
         await supabase.auth.signOut();
         setLoading(false);
@@ -49,13 +55,16 @@ export const useExpertAuthentication = (
         return false;
       }
       
+      // Success! We have both authentication and an expert profile
+      console.log('Expert auth: Profile found, setting expert state');
       setExpert(expertProfile);
       toast.success('Login successful!');
       navigate('/expert-dashboard');
       return true;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Unexpected error in expert login:', error);
       toast.error('An unexpected error occurred');
+      setLoading(false);
       return false;
     } finally {
       setLoading(false);

@@ -59,12 +59,18 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
 
   // Initialize authentication and fetch expert profile
   useEffect(() => {
+    let isMounted = true;
     const initAuth = async () => {
       try {
+        console.log('Initializing expert auth');
+        setLoading(true);
+        
         // Set up auth state listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             console.log('Expert auth state changed:', event, session ? 'Has session' : 'No session');
+            
+            if (!isMounted) return;
             
             if (!session) {
               setExpert(null);
@@ -72,13 +78,16 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
               return;
             }
 
+            console.log('Expert auth state event - fetching profile for:', session.user.id);
             const expertProfile = await fetchExpertProfile(session.user.id);
             
             // Only set the expert profile if we found one
             if (expertProfile) {
+              console.log('Expert profile found after auth state change');
               setExpert(expertProfile);
             } else {
               // If no expert profile but we have a session, this is likely a regular user
+              console.log('No expert profile found after auth state change');
               setExpert(null);
             }
             
@@ -92,25 +101,57 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
           console.log('Found existing session, fetching expert profile');
           const expertProfile = await fetchExpertProfile(session.user.id);
           
-          if (expertProfile) {
-            setExpert(expertProfile);
+          if (isMounted) {
+            if (expertProfile) {
+              console.log('Expert profile found on init');
+              setExpert(expertProfile);
+            } else {
+              console.log('No expert profile found on init');
+              setExpert(null);
+            }
           }
         }
         
-        setLoading(false);
-        setAuthInitialized(true);
+        if (isMounted) {
+          setLoading(false);
+          setAuthInitialized(true);
+        }
 
         return () => {
           subscription.unsubscribe();
         };
       } catch (error) {
         console.error('Error initializing expert auth:', error);
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          setAuthInitialized(true);
+        }
       }
     };
 
     initAuth();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [navigate, fetchExpertProfile]);
+
+  // Add a timeout to prevent infinite loading
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (loading && !authInitialized) {
+      timeoutId = setTimeout(() => {
+        console.log('Expert auth loading timeout reached');
+        setLoading(false);
+        setAuthInitialized(true);
+      }, 5000); // 5 second timeout
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [loading, authInitialized]);
 
   return {
     expert,

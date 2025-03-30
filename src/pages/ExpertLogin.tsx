@@ -18,11 +18,22 @@ const ExpertLogin = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('login');
   
-  const { login, expert, loading } = useExpertAuth();
+  const { login, expert, loading, authInitialized } = useExpertAuth();
   const { isAuthenticated: isUserAuthenticated, currentUser: userProfile, logout: userLogout } = useUserAuth();
   
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // For debug purposes
+  useEffect(() => {
+    console.log('ExpertLogin component - Auth states:', {
+      expertLoading: loading,
+      expertAuthInitialized: authInitialized,
+      hasExpertProfile: !!expert,
+      isUserAuthenticated,
+      hasUserProfile: !!userProfile
+    });
+  }, [loading, authInitialized, expert, isUserAuthenticated, userProfile]);
   
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -33,11 +44,12 @@ const ExpertLogin = () => {
   }, [location]);
   
   useEffect(() => {
-    // If already logged in as expert, redirect to dashboard
-    if (expert && !loading) {
+    // If already logged in as expert and authentication is initialized, redirect to dashboard
+    if (expert && authInitialized && !loading) {
+      console.log('Redirecting to expert dashboard - Expert profile found');
       navigate('/expert-dashboard');
     }
-  }, [expert, loading, navigate]);
+  }, [expert, loading, authInitialized, navigate]);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
@@ -64,10 +76,13 @@ const ExpertLogin = () => {
     setIsLoggingIn(true);
     
     try {
+      console.log('Attempting expert login with:', email);
       const success = await login(email, password);
       
       if (!success) {
         setLoginError('Login failed. Please check your credentials and try again.');
+      } else {
+        console.log('Expert login successful, should redirect soon');
       }
       
       return success;
@@ -92,7 +107,9 @@ const ExpertLogin = () => {
     }
   };
 
-  if (loading && !isLoggingIn) {
+  // Show loading view only when not logging in manually and still initializing auth
+  if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn)) {
+    console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;
   }
   

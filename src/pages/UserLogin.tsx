@@ -26,6 +26,17 @@ const UserLogin = () => {
   const { currentUser, isAuthenticated, authLoading, login, signup } = useUserAuth();
   const { expert, loading: expertLoading, logout: expertLogout } = useExpertAuth();
   
+  // Log auth state for debugging
+  useEffect(() => {
+    console.log('UserLogin component - Auth states:', {
+      userLoading: authLoading,
+      isUserAuthenticated,
+      hasUserProfile: !!currentUser,
+      expertLoading,
+      hasExpertProfile: !!expert
+    });
+  }, [authLoading, isAuthenticated, currentUser, expertLoading, expert]);
+  
   // Check if redirected to register tab
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -46,13 +57,26 @@ const UserLogin = () => {
   };
 
   const handleLogin = async (email: string, password: string): Promise<void> => {
+    if (isLoggingIn) return;
+    
     setIsLoggingIn(true);
     setLoginError(null);
     
     try {
+      // First check if logged in as expert
+      if (expert) {
+        toast.error('You are already logged in as an expert. Please log out first.');
+        setLoginError('Please log out as an expert before logging in as a user.');
+        return;
+      }
+      
+      console.log('Attempting user login with:', email);
       const success = await login(email, password);
+      
       if (!success) {
         setLoginError('Login failed. Please check your credentials and try again.');
+      } else {
+        console.log('User login successful');
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -71,10 +95,20 @@ const UserLogin = () => {
     city?: string;
     referralCode?: string;
   }): Promise<void> => {
+    if (isRegistering) return;
+    
     setIsRegistering(true);
     setRegisterError(null);
     
     try {
+      // First check if logged in as expert
+      if (expert) {
+        toast.error('You are already logged in as an expert. Please log out first.');
+        setRegisterError('Please log out as an expert before registering as a user.');
+        return;
+      }
+      
+      console.log('Attempting user registration with:', userData.email);
       const success = await signup(
         userData.email, 
         userData.password, 
@@ -89,6 +123,8 @@ const UserLogin = () => {
       
       if (!success) {
         setRegisterError('Registration failed. Please try again.');
+      } else {
+        console.log('User registration successful');
       }
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -99,13 +135,18 @@ const UserLogin = () => {
   };
 
   const handleExpertLogout = async () => {
-    await expertLogout();
-    toast.success('Successfully logged out as expert');
-    // Refresh the page to clear any lingering state
-    window.location.reload();
+    try {
+      await expertLogout();
+      toast.success('Successfully logged out as expert');
+      // Refresh the page to clear any lingering state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error during expert logout:', error);
+      toast.error('Failed to log out as expert. Please try again.');
+    }
   };
 
-  if (authLoading || expertLoading) {
+  if (authLoading || (expertLoading && !expert)) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
