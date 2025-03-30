@@ -9,9 +9,8 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 import ExpertLoginHeader from '@/components/expert/auth/ExpertLoginHeader';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import LoadingView from '@/components/expert/auth/LoadingView';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 
 const ExpertLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -20,7 +19,8 @@ const ExpertLogin = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const { login, expert, loading, authInitialized } = useExpertAuth();
-  const { isAuthenticated, currentUser, logout: userLogout } = useUserAuth();
+  const { isUserAuthenticated, currentUser, isSynchronizing } = useAuthSynchronization();
+  const { logout: userLogout } = useUserAuth();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,10 +31,11 @@ const ExpertLogin = () => {
       expertLoading: loading,
       expertAuthInitialized: authInitialized,
       hasExpertProfile: !!expert,
-      isUserAuthenticated: isAuthenticated,
-      hasUserProfile: !!currentUser
+      isUserAuthenticated,
+      hasUserProfile: !!currentUser,
+      isSynchronizing
     });
-  }, [loading, authInitialized, expert, isAuthenticated, currentUser]);
+  }, [loading, authInitialized, expert, isUserAuthenticated, currentUser, isSynchronizing]);
   
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -56,7 +57,7 @@ const ExpertLogin = () => {
     if (isLoggingIn) return false;
     
     // Check if user is already authenticated as a user
-    if (isAuthenticated) {
+    if (isUserAuthenticated) {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
       return false;
@@ -122,7 +123,7 @@ const ExpertLogin = () => {
   };
 
   // Show loading view only when not logging in manually and still initializing auth
-  if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn)) {
+  if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;
   }
@@ -132,38 +133,20 @@ const ExpertLogin = () => {
       <Navbar />
       <main className="flex-1 py-10 flex items-center justify-center bg-stars">
         <div className="container max-w-4xl">
-          {isAuthenticated && (
+          {isUserAuthenticated && (
             <div className="mb-6">
-              <Alert variant="destructive" className="mb-4">
-                <AlertDescription>
-                  You are currently logged in as {currentUser?.name || 'a user'}. You need to log out as a user before logging in as an expert.
-                </AlertDescription>
-              </Alert>
-              <Button 
-                onClick={handleUserLogout} 
-                variant="destructive" 
-                className="flex items-center"
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? (
-                  <>
-                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                    Logging Out...
-                  </>
-                ) : (
-                  <>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log Out as User
-                  </>
-                )}
-              </Button>
+              <UserLogoutAlert
+                profileName={currentUser?.name}
+                isLoggingOut={isLoggingOut}
+                onLogout={handleUserLogout}
+              />
             </div>
           )}
           
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <ExpertLoginHeader />
             
-            {!isAuthenticated && (
+            {!isUserAuthenticated && (
               <ExpertLoginTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}

@@ -12,6 +12,8 @@ import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import { toast } from 'sonner';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useExpertAuth } from '@/hooks/expert-auth';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import UserLoginHeader from '@/components/auth/UserLoginHeader';
 
 const UserLogin = () => {
   const [activeTab, setActiveTab] = useState('login');
@@ -24,19 +26,23 @@ const UserLogin = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentUser, isAuthenticated, authLoading, login, signup } = useUserAuth();
-  const { expert, loading: expertLoading, logout: expertLogout } = useExpertAuth();
+  
+  // Get auth state from context
+  const { login, signup, authLoading } = useUserAuth();
+  const { isUserAuthenticated, isExpertAuthenticated, currentUser, isSynchronizing, expertProfile } = useAuthSynchronization();
+  const { logout: expertLogout } = useExpertAuth();
   
   // Log auth state for debugging
   useEffect(() => {
     console.log('UserLogin component - Auth states:', {
       userLoading: authLoading,
-      isAuthenticated,
+      isUserAuthenticated,
       hasUserProfile: !!currentUser,
-      expertLoading,
-      hasExpertProfile: !!expert
+      isExpertAuthenticated,
+      hasExpertProfile: !!expertProfile,
+      isSynchronizing
     });
-  }, [authLoading, isAuthenticated, currentUser, expertLoading, expert]);
+  }, [authLoading, isUserAuthenticated, currentUser, isExpertAuthenticated, expertProfile, isSynchronizing]);
   
   // Check if redirected to register tab
   useEffect(() => {
@@ -48,10 +54,10 @@ const UserLogin = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (isAuthenticated && !authLoading && currentUser) {
+    if (isUserAuthenticated && !authLoading && currentUser) {
       navigate('/user-dashboard');
     }
-  }, [isAuthenticated, authLoading, currentUser, navigate]);
+  }, [isUserAuthenticated, authLoading, currentUser, navigate]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -65,7 +71,7 @@ const UserLogin = () => {
     
     try {
       // First check if logged in as expert
-      if (expert) {
+      if (isExpertAuthenticated) {
         toast.error('You are already logged in as an expert. Please log out first.');
         setLoginError('Please log out as an expert before logging in as a user.');
         return;
@@ -103,7 +109,7 @@ const UserLogin = () => {
     
     try {
       // First check if logged in as expert
-      if (expert) {
+      if (isExpertAuthenticated) {
         toast.error('You are already logged in as an expert. Please log out first.');
         setRegisterError('Please log out as an expert before registering as a user.');
         return;
@@ -155,7 +161,7 @@ const UserLogin = () => {
     }
   };
 
-  if (authLoading || (expertLoading && !expert)) {
+  if (authLoading || isSynchronizing) {
     return <LoadingScreen />;
   }
   
@@ -166,9 +172,11 @@ const UserLogin = () => {
         <div className="max-w-md mx-auto">
           <Card className="border-ifind-lavender/20 shadow-xl">
             <CardContent className="pt-6">
-              {expert ? (
+              <UserLoginHeader />
+              
+              {isExpertAuthenticated ? (
                 <UserLogoutAlert 
-                  profileName={expert.name}
+                  profileName={expertProfile?.name}
                   isLoggingOut={isLoggingOut}
                   onLogout={handleExpertLogout}
                 />

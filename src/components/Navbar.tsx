@@ -6,11 +6,13 @@ import { useExpertAuth } from '@/hooks/expert-auth';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { toast } from 'sonner';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const { isAuthenticated, currentUser, logout: userLogout } = useUserAuth();
-  const { expert, logout: expertLogout } = useExpertAuth();
+  const { logout: userLogout } = useUserAuth();
+  const { logout: expertLogout } = useExpertAuth();
+  const { isUserAuthenticated, isExpertAuthenticated, currentUser, expertProfile } = useAuthSynchronization();
   const location = useLocation();
 
   useEffect(() => {
@@ -85,17 +87,17 @@ const Navbar = () => {
         </Link>
         
         <NavbarDesktopLinks 
-          isAuthenticated={isAuthenticated}
+          isAuthenticated={isUserAuthenticated}
           currentUser={currentUser}
-          hasExpertProfile={!!expert}
+          hasExpertProfile={isExpertAuthenticated}
           userLogout={handleUserLogout}
           expertLogout={handleExpertLogout}
         />
         
         <NavbarMobileMenu 
-          isAuthenticated={isAuthenticated}
+          isAuthenticated={isUserAuthenticated}
           currentUser={currentUser}
-          hasExpertProfile={!!expert}
+          hasExpertProfile={isExpertAuthenticated}
           userLogout={handleUserLogout}
           expertLogout={handleExpertLogout}
         />
