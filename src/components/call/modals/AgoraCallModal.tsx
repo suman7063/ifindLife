@@ -1,17 +1,15 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogFooter } from "@/components/ui/dialog";
-import { toast } from 'sonner';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useAgoraCall } from '@/hooks/useAgoraCall';
-import AgoraCallControls from '../AgoraCallControls';
-import AgoraCallTypeSelector from '../AgoraCallTypeSelector';
-import AgoraCallContent from '../AgoraCallContent';
 import { useUserAuth } from '@/hooks/useUserAuth';
-import RechargeDialog from '../../user/dashboard/RechargeDialog';
+import AgoraCallControls from '@/components/call/AgoraCallControls';
+import AgoraCallContent from '@/components/call/AgoraCallContent';
 import AgoraCallModalHeader from './AgoraCallModalHeader';
+import AgoraCallTypeSelector from '@/components/call/AgoraCallTypeSelector';
 import CallAuthMessage from './CallAuthMessage';
 import CallErrorMessage from './CallErrorMessage';
-import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface AgoraCallModalProps {
   isOpen: boolean;
@@ -29,9 +27,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
   const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [showChat, setShowChat] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+  const dialogRef = React.useRef<HTMLDivElement>(null);
   
   const {
     callState,
@@ -49,203 +45,149 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
     formatTime
   } = useAgoraCall(expert.id, expert.price);
   
-  // Determine if the user is authenticated
-  const isAuthenticated = !!currentUser;
-  
-  // Reset status when modal is closed
-  useEffect(() => {
-    if (!isOpen) {
-      setCallStatus('choosing');
-      setShowChat(false);
-      setIsFullscreen(false);
-    }
-  }, [isOpen]);
-  
-  // Handle errors
-  useEffect(() => {
-    if (callError) {
-      setCallStatus('error');
-      toast.error('Call Error', {
-        description: callError
-      });
-    }
-  }, [callError]);
-  
   // Handle fullscreen toggle
-  useEffect(() => {
-    const handleEscKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && isFullscreen) {
-        setIsFullscreen(false);
+  const handleToggleFullscreen = () => {
+    if (!isFullscreen) {
+      if (dialogRef.current?.requestFullscreen) {
+        dialogRef.current.requestFullscreen();
       }
-    };
-    
-    document.addEventListener('keydown', handleEscKey);
-    
-    return () => {
-      document.removeEventListener('keydown', handleEscKey);
-    };
-  }, [isFullscreen]);
-  
-  // Check if user has enough wallet balance (at least 15 minutes of call)
-  const hasEnoughBalance = () => {
-    if (!currentUser || typeof currentUser.walletBalance !== 'number') return false;
-    
-    // Calculate minimum required balance (15 minutes of call time)
-    const minimumRequiredBalance = expert.price * 15;
-    return currentUser.walletBalance >= minimumRequiredBalance;
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+    setIsFullscreen(!isFullscreen);
   };
   
-  // Initiate call
-  const handleInitiateCall = async (selectedCallType: 'audio' | 'video') => {
-    // Check if user is authenticated
-    if (!isAuthenticated) {
-      toast.error('Authentication Required', {
-        description: 'You need to log in or sign up to start a call with an expert.',
-        action: {
-          label: 'Log In',
-          onClick: () => navigate('/user-login')
-        }
-      });
-      return;
-    }
+  // Listen for fullscreen change event
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
     
-    // Check if user has enough balance
-    if (!hasEnoughBalance()) {
-      toast.error('Insufficient Wallet Balance', {
-        description: `You need at least ${currentUser?.currency || 'USD'} ${(expert.price * 15).toFixed(2)} in your wallet for a 15-minute call.`,
-        action: {
-          label: 'Recharge',
-          onClick: () => setIsRechargeDialogOpen(true)
-        }
-      });
-      return;
-    }
-    
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+  
+  // Handle chat toggle
+  const handleToggleChat = () => {
+    setShowChat(!showChat);
+  };
+  
+  // Handle starting a call
+  const handleStartCall = async (type: 'audio' | 'video') => {
     setCallStatus('connecting');
-    console.log("Initiating call of type:", selectedCallType);
     
-    const success = await startCall(selectedCallType);
-    console.log("Call initiation result:", success);
+    const success = await startCall(type);
     
     if (success) {
       setCallStatus('connected');
-      toast.success(`${selectedCallType.charAt(0).toUpperCase() + selectedCallType.slice(1)} call connected`);
+      toast.success(`Call connected with ${expert.name}`);
     } else {
       setCallStatus('error');
-      toast.error('Failed to connect call', { 
-        description: callError || 'Check your microphone and camera permissions' 
-      });
     }
   };
   
-  // End call
+  // Handle ending a call
   const handleEndCall = async () => {
-    const result = await endCall();
+    const { success, cost } = await endCall();
     
-    if (result.success) {
-      setCallStatus('ended');
-      toast.success(`Call ended. Duration: ${formatTime(result.duration)}`);
-      
-      if (result.cost > 0) {
-        toast.info(`Call cost: ${currentUser?.currency || 'USD'} ${result.cost.toFixed(2)}`);
-      }
-    } else {
-      toast.error('Error ending call');
+    if (success) {
+      toast.info(`Call ended. Total cost: ₹${cost.toFixed(2)}`);
     }
+    
+    setCallStatus('ended');
+    setShowChat(false);
   };
   
-  // Toggle chat
-  const handleToggleChat = () => {
-    setShowChat(prev => !prev);
-  };
-  
-  // Toggle fullscreen
-  const handleToggleFullscreen = () => {
-    if (isFullscreen) {
-      document.exitFullscreen().catch(err => console.error("Error exiting fullscreen:", err));
+  // Reset state when modal is closed
+  const handleCloseModal = () => {
+    // If call is active, end it first
+    if (callStatus === 'connected') {
+      handleEndCall();
+    }
+    
+    // Reset state for next call
+    setTimeout(() => {
+      setCallStatus('choosing');
+      setShowChat(false);
       setIsFullscreen(false);
-    } else if (containerRef.current) {
-      containerRef.current.requestFullscreen().catch(err => console.error("Error entering fullscreen:", err));
-      setIsFullscreen(true);
+      onClose();
+    }, 500);
+  };
+  
+  // Check if user is authenticated
+  const isAuthenticated = !!currentUser;
+  
+  // Render appropriate content based on call status
+  const renderContent = () => {
+    if (!isAuthenticated) {
+      return (
+        <CallAuthMessage 
+          expertName={expert.name} 
+          onClose={handleCloseModal} 
+        />
+      );
     }
+    
+    if (callStatus === 'choosing') {
+      return (
+        <AgoraCallTypeSelector onSelectCallType={handleStartCall} />
+      );
+    }
+    
+    if (callStatus === 'error') {
+      return (
+        <CallErrorMessage 
+          errorMessage={callError} 
+          onRetry={() => setCallStatus('choosing')} 
+        />
+      );
+    }
+    
+    return (
+      <AgoraCallContent
+        callState={callState}
+        callStatus={callStatus}
+        showChat={showChat}
+        duration={duration}
+        remainingTime={remainingTime}
+        cost={cost}
+        formatTime={formatTime}
+        expertPrice={expert.price}
+        userName={currentUser?.name || 'You'}
+        expertName={expert.name}
+      />
+    );
   };
   
-  // Reset the call state
-  const handleRetry = () => {
-    setCallStatus('choosing');
-  };
-
-  // Handle successful wallet recharge
-  const handleRechargeSuccess = () => {
-    setIsRechargeDialogOpen(false);
-    toast.success('Wallet recharged successfully! You can now start the call.');
-  };
-  
-  // Handle recharge cancellation
-  const handleRechargeCancel = () => {
-    setIsRechargeDialogOpen(false);
-  };
-
   return (
-    <>
-      <Dialog 
-        open={isOpen} 
-        onOpenChange={(open) => {
-          if (!open && callStatus === 'connected') {
-            // Confirm before closing if call is in progress
-            if (window.confirm('Are you sure you want to end the call?')) {
-              handleEndCall();
-              onClose();
-            }
-          } else if (!open) {
-            onClose();
-          }
-        }}
+    <Dialog open={isOpen} onOpenChange={open => !open && handleCloseModal()}>
+      <DialogContent 
+        ref={dialogRef}
+        className={`sm:max-w-[700px] p-0 ${isFullscreen ? 'w-screen h-screen rounded-none' : ''}`}
       >
-        <DialogContent 
-          ref={containerRef} 
-          className={`${isFullscreen ? 'w-screen h-screen max-w-none rounded-none' : 'sm:max-w-[600px]'} ${showChat && callStatus === 'connected' ? 'sm:max-w-[900px]' : ''}`}
-        >
+        <div className="p-6">
           <AgoraCallModalHeader 
             callStatus={callStatus}
             expertName={expert.name}
-            currency={currentUser?.currency || 'USD'}
+            currency="₹"
             expertPrice={expert.price}
           />
           
-          {!isAuthenticated && callStatus === 'choosing' ? (
-            <CallAuthMessage expertName={expert.name} onClose={onClose} />
-          ) : callStatus === 'choosing' ? (
-            <AgoraCallTypeSelector 
-              expert={expert}
-              onSelectCallType={handleInitiateCall}
-            />
-          ) : callStatus === 'error' ? (
-            <CallErrorMessage 
-              errorMessage={callError}
-              onRetry={handleRetry}
-            />
-          ) : (
-            <AgoraCallContent 
-              callState={callState}
-              callStatus={callStatus}
-              showChat={showChat}
-              duration={duration}
-              remainingTime={remainingTime}
-              cost={cost}
-              formatTime={formatTime}
-              expertPrice={expert.price}
-              userName={currentUser?.name || 'You'}
-              expertName={expert.name}
-            />
-          )}
+          <div className="my-6">
+            {renderContent()}
+          </div>
           
-          {callStatus !== 'choosing' && callStatus !== 'error' && (
-            <DialogFooter className="flex justify-center space-x-4">
-              <AgoraCallControls 
+          {(callStatus === 'connected' || callStatus === 'ended') && (
+            <div className="flex justify-center">
+              <AgoraCallControls
                 callState={callState}
                 callType={callType}
                 isExtending={isExtending}
+                isFullscreen={isFullscreen}
                 onToggleMute={handleToggleMute}
                 onToggleVideo={handleToggleVideo}
                 onEndCall={handleEndCall}
@@ -253,18 +195,11 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
                 onToggleChat={handleToggleChat}
                 onToggleFullscreen={handleToggleFullscreen}
               />
-            </DialogFooter>
+            </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      <RechargeDialog 
-        isOpen={isRechargeDialogOpen}
-        onClose={handleRechargeCancel}
-        onSuccess={handleRechargeSuccess}
-        onCancel={handleRechargeCancel}
-      />
-    </>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

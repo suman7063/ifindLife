@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { CallState } from '@/utils/agoraService';
-import AgoraVideoDisplay from './AgoraVideoDisplay';
-import AgoraCallInfo from './AgoraCallInfo';
+import VideoContainer from './content/VideoContainer';
+import CallCostDisplay from './content/CallCostDisplay';
 import AgoraCallChat from './AgoraCallChat';
 
 interface AgoraCallContentProps {
@@ -33,20 +33,20 @@ const AgoraCallContent: React.FC<AgoraCallContentProps> = ({
   return (
     <div className={`flex ${showChat ? 'flex-row' : 'flex-col'} items-center py-3 space-y-4 space-x-0 ${showChat ? 'sm:space-x-4 sm:space-y-0' : ''}`}>
       <div className={`${showChat ? 'w-1/2' : 'w-full'} space-y-4`}>
-        <AgoraVideoDisplay 
+        <VideoContainer 
           callState={callState}
+          callStatus={callStatus}
           userName={userName}
           expertName={expertName}
-          callStatus={callStatus}
         />
         
         {callStatus === 'connected' && (
-          <AgoraCallInfo 
+          <CallCostDisplay 
             duration={duration}
             remainingTime={remainingTime}
             cost={cost}
             formatTime={formatTime}
-            pricePerMinute={expertPrice}
+            expertPrice={expertPrice}
           />
         )}
       </div>
