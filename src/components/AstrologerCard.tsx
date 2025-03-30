@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { StarIcon, PhoneIcon, CalendarIcon, MessageSquareIcon } from 'lucide-react';
+import { StarIcon, PhoneIcon, CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AstrologerCardProps {

@@ -1,14 +1,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
-import { Phone, PhoneCall, Video } from 'lucide-react';
 import { useAgoraCall } from '@/hooks/useAgoraCall';
-import AgoraVideoDisplay from './call/AgoraVideoDisplay';
 import AgoraCallControls from './call/AgoraCallControls';
-import AgoraCallInfo from './call/AgoraCallInfo';
-import AgoraCallChat from './call/AgoraCallChat';
+import AgoraCallTypeSelector from './call/AgoraCallTypeSelector';
+import AgoraCallContent from './call/AgoraCallContent';
 import { useUserAuth } from '@/hooks/useUserAuth';
 
 interface AgoraCallModalProps {
@@ -24,7 +21,6 @@ interface AgoraCallModalProps {
 
 const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert }) => {
   const { currentUser } = useUserAuth();
-  const [selectedCallType, setSelectedCallType] = useState<'audio' | 'video'>('video');
   const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended'>('choosing');
   const [showChat, setShowChat] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -70,7 +66,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
   }, [isFullscreen]);
   
   // Initiate call
-  const handleInitiateCall = async () => {
+  const handleInitiateCall = async (selectedCallType: 'audio' | 'video') => {
     setCallStatus('connecting');
     
     const success = await startCall(selectedCallType);
@@ -153,79 +149,25 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
           )}
         </DialogHeader>
         
-        <div className={`flex ${showChat ? 'flex-row' : 'flex-col'} items-center py-3 space-y-4 space-x-0 ${showChat ? 'sm:space-x-4 sm:space-y-0' : ''}`}>
-          {callStatus === 'choosing' ? (
-            <div className="flex flex-col items-center space-y-6 w-full">
-              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary">
-                <img 
-                  src={expert.imageUrl} 
-                  alt={expert.name} 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              
-              <div className="text-center">
-                <h3 className="text-lg font-semibold">{expert.name}</h3>
-                <p className="text-sm text-muted-foreground">₹{expert.price}/min after first 15 minutes</p>
-              </div>
-              
-              <div className="flex space-x-4">
-                <Button 
-                  onClick={() => {
-                    setSelectedCallType('audio');
-                    handleInitiateCall();
-                  }}
-                  className="flex items-center space-x-2"
-                  variant="outline"
-                >
-                  <Phone className="h-4 w-4" />
-                  <span>Audio Call</span>
-                </Button>
-                
-                <Button 
-                  onClick={() => {
-                    setSelectedCallType('video');
-                    handleInitiateCall();
-                  }}
-                  className="flex items-center space-x-2"
-                >
-                  <Video className="h-4 w-4" />
-                  <span>Video Call</span>
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className={`${showChat ? 'w-1/2' : 'w-full'} space-y-4`}>
-                <AgoraVideoDisplay 
-                  callState={callState}
-                  userName={currentUser?.name || 'You'}
-                  expertName={expert.name}
-                />
-                
-                {callStatus === 'connected' && (
-                  <AgoraCallInfo 
-                    duration={duration}
-                    remainingTime={remainingTime}
-                    cost={cost}
-                    formatTime={formatTime}
-                    pricePerMinute={expert.price}
-                  />
-                )}
-              </div>
-              
-              {showChat && callStatus === 'connected' && (
-                <div className="w-1/2 h-[400px]">
-                  <AgoraCallChat 
-                    visible={showChat}
-                    userName={currentUser?.name || 'You'}
-                    expertName={expert.name}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+        {callStatus === 'choosing' ? (
+          <AgoraCallTypeSelector 
+            expert={expert}
+            onSelectCallType={handleInitiateCall}
+          />
+        ) : (
+          <AgoraCallContent 
+            callState={callState}
+            callStatus={callStatus}
+            showChat={showChat}
+            duration={duration}
+            remainingTime={remainingTime}
+            cost={cost}
+            formatTime={formatTime}
+            expertPrice={expert.price}
+            userName={currentUser?.name || 'You'}
+            expertName={expert.name}
+          />
+        )}
         
         {callStatus !== 'choosing' && (
           <DialogFooter className="flex justify-center space-x-4">
