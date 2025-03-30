@@ -25,7 +25,7 @@ interface AgoraCallModalProps {
 }
 
 const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert }) => {
-  const { currentUser, isAuthenticated } = useUserAuth();
+  const { currentUser, user } = useUserAuth();
   const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [showChat, setShowChat] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -48,6 +48,9 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
     extendCall,
     formatTime
   } = useAgoraCall(expert.id, expert.price);
+  
+  // Determine if the user is authenticated
+  const isAuthenticated = !!user;
   
   // Reset status when modal is closed
   useEffect(() => {
@@ -187,7 +190,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
   const renderAuthMessage = () => {
     return (
       <div className="flex flex-col items-center space-y-4 py-6">
-        <Alert variant="warning" className="max-w-md">
+        <Alert variant="destructive" className="max-w-md">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             You need to log in or sign up to start a call with {expert.name}.

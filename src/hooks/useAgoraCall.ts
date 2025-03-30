@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import AgoraRTC, {
   IAgoraRTCClient,
@@ -39,6 +40,7 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const initialSlot = 15 * 60; // 15 minutes in seconds
+  const initialSlotMinutes = initialSlot / 60; // Convert to minutes for calculation
 
   useEffect(() => {
     const client = createClient();
@@ -99,7 +101,7 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
         if (newDuration > initialSlot) {
           const billableSeconds = newDuration - initialSlot;
           const billableMinutes = billableSeconds / 60;
-          setCost(expertPrice * billableMinutes);
+          setCost(calculateCallCost(newDuration, expertPrice, initialSlotMinutes));
         }
         
         return newDuration;
@@ -241,10 +243,6 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
     if (duration <= initialSlot) {
       return 0;
     }
-    
-    const billableSeconds = duration - initialSlot;
-    const billableMinutes = billableSeconds / 60;
-    const initialSlotMinutes = initialSlot / 60;
     
     return calculateCallCost(duration, expertPrice, initialSlotMinutes);
   };
