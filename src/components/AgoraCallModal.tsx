@@ -25,7 +25,7 @@ interface AgoraCallModalProps {
 }
 
 const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert }) => {
-  const { currentUser, user } = useUserAuth();
+  const { currentUser } = useUserAuth();
   const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [showChat, setShowChat] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -50,7 +50,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
   } = useAgoraCall(expert.id, expert.price);
   
   // Determine if the user is authenticated
-  const isAuthenticated = !!user;
+  const isAuthenticated = !!currentUser;
   
   // Reset status when modal is closed
   useEffect(() => {
