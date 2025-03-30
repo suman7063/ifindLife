@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, UserPlus, User, UserCircle, LogOut, BriefcaseBusiness } from "lucide-react";
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useExpertAuth } from '@/hooks/expert-auth';
@@ -16,13 +16,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from 'sonner';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { isAuthenticated: isAdminAuthenticated } = useAuth();
-  const { isAuthenticated: isUserAuthenticated, currentUser, logout: userLogout } = useUserAuth();
+  const { isAuthenticated, currentUser, logout: userLogout } = useUserAuth();
   const { expert, logout: expertLogout } = useExpertAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,12 +41,50 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
-  const handleUserLogout = () => {
-    userLogout();
+  const handleUserLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    
+    try {
+      console.log("Navbar: Initiating user logout...");
+      const success = await userLogout();
+      
+      if (success) {
+        console.log("Navbar: User logout successful");
+        toast.success('Successfully logged out');
+        
+        // Force page reload to ensure clean state
+        window.location.href = '/';
+      } else {
+        console.error("Navbar: User logout failed");
+        toast.error('Logout failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during user logout:', error);
+      toast.error('Failed to log out. Please try again.');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
-  const handleExpertLogout = () => {
-    expertLogout();
+  const handleExpertLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    
+    try {
+      console.log("Navbar: Initiating expert logout...");
+      await expertLogout();
+      console.log("Navbar: Expert logout completed");
+      toast.success('Successfully logged out as expert');
+      
+      // Force page reload to ensure clean state
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error during expert logout:', error);
+      toast.error('Failed to log out as expert. Please try again.');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   // Check if the current page is user dashboard or related pages
@@ -94,7 +135,8 @@ const Navbar = () => {
                   <Link to="/expert-dashboard" className="w-full cursor-pointer">Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleExpertLogout} className="text-red-500 cursor-pointer">
-                  <LogOut className="h-4 w-4 mr-1" /> Logout
+                  <LogOut className="h-4 w-4 mr-1" /> 
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -106,7 +148,7 @@ const Navbar = () => {
             </Button>
           )}
           
-          {isUserAuthenticated ? (
+          {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="text-ifind-teal">
@@ -125,7 +167,8 @@ const Navbar = () => {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleUserLogout} className="text-red-500 cursor-pointer">
-                  <LogOut className="h-4 w-4 mr-1" /> Logout
+                  <LogOut className="h-4 w-4 mr-1" /> 
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -176,8 +219,14 @@ const Navbar = () => {
                         <BriefcaseBusiness className="h-4 w-4 mr-1" /> Expert Dashboard
                       </Link>
                     </Button>
-                    <Button variant="ghost" className="justify-start text-red-500" onClick={handleExpertLogout}>
-                      <LogOut className="h-4 w-4 mr-1" /> Logout as Expert
+                    <Button 
+                      variant="ghost" 
+                      className="justify-start text-red-500" 
+                      onClick={handleExpertLogout}
+                      disabled={isLoggingOut}
+                    >
+                      <LogOut className="h-4 w-4 mr-1" /> 
+                      {isLoggingOut ? 'Logging out...' : 'Logout as Expert'}
                     </Button>
                   </>
                 ) : (
@@ -188,7 +237,7 @@ const Navbar = () => {
                   </Button>
                 )}
                 
-                {isUserAuthenticated ? (
+                {isAuthenticated ? (
                   <>
                     <Button variant="ghost" className="justify-start" asChild>
                       <Link to="/user-dashboard">
@@ -200,8 +249,14 @@ const Navbar = () => {
                         <User className="h-4 w-4 mr-1" /> My Referrals
                       </Link>
                     </Button>
-                    <Button variant="ghost" className="justify-start text-red-500" onClick={handleUserLogout}>
-                      <LogOut className="h-4 w-4 mr-1" /> Logout as User
+                    <Button 
+                      variant="ghost" 
+                      className="justify-start text-red-500" 
+                      onClick={handleUserLogout}
+                      disabled={isLoggingOut}
+                    >
+                      <LogOut className="h-4 w-4 mr-1" /> 
+                      {isLoggingOut ? 'Logging out...' : 'Logout as User'}
                     </Button>
                   </>
                 ) : (

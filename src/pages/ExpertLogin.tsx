@@ -17,9 +17,10 @@ const ExpertLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('login');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const { login, expert, loading, authInitialized } = useExpertAuth();
-  const { isAuthenticated: isUserAuthenticated, currentUser: userProfile, logout: userLogout } = useUserAuth();
+  const { isAuthenticated, currentUser, logout: userLogout } = useUserAuth();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -30,10 +31,10 @@ const ExpertLogin = () => {
       expertLoading: loading,
       expertAuthInitialized: authInitialized,
       hasExpertProfile: !!expert,
-      isUserAuthenticated,
-      hasUserProfile: !!userProfile
+      isUserAuthenticated: isAuthenticated,
+      hasUserProfile: !!currentUser
     });
-  }, [loading, authInitialized, expert, isUserAuthenticated, userProfile]);
+  }, [loading, authInitialized, expert, isAuthenticated, currentUser]);
   
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -55,7 +56,7 @@ const ExpertLogin = () => {
     if (isLoggingIn) return false;
     
     // Check if user is already authenticated as a user
-    if (isUserAuthenticated) {
+    if (isAuthenticated) {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
       return false;
@@ -96,14 +97,22 @@ const ExpertLogin = () => {
   };
 
   const handleUserLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    
     try {
+      console.log('Attempting to log out user...');
       await userLogout();
+      console.log('User logout completed');
       toast.success('Successfully logged out as user');
-      // Refresh the page to clear any lingering state
-      window.location.reload();
+      
+      // Force a full page reload to ensure clean state
+      window.location.href = '/expert-login';
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out as user. Please try again.');
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -118,16 +127,30 @@ const ExpertLogin = () => {
       <Navbar />
       <main className="flex-1 py-10 flex items-center justify-center bg-stars">
         <div className="container max-w-4xl">
-          {isUserAuthenticated && (
+          {isAuthenticated && (
             <div className="mb-6">
               <Alert variant="destructive" className="mb-4">
                 <AlertDescription>
-                  You are currently logged in as {userProfile?.name || 'a user'}. You need to log out as a user before logging in as an expert.
+                  You are currently logged in as {currentUser?.name || 'a user'}. You need to log out as a user before logging in as an expert.
                 </AlertDescription>
               </Alert>
-              <Button onClick={handleUserLogout} variant="destructive" className="flex items-center">
-                <LogOut className="mr-2 h-4 w-4" />
-                Log Out as User
+              <Button 
+                onClick={handleUserLogout} 
+                variant="destructive" 
+                className="flex items-center"
+                disabled={isLoggingOut}
+              >
+                {isLoggingOut ? (
+                  <>
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                    Logging Out...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Log Out as User
+                  </>
+                )}
               </Button>
             </div>
           )}
@@ -135,7 +158,7 @@ const ExpertLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <ExpertLoginHeader />
             
-            {!isUserAuthenticated && (
+            {!isAuthenticated && (
               <ExpertLoginTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}

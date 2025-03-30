@@ -12,7 +12,7 @@ export interface UserAuthContextType {
   profileNotFound?: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
   updatePassword: (newPassword: string) => Promise<boolean>;
   updateProfile: (userData: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture: (file: File) => Promise<string | null>;

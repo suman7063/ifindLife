@@ -81,17 +81,31 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     }
   };
 
-  const logout = async (): Promise<void> => {
+  const logout = async (): Promise<boolean> => {
     setActionLoading(true);
     try {
-      await authLogout();
+      console.log("Starting user logout process...");
       
-      // Redirect to home page instead of login
-      navigate('/');
-      toast.info('You have been logged out');
-    } catch (error) {
+      // First, ensure we sign out completely from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Error during Supabase logout:", error);
+        toast.error('An error occurred during logout: ' + error.message);
+        return false;
+      }
+      
+      console.log("Supabase signOut completed");
+      
+      // Clear any local state that might be holding user info
+      // navigate directly in this function, since we want immediate response
+      // Don't redirect to home page, let the calling component decide
+      toast.success('You have been logged out');
+      return true;
+    } catch (error: any) {
       console.error("Logout error:", error);
-      toast.error('An error occurred during logout');
+      toast.error('An error occurred during logout: ' + (error.message || 'Unknown error'));
+      return false;
     } finally {
       setActionLoading(false);
     }
