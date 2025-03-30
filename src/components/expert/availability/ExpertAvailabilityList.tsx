@@ -1,39 +1,22 @@
-
 import React from 'react';
 import { useUserAuth } from '@/hooks/user-auth';
-import { useAppointments, Availability } from '@/hooks/useAppointments';
+import { useAppointments } from '@/hooks/useAppointments';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { format, isAfter, parseISO } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { CalendarIcon, Clock, Trash } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 const ExpertAvailabilityList = () => {
   const { currentUser } = useUserAuth();
-  const { availabilities, fetchAvailabilities, loading } = useAppointments(currentUser);
+  const { availabilities, fetchAvailabilities, deleteAvailability, loading } = useAppointments(currentUser);
   
-  const deleteAvailability = async (availabilityId: string) => {
-    try {
-      // Delete the availability using RPC
-      const { error } = await supabase
-        .rpc('delete_expert_availability', { availability_id_param: availabilityId });
-      
-      if (error) throw error;
-      
-      if (currentUser) {
-        await fetchAvailabilities(currentUser.id);
-      }
-      
-      toast.success('Availability period deleted');
-    } catch (error: any) {
-      console.error('Error deleting availability:', error);
-      toast.error('Failed to delete availability');
-    }
+  const handleDeleteAvailability = async (availabilityId: string) => {
+    await deleteAvailability(availabilityId);
   };
   
-  const isAvailabilityActive = (availability: Availability) => {
+  const isAvailabilityActive = (availability: any) => {
     const now = new Date();
     const endDate = parseISO(availability.end_date);
     return isAfter(endDate, now);
@@ -80,7 +63,7 @@ const ExpertAvailabilityList = () => {
                 </h4>
                 
                 <ul className="space-y-2">
-                  {availability.time_slots?.map((slot, index) => (
+                  {availability.time_slots?.map((slot: any, index: number) => (
                     <li key={index} className="text-sm border rounded-md p-2">
                       {availability.availability_type === 'recurring' && slot.day_of_week !== undefined && (
                         <div className="font-medium">
@@ -98,7 +81,7 @@ const ExpertAvailabilityList = () => {
                   <Button 
                     variant="destructive" 
                     size="sm" 
-                    onClick={() => deleteAvailability(availability.id)}
+                    onClick={() => handleDeleteAvailability(availability.id)}
                     disabled={!isAvailabilityActive(availability)}
                   >
                     <Trash className="h-4 w-4 mr-1" />

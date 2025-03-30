@@ -43,10 +43,7 @@ const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
       </TabsContent>
       
       <TabsContent value="reviews">
-        <ExpertReviews 
-          reviews={expert.reviews} 
-          rating={expert.rating}
-        />
+        <ExpertReviews reviews={expert.reviews} />
       </TabsContent>
       
       <TabsContent value="booking">
