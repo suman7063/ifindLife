@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useUserAuth } from '@/hooks/user-auth';
 import { useAppointments, Availability } from '@/hooks/useAppointments';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

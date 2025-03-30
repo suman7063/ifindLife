@@ -13,6 +13,7 @@ interface ExpertDetailTabsProps {
     description: string;
     education?: string;
     specialties: string[];
+    rating: number;
     reviews: Array<{
       id: number;
       name: string;

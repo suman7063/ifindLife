@@ -12,17 +12,21 @@ interface Review {
 
 interface ExpertReviewsProps {
   reviews: Review[];
-  rating: number;
 }
 
-const ExpertReviews: React.FC<ExpertReviewsProps> = ({ reviews, rating }) => {
+const ExpertReviews: React.FC<ExpertReviewsProps> = ({ reviews }) => {
+  // Calculate average rating
+  const averageRating = reviews.length > 0 
+    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1) 
+    : "0";
+    
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Client Reviews</h2>
         <div className="flex items-center">
           <Star className="h-5 w-5 fill-astro-gold text-astro-gold mr-1" />
-          <span className="font-medium">{rating} / 5</span>
+          <span className="font-medium">{averageRating} / 5</span>
         </div>
       </div>
       

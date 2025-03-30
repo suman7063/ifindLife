@@ -49,7 +49,7 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     try {
       setLoading(true);
       
-      // Fetch availabilities
+      // Use a custom query since the tables might not be in the TypeScript definitions yet
       const { data: availabilityData, error: availabilityError } = await supabase
         .from('expert_availability')
         .select('*')
@@ -67,10 +67,15 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
           
           if (timeSlotsError) throw timeSlotsError;
           
+          // Return properly shaped data
           return {
-            ...availability,
+            id: availability.id,
+            expert_id: availability.expert_id,
+            start_date: availability.start_date,
+            end_date: availability.end_date,
+            availability_type: availability.availability_type,
             time_slots: timeSlots || []
-          };
+          } as Availability;
         })
       );
       
@@ -91,22 +96,41 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     try {
       setLoading(true);
       
-      let query = supabase.from('appointments').select('*');
-      
-      if (userId) {
-        query = query.eq('user_id', userId);
-      }
-      
-      if (expId) {
-        query = query.eq('expert_id', expId);
-      }
-      
-      const { data, error: appointmentsError } = await query;
+      const { data, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('*')
+        .in('status', ['pending', 'confirmed', 'cancelled', 'completed']);
       
       if (appointmentsError) throw appointmentsError;
       
-      setAppointments(data || []);
-      return data || [];
+      // Filter client-side for now until we update the TypeScript definitions
+      let filteredAppointments = data || [];
+      
+      if (userId) {
+        filteredAppointments = filteredAppointments.filter(apt => apt.user_id === userId);
+      }
+      
+      if (expId) {
+        filteredAppointments = filteredAppointments.filter(apt => apt.expert_id === expId);
+      }
+      
+      // Map to the correct shape for our interface
+      const formattedAppointments = filteredAppointments.map(apt => ({
+        id: apt.id,
+        expert_id: apt.expert_id,
+        user_id: apt.user_id,
+        appointment_date: apt.appointment_date,
+        start_time: apt.start_time || '00:00',  // Provide defaults
+        end_time: apt.end_time || '00:00',      // Provide defaults
+        status: apt.status,
+        google_calendar_event_id: apt.google_calendar_event_id,
+        user_calendar_event_id: apt.user_calendar_event_id,
+        notes: apt.notes,
+        expert_name: apt.expert_name
+      })) as Appointment[];
+      
+      setAppointments(formattedAppointments);
+      return formattedAppointments;
     } catch (error: any) {
       console.error('Error fetching appointments:', error);
       setError(error.message);
@@ -144,7 +168,10 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
       
       // Insert time slots
       const formattedTimeSlots = timeSlots.map(slot => ({
-        ...slot,
+        start_time: slot.start_time,
+        end_time: slot.end_time,
+        day_of_week: slot.day_of_week,
+        specific_date: slot.specific_date,
         availability_id: availabilityData.id
       }));
       
@@ -183,18 +210,20 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     try {
       setLoading(true);
       
-      // Check if the slot is available using our custom function
-      const { data: availabilityCheck, error: availabilityError } = await supabase
-        .rpc('is_time_slot_available', {
-          p_expert_id: expertId,
-          p_date: date,
-          p_start_time: startTime,
-          p_end_time: endTime
-        });
+      // We need to use a custom RPC call to check availability
+      // Since the is_time_slot_available function is new, we'll need to handle it manually
+      // by checking for overlapping appointments
+      const { data: existingAppointments, error: checkError } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq('expert_id', expertId)
+        .eq('appointment_date', date)
+        .in('status', ['pending', 'confirmed'])
+        .or(`start_time.lte.${startTime},end_time.gt.${startTime},start_time.lt.${endTime},end_time.gte.${endTime}`);
       
-      if (availabilityError) throw availabilityError;
+      if (checkError) throw checkError;
       
-      if (!availabilityCheck) {
+      if (existingAppointments && existingAppointments.length > 0) {
         toast.error('This time slot is no longer available');
         return null;
       }
@@ -209,7 +238,8 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
           start_time: startTime,
           end_time: endTime,
           time_slot_id: timeSlotId,
-          notes
+          notes: notes,
+          status: 'pending'
         })
         .select()
         .single();
