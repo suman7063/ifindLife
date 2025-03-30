@@ -156,7 +156,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
         <div className={`flex ${showChat ? 'flex-row' : 'flex-col'} items-center py-3 space-y-4 space-x-0 ${showChat ? 'sm:space-x-4 sm:space-y-0' : ''}`}>
           {callStatus === 'choosing' ? (
             <div className="flex flex-col items-center space-y-6 w-full">
-              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-astro-light-purple">
+              <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-primary">
                 <img 
                   src={expert.imageUrl} 
                   alt={expert.name} 
@@ -175,7 +175,8 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
                     setSelectedCallType('audio');
                     handleInitiateCall();
                   }}
-                  className="flex items-center space-x-2 bg-astro-purple hover:bg-astro-deep-blue"
+                  className="flex items-center space-x-2"
+                  variant="outline"
                 >
                   <Phone className="h-4 w-4" />
                   <span>Audio Call</span>
@@ -186,7 +187,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ isOpen, onClose, expert
                     setSelectedCallType('video');
                     handleInitiateCall();
                   }}
-                  className="flex items-center space-x-2 bg-astro-purple hover:bg-astro-deep-blue"
+                  className="flex items-center space-x-2"
                 >
                   <Video className="h-4 w-4" />
                   <span>Video Call</span>

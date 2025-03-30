@@ -1,9 +1,8 @@
 
 import React from 'react';
-import { Star, PhoneCall, MessageCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { toast } from '@/hooks/use-toast';
+import { Calendar, PhoneCall, Star, MessageSquare, Clock } from 'lucide-react';
 
 interface ExpertProfileProps {
   expert: {
@@ -24,71 +23,92 @@ interface ExpertProfileProps {
 
 const ExpertProfile: React.FC<ExpertProfileProps> = ({ expert, onCallClick }) => {
   return (
-    <div className="bg-white rounded-lg shadow-sm border p-6 sticky top-20">
-      <div className="flex flex-col items-center text-center mb-6">
-        <div className="relative mb-4">
-          <div className="h-32 w-32 rounded-full overflow-hidden border-4 border-astro-light-purple">
+    <div className="bg-white rounded-lg shadow-md p-6 border border-border">
+      {/* Expert Image and Online Status */}
+      <div className="flex flex-col items-center mb-4">
+        <div className="relative">
+          <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary/20">
             <img 
               src={expert.imageUrl} 
-              alt={expert.name} 
-              className="h-full w-full object-cover"
+              alt={expert.name}
+              className="w-full h-full object-cover" 
             />
           </div>
+          
           {expert.online && (
-            <span className="absolute bottom-2 right-2 h-4 w-4 bg-green-500 rounded-full border-2 border-white"></span>
+            <span className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></span>
           )}
         </div>
         
-        <h1 className="text-xl font-bold mb-1">{expert.name}</h1>
+        <h2 className="text-xl font-bold mt-3">{expert.name}</h2>
         
-        <div className="flex items-center justify-center mb-2">
-          <Star className="h-4 w-4 fill-astro-gold text-astro-gold mr-1" />
-          <span className="font-medium">{expert.rating}</span>
-          <span className="text-sm text-muted-foreground ml-1">
-            ({expert.consultations.toLocaleString()}+ consultations)
-          </span>
+        <div className="flex items-center mt-1 text-yellow-500">
+          <Star className="w-4 h-4 fill-current" />
+          <span className="ml-1 text-gray-800">{expert.rating}</span>
+          <span className="mx-1 text-gray-400">•</span>
+          <span className="text-gray-500">{expert.consultations.toLocaleString()} consultations</span>
         </div>
-        
-        <div className="flex flex-wrap justify-center gap-1 mb-6">
+      </div>
+      
+      {/* Specialty Tags */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {expert.specialties.map((specialty, index) => (
+          <Badge key={index} variant="outline" className="bg-primary/10">
+            {specialty}
+          </Badge>
+        ))}
+      </div>
+      
+      {/* Languages */}
+      <div className="mb-4">
+        <h3 className="text-sm font-medium text-gray-500 mb-2">Languages</h3>
+        <div className="flex flex-wrap gap-2">
           {expert.languages.map((language, index) => (
-            <Badge key={index} variant="outline" className="bg-muted/50">
+            <Badge key={index} variant="secondary" className="bg-secondary/20">
               {language}
             </Badge>
           ))}
         </div>
-        
-        <div className="grid grid-cols-2 gap-4 w-full mb-6">
-          <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="font-medium">{expert.experience} Years</div>
-            <div className="text-sm text-muted-foreground">Experience</div>
+      </div>
+      
+      {/* Pricing and Wait Time */}
+      <div className="mb-6 p-3 bg-background rounded-md">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center">
+            <Clock className="w-4 h-4 text-muted-foreground mr-1" />
+            <span className="text-sm">{expert.waitTime}</span>
           </div>
-          <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="font-medium">₹{expert.price}</div>
-            <div className="text-sm text-muted-foreground">Per Minute</div>
-          </div>
+          <div className="font-semibold">₹{expert.price}/min</div>
         </div>
+        <p className="text-xs text-muted-foreground">First 15 minutes free, then ₹{expert.price}/min</p>
+      </div>
+      
+      {/* Action Buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <Button 
+          onClick={onCallClick}
+          className="flex items-center justify-center"
+          disabled={!expert.online}
+        >
+          <PhoneCall className="w-4 h-4 mr-2" />
+          Call Now
+        </Button>
         
-        <div className="flex items-center justify-center mb-6">
-          <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-          <span className={expert.waitTime === "Available" ? "text-green-600" : "text-muted-foreground"}>
-            {expert.waitTime}
-          </span>
-        </div>
+        <Button 
+          variant="outline"
+          className="flex items-center justify-center"
+        >
+          <Calendar className="w-4 h-4 mr-2" />
+          Book
+        </Button>
         
-        <div className="flex gap-4 w-full">
-          <Button 
-            onClick={onCallClick}
-            variant="outline" 
-            className="flex-1 border-astro-purple text-astro-purple hover:bg-astro-purple hover:text-white"
-          >
-            <PhoneCall className="h-4 w-4 mr-2" />
-            Call
-          </Button>
-          <Button className="flex-1 bg-astro-purple hover:bg-astro-violet">
-            <MessageCircle className="h-4 w-4 mr-2" />
-            Chat
-          </Button>
-        </div>
+        <Button 
+          variant="outline" 
+          className="col-span-2 flex items-center justify-center"
+        >
+          <MessageSquare className="w-4 h-4 mr-2" />
+          Chat
+        </Button>
       </div>
     </div>
   );
