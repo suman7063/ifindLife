@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
 import { Link } from 'react-router-dom';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
     title: "You Are Not Alone!",
     subtitle: "Is there a situation, you need immediate help with?",
     description: "Connect with our currently online experts through an instant call",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1" // Default video URL with autoplay
+    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0" // Disable autoplay initially
   });
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   // Load content from localStorage on component mount
   useEffect(() => {
@@ -18,12 +21,13 @@ const Hero = () => {
       if (savedContent) {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.heroSettings) {
-          // Ensure the autoplay parameter is added to the video URL if not already present
+          // Don't enable autoplay immediately - wait until user interaction or after page load
           let videoUrl = parsedContent.heroSettings.videoUrl || heroSettings.videoUrl;
-          if (videoUrl && !videoUrl.includes('autoplay=1')) {
+          if (videoUrl) {
+            // Start without autoplay for faster initial load
             videoUrl = videoUrl.includes('?') 
-              ? `${videoUrl}&autoplay=1` 
-              : `${videoUrl}?autoplay=1`;
+              ? videoUrl.split('?')[0] + '?autoplay=0' 
+              : videoUrl + '?autoplay=0';
           }
           
           setHeroSettings({
@@ -39,6 +43,19 @@ const Hero = () => {
       console.error('Error loading content from localStorage:', error);
     }
   }, []);
+
+  // Enable video autoplay after a delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (heroSettings.videoUrl && !isVideoLoaded) {
+        const newVideoUrl = heroSettings.videoUrl.replace('autoplay=0', 'autoplay=1');
+        setHeroSettings(prev => ({ ...prev, videoUrl: newVideoUrl }));
+        setIsVideoLoaded(true);
+      }
+    }, 3000); // 3 second delay before loading video with autoplay
+
+    return () => clearTimeout(timer);
+  }, [heroSettings.videoUrl, isVideoLoaded]);
 
   return (
     <div className="relative">
@@ -56,6 +73,7 @@ const Hero = () => {
             height: '504px',
             borderRadius: '0px'
           }}
+          loading="eager" // Prioritize this image
         />
         <div 
           className="absolute inset-0 flex flex-col justify-center px-[60px]"
@@ -130,20 +148,29 @@ const Hero = () => {
               </Link>
             </div>
             <div className="relative rounded-lg overflow-hidden">
-              {heroSettings.videoUrl ? (
-                <iframe
-                  src={heroSettings.videoUrl}
-                  className="w-full aspect-video rounded-lg shadow-lg"
-                  title="Mental Health Video"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
+              {!isVideoLoaded ? (
+                // Display placeholder before video is loaded
+                <div className="w-full aspect-video rounded-lg bg-gray-200 shadow-lg flex items-center justify-center">
+                  <span className="text-gray-500">Video loading...</span>
+                </div>
               ) : (
-                <img 
-                  src="https://images.unsplash.com/photo-1569437061238-3cf61084f487?q=80&w=2070&auto=format&fit=crop" 
-                  alt="Mental Health Expert" 
-                  className="w-full h-auto rounded-lg shadow-lg"
-                />
+                heroSettings.videoUrl ? (
+                  <iframe
+                    src={heroSettings.videoUrl}
+                    className="w-full aspect-video rounded-lg shadow-lg"
+                    title="Mental Health Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    loading="lazy"
+                  ></iframe>
+                ) : (
+                  <img 
+                    src="https://images.unsplash.com/photo-1569437061238-3cf61084f487?q=80&w=2070&auto=format&fit=crop" 
+                    alt="Mental Health Expert" 
+                    className="w-full h-auto rounded-lg shadow-lg"
+                    loading="lazy"
+                  />
+                )
               )}
             </div>
           </div>

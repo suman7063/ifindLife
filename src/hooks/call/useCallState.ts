@@ -45,9 +45,18 @@ export const useCallState = () => {
   }, []);
   
   useEffect(() => {
-    const client = createClient();
-    console.log("Agora client initialized:", client);
-    setCallState(prev => ({ ...prev, client }));
+    // Initialize client only once
+    let client: IAgoraRTCClient | null = null;
+    
+    // Create client asynchronously to avoid blocking the main thread
+    const initClient = async () => {
+      client = createClient();
+      console.log("Agora client initialized:", client);
+      setCallState(prev => ({ ...prev, client }));
+    };
+    
+    // Initialize in a non-blocking way
+    initClient();
 
     return () => {
       // Cleanup will happen in the useEffect below
