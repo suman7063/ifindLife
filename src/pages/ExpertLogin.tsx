@@ -111,6 +111,11 @@ const ExpertLogin = () => {
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out as user. Please try again.');
+      
+      // Force a page reload as a last resort
+      setTimeout(() => {
+        window.location.href = '/expert-login';
+      }, 1500);
     } finally {
       setIsLoggingOut(false);
     }

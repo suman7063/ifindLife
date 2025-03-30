@@ -45,6 +45,11 @@ const Navbar = () => {
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out. Please try again.');
+      
+      // Force reload as a last resort
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     }
   };
 
@@ -60,6 +65,11 @@ const Navbar = () => {
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.');
+      
+      // Force reload as a last resort
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     }
   };
 

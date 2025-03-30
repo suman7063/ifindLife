@@ -87,7 +87,9 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       console.log("Starting user logout process...");
       
       // First, ensure we sign out completely from Supabase
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({
+        scope: 'global' // Sign out from all tabs/windows
+      });
       
       if (error) {
         console.error("Error during Supabase logout:", error);

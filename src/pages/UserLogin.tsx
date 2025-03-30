@@ -21,6 +21,8 @@ const UserLogin = () => {
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUser, isAuthenticated, authLoading, login, signup } = useUserAuth();
@@ -47,10 +49,10 @@ const UserLogin = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    if (isAuthenticated && !authLoading && currentUser) {
       navigate('/user-dashboard');
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, currentUser, navigate]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -135,14 +137,22 @@ const UserLogin = () => {
   };
 
   const handleExpertLogout = async () => {
+    setIsLoggingOut(true);
     try {
       await expertLogout();
       toast.success('Successfully logged out as expert');
-      // Refresh the page to clear any lingering state
-      window.location.reload();
+      // Force a full page reload to ensure clean state
+      window.location.href = '/user-login';
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.');
+      
+      // Force a page reload as a last resort
+      setTimeout(() => {
+        window.location.href = '/user-login';
+      }, 1500);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -174,9 +184,23 @@ const UserLogin = () => {
                       You are currently logged in as an expert. You need to log out as an expert before logging in as a user.
                     </AlertDescription>
                   </Alert>
-                  <Button onClick={handleExpertLogout} variant="destructive" className="w-full flex items-center justify-center">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log Out as Expert
+                  <Button 
+                    onClick={handleExpertLogout} 
+                    variant="destructive" 
+                    className="w-full flex items-center justify-center"
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? (
+                      <>
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                        Logging Out...
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Log Out as Expert
+                      </>
+                    )}
                   </Button>
                 </div>
               ) : (

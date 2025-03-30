@@ -18,7 +18,9 @@ export const useExpertAuthentication = (
     try {
       console.log('Expert auth: Starting login process for', email);
       // First ensure we're signed out
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({
+        scope: 'global'
+      });
       
       // Now perform the login
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -49,7 +51,9 @@ export const useExpertAuthentication = (
         console.error('Expert auth: No expert profile found for user ID', data.user.id);
         // This user is authenticated but doesn't have an expert profile
         toast.error('No expert profile found. Please register as an expert.');
-        await supabase.auth.signOut();
+        await supabase.auth.signOut({
+          scope: 'global'
+        });
         setLoading(false);
         navigate('/expert-login?register=true');
         return false;
@@ -75,13 +79,30 @@ export const useExpertAuthentication = (
   const logout = async (): Promise<void> => {
     setLoading(true);
     try {
-      await supabase.auth.signOut();
+      // Ensure a complete logout using scope: 'global'
+      const { error } = await supabase.auth.signOut({
+        scope: 'global'
+      });
+      
+      if (error) {
+        console.error('Expert logout error:', error);
+        toast.error('Failed to log out: ' + error.message);
+        throw error;
+      }
+      
       setExpert(null);
       toast.success('Logged out successfully');
-      navigate('/expert-login');
+      
+      // Force a full page reload to clear any lingering state
+      window.location.href = '/expert-login';
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to log out');
+      
+      // Force a page reload as a fallback
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1500);
     } finally {
       setLoading(false);
     }
