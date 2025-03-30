@@ -30,7 +30,7 @@ const UserLogin = () => {
   useEffect(() => {
     console.log('UserLogin component - Auth states:', {
       userLoading: authLoading,
-      isUserAuthenticated,
+      isAuthenticated,
       hasUserProfile: !!currentUser,
       expertLoading,
       hasExpertProfile: !!expert
