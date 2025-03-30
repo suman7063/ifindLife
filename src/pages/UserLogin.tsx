@@ -7,12 +7,11 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoginTab from '@/components/auth/LoginTab';
 import RegisterTab from '@/components/auth/RegisterTab';
+import LoadingScreen from '@/components/auth/LoadingScreen';
+import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import { toast } from 'sonner';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useExpertAuth } from '@/hooks/expert-auth';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
 
 const UserLogin = () => {
   const [activeTab, setActiveTab] = useState('login');
@@ -157,17 +156,7 @@ const UserLogin = () => {
   };
 
   if (authLoading || (expertLoading && !expert)) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <main className="flex-1 py-16 container">
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ifind-teal"></div>
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+    return <LoadingScreen />;
   }
   
   return (
@@ -178,31 +167,11 @@ const UserLogin = () => {
           <Card className="border-ifind-lavender/20 shadow-xl">
             <CardContent className="pt-6">
               {expert ? (
-                <div className="space-y-4 p-4">
-                  <Alert variant="destructive" className="mb-4">
-                    <AlertDescription>
-                      You are currently logged in as an expert. You need to log out as an expert before logging in as a user.
-                    </AlertDescription>
-                  </Alert>
-                  <Button 
-                    onClick={handleExpertLogout} 
-                    variant="destructive" 
-                    className="w-full flex items-center justify-center"
-                    disabled={isLoggingOut}
-                  >
-                    {isLoggingOut ? (
-                      <>
-                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                        Logging Out...
-                      </>
-                    ) : (
-                      <>
-                        <LogOut className="mr-2 h-4 w-4" />
-                        Log Out as Expert
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <UserLogoutAlert 
+                  profileName={expert.name}
+                  isLoggingOut={isLoggingOut}
+                  onLogout={handleExpertLogout}
+                />
               ) : (
                 <Tabs value={activeTab} onValueChange={handleTabChange}>
                   <TabsList className="grid w-full grid-cols-2 mb-6">
