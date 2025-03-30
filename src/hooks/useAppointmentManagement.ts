@@ -72,17 +72,19 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
       setLoading(true);
       
       // First check if time slot is available
-      const { data: slots, error: checkError } = await supabase
-        .from('expert_time_slots')
-        .select('*')
-        .eq(timeSlotId ? 'id' : 'expert_id', timeSlotId || expertId)
-        .eq('is_booked', false);
-      
-      if (checkError) throw checkError;
-      
-      if (!slots || slots.length === 0) {
-        toast.error('This time slot is no longer available');
-        return null;
+      if (timeSlotId) {
+        const { data: slots, error: checkError } = await supabase
+          .from('expert_time_slots')
+          .select('*')
+          .eq('id', timeSlotId)
+          .eq('is_booked', false);
+        
+        if (checkError) throw checkError;
+        
+        if (!slots || slots.length === 0) {
+          toast.error('This time slot is no longer available');
+          return null;
+        }
       }
       
       // Insert new appointment
@@ -96,7 +98,8 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
           end_time: endTime,
           time_slot_id: timeSlotId,
           notes: notes,
-          status: 'pending'
+          status: 'pending',
+          duration: 60 // Default to 60 minutes if not specified
         })
         .select()
         .single();

@@ -15,7 +15,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     try {
       setLoading(true);
       
-      // Fetch availabilities using direct query instead of RPC
+      // Fetch availabilities 
       const { data: availabilityData, error: availabilityError } = await supabase
         .from('expert_availabilities')
         .select('*')
@@ -73,7 +73,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     try {
       setLoading(true);
       
-      // Insert availability directly instead of using RPC
+      // Insert availability 
       const { data: newAvailability, error: availabilityError } = await supabase
         .from('expert_availabilities')
         .insert({
@@ -126,7 +126,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     try {
       setLoading(true);
       
-      // Delete the availability directly instead of using RPC
+      // Delete the availability 
       const { error } = await supabase
         .from('expert_availabilities')
         .delete()

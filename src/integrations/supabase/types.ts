@@ -33,14 +33,19 @@ export type Database = {
           channel_name: string | null
           created_at: string
           duration: number
+          end_time: string | null
           expert_id: string
           expert_name: string
+          google_calendar_event_id: string | null
           id: string
           notes: string | null
           service_id: number | null
+          start_time: string | null
           status: string
+          time_slot_id: string | null
           token: string | null
           uid: number | null
+          user_calendar_event_id: string | null
           user_id: string
         }
         Insert: {
@@ -48,14 +53,19 @@ export type Database = {
           channel_name?: string | null
           created_at?: string
           duration: number
+          end_time?: string | null
           expert_id: string
           expert_name: string
+          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           service_id?: number | null
+          start_time?: string | null
           status: string
+          time_slot_id?: string | null
           token?: string | null
           uid?: number | null
+          user_calendar_event_id?: string | null
           user_id: string
         }
         Update: {
@@ -63,14 +73,19 @@ export type Database = {
           channel_name?: string | null
           created_at?: string
           duration?: number
+          end_time?: string | null
           expert_id?: string
           expert_name?: string
+          google_calendar_event_id?: string | null
           id?: string
           notes?: string | null
           service_id?: number | null
+          start_time?: string | null
           status?: string
+          time_slot_id?: string | null
           token?: string | null
           uid?: number | null
+          user_calendar_event_id?: string | null
           user_id?: string
         }
         Relationships: [
@@ -86,6 +101,13 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_time_slot_id_fkey"
+            columns: ["time_slot_id"]
+            isOneToOne: false
+            referencedRelation: "expert_time_slots"
             referencedColumns: ["id"]
           },
         ]
@@ -159,6 +181,33 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_availabilities: {
+        Row: {
+          availability_type: string
+          created_at: string | null
+          end_date: string
+          expert_id: string
+          id: string
+          start_date: string
+        }
+        Insert: {
+          availability_type: string
+          created_at?: string | null
+          end_date: string
+          expert_id: string
+          id?: string
+          start_date: string
+        }
+        Update: {
+          availability_type?: string
+          created_at?: string | null
+          end_date?: string
+          expert_id?: string
+          id?: string
+          start_date?: string
+        }
+        Relationships: []
+      }
       expert_reports: {
         Row: {
           date: string | null
@@ -196,6 +245,47 @@ export type Database = {
             columns: ["expert_id"]
             isOneToOne: false
             referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expert_time_slots: {
+        Row: {
+          availability_id: string
+          created_at: string | null
+          day_of_week: number | null
+          end_time: string
+          id: string
+          is_booked: boolean | null
+          specific_date: string | null
+          start_time: string
+        }
+        Insert: {
+          availability_id: string
+          created_at?: string | null
+          day_of_week?: number | null
+          end_time: string
+          id?: string
+          is_booked?: boolean | null
+          specific_date?: string | null
+          start_time: string
+        }
+        Update: {
+          availability_id?: string
+          created_at?: string | null
+          day_of_week?: number | null
+          end_time?: string
+          id?: string
+          is_booked?: boolean | null
+          specific_date?: string | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_time_slots_availability_id_fkey"
+            columns: ["availability_id"]
+            isOneToOne: false
+            referencedRelation: "expert_availabilities"
             referencedColumns: ["id"]
           },
         ]
