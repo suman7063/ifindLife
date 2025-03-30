@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { 
@@ -17,12 +17,42 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   const [authInitialized, setAuthInitialized] = useState(false);
   const navigate = useNavigate();
 
+  // Create a fetchExpertProfile function that can be used directly
+  const fetchExpertProfile = useCallback(async (userId: string) => {
+    try {
+      console.log("Fetching expert profile for user ID:", userId);
+      
+      // Use standard select without attempting to get a single row
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .eq('auth_id', userId);
+
+      if (error) {
+        console.error('Error fetching expert profile:', error);
+        return null;
+      }
+
+      if (!data || data.length === 0) {
+        console.log('No expert profile found for this user');
+        return null;
+      }
+
+      // Take the first record if multiple exist
+      const expertProfile = data[0] as ExpertProfile;
+      console.log('Expert profile retrieved:', expertProfile);
+      return expertProfile;
+    } catch (error) {
+      console.error('Exception in fetchExpertProfile:', error);
+      return null;
+    }
+  }, []);
+
   const { 
     login, 
     logout, 
-    register, 
-    fetchExpertProfile 
-  } = useExpertAuthentication(setExpert, setLoading);
+    register
+  } = useExpertAuthentication(setExpert, setLoading, fetchExpertProfile);
   
   const { updateProfile } = useExpertProfile(expert, setExpert, setLoading);
   const { uploadCertificate, removeCertificate } = useExpertCertificates(expert, setExpert, setLoading);
@@ -34,7 +64,7 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
         // Set up auth state listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
-            console.log('Auth state changed:', event, session ? 'Has session' : 'No session');
+            console.log('Expert auth state changed:', event, session ? 'Has session' : 'No session');
             
             if (!session) {
               setExpert(null);
@@ -43,7 +73,15 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
             }
 
             const expertProfile = await fetchExpertProfile(session.user.id);
-            setExpert(expertProfile);
+            
+            // Only set the expert profile if we found one
+            if (expertProfile) {
+              setExpert(expertProfile);
+            } else {
+              // If no expert profile but we have a session, this is likely a regular user
+              setExpert(null);
+            }
+            
             setLoading(false);
           }
         );
@@ -53,7 +91,10 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
         if (session) {
           console.log('Found existing session, fetching expert profile');
           const expertProfile = await fetchExpertProfile(session.user.id);
-          setExpert(expertProfile);
+          
+          if (expertProfile) {
+            setExpert(expertProfile);
+          }
         }
         
         setLoading(false);
@@ -80,7 +121,8 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     updateProfile,
     uploadCertificate,
     removeCertificate,
-    authInitialized
+    authInitialized,
+    fetchExpertProfile
   };
 };
 

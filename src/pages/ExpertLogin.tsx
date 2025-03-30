@@ -42,6 +42,13 @@ const ExpertLogin = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
     
+    // Check if user is already authenticated as a user
+    if (isUserAuthenticated) {
+      setLoginError('You are logged in as a user. Please log out first.');
+      toast.error('Please log out as a user before logging in as an expert');
+      return false;
+    }
+    
     // Basic validation
     if (!email.trim()) {
       setLoginError('Email is required');
@@ -74,10 +81,15 @@ const ExpertLogin = () => {
   };
 
   const handleUserLogout = async () => {
-    await userLogout();
-    toast.success('Successfully logged out as user');
-    // Refresh the page to clear any lingering state
-    window.location.reload();
+    try {
+      await userLogout();
+      toast.success('Successfully logged out as user');
+      // Refresh the page to clear any lingering state
+      window.location.reload();
+    } catch (error) {
+      console.error('Error during user logout:', error);
+      toast.error('Failed to log out as user. Please try again.');
+    }
   };
 
   if (loading && !isLoggingIn) {

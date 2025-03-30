@@ -7,45 +7,19 @@ import { ExpertProfile, ExpertRegistrationData } from './types';
 
 export const useExpertAuthentication = (
   setExpert: React.Dispatch<React.SetStateAction<ExpertProfile | null>>,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>
 ) => {
   const navigate = useNavigate();
-
-  // Function to fetch expert profile from supabase
-  const fetchExpertProfile = async (userId: string) => {
-    try {
-      console.log("Fetching expert profile for user ID:", userId);
-      
-      // Use standard select without attempting to get a single row
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', userId);
-
-      if (error) {
-        console.error('Error fetching expert profile:', error);
-        return null;
-      }
-
-      if (!data || data.length === 0) {
-        console.log('No expert profile found for this user');
-        return null;
-      }
-
-      // Take the first record if multiple exist
-      const expertProfile = data[0] as ExpertProfile;
-      console.log('Expert profile retrieved:', expertProfile);
-      return expertProfile;
-    } catch (error) {
-      console.error('Exception in fetchExpertProfile:', error);
-      return null;
-    }
-  };
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
+      // First check if there's a previous session and sign out
+      await supabase.auth.signOut();
+      
+      // Now perform the login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -195,5 +169,5 @@ export const useExpertAuthentication = (
     }
   };
 
-  return { login, logout, register, fetchExpertProfile };
+  return { login, logout, register };
 };
