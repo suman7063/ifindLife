@@ -45,6 +45,11 @@ export const useCallState = () => {
     }));
   }, []);
   
+  // Define error handler with proper signature
+  const handleError = useCallback((err: Error) => {
+    console.error("Agora client error:", err);
+  }, []);
+  
   useEffect(() => {
     // Initialize client only once
     let client: IAgoraRTCClient | null = null;
@@ -78,9 +83,8 @@ export const useCallState = () => {
     // The event handler for user-left takes one argument: user
     client.on('user-left', handleUserLeft);
     
-    client.on('error', (err) => {
-      console.error("Agora client error:", err);
-    });
+    // Add the error event handler
+    client.on('error', handleError);
     
     return () => {
       // Make sure to use the same reference to the handlers when removing them
@@ -90,10 +94,10 @@ export const useCallState = () => {
       client.off('user-unpublished', handleUserUnpublished);
       // For user-left event, we need to specify the event name and the handler function
       client.off('user-left', handleUserLeft);
-      // For error event, simply passing the event name is sufficient as it has no specific handler
-      client.off('error');
+      // For error event, we need to specify both the event name and the handler function
+      client.off('error', handleError);
     };
-  }, [callState.client, handleUserPublished, handleUserUnpublished, handleUserLeft]);
+  }, [callState.client, handleUserPublished, handleUserUnpublished, handleUserLeft, handleError]);
 
   return {
     callState,
