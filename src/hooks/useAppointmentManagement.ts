@@ -87,6 +87,20 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         }
       }
       
+      // Fetch expert name
+      const { data: expertData, error: expertError } = await supabase
+        .from('experts')
+        .select('name')
+        .eq('id', expertId)
+        .single();
+      
+      if (expertError) throw expertError;
+      
+      if (!expertData || !expertData.name) {
+        toast.error('Expert information not found');
+        return null;
+      }
+      
       // Insert new appointment
       const { data, error: appointmentError } = await supabase
         .from('appointments')
@@ -99,7 +113,8 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
           time_slot_id: timeSlotId,
           notes: notes,
           status: 'pending',
-          duration: 60 // Default to 60 minutes if not specified
+          duration: 60, // Default to 60 minutes if not specified
+          expert_name: expertData.name // Include expert name from the query
         })
         .select()
         .single();
