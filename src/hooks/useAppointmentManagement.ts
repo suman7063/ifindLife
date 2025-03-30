@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Appointment } from '@/types/appointments';
+import type { Appointment } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
 
 export const useAppointmentManagement = (currentUser: UserProfile | null, expertId?: string) => {
@@ -71,41 +71,53 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
     try {
       setLoading(true);
       
-      // Check availability using RPC
-      const { data: isAvailable, error: checkError } = await supabase
-        .rpc('is_time_slot_available', {
-          p_expert_id: expertId,
-          p_date: date,
-          p_start_time: startTime,
-          p_end_time: endTime
-        });
+      // First check if time slot is available
+      const { data: slots, error: checkError } = await supabase
+        .from('expert_time_slots')
+        .select('*')
+        .eq(timeSlotId ? 'id' : 'expert_id', timeSlotId || expertId)
+        .eq('is_booked', false);
       
       if (checkError) throw checkError;
       
-      if (!isAvailable) {
+      if (!slots || slots.length === 0) {
         toast.error('This time slot is no longer available');
         return null;
       }
       
-      // Insert appointment using RPC
-      const { data: appointmentId, error: appointmentError } = await supabase
-        .rpc('create_appointment', {
-          p_expert_id: expertId,
-          p_user_id: userId,
-          p_appointment_date: date,
-          p_start_time: startTime,
-          p_end_time: endTime,
-          p_time_slot_id: timeSlotId,
-          p_notes: notes
-        });
+      // Insert new appointment
+      const { data, error: appointmentError } = await supabase
+        .from('appointments')
+        .insert({
+          expert_id: expertId,
+          user_id: userId,
+          appointment_date: date,
+          start_time: startTime,
+          end_time: endTime,
+          time_slot_id: timeSlotId,
+          notes: notes,
+          status: 'pending'
+        })
+        .select()
+        .single();
       
       if (appointmentError) throw appointmentError;
+      
+      // Mark time slot as booked if provided
+      if (timeSlotId) {
+        const { error: updateError } = await supabase
+          .from('expert_time_slots')
+          .update({ is_booked: true })
+          .eq('id', timeSlotId);
+        
+        if (updateError) throw updateError;
+      }
       
       // Refresh appointments
       await fetchAppointments(userId, expertId);
       
       toast.success('Appointment booked successfully');
-      return appointmentId;
+      return data.id;
     } catch (error: any) {
       console.error('Error booking appointment:', error);
       setError(error.message);
@@ -122,10 +134,11 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
       setLoading(true);
       
       const { data, error } = await supabase
-        .rpc('update_appointment_status', {
-          p_appointment_id: appointmentId,
-          p_status: status
-        });
+        .from('appointments')
+        .update({ status })
+        .eq('id', appointmentId)
+        .select()
+        .single();
       
       if (error) throw error;
       

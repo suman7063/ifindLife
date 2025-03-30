@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Availability, TimeSlot } from '@/types/appointments';
+import type { Availability, TimeSlot } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
 
 export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
@@ -15,9 +15,11 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     try {
       setLoading(true);
       
-      // Use RPC to get availability data
+      // Fetch availabilities using direct query instead of RPC
       const { data: availabilityData, error: availabilityError } = await supabase
-        .rpc('query_expert_availability', { expert_id_param: expertId });
+        .from('expert_availabilities')
+        .select('*')
+        .eq('expert_id', expertId);
       
       if (availabilityError) throw availabilityError;
       
@@ -26,11 +28,13 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
         return [];
       }
 
-      // For each availability, fetch time slots using RPC
+      // For each availability, fetch time slots
       const availabilitiesWithSlots = await Promise.all(
-        availabilityData.map(async (availability: any) => {
+        availabilityData.map(async (availability) => {
           const { data: timeSlots, error: timeSlotsError } = await supabase
-            .rpc('query_expert_time_slots', { availability_id_param: availability.id });
+            .from('expert_time_slots')
+            .select('*')
+            .eq('availability_id', availability.id);
           
           if (timeSlotsError) throw timeSlotsError;
           
@@ -69,30 +73,34 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     try {
       setLoading(true);
       
-      // Insert availability using RPC
-      const { data: availabilityId, error: availabilityError } = await supabase
-        .rpc('create_expert_availability', {
-          p_expert_id: expertId,
-          p_start_date: startDate,
-          p_end_date: endDate,
-          p_availability_type: availabilityType
-        });
+      // Insert availability directly instead of using RPC
+      const { data: newAvailability, error: availabilityError } = await supabase
+        .from('expert_availabilities')
+        .insert({
+          expert_id: expertId,
+          start_date: startDate,
+          end_date: endDate,
+          availability_type: availabilityType
+        })
+        .select()
+        .single();
       
       if (availabilityError) throw availabilityError;
       
-      if (!availabilityId) {
+      if (!newAvailability) {
         throw new Error('Failed to create availability');
       }
       
-      // Insert time slots using RPC for each slot
+      // Insert time slots for each slot
       for (const slot of timeSlots) {
         const { error: slotError } = await supabase
-          .rpc('create_expert_time_slot', {
-            p_availability_id: availabilityId,
-            p_start_time: slot.start_time,
-            p_end_time: slot.end_time,
-            p_day_of_week: slot.day_of_week,
-            p_specific_date: slot.specific_date
+          .from('expert_time_slots')
+          .insert({
+            availability_id: newAvailability.id,
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            day_of_week: slot.day_of_week,
+            specific_date: slot.specific_date
           });
         
         if (slotError) throw slotError;
@@ -102,7 +110,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
       await fetchAvailabilities(expertId);
       
       toast.success('Availability created successfully');
-      return { availability: availabilityId };
+      return { availability: newAvailability.id };
     } catch (error: any) {
       console.error('Error creating availability:', error);
       setError(error.message);
@@ -118,9 +126,11 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     try {
       setLoading(true);
       
-      // Delete the availability using RPC
+      // Delete the availability directly instead of using RPC
       const { error } = await supabase
-        .rpc('delete_expert_availability', { availability_id_param: availabilityId });
+        .from('expert_availabilities')
+        .delete()
+        .eq('id', availabilityId);
       
       if (error) throw error;
       

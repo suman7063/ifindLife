@@ -2,10 +2,10 @@
 import { UserProfile } from '@/types/supabase';
 import { useAvailabilityManagement } from './useAvailabilityManagement';
 import { useAppointmentManagement } from './useAppointmentManagement';
-import { Availability, TimeSlot, Appointment } from '@/types/appointments';
+import type { TimeSlot, Availability, Appointment } from '@/types/appointments';
 
 // Re-export the types
-export { TimeSlot, Availability, Appointment };
+export type { TimeSlot, Availability, Appointment };
 
 // Combined hook for backward compatibility
 export const useAppointments = (currentUser: UserProfile | null, expertId?: string) => {
