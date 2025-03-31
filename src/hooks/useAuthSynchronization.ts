@@ -57,58 +57,62 @@ export const useAuthSynchronization = () => {
   
   // Enhance logout functions with better error handling and state updates
   const handleUserLogout = useCallback(async (): Promise<boolean> => {
-    if (isSynchronizing) return false;
+    if (isLoggingOut) return false;
     
     try {
-      setIsSynchronizing(true);
+      setIsLoggingOut(true);
       console.log("useAuthSynchronization: Executing user logout");
       const success = await userLogout();
       
       if (success) {
         console.log("useAuthSynchronization: User logout successful");
+        // Force a page reload to clear any lingering state
+        window.location.href = '/user-login';
         return true;
       } else {
         console.error("useAuthSynchronization: User logout failed");
         // Force page reload as a last resort
-        window.location.href = '/';
+        window.location.href = '/user-login';
         return false;
       }
     } catch (error) {
       console.error("useAuthSynchronization: Error during user logout:", error);
       // Force page reload as a last resort
-      window.location.href = '/';
+      window.location.href = '/user-login';
       return false;
     } finally {
-      setIsSynchronizing(false);
+      setIsLoggingOut(false);
     }
-  }, [userLogout, isSynchronizing]);
+  }, [userLogout]);
 
   const handleExpertLogout = useCallback(async (): Promise<boolean> => {
-    if (isSynchronizing) return false;
+    if (isLoggingOut) return false;
     
     try {
-      setIsSynchronizing(true);
+      setIsLoggingOut(true);
       console.log("useAuthSynchronization: Executing expert logout");
       const success = await expertLogout();
       
       if (success) {
         console.log("useAuthSynchronization: Expert logout successful");
+        // Force a page reload to clear any lingering state
+        window.location.href = '/expert-login';
         return true;
       } else {
         console.error("useAuthSynchronization: Expert logout failed");
         // Force page reload as a last resort
-        window.location.href = '/';
+        window.location.href = '/expert-login';
         return false;
       }
     } catch (error) {
       console.error("useAuthSynchronization: Error during expert logout:", error);
       // Force page reload as a last resort
-      window.location.href = '/';
+      window.location.href = '/expert-login';
       return false;
     } finally {
-      setIsSynchronizing(false);
+      setIsLoggingOut(false);
     }
-  }, [expertLogout, isSynchronizing]);
+  }, [expertLogout]);
   
   // Effect to handle auth conflict resolution - but don't run on every render
   useEffect(() => {

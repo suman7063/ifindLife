@@ -25,6 +25,7 @@ const UserLoginTabs = () => {
   // Redirect when authenticated
   useEffect(() => {
     if (isAuthenticated && currentUser && !authLoading) {
+      console.log('UserLoginTabs: User authenticated, redirecting');
       redirectIfAuthenticated();
     }
   }, [isAuthenticated, currentUser, authLoading, redirectIfAuthenticated]);
@@ -53,6 +54,7 @@ const UserLoginTabs = () => {
       
       if (success) {
         toast.success('Login successful! Redirecting to dashboard...');
+        // Let the useEffect handle redirection to avoid race conditions
       } else {
         setLoginError('Login failed. Please check your credentials and try again.');
       }

@@ -28,7 +28,7 @@ export const useAuthSessionEffects = (
 
   // Main effect to fetch profile when auth state changes
   useEffect(() => {
-    // If already initialized and not loading, don't run this effect
+    // Skip this effect if we're already initialized
     if (!authState.authLoading && authState.authInitialized) {
       return;
     }
@@ -74,14 +74,15 @@ export const useAuthSessionEffects = (
     }
   }, [user, loading, authState.authLoading, authState.authInitialized, fetchProfile, setAuthLoading]);
 
-  // Add a definitive maximum loading timeout
+  // Add a definitive maximum loading timeout to prevent infinite loading
   useEffect(() => {
     const maxTimeout = setTimeout(() => {
       if (authState.authLoading && isMounted.current) {
         console.log("Force completing auth loading after timeout");
         setAuthLoading(false);
+        profileFetchAttempted.current = false;
       }
-    }, 2000); // 2 seconds maximum loading time
+    }, 3000); // 3 seconds maximum loading time
     
     return () => clearTimeout(maxTimeout);
   }, [authState.authLoading, setAuthLoading]);
