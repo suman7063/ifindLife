@@ -112,29 +112,30 @@ export const useAuthSynchronization = () => {
     }
   }, [expertLogout, isSynchronizing]);
   
-  // Effect to handle auth conflict resolution
+  // Effect to handle auth conflict resolution - but don't run on every render
   useEffect(() => {
-    // Skip if not fully initialized or already handling a sync operation
-    if (isSynchronizing || userAuthLoading || expertLoading) return;
+    // Skip if not fully initialized, already handling a sync operation, or still loading
+    if (isSynchronizing || userAuthLoading || expertLoading || !expertAuthInitialized) {
+      return;
+    }
     
-    const handleConflictingAuth = async () => {
-      if (isUserAuthenticated && isExpertAuthenticated) {
+    // Only run this effect when both auth states are true simultaneously
+    if (isUserAuthenticated && isExpertAuthenticated) {
+      const handleConflictingAuth = async () => {
         console.log("Conflicting auth detected: User and Expert are both authenticated");
         
         try {
           setIsSynchronizing(true);
           // For simplicity, we'll log out of expert account if both are logged in
           console.log("Logging out of expert account to resolve auth conflict");
-          const success = await expertLogout();
           
-          if (success) {
-            toast.info("You've been logged out as an expert to avoid conflict with your user account");
-          } else {
-            // If expert logout fails, try user logout as fallback
-            console.log("Expert logout failed, attempting user logout instead");
-            await userLogout();
-            toast.info("You've been logged out as a user to avoid auth conflict");
-          }
+          await expertLogout();
+          toast.info("You've been logged out as an expert to avoid conflict with your user account");
+          
+          // Force refresh the page after logout
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
         } catch (error) {
           console.error("Error during auth synchronization:", error);
           // Force a page reload as a last resort
@@ -142,21 +143,18 @@ export const useAuthSynchronization = () => {
         } finally {
           setIsSynchronizing(false);
         }
-      }
-    };
-    
-    // Check for conflicting authentication states
-    if (isUserAuthenticated && isExpertAuthenticated) {
+      };
+      
       handleConflictingAuth();
     }
   }, [
     isUserAuthenticated, 
     isExpertAuthenticated, 
     expertLogout,
-    userLogout,
     isSynchronizing,
     userAuthLoading,
-    expertLoading
+    expertLoading,
+    expertAuthInitialized
   ]);
   
   return {

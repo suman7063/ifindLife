@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -18,7 +19,7 @@ export const useExpertAuthentication = (
       console.log('Expert auth: Starting login process for', email);
       // First ensure we're signed out
       await supabase.auth.signOut({
-        scope: 'global'
+        scope: 'local'
       });
       
       // Now perform the login
@@ -51,7 +52,7 @@ export const useExpertAuthentication = (
         // This user is authenticated but doesn't have an expert profile
         toast.error('No expert profile found. Please register as an expert.');
         await supabase.auth.signOut({
-          scope: 'global'
+          scope: 'local'
         });
         setLoading(false);
         navigate('/expert-login?register=true');
@@ -62,7 +63,6 @@ export const useExpertAuthentication = (
       console.log('Expert auth: Profile found, setting expert state');
       setExpert(expertProfile);
       toast.success('Login successful!');
-      navigate('/expert-dashboard');
       return true;
     } catch (error) {
       console.error('Unexpected error in expert login:', error);
@@ -93,20 +93,14 @@ export const useExpertAuthentication = (
       toast.success('Logged out successfully');
       
       // Force a full page reload to clear any lingering state
-      setTimeout(() => {
-        window.location.reload();
-      }, 100);
-      
+      window.location.href = '/';
       return true;
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Failed to log out');
       
       // Force a page reload as a fallback
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
-      
+      window.location.href = '/';
       return false;
     } finally {
       setLoading(false);
@@ -128,6 +122,9 @@ export const useExpertAuthentication = (
         email: expertData.email,
         // Don't log password for security
       });
+      
+      // Ensure we don't have an existing session before signup
+      await supabase.auth.signOut({ scope: 'local' });
       
       // 1. Create auth user
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -196,9 +193,8 @@ export const useExpertAuthentication = (
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
-      
-      // Make sure to propagate the error message
-      throw error;
+      toast.error(error.message || 'Registration failed. Please try again.');
+      return false;
     } finally {
       setLoading(false);
     }

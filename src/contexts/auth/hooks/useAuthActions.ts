@@ -13,6 +13,10 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     try {
       setActionLoading(true);
       console.log("Attempting login in context with:", email);
+      
+      // Ensure we don't have an existing session before login
+      await supabase.auth.signOut({ scope: 'local' });
+      
       const success = await authLogin(email, password);
       console.log("Login in context result:", success);
       
@@ -21,10 +25,6 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
           // Fetch user profile to check if it exists
           await fetchProfile();
           toast.success('Login successful');
-          
-          // Use window.location for a full page navigation to avoid React Router issues
-          console.log("Redirecting to dashboard after successful login");
-          window.location.href = '/user-dashboard';
           return true;
         } catch (error) {
           console.error("Profile fetch error:", error);
@@ -57,6 +57,9 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     setActionLoading(true);
     
     try {
+      // Ensure we don't have an existing session before signup
+      await supabase.auth.signOut({ scope: 'local' });
+      
       const success = await authSignup(userData);
       console.log("Context: Signup result:", success);
       

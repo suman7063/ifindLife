@@ -38,24 +38,21 @@ export const useAuthSessionEffects = (
       console.log("User detected, fetching profile");
       profileFetchAttempted.current = true;
       
-      // Use setTimeout to avoid React state update conflicts
-      setTimeout(() => {
-        if (!isMounted.current) return;
-        
-        fetchProfile().catch(error => {
+      // Execute profile fetch immediately
+      fetchProfile()
+        .catch(error => {
           console.error("Error fetching profile:", error);
           if (isMounted.current) {
             setAuthLoading(false);
             profileFetchAttempted.current = false;
           }
         });
-      }, 0);
     } 
     // If Supabase has completed loading and still no user, force loading to complete
     else if (loading === false && !user) {
       console.log("No user found after Supabase loading completed");
       
-      // Only set timeout if we haven't already
+      // Set a short timeout to ensure we don't have any race conditions
       if (!loadingTimeoutRef.current) {
         loadingTimeoutRef.current = setTimeout(() => {
           if (!isMounted.current) return;
@@ -64,8 +61,20 @@ export const useAuthSessionEffects = (
           setAuthLoading(false);
           profileFetchAttempted.current = false;
           loadingTimeoutRef.current = null;
-        }, 500);
+        }, 300);
       }
     }
   }, [user, loading, authState.authLoading, authState.authInitialized, fetchProfile, setAuthLoading]);
+
+  // Add a definitive maximum loading timeout
+  useEffect(() => {
+    const maxTimeout = setTimeout(() => {
+      if (authState.authLoading && isMounted.current) {
+        console.log("Force completing auth loading after timeout");
+        setAuthLoading(false);
+      }
+    }, 2000); // 2 seconds maximum loading time
+    
+    return () => clearTimeout(maxTimeout);
+  }, [authState.authLoading, setAuthLoading]);
 };

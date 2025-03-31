@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -15,6 +16,7 @@ const ExpertLogin = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('login');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   const { login, expert, loading, authInitialized } = useExpertAuth();
   const { isUserAuthenticated, currentUser, isSynchronizing, userLogout } = useAuthSynchronization();
@@ -29,9 +31,10 @@ const ExpertLogin = () => {
       hasExpertProfile: !!expert,
       isUserAuthenticated,
       hasUserProfile: !!currentUser,
-      isSynchronizing
+      isSynchronizing,
+      redirectAttempted
     });
-  }, [loading, authInitialized, expert, isUserAuthenticated, currentUser, isSynchronizing]);
+  }, [loading, authInitialized, expert, isUserAuthenticated, currentUser, isSynchronizing, redirectAttempted]);
   
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -41,12 +44,34 @@ const ExpertLogin = () => {
     }
   }, [location]);
   
+  // Direct redirection on mount if already authenticated
   useEffect(() => {
-    if (expert && authInitialized && !loading) {
+    // Only run this once on initial mount
+    const checkAuthOnMount = async () => {
+      // Wait a bit to let auth state settle
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (expert && authInitialized && !loading) {
+        console.log('Already authenticated on mount, redirecting to dashboard...');
+        window.location.href = '/expert-dashboard';
+      }
+    };
+    
+    checkAuthOnMount();
+  }, []);
+  
+  // Redirect when expert profile found
+  useEffect(() => {
+    if (expert && authInitialized && !loading && !redirectAttempted) {
       console.log('Redirecting to expert dashboard - Expert profile found');
-      navigate('/expert-dashboard');
+      setRedirectAttempted(true);
+      
+      // Use timeout to avoid state update conflicts
+      setTimeout(() => {
+        window.location.href = '/expert-dashboard';
+      }, 100);
     }
-  }, [expert, loading, authInitialized, navigate]);
+  }, [expert, loading, authInitialized, redirectAttempted]);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
@@ -77,7 +102,10 @@ const ExpertLogin = () => {
       if (!success) {
         setLoginError('Login failed. Please check your credentials and try again.');
       } else {
-        console.log('Expert login successful, should redirect soon');
+        console.log('Expert login successful');
+        toast.success('Login successful! Redirecting to dashboard...');
+        // Force redirect to dashboard
+        window.location.href = '/expert-dashboard';
       }
       
       return success;

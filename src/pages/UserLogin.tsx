@@ -58,16 +58,34 @@ const UserLogin = () => {
     }
   }, [location]);
   
-  // Redirect if already logged in
+  // Direct redirection on mount if already authenticated
   useEffect(() => {
-    if (isAuthenticated && !authLoading && currentUser && !redirectAttempted) {
+    // Only run this once on initial mount
+    const checkAuthOnMount = async () => {
+      // Wait a bit to let auth state settle
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (isAuthenticated && currentUser) {
+        console.log('Already authenticated on mount, redirecting to dashboard...');
+        window.location.href = '/user-dashboard';
+      }
+    };
+    
+    checkAuthOnMount();
+  }, []);
+  
+  // Redirect on authentication state change
+  useEffect(() => {
+    if (isAuthenticated && currentUser && !redirectAttempted && !authLoading) {
       console.log('User authenticated, redirecting to dashboard...');
       setRedirectAttempted(true);
       
-      // Force navigation to dashboard using window.location
-      window.location.href = '/user-dashboard';
+      // Use timeout to avoid state update conflicts
+      setTimeout(() => {
+        window.location.href = '/user-dashboard';
+      }, 100);
     }
-  }, [isAuthenticated, authLoading, currentUser, navigate, redirectAttempted]);
+  }, [isAuthenticated, authLoading, currentUser, redirectAttempted]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -90,7 +108,11 @@ const UserLogin = () => {
       console.log('Attempting user login with:', email);
       const success = await login(email, password);
       
-      if (!success) {
+      if (success) {
+        toast.success('Login successful! Redirecting to dashboard...');
+        // Force redirect to dashboard
+        window.location.href = '/user-dashboard';
+      } else {
         setLoginError('Login failed. Please check your credentials and try again.');
       }
     } catch (error: any) {
