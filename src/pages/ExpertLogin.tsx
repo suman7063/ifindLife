@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -23,7 +22,6 @@ const ExpertLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // For debug purposes
   useEffect(() => {
     console.log('ExpertLogin component - Auth states:', {
       expertLoading: loading,
@@ -44,7 +42,6 @@ const ExpertLogin = () => {
   }, [location]);
   
   useEffect(() => {
-    // If already logged in as expert and authentication is initialized, redirect to dashboard
     if (expert && authInitialized && !loading) {
       console.log('Redirecting to expert dashboard - Expert profile found');
       navigate('/expert-dashboard');
@@ -54,14 +51,12 @@ const ExpertLogin = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
     
-    // Check if user is already authenticated as a user
     if (isUserAuthenticated) {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
       return false;
     }
     
-    // Basic validation
     if (!email.trim()) {
       setLoginError('Email is required');
       return false;
@@ -96,7 +91,7 @@ const ExpertLogin = () => {
   };
 
   const handleUserLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoggingOut) return false;
     setIsLoggingOut(true);
     
     try {
@@ -107,31 +102,30 @@ const ExpertLogin = () => {
         console.log('User logout completed');
         toast.success('Successfully logged out as user');
         
-        // Force a full page reload to ensure clean state
         window.location.href = '/expert-login';
+        return true;
       } else {
         console.error('User logout failed');
         toast.error('Failed to log out as user. Please try again.');
         
-        // Force a page reload as a last resort
         setTimeout(() => {
           window.location.href = '/expert-login';
         }, 1500);
+        return false;
       }
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out as user. Please try again.');
       
-      // Force a page reload as a last resort
       setTimeout(() => {
         window.location.href = '/expert-login';
       }, 1500);
+      return false;
     } finally {
       setIsLoggingOut(false);
     }
   };
 
-  // Show loading view only when not logging in manually and still initializing auth
   if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;

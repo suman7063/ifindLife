@@ -155,12 +155,14 @@ const UserLogin = () => {
         toast.success('Successfully logged out as expert');
         // Force a full page reload to ensure clean state
         window.location.href = '/user-login';
+        return true;
       } else {
         toast.error('Failed to log out as expert. Please try again.');
         // Force a page reload as a last resort
         setTimeout(() => {
           window.location.href = '/user-login';
         }, 1500);
+        return false;
       }
     } catch (error) {
       console.error('Error during expert logout:', error);
@@ -170,6 +172,7 @@ const UserLogin = () => {
       setTimeout(() => {
         window.location.href = '/user-login';
       }, 1500);
+      return false;
     } finally {
       setIsLoggingOut(false);
     }
