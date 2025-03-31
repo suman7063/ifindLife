@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -39,7 +40,7 @@ const UserLogin = () => {
   useEffect(() => {
     console.log('UserLogin component - Auth states:', {
       userLoading: authLoading,
-      isUserAuthenticated,
+      isAuthenticated,
       hasUserProfile: !!currentUser,
       isExpertAuthenticated,
       hasExpertProfile: !!expertProfile,
