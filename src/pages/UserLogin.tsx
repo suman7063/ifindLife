@@ -22,6 +22,7 @@ const UserLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -45,9 +46,10 @@ const UserLogin = () => {
       hasUserProfile: !!currentUser,
       isExpertAuthenticated,
       hasExpertProfile: !!expertProfile,
-      isSynchronizing
+      isSynchronizing,
+      redirectAttempted
     });
-  }, [authLoading, isUserAuthenticated, currentUser, isExpertAuthenticated, expertProfile, isSynchronizing]);
+  }, [authLoading, isUserAuthenticated, currentUser, isExpertAuthenticated, expertProfile, isSynchronizing, redirectAttempted]);
   
   // Check if redirected to register tab
   useEffect(() => {
@@ -59,10 +61,16 @@ const UserLogin = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (isUserAuthenticated && !authLoading && currentUser) {
-      navigate('/user-dashboard');
+    if (isUserAuthenticated && !authLoading && currentUser && !redirectAttempted) {
+      console.log('User authenticated, redirecting to dashboard...');
+      setRedirectAttempted(true);
+      
+      // Add a slight delay to ensure state is settled
+      setTimeout(() => {
+        navigate('/user-dashboard');
+      }, 100);
     }
-  }, [isUserAuthenticated, authLoading, currentUser, navigate]);
+  }, [isUserAuthenticated, authLoading, currentUser, navigate, redirectAttempted]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -88,7 +96,13 @@ const UserLogin = () => {
       if (!success) {
         setLoginError('Login failed. Please check your credentials and try again.');
       } else {
-        console.log('User login successful');
+        console.log('User login successful, redirecting soon...');
+        toast.success('Login successful');
+        
+        // Force redirect to dashboard
+        setTimeout(() => {
+          navigate('/user-dashboard');
+        }, 500);
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -137,6 +151,7 @@ const UserLogin = () => {
         setRegisterError('Registration failed. Please try again.');
       } else {
         console.log('User registration successful');
+        toast.success('Registration successful! Please check your email for verification.');
       }
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -146,7 +161,7 @@ const UserLogin = () => {
     }
   };
 
-  const handleExpertLogout = async () => {
+  const handleExpertLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);
     try {
       const success = await expertLogout();
@@ -178,6 +193,7 @@ const UserLogin = () => {
     }
   };
 
+  // Show loading screen during auth initialization
   if (authLoading || isSynchronizing) {
     return <LoadingScreen />;
   }

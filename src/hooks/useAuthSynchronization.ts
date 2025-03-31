@@ -20,7 +20,7 @@ export const useAuthSynchronization = () => {
   const isExpertAuthenticated = !!expert && !expertLoading && expertAuthInitialized;
   
   // Enhance logout functions with better error handling and state updates
-  const handleUserLogout = useCallback(async () => {
+  const handleUserLogout = useCallback(async (): Promise<boolean> => {
     if (isSynchronizing) return false;
     
     try {
@@ -43,7 +43,7 @@ export const useAuthSynchronization = () => {
     }
   }, [userLogout, isSynchronizing]);
 
-  const handleExpertLogout = useCallback(async () => {
+  const handleExpertLogout = useCallback(async (): Promise<boolean> => {
     if (isSynchronizing) return false;
     
     try {
@@ -51,7 +51,7 @@ export const useAuthSynchronization = () => {
       console.log("useAuthSynchronization: Executing expert logout");
       // Handle the boolean return value from expertLogout
       const success = await expertLogout();
-      console.log("useAuthSynchronization: Expert logout successful:", success);
+      console.log("useAuthSynchronization: Expert logout result:", success);
       return success;
     } catch (error) {
       console.error("useAuthSynchronization: Error during expert logout:", error);
@@ -74,8 +74,16 @@ export const useAuthSynchronization = () => {
           setIsSynchronizing(true);
           // For simplicity, we'll log out of expert account if both are logged in
           console.log("Logging out of expert account to resolve auth conflict");
-          await expertLogout();
-          toast.info("You've been logged out as an expert to avoid conflict with your user account");
+          const success = await expertLogout();
+          
+          if (success) {
+            toast.info("You've been logged out as an expert to avoid conflict with your user account");
+          } else {
+            // If expert logout fails, try user logout as fallback
+            console.log("Expert logout failed, attempting user logout instead");
+            await userLogout();
+            toast.info("You've been logged out as a user to avoid auth conflict");
+          }
         } catch (error) {
           console.error("Error during auth synchronization:", error);
         } finally {
@@ -91,7 +99,8 @@ export const useAuthSynchronization = () => {
   }, [
     isUserAuthenticated, 
     isExpertAuthenticated, 
-    expertLogout, 
+    expertLogout,
+    userLogout,
     isSynchronizing,
     expertLoading
   ]);

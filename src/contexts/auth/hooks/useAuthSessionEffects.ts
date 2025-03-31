@@ -23,18 +23,23 @@ export const useAuthSessionEffects = (
 
   // Main effect to fetch profile when auth state changes
   useEffect(() => {
-    // Don't run this effect if auth is not loading anymore
-    if (!authState.authLoading) return;
+    // Don't run this effect if auth is not initialized yet
+    if (!authState.authLoading && authState.authInitialized) return;
 
     // If we have a user, attempt to fetch their profile
     if (user && !profileFetchAttempted.current) {
       console.log("User detected, fetching profile");
       profileFetchAttempted.current = true;
       
-      fetchProfile().catch(error => {
-        console.error("Error fetching profile:", error);
-        setAuthLoading(false);
-      });
+      // Use a timeout to prevent multiple rapid profile fetches
+      const fetchTimeout = setTimeout(() => {
+        fetchProfile().catch(error => {
+          console.error("Error fetching profile:", error);
+          setAuthLoading(false);
+        });
+      }, 50);
+      
+      return () => clearTimeout(fetchTimeout);
     } 
     // If Supabase has completed loading and still no user, force loading to complete
     else if (loading === false && !user) {
@@ -45,9 +50,10 @@ export const useAuthSessionEffects = (
         loadingTimeoutRef.current = setTimeout(() => {
           console.log("Auth loading timeout reached, completing auth loading");
           setAuthLoading(false);
+          profileFetchAttempted.current = false;
           loadingTimeoutRef.current = null;
         }, 1000);
       }
     }
-  }, [user, loading, authState.authLoading, fetchProfile, setAuthLoading]);
+  }, [user, loading, authState.authLoading, authState.authInitialized, fetchProfile, setAuthLoading]);
 };

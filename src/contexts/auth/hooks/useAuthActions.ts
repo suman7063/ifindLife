@@ -19,9 +19,15 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       console.log("Login in context result:", success);
       
       if (success) {
-        // Login successful, but we'll let the fetchProfile handle redirection
-        // based on whether a profile exists or not
+        // Fetch user profile to check if it exists
+        await fetchProfile();
         toast.success('Login successful');
+        
+        // Explicitly redirect to dashboard
+        setTimeout(() => {
+          navigate('/user-dashboard');
+        }, 300);
+        
         return true;
       } else {
         toast.error('Login failed. Please check your credentials.');
@@ -32,7 +38,9 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       console.error("Login error in context:", error);
       toast.error(error.message || 'Login failed. Please try again.');
       setActionLoading(false);
-      throw error;
+      return false;
+    } finally {
+      setActionLoading(false);
     }
   };
 
