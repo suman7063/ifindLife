@@ -51,44 +51,54 @@ export const useAuthInitialization = (): [
         setCurrentUser(userProfile);
         setProfileNotFound(false);
         
-        // If user is on login or user-login page, and has successfully logged in,
-        // redirect to dashboard
-        if (window.location.pathname.includes('/login') || window.location.pathname.includes('/user-login')) {
+        // Only redirect if user is on login page and this isn't an initial load
+        if (authInitialized && 
+            (window.location.pathname.includes('/login') || 
+             window.location.pathname.includes('/user-login'))) {
           console.log("Redirecting to dashboard after successful profile fetch");
           navigate('/user-dashboard');
         }
       } else {
         console.error("No user profile found for:", user.id);
         setProfileNotFound(true);
+        setCurrentUser(null);
         
         // Don't toast error on initial load
         if (authInitialized) {
           toast.error("Profile not found. Please register to create an account.");
         }
-        
-        // Redirect back to login page if no profile
-        if (!window.location.pathname.includes('/user-login')) {
-          navigate('/user-login');
-        }
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
       setProfileNotFound(true);
+      setCurrentUser(null);
       
       // Don't toast error on initial load
       if (authInitialized) {
         toast.error("Could not load your profile. Please try again or register for a new account.");
-      }
-      
-      // Redirect back to login page if profile fetch fails
-      if (!window.location.pathname.includes('/user-login')) {
-        navigate('/user-login');
       }
     } finally {
       setAuthInitialized(true);
       setAuthLoading(false);
     }
   }, [user, navigate, authInitialized]);
+
+  // Add a maximum loading timeout
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    if (authLoading) {
+      timeoutId = setTimeout(() => {
+        console.log("Maximum auth loading time reached");
+        setAuthLoading(false);
+        setAuthInitialized(true);
+      }, 2000); // 2 seconds maximum loading time
+    }
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [authLoading]);
 
   return [
     { currentUser, authInitialized, authLoading, profileNotFound }, 

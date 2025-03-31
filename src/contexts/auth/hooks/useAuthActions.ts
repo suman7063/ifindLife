@@ -9,7 +9,7 @@ import { processReferralCode } from '@/utils/referralUtils';
 export const useAuthActions = (fetchProfile: () => Promise<void>) => {
   const [actionLoading, setActionLoading] = useState(false);
   const navigate = useNavigate();
-  const { login: authLogin, signup: authSignup, logout: authLogout } = useSupabaseAuth();
+  const { login: authLogin, signup: authSignup } = useSupabaseAuth();
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -19,16 +19,24 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       console.log("Login in context result:", success);
       
       if (success) {
-        // Fetch user profile to check if it exists
-        await fetchProfile();
-        toast.success('Login successful');
-        
-        // Explicitly redirect to dashboard
-        setTimeout(() => {
-          navigate('/user-dashboard');
-        }, 300);
-        
-        return true;
+        try {
+          // Fetch user profile to check if it exists
+          await fetchProfile();
+          toast.success('Login successful');
+          
+          // Explicitly redirect to dashboard with a full URL to force navigation
+          console.log("Redirecting to dashboard after successful login");
+          setTimeout(() => {
+            window.location.href = '/user-dashboard';
+          }, 300);
+          
+          return true;
+        } catch (error) {
+          console.error("Profile fetch error:", error);
+          toast.error('Login successful but profile load failed. Please try again.');
+          setActionLoading(false);
+          return false;
+        }
       } else {
         toast.error('Login failed. Please check your credentials.');
         setActionLoading(false);
@@ -108,7 +116,7 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       
       // Force a full page reload to clear any lingering state
       setTimeout(() => {
-        window.location.reload();
+        window.location.href = '/';
       }, 100);
       
       return true;

@@ -12,12 +12,50 @@ export const useAuthSynchronization = () => {
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   
   // Access both auth contexts
-  const { isAuthenticated: isUserAuthenticatedContext, currentUser, logout: userLogout, user: supabaseUser } = useUserAuth();
-  const { expert, loading: expertLoading, logout: expertLogout, authInitialized: expertAuthInitialized } = useExpertAuth();
+  const { 
+    isAuthenticated: isUserAuthenticatedContext, 
+    currentUser, 
+    logout: userLogout, 
+    user: supabaseUser,
+    authLoading: userAuthLoading 
+  } = useUserAuth();
+  const { 
+    expert, 
+    loading: expertLoading, 
+    logout: expertLogout, 
+    authInitialized: expertAuthInitialized 
+  } = useExpertAuth();
   
   // Derived state - ensure we check for both user session and profile
   const isUserAuthenticated = !!supabaseUser && !!currentUser && isUserAuthenticatedContext;
   const isExpertAuthenticated = !!expert && !expertLoading && expertAuthInitialized;
+  
+  // Enhanced logging for debugging
+  useEffect(() => {
+    console.log("Auth Synchronization state:", {
+      isUserAuthenticated,
+      hasUserProfile: !!currentUser,
+      hasSupabaseUser: !!supabaseUser,
+      isUserAuthenticatedContext,
+      userAuthLoading,
+      isExpertAuthenticated,
+      hasExpertProfile: !!expert,
+      expertLoading,
+      expertAuthInitialized,
+      isSynchronizing
+    });
+  }, [
+    isUserAuthenticated, 
+    currentUser, 
+    supabaseUser, 
+    isUserAuthenticatedContext, 
+    userAuthLoading,
+    isExpertAuthenticated,
+    expert,
+    expertLoading,
+    expertAuthInitialized,
+    isSynchronizing
+  ]);
   
   // Enhance logout functions with better error handling and state updates
   const handleUserLogout = useCallback(async (): Promise<boolean> => {
@@ -33,10 +71,14 @@ export const useAuthSynchronization = () => {
         return true;
       } else {
         console.error("useAuthSynchronization: User logout failed");
+        // Force page reload as a last resort
+        window.location.href = '/';
         return false;
       }
     } catch (error) {
       console.error("useAuthSynchronization: Error during user logout:", error);
+      // Force page reload as a last resort
+      window.location.href = '/';
       return false;
     } finally {
       setIsSynchronizing(false);
@@ -49,12 +91,21 @@ export const useAuthSynchronization = () => {
     try {
       setIsSynchronizing(true);
       console.log("useAuthSynchronization: Executing expert logout");
-      // Handle the boolean return value from expertLogout
       const success = await expertLogout();
-      console.log("useAuthSynchronization: Expert logout result:", success);
-      return success;
+      
+      if (success) {
+        console.log("useAuthSynchronization: Expert logout successful");
+        return true;
+      } else {
+        console.error("useAuthSynchronization: Expert logout failed");
+        // Force page reload as a last resort
+        window.location.href = '/';
+        return false;
+      }
     } catch (error) {
       console.error("useAuthSynchronization: Error during expert logout:", error);
+      // Force page reload as a last resort
+      window.location.href = '/';
       return false;
     } finally {
       setIsSynchronizing(false);
@@ -64,7 +115,7 @@ export const useAuthSynchronization = () => {
   // Effect to handle auth conflict resolution
   useEffect(() => {
     // Skip if not fully initialized or already handling a sync operation
-    if (isSynchronizing || expertLoading) return;
+    if (isSynchronizing || userAuthLoading || expertLoading) return;
     
     const handleConflictingAuth = async () => {
       if (isUserAuthenticated && isExpertAuthenticated) {
@@ -86,6 +137,8 @@ export const useAuthSynchronization = () => {
           }
         } catch (error) {
           console.error("Error during auth synchronization:", error);
+          // Force a page reload as a last resort
+          window.location.reload();
         } finally {
           setIsSynchronizing(false);
         }
@@ -102,6 +155,7 @@ export const useAuthSynchronization = () => {
     expertLogout,
     userLogout,
     isSynchronizing,
+    userAuthLoading,
     expertLoading
   ]);
   
