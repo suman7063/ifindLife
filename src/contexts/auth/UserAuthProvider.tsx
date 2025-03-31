@@ -1,5 +1,5 @@
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect } from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { UserProfile } from '@/types/supabase';
@@ -34,22 +34,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Combine loading states
   const isLoading = authState.authLoading || actionLoading;
 
-  // Add a timeout effect to prevent infinite loading
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    
-    if (authState.authLoading) {
-      timeoutId = setTimeout(() => {
-        console.log("Force completing auth loading after timeout");
-        setAuthLoading(false);
-      }, 3000); // 3 second maximum loading time
-    }
-    
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [authState.authLoading, setAuthLoading]);
-
   // Create the modified signup function to match our type definition
   const handleSignup = async (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => {
     return await signup({
@@ -63,11 +47,22 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   };
 
+  // Log auth state for debugging
+  useEffect(() => {
+    console.log("UserAuthProvider state:", {
+      hasUser: !!user,
+      hasProfile: !!authState.currentUser,
+      isLoading,
+      isInitialized: authState.authInitialized,
+      profileNotFound: authState.profileNotFound
+    });
+  }, [user, authState, isLoading]);
+
   return (
     <UserAuthContext.Provider
       value={{
         currentUser: authState.currentUser,
-        isAuthenticated: !!user, // Use Supabase user directly
+        isAuthenticated: !!user && !!authState.currentUser, // Require both user and profile
         login,
         signup: handleSignup,
         logout,
@@ -85,7 +80,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         hasTakenServiceFrom,
         getReferralLink,
         user,
-        loading: isLoading || supabaseLoading // Added the missing loading property
+        loading: isLoading || supabaseLoading
       }}
     >
       {children}

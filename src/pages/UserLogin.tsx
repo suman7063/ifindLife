@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,13 +27,11 @@ const UserLogin = () => {
   const location = useLocation();
   
   // Get auth state from context
-  const { login, signup, authLoading } = useUserAuth();
+  const { login, signup, authLoading, isAuthenticated, currentUser } = useUserAuth();
   const { 
-    isUserAuthenticated, 
     isExpertAuthenticated, 
-    currentUser, 
-    isSynchronizing, 
     expertProfile,
+    isSynchronizing,
     expertLogout 
   } = useAuthSynchronization();
   
@@ -47,9 +44,10 @@ const UserLogin = () => {
       isExpertAuthenticated,
       hasExpertProfile: !!expertProfile,
       isSynchronizing,
-      redirectAttempted
+      redirectAttempted,
+      currentPath: location.pathname
     });
-  }, [authLoading, isUserAuthenticated, currentUser, isExpertAuthenticated, expertProfile, isSynchronizing, redirectAttempted]);
+  }, [authLoading, isAuthenticated, currentUser, isExpertAuthenticated, expertProfile, isSynchronizing, redirectAttempted, location]);
   
   // Check if redirected to register tab
   useEffect(() => {
@@ -61,16 +59,14 @@ const UserLogin = () => {
   
   // Redirect if already logged in
   useEffect(() => {
-    if (isUserAuthenticated && !authLoading && currentUser && !redirectAttempted) {
+    if (isAuthenticated && !authLoading && currentUser && !redirectAttempted) {
       console.log('User authenticated, redirecting to dashboard...');
       setRedirectAttempted(true);
       
-      // Add a slight delay to ensure state is settled
-      setTimeout(() => {
-        navigate('/user-dashboard');
-      }, 100);
+      // Force navigation to dashboard using window.location
+      window.location.href = '/user-dashboard';
     }
-  }, [isUserAuthenticated, authLoading, currentUser, navigate, redirectAttempted]);
+  }, [isAuthenticated, authLoading, currentUser, navigate, redirectAttempted]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -95,14 +91,6 @@ const UserLogin = () => {
       
       if (!success) {
         setLoginError('Login failed. Please check your credentials and try again.');
-      } else {
-        console.log('User login successful, redirecting soon...');
-        toast.success('Login successful');
-        
-        // Force redirect to dashboard
-        setTimeout(() => {
-          navigate('/user-dashboard');
-        }, 500);
       }
     } catch (error: any) {
       console.error('Login error:', error);

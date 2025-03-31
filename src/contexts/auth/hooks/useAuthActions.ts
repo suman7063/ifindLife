@@ -1,6 +1,5 @@
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -8,7 +7,6 @@ import { processReferralCode } from '@/utils/referralUtils';
 
 export const useAuthActions = (fetchProfile: () => Promise<void>) => {
   const [actionLoading, setActionLoading] = useState(false);
-  const navigate = useNavigate();
   const { login: authLogin, signup: authSignup } = useSupabaseAuth();
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -24,28 +22,22 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
           await fetchProfile();
           toast.success('Login successful');
           
-          // Explicitly redirect to dashboard with a full URL to force navigation
+          // Use window.location for a full page navigation to avoid React Router issues
           console.log("Redirecting to dashboard after successful login");
-          setTimeout(() => {
-            window.location.href = '/user-dashboard';
-          }, 300);
-          
+          window.location.href = '/user-dashboard';
           return true;
         } catch (error) {
           console.error("Profile fetch error:", error);
           toast.error('Login successful but profile load failed. Please try again.');
-          setActionLoading(false);
           return false;
         }
       } else {
         toast.error('Login failed. Please check your credentials.');
-        setActionLoading(false);
         return false;
       }
     } catch (error: any) {
       console.error("Login error in context:", error);
       toast.error(error.message || 'Login failed. Please try again.');
-      setActionLoading(false);
       return false;
     } finally {
       setActionLoading(false);
@@ -115,10 +107,7 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       console.log("Supabase signOut completed");
       
       // Force a full page reload to clear any lingering state
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
-      
+      window.location.href = '/';
       return true;
     } catch (error: any) {
       console.error("Logout error:", error);

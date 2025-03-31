@@ -24,6 +24,7 @@ export const useAuthInitialization = (): [
   const [authInitialized, setAuthInitialized] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [profileNotFound, setProfileNotFound] = useState(false);
+  const [profileFetchInProgress, setProfileFetchInProgress] = useState(false);
   const navigate = useNavigate();
   const { user, session } = useSupabaseAuth();
 
@@ -33,30 +34,31 @@ export const useAuthInitialization = (): [
   }, []);
 
   const fetchProfile = useCallback(async () => {
-    if (!user) {
-      setCurrentUser(null);
-      setProfileNotFound(false);
-      setAuthInitialized(true);
-      setAuthLoading(false);
-      return;
-    }
+    if (profileFetchInProgress) return;
     
-    console.log("Fetching user profile for:", user.id);
     try {
-      setAuthLoading(true);
+      setProfileFetchInProgress(true);
+      
+      if (!user) {
+        setCurrentUser(null);
+        setProfileNotFound(false);
+        setAuthInitialized(true);
+        setAuthLoading(false);
+        return;
+      }
+      
+      console.log("Fetching user profile for:", user.id);
       const userProfile = await fetchUserProfile(user);
       
       if (userProfile) {
-        console.log("User profile fetched:", userProfile.id);
+        console.log("User profile fetched successfully:", userProfile.id);
         setCurrentUser(userProfile);
         setProfileNotFound(false);
         
         // Only redirect if user is on login page and this isn't an initial load
-        if (authInitialized && 
-            (window.location.pathname.includes('/login') || 
-             window.location.pathname.includes('/user-login'))) {
+        if (authInitialized && window.location.pathname.includes('/login')) {
           console.log("Redirecting to dashboard after successful profile fetch");
-          navigate('/user-dashboard');
+          window.location.href = '/user-dashboard';
         }
       } else {
         console.error("No user profile found for:", user.id);
@@ -72,32 +74,24 @@ export const useAuthInitialization = (): [
       console.error("Error fetching user profile:", error);
       setProfileNotFound(true);
       setCurrentUser(null);
-      
-      // Don't toast error on initial load
-      if (authInitialized) {
-        toast.error("Could not load your profile. Please try again or register for a new account.");
-      }
     } finally {
       setAuthInitialized(true);
       setAuthLoading(false);
+      setProfileFetchInProgress(false);
     }
   }, [user, navigate, authInitialized]);
 
   // Add a maximum loading timeout
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    
-    if (authLoading) {
-      timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
+      if (authLoading) {
         console.log("Maximum auth loading time reached");
         setAuthLoading(false);
         setAuthInitialized(true);
-      }, 2000); // 2 seconds maximum loading time
-    }
+      }
+    }, 3000); // 3 seconds maximum loading time
     
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
+    return () => clearTimeout(timeoutId);
   }, [authLoading]);
 
   return [

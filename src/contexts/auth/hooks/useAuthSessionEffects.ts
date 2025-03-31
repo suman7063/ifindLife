@@ -11,12 +11,17 @@ export const useAuthSessionEffects = (
   const { user, loading } = useSupabaseAuth();
   const profileFetchAttempted = useRef(false);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMounted = useRef(true);
 
-  // Clear any existing timeouts when unmounting
+  // Set up cleanup on unmount
   useEffect(() => {
+    isMounted.current = true;
+    
     return () => {
+      isMounted.current = false;
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
       }
     };
   }, []);
@@ -33,11 +38,18 @@ export const useAuthSessionEffects = (
       console.log("User detected, fetching profile");
       profileFetchAttempted.current = true;
       
-      fetchProfile().catch(error => {
-        console.error("Error fetching profile:", error);
-        setAuthLoading(false);
-        profileFetchAttempted.current = false;
-      });
+      // Use setTimeout to avoid React state update conflicts
+      setTimeout(() => {
+        if (!isMounted.current) return;
+        
+        fetchProfile().catch(error => {
+          console.error("Error fetching profile:", error);
+          if (isMounted.current) {
+            setAuthLoading(false);
+            profileFetchAttempted.current = false;
+          }
+        });
+      }, 0);
     } 
     // If Supabase has completed loading and still no user, force loading to complete
     else if (loading === false && !user) {
@@ -46,11 +58,13 @@ export const useAuthSessionEffects = (
       // Only set timeout if we haven't already
       if (!loadingTimeoutRef.current) {
         loadingTimeoutRef.current = setTimeout(() => {
+          if (!isMounted.current) return;
+          
           console.log("Auth loading timeout reached, completing auth loading");
           setAuthLoading(false);
           profileFetchAttempted.current = false;
           loadingTimeoutRef.current = null;
-        }, 500); // Reduced timeout to prevent long waits
+        }, 500);
       }
     }
   }, [user, loading, authState.authLoading, authState.authInitialized, fetchProfile, setAuthLoading]);
