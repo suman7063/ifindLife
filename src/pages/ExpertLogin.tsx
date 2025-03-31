@@ -24,8 +24,6 @@ const ExpertLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // All useEffects should be defined at the component's top level
-  
   // Debug logging
   useEffect(() => {
     console.log('ExpertLogin component - Auth states:', {
@@ -48,7 +46,7 @@ const ExpertLogin = () => {
     }
   }, [location]);
   
-  // Redirect if authenticated - all in a single effect
+  // Redirect if authenticated
   useEffect(() => {
     // Skip if conditions aren't met
     if (!expert || !authInitialized || loading || redirectAttempted) {
@@ -145,6 +143,7 @@ const ExpertLogin = () => {
     }
   };
 
+  // Show loading screen when appropriate
   if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;

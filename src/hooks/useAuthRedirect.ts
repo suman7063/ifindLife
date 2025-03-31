@@ -1,32 +1,26 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-/**
- * Hook that provides functions to handle authentication-related redirects
- * @param redirectPath - The path to redirect to
- * @returns Object containing the redirect functions
- */
-export const useAuthRedirect = (redirectPath: string) => {
+export const useAuthRedirect = (defaultPath: string) => {
   const navigate = useNavigate();
-  
-  const redirectIfAuthenticated = useCallback(() => {
-    console.log(`Redirecting authenticated user to ${redirectPath}`);
-    navigate(redirectPath, { replace: true });
-  }, [navigate, redirectPath]);
-  
-  // Automatically redirect if this hook is used with immediate=true
-  const redirectImmediately = useCallback((condition: boolean = true) => {
-    if (condition) {
-      console.log(`Immediately redirecting to ${redirectPath}`);
-      navigate(redirectPath, { replace: true });
-      return true;
-    }
-    return false;
-  }, [navigate, redirectPath]);
-  
-  return { 
-    redirectIfAuthenticated,
-    redirectImmediately
+
+  /**
+   * Redirects user to specified path or default path
+   * @param replace Whether to replace current history entry (prevents back button going to login page)
+   * @param path Optional custom path to redirect to
+   */
+  const redirectImmediately = useCallback((replace: boolean = true, path?: string) => {
+    const redirectPath = path || defaultPath;
+    console.log(`Redirecting to ${redirectPath} with replace=${replace}`);
+    
+    // Use timeout to prevent potential state update conflicts
+    setTimeout(() => {
+      navigate(redirectPath, { replace });
+    }, 100);
+  }, [navigate, defaultPath]);
+
+  return {
+    redirectImmediately,
   };
 };

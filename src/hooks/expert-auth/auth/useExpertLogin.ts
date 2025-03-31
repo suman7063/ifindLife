@@ -16,8 +16,10 @@ export const useExpertLogin = (
    */
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
+    
     try {
       console.log('Expert auth: Starting login process for', email);
+      
       // First ensure we're signed out
       await supabase.auth.signOut({
         scope: 'local'
@@ -67,7 +69,6 @@ export const useExpertLogin = (
     } catch (error) {
       console.error('Unexpected error in expert login:', error);
       toast.error('An unexpected error occurred');
-      setLoading(false);
       return false;
     } finally {
       setLoading(false);
