@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -58,34 +57,16 @@ const UserLogin = () => {
     }
   }, [location]);
   
-  // Direct redirection on mount if already authenticated
+  // Handle redirection when authenticated
   useEffect(() => {
-    // Only run this once on initial mount
-    const checkAuthOnMount = async () => {
-      // Wait a bit to let auth state settle
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (isAuthenticated && currentUser) {
-        console.log('Already authenticated on mount, redirecting to dashboard...');
-        window.location.href = '/user-dashboard';
-      }
-    };
-    
-    checkAuthOnMount();
-  }, []);
-  
-  // Redirect on authentication state change
-  useEffect(() => {
-    if (isAuthenticated && currentUser && !redirectAttempted && !authLoading) {
+    if (isAuthenticated && currentUser && !redirectAttempted) {
       console.log('User authenticated, redirecting to dashboard...');
       setRedirectAttempted(true);
       
-      // Use timeout to avoid state update conflicts
-      setTimeout(() => {
-        window.location.href = '/user-dashboard';
-      }, 100);
+      // Use navigate for React Router-based redirection
+      navigate('/user-dashboard', { replace: true });
     }
-  }, [isAuthenticated, authLoading, currentUser, redirectAttempted]);
+  }, [isAuthenticated, currentUser, redirectAttempted, navigate]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -110,8 +91,8 @@ const UserLogin = () => {
       
       if (success) {
         toast.success('Login successful! Redirecting to dashboard...');
-        // Force redirect to dashboard
-        window.location.href = '/user-dashboard';
+        // Use React Router navigation for a cleaner transition
+        navigate('/user-dashboard', { replace: true });
       } else {
         setLoginError('Login failed. Please check your credentials and try again.');
       }
@@ -208,6 +189,14 @@ const UserLogin = () => {
   if (authLoading || isSynchronizing) {
     return <LoadingScreen />;
   }
+  
+  // If already authenticated, redirect to dashboard
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      console.log('Already authenticated on mount, redirecting to dashboard...');
+      navigate('/user-dashboard', { replace: true });
+    }
+  }, [isAuthenticated, currentUser, navigate]);
   
   return (
     <div className="min-h-screen flex flex-col">

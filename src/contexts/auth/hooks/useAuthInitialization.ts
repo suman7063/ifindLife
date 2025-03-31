@@ -31,6 +31,9 @@ export const useAuthInitialization = (): [
   // Function to directly control loading state
   const setLoading = useCallback((loading: boolean) => {
     setAuthLoading(loading);
+    if (!loading) {
+      setAuthInitialized(true);
+    }
   }, []);
 
   const fetchProfile = useCallback(async () => {
@@ -40,6 +43,7 @@ export const useAuthInitialization = (): [
       setProfileFetchInProgress(true);
       
       if (!user) {
+        console.log("No user available for profile fetch");
         setCurrentUser(null);
         setProfileNotFound(false);
         setAuthInitialized(true);
@@ -58,7 +62,8 @@ export const useAuthInitialization = (): [
         // Only redirect if user is on login page and this isn't an initial load
         if (authInitialized && window.location.pathname.includes('/login')) {
           console.log("Redirecting to dashboard after successful profile fetch");
-          window.location.href = '/user-dashboard';
+          // Use navigate instead of directly modifying window.location for better React integration
+          navigate('/user-dashboard');
         }
       } else {
         console.error("No user profile found for:", user.id);

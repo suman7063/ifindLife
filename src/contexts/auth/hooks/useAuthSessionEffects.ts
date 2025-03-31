@@ -40,6 +40,14 @@ export const useAuthSessionEffects = (
       
       // Execute profile fetch
       fetchProfile()
+        .then(() => {
+          // Set a short timeout to ensure UI updates before potentially redirecting
+          setTimeout(() => {
+            if (isMounted.current) {
+              setAuthLoading(false);
+            }
+          }, 100);
+        })
         .catch(error => {
           console.error("Error fetching profile:", error);
           if (isMounted.current) {
