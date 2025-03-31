@@ -22,7 +22,7 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       
       if (success) {
         try {
-          // Fetch user profile to check if it exists
+          // Fetch user profile after successful login
           await fetchProfile();
           toast.success('Login successful');
           return true;

@@ -19,7 +19,7 @@ const ExpertLogin = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   const { login, expert, loading, authInitialized } = useExpertAuth();
-  const { isUserAuthenticated, currentUser, isSynchronizing, userLogout } = useAuthSynchronization();
+  const { isAuthenticated, currentUser, isSynchronizing, userLogout } = useAuthSynchronization();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -29,12 +29,12 @@ const ExpertLogin = () => {
       expertLoading: loading,
       expertAuthInitialized: authInitialized,
       hasExpertProfile: !!expert,
-      isUserAuthenticated,
+      isAuthenticated,
       hasUserProfile: !!currentUser,
       isSynchronizing,
       redirectAttempted
     });
-  }, [loading, authInitialized, expert, isUserAuthenticated, currentUser, isSynchronizing, redirectAttempted]);
+  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted]);
   
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -76,7 +76,7 @@ const ExpertLogin = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
     
-    if (isUserAuthenticated) {
+    if (isAuthenticated) {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
       return false;
@@ -164,7 +164,7 @@ const ExpertLogin = () => {
       <Navbar />
       <main className="flex-1 py-10 flex items-center justify-center bg-stars">
         <div className="container max-w-4xl">
-          {isUserAuthenticated && (
+          {isAuthenticated && (
             <div className="mb-6">
               <UserLogoutAlert
                 profileName={currentUser?.name}
@@ -177,7 +177,7 @@ const ExpertLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <ExpertLoginHeader />
             
-            {!isUserAuthenticated && (
+            {!isAuthenticated && (
               <ExpertLoginTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}

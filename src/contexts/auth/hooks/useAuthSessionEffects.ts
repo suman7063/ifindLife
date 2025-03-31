@@ -38,7 +38,7 @@ export const useAuthSessionEffects = (
       console.log("User detected, fetching profile");
       profileFetchAttempted.current = true;
       
-      // Execute profile fetch immediately
+      // Execute profile fetch
       fetchProfile()
         .catch(error => {
           console.error("Error fetching profile:", error);

@@ -13,7 +13,7 @@ export const useAuthSynchronization = () => {
   
   // Access both auth contexts
   const { 
-    isAuthenticated: isUserAuthenticatedContext, 
+    isAuthenticated, 
     currentUser, 
     logout: userLogout, 
     user: supabaseUser,
@@ -27,16 +27,14 @@ export const useAuthSynchronization = () => {
   } = useExpertAuth();
   
   // Derived state - ensure we check for both user session and profile
-  const isUserAuthenticated = !!supabaseUser && !!currentUser && isUserAuthenticatedContext;
   const isExpertAuthenticated = !!expert && !expertLoading && expertAuthInitialized;
   
   // Enhanced logging for debugging
   useEffect(() => {
     console.log("Auth Synchronization state:", {
-      isUserAuthenticated,
+      isAuthenticated,
       hasUserProfile: !!currentUser,
       hasSupabaseUser: !!supabaseUser,
-      isUserAuthenticatedContext,
       userAuthLoading,
       isExpertAuthenticated,
       hasExpertProfile: !!expert,
@@ -45,10 +43,9 @@ export const useAuthSynchronization = () => {
       isSynchronizing
     });
   }, [
-    isUserAuthenticated, 
+    isAuthenticated, 
     currentUser, 
     supabaseUser, 
-    isUserAuthenticatedContext, 
     userAuthLoading,
     isExpertAuthenticated,
     expert,
@@ -120,7 +117,7 @@ export const useAuthSynchronization = () => {
     }
     
     // Only run this effect when both auth states are true simultaneously
-    if (isUserAuthenticated && isExpertAuthenticated) {
+    if (isAuthenticated && isExpertAuthenticated) {
       const handleConflictingAuth = async () => {
         console.log("Conflicting auth detected: User and Expert are both authenticated");
         
@@ -148,7 +145,7 @@ export const useAuthSynchronization = () => {
       handleConflictingAuth();
     }
   }, [
-    isUserAuthenticated, 
+    isAuthenticated, 
     isExpertAuthenticated, 
     expertLogout,
     isSynchronizing,
@@ -158,7 +155,7 @@ export const useAuthSynchronization = () => {
   ]);
   
   return {
-    isUserAuthenticated,
+    isAuthenticated,
     isExpertAuthenticated,
     isSynchronizing,
     currentUser,
