@@ -11,20 +11,20 @@ import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLoginPage = () => {
-  const { authLoading, isSynchronizing } = useAuthSynchronization();
+  const { userAuthLoading, isSynchronizing } = useAuthSynchronization();
   const { isAuthenticated, currentUser } = useUserAuth();
   const { redirectImmediately } = useAuthRedirect('/user-dashboard');
   
   // Redirect immediately if user is already authenticated
   useEffect(() => {
-    if (isAuthenticated && currentUser && !authLoading && !isSynchronizing) {
+    if (isAuthenticated && currentUser && !userAuthLoading && !isSynchronizing) {
       console.log('UserLoginPage: User is authenticated, redirecting to dashboard');
       redirectImmediately(true);
     }
-  }, [isAuthenticated, currentUser, authLoading, isSynchronizing, redirectImmediately]);
+  }, [isAuthenticated, currentUser, userAuthLoading, isSynchronizing, redirectImmediately]);
   
   // Show loading screen during auth initialization or synchronization
-  if (authLoading || isSynchronizing) {
+  if (userAuthLoading || isSynchronizing) {
     console.log('UserLoginPage: Showing loading screen');
     return <LoadingScreen />;
   }

@@ -12,7 +12,7 @@ export const useAuthSynchronization = () => {
   const { 
     isAuthenticated, 
     currentUser, 
-    authLoading, 
+    authLoading: userAuthLoading, 
     logout: userLogoutFn
   } = useUserAuth();
   
@@ -30,7 +30,7 @@ export const useAuthSynchronization = () => {
       isAuthenticated,
       hasUserProfile: !!currentUser,
       hasSupabaseUser: isAuthenticated,
-      userAuthLoading: authLoading,
+      userAuthLoading,
       isExpertAuthenticated: !!expert,
       hasExpertProfile: !!expert,
       expertLoading,
@@ -42,7 +42,7 @@ export const useAuthSynchronization = () => {
     currentUser, 
     expertLoading, 
     expert, 
-    authLoading, 
+    userAuthLoading, 
     authInitialized, 
     isSynchronizing
   ]);
@@ -52,12 +52,21 @@ export const useAuthSynchronization = () => {
     setIsSynchronizing(true);
     
     try {
+      console.log('Attempting user logout...');
       await userLogoutFn();
       toast.success('Successfully logged out');
+      
+      // Force page reload to clear all state
+      window.location.href = '/';
       return true;
     } catch (error) {
       console.error('User logout error:', error);
       toast.error('Failed to log out. Please try again.');
+      
+      // Force page reload as failsafe
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
       return false;
     } finally {
       setIsSynchronizing(false);
@@ -68,18 +77,32 @@ export const useAuthSynchronization = () => {
     setIsSynchronizing(true);
     
     try {
+      console.log('Attempting expert logout...');
       const success = await expertLogoutFn();
       
       if (success) {
         toast.success('Successfully logged out as expert');
+        
+        // Force page reload to clear all state
+        window.location.href = '/';
         return true;
       } else {
         toast.error('Failed to log out as expert. Please try again.');
+        
+        // Force page reload as failsafe
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 1000);
         return false;
       }
     } catch (error) {
       console.error('Expert logout error:', error);
       toast.error('Failed to log out as expert. Please try again.');
+      
+      // Force page reload as failsafe
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
       return false;
     } finally {
       setIsSynchronizing(false);
@@ -90,7 +113,7 @@ export const useAuthSynchronization = () => {
     // User auth state
     isAuthenticated,
     currentUser,
-    userAuthLoading: authLoading,
+    userAuthLoading,
     
     // Expert auth state
     isExpertAuthenticated: !!expert,

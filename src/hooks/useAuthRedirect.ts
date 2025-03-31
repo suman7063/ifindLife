@@ -14,10 +14,8 @@ export const useAuthRedirect = (defaultPath: string) => {
     const redirectPath = path || defaultPath;
     console.log(`Redirecting to ${redirectPath} with replace=${replace}`);
     
-    // Use timeout to prevent potential state update conflicts
-    setTimeout(() => {
-      navigate(redirectPath, { replace });
-    }, 100);
+    // Use direct navigation without timeout to prevent potential blocking
+    navigate(redirectPath, { replace });
   }, [navigate, defaultPath]);
 
   return {

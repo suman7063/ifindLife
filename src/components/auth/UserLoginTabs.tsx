@@ -17,7 +17,7 @@ const UserLoginTabs = () => {
   const [isRegistering, setIsRegistering] = useState(false);
   
   const location = useLocation();
-  const { redirectIfAuthenticated } = useAuthRedirect('/user-dashboard');
+  const { redirectImmediately } = useAuthRedirect('/user-dashboard');
   
   // Get auth state from context
   const { login, signup, authLoading, isAuthenticated, currentUser } = useUserAuth();
@@ -26,9 +26,9 @@ const UserLoginTabs = () => {
   useEffect(() => {
     if (isAuthenticated && currentUser && !authLoading) {
       console.log('UserLoginTabs: User authenticated, redirecting');
-      redirectIfAuthenticated();
+      redirectImmediately();
     }
-  }, [isAuthenticated, currentUser, authLoading, redirectIfAuthenticated]);
+  }, [isAuthenticated, currentUser, authLoading, redirectImmediately]);
   
   // Check if redirected to register tab
   useEffect(() => {

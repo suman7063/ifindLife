@@ -20,12 +20,14 @@ export const useExpertLogin = (
     try {
       console.log('Expert auth: Starting login process for', email);
       
-      // First ensure we're signed out
+      // First ensure we're signed out to prevent any auth state conflicts
       await supabase.auth.signOut({
-        scope: 'local'
+        scope: 'global'
       });
       
-      // Now perform the login
+      console.log('Expert auth: Previous sessions cleared, proceeding with login');
+      
+      // Now perform the login with explicit storage setting
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -55,7 +57,7 @@ export const useExpertLogin = (
         // This user is authenticated but doesn't have an expert profile
         toast.error('No expert profile found. Please register as an expert.');
         await supabase.auth.signOut({
-          scope: 'local'
+          scope: 'global'
         });
         setLoading(false);
         return false;
@@ -65,6 +67,9 @@ export const useExpertLogin = (
       console.log('Expert auth: Profile found, setting expert state');
       setExpert(expertProfile);
       toast.success('Login successful!');
+      
+      // Force a reload to ensure clean state
+      window.location.href = '/expert-dashboard';
       return true;
     } catch (error) {
       console.error('Unexpected error in expert login:', error);

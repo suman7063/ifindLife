@@ -15,11 +15,10 @@ const ExpertLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('login');
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   const { login, expert, loading, authInitialized } = useExpertAuth();
-  const { isAuthenticated, currentUser, isSynchronizing, userLogout } = useAuthSynchronization();
+  const { isAuthenticated, currentUser, isSynchronizing, userLogout, isLoggingOut, setIsLoggingOut } = useAuthSynchronization();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,10 +55,8 @@ const ExpertLogin = () => {
     console.log('Redirecting to expert dashboard - Expert profile found');
     setRedirectAttempted(true);
     
-    // Use timeout to avoid state update conflicts
-    setTimeout(() => {
-      navigate('/expert-dashboard', { replace: true });
-    }, 100);
+    // Redirect to dashboard
+    navigate('/expert-dashboard', { replace: true });
   }, [expert, loading, authInitialized, redirectAttempted, navigate]);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -93,8 +90,7 @@ const ExpertLogin = () => {
       } else {
         console.log('Expert login successful');
         toast.success('Login successful! Redirecting to dashboard...');
-        // Use navigate for React Router-based redirection
-        navigate('/expert-dashboard', { replace: true });
+        // Redirect handled by the login function
       }
       
       return success;
@@ -108,7 +104,6 @@ const ExpertLogin = () => {
   };
 
   const handleUserLogout = async () => {
-    if (isLoggingOut) return false;
     setIsLoggingOut(true);
     
     try {
@@ -117,26 +112,23 @@ const ExpertLogin = () => {
       
       if (success) {
         console.log('User logout completed');
-        toast.success('Successfully logged out as user');
-        
+        // Reload the page to ensure clean state
         window.location.href = '/expert-login';
         return true;
       } else {
         console.error('User logout failed');
-        toast.error('Failed to log out as user. Please try again.');
-        
+        // Force reload as a fallback
         setTimeout(() => {
           window.location.href = '/expert-login';
-        }, 1500);
+        }, 1000);
         return false;
       }
     } catch (error) {
       console.error('Error during user logout:', error);
-      toast.error('Failed to log out as user. Please try again.');
-      
+      // Force reload as a fallback
       setTimeout(() => {
         window.location.href = '/expert-login';
-      }, 1500);
+      }, 1000);
       return false;
     } finally {
       setIsLoggingOut(false);

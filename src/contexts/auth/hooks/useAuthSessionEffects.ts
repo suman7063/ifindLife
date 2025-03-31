@@ -41,12 +41,9 @@ export const useAuthSessionEffects = (
       // Execute profile fetch
       fetchProfile()
         .then(() => {
-          // Set a short timeout to ensure UI updates before potentially redirecting
-          setTimeout(() => {
-            if (isMounted.current) {
-              setAuthLoading(false);
-            }
-          }, 100);
+          if (isMounted.current) {
+            setAuthLoading(false);
+          }
         })
         .catch(error => {
           console.error("Error fetching profile:", error);
@@ -57,8 +54,8 @@ export const useAuthSessionEffects = (
         });
     } 
     // If Supabase has completed loading and still no user, force loading to complete
-    else if (loading === false && !user) {
-      console.log("No user found after Supabase loading completed");
+    else if (loading === false) {
+      console.log("Supabase loading completed");
       
       // Set a short timeout to ensure we don't have any race conditions
       if (!loadingTimeoutRef.current) {
@@ -69,7 +66,7 @@ export const useAuthSessionEffects = (
           setAuthLoading(false);
           profileFetchAttempted.current = false;
           loadingTimeoutRef.current = null;
-        }, 300);
+        }, 200);
       }
     }
   }, [user, loading, authState.authLoading, authState.authInitialized, fetchProfile, setAuthLoading]);
@@ -82,7 +79,7 @@ export const useAuthSessionEffects = (
         setAuthLoading(false);
         profileFetchAttempted.current = false;
       }
-    }, 3000); // 3 seconds maximum loading time
+    }, 2000); // 2 seconds maximum loading time
     
     return () => clearTimeout(maxTimeout);
   }, [authState.authLoading, setAuthLoading]);
