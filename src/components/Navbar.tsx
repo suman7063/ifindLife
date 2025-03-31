@@ -10,7 +10,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { 
-    isUserAuthenticated, 
+    isAuthenticated, 
     isExpertAuthenticated, 
     currentUser, 
     expertProfile,
@@ -112,7 +112,7 @@ const Navbar = () => {
         </Link>
         
         <NavbarDesktopLinks 
-          isAuthenticated={isUserAuthenticated}
+          isAuthenticated={isAuthenticated}
           currentUser={currentUser}
           hasExpertProfile={isExpertAuthenticated}
           userLogout={handleUserLogout}
@@ -120,7 +120,7 @@ const Navbar = () => {
         />
         
         <NavbarMobileMenu 
-          isAuthenticated={isUserAuthenticated}
+          isAuthenticated={isAuthenticated}
           currentUser={currentUser}
           hasExpertProfile={isExpertAuthenticated}
           userLogout={handleUserLogout}
