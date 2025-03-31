@@ -10,6 +10,7 @@ import { toast } from 'sonner';
  */
 export const useAuthSynchronization = () => {
   const [isSynchronizing, setIsSynchronizing] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Access both auth contexts
   const { 
@@ -161,6 +162,9 @@ export const useAuthSynchronization = () => {
     currentUser,
     expertProfile: expert,
     userLogout: handleUserLogout,
-    expertLogout: handleExpertLogout
+    expertLogout: handleExpertLogout,
+    authLoading: userAuthLoading,
+    isLoggingOut,
+    setIsLoggingOut
   };
 };
