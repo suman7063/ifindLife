@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -35,6 +36,8 @@ const UserLogin = () => {
     expertLogout 
   } = useAuthSynchronization();
   
+  // Define all useEffects at the top level, never conditionally
+  
   // Log auth state for debugging
   useEffect(() => {
     console.log('UserLogin component - Auth states:', {
@@ -59,14 +62,15 @@ const UserLogin = () => {
   
   // Handle redirection when authenticated
   useEffect(() => {
-    if (isAuthenticated && currentUser && !redirectAttempted) {
-      console.log('User authenticated, redirecting to dashboard...');
-      setRedirectAttempted(true);
-      
-      // Use navigate for React Router-based redirection
-      navigate('/user-dashboard', { replace: true });
+    // Use early return pattern inside the effect rather than conditionally using the effect
+    if (!isAuthenticated || !currentUser || redirectAttempted || authLoading) {
+      return;
     }
-  }, [isAuthenticated, currentUser, redirectAttempted, navigate]);
+    
+    console.log('User authenticated, redirecting to dashboard...');
+    setRedirectAttempted(true);
+    navigate('/user-dashboard', { replace: true });
+  }, [isAuthenticated, currentUser, redirectAttempted, navigate, authLoading]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -185,18 +189,10 @@ const UserLogin = () => {
     }
   };
 
-  // Show loading screen during auth initialization
+  // Show loading screen during auth initialization or synchronization
   if (authLoading || isSynchronizing) {
     return <LoadingScreen />;
   }
-  
-  // If already authenticated, redirect to dashboard
-  useEffect(() => {
-    if (isAuthenticated && currentUser) {
-      console.log('Already authenticated on mount, redirecting to dashboard...');
-      navigate('/user-dashboard', { replace: true });
-    }
-  }, [isAuthenticated, currentUser, navigate]);
   
   return (
     <div className="min-h-screen flex flex-col">

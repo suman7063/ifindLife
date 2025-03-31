@@ -24,6 +24,9 @@ const ExpertLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // All useEffects should be defined at the component's top level
+  
+  // Debug logging
   useEffect(() => {
     console.log('ExpertLogin component - Auth states:', {
       expertLoading: loading,
@@ -36,6 +39,7 @@ const ExpertLogin = () => {
     });
   }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted]);
   
+  // Check URL parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('register') === 'true') {
@@ -44,34 +48,21 @@ const ExpertLogin = () => {
     }
   }, [location]);
   
-  // Direct redirection on mount if already authenticated
+  // Redirect if authenticated - all in a single effect
   useEffect(() => {
-    // Only run this once on initial mount
-    const checkAuthOnMount = async () => {
-      // Wait a bit to let auth state settle
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      if (expert && authInitialized && !loading) {
-        console.log('Already authenticated on mount, redirecting to dashboard...');
-        window.location.href = '/expert-dashboard';
-      }
-    };
-    
-    checkAuthOnMount();
-  }, []);
-  
-  // Redirect when expert profile found
-  useEffect(() => {
-    if (expert && authInitialized && !loading && !redirectAttempted) {
-      console.log('Redirecting to expert dashboard - Expert profile found');
-      setRedirectAttempted(true);
-      
-      // Use timeout to avoid state update conflicts
-      setTimeout(() => {
-        window.location.href = '/expert-dashboard';
-      }, 100);
+    // Skip if conditions aren't met
+    if (!expert || !authInitialized || loading || redirectAttempted) {
+      return;
     }
-  }, [expert, loading, authInitialized, redirectAttempted]);
+    
+    console.log('Redirecting to expert dashboard - Expert profile found');
+    setRedirectAttempted(true);
+    
+    // Use timeout to avoid state update conflicts
+    setTimeout(() => {
+      navigate('/expert-dashboard', { replace: true });
+    }, 100);
+  }, [expert, loading, authInitialized, redirectAttempted, navigate]);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
@@ -104,8 +95,8 @@ const ExpertLogin = () => {
       } else {
         console.log('Expert login successful');
         toast.success('Login successful! Redirecting to dashboard...');
-        // Force redirect to dashboard
-        window.location.href = '/expert-dashboard';
+        // Use navigate for React Router-based redirection
+        navigate('/expert-dashboard', { replace: true });
       }
       
       return success;
