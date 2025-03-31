@@ -33,8 +33,8 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
-  const handleUserLogout = async () => {
-    if (isLoggingOut) return;
+  const handleUserLogout = async (): Promise<boolean> => {
+    if (isLoggingOut) return false;
     
     try {
       setIsLoggingOut(true);
@@ -46,9 +46,11 @@ const Navbar = () => {
         toast.success('Successfully logged out');
         // Force page reload to ensure clean state
         window.location.href = '/';
+        return true;
       } else {
         console.error("Navbar: User logout failed");
         toast.error('Logout failed. Please try again.');
+        return false;
       }
     } catch (error) {
       console.error('Error during user logout:', error);
@@ -58,13 +60,14 @@ const Navbar = () => {
       setTimeout(() => {
         window.location.href = '/';
       }, 1500);
+      return false;
     } finally {
       setIsLoggingOut(false);
     }
   };
 
-  const handleExpertLogout = async () => {
-    if (isLoggingOut) return;
+  const handleExpertLogout = async (): Promise<boolean> => {
+    if (isLoggingOut) return false;
     
     try {
       setIsLoggingOut(true);
@@ -77,9 +80,11 @@ const Navbar = () => {
         
         // Force page reload to ensure clean state
         window.location.href = '/';
+        return true;
       } else {
         console.error("Navbar: Expert logout failed");
         toast.error('Failed to log out as expert. Please try again.');
+        return false;
       }
     } catch (error) {
       console.error('Error during expert logout:', error);
@@ -89,6 +94,7 @@ const Navbar = () => {
       setTimeout(() => {
         window.location.href = '/';
       }, 1500);
+      return false;
     } finally {
       setIsLoggingOut(false);
     }
