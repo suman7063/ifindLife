@@ -128,43 +128,47 @@ const UserLoginContent = () => {
     );
   }
   
-  return (
-    <>
-      {hasDualSessions && (
-        <div className="space-y-4">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Multiple Sessions Detected</AlertTitle>
-            <AlertDescription>
-              You are currently logged in as both a user and an expert. This can cause authentication issues.
-            </AlertDescription>
-          </Alert>
-          <Button 
-            onClick={handleFullLogout} 
-            variant="destructive" 
-            className="w-full"
-            disabled={isLoggingOut}
-          >
-            {isLoggingOut ? (
-              <>
-                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                Logging Out...
-              </>
-            ) : 'Log Out of All Accounts'}
-          </Button>
-        </div>
-      ) : expertProfile || synchronizedExpertProfile ? (
-        <UserLogoutAlert 
-          profileName={(expertProfile?.name || synchronizedExpertProfile?.name) ?? "Expert"}
-          isLoggingOut={isLoggingOut}
-          onLogout={handleExpertLogout}
-          logoutType="expert"
-        />
-      ) : (
-        <UserLoginTabs />
-      )}
-    </>
-  );
+  // Determine which content to render based on conditions
+  let content;
+  if (hasDualSessions) {
+    content = (
+      <div className="space-y-4">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Multiple Sessions Detected</AlertTitle>
+          <AlertDescription>
+            You are currently logged in as both a user and an expert. This can cause authentication issues.
+          </AlertDescription>
+        </Alert>
+        <Button 
+          onClick={handleFullLogout} 
+          variant="destructive" 
+          className="w-full"
+          disabled={isLoggingOut}
+        >
+          {isLoggingOut ? (
+            <>
+              <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+              Logging Out...
+            </>
+          ) : 'Log Out of All Accounts'}
+        </Button>
+      </div>
+    );
+  } else if (expertProfile || synchronizedExpertProfile) {
+    content = (
+      <UserLogoutAlert 
+        profileName={(expertProfile?.name || synchronizedExpertProfile?.name) ?? "Expert"}
+        isLoggingOut={isLoggingOut}
+        onLogout={handleExpertLogout}
+        logoutType="expert"
+      />
+    );
+  } else {
+    content = <UserLoginTabs />;
+  }
+
+  return <>{content}</>;
 };
 
 export default UserLoginContent;
