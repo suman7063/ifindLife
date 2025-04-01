@@ -523,6 +523,7 @@ export type Database = {
           id: number
           image: string
           price: number
+          programType: string
           sessions: number
           title: string
         }
@@ -535,6 +536,7 @@ export type Database = {
           id?: number
           image: string
           price: number
+          programType?: string
           sessions: number
           title: string
         }
@@ -547,6 +549,7 @@ export type Database = {
           id?: number
           image?: string
           price?: number
+          programType?: string
           sessions?: number
           title?: string
         }
