@@ -21,7 +21,9 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from './components/ProtectedRoute';
 import UserReferrals from './pages/UserReferrals';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
-import Programs from './pages/Programs';
+import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
+import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
+import ProgramsForBusiness from './pages/ProgramsForBusiness';
 import ProgramDetail from './pages/ProgramDetail';
 import AboutUs from "./pages/AboutUs";
 import CareerGuidance from "./pages/CareerGuidance";
@@ -50,7 +52,9 @@ function App() {
       <Route path="/migrate-data" element={<MigrateData />} />
       <Route path="/referrals" element={<ProtectedRoute><UserReferrals /></ProtectedRoute>} />
       <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
-      <Route path="/programs" element={<Programs />} />
+      <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
+      <Route path="/programs-for-academic-institutes" element={<ProgramsForAcademicInstitutes />} />
+      <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/program/:id" element={<ProgramDetail />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/career-guidance" element={<CareerGuidance />} />

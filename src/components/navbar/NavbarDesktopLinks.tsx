@@ -17,6 +17,26 @@ interface NavbarDesktopLinksProps {
   isLoggingOut: boolean;
 }
 
+const NavbarDesktopLinksDropdown: React.FC<{title: string}> = ({ title }) => {
+  return (
+    <div className="group relative">
+      <Button variant="ghost" className="flex items-center gap-1">
+        {title}
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-4 w-4">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </Button>
+      <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 group-hover:block">
+        <div className="py-1">
+          <Link to="/programs-for-wellness-seekers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wellness Seekers</Link>
+          <Link to="/programs-for-academic-institutes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Academic Institutes</Link>
+          <Link to="/programs-for-business" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Business</Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   isAuthenticated,
   currentUser,
@@ -34,9 +54,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       <Button variant="ghost" asChild>
         <Link to="/experts">Experts</Link>
       </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/programs">Programs</Link>
-      </Button>
+      <NavbarDesktopLinksDropdown title="Programs" />
       <Button variant="ghost" asChild>
         <Link to="/about">About</Link>
       </Button>

@@ -14,7 +14,7 @@ const WhatWeDoSection = () => {
         "Personalized wellness plans"
       ],
       color: "bg-ifind-aqua/10",
-      href: "/wellness-seekers"
+      href: "/programs-for-wellness-seekers"
     },
     {
       title: "For Academic Institutes",
@@ -26,7 +26,7 @@ const WhatWeDoSection = () => {
         "Wellness workshops for campus life"
       ],
       color: "bg-ifind-purple/10",
-      href: "/academic-institutes"
+      href: "/programs-for-academic-institutes"
     },
     {
       title: "For Business",
@@ -38,7 +38,7 @@ const WhatWeDoSection = () => {
         "Burnout prevention strategies"
       ],
       color: "bg-ifind-teal/10",
-      href: "/business"
+      href: "/programs-for-business"
     }
   ];
 
