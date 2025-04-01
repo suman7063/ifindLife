@@ -4,7 +4,7 @@ import { useUserAuth } from '@/hooks/useUserAuth';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
+import ProgramList from '@/components/programs/ProgramList';
 import { useProgramData } from '@/hooks/useProgramData';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -12,9 +12,8 @@ import { toast } from 'sonner';
 const ProgramsForBusiness = () => {
   const { currentUser, isAuthenticated } = useUserAuth();
   const { 
-    filteredPrograms,
+    programs,
     isLoading,
-    selectedCategory,
     refreshPrograms
   } = useProgramData(isAuthenticated, currentUser, 'business');
 
@@ -78,11 +77,12 @@ const ProgramsForBusiness = () => {
           </p>
         </div>
         
-        <FilteredProgramsGrid 
-          filteredPrograms={filteredPrograms}
+        <ProgramList 
+          programs={programs}
+          isLoading={isLoading}
           currentUser={currentUser}
           isAuthenticated={isAuthenticated}
-          selectedCategory={selectedCategory}
+          emptyMessage="No business programs are currently available."
         />
       </div>
       <div className="mb-36"></div>

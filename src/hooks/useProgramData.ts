@@ -86,11 +86,17 @@ export const useProgramData = (
     }
   }, [programs.length, programType]);
 
-  // Apply filters when criteria change
+  // Apply filters when criteria change - only for wellness programs
   useEffect(() => {
     if (programs.length === 0) return;
     
-    // Apply category filter
+    // For academic and business programs, we don't filter by category
+    if (programType !== 'wellness') {
+      setFilteredPrograms(programs);
+      return;
+    }
+    
+    // Apply category filter for wellness programs
     let categoryFiltered = programs;
     if (selectedCategory !== 'all') {
       if (selectedCategory === 'favorites') {
@@ -121,7 +127,7 @@ export const useProgramData = (
     }
     
     setFilteredPrograms(sorted);
-  }, [selectedCategory, programs, sortOption]);
+  }, [selectedCategory, programs, sortOption, programType]);
 
   // Group programs by category
   const programsByCategory = () => {
