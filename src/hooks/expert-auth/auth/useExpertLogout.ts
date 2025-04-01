@@ -16,6 +16,11 @@ export const useExpertLogout = (
   const logout = async (): Promise<boolean> => {
     setLoading(true);
     try {
+      console.log('Expert logout: Starting logout process');
+      
+      // First clear the expert state
+      setExpert(null);
+      
       // Ensure a complete logout using scope: 'global'
       const { error } = await supabase.auth.signOut({
         scope: 'global'
@@ -27,7 +32,14 @@ export const useExpertLogout = (
         throw error;
       }
       
-      setExpert(null);
+      // Additional cleanup to ensure auth state is fully reset
+      try {
+        // Manually clear any lingering session data
+        localStorage.removeItem('sb-' + supabase.supabaseUrl + '-auth-token');
+      } catch (e) {
+        console.warn('Error cleaning up local storage:', e);
+      }
+      
       toast.success('Logged out successfully');
       
       // Force a full page reload to clear any lingering state

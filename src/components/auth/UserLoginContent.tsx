@@ -10,7 +10,8 @@ const UserLoginContent = () => {
     expertProfile,
     expertLogout,
     isLoggingOut,
-    setIsLoggingOut
+    setIsLoggingOut,
+    authCheckCompleted
   } = useAuthSynchronization();
   
   const handleExpertLogout = async (): Promise<boolean> => {
@@ -44,7 +45,7 @@ const UserLoginContent = () => {
   
   return (
     <>
-      {isExpertAuthenticated ? (
+      {authCheckCompleted && isExpertAuthenticated ? (
         <UserLogoutAlert 
           profileName={expertProfile?.name}
           isLoggingOut={isLoggingOut}

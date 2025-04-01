@@ -1,19 +1,22 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useExpertAuth } from '@/hooks/expert-auth';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 export const useAuthSynchronization = () => {
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const authCheckCompleted = useRef(false);
   
   // Get user auth state from context
   const { 
     isAuthenticated, 
     currentUser, 
     authLoading: userAuthLoading, 
-    logout: userLogoutFn
+    logout: userLogoutFn,
+    user: supabaseUser
   } = useUserAuth();
   
   // Get expert auth state
@@ -29,31 +32,48 @@ export const useAuthSynchronization = () => {
     console.log('Auth Synchronization state:', {
       isAuthenticated,
       hasUserProfile: !!currentUser,
-      hasSupabaseUser: isAuthenticated,
+      hasSupabaseUser: !!supabaseUser,
       userAuthLoading,
       isExpertAuthenticated: !!expert,
       hasExpertProfile: !!expert,
       expertLoading,
       expertAuthInitialized: authInitialized,
-      isSynchronizing
+      isSynchronizing,
+      authCheckCompleted: authCheckCompleted.current
     });
   }, [
     isAuthenticated, 
-    currentUser, 
+    currentUser,
+    supabaseUser,
     expertLoading, 
     expert, 
     userAuthLoading, 
     authInitialized, 
     isSynchronizing
   ]);
+
+  useEffect(() => {
+    // Mark auth check as completed when all loading states resolve
+    if (!userAuthLoading && !expertLoading && authInitialized) {
+      authCheckCompleted.current = true;
+    }
+  }, [userAuthLoading, expertLoading, authInitialized]);
   
   // Logout functions
   const userLogout = useCallback(async (): Promise<boolean> => {
     setIsSynchronizing(true);
+    setIsLoggingOut(true);
     
     try {
       console.log('Attempting user logout...');
       await userLogoutFn();
+      
+      // Ensure we fully sign out from Supabase
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Reset auth check completed flag
+      authCheckCompleted.current = false;
+      
       toast.success('Successfully logged out');
       
       // Force page reload to clear all state
@@ -70,15 +90,20 @@ export const useAuthSynchronization = () => {
       return false;
     } finally {
       setIsSynchronizing(false);
+      setIsLoggingOut(false);
     }
   }, [userLogoutFn]);
   
   const expertLogout = useCallback(async (): Promise<boolean> => {
     setIsSynchronizing(true);
+    setIsLoggingOut(true);
     
     try {
       console.log('Attempting expert logout...');
       const success = await expertLogoutFn();
+      
+      // Reset auth check completed flag
+      authCheckCompleted.current = false;
       
       if (success) {
         toast.success('Successfully logged out as expert');
@@ -106,6 +131,7 @@ export const useAuthSynchronization = () => {
       return false;
     } finally {
       setIsSynchronizing(false);
+      setIsLoggingOut(false);
     }
   }, [expertLogoutFn]);
   
@@ -124,6 +150,9 @@ export const useAuthSynchronization = () => {
     isSynchronizing,
     isLoggingOut,
     setIsLoggingOut,
+    
+    // Auth check status
+    authCheckCompleted: authCheckCompleted.current,
     
     // Actions
     userLogout,

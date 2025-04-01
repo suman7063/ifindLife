@@ -12,7 +12,7 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLoginPage = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const { userAuthLoading, isSynchronizing } = useAuthSynchronization();
+  const { userAuthLoading, isSynchronizing, authCheckCompleted } = useAuthSynchronization();
   const { isAuthenticated, currentUser, loading } = useUserAuth();
   const navigate = useNavigate();
   
@@ -22,12 +22,14 @@ const UserLoginPage = () => {
     // 1. User is authenticated
     // 2. We have a user profile
     // 3. Loading states are completed
-    // 4. We haven't already attempted a redirect
+    // 4. Auth check is completed
+    // 5. We haven't already attempted a redirect
     if (isAuthenticated && 
         currentUser && 
         !userAuthLoading && 
         !isSynchronizing && 
         !loading && 
+        authCheckCompleted && 
         !redirectAttempted) {
       console.log('UserLoginPage: User is authenticated, redirecting to dashboard');
       setRedirectAttempted(true);
@@ -40,6 +42,7 @@ const UserLoginPage = () => {
     isSynchronizing, 
     loading, 
     redirectAttempted,
+    authCheckCompleted,
     navigate
   ]);
   

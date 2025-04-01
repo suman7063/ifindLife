@@ -18,7 +18,15 @@ const ExpertLogin = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   const { login, expert, loading, authInitialized } = useExpertAuth();
-  const { isAuthenticated, currentUser, isSynchronizing, userLogout, isLoggingOut, setIsLoggingOut } = useAuthSynchronization();
+  const { 
+    isAuthenticated, 
+    currentUser, 
+    isSynchronizing, 
+    userLogout, 
+    isLoggingOut, 
+    setIsLoggingOut,
+    authCheckCompleted 
+  } = useAuthSynchronization();
   
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,9 +40,10 @@ const ExpertLogin = () => {
       isAuthenticated,
       hasUserProfile: !!currentUser,
       isSynchronizing,
-      redirectAttempted
+      redirectAttempted,
+      authCheckCompleted
     });
-  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted]);
+  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted]);
   
   // Check URL parameters
   useEffect(() => {
@@ -62,7 +71,8 @@ const ExpertLogin = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
     
-    if (isAuthenticated) {
+    // Only check for user authentication if auth check is completed
+    if (authCheckCompleted && isAuthenticated) {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
       return false;
@@ -146,7 +156,7 @@ const ExpertLogin = () => {
       <Navbar />
       <main className="flex-1 py-10 flex items-center justify-center bg-stars">
         <div className="container max-w-4xl">
-          {isAuthenticated && (
+          {authCheckCompleted && isAuthenticated && (
             <div className="mb-6">
               <UserLogoutAlert
                 profileName={currentUser?.name}
@@ -159,7 +169,7 @@ const ExpertLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <ExpertLoginHeader />
             
-            {!isAuthenticated && (
+            {(!authCheckCompleted || !isAuthenticated) && (
               <ExpertLoginTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
