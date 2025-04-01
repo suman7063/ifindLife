@@ -1,8 +1,7 @@
 
-import { User } from '@supabase/supabase-js';
-
 export interface ExpertProfile {
   id: string;
+  auth_id?: string;
   name: string;
   email: string;
   phone?: string;
@@ -21,6 +20,7 @@ export interface ExpertProfile {
   verified?: boolean;
   status?: string;
   created_at?: string;
+  reportedUsers?: any[];
 }
 
 export interface ExpertAuthState {

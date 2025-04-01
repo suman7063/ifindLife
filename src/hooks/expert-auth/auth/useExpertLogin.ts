@@ -15,6 +15,24 @@ export const useExpertLogin = (
   const [loginInProgress, setLoginInProgress] = useState(false);
 
   /**
+   * Checks if a user profile exists for the current session
+   */
+  const checkUserProfile = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single();
+        
+      return !!data && !error;
+    } catch (error) {
+      console.error('Error checking user profile:', error);
+      return false;
+    }
+  };
+
+  /**
    * Logs in the expert user
    */
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -48,6 +66,9 @@ export const useExpertLogin = (
       }
       
       console.log('Expert auth: Successfully authenticated, fetching expert profile');
+      
+      // Check if the user is already logged in as a regular user
+      const hasUserProfile = await checkUserProfile(data.user.id);
       
       // Check if there's an expert profile for this user
       const expertProfile = await fetchExpertProfile(data.user.id);

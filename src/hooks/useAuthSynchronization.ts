@@ -63,22 +63,51 @@ export const useAuthSynchronization = () => {
 
   // Set the session type based on what auth contexts are active
   useEffect(() => {
-    if (authCheckCompleted.current && !userAuthLoading && !expertLoading) {
-      if (userIsAuthenticated && currentUser && expert) {
-        setSessionType('dual');
-        setHasDualSessions(true);
-      } else if (userIsAuthenticated && currentUser) {
-        setSessionType('user');
-        setHasDualSessions(false);
-      } else if (expert) {
-        setSessionType('expert');
-        setHasDualSessions(false);
-      } else {
-        setSessionType('none');
-        setHasDualSessions(false);
+    const checkSessionType = async () => {
+      if (!authCheckCompleted.current || userAuthLoading || expertLoading) {
+        return;
       }
-    }
-  }, [userIsAuthenticated, currentUser, expert, userAuthLoading, expertLoading]);
+      
+      try {
+        // Get current session directly from Supabase
+        const { data } = await supabase.auth.getSession();
+        const hasSession = !!data.session;
+        
+        // Most reliable check is having actual profiles, not just auth states
+        if (currentUser && expert && hasSession) {
+          setSessionType('dual');
+          setHasDualSessions(true);
+        } else if (currentUser && hasSession) {
+          setSessionType('user');
+          setHasDualSessions(false);
+        } else if (expert && hasSession) {
+          setSessionType('expert');
+          setHasDualSessions(false);
+        } else {
+          setSessionType('none');
+          setHasDualSessions(false);
+        }
+      } catch (error) {
+        console.error('Error checking session type:', error);
+        // Default to what we know from the contexts if direct check fails
+        if (userIsAuthenticated && currentUser && expert) {
+          setSessionType('dual');
+          setHasDualSessions(true);
+        } else if (userIsAuthenticated && currentUser) {
+          setSessionType('user');
+          setHasDualSessions(false);
+        } else if (expert) {
+          setSessionType('expert');
+          setHasDualSessions(false);
+        } else {
+          setSessionType('none');
+          setHasDualSessions(false);
+        }
+      }
+    };
+    
+    checkSessionType();
+  }, [userIsAuthenticated, currentUser, expert, userAuthLoading, expertLoading, authCheckCompleted]);
 
   // Mark auth check as completed when all loading states resolve
   useEffect(() => {

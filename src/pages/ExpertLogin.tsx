@@ -51,18 +51,23 @@ const ExpertLogin = () => {
         
         if (data.session) {
           // Check if there's a profile in the profiles table
-          const { data: profileData } = await supabase
+          const { data: profileData, error } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', data.session.user.id)
             .single();
             
-          if (profileData) {
+          if (profileData && !error) {
             setUserProfile(profileData as UserProfile);
+          } else {
+            setUserProfile(null);
           }
+        } else {
+          setUserProfile(null);
         }
       } catch (error) {
         console.error('Error checking user login:', error);
+        setUserProfile(null);
       } finally {
         setIsCheckingUser(false);
       }
@@ -79,14 +84,14 @@ const ExpertLogin = () => {
       hasExpertProfile: !!expert,
       isAuthenticated,
       hasUserProfile: !!currentUser,
+      directlyFetchedUserProfile: !!userProfile,
       isSynchronizing,
       redirectAttempted,
       authCheckCompleted,
       hasDualSessions,
-      sessionType,
-      userProfile
+      sessionType
     });
-  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, userProfile]);
+  }, [loading, authInitialized, expert, isAuthenticated, currentUser, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType]);
   
   // Check URL parameters
   useEffect(() => {
@@ -114,7 +119,7 @@ const ExpertLogin = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
     
-    // Check for user profile first
+    // Only check for user profile from direct Supabase check, not from the sync context
     if (userProfile) {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
