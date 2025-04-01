@@ -71,6 +71,14 @@ export const useExpertAuthentication = (
     console.log('Expert auth: Starting login process for', email);
     
     try {
+      // Check if a user is already logged in
+      const userLoggedIn = await isUserLoggedIn();
+      if (userLoggedIn) {
+        console.error('Expert auth: A user is already logged in');
+        toast.error('Please log out as a user before logging in as an expert');
+        return false;
+      }
+      
       // First ensure we're properly logged out to prevent session issues
       await cleanAuthState();
       

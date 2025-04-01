@@ -33,7 +33,8 @@ const ExpertLogin = () => {
     authCheckCompleted,
     hasDualSessions,
     fullLogout,
-    sessionType
+    sessionType,
+    isAuthenticated
   } = useAuthSynchronization();
   
   const navigate = useNavigate();
@@ -57,6 +58,7 @@ const ExpertLogin = () => {
             
           if (profileData && !error) {
             setUserProfile(profileData as UserProfile);
+            console.log('User is already logged in, expert login not allowed');
           } else {
             setUserProfile(null);
           }
@@ -85,9 +87,10 @@ const ExpertLogin = () => {
       redirectAttempted,
       authCheckCompleted,
       hasDualSessions,
-      sessionType
+      sessionType,
+      isUserAuthenticated: isAuthenticated
     });
-  }, [loading, authInitialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType]);
+  }, [loading, authInitialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, isAuthenticated]);
   
   // Check URL parameters
   useEffect(() => {
@@ -122,6 +125,12 @@ const ExpertLogin = () => {
     
     if (!password.trim()) {
       setLoginError('Password is required');
+      return false;
+    }
+    
+    // If user is logged in, don't allow expert login
+    if (userProfile || isAuthenticated) {
+      setLoginError('Please log out as a user before attempting to log in as an expert');
       return false;
     }
     
@@ -246,17 +255,19 @@ const ExpertLogin = () => {
             </div>
           )}
           
-          <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
-            <ExpertLoginHeader />
-            
-            <ExpertLoginTabs
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onLogin={handleLogin}
-              isLoggingIn={isLoggingIn}
-              loginError={loginError}
-            />
-          </div>
+          {!userProfile && !hasDualSessions && (
+            <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
+              <ExpertLoginHeader />
+              
+              <ExpertLoginTabs
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onLogin={handleLogin}
+                isLoggingIn={isLoggingIn}
+                loginError={loginError}
+              />
+            </div>
+          )}
         </div>
       </main>
       <Footer />

@@ -39,14 +39,22 @@ const UserLoginContent = () => {
             .from('expert_accounts')
             .select('*')
             .eq('auth_id', data.session.user.id)
-            .single();
+            .maybeSingle();
             
           if (expertData && !error) {
             setExpertProfile(expertData as ExpertProfile);
+            
+            // If an expert is logged in, we shouldn't show login tabs
+            console.log('Expert is already logged in, user login not allowed');
+          } else {
+            setExpertProfile(null);
           }
+        } else {
+          setExpertProfile(null);
         }
       } catch (error) {
         console.error('Error checking expert login:', error);
+        setExpertProfile(null);
       } finally {
         setIsCheckingExpert(false);
       }
@@ -146,9 +154,9 @@ const UserLoginContent = () => {
             ) : 'Log Out of All Accounts'}
           </Button>
         </div>
-      ) : expertProfile ? (
+      ) : expertProfile || synchronizedExpertProfile ? (
         <UserLogoutAlert 
-          profileName={expertProfile?.name}
+          profileName={expertProfile?.name || synchronizedExpertProfile?.name}
           isLoggingOut={isLoggingOut}
           onLogout={handleExpertLogout}
           logoutType="expert"

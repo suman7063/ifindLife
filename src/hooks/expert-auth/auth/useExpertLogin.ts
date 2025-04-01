@@ -33,6 +33,27 @@ export const useExpertLogin = (
   };
 
   /**
+   * Checks if there's a current active session for a regular user
+   */
+  const isUserLoggedIn = async (): Promise<boolean> => {
+    try {
+      // Check for existing session
+      const { data } = await supabase.auth.getSession();
+      
+      if (!data.session) {
+        return false;
+      }
+      
+      // If there's a session, check if there's a user profile
+      const hasUserProfile = await checkUserProfile(data.session.user.id);
+      return hasUserProfile;
+    } catch (error) {
+      console.error('Error checking for user login:', error);
+      return false;
+    }
+  };
+
+  /**
    * Logs in the expert user
    */
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -46,6 +67,17 @@ export const useExpertLogin = (
       setLoading(true);
       
       console.log('Expert auth: Starting authentication');
+      
+      // First, check if a user is already logged in
+      const userIsLoggedIn = await isUserLoggedIn();
+      if (userIsLoggedIn) {
+        console.error('Expert login: A user is already logged in');
+        toast.error('Please log out as a user before logging in as an expert');
+        return false;
+      }
+      
+      // Clean auth state before proceeding
+      await supabase.auth.signOut({ scope: 'local' });
       
       // Sign in with email and password
       const { data, error } = await supabase.auth.signInWithPassword({

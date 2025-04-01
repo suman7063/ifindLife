@@ -96,18 +96,29 @@ export const useAuthSynchronization = () => {
         const hasUserProfile = !!userProfileData && !userError;
         const hasExpertProfile = !!expertProfileData && !expertError;
         
+        console.log('Session check results:', {
+          hasSession,
+          hasUserProfile,
+          hasExpertProfile,
+          userId: data.session?.user.id
+        });
+        
         // Determine session type based on profile existence
         if (hasUserProfile && hasExpertProfile) {
+          console.log('DUAL SESSION DETECTED - both user and expert profiles exist');
           setSessionType('dual');
           setHasDualSessions(true);
         } else if (hasUserProfile) {
+          console.log('USER SESSION DETECTED - user profile exists');
           setSessionType('user');
           setHasDualSessions(false);
         } else if (hasExpertProfile) {
+          console.log('EXPERT SESSION DETECTED - expert profile exists');
           setSessionType('expert');
           setHasDualSessions(false);
         } else {
           // Has session but no profiles - could be a new signup
+          console.log('UNKNOWN SESSION TYPE - no profiles exist');
           setSessionType('none');
           setHasDualSessions(false);
         }
