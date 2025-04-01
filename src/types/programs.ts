@@ -9,7 +9,7 @@ export interface Program {
   sessions: number;
   price: number;
   image: string;
-  category: string;
+  category: ProgramCategory;
   created_at: string;
   enrollments?: number;
   is_favorite?: boolean;

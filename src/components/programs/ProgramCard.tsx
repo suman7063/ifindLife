@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Program } from '@/types/supabase/tables';
+import { Program } from '@/types/programs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';

@@ -1,6 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Program } from '@/types/supabase/tables';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

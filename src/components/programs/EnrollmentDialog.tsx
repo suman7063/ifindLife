@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Program } from '@/types/supabase/tables';
+import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase';
 import { Button } from '@/components/ui/button';
 import { 

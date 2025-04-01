@@ -43,7 +43,7 @@ const formSchema = z.object({
   sessions: z.coerce.number().min(1, "Must have at least 1 session"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   image: z.string().url("Must be a valid URL"),
-  category: z.enum(['quick-ease', 'resilience-building', 'super-human', 'issue-based'])
+  category: z.enum(['quick-ease', 'resilience-building', 'super-human', 'issue-based'] as const)
 });
 
 const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({ 
@@ -59,7 +59,7 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
       sessions: program.sessions,
       price: program.price,
       image: program.image,
-      category: program.category
+      category: program.category as ProgramCategory
     } : {
       title: "",
       description: "",
