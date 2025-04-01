@@ -203,7 +203,7 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     logout,
     register,
     updateProfile,
-    uploadCertificate,
+    uploadCertificate, // This now matches the correct type signature
     removeCertificate,
     authInitialized,
     fetchExpertProfile,

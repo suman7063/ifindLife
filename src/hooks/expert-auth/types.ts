@@ -25,7 +25,7 @@ export interface ExpertProfile {
 export interface ExpertRegistrationData {
   name: string;
   email: string;
-  phone: string;
+  phone?: string; // Changed from required to optional to match component implementation
   password: string;
   address?: string;
   city?: string;
@@ -50,7 +50,7 @@ export interface UseExpertAuthReturn extends ExpertAuthState {
   logout: () => Promise<boolean>;
   register: (data: ExpertRegistrationData) => Promise<boolean>;
   updateProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
-  uploadCertificate: (certificateUrl: string) => Promise<boolean>;
+  uploadCertificate: (file: File) => Promise<string | null>; // Changed parameter type to File
   removeCertificate: (certificateUrl: string) => Promise<boolean>;
   fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>;
   isUserLoggedIn: () => Promise<boolean>;

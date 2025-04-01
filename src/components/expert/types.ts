@@ -29,11 +29,12 @@ export interface ExpertFormData {
   [key: string]: any; // To allow dynamic property access
 }
 
+// Updated to match the hook interface
 export interface ExpertRegistrationData {
   name: string;
   email: string;
   password: string;
-  phone?: string;
+  phone?: string; // Optional to match the hook version
   address?: string;
   city?: string;
   state?: string;
