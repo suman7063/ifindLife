@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { Program } from '@/types/programs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { UserProfile } from '@/types/supabase';
-import { from, supabase } from '@/lib/supabase';
+import { from } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
@@ -89,7 +90,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
 
   return (
     <>
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer transform scale-90" onClick={handleCardClick}>
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer transform hover:scale-[1.02]" onClick={handleCardClick}>
         <div className="aspect-video relative overflow-hidden">
           <img 
             src={program.image} 
@@ -114,20 +115,20 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="line-clamp-2 text-lg">{program.title}</CardTitle>
-              <CardDescription>
+              <CardDescription className="mt-1">
                 {program.duration} • {program.sessions} sessions
               </CardDescription>
+              <span className="inline-flex items-center px-2.5 py-0.5 mt-2 rounded-full text-xs font-medium bg-ifind-aqua/10 text-ifind-aqua">
+                {program.category === 'quick-ease' && 'QuickEase'}
+                {program.category === 'resilience-building' && 'Resilience Building'}
+                {program.category === 'super-human' && 'Super Human'}
+                {program.category === 'issue-based' && 'Issue-Based'}
+              </span>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground line-clamp-2">{program.description}</p>
-          <span className="inline-flex items-center px-2.5 py-0.5 mt-3 rounded-full text-xs font-medium bg-ifind-aqua/10 text-ifind-aqua">
-            {program.category === 'quick-ease' && 'QuickEase'}
-            {program.category === 'resilience-building' && 'Resilience Building'}
-            {program.category === 'super-human' && 'Super Human'}
-            {program.category === 'issue-based' && 'Issue-Based'}
-          </span>
         </CardContent>
         <CardFooter className="flex justify-between items-center">
           <div className="text-lg font-semibold text-ifind-teal">

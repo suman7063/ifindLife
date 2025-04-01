@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Program } from '@/types/programs';
@@ -12,6 +13,7 @@ import ProgramImageHeader from './dialog/ProgramImageHeader';
 import ProgramMetadata from './dialog/ProgramMetadata';
 import ProgramDescription from './dialog/ProgramDescription';
 import ProgramPriceFooter from './dialog/ProgramPriceFooter';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProgramDetailDialogProps {
   program: Program;
@@ -137,7 +139,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
 
   return (
     <>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-md max-h-[90vh] p-0 gap-0 overflow-hidden">
         <ProgramImageHeader 
           program={program}
           isFavorite={isFavorite}
@@ -145,15 +147,19 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
           onFavoriteToggle={handleFavoriteToggle}
         />
         
-        <div className="py-4">
-          <ProgramMetadata program={program} />
-          <ProgramDescription description={program.description} />
-        </div>
+        <ScrollArea className="max-h-[calc(90vh-200px)]">
+          <div className="p-6">
+            <ProgramMetadata program={program} />
+            <ProgramDescription description={program.description} />
+          </div>
+        </ScrollArea>
         
-        <ProgramPriceFooter 
-          price={program.price} 
-          onEnroll={handleEnroll}
-        />
+        <div className="p-6 pt-0 border-t">
+          <ProgramPriceFooter 
+            price={program.price} 
+            onEnroll={handleEnroll}
+          />
+        </div>
         <DialogComponent />
       </DialogContent>
     </>
