@@ -31,12 +31,13 @@ export interface ExpertAuthState {
 
 export interface UseExpertAuthReturn extends ExpertAuthState {
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<boolean>; // Changed from Promise<void> to Promise<boolean>
+  logout: () => Promise<boolean>;
   register: (expertData: ExpertRegistrationData) => Promise<boolean>;
   updateProfile: (profileData: Partial<ExpertProfile>) => Promise<boolean>;
   uploadCertificate: (file: File) => Promise<string | null>;
   removeCertificate: (certificateUrl: string) => Promise<boolean>;
   fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>;
+  isUserLoggedIn: () => Promise<boolean>;
 }
 
 export interface ExpertRegistrationData {

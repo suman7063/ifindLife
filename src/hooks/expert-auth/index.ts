@@ -54,7 +54,8 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   const { 
     login, 
     logout, 
-    register
+    register,
+    isUserLoggedIn
   } = useExpertAuthentication(setExpert, setLoading, fetchExpertProfile);
   
   const { updateProfile } = useExpertProfile(expert, setExpert, setLoading);
@@ -183,7 +184,8 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     uploadCertificate,
     removeCertificate,
     authInitialized,
-    fetchExpertProfile
+    fetchExpertProfile,
+    isUserLoggedIn
   };
 };
 
