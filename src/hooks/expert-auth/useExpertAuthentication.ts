@@ -90,9 +90,6 @@ export const useExpertAuthentication = (
       if (success) {
         console.log('Expert auth: Successfully authenticated, fetching expert profile');
         // The profile fetch is handled within expertLogin
-        
-        // Force a page reload to clear any lingering state from other sessions
-        window.location.href = '/expert-dashboard';
         return true;
       } else {
         console.error('Expert auth: Authentication failed');

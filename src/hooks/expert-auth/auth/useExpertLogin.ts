@@ -66,7 +66,7 @@ export const useExpertLogin = (
       // Set the expert data
       setExpert(expertProfile);
       
-      toast.success('Login successful');
+      toast.success('Expert login successful');
       return true;
     } catch (error) {
       console.error('Expert login unexpected error:', error);

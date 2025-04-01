@@ -15,25 +15,50 @@ import { useExpertAuth } from '@/hooks/expert-auth';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 
 const ExpertDashboard = () => {
-  const { expert, loading, users } = useDashboardState();
+  const { expert, loading: expertStateLoading, users } = useDashboardState();
   const navigate = useNavigate();
   const { isAuthenticated, currentUser } = useAuthSynchronization();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const { expert: expertAuthProfile, loading: expertAuthLoading } = useExpertAuth();
   
-  // If user is authenticated but not expert, redirect to user dashboard
+  const loading = expertStateLoading || expertAuthLoading;
+  
+  // Debug logging
   useEffect(() => {
-    if (!loading && !expert && isAuthenticated && currentUser && !redirectAttempted) {
-      console.log('User authenticated but not expert, redirecting to user dashboard');
+    console.log('ExpertDashboard - Auth states:', {
+      expertStateLoading,
+      expertAuthLoading,
+      hasExpertStateProfiile: !!expert,
+      hasExpertAuthProfile: !!expertAuthProfile,
+      isAuthenticated,
+      hasUserProfile: !!currentUser,
+      redirectAttempted
+    });
+  }, [expert, expertAuthProfile, expertStateLoading, expertAuthLoading, isAuthenticated, currentUser, redirectAttempted]);
+  
+  // If not authenticated as expert but authenticated as user, redirect to user dashboard
+  useEffect(() => {
+    if (!loading && !expertAuthProfile && isAuthenticated && currentUser && !redirectAttempted) {
+      console.log('User authenticated but no expert profile found, redirecting to user dashboard');
       setRedirectAttempted(true);
       navigate('/user-dashboard');
     }
-  }, [expert, loading, isAuthenticated, currentUser, redirectAttempted, navigate]);
+  }, [expertAuthProfile, loading, isAuthenticated, currentUser, redirectAttempted, navigate]);
+  
+  // If not authenticated at all, redirect to login
+  useEffect(() => {
+    if (!loading && !expertAuthProfile && !isAuthenticated && !currentUser && !redirectAttempted) {
+      console.log('Not authenticated as expert or user, redirecting to expert login');
+      setRedirectAttempted(true);
+      navigate('/expert-login');
+    }
+  }, [expertAuthProfile, loading, isAuthenticated, currentUser, redirectAttempted, navigate]);
   
   if (loading) {
     return <DashboardLoader />;
   }
 
-  if (!expert) {
+  if (!expertAuthProfile) {
     return <UnauthorizedView />;
   }
 

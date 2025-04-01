@@ -145,7 +145,10 @@ const ExpertLogin = () => {
       } else {
         console.log('Expert login successful');
         toast.success('Login successful! Redirecting to dashboard...');
-        // Redirect handled by the login function
+        // Explicitly navigate to expert dashboard rather than relying on login function
+        setTimeout(() => {
+          navigate('/expert-dashboard', { replace: true });
+        }, 500);
       }
       
       return success;

@@ -44,14 +44,37 @@ const UserDashboard = () => {
   // Get expert auth state
   const { expert, loading: expertLoading } = useExpertAuth();
 
+  // Debug logging
+  useEffect(() => {
+    console.log('UserDashboard - Auth states:', {
+      userAuthLoading: authLoading,
+      dashboardLoading,
+      isAuthenticated,
+      hasUserProfile: !!currentUser,
+      hasUser: !!user,
+      expertLoading,
+      hasExpertProfile: !!expert,
+      redirectAttempted
+    });
+  }, [authLoading, dashboardLoading, isAuthenticated, currentUser, user, expert, expertLoading, redirectAttempted]);
+  
   // If expert is authenticated but not user, redirect to expert dashboard
   useEffect(() => {
     if (!dashboardLoading && !authLoading && !expertLoading && expert && !currentUser && !redirectAttempted) {
       console.log('Expert authenticated but not user, redirecting to expert dashboard');
       setRedirectAttempted(true);
-      navigate('/expert-dashboard');
+      navigate('/expert-dashboard', { replace: true });
     }
   }, [expert, currentUser, dashboardLoading, authLoading, expertLoading, redirectAttempted, navigate]);
+
+  // If neither user nor expert is authenticated, redirect to login
+  useEffect(() => {
+    if (!dashboardLoading && !authLoading && !expertLoading && !expert && !currentUser && !user && !redirectAttempted) {
+      console.log('Not authenticated as user or expert, redirecting to user login');
+      setRedirectAttempted(true);
+      navigate('/user-login', { replace: true });
+    }
+  }, [expert, currentUser, user, dashboardLoading, authLoading, expertLoading, redirectAttempted, navigate]);
 
   const handleLogout = async () => {
     await logout();
