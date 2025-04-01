@@ -22,7 +22,12 @@ const ProgramsForWellnessSeekers = () => {
     setSortOption,
     programsByCategory,
     refreshPrograms
-  } = useProgramData(isAuthenticated, currentUser, 'quick-ease');
+  } = useProgramData(isAuthenticated, currentUser);
+
+  // Set default category to 'quick-ease' when component mounts
+  useEffect(() => {
+    setSelectedCategory('quick-ease');
+  }, [setSelectedCategory]);
 
   // Check for any pending actions from session storage (e.g., after login)
   useEffect(() => {

@@ -20,7 +20,12 @@ const ProgramsForBusiness = () => {
     sortOption,
     setSortOption,
     refreshPrograms
-  } = useProgramData(isAuthenticated, currentUser, 'super-human');
+  } = useProgramData(isAuthenticated, currentUser);
+
+  // Set default category to 'super-human' when component mounts
+  useEffect(() => {
+    setSelectedCategory('super-human');
+  }, [setSelectedCategory]);
 
   // Check for any pending actions from session storage (e.g., after login)
   useEffect(() => {

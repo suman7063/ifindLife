@@ -20,7 +20,12 @@ const ProgramsForAcademicInstitutes = () => {
     sortOption,
     setSortOption,
     refreshPrograms
-  } = useProgramData(isAuthenticated, currentUser, 'resilience-building');
+  } = useProgramData(isAuthenticated, currentUser);
+
+  // Set default category to 'resilience-building' when component mounts
+  useEffect(() => {
+    setSelectedCategory('resilience-building');
+  }, [setSelectedCategory]);
 
   // Check for any pending actions from session storage (e.g., after login)
   useEffect(() => {
