@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import UserLoginTabs from '@/components/auth/UserLoginTabs';
@@ -16,7 +16,8 @@ const UserLoginContent = () => {
     setIsLoggingOut,
     authCheckCompleted,
     hasDualSessions,
-    fullLogout
+    fullLogout,
+    sessionType
   } = useAuthSynchronization();
   
   const handleExpertLogout = async (): Promise<boolean> => {
@@ -25,13 +26,12 @@ const UserLoginContent = () => {
       const success = await expertLogout();
       
       if (success) {
-        // Force a full page reload to ensure clean state
-        window.location.href = '/user-login';
+        // Navigation handled by the logout function
         return true;
       } else {
         // Force a page reload as a last resort
         setTimeout(() => {
-          window.location.href = '/user-login';
+          window.location.reload();
         }, 1500);
         return false;
       }
@@ -40,7 +40,7 @@ const UserLoginContent = () => {
       
       // Force a page reload as a last resort
       setTimeout(() => {
-        window.location.href = '/user-login';
+        window.location.reload();
       }, 1500);
       return false;
     } finally {
@@ -54,13 +54,12 @@ const UserLoginContent = () => {
       const success = await fullLogout();
       
       if (success) {
-        // Force a full page reload to ensure clean state
-        window.location.href = '/user-login';
+        // Navigation handled by the logout function
         return true;
       } else {
         // Force a page reload as a last resort
         setTimeout(() => {
-          window.location.href = '/user-login';
+          window.location.reload();
         }, 1500);
         return false;
       }
@@ -69,7 +68,7 @@ const UserLoginContent = () => {
       
       // Force a page reload as a last resort
       setTimeout(() => {
-        window.location.href = '/user-login';
+        window.location.reload();
       }, 1500);
       return false;
     } finally {
@@ -102,11 +101,12 @@ const UserLoginContent = () => {
             ) : 'Log Out of All Accounts'}
           </Button>
         </div>
-      ) : authCheckCompleted && isExpertAuthenticated ? (
+      ) : authCheckCompleted && (sessionType === 'expert' || isExpertAuthenticated) ? (
         <UserLogoutAlert 
           profileName={expertProfile?.name}
           isLoggingOut={isLoggingOut}
           onLogout={handleExpertLogout}
+          logoutType="expert"
         />
       ) : (
         <UserLoginTabs />

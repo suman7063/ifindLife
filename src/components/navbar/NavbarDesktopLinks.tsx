@@ -13,6 +13,8 @@ interface NavbarDesktopLinksProps {
   hasExpertProfile: boolean;
   userLogout: () => Promise<boolean>;
   expertLogout: () => Promise<boolean>;
+  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  isLoggingOut: boolean;
 }
 
 const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
@@ -20,7 +22,9 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   currentUser,
   hasExpertProfile,
   userLogout,
-  expertLogout
+  expertLogout,
+  sessionType,
+  isLoggingOut
 }) => {
   return (
     <div className="hidden md:flex items-center space-x-1">
@@ -39,7 +43,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       <Button variant="ghost">Blog</Button>
       
       {hasExpertProfile ? (
-        <NavbarExpertMenu onLogout={expertLogout} />
+        <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
       ) : (
         <Button variant="ghost" asChild>
           <Link to="/expert-login" className="text-ifind-teal">
@@ -49,7 +53,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       )}
       
       {isAuthenticated ? (
-        <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} />
+        <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
       ) : (
         <Button variant="ghost" asChild>
           <Link to="/user-login" className="text-ifind-teal">

@@ -20,7 +20,8 @@ const Navbar = () => {
     userLogout,
     expertLogout,
     fullLogout,
-    hasDualSessions
+    hasDualSessions,
+    sessionType
   } = useAuthSynchronization();
   const location = useLocation();
 
@@ -38,6 +39,7 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
+  // Handle user logout
   const handleUserLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -48,9 +50,7 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: User logout successful");
-        toast.success('Successfully logged out');
-        // Force page reload to ensure clean state
-        window.location.href = '/';
+        // UI update should be handled by auth state changes
         return true;
       } else {
         console.error("Navbar: User logout failed");
@@ -60,17 +60,13 @@ const Navbar = () => {
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out. Please try again.');
-      
-      // Force reload as a last resort
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
       return false;
     } finally {
       setIsLoggingOut(false);
     }
   };
 
+  // Handle expert logout
   const handleExpertLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -81,10 +77,7 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: Expert logout completed");
-        toast.success('Successfully logged out as expert');
-        
-        // Force page reload to ensure clean state
-        window.location.href = '/';
+        // UI update should be handled by auth state changes
         return true;
       } else {
         console.error("Navbar: Expert logout failed");
@@ -94,45 +87,23 @@ const Navbar = () => {
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.');
-      
-      // Force reload as a last resort
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
       return false;
     } finally {
       setIsLoggingOut(false);
     }
   };
 
+  // Handle full logout (both user and expert)
   const handleFullLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
     try {
       setIsLoggingOut(true);
       console.log("Navbar: Initiating full logout...");
-      const success = await fullLogout();
-      
-      if (success) {
-        console.log("Navbar: Full logout completed");
-        toast.success('Successfully logged out of all accounts');
-        
-        // Force page reload to ensure clean state
-        window.location.href = '/';
-        return true;
-      } else {
-        console.error("Navbar: Full logout failed");
-        toast.error('Failed to log out completely. Please try again.');
-        return false;
-      }
+      return await fullLogout();
     } catch (error) {
       console.error('Error during full logout:', error);
       toast.error('Failed to log out. Please try again.');
-      
-      // Force reload as a last resort
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1500);
       return false;
     } finally {
       setIsLoggingOut(false);
@@ -146,7 +117,7 @@ const Navbar = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Warning: Multiple Sessions</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
-            <span>You are currently logged in as both a user and an expert. Please log out of all accounts to avoid issues.</span>
+            <span>You are currently logged in as both a user and an expert. This may cause authentication issues.</span>
             <Button 
               variant="destructive" 
               onClick={handleFullLogout}
@@ -175,6 +146,8 @@ const Navbar = () => {
             hasExpertProfile={isExpertAuthenticated}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
+            sessionType={sessionType}
+            isLoggingOut={isLoggingOut}
           />
           
           <NavbarMobileMenu 
@@ -183,6 +156,8 @@ const Navbar = () => {
             hasExpertProfile={isExpertAuthenticated}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
+            sessionType={sessionType}
+            isLoggingOut={isLoggingOut}
           />
         </div>
       </div>

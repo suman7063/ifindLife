@@ -13,6 +13,8 @@ interface NavbarMobileMenuProps {
   hasExpertProfile: boolean;
   userLogout: () => Promise<boolean>;
   expertLogout: () => Promise<boolean>;
+  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  isLoggingOut: boolean;
 }
 
 const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({ 
@@ -20,13 +22,18 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
   currentUser, 
   hasExpertProfile,
   userLogout,
-  expertLogout
+  expertLogout,
+  sessionType,
+  isLoggingOut: parentIsLoggingOut
 }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleUserLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoggingOut || parentIsLoggingOut) return;
+    
     setIsLoggingOut(true);
+    setIsOpen(false);
     
     try {
       console.log("NavbarMobileMenu: Initiating user logout...");
@@ -45,8 +52,10 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
   };
 
   const handleExpertLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoggingOut || parentIsLoggingOut) return;
+    
     setIsLoggingOut(true);
+    setIsOpen(false);
     
     try {
       console.log("NavbarMobileMenu: Initiating expert logout...");
@@ -66,7 +75,7 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
 
   return (
     <div className="md:hidden">
-      <Sheet>
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon">
             <Menu className="h-5 w-5" />
@@ -81,16 +90,16 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
           </SheetHeader>
           <div className="grid gap-4 py-4">
             <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/">Home</Link>
+              <Link to="/" onClick={() => setIsOpen(false)}>Home</Link>
             </Button>
             <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/experts">Experts</Link>
+              <Link to="/experts" onClick={() => setIsOpen(false)}>Experts</Link>
             </Button>
             <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/programs">Programs</Link>
+              <Link to="/programs" onClick={() => setIsOpen(false)}>Programs</Link>
             </Button>
             <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/about">About</Link>
+              <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
             </Button>
             <Button variant="ghost" className="justify-start">
               Blog
@@ -99,7 +108,7 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
             {hasExpertProfile ? (
               <>
                 <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/expert-dashboard">
+                  <Link to="/expert-dashboard" onClick={() => setIsOpen(false)}>
                     <BriefcaseBusiness className="h-4 w-4 mr-1" /> Expert Dashboard
                   </Link>
                 </Button>
@@ -107,15 +116,15 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
                   variant="ghost" 
                   className="justify-start text-red-500" 
                   onClick={handleExpertLogout}
-                  disabled={isLoggingOut}
+                  disabled={isLoggingOut || parentIsLoggingOut}
                 >
                   <LogOut className="h-4 w-4 mr-1" /> 
-                  {isLoggingOut ? 'Logging out...' : 'Logout as Expert'}
+                  {isLoggingOut || parentIsLoggingOut ? 'Logging out...' : 'Logout as Expert'}
                 </Button>
               </>
             ) : (
               <Button variant="ghost" className="justify-start" asChild>
-                <Link to="/expert-login">
+                <Link to="/expert-login" onClick={() => setIsOpen(false)}>
                   <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
                 </Link>
               </Button>
@@ -124,12 +133,12 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
             {isAuthenticated ? (
               <>
                 <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/user-dashboard">
+                  <Link to="/user-dashboard" onClick={() => setIsOpen(false)}>
                     <User className="h-4 w-4 mr-1" /> Dashboard
                   </Link>
                 </Button>
                 <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/referrals">
+                  <Link to="/referrals" onClick={() => setIsOpen(false)}>
                     <User className="h-4 w-4 mr-1" /> My Referrals
                   </Link>
                 </Button>
@@ -137,15 +146,15 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
                   variant="ghost" 
                   className="justify-start text-red-500" 
                   onClick={handleUserLogout}
-                  disabled={isLoggingOut}
+                  disabled={isLoggingOut || parentIsLoggingOut}
                 >
                   <LogOut className="h-4 w-4 mr-1" /> 
-                  {isLoggingOut ? 'Logging out...' : 'Logout as User'}
+                  {isLoggingOut || parentIsLoggingOut ? 'Logging out...' : 'Logout as User'}
                 </Button>
               </>
             ) : (
               <Button variant="ghost" className="justify-start" asChild>
-                <Link to="/user-login">
+                <Link to="/user-login" onClick={() => setIsOpen(false)}>
                   <User className="h-4 w-4 mr-1" /> Login
                 </Link>
               </Button>

@@ -11,6 +11,9 @@ import LoadingView from '@/components/expert/auth/LoadingView';
 import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import { supabase } from '@/lib/supabase';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const ExpertLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -28,7 +31,8 @@ const ExpertLogin = () => {
     setIsLoggingOut,
     authCheckCompleted,
     hasDualSessions,
-    fullLogout
+    fullLogout,
+    sessionType
   } = useAuthSynchronization();
   
   const navigate = useNavigate();
@@ -45,9 +49,10 @@ const ExpertLogin = () => {
       isSynchronizing,
       redirectAttempted,
       authCheckCompleted,
-      hasDualSessions
+      hasDualSessions,
+      sessionType
     });
-  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions]);
+  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType]);
   
   // Check URL parameters
   useEffect(() => {
@@ -58,7 +63,7 @@ const ExpertLogin = () => {
     }
   }, [location]);
   
-  // Redirect if authenticated
+  // Redirect if authenticated as expert
   useEffect(() => {
     // Skip if conditions aren't met
     if (!expert || !authInitialized || loading || redirectAttempted) {
@@ -76,7 +81,7 @@ const ExpertLogin = () => {
     if (isLoggingIn) return false;
     
     // Only check for user authentication if auth check is completed
-    if (authCheckCompleted && isAuthenticated) {
+    if (authCheckCompleted && sessionType === 'user') {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
       return false;
@@ -96,13 +101,7 @@ const ExpertLogin = () => {
     setIsLoggingIn(true);
     
     try {
-      // First, ensure we're logged out to prevent dual sessions
       console.log('Expert auth: Starting login process for', email);
-      
-      // Sign out from current session to ensure clean state
-      console.log('Expert auth: Clearing any existing sessions before login');
-      await supabase.auth.signOut({ scope: 'global' });
-      console.log('Expert auth: Previous sessions cleared, proceeding with login');
       
       // Now attempt login
       const success = await login(email, password);
@@ -134,23 +133,30 @@ const ExpertLogin = () => {
       
       if (success) {
         console.log('User logout completed');
-        // Reload the page to ensure clean state
-        window.location.href = '/expert-login';
         return true;
       } else {
         console.error('User logout failed');
-        // Force reload as a fallback
-        setTimeout(() => {
-          window.location.href = '/expert-login';
-        }, 1000);
+        window.location.reload();
         return false;
       }
     } catch (error) {
       console.error('Error during user logout:', error);
-      // Force reload as a fallback
-      setTimeout(() => {
-        window.location.href = '/expert-login';
-      }, 1000);
+      window.location.reload();
+      return false;
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  const handleFullLogout = async () => {
+    setIsLoggingOut(true);
+    
+    try {
+      console.log('Attempting full logout...');
+      await fullLogout();
+      return true;
+    } catch (error) {
+      console.error('Error during full logout:', error);
       return false;
     } finally {
       setIsLoggingOut(false);
@@ -168,12 +174,42 @@ const ExpertLogin = () => {
       <Navbar />
       <main className="flex-1 py-10 flex items-center justify-center bg-stars">
         <div className="container max-w-4xl">
-          {authCheckCompleted && isAuthenticated && (
+          {hasDualSessions && (
+            <div className="mb-6">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Multiple Sessions Detected</AlertTitle>
+                <AlertDescription className="flex flex-col space-y-4">
+                  <p>You are currently logged in as both a user and an expert. This can cause authentication issues.</p>
+                  <Button 
+                    onClick={handleFullLogout} 
+                    variant="destructive" 
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? (
+                      <>
+                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                        Logging Out...
+                      </>
+                    ) : (
+                      <>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Log Out of All Accounts
+                      </>
+                    )}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+          
+          {authCheckCompleted && sessionType === 'user' && !hasDualSessions && (
             <div className="mb-6">
               <UserLogoutAlert
                 profileName={currentUser?.name}
                 isLoggingOut={isLoggingOut}
                 onLogout={handleUserLogout}
+                logoutType="user"
               />
             </div>
           )}
@@ -181,7 +217,7 @@ const ExpertLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <ExpertLoginHeader />
             
-            {(!authCheckCompleted || !isAuthenticated) && (
+            {(!authCheckCompleted || sessionType === 'none' || sessionType === 'expert' || hasDualSessions) && (
               <ExpertLoginTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}

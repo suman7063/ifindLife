@@ -21,9 +21,10 @@ export const useExpertLogout = (
       // First clear the expert state
       setExpert(null);
       
-      // Ensure a complete logout using scope: 'global'
+      // Ensure a complete logout using scope: 'local' to only log out current tab/window
+      // This allows user context to remain logged in if present in another tab
       const { error } = await supabase.auth.signOut({
-        scope: 'global'
+        scope: 'local'
       });
       
       if (error) {
@@ -34,7 +35,7 @@ export const useExpertLogout = (
       
       // Additional cleanup to ensure auth state is fully reset
       try {
-        // Manually clear any lingering session data without accessing protected properties
+        // Manually clear any lingering session data
         // This will clear all Supabase-related items from localStorage
         const storageKeys = Object.keys(localStorage);
         const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
@@ -46,17 +47,11 @@ export const useExpertLogout = (
         console.warn('Error cleaning up local storage:', e);
       }
       
-      toast.success('Logged out successfully');
-      
-      // Force a full page reload to clear any lingering state
-      window.location.href = '/';
+      toast.success('Logged out successfully as expert');
       return true;
     } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Failed to log out');
-      
-      // Force a page reload as a fallback
-      window.location.href = '/';
+      console.error('Expert logout error:', error);
+      toast.error('Failed to log out as expert');
       return false;
     } finally {
       setLoading(false);

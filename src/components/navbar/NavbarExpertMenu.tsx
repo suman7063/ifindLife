@@ -15,14 +15,21 @@ import { toast } from 'sonner';
 
 interface NavbarExpertMenuProps {
   onLogout: () => Promise<boolean>;
+  isLoggingOut: boolean;
 }
 
-const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({ onLogout }) => {
+const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({ 
+  onLogout,
+  isLoggingOut: parentIsLoggingOut
+}) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
-    if (isLoggingOut) return;
+    if (isLoggingOut || parentIsLoggingOut) return;
+    
     setIsLoggingOut(true);
+    setIsOpen(false);
     
     try {
       console.log("NavbarExpertMenu: Initiating expert logout...");
@@ -41,7 +48,7 @@ const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({ onLogout }) => {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="text-ifind-teal">
           <BriefcaseBusiness className="h-4 w-4 mr-1" /> 
@@ -52,11 +59,11 @@ const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({ onLogout }) => {
         <DropdownMenuLabel>Expert Account</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/expert-dashboard" className="w-full cursor-pointer">Dashboard</Link>
+          <Link to="/expert-dashboard" className="w-full cursor-pointer" onClick={() => setIsOpen(false)}>Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
           <LogOut className="h-4 w-4 mr-1" /> 
-          {isLoggingOut ? 'Logging out...' : 'Logout'}
+          {isLoggingOut || parentIsLoggingOut ? 'Logging out...' : 'Logout'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

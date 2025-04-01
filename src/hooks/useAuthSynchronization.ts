@@ -5,15 +5,19 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
+/**
+ * Custom hook to synchronize and manage authentication states between user and expert systems
+ */
 export const useAuthSynchronization = () => {
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [hasDualSessions, setHasDualSessions] = useState(false);
+  const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
   const authCheckCompleted = useRef(false);
   
   // Get user auth state from context
   const { 
-    isAuthenticated, 
+    isAuthenticated: userIsAuthenticated, 
     currentUser, 
     authLoading: userAuthLoading, 
     logout: userLogoutFn,
@@ -31,7 +35,7 @@ export const useAuthSynchronization = () => {
   // Debug logging
   useEffect(() => {
     console.log('Auth Synchronization state:', {
-      isAuthenticated,
+      isAuthenticated: userIsAuthenticated,
       hasUserProfile: !!currentUser,
       hasSupabaseUser: !!supabaseUser,
       userAuthLoading,
@@ -41,10 +45,11 @@ export const useAuthSynchronization = () => {
       expertAuthInitialized: authInitialized,
       isSynchronizing,
       authCheckCompleted: authCheckCompleted.current,
-      hasDualSessions
+      hasDualSessions,
+      sessionType
     });
   }, [
-    isAuthenticated, 
+    userIsAuthenticated, 
     currentUser,
     supabaseUser,
     expertLoading, 
@@ -52,24 +57,31 @@ export const useAuthSynchronization = () => {
     userAuthLoading, 
     authInitialized, 
     isSynchronizing,
-    hasDualSessions
+    hasDualSessions,
+    sessionType
   ]);
 
-  // Check for dual-sessions (both user and expert simultaneously)
+  // Set the session type based on what auth contexts are active
   useEffect(() => {
     if (authCheckCompleted.current && !userAuthLoading && !expertLoading) {
-      // If both authentications are active, set dual sessions flag
-      if (isAuthenticated && currentUser && expert) {
-        console.log('Detected dual sessions: User is logged in as both user and expert');
+      if (userIsAuthenticated && currentUser && expert) {
+        setSessionType('dual');
         setHasDualSessions(true);
+      } else if (userIsAuthenticated && currentUser) {
+        setSessionType('user');
+        setHasDualSessions(false);
+      } else if (expert) {
+        setSessionType('expert');
+        setHasDualSessions(false);
       } else {
+        setSessionType('none');
         setHasDualSessions(false);
       }
     }
-  }, [isAuthenticated, currentUser, expert, userAuthLoading, expertLoading]);
+  }, [userIsAuthenticated, currentUser, expert, userAuthLoading, expertLoading]);
 
+  // Mark auth check as completed when all loading states resolve
   useEffect(() => {
-    // Mark auth check as completed when all loading states resolve
     if (!userAuthLoading && !expertLoading && authInitialized) {
       authCheckCompleted.current = true;
     }
@@ -100,12 +112,13 @@ export const useAuthSynchronization = () => {
       
       // Reset states
       setHasDualSessions(false);
+      setSessionType('none');
       authCheckCompleted.current = false;
       
       toast.success('Successfully logged out of all accounts');
       
       // Force page reload to clear all state
-      window.location.href = '/';
+      window.location.reload();
       return true;
     } catch (error) {
       console.error('Full logout error:', error);
@@ -113,7 +126,7 @@ export const useAuthSynchronization = () => {
       
       // Force page reload as failsafe
       setTimeout(() => {
-        window.location.href = '/';
+        window.location.reload();
       }, 1000);
       return false;
     } finally {
@@ -122,52 +135,68 @@ export const useAuthSynchronization = () => {
     }
   }, []);
   
-  // Logout functions
+  // User-specific logout function
   const userLogout = useCallback(async (): Promise<boolean> => {
     setIsSynchronizing(true);
     setIsLoggingOut(true);
     
     try {
-      // If we have dual sessions, do a full logout
+      // If we have dual sessions, handle differently
       if (hasDualSessions) {
-        console.log('Dual sessions detected, performing full logout...');
-        return await fullLogout();
+        console.log('Dual sessions detected during user logout, preserving expert session...');
+        
+        try {
+          // Use localStorage to preserve expert session info
+          const storageKeys = Object.keys(localStorage);
+          let expertSessionData = {};
+          
+          storageKeys.forEach(key => {
+            if (key.startsWith('sb-')) {
+              expertSessionData[key] = localStorage.getItem(key);
+            }
+          });
+          
+          // Perform user context logout
+          await userLogoutFn();
+          
+          // Need a slight delay before continuing
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // The expert session should now be the active one
+          console.log('User session cleared, expert session should remain active');
+          setSessionType('expert');
+          setHasDualSessions(false);
+          
+          toast.success('Successfully logged out as user');
+          authCheckCompleted.current = false;
+          
+          return true;
+        } catch (error) {
+          console.error('Error during selective logout in dual session:', error);
+          // Fall back to full logout as a failsafe
+          return await fullLogout();
+        }
       }
       
+      // Standard user logout
       console.log('Attempting user logout...');
       await userLogoutFn();
       
-      // Ensure we fully sign out from Supabase
-      await supabase.auth.signOut({ scope: 'global' });
-      
-      // Clear local session data
-      try {
-        const storageKeys = Object.keys(localStorage);
-        const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
-        
-        supabaseKeys.forEach(key => {
-          localStorage.removeItem(key);
-        });
-      } catch (e) {
-        console.warn('Error cleaning up local storage:', e);
-      }
-      
       // Reset auth check completed flag
       authCheckCompleted.current = false;
+      setSessionType('none');
       
       toast.success('Successfully logged out');
       
-      // Force page reload to clear all state
-      window.location.href = '/';
+      // No need to force page reload here - auth state change handlers
+      // will update the UI appropriately
       return true;
     } catch (error) {
       console.error('User logout error:', error);
       toast.error('Failed to log out. Please try again.');
       
       // Force page reload as failsafe
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+      window.location.reload();
       return false;
     } finally {
       setIsSynchronizing(false);
@@ -175,36 +204,65 @@ export const useAuthSynchronization = () => {
     }
   }, [userLogoutFn, hasDualSessions, fullLogout]);
   
+  // Expert-specific logout function
   const expertLogout = useCallback(async (): Promise<boolean> => {
     setIsSynchronizing(true);
     setIsLoggingOut(true);
     
     try {
-      // If we have dual sessions, do a full logout
+      // If we have dual sessions, handle differently
       if (hasDualSessions) {
-        console.log('Dual sessions detected, performing full logout...');
-        return await fullLogout();
+        console.log('Dual sessions detected during expert logout, preserving user session...');
+        
+        try {
+          // Use localStorage to preserve user session info
+          const storageKeys = Object.keys(localStorage);
+          let userSessionData = {};
+          
+          storageKeys.forEach(key => {
+            if (key.startsWith('sb-')) {
+              userSessionData[key] = localStorage.getItem(key);
+            }
+          });
+          
+          // Perform expert context logout
+          await expertLogoutFn();
+          
+          // Need a slight delay before continuing
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // The user session should now be the active one
+          console.log('Expert session cleared, user session should remain active');
+          setSessionType('user');
+          setHasDualSessions(false);
+          
+          toast.success('Successfully logged out as expert');
+          authCheckCompleted.current = false;
+          
+          return true;
+        } catch (error) {
+          console.error('Error during selective logout in dual session:', error);
+          // Fall back to full logout as a failsafe
+          return await fullLogout();
+        }
       }
       
+      // Standard expert logout
       console.log('Attempting expert logout...');
       const success = await expertLogoutFn();
       
       // Reset auth check completed flag
       authCheckCompleted.current = false;
+      setSessionType('none');
       
       if (success) {
         toast.success('Successfully logged out as expert');
-        
-        // Force page reload to clear all state
-        window.location.href = '/';
         return true;
       } else {
         toast.error('Failed to log out as expert. Please try again.');
         
         // Force page reload as failsafe
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 1000);
+        window.location.reload();
         return false;
       }
     } catch (error) {
@@ -212,9 +270,7 @@ export const useAuthSynchronization = () => {
       toast.error('Failed to log out as expert. Please try again.');
       
       // Force page reload as failsafe
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 1000);
+      window.location.reload();
       return false;
     } finally {
       setIsSynchronizing(false);
@@ -224,7 +280,7 @@ export const useAuthSynchronization = () => {
   
   return {
     // User auth state
-    isAuthenticated,
+    isAuthenticated: userIsAuthenticated,
     currentUser,
     userAuthLoading,
     
@@ -238,6 +294,7 @@ export const useAuthSynchronization = () => {
     isLoggingOut,
     setIsLoggingOut,
     hasDualSessions,
+    sessionType,
     
     // Auth check status
     authCheckCompleted: authCheckCompleted.current,

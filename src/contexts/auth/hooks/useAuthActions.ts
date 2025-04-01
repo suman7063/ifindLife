@@ -9,13 +9,35 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
   const [actionLoading, setActionLoading] = useState(false);
   const { login: authLogin, signup: authSignup } = useSupabaseAuth();
 
+  // Clean auth state before login
+  const cleanAuthState = async (): Promise<void> => {
+    console.log('User Auth: Cleaning auth state before login');
+    
+    try {
+      // Sign out from Supabase to clear current session
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Clear any Supabase-related items from localStorage
+      const storageKeys = Object.keys(localStorage);
+      const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
+      
+      supabaseKeys.forEach(key => {
+        localStorage.removeItem(key);
+      });
+      
+      console.log('User Auth: Auth state cleaned successfully');
+    } catch (e) {
+      console.warn('Error cleaning auth state:', e);
+    }
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setActionLoading(true);
       console.log("Attempting login in context with:", email);
       
-      // Ensure we don't have an existing session before login
-      await supabase.auth.signOut({ scope: 'local' });
+      // Clean auth state before login
+      await cleanAuthState();
       
       const success = await authLogin(email, password);
       console.log("Login in context result:", success);
@@ -26,6 +48,9 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
           await fetchProfile();
           console.log("Profile fetched successfully after login");
           toast.success('Login successful');
+          
+          // Redirect to user dashboard
+          window.location.href = '/user-dashboard';
           return true;
         } catch (error) {
           console.error("Profile fetch error:", error);
@@ -58,8 +83,8 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     setActionLoading(true);
     
     try {
-      // Ensure we don't have an existing session before signup
-      await supabase.auth.signOut({ scope: 'local' });
+      // Clean auth state before signup
+      await cleanAuthState();
       
       const success = await authSignup(userData);
       console.log("Context: Signup result:", success);
@@ -97,9 +122,9 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     try {
       console.log("Starting user logout process...");
       
-      // First, ensure we sign out completely from Supabase
+      // First, sign out from Supabase (local scope to not affect other tabs)
       const { error } = await supabase.auth.signOut({
-        scope: 'global' // Sign out from all tabs/windows
+        scope: 'local'
       });
       
       if (error) {
@@ -111,6 +136,8 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       console.log("Supabase signOut completed");
       toast.success('Successfully logged out');
       
+      // Redirect to homepage after logout
+      window.location.href = '/';
       return true;
     } catch (error: any) {
       console.error("Logout error:", error);
