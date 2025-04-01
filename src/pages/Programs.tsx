@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -6,7 +7,7 @@ import ProgramList from '@/components/programs/ProgramList';
 import ProgramFilters from '@/components/programs/ProgramFilters';
 import TrendingPrograms from '@/components/programs/TrendingPrograms';
 import { useUserAuth } from '@/hooks/user-auth';
-import { from, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { Program, ProgramCategory } from '@/types/programs';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,7 +27,7 @@ const Programs = () => {
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await from('programs')
+      const { data, error } = await supabase.from('programs')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -96,40 +97,22 @@ const Programs = () => {
         </div>
         
         <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1">
-              <ProgramFilters 
-                activeCategory={activeCategory}
-                setActiveCategory={setActiveCategory}
-                sortOption={sortOption}
-                setSortOption={setSortOption}
-                categoryOptions={categoryOptions}
-              />
-            </div>
-            
-            <div className="lg:col-span-3">
-              <Tabs defaultValue="all" onValueChange={setActiveCategory} className="mb-8">
-                <TabsList className="mb-4">
-                  {categoryOptions.map(category => (
-                    <TabsTrigger key={category.value} value={category.value}>
-                      {category.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                
-                {categoryOptions.map(category => (
-                  <TabsContent key={category.value} value={category.value}>
-                    <ProgramList 
-                      programs={filteredPrograms} 
-                      isLoading={isLoading}
-                      currentUser={currentUser}
-                      isAuthenticated={isAuthenticated}
-                    />
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </div>
+          <div className="flex flex-col space-y-4 mb-6">
+            <ProgramFilters 
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+              categoryOptions={categoryOptions}
+            />
           </div>
+          
+          <ProgramList 
+            programs={filteredPrograms} 
+            isLoading={isLoading} 
+            currentUser={currentUser}
+            isAuthenticated={isAuthenticated}
+          />
         </div>
       </main>
       <Footer />
