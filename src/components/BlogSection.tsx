@@ -1,41 +1,29 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { sampleBlogPosts } from '@/data/blogData';
 
 const BlogSection = () => {
-  const blogPosts = [
-    {
-      title: "Unlocking the Secrets of Emotional Intelligence",
-      imageUrl: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?q=80&w=2070&auto=format&fit=crop",
-      category: "Mental Health",
-      date: "June 15, 2023",
-      href: "/blog/emotional-intelligence"
-    },
-    {
-      title: "Managing Conflicting Random Thoughts",
-      imageUrl: "https://images.unsplash.com/photo-1562690868-60bbe7293e94?q=80&w=2070&auto=format&fit=crop",
-      category: "Self-Improvement",
-      date: "July 22, 2023",
-      href: "/blog/managing-thoughts"
-    },
-    {
-      title: "Steps to Overcoming Teenage Anger",
-      // Using a completely different reliable image URL
-      imageUrl: "https://images.unsplash.com/photo-1583468982228-19f19164aee2?q=80&w=2068&auto=format&fit=crop",
-      category: "Parenting",
-      date: "August 10, 2023",
-      href: "/blog/teenage-anger"
-    }
-  ];
+  // Get the first 3 blog posts for the homepage
+  const featuredPosts = sampleBlogPosts.slice(0, 3);
 
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-2xl font-bold mb-8">From The Blog</h2>
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-bold">From The Blog</h2>
+          <Button variant="ghost" asChild className="text-ifind-aqua">
+            <Link to="/blog" className="flex items-center">
+              View all posts <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {blogPosts.map((post, index) => (
-            <Link key={index} to={post.href} className="block group">
+          {featuredPosts.map((post) => (
+            <Link key={post.id} to={`/blog/${post.slug}`} className="block group">
               <div className="overflow-hidden rounded-lg shadow-sm">
                 <div className="h-48 overflow-hidden">
                   <img 

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, User, UserPlus, LogOut, BriefcaseBusiness } from "lucide-react";
+import { Menu, User, UserPlus, LogOut, BriefcaseBusiness, BookOpen } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from '@/types/supabase';
@@ -101,8 +101,10 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
             <Button variant="ghost" className="justify-start" asChild>
               <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
             </Button>
-            <Button variant="ghost" className="justify-start">
-              Blog
+            <Button variant="ghost" className="justify-start" asChild>
+              <Link to="/blog" onClick={() => setIsOpen(false)}>
+                <BookOpen className="h-4 w-4 mr-1" /> Blog
+              </Link>
             </Button>
             
             {hasExpertProfile ? (

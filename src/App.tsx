@@ -29,6 +29,8 @@ import BlogEmotionalIntelligence from "./pages/BlogEmotionalIntelligence";
 import BlogManagingThoughts from "./pages/BlogManagingThoughts";
 import BlogTeenageAnger from "./pages/BlogTeenageAnger";
 import UserProfileEdit from './components/user/UserProfileEdit';
+import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 
 function App() {
   return (
@@ -52,6 +54,8 @@ function App() {
       <Route path="/program/:id" element={<ProgramDetail />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/career-guidance" element={<CareerGuidance />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
       <Route path="/blog/emotional-intelligence" element={<BlogEmotionalIntelligence />} />
       <Route path="/blog/managing-thoughts" element={<BlogManagingThoughts />} />
       <Route path="/blog/teenage-anger" element={<BlogTeenageAnger />} />

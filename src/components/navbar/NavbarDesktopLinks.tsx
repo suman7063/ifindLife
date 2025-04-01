@@ -40,7 +40,9 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       <Button variant="ghost" asChild>
         <Link to="/about">About</Link>
       </Button>
-      <Button variant="ghost">Blog</Button>
+      <Button variant="ghost" asChild>
+        <Link to="/blog">Blog</Link>
+      </Button>
       
       {hasExpertProfile ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
