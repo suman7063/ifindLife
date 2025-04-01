@@ -1,4 +1,3 @@
-
 import { Program, ProgramCategory } from '@/types/programs';
 import { from } from '@/lib/supabase';
 
@@ -65,102 +64,126 @@ export const addSamplePrograms = async (programs: Program[]) => {
     });
   }
   
-  // Resilience Building programs
+  // Resilience Building programs for Academic Institutes
   if (existingCounts['resilience-building'] < 5) {
     samplePrograms.push({
-      title: "Bounce Back Stronger",
-      description: "Build emotional resilience with this comprehensive program that teaches coping mechanisms for life's challenges.",
+      title: "Student Counseling Programs",
+      description: "Comprehensive counseling programs designed specifically for students to address academic stress, social challenges, and personal development.",
+      duration: "12 weeks",
+      sessions: 24,
+      price: 5999,
+      image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8c3R1ZGVudHN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
+      category: 'resilience-building',
+      created_at: new Date().toISOString(),
+      enrollments: Math.floor(Math.random() * 50) + 10
+    });
+    
+    samplePrograms.push({
+      title: "Teacher Mental Health Support",
+      description: "Support programs specifically designed to help teachers manage stress, prevent burnout, and maintain their mental wellbeing in challenging educational environments.",
       duration: "8 weeks",
       sessions: 16,
-      price: 4499,
-      image: "https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cmVzaWxpZW5jZXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60",
+      price: 4500,
+      image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8dGVhY2hlcnN8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
       category: 'resilience-building',
       created_at: new Date().toISOString(),
       enrollments: Math.floor(Math.random() * 50) + 10
     });
     
     samplePrograms.push({
-      title: "Emotional Strength Training",
-      description: "Learn to process difficult emotions and develop the strength to face life's challenges with confidence.",
+      title: "Crisis Intervention Resources",
+      description: "Specialized training and resources for educational institutions to handle crisis situations, including mental health emergencies and traumatic events.",
       duration: "6 weeks",
       sessions: 12,
-      price: 3999,
-      image: "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8c3RyZW5ndGh8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
+      price: 4999,
+      image: "https://images.unsplash.com/photo-1573497620053-ea5300f94f21?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8Y3Jpc2lzfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60",
       category: 'resilience-building',
       created_at: new Date().toISOString(),
       enrollments: Math.floor(Math.random() * 50) + 10
     });
     
     samplePrograms.push({
-      title: "Crisis Navigation",
-      description: "Develop skills to handle major life changes and unexpected challenges while maintaining your mental wellness.",
+      title: "Bullying Prevention Strategies",
+      description: "Comprehensive program to implement effective anti-bullying initiatives, foster inclusive environments, and build a culture of respect in academic settings.",
       duration: "10 weeks",
       sessions: 20,
-      price: 5499,
-      image: "https://images.unsplash.com/photo-1590856029826-c7a73142bbf1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Y3Jpc2lzfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60",
+      price: 4199,
+      image: "https://images.unsplash.com/photo-1608354580875-30675e7f1a4e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8YnVsbHlpbmd8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
       category: 'resilience-building',
       created_at: new Date().toISOString(),
       enrollments: Math.floor(Math.random() * 50) + 10
     });
     
     samplePrograms.push({
-      title: "Adaptive Mindset",
-      description: "Cultivate flexibility in thinking and develop the ability to adapt to changing circumstances while staying grounded.",
-      duration: "7 weeks",
-      sessions: 14,
-      price: 4299,
-      image: "https://images.unsplash.com/photo-1569161031678-f19b1f8e52a4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8YWRhcHRhdGlvbnxlbnwwfHwwfHx8MA%3D&auto=format&fit=crop&w=500&q=60",
+      title: "Wellness Workshops for Campus Life",
+      description: "Interactive workshops designed to promote overall wellness, mental health awareness, and positive lifestyle choices throughout campus communities.",
+      duration: "5 weeks",
+      sessions: 10,
+      price: 3499,
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8Y2FtcHVzJTIwbGlmZXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60",
       category: 'resilience-building',
       created_at: new Date().toISOString(),
       enrollments: Math.floor(Math.random() * 50) + 10
     });
   }
   
-  // Super Human programs
+  // Super Human programs for Business
   if (existingCounts['super-human'] < 5) {
     samplePrograms.push({
-      title: "Peak Performance Mindset",
-      description: "Unlock your full potential with advanced cognitive techniques and performance psychology principles.",
+      title: "Employee Wellness Programs",
+      description: "Comprehensive wellness initiatives to boost employee morale, reduce absenteeism, and create a healthier, more productive workplace environment.",
       duration: "12 weeks",
       sessions: 24,
-      price: 6999,
-      image: "https://images.unsplash.com/photo-1551632811-561732d1e306?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cGVyZm9ybWFuY2V8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
+      price: 7499,
+      image: "https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZW1wbG95ZWV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
       category: 'super-human',
       created_at: new Date().toISOString(),
       enrollments: Math.floor(Math.random() * 50) + 10
     });
     
     samplePrograms.push({
-      title: "Mental Mastery Elite",
-      description: "Join our most comprehensive program for those seeking to achieve elite mental performance in all areas of life.",
-      duration: "3 months",
-      sessions: 36,
-      price: 8999,
-      image: "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8bWFzdGVyeXxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60",
-      category: 'super-human',
-      created_at: new Date().toISOString(),
-      enrollments: Math.floor(Math.random() * 50) + 10
-    });
-    
-    samplePrograms.push({
-      title: "Flow State Mastery",
-      description: "Learn how to consistently achieve and maintain the optimal state of flow for extraordinary productivity and creativity.",
+      title: "Leadership Mental Fitness Training",
+      description: "Advanced mental fitness training for executives and team leaders to enhance decision-making, emotional intelligence, and resilience under pressure.",
       duration: "10 weeks",
       sessions: 20,
-      price: 7499,
-      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8Zmxvd3xlbnwwfHwwfHx8MA%3D&auto=format&fit=crop&w=500&q=60",
+      price: 8999,
+      image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8bGVhZGVyc2hpcHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60",
       category: 'super-human',
       created_at: new Date().toISOString(),
       enrollments: Math.floor(Math.random() * 50) + 10
     });
     
     samplePrograms.push({
-      title: "Limitless Potential",
-      description: "Break through mental barriers and discover techniques used by world-class performers to achieve extraordinary results.",
-      duration: "14 weeks",
-      sessions: 28,
-      price: 7999,
-      image: "https://images.unsplash.com/photo-1519834785169-98be25ec3f84?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG90ZW50aWFsfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60",
+      title: "Workplace Stress Management",
+      description: "Evidence-based strategies to identify stress triggers in the workplace and implement effective management techniques for improved organizational health.",
+      duration: "8 weeks",
+      sessions: 16,
+      price: 6999,
+      image: "https://images.unsplash.com/photo-1573497620285-d7f0885fa473?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8c3RyZXNzfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60",
+      category: 'super-human',
+      created_at: new Date().toISOString(),
+      enrollments: Math.floor(Math.random() * 50) + 10
+    });
+    
+    samplePrograms.push({
+      title: "Team Building for Psychological Safety",
+      description: "Specialized program to foster psychological safety within teams, enhancing collaboration, innovation, and open communication in the workplace.",
+      duration: "6 weeks",
+      sessions: 12,
+      price: 5999,
+      image: "https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8dGVhbXdvcmt8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60",
+      category: 'super-human',
+      created_at: new Date().toISOString(),
+      enrollments: Math.floor(Math.random() * 50) + 10
+    });
+    
+    samplePrograms.push({
+      title: "Burnout Prevention Strategies",
+      description: "Proactive approaches to identify and address burnout risks within organizations, creating sustainable work practices and supportive corporate cultures.",
+      duration: "8 weeks",
+      sessions: 16,
+      price: 6499,
+      image: "https://images.unsplash.com/photo-1626197031507-c17099753214?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8YnVybm91dHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60",
       category: 'super-human',
       created_at: new Date().toISOString(),
       enrollments: Math.floor(Math.random() * 50) + 10
