@@ -32,8 +32,12 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
     
     if (isTogglingFavorite) return;
     
-    // Prompt login if not authenticated
+    // Store the program to continue user journey after login
     if (!isAuthenticated) {
+      // Save program ID to session storage for post-login action
+      sessionStorage.setItem('pendingAction', 'favorite');
+      sessionStorage.setItem('pendingProgramId', program.id.toString());
+      
       toast.info("Please log in to save programs to your favorites");
       navigate('/user-login');
       return;
@@ -86,7 +90,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
 
   return (
     <>
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer" onClick={handleCardClick}>
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer transform scale-90" onClick={handleCardClick}>
         <div className="aspect-video relative overflow-hidden">
           <img 
             src={program.image} 
@@ -98,7 +102,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
               isFavorite 
                 ? 'bg-red-100 text-red-500' 
                 : 'bg-white/80 text-gray-500 hover:text-red-500 hover:bg-red-50'
-            } transition-colors`}
+            } transition-colors shadow-md`}
             onClick={handleFavoriteToggle}
             disabled={isTogglingFavorite}
           >
@@ -110,21 +114,21 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="line-clamp-1">{program.title}</CardTitle>
+              <CardTitle className="line-clamp-2 text-lg">{program.title}</CardTitle>
               <CardDescription>
                 {program.duration} • {program.sessions} sessions
               </CardDescription>
             </div>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ifind-aqua/10 text-ifind-aqua">
-              {program.category === 'quick-ease' && 'QuickEase'}
-              {program.category === 'resilience-building' && 'Resilience'}
-              {program.category === 'super-human' && 'Super Human'}
-              {program.category === 'issue-based' && 'Issue-Based'}
-            </span>
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground line-clamp-2">{program.description}</p>
+          <span className="inline-flex items-center px-2.5 py-0.5 mt-3 rounded-full text-xs font-medium bg-ifind-aqua/10 text-ifind-aqua">
+            {program.category === 'quick-ease' && 'QuickEase'}
+            {program.category === 'resilience-building' && 'Resilience Building'}
+            {program.category === 'super-human' && 'Super Human'}
+            {program.category === 'issue-based' && 'Issue-Based'}
+          </span>
         </CardContent>
         <CardFooter className="flex justify-between items-center">
           <div className="text-lg font-semibold text-ifind-teal">

@@ -95,13 +95,15 @@ const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
         toast.success("Successfully enrolled in program!");
         navigate('/user-dashboard');
       } else {
-        // In a real application, redirect to payment gateway
+        // In a real application, this would redirect to payment gateway
         toast.info("Redirecting to payment gateway...");
-        // Simulating gateway payment for this demo
-        setTimeout(() => {
-          toast.success("Payment successful! You are now enrolled.");
-          navigate('/user-dashboard');
-        }, 2000);
+        
+        // Simulate payment gateway redirect
+        // This would be replaced with actual payment gateway integration
+        window.location.href = `/payment-gateway?program=${program.id}&amount=${program.price}`;
+        
+        // This code will not run due to redirect, just here for completeness
+        return;
       }
     } catch (error) {
       console.error('Error enrolling in program:', error);
