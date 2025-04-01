@@ -1,12 +1,5 @@
 
 import React from 'react';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -39,37 +32,31 @@ const ProgramFilters: React.FC<ProgramFiltersProps> = ({
   categoryOptions
 }) => {
   return (
-    <div className="bg-white p-4 rounded-lg border shadow-sm space-y-4">
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <span className="text-sm font-medium">Category:</span>
-          <Select value={activeCategory} onValueChange={setActiveCategory}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Select category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map(category => (
-                <SelectItem key={category.value} value={category.value}>
-                  {category.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        
-        <div className="w-full sm:w-auto flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <span className="text-sm font-medium">Sort by:</span>
-          <Select value={sortOption} onValueChange={setSortOption}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Sort programs" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">Newest First</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-              <SelectItem value="popularity">Most Popular</SelectItem>
-            </SelectContent>
-          </Select>
+    <div className="bg-white p-4 rounded-lg border shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="flex flex-wrap gap-2 w-full justify-center">
+          {categoryOptions.map(category => (
+            <Button
+              key={category.value}
+              variant={activeCategory === category.value ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveCategory(category.value)}
+              className="sm:inline-flex"
+            >
+              {category.label}
+            </Button>
+          ))}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setSortOption(sortOption === 'popularity' ? 'price-low' : 'popularity')}
+            className="ml-auto hidden sm:inline-flex"
+          >
+            <ArrowUpDown className="h-4 w-4 mr-2" />
+            {sortOption === 'popularity' ? 'Most Popular' : 
+             sortOption === 'price-low' ? 'Price: Low to High' : 
+             sortOption === 'price-high' ? 'Price: High to Low' : 'Newest First'}
+          </Button>
         </div>
         
         <div className="w-full sm:hidden">
@@ -138,31 +125,6 @@ const ProgramFilters: React.FC<ProgramFiltersProps> = ({
             </SheetContent>
           </Sheet>
         </div>
-      </div>
-      
-      <div className="flex flex-wrap gap-2">
-        {categoryOptions.map(category => (
-          <Button
-            key={category.value}
-            variant={activeCategory === category.value ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveCategory(category.value)}
-            className="hidden sm:inline-flex"
-          >
-            {category.label}
-          </Button>
-        ))}
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setSortOption(sortOption === 'popularity' ? 'price-low' : 'popularity')}
-          className="ml-auto hidden sm:inline-flex"
-        >
-          <ArrowUpDown className="h-4 w-4 mr-2" />
-          {sortOption === 'popularity' ? 'Most Popular' : 
-           sortOption === 'price-low' ? 'Price: Low to High' : 
-           sortOption === 'price-high' ? 'Price: High to Low' : 'Newest First'}
-        </Button>
       </div>
     </div>
   );

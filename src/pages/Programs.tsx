@@ -32,7 +32,6 @@ const Programs = () => {
       if (programError) throw programError;
       
       // Safely cast the data to ensure type safety
-      // First cast to unknown and then to Program[] to avoid TypeScript errors
       const validProgramData = (programData as unknown) as Program[];
       let programsWithFavorites: Program[] = validProgramData;
 
@@ -142,7 +141,7 @@ const Programs = () => {
     return (
       <>
         <Navbar />
-        <div className="container py-8 flex items-center justify-center min-h-[70vh]">
+        <div className="container mx-auto px-4 sm:px-6 py-8 flex items-center justify-center min-h-[70vh]">
           <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
         </div>
         <Footer />
@@ -153,7 +152,7 @@ const Programs = () => {
   return (
     <>
       <Navbar />
-      <div className="container py-8">
+      <div className="container mx-auto px-4 sm:px-6 py-8">
         <h1 className="text-3xl font-bold mb-8 text-center">Mental Health Programs</h1>
         
         <div className="mb-8">
@@ -181,7 +180,7 @@ const Programs = () => {
                   <ScrollArea className="pb-4">
                     <div className="flex space-x-6 pb-2">
                       {categoryPrograms.map(program => (
-                        <div key={program.id} className="min-w-[300px] w-[300px]">
+                        <div key={program.id} className="min-w-[300px] max-w-[300px]">
                           <ProgramCard 
                             program={program} 
                             currentUser={currentUser}
@@ -197,15 +196,16 @@ const Programs = () => {
           </div>
         ) : (
           // Show grid layout when filtered by category
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredPrograms.length > 0 ? (
               filteredPrograms.map(program => (
-                <ProgramCard 
-                  key={program.id} 
-                  program={program} 
-                  currentUser={currentUser}
-                  isAuthenticated={isAuthenticated}
-                />
+                <div key={program.id} className="w-full">
+                  <ProgramCard 
+                    program={program} 
+                    currentUser={currentUser}
+                    isAuthenticated={isAuthenticated}
+                  />
+                </div>
               ))
             ) : (
               <div className="col-span-full py-12 text-center text-muted-foreground">

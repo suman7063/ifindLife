@@ -90,7 +90,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
 
   return (
     <>
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer transform hover:scale-[1.02]" onClick={handleCardClick}>
+      <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer transform hover:scale-[1.02]" onClick={handleCardClick}>
         <div className="aspect-video relative overflow-hidden">
           <img 
             src={program.image} 
@@ -111,7 +111,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
             />
           </button>
         </div>
-        <CardHeader>
+        <CardHeader className="p-4">
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="line-clamp-2 text-lg">{program.title}</CardTitle>
@@ -129,10 +129,10 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <p className="text-sm text-muted-foreground line-clamp-2">{program.description}</p>
         </CardContent>
-        <CardFooter className="flex justify-between items-center">
+        <CardFooter className="flex justify-between items-center p-4 pt-0">
           <div className="text-lg font-semibold text-ifind-teal">
             ₹{program.price}
           </div>
