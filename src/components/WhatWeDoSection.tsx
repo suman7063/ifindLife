@@ -13,7 +13,7 @@ const WhatWeDoSection = () => {
         "Stress management techniques",
         "Personalized wellness plans"
       ],
-      color: "bg-gray-200",
+      color: "bg-ifind-aqua/10",
       href: "/wellness-seekers"
     },
     {
@@ -25,7 +25,7 @@ const WhatWeDoSection = () => {
         "Bullying prevention strategies",
         "Wellness workshops for campus life"
       ],
-      color: "bg-gray-300",
+      color: "bg-ifind-purple/10",
       href: "/academic-institutes"
     },
     {
@@ -37,13 +37,13 @@ const WhatWeDoSection = () => {
         "Team building for psychological safety",
         "Burnout prevention strategies"
       ],
-      color: "bg-gray-400",
+      color: "bg-ifind-teal/10",
       href: "/business"
     }
   ];
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-16 bg-calm-gradient">
       <div className="container mx-auto px-6 sm:px-12">
         <h2 className="text-2xl font-bold mb-8">What We do</h2>
 
