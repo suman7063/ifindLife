@@ -57,7 +57,7 @@ const Programs = () => {
             isAuthenticated={isAuthenticated}
           />
         ) : (
-          // Show grid layout when filtered by category
+          // Show grid layout with pagination when filtered by category
           <FilteredProgramsGrid 
             filteredPrograms={filteredPrograms}
             currentUser={currentUser}
@@ -66,7 +66,7 @@ const Programs = () => {
           />
         )}
       </div>
-      <div className="mb-24"></div>
+      <div className="mb-36"></div> {/* Increased bottom margin to make room for pagination */}
       <Footer />
     </>
   );
