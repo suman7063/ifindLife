@@ -1,16 +1,21 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { ExpertProfile } from '@/hooks/expert-auth';
 
 const UserLoginContent = () => {
+  const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
+  const [isCheckingExpert, setIsCheckingExpert] = useState(true);
+  
   const { 
     isExpertAuthenticated, 
-    expertProfile,
+    expertProfile: synchronizedExpertProfile,
     expertLogout,
     isLoggingOut,
     setIsLoggingOut,
@@ -20,12 +25,43 @@ const UserLoginContent = () => {
     sessionType
   } = useAuthSynchronization();
   
+  // Check if expert is logged in directly from Supabase
+  useEffect(() => {
+    const checkExpertLogin = async () => {
+      setIsCheckingExpert(true);
+      
+      try {
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session) {
+          // Check if there's a profile in the expert_accounts table
+          const { data: expertData, error } = await supabase
+            .from('expert_accounts')
+            .select('*')
+            .eq('auth_id', data.session.user.id)
+            .single();
+            
+          if (expertData && !error) {
+            setExpertProfile(expertData as ExpertProfile);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking expert login:', error);
+      } finally {
+        setIsCheckingExpert(false);
+      }
+    };
+    
+    checkExpertLogin();
+  }, []);
+  
   const handleExpertLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);
     try {
       const success = await expertLogout();
       
       if (success) {
+        setExpertProfile(null);
         // Navigation handled by the logout function
         return true;
       } else {
@@ -76,6 +112,15 @@ const UserLoginContent = () => {
     }
   };
   
+  // Show loading while checking expert status
+  if (isCheckingExpert) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
+  
   return (
     <>
       {hasDualSessions ? (
@@ -101,7 +146,7 @@ const UserLoginContent = () => {
             ) : 'Log Out of All Accounts'}
           </Button>
         </div>
-      ) : authCheckCompleted && (sessionType === 'expert' || isExpertAuthenticated) ? (
+      ) : expertProfile ? (
         <UserLogoutAlert 
           profileName={expertProfile?.name}
           isLoggingOut={isLoggingOut}

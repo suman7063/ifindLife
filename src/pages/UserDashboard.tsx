@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Separator } from "@/components/ui/separator";
@@ -15,6 +15,7 @@ import ProfileSetupPlaceholder from '@/components/user/dashboard/ProfileSetupPla
 import DashboardStatsGrid from '@/components/user/dashboard/DashboardStatsGrid';
 import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
 import useDashboardState from '@/hooks/user-dashboard/useDashboardState';
+import { useExpertAuth } from '@/hooks/expert-auth';
 
 // Import existing components
 import UserProfileCard from '@/components/user/UserProfileCard';
@@ -23,6 +24,8 @@ import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
 
 const UserDashboard = () => {
   const navigate = useNavigate();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  
   const {
     currentUser,
     isAuthenticated,
@@ -37,12 +40,24 @@ const UserDashboard = () => {
     handlePaymentSuccess,
     handlePaymentCancel
   } = useDashboardState();
+  
+  // Get expert auth state
+  const { expert, loading: expertLoading } = useExpertAuth();
+
+  // If expert is authenticated but not user, redirect to expert dashboard
+  useEffect(() => {
+    if (!dashboardLoading && !authLoading && !expertLoading && expert && !currentUser && !redirectAttempted) {
+      console.log('Expert authenticated but not user, redirecting to expert dashboard');
+      setRedirectAttempted(true);
+      navigate('/expert-dashboard');
+    }
+  }, [expert, currentUser, dashboardLoading, authLoading, expertLoading, redirectAttempted, navigate]);
 
   const handleLogout = async () => {
     await logout();
   };
 
-  if (dashboardLoading) {
+  if (dashboardLoading || expertLoading) {
     return <DashboardLoader />;
   }
 

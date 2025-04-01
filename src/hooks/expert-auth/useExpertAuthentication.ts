@@ -23,6 +23,26 @@ export const useExpertAuthentication = (
   // Registration functionality
   const { register } = useExpertRegistration(setExpert, setLoading);
 
+  // Check if user is logged in
+  const isUserLoggedIn = async (): Promise<boolean> => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return false;
+    
+    // Check if there's a profile in the 'profiles' table for this user
+    try {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', data.session.user.id)
+        .single();
+      
+      return !!profileData && !error;
+    } catch (error) {
+      console.error('Error checking user login status:', error);
+      return false;
+    }
+  };
+
   // Clean the auth state before login to prevent dual sessions
   const cleanAuthState = async (): Promise<void> => {
     console.log('Expert auth: Cleaning auth state before login');
@@ -50,6 +70,15 @@ export const useExpertAuthentication = (
     console.log('Expert auth: Starting login process for', email);
     
     try {
+      // Check if user is logged in
+      const userLoggedIn = await isUserLoggedIn();
+      
+      if (userLoggedIn) {
+        console.log('Expert auth: User is already logged in, cannot proceed with expert login');
+        toast.error('You are currently logged in as a user. Please log out before logging in as an expert.');
+        return false;
+      }
+      
       // First ensure we're properly logged out to prevent session issues
       await cleanAuthState();
       
@@ -86,21 +115,16 @@ export const useExpertAuthentication = (
       setExpert(null);
       
       // Then perform actual logout
-      const success = await expertLogout();
+      await expertLogout();
       
-      if (success) {
-        // After successful logout, force a page reload
-        window.location.href = '/';
-        return true;
-      } else {
-        console.error('Expert auth: Logout failed');
-        return false;
-      }
+      // After successful logout, force a page reload
+      window.location.href = '/expert-login';
+      return true;
     } catch (error) {
       console.error('Expert auth: Logout error:', error);
       return false;
     }
   };
 
-  return { login, logout, register };
+  return { login, logout, register, isUserLoggedIn };
 };

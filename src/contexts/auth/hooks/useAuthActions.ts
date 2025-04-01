@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from 'sonner';
@@ -8,6 +7,26 @@ import { processReferralCode } from '@/utils/referralUtils';
 export const useAuthActions = (fetchProfile: () => Promise<void>) => {
   const [actionLoading, setActionLoading] = useState(false);
   const { login: authLogin, signup: authSignup } = useSupabaseAuth();
+
+  // Check if expert is logged in
+  const isExpertLoggedIn = async (): Promise<boolean> => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return false;
+    
+    // Check if there's a profile in the 'expert_accounts' table for this user
+    try {
+      const { data: expertData, error } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .eq('auth_id', data.session.user.id)
+        .single();
+      
+      return !!expertData && !error;
+    } catch (error) {
+      console.error('Error checking expert login status:', error);
+      return false;
+    }
+  };
 
   // Clean auth state before login
   const cleanAuthState = async (): Promise<void> => {
@@ -35,6 +54,15 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     try {
       setActionLoading(true);
       console.log("Attempting login in context with:", email);
+      
+      // Check if expert is logged in
+      const expertLoggedIn = await isExpertLoggedIn();
+      
+      if (expertLoggedIn) {
+        console.log('User auth: Expert is already logged in, cannot proceed with user login');
+        toast.error('You are currently logged in as an expert. Please log out before logging in as a user.');
+        return false;
+      }
       
       // Clean auth state before login
       await cleanAuthState();
@@ -148,5 +176,5 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     }
   }, []);
 
-  return { login, signup, logout, actionLoading };
+  return { login, signup, logout, actionLoading, isExpertLoggedIn };
 };

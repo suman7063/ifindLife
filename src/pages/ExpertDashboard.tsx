@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import DashboardLayout from '@/components/expert/dashboard/DashboardLayout';
 import DashboardLoader from '@/components/expert/dashboard/DashboardLoader';
@@ -10,9 +10,24 @@ import SettingsTab from '@/components/expert/dashboard/SettingsTab';
 import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import useDashboardState from '@/components/expert/hooks/useDashboardState';
+import { useNavigate } from 'react-router-dom';
+import { useExpertAuth } from '@/hooks/expert-auth';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 
 const ExpertDashboard = () => {
   const { expert, loading, users } = useDashboardState();
+  const navigate = useNavigate();
+  const { isAuthenticated, currentUser } = useAuthSynchronization();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  
+  // If user is authenticated but not expert, redirect to user dashboard
+  useEffect(() => {
+    if (!loading && !expert && isAuthenticated && currentUser && !redirectAttempted) {
+      console.log('User authenticated but not expert, redirecting to user dashboard');
+      setRedirectAttempted(true);
+      navigate('/user-dashboard');
+    }
+  }, [expert, loading, isAuthenticated, currentUser, redirectAttempted, navigate]);
   
   if (loading) {
     return <DashboardLoader />;

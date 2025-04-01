@@ -14,14 +14,17 @@ import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { UserProfile } from '@/types/supabase';
 
 const ExpertLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('login');
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
   
-  const { login, expert, loading, authInitialized } = useExpertAuth();
+  const { login, expert, loading, authInitialized, isUserLoggedIn } = useExpertAuth();
   const { 
     isAuthenticated, 
     currentUser, 
@@ -38,6 +41,36 @@ const ExpertLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
+  // Check if user is logged in
+  useEffect(() => {
+    const checkUserLogin = async () => {
+      setIsCheckingUser(true);
+      
+      try {
+        const { data } = await supabase.auth.getSession();
+        
+        if (data.session) {
+          // Check if there's a profile in the profiles table
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.session.user.id)
+            .single();
+            
+          if (profileData) {
+            setUserProfile(profileData as UserProfile);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking user login:', error);
+      } finally {
+        setIsCheckingUser(false);
+      }
+    };
+    
+    checkUserLogin();
+  }, []);
+  
   // Debug logging
   useEffect(() => {
     console.log('ExpertLogin component - Auth states:', {
@@ -50,9 +83,10 @@ const ExpertLogin = () => {
       redirectAttempted,
       authCheckCompleted,
       hasDualSessions,
-      sessionType
+      sessionType,
+      userProfile
     });
-  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType]);
+  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, userProfile]);
   
   // Check URL parameters
   useEffect(() => {
@@ -80,8 +114,8 @@ const ExpertLogin = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
     
-    // Only check for user authentication if auth check is completed
-    if (authCheckCompleted && sessionType === 'user') {
+    // Check for user profile first
+    if (userProfile) {
       setLoginError('You are logged in as a user. Please log out first.');
       toast.error('Please log out as a user before logging in as an expert');
       return false;
@@ -132,6 +166,7 @@ const ExpertLogin = () => {
       const success = await userLogout();
       
       if (success) {
+        setUserProfile(null);
         console.log('User logout completed');
         return true;
       } else {
@@ -164,7 +199,7 @@ const ExpertLogin = () => {
   };
 
   // Show loading screen when appropriate
-  if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing) {
+  if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing || isCheckingUser) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;
   }
@@ -203,10 +238,10 @@ const ExpertLogin = () => {
             </div>
           )}
           
-          {authCheckCompleted && sessionType === 'user' && !hasDualSessions && (
+          {userProfile && !hasDualSessions && (
             <div className="mb-6">
               <UserLogoutAlert
-                profileName={currentUser?.name}
+                profileName={userProfile.name}
                 isLoggingOut={isLoggingOut}
                 onLogout={handleUserLogout}
                 logoutType="user"
@@ -217,7 +252,7 @@ const ExpertLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <ExpertLoginHeader />
             
-            {(!authCheckCompleted || sessionType === 'none' || sessionType === 'expert' || hasDualSessions) && (
+            {!userProfile && (
               <ExpertLoginTabs
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
