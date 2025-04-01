@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Routes,
@@ -21,6 +22,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import UserReferrals from './pages/UserReferrals';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import Programs from './pages/Programs';
+import ProgramDetail from './pages/ProgramDetail';
 import AboutUs from "./pages/AboutUs";
 import CareerGuidance from "./pages/CareerGuidance";
 import BlogEmotionalIntelligence from "./pages/BlogEmotionalIntelligence";
@@ -47,6 +49,7 @@ function App() {
       <Route path="/referrals" element={<ProtectedRoute><UserReferrals /></ProtectedRoute>} />
       <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
       <Route path="/programs" element={<Programs />} />
+      <Route path="/program/:id" element={<ProgramDetail />} />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/career-guidance" element={<CareerGuidance />} />
       <Route path="/blog/emotional-intelligence" element={<BlogEmotionalIntelligence />} />

@@ -1,40 +1,85 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Link } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ProgramList from '@/components/programs/ProgramList';
+import ProgramFilters from '@/components/programs/ProgramFilters';
+import TrendingPrograms from '@/components/programs/TrendingPrograms';
+import { useUserAuth } from '@/hooks/user-auth';
+import { supabase } from '@/lib/supabase';
+import { Program, ProgramCategory } from '@/types/programs';
+import { useNavigate } from 'react-router-dom';
 
 const Programs = () => {
-  const programs = [
-    {
-      id: 1,
-      title: "Stress Management",
-      description: "Learn effective techniques to manage daily stress and anxiety through our comprehensive program.",
-      duration: "6 weeks",
-      sessions: 12,
-      price: 4999,
-      image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=2070&auto=format&fit=crop"
-    },
-    {
-      id: 2,
-      title: "Mindfulness Meditation",
-      description: "Develop mindfulness skills to stay present and improve your overall mental wellbeing.",
-      duration: "4 weeks",
-      sessions: 8,
-      price: 3499,
-      image: "https://images.unsplash.com/photo-1545389336-cf090694435e?q=80&w=2070&auto=format&fit=crop"
-    },
-    {
-      id: 3,
-      title: "Relationship Counseling",
-      description: "Strengthen your relationships with effective communication and conflict resolution techniques.",
-      duration: "8 weeks",
-      sessions: 16,
-      price: 6999,
-      image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=2069&auto=format&fit=crop"
-    },
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [filteredPrograms, setFilteredPrograms] = useState<Program[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [sortOption, setSortOption] = useState<string>("newest");
+  const { currentUser, isAuthenticated } = useUserAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchPrograms();
+  }, []);
+
+  const fetchPrograms = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('programs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setPrograms(data || []);
+      setFilteredPrograms(data || []);
+    } catch (error) {
+      console.error('Error fetching programs:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    filterPrograms();
+  }, [activeCategory, sortOption, programs]);
+
+  const filterPrograms = () => {
+    let result = [...programs];
+    
+    // Filter by category
+    if (activeCategory !== "all") {
+      result = result.filter(program => program.category === activeCategory);
+    }
+    
+    // Sort programs
+    switch (sortOption) {
+      case "price-low":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "price-high":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "popularity":
+        result.sort((a, b) => (b.enrollments || 0) - (a.enrollments || 0));
+        break;
+      case "newest":
+      default:
+        // Already sorted by created_at in the query
+        break;
+    }
+    
+    setFilteredPrograms(result);
+  };
+
+  const categoryOptions: { value: ProgramCategory | 'all', label: string }[] = [
+    { value: 'all', label: 'All Programs' },
+    { value: 'quick-ease', label: 'QuickEase' },
+    { value: 'resilience-building', label: 'Resilience Building' },
+    { value: 'super-human', label: 'Super Human' },
+    { value: 'issue-based', label: 'Issue-Based Programs' }
   ];
 
   return (
@@ -48,36 +93,44 @@ const Programs = () => {
       </div>
       
       <main className="flex-1 py-10">
+        <div className="container mb-12">
+          <TrendingPrograms programs={programs.filter(p => p.enrollments && p.enrollments > 0).sort((a, b) => (b.enrollments || 0) - (a.enrollments || 0)).slice(0, 6)} />
+        </div>
+        
         <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {programs.map((program) => (
-              <Card key={program.id} className="overflow-hidden transition-all duration-300 hover:shadow-md">
-                <div className="aspect-video relative overflow-hidden">
-                  <img 
-                    src={program.image} 
-                    alt={program.title} 
-                    className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
-                  />
-                </div>
-                <CardHeader>
-                  <CardTitle>{program.title}</CardTitle>
-                  <CardDescription>
-                    {program.duration} • {program.sessions} sessions
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{program.description}</p>
-                </CardContent>
-                <CardFooter className="flex justify-between items-center">
-                  <div className="text-lg font-semibold text-ifind-teal">
-                    ₹{program.price}
-                  </div>
-                  <Button className="bg-ifind-purple hover:bg-ifind-purple/90">
-                    Enroll Now
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
+              <ProgramFilters 
+                activeCategory={activeCategory}
+                setActiveCategory={setActiveCategory}
+                sortOption={sortOption}
+                setSortOption={setSortOption}
+                categoryOptions={categoryOptions}
+              />
+            </div>
+            
+            <div className="lg:col-span-3">
+              <Tabs defaultValue="all" onValueChange={setActiveCategory} className="mb-8">
+                <TabsList className="mb-4">
+                  {categoryOptions.map(category => (
+                    <TabsTrigger key={category.value} value={category.value}>
+                      {category.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {categoryOptions.map(category => (
+                  <TabsContent key={category.value} value={category.value}>
+                    <ProgramList 
+                      programs={filteredPrograms} 
+                      isLoading={isLoading}
+                      currentUser={currentUser}
+                      isAuthenticated={isAuthenticated}
+                    />
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </div>
           </div>
         </div>
       </main>
