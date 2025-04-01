@@ -8,13 +8,13 @@ export const addSamplePrograms = async (programType: ProgramType = 'wellness'): 
   try {
     // Check if programs of the specified type already exist
     const { data, error } = await from('programs')
-      .select('count')
+      .select('id')
       .eq('programType', programType);
       
     if (error) throw error;
     
     // If programs of the specified type already exist, don't add samples
-    if (data && data[0] && data[0].count > 0) {
+    if (data && data.length > 0) {
       return false;
     }
 
