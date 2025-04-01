@@ -47,7 +47,7 @@ const MobileFilterSheet: React.FC<MobileFilterSheetProps> = ({
           </SheetDescription>
         </SheetHeader>
         
-        <div className="py-4">
+        <div className="py-4 overflow-y-auto max-h-[calc(70vh-120px)]">
           <h3 className="font-medium mb-3">Categories</h3>
           <RadioGroup 
             value={activeCategory} 

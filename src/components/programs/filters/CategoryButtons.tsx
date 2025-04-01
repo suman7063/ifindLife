@@ -15,14 +15,14 @@ const CategoryButtons: React.FC<CategoryButtonsProps> = ({
   categoryOptions
 }) => {
   return (
-    <div className="flex flex-wrap gap-2 w-full justify-center">
+    <div className="flex flex-wrap gap-2 mb-2 sm:mb-0">
       {categoryOptions.map(category => (
         <Button
           key={category.value}
           variant={activeCategory === category.value ? "default" : "outline"}
           size="sm"
           onClick={() => setActiveCategory(category.value)}
-          className="sm:inline-flex"
+          className="whitespace-nowrap"
         >
           {category.label}
         </Button>

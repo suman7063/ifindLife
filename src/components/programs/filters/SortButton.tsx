@@ -9,24 +9,35 @@ interface SortButtonProps {
 }
 
 const SortButton: React.FC<SortButtonProps> = ({ sortOption, setSortOption }) => {
-  const getDisplayText = () => {
+  const getNextSortOption = () => {
     switch (sortOption) {
-      case 'popularity': return 'Most Popular';
-      case 'price-low': return 'Price: Low to High';
-      case 'price-high': return 'Price: High to Low';
-      default: return 'Newest First';
+      case 'newest': return 'popularity';
+      case 'popularity': return 'price-low';
+      case 'price-low': return 'price-high';
+      case 'price-high': return 'newest';
+      default: return 'newest';
     }
   };
 
-  const toggleSort = () => {
-    setSortOption(sortOption === 'popularity' ? 'price-low' : 'popularity');
+  const getDisplayText = () => {
+    switch (sortOption) {
+      case 'newest': return 'Newest First';
+      case 'popularity': return 'Most Popular';
+      case 'price-low': return 'Price: Low to High';
+      case 'price-high': return 'Price: High to Low';
+      default: return 'Sort By';
+    }
+  };
+
+  const handleSort = () => {
+    setSortOption(getNextSortOption());
   };
 
   return (
     <Button 
       variant="outline" 
       size="sm" 
-      onClick={toggleSort}
+      onClick={handleSort}
       className="ml-auto hidden sm:inline-flex"
     >
       <ArrowUpDown className="h-4 w-4 mr-2" />

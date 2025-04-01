@@ -22,27 +22,28 @@ const ProgramFilters: React.FC<ProgramFiltersProps> = ({
 }) => {
   return (
     <div className="bg-white p-4 rounded-lg border shadow-sm">
-      <div className="flex flex-col sm:flex-row items-center gap-3">
-        <div className="flex flex-wrap gap-2 w-full justify-center">
-          <CategoryButtons 
-            activeCategory={activeCategory} 
-            setActiveCategory={setActiveCategory}
-            categoryOptions={categoryOptions}
-          />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <CategoryButtons 
+          activeCategory={activeCategory} 
+          setActiveCategory={setActiveCategory}
+          categoryOptions={categoryOptions}
+        />
+        
+        <div className="w-full sm:w-auto flex">
           <SortButton 
             sortOption={sortOption} 
             setSortOption={setSortOption} 
           />
-        </div>
-        
-        <div className="w-full sm:hidden">
-          <MobileFilterSheet 
-            activeCategory={activeCategory}
-            setActiveCategory={setActiveCategory}
-            sortOption={sortOption}
-            setSortOption={setSortOption}
-            categoryOptions={categoryOptions}
-          />
+          
+          <div className="w-full sm:hidden">
+            <MobileFilterSheet 
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+              sortOption={sortOption}
+              setSortOption={setSortOption}
+              categoryOptions={categoryOptions}
+            />
+          </div>
         </div>
       </div>
     </div>
