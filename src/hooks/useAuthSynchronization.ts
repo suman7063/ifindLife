@@ -73,17 +73,41 @@ export const useAuthSynchronization = () => {
         const { data } = await supabase.auth.getSession();
         const hasSession = !!data.session;
         
-        // Most reliable check is having actual profiles, not just auth states
-        if (currentUser && expert && hasSession) {
+        if (!hasSession) {
+          setSessionType('none');
+          setHasDualSessions(false);
+          return;
+        }
+        
+        // Check if the current user has a profile in profiles table (regular user)
+        const { data: userProfileData, error: userError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.session.user.id)
+          .maybeSingle();
+        
+        // Check if the current user has a profile in expert_accounts table
+        const { data: expertProfileData, error: expertError } = await supabase
+          .from('expert_accounts')
+          .select('*')
+          .eq('auth_id', data.session.user.id)
+          .maybeSingle();
+        
+        const hasUserProfile = !!userProfileData && !userError;
+        const hasExpertProfile = !!expertProfileData && !expertError;
+        
+        // Determine session type based on profile existence
+        if (hasUserProfile && hasExpertProfile) {
           setSessionType('dual');
           setHasDualSessions(true);
-        } else if (currentUser && hasSession) {
+        } else if (hasUserProfile) {
           setSessionType('user');
           setHasDualSessions(false);
-        } else if (expert && hasSession) {
+        } else if (hasExpertProfile) {
           setSessionType('expert');
           setHasDualSessions(false);
         } else {
+          // Has session but no profiles - could be a new signup
           setSessionType('none');
           setHasDualSessions(false);
         }
@@ -175,16 +199,6 @@ export const useAuthSynchronization = () => {
         console.log('Dual sessions detected during user logout, preserving expert session...');
         
         try {
-          // Use localStorage to preserve expert session info
-          const storageKeys = Object.keys(localStorage);
-          let expertSessionData = {};
-          
-          storageKeys.forEach(key => {
-            if (key.startsWith('sb-')) {
-              expertSessionData[key] = localStorage.getItem(key);
-            }
-          });
-          
           // Perform user context logout
           await userLogoutFn();
           
@@ -244,16 +258,6 @@ export const useAuthSynchronization = () => {
         console.log('Dual sessions detected during expert logout, preserving user session...');
         
         try {
-          // Use localStorage to preserve user session info
-          const storageKeys = Object.keys(localStorage);
-          let userSessionData = {};
-          
-          storageKeys.forEach(key => {
-            if (key.startsWith('sb-')) {
-              userSessionData[key] = localStorage.getItem(key);
-            }
-          });
-          
           // Perform expert context logout
           await expertLogoutFn();
           

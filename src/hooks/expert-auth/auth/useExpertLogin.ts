@@ -67,9 +67,6 @@ export const useExpertLogin = (
       
       console.log('Expert auth: Successfully authenticated, fetching expert profile');
       
-      // Check if the user is already logged in as a regular user
-      const hasUserProfile = await checkUserProfile(data.user.id);
-      
       // Check if there's an expert profile for this user
       const expertProfile = await fetchExpertProfile(data.user.id);
       

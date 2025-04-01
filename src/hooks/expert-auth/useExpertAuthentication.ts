@@ -25,17 +25,18 @@ export const useExpertAuthentication = (
 
   // Check if user is logged in
   const isUserLoggedIn = async (): Promise<boolean> => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) return false;
-    
-    // Check if there's a profile in the 'profiles' table for this user
     try {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return false;
+      
+      // Check if there's a profile in the 'profiles' table for this user
       const { data: profileData, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', data.session.user.id)
         .single();
       
+      // If there's no error and we have profile data, the user is logged in
       return !!profileData && !error;
     } catch (error) {
       console.error('Error checking user login status:', error);
@@ -70,15 +71,6 @@ export const useExpertAuthentication = (
     console.log('Expert auth: Starting login process for', email);
     
     try {
-      // Check if user is logged in
-      const userLoggedIn = await isUserLoggedIn();
-      
-      if (userLoggedIn) {
-        console.log('Expert auth: User is already logged in, cannot proceed with expert login');
-        toast.error('You are currently logged in as a user. Please log out before logging in as an expert.');
-        return false;
-      }
-      
       // First ensure we're properly logged out to prevent session issues
       await cleanAuthState();
       
@@ -93,7 +85,6 @@ export const useExpertAuthentication = (
         return true;
       } else {
         console.error('Expert auth: Authentication failed');
-        toast.error('Login failed. Please check your credentials and try again.');
         return false;
       }
     } catch (error) {

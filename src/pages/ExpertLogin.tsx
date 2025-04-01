@@ -24,10 +24,8 @@ const ExpertLogin = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
   
-  const { login, expert, loading, authInitialized, isUserLoggedIn } = useExpertAuth();
+  const { login, expert, loading, authInitialized } = useExpertAuth();
   const { 
-    isAuthenticated, 
-    currentUser, 
     isSynchronizing, 
     userLogout, 
     isLoggingOut, 
@@ -55,7 +53,7 @@ const ExpertLogin = () => {
             .from('profiles')
             .select('*')
             .eq('id', data.session.user.id)
-            .single();
+            .maybeSingle();
             
           if (profileData && !error) {
             setUserProfile(profileData as UserProfile);
@@ -82,8 +80,6 @@ const ExpertLogin = () => {
       expertLoading: loading,
       expertAuthInitialized: authInitialized,
       hasExpertProfile: !!expert,
-      isAuthenticated,
-      hasUserProfile: !!currentUser,
       directlyFetchedUserProfile: !!userProfile,
       isSynchronizing,
       redirectAttempted,
@@ -91,7 +87,7 @@ const ExpertLogin = () => {
       hasDualSessions,
       sessionType
     });
-  }, [loading, authInitialized, expert, isAuthenticated, currentUser, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType]);
+  }, [loading, authInitialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType]);
   
   // Check URL parameters
   useEffect(() => {
@@ -118,13 +114,6 @@ const ExpertLogin = () => {
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
-    
-    // Only check for user profile from direct Supabase check, not from the sync context
-    if (userProfile) {
-      setLoginError('You are logged in as a user. Please log out first.');
-      toast.error('Please log out as a user before logging in as an expert');
-      return false;
-    }
     
     if (!email.trim()) {
       setLoginError('Email is required');
@@ -260,15 +249,13 @@ const ExpertLogin = () => {
           <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
             <ExpertLoginHeader />
             
-            {!userProfile && (
-              <ExpertLoginTabs
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                onLogin={handleLogin}
-                isLoggingIn={isLoggingIn}
-                loginError={loginError}
-              />
-            )}
+            <ExpertLoginTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onLogin={handleLogin}
+              isLoggingIn={isLoggingIn}
+              loginError={loginError}
+            />
           </div>
         </div>
       </main>
