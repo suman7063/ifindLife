@@ -31,7 +31,9 @@ const Programs = () => {
 
       if (programError) throw programError;
       
-      let programsWithFavorites: Program[] = programData as Program[];
+      // TypeScript assertion to ensure we have valid program data
+      const validProgramData = programData as Program[];
+      let programsWithFavorites: Program[] = validProgramData;
 
       // If user is authenticated, fetch favorites
       if (isAuthenticated && currentUser) {
@@ -41,9 +43,12 @@ const Programs = () => {
 
         if (favoritesError) throw favoritesError;
 
+        // Ensure we have valid favorites data
+        const validFavoritesData = favoritesData as { program_id: number }[];
+
         // Convert favorites data to a Set for faster lookups
         const favoriteProgramIds = new Set(
-          favoritesData.map(favorite => favorite.program_id)
+          validFavoritesData.map(favorite => favorite.program_id)
         );
 
         // Mark programs as favorites
