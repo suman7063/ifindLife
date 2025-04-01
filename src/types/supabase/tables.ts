@@ -111,6 +111,34 @@ export interface CustomTable {
     created_at?: string;
     completed_at?: string;
   };
+  programs: {
+    id: number;
+    title: string;
+    description: string;
+    duration: string;
+    sessions: number;
+    price: number;
+    image: string;
+    category: string;
+    created_at: string;
+    enrollments?: number;
+  };
+  user_favorite_programs: {
+    id: string;
+    user_id: string;
+    program_id: number;
+    created_at: string;
+  };
+  program_enrollments: {
+    id: string;
+    program_id: number;
+    user_id: string;
+    enrollment_date: string;
+    payment_status: string;
+    payment_method: string;
+    amount_paid: number;
+    transaction_id?: string;
+  };
 }
 
 // Direct type definitions from database tables

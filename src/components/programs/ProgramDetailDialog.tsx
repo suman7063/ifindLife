@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase';
@@ -8,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Clock, Users, Calendar, CheckCircle, Loader2, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { from, supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import EnrollmentDialog from './EnrollmentDialog';
 import { useDialog } from '@/hooks/useDialog';
@@ -44,8 +43,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
     try {
       if (isFavorite) {
         // Remove from favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
+        const { error } = await from('user_favorite_programs')
           .delete()
           .eq('user_id', currentUser?.id)
           .eq('program_id', program.id);
@@ -55,8 +53,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
         toast.success('Removed from favorites');
       } else {
         // Add to favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
+        const { error } = await from('user_favorite_programs')
           .insert({
             user_id: currentUser?.id,
             program_id: program.id

@@ -1,11 +1,10 @@
-
 import React, { useState } from 'react';
 import { Program } from '@/types/programs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { UserProfile } from '@/types/supabase';
-import { supabase } from '@/lib/supabase';
+import { from, supabase } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
@@ -44,8 +43,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
     try {
       if (isFavorite) {
         // Remove from favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
+        const { error } = await from('user_favorite_programs')
           .delete()
           .eq('user_id', currentUser?.id)
           .eq('program_id', program.id);
@@ -55,8 +53,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
         toast.success('Removed from favorites');
       } else {
         // Add to favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
+        const { error } = await from('user_favorite_programs')
           .insert({
             user_id: currentUser?.id,
             program_id: program.id

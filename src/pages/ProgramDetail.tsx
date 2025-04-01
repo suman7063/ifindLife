@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { supabase } from '@/lib/supabase';
+import { from, supabase } from '@/lib/supabase';
 import { Program } from '@/types/programs';
 import { useUserAuth } from '@/hooks/user-auth';
 import { 
@@ -40,8 +39,7 @@ const ProgramDetail = () => {
   const fetchProgram = async (programId: number) => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('programs')
+      const { data, error } = await from('programs')
         .select('*')
         .eq('id', programId)
         .single();
@@ -52,8 +50,7 @@ const ProgramDetail = () => {
       
       // Check if program is in user's favorites
       if (isAuthenticated && currentUser) {
-        const { data: favoriteData, error: favoriteError } = await supabase
-          .from('user_favorite_programs')
+        const { data: favoriteData, error: favoriteError } = await from('user_favorite_programs')
           .select('*')
           .eq('user_id', currentUser.id)
           .eq('program_id', programId)
@@ -87,8 +84,7 @@ const ProgramDetail = () => {
     try {
       if (isFavorite) {
         // Remove from favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
+        const { error } = await from('user_favorite_programs')
           .delete()
           .eq('user_id', currentUser?.id)
           .eq('program_id', program?.id);
@@ -98,8 +94,7 @@ const ProgramDetail = () => {
         toast.success('Removed from favorites');
       } else {
         // Add to favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
+        const { error } = await from('user_favorite_programs')
           .insert({
             user_id: currentUser?.id,
             program_id: program?.id

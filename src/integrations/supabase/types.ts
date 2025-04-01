@@ -472,6 +472,86 @@ export type Database = {
         }
         Relationships: []
       }
+      program_enrollments: {
+        Row: {
+          amount_paid: number
+          enrollment_date: string
+          id: string
+          payment_method: string
+          payment_status: string
+          program_id: number
+          transaction_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount_paid: number
+          enrollment_date?: string
+          id?: string
+          payment_method: string
+          payment_status: string
+          program_id: number
+          transaction_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount_paid?: number
+          enrollment_date?: string
+          id?: string
+          payment_method?: string
+          payment_status?: string
+          program_id?: number
+          transaction_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_enrollments_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          duration: string
+          enrollments: number | null
+          id: number
+          image: string
+          price: number
+          sessions: number
+          title: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          duration: string
+          enrollments?: number | null
+          id?: number
+          image: string
+          price: number
+          sessions: number
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          duration?: string
+          enrollments?: number | null
+          id?: number
+          image?: string
+          price?: number
+          sessions?: number
+          title?: string
+        }
+        Relationships: []
+      }
       referral_settings: {
         Row: {
           active: boolean
@@ -631,6 +711,35 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_favorite_programs: {
+        Row: {
+          created_at: string
+          id: string
+          program_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          program_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          program_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_favorite_programs_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
             referencedColumns: ["id"]
           },
         ]
@@ -854,6 +963,12 @@ export type Database = {
           p_referral_id: string
         }
         Returns: boolean
+      }
+      increment_program_enrollments: {
+        Args: {
+          program_id: number
+        }
+        Returns: undefined
       }
     }
     Enums: {

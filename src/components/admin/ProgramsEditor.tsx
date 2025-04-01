@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -16,7 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/lib/supabase';
+import { from, supabase } from '@/lib/supabase';
 import { Program, ProgramCategory } from '@/types/programs';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
@@ -35,8 +34,7 @@ const ProgramsEditor = () => {
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('programs')
+      const { data, error } = await from('programs')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -71,8 +69,7 @@ const ProgramsEditor = () => {
     try {
       if (programData.id) {
         // Update existing program
-        const { error } = await supabase
-          .from('programs')
+        const { error } = await from('programs')
           .update({
             title: programData.title,
             description: programData.description,
@@ -89,8 +86,7 @@ const ProgramsEditor = () => {
         toast.success('Program updated successfully');
       } else {
         // Create new program
-        const { error } = await supabase
-          .from('programs')
+        const { error } = await from('programs')
           .insert({
             title: programData.title,
             description: programData.description,
@@ -121,8 +117,7 @@ const ProgramsEditor = () => {
     }
     
     try {
-      const { error } = await supabase
-        .from('programs')
+      const { error } = await from('programs')
         .delete()
         .eq('id', programId);
         

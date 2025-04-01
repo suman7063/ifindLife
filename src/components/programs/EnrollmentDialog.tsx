@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase';
@@ -18,7 +17,7 @@ import {
   Wallet 
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { from, supabase } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
@@ -50,8 +49,7 @@ const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
         }
         
         // Create enrollment
-        const { error: enrollmentError } = await supabase
-          .from('program_enrollments')
+        const { error: enrollmentError } = await from('program_enrollments')
           .insert({
             program_id: program.id,
             user_id: currentUser.id,
@@ -64,8 +62,7 @@ const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
         if (enrollmentError) throw enrollmentError;
         
         // Update wallet balance
-        const { error: walletError } = await supabase
-          .from('profiles')
+        const { error: walletError } = await from('profiles')
           .update({
             wallet_balance: (currentUser.walletBalance || 0) - program.price
           })
@@ -74,8 +71,7 @@ const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
         if (walletError) throw walletError;
         
         // Create transaction record
-        const { error: transactionError } = await supabase
-          .from('user_transactions')
+        const { error: transactionError } = await from('user_transactions')
           .insert({
             user_id: currentUser.id,
             date: new Date().toISOString(),

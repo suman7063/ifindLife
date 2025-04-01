@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -7,7 +6,7 @@ import ProgramList from '@/components/programs/ProgramList';
 import ProgramFilters from '@/components/programs/ProgramFilters';
 import TrendingPrograms from '@/components/programs/TrendingPrograms';
 import { useUserAuth } from '@/hooks/user-auth';
-import { supabase } from '@/lib/supabase';
+import { from, supabase } from '@/lib/supabase';
 import { Program, ProgramCategory } from '@/types/programs';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,8 +26,7 @@ const Programs = () => {
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('programs')
+      const { data, error } = await from('programs')
         .select('*')
         .order('created_at', { ascending: false });
 
