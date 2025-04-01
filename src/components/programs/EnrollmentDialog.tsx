@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Program } from '@/types/programs';
+import { Program } from '@/types/supabase/tables';
 import { UserProfile } from '@/types/supabase';
 import { Button } from '@/components/ui/button';
 import { 
@@ -62,7 +63,8 @@ const EnrollmentDialog: React.FC<EnrollmentDialogProps> = ({
         if (enrollmentError) throw enrollmentError;
         
         // Update wallet balance
-        const { error: walletError } = await from('profiles')
+        const { error: walletError } = await supabase
+          .from('profiles')
           .update({
             wallet_balance: (currentUser.walletBalance || 0) - program.price
           })

@@ -139,6 +139,19 @@ export interface CustomTable {
     amount_paid: number;
     transaction_id?: string;
   };
+  profiles: {
+    id: string;
+    name?: string;
+    email?: string;
+    phone?: string;
+    country?: string;
+    city?: string;
+    currency?: string;
+    profile_picture?: string;
+    wallet_balance?: number;
+    created_at?: string;
+    updated_at?: string;
+  };
 }
 
 // Direct type definitions from database tables
@@ -146,3 +159,7 @@ export type Expert = CustomTable['experts'];
 export type User = CustomTable['users'];
 export type UserTransaction = CustomTable['user_transactions'];
 export type ReferralSettings = CustomTable['referral_settings'];
+export type Program = CustomTable['programs'];
+export type UserFavoriteProgram = CustomTable['user_favorite_programs'];
+export type ProgramEnrollment = CustomTable['program_enrollments'];
+export type Profile = CustomTable['profiles'];

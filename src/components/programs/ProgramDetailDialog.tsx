@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { Program } from '@/types/programs';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Program } from '@/types/supabase/tables';
 import { UserProfile } from '@/types/supabase';
 import { Button } from '@/components/ui/button';
-import { DialogTitle, DialogDescription, DialogFooter, DialogHeader } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Users, Calendar, CheckCircle, Loader2, Heart } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { Separator } from '@/components/ui/separator';
+import { Calendar, Clock, Heart, Loader2, CheckCircle, Users } from 'lucide-react';
 import { from, supabase } from '@/lib/supabase';
-import { format } from 'date-fns';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import EnrollmentDialog from './EnrollmentDialog';
 import { useDialog } from '@/hooks/useDialog';
 
@@ -16,17 +16,46 @@ interface ProgramDetailDialogProps {
   program: Program;
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
+  onClose?: () => void;
 }
 
-const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({ 
-  program, 
+const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
+  program,
   currentUser,
-  isAuthenticated
+  isAuthenticated,
+  onClose
 }) => {
-  const [isFavorite, setIsFavorite] = useState(program.is_favorite || false);
+  const [isFavorite, setIsFavorite] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { showDialog, DialogComponent } = useDialog();
+
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      checkFavoriteStatus();
+    } else {
+      setLoading(false);
+    }
+  }, [isAuthenticated, currentUser, program.id]);
+
+  const checkFavoriteStatus = async () => {
+    try {
+      const { data, error } = await from('user_favorite_programs')
+        .select('*')
+        .eq('user_id', currentUser?.id)
+        .eq('program_id', program.id)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      setIsFavorite(!!data);
+    } catch (error) {
+      console.error('Error checking favorite status:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFavoriteToggle = async () => {
     if (isTogglingFavorite) return;
@@ -87,6 +116,26 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
       />
     );
   };
+
+  const handleViewFullDetails = () => {
+    if (!isAuthenticated) {
+      toast.info("Please log in to view full details");
+      navigate('/user-login');
+      return;
+    }
+    
+    navigate(`/program/${program.id}`);
+  };
+
+  if (loading) {
+    return (
+      <Dialog open>
+        <DialogContent>
+          <Loader2 className="h-10 w-10 animate-spin" />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>

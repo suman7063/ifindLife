@@ -7,8 +7,9 @@ import ProgramList from '@/components/programs/ProgramList';
 import ProgramFilters from '@/components/programs/ProgramFilters';
 import TrendingPrograms from '@/components/programs/TrendingPrograms';
 import { useUserAuth } from '@/hooks/user-auth';
-import { supabase } from '@/lib/supabase';
-import { Program, ProgramCategory } from '@/types/programs';
+import { from, supabase } from '@/lib/supabase';
+import { Program } from '@/types/supabase/tables';
+import { ProgramCategory } from '@/types/programs';
 import { useNavigate } from 'react-router-dom';
 
 const Programs = () => {
@@ -27,13 +28,17 @@ const Programs = () => {
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.from('programs')
+      const { data, error } = await from('programs')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPrograms(data || []);
-      setFilteredPrograms(data || []);
+      if (data) {
+        // Cast the data to match our Program type
+        const typedData = data as unknown as Program[];
+        setPrograms(typedData);
+        setFilteredPrograms(typedData);
+      }
     } catch (error) {
       console.error('Error fetching programs:', error);
     } finally {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -16,7 +17,8 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { from, supabase } from '@/lib/supabase';
-import { Program, ProgramCategory } from '@/types/programs';
+import { Program } from '@/types/supabase/tables';
+import { ProgramCategory } from '@/types/programs';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
 import ProgramFormDialog from './ProgramFormDialog';
@@ -39,7 +41,9 @@ const ProgramsEditor = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPrograms(data || []);
+      if (data) {
+        setPrograms(data as unknown as Program[]);
+      }
     } catch (error) {
       console.error('Error fetching programs:', error);
       toast.error('Failed to load programs');

@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { from, supabase } from '@/lib/supabase';
-import { Program } from '@/types/programs';
+import { Program } from '@/types/supabase/tables';
 import { useUserAuth } from '@/hooks/user-auth';
 import { 
   Calendar, 
@@ -46,19 +47,21 @@ const ProgramDetail = () => {
 
       if (error) throw error;
       
-      setProgram(data as Program);
-      
-      // Check if program is in user's favorites
-      if (isAuthenticated && currentUser) {
-        const { data: favoriteData, error: favoriteError } = await from('user_favorite_programs')
-          .select('*')
-          .eq('user_id', currentUser.id)
-          .eq('program_id', programId)
-          .maybeSingle();
-          
-        if (favoriteError) throw favoriteError;
+      if (data) {
+        setProgram(data as unknown as Program);
         
-        setIsFavorite(!!favoriteData);
+        // Check if program is in user's favorites
+        if (isAuthenticated && currentUser) {
+          const { data: favoriteData, error: favoriteError } = await from('user_favorite_programs')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .eq('program_id', programId)
+            .maybeSingle();
+            
+          if (favoriteError) throw favoriteError;
+          
+          setIsFavorite(!!favoriteData);
+        }
       }
     } catch (error) {
       console.error('Error fetching program:', error);

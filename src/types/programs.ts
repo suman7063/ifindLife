@@ -26,7 +26,7 @@ export interface EnrollmentData {
 }
 
 export interface UserFavoriteProgram {
-  id: number;
+  id: string;
   user_id: string;
   program_id: number;
   created_at: string;
