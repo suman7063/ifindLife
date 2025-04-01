@@ -34,8 +34,14 @@ export const useExpertLogout = (
       
       // Additional cleanup to ensure auth state is fully reset
       try {
-        // Manually clear any lingering session data
-        localStorage.removeItem('sb-' + supabase.supabaseUrl + '-auth-token');
+        // Manually clear any lingering session data without accessing protected properties
+        // This will clear all Supabase-related items from localStorage
+        const storageKeys = Object.keys(localStorage);
+        const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
+        
+        supabaseKeys.forEach(key => {
+          localStorage.removeItem(key);
+        });
       } catch (e) {
         console.warn('Error cleaning up local storage:', e);
       }
