@@ -8,7 +8,7 @@ import ProgramFilters from '@/components/programs/ProgramFilters';
 import TrendingPrograms from '@/components/programs/TrendingPrograms';
 import { useUserAuth } from '@/hooks/user-auth';
 import { from, supabase } from '@/lib/supabase';
-import { Program } from '@/types/supabase/tables';
+import { Program } from '@/types/programs';
 import { ProgramCategory } from '@/types/programs';
 import { useNavigate } from 'react-router-dom';
 

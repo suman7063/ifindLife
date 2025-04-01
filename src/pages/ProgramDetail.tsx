@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { from, supabase } from '@/lib/supabase';
-import { Program } from '@/types/supabase/tables';
+import { Program } from '@/types/programs';
 import { useUserAuth } from '@/hooks/user-auth';
 import { 
   Calendar, 
@@ -48,6 +48,7 @@ const ProgramDetail = () => {
       if (error) throw error;
       
       if (data) {
+        // Cast the data to match the Program type
         setProgram(data as unknown as Program);
         
         // Check if program is in user's favorites

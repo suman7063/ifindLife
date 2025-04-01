@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { from, supabase } from '@/lib/supabase';
-import { Program } from '@/types/supabase/tables';
+import { Program } from '@/types/programs';
 import { ProgramCategory } from '@/types/programs';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
