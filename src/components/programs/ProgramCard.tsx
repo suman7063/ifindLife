@@ -118,12 +118,14 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
               <CardDescription className="mt-1">
                 {program.duration} • {program.sessions} sessions
               </CardDescription>
-              <span className="inline-flex items-center px-2.5 py-0.5 mt-2 rounded-full text-xs font-medium bg-ifind-aqua/10 text-ifind-aqua">
-                {program.category === 'quick-ease' && 'QuickEase'}
-                {program.category === 'resilience-building' && 'Resilience Building'}
-                {program.category === 'super-human' && 'Super Human'}
-                {program.category === 'issue-based' && 'Issue-Based'}
-              </span>
+              <div className="mt-2">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ifind-aqua/10 text-ifind-aqua">
+                  {program.category === 'quick-ease' && 'QuickEase'}
+                  {program.category === 'resilience-building' && 'Resilience Building'}
+                  {program.category === 'super-human' && 'Super Human'}
+                  {program.category === 'issue-based' && 'Issue-Based'}
+                </span>
+              </div>
             </div>
           </div>
         </CardHeader>

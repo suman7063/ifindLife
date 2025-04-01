@@ -1,23 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
-import { Program } from '@/types/programs';
+import { Program, ProgramCategory } from '@/types/programs';
 import ProgramCard from '@/components/programs/ProgramCard';
 import ProgramFilters from '@/components/programs/ProgramFilters';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { from } from '@/lib/supabase';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
-import ProgramList from '@/components/programs/ProgramList';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-type ProgramCategory = 'all' | 'quick-ease' | 'resilience-building' | 'super-human' | 'issue-based' | 'favorites';
-
 const Programs = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [filteredPrograms, setFilteredPrograms] = useState<Program[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<ProgramCategory>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [sortOption, setSortOption] = useState<string>('popularity');
   const { currentUser, isAuthenticated } = useUserAuth();
@@ -128,11 +124,12 @@ const Programs = () => {
     return categories;
   };
 
-  const handleCategoryChange = (category: ProgramCategory) => {
+  const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
   };
 
-  const categoryOptions = [
+  // Fix the type of categoryOptions to match the expected type in ProgramFilters
+  const categoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[] = [
     { value: 'all', label: 'All Programs' },
     { value: 'quick-ease', label: 'QuickEase' },
     { value: 'resilience-building', label: 'Resilience Building' },
