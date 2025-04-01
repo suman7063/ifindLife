@@ -10,6 +10,7 @@ import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import LoadingView from '@/components/expert/auth/LoadingView';
 import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { supabase } from '@/lib/supabase';
 
 const ExpertLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -25,7 +26,9 @@ const ExpertLogin = () => {
     userLogout, 
     isLoggingOut, 
     setIsLoggingOut,
-    authCheckCompleted 
+    authCheckCompleted,
+    hasDualSessions,
+    fullLogout
   } = useAuthSynchronization();
   
   const navigate = useNavigate();
@@ -41,9 +44,10 @@ const ExpertLogin = () => {
       hasUserProfile: !!currentUser,
       isSynchronizing,
       redirectAttempted,
-      authCheckCompleted
+      authCheckCompleted,
+      hasDualSessions
     });
-  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted]);
+  }, [loading, authInitialized, expert, isAuthenticated, currentUser, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions]);
   
   // Check URL parameters
   useEffect(() => {
@@ -92,7 +96,15 @@ const ExpertLogin = () => {
     setIsLoggingIn(true);
     
     try {
-      console.log('Attempting expert login with:', email);
+      // First, ensure we're logged out to prevent dual sessions
+      console.log('Expert auth: Starting login process for', email);
+      
+      // Sign out from current session to ensure clean state
+      console.log('Expert auth: Clearing any existing sessions before login');
+      await supabase.auth.signOut({ scope: 'global' });
+      console.log('Expert auth: Previous sessions cleared, proceeding with login');
+      
+      // Now attempt login
       const success = await login(email, password);
       
       if (!success) {

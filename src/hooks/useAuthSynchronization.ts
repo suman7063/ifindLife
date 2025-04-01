@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 export const useAuthSynchronization = () => {
   const [isSynchronizing, setIsSynchronizing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [hasDualSessions, setHasDualSessions] = useState(false);
   const authCheckCompleted = useRef(false);
   
   // Get user auth state from context
@@ -39,7 +40,8 @@ export const useAuthSynchronization = () => {
       expertLoading,
       expertAuthInitialized: authInitialized,
       isSynchronizing,
-      authCheckCompleted: authCheckCompleted.current
+      authCheckCompleted: authCheckCompleted.current,
+      hasDualSessions
     });
   }, [
     isAuthenticated, 
@@ -49,8 +51,22 @@ export const useAuthSynchronization = () => {
     expert, 
     userAuthLoading, 
     authInitialized, 
-    isSynchronizing
+    isSynchronizing,
+    hasDualSessions
   ]);
+
+  // Check for dual-sessions (both user and expert simultaneously)
+  useEffect(() => {
+    if (authCheckCompleted.current && !userAuthLoading && !expertLoading) {
+      // If both authentications are active, set dual sessions flag
+      if (isAuthenticated && currentUser && expert) {
+        console.log('Detected dual sessions: User is logged in as both user and expert');
+        setHasDualSessions(true);
+      } else {
+        setHasDualSessions(false);
+      }
+    }
+  }, [isAuthenticated, currentUser, expert, userAuthLoading, expertLoading]);
 
   useEffect(() => {
     // Mark auth check as completed when all loading states resolve
@@ -59,17 +75,82 @@ export const useAuthSynchronization = () => {
     }
   }, [userAuthLoading, expertLoading, authInitialized]);
   
+  // Full logout function - to guarantee we log out of all sessions
+  const fullLogout = useCallback(async (): Promise<boolean> => {
+    setIsSynchronizing(true);
+    setIsLoggingOut(true);
+    
+    try {
+      console.log('Performing full logout of all sessions...');
+      
+      // First sign out from Supabase completely
+      await supabase.auth.signOut({ scope: 'global' });
+      
+      // Clear local session data
+      try {
+        const storageKeys = Object.keys(localStorage);
+        const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
+        
+        supabaseKeys.forEach(key => {
+          localStorage.removeItem(key);
+        });
+      } catch (e) {
+        console.warn('Error cleaning up local storage:', e);
+      }
+      
+      // Reset states
+      setHasDualSessions(false);
+      authCheckCompleted.current = false;
+      
+      toast.success('Successfully logged out of all accounts');
+      
+      // Force page reload to clear all state
+      window.location.href = '/';
+      return true;
+    } catch (error) {
+      console.error('Full logout error:', error);
+      toast.error('Failed to log out completely. Please try again.');
+      
+      // Force page reload as failsafe
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
+      return false;
+    } finally {
+      setIsSynchronizing(false);
+      setIsLoggingOut(false);
+    }
+  }, []);
+  
   // Logout functions
   const userLogout = useCallback(async (): Promise<boolean> => {
     setIsSynchronizing(true);
     setIsLoggingOut(true);
     
     try {
+      // If we have dual sessions, do a full logout
+      if (hasDualSessions) {
+        console.log('Dual sessions detected, performing full logout...');
+        return await fullLogout();
+      }
+      
       console.log('Attempting user logout...');
       await userLogoutFn();
       
       // Ensure we fully sign out from Supabase
       await supabase.auth.signOut({ scope: 'global' });
+      
+      // Clear local session data
+      try {
+        const storageKeys = Object.keys(localStorage);
+        const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
+        
+        supabaseKeys.forEach(key => {
+          localStorage.removeItem(key);
+        });
+      } catch (e) {
+        console.warn('Error cleaning up local storage:', e);
+      }
       
       // Reset auth check completed flag
       authCheckCompleted.current = false;
@@ -92,13 +173,19 @@ export const useAuthSynchronization = () => {
       setIsSynchronizing(false);
       setIsLoggingOut(false);
     }
-  }, [userLogoutFn]);
+  }, [userLogoutFn, hasDualSessions, fullLogout]);
   
   const expertLogout = useCallback(async (): Promise<boolean> => {
     setIsSynchronizing(true);
     setIsLoggingOut(true);
     
     try {
+      // If we have dual sessions, do a full logout
+      if (hasDualSessions) {
+        console.log('Dual sessions detected, performing full logout...');
+        return await fullLogout();
+      }
+      
       console.log('Attempting expert logout...');
       const success = await expertLogoutFn();
       
@@ -133,7 +220,7 @@ export const useAuthSynchronization = () => {
       setIsSynchronizing(false);
       setIsLoggingOut(false);
     }
-  }, [expertLogoutFn]);
+  }, [expertLogoutFn, hasDualSessions, fullLogout]);
   
   return {
     // User auth state
@@ -150,12 +237,14 @@ export const useAuthSynchronization = () => {
     isSynchronizing,
     isLoggingOut,
     setIsLoggingOut,
+    hasDualSessions,
     
     // Auth check status
     authCheckCompleted: authCheckCompleted.current,
     
     // Actions
     userLogout,
-    expertLogout
+    expertLogout,
+    fullLogout
   };
 };

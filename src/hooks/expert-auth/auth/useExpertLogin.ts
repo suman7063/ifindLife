@@ -2,6 +2,7 @@
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '../types';
+import { useState } from 'react';
 
 /**
  * Hook for handling expert login functionality
@@ -11,72 +12,71 @@ export const useExpertLogin = (
   setLoading: React.Dispatch<React.SetStateAction<boolean>>,
   fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>
 ) => {
+  const [loginInProgress, setLoginInProgress] = useState(false);
+
   /**
-   * Authenticates an expert user with email and password
+   * Logs in the expert user
    */
   const login = async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
+    if (loginInProgress) {
+      console.log('Expert login already in progress, aborting');
+      return false;
+    }
     
     try {
-      console.log('Expert auth: Starting login process for', email);
+      setLoginInProgress(true);
+      setLoading(true);
       
-      // First ensure we're signed out to prevent any auth state conflicts
-      await supabase.auth.signOut({
-        scope: 'global'
-      });
+      console.log('Expert auth: Starting authentication');
       
-      console.log('Expert auth: Previous sessions cleared, proceeding with login');
-      
-      // Now perform the login
+      // Sign in with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-
+      
       if (error) {
-        console.error('Expert auth login error:', error);
-        toast.error(error.message);
-        setLoading(false);
+        console.error('Expert login error:', error);
+        toast.error('Login failed: ' + error.message);
         return false;
       }
-
-      if (!data.session) {
-        console.error('Expert auth: No session created');
-        toast.error('No session created');
-        setLoading(false);
+      
+      if (!data.user) {
+        console.error('Expert login: No user data returned');
+        toast.error('Login failed: No user data returned');
         return false;
       }
-
+      
       console.log('Expert auth: Successfully authenticated, fetching expert profile');
       
-      // Fetch expert profile
+      // Check if there's an expert profile for this user
       const expertProfile = await fetchExpertProfile(data.user.id);
       
       if (!expertProfile) {
-        console.error('Expert auth: No expert profile found for user ID', data.user.id);
-        // This user is authenticated but doesn't have an expert profile
-        toast.error('No expert profile found. Please register as an expert.');
-        await supabase.auth.signOut({
-          scope: 'global'
-        });
-        setLoading(false);
+        console.error('Expert login: No expert profile found for this user');
+        toast.error('No expert profile found for this account. Please contact support.');
+        
+        // Sign out since this is not a valid expert
+        await supabase.auth.signOut();
         return false;
       }
       
-      // Success! We have both authentication and an expert profile
       console.log('Expert auth: Profile found, setting expert state');
-      setExpert(expertProfile);
-      toast.success('Login successful!');
       
-      // Use navigate instead of window.location for cleaner transitions
+      // Set the expert data
+      setExpert(expertProfile);
+      
+      toast.success('Login successful');
       return true;
     } catch (error) {
-      console.error('Unexpected error in expert login:', error);
-      toast.error('An unexpected error occurred');
-      setLoading(false);
+      console.error('Expert login unexpected error:', error);
+      toast.error('An unexpected error occurred during login');
       return false;
+    } finally {
+      setLoading(false);
+      setLoginInProgress(false);
     }
   };
 
-  return { login };
+  return { login, loginInProgress };
 };
