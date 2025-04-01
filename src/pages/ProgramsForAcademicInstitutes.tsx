@@ -1,12 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Loader2 } from 'lucide-react';
-import ProgramFilters from '@/components/programs/ProgramFilters';
-import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useProgramData, categoryOptions } from '@/hooks/useProgramData';
+import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
+import { useProgramData } from '@/hooks/useProgramData';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -16,41 +15,10 @@ const ProgramsForAcademicInstitutes = () => {
     filteredPrograms,
     isLoading,
     selectedCategory,
-    setSelectedCategory,
-    sortOption,
-    setSortOption,
     refreshPrograms
-  } = useProgramData(isAuthenticated, currentUser);
-
-  // Set default category to 'resilience-building' when component mounts
-  useEffect(() => {
-    setSelectedCategory('resilience-building');
-  }, [setSelectedCategory]);
+  } = useProgramData(isAuthenticated, currentUser, 'academic');
 
   // Check for any pending actions from session storage (e.g., after login)
-  useEffect(() => {
-    if (isAuthenticated && currentUser) {
-      const pendingAction = sessionStorage.getItem('pendingAction');
-      const pendingProgramId = sessionStorage.getItem('pendingProgramId');
-      
-      if (pendingAction && pendingProgramId) {
-        const programId = parseInt(pendingProgramId);
-        
-        // Handle pending actions
-        if (pendingAction === 'favorite') {
-          handlePendingFavorite(programId);
-        } else if (pendingAction === 'enroll') {
-          // Redirect to the program detail page for enrollment
-          window.location.href = `/program/${programId}`;
-        }
-        
-        // Clear pending actions
-        sessionStorage.removeItem('pendingAction');
-        sessionStorage.removeItem('pendingProgramId');
-      }
-    }
-  }, [isAuthenticated, currentUser]);
-
   const handlePendingFavorite = async (programId: number) => {
     try {
       // Check if already a favorite
@@ -99,14 +67,15 @@ const ProgramsForAcademicInstitutes = () => {
       <div className="container mx-auto px-4 sm:px-6 py-8">
         <h1 className="text-3xl font-bold mb-8 text-center">Programs For Academic Institutes</h1>
         
-        <div className="mb-8">
-          <ProgramFilters 
-            activeCategory={selectedCategory}
-            setActiveCategory={setSelectedCategory}
-            sortOption={sortOption}
-            setSortOption={setSortOption}
-            categoryOptions={categoryOptions}
-          />
+        <div className="my-6">
+          <h2 className="text-xl font-semibold mb-4 text-ifind-purple">
+            Mental Wellness Solutions for Educational Institutions
+          </h2>
+          <p className="text-gray-700 mb-6">
+            Our specialized programs for academic institutions provide comprehensive mental health support 
+            for students, faculty, and staff. Create a healthier learning environment with our evidence-based 
+            approaches to mental wellbeing in educational settings.
+          </p>
         </div>
         
         <FilteredProgramsGrid 

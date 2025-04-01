@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Program, ProgramCategory } from '@/types/programs';
+import { Program, ProgramCategory, ProgramType } from '@/types/programs';
 import { 
   DialogTitle, 
   DialogDescription, 
@@ -10,7 +10,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { 
   Select, 
   SelectContent, 
@@ -43,7 +42,8 @@ const formSchema = z.object({
   sessions: z.coerce.number().min(1, "Must have at least 1 session"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   image: z.string().url("Must be a valid URL"),
-  category: z.enum(['quick-ease', 'resilience-building', 'super-human', 'issue-based'] as const)
+  category: z.enum(['quick-ease', 'resilience-building', 'super-human', 'issue-based'] as const),
+  programType: z.enum(['wellness', 'academic', 'business'] as const)
 });
 
 const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({ 
@@ -59,7 +59,8 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
       sessions: program.sessions,
       price: program.price,
       image: program.image,
-      category: program.category as ProgramCategory
+      category: program.category as ProgramCategory,
+      programType: program.programType as ProgramType
     } : {
       title: "",
       description: "",
@@ -67,7 +68,8 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
       sessions: 1,
       price: 0,
       image: "",
-      category: 'quick-ease' as ProgramCategory
+      category: 'quick-ease' as ProgramCategory,
+      programType: 'wellness' as ProgramType
     }
   });
   
@@ -182,21 +184,20 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
             
             <FormField
               control={form.control}
-              name="category"
+              name="programType"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>Program Type</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a category" />
+                        <SelectValue placeholder="Select a program type" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="quick-ease">QuickEase</SelectItem>
-                      <SelectItem value="resilience-building">Resilience Building</SelectItem>
-                      <SelectItem value="super-human">Super Human</SelectItem>
-                      <SelectItem value="issue-based">Issue-Based Programs</SelectItem>
+                      <SelectItem value="wellness">Wellness Programs</SelectItem>
+                      <SelectItem value="academic">Academic Institute Programs</SelectItem>
+                      <SelectItem value="business">Business Programs</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -204,6 +205,30 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
               )}
             />
           </div>
+          
+          <FormField
+            control={form.control}
+            name="category"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="quick-ease">QuickEase</SelectItem>
+                    <SelectItem value="resilience-building">Resilience Building</SelectItem>
+                    <SelectItem value="super-human">Super Human</SelectItem>
+                    <SelectItem value="issue-based">Issue-Based Programs</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
           <FormField
             control={form.control}

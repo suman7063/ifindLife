@@ -1,12 +1,11 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Loader2 } from 'lucide-react';
-import ProgramFilters from '@/components/programs/ProgramFilters';
-import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useProgramData, categoryOptions } from '@/hooks/useProgramData';
+import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
+import { useProgramData } from '@/hooks/useProgramData';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -16,41 +15,10 @@ const ProgramsForBusiness = () => {
     filteredPrograms,
     isLoading,
     selectedCategory,
-    setSelectedCategory,
-    sortOption,
-    setSortOption,
     refreshPrograms
-  } = useProgramData(isAuthenticated, currentUser);
-
-  // Set default category to 'super-human' when component mounts
-  useEffect(() => {
-    setSelectedCategory('super-human');
-  }, [setSelectedCategory]);
+  } = useProgramData(isAuthenticated, currentUser, 'business');
 
   // Check for any pending actions from session storage (e.g., after login)
-  useEffect(() => {
-    if (isAuthenticated && currentUser) {
-      const pendingAction = sessionStorage.getItem('pendingAction');
-      const pendingProgramId = sessionStorage.getItem('pendingProgramId');
-      
-      if (pendingAction && pendingProgramId) {
-        const programId = parseInt(pendingProgramId);
-        
-        // Handle pending actions
-        if (pendingAction === 'favorite') {
-          handlePendingFavorite(programId);
-        } else if (pendingAction === 'enroll') {
-          // Redirect to the program detail page for enrollment
-          window.location.href = `/program/${programId}`;
-        }
-        
-        // Clear pending actions
-        sessionStorage.removeItem('pendingAction');
-        sessionStorage.removeItem('pendingProgramId');
-      }
-    }
-  }, [isAuthenticated, currentUser]);
-
   const handlePendingFavorite = async (programId: number) => {
     try {
       // Check if already a favorite
@@ -99,14 +67,15 @@ const ProgramsForBusiness = () => {
       <div className="container mx-auto px-4 sm:px-6 py-8">
         <h1 className="text-3xl font-bold mb-8 text-center">Programs For Business</h1>
         
-        <div className="mb-8">
-          <ProgramFilters 
-            activeCategory={selectedCategory}
-            setActiveCategory={setSelectedCategory}
-            sortOption={sortOption}
-            setSortOption={setSortOption}
-            categoryOptions={categoryOptions}
-          />
+        <div className="my-6">
+          <h2 className="text-xl font-semibold mb-4 text-ifind-purple">
+            Corporate Mental Wellness Solutions
+          </h2>
+          <p className="text-gray-700 mb-6">
+            Our business-focused programs are designed to enhance workplace wellbeing, 
+            boost productivity, and create psychologically safe environments where teams can thrive. 
+            Invest in your organization's most valuable asset - your people.
+          </p>
         </div>
         
         <FilteredProgramsGrid 

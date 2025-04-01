@@ -1,13 +1,14 @@
 
 import { useState, useEffect } from 'react';
-import { Program, ProgramCategory } from '@/types/programs';
+import { Program, ProgramCategory, ProgramType } from '@/types/programs';
 import { from } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 
 export const useProgramData = (
   isAuthenticated: boolean,
-  currentUser: UserProfile | null
+  currentUser: UserProfile | null,
+  programType: ProgramType = 'wellness'
 ) => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [filteredPrograms, setFilteredPrograms] = useState<Program[]>([]);
@@ -18,15 +19,21 @@ export const useProgramData = (
   // Fetch programs on mount or when auth state changes
   useEffect(() => {
     fetchPrograms();
-  }, [isAuthenticated, currentUser]);
+  }, [isAuthenticated, currentUser, programType]);
 
   // Fetch programs from the database
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
-      // Fetch all programs
-      const { data: programData, error: programError } = await from('programs')
-        .select('*');
+      // Fetch programs based on program type
+      let query = from('programs').select('*');
+      
+      // Apply program type filter if not 'all'
+      if (programType) {
+        query = query.eq('programType', programType);
+      }
+      
+      const { data: programData, error: programError } = await query;
 
       if (programError) throw programError;
       
@@ -70,14 +77,14 @@ export const useProgramData = (
 
   // Add sample programs if needed
   useEffect(() => {
-    if (programs.length > 0) {
-      addSamplePrograms(programs).then(added => {
+    if (programs.length === 0) {
+      addSamplePrograms(programType).then(added => {
         if (added) {
           fetchPrograms(); // Refresh if samples were added
         }
       });
     }
-  }, [programs.length]);
+  }, [programs.length, programType]);
 
   // Apply filters when criteria change
   useEffect(() => {

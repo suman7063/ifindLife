@@ -3,7 +3,6 @@ import React, { useEffect } from 'react';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Loader2 } from 'lucide-react';
 import ProgramFilters from '@/components/programs/ProgramFilters';
-import ProgramCategories from '@/components/programs/ProgramCategories';
 import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -22,7 +21,7 @@ const ProgramsForWellnessSeekers = () => {
     setSortOption,
     programsByCategory,
     refreshPrograms
-  } = useProgramData(isAuthenticated, currentUser);
+  } = useProgramData(isAuthenticated, currentUser, 'wellness');
 
   // Set default category to 'quick-ease' when component mounts
   useEffect(() => {

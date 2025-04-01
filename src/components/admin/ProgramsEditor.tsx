@@ -16,17 +16,18 @@ import {
   Loader2
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { from, supabase } from '@/lib/supabase';
-import { Program } from '@/types/programs';
-import { ProgramCategory } from '@/types/programs';
+import { from } from '@/lib/supabase';
+import { Program, ProgramType } from '@/types/programs';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
 import ProgramFormDialog from './ProgramFormDialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ProgramsEditor = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [programType, setProgramType] = useState<ProgramType | 'all'>('all');
   const { showDialog, DialogComponent } = useDialog();
 
   useEffect(() => {
@@ -81,7 +82,8 @@ const ProgramsEditor = () => {
             sessions: programData.sessions,
             price: programData.price,
             image: programData.image,
-            category: programData.category
+            category: programData.category,
+            programType: programData.programType
           })
           .eq('id', programData.id);
           
@@ -99,6 +101,7 @@ const ProgramsEditor = () => {
             price: programData.price,
             image: programData.image,
             category: programData.category,
+            programType: programData.programType,
             created_at: new Date().toISOString(),
             enrollments: 0
           });
@@ -135,10 +138,25 @@ const ProgramsEditor = () => {
     }
   };
 
-  const filteredPrograms = programs.filter(program => 
-    program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    program.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter programs by search query and program type
+  const filteredPrograms = programs.filter(program => {
+    const matchesSearch = 
+      program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      program.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesType = programType === 'all' || program.programType === programType;
+    
+    return matchesSearch && matchesType;
+  });
+
+  const getProgramTypeDisplay = (type: ProgramType) => {
+    switch(type) {
+      case 'wellness': return 'Wellness Programs';
+      case 'academic': return 'Academic Programs';
+      case 'business': return 'Business Programs';
+      default: return type;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -158,74 +176,95 @@ const ProgramsEditor = () => {
         </Button>
       </div>
       
-      {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
-        </div>
-      ) : filteredPrograms.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-8">
-            <p className="text-muted-foreground mb-4">No programs found</p>
-            <Button onClick={handleAddProgram} variant="outline">
-              <Plus className="mr-2 h-4 w-4" /> Add Your First Program
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPrograms.map(program => (
-            <Card key={program.id} className="overflow-hidden">
-              <div className="aspect-video relative overflow-hidden">
-                <img 
-                  src={program.image} 
-                  alt={program.title} 
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                  <span className="text-white text-sm font-medium">
-                    {program.category === 'quick-ease' && 'QuickEase'}
-                    {program.category === 'resilience-building' && 'Resilience Building'}
-                    {program.category === 'super-human' && 'Super Human'}
-                    {program.category === 'issue-based' && 'Issue-Based'}
-                  </span>
-                </div>
-                <div className="absolute top-2 right-2 flex space-x-2">
-                  <Button 
-                    size="icon" 
-                    variant="secondary" 
-                    className="h-8 w-8 bg-white/80 hover:bg-white"
-                    onClick={() => handleEditProgram(program)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    size="icon" 
-                    variant="destructive" 
-                    className="h-8 w-8 bg-white/80 hover:bg-red-500 text-red-500 hover:text-white"
-                    onClick={() => handleDeleteProgram(program.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <CardHeader className="pb-2">
-                <CardTitle className="line-clamp-1">{program.title}</CardTitle>
-                <CardDescription>
-                  {program.duration} • {program.sessions} sessions • ₹{program.price}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground line-clamp-2">{program.description}</p>
-                {program.enrollments !== undefined && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {program.enrollments} {program.enrollments === 1 ? 'enrollment' : 'enrollments'}
-                  </p>
-                )}
+      <Tabs 
+        defaultValue="all" 
+        onValueChange={(value) => setProgramType(value as ProgramType | 'all')}
+        className="w-full"
+      >
+        <TabsList className="w-full md:w-auto grid grid-cols-2 md:grid-cols-4 gap-2">
+          <TabsTrigger value="all">All Programs</TabsTrigger>
+          <TabsTrigger value="wellness">Wellness</TabsTrigger>
+          <TabsTrigger value="academic">Academic</TabsTrigger>
+          <TabsTrigger value="business">Business</TabsTrigger>
+        </TabsList>
+
+        {/* Tab content container */}
+        <div className="mt-6">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
+            </div>
+          ) : filteredPrograms.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-8">
+                <p className="text-muted-foreground mb-4">No programs found</p>
+                <Button onClick={handleAddProgram} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" /> Add Your First Program
+                </Button>
               </CardContent>
             </Card>
-          ))}
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredPrograms.map(program => (
+                <Card key={program.id} className="overflow-hidden">
+                  <div className="aspect-video relative overflow-hidden">
+                    <img 
+                      src={program.image} 
+                      alt={program.title} 
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                      <span className="text-white text-sm font-medium">
+                        {program.category === 'quick-ease' && 'QuickEase'}
+                        {program.category === 'resilience-building' && 'Resilience Building'}
+                        {program.category === 'super-human' && 'Super Human'}
+                        {program.category === 'issue-based' && 'Issue-Based'}
+                      </span>
+                    </div>
+                    <div className="absolute top-2 right-2 flex space-x-2">
+                      <Button 
+                        size="icon" 
+                        variant="secondary" 
+                        className="h-8 w-8 bg-white/80 hover:bg-white"
+                        onClick={() => handleEditProgram(program)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="destructive" 
+                        className="h-8 w-8 bg-white/80 hover:bg-red-500 text-red-500 hover:text-white"
+                        onClick={() => handleDeleteProgram(program.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-ifind-purple text-white text-xs px-2 py-1 rounded-full">
+                        {getProgramTypeDisplay(program.programType)}
+                      </span>
+                    </div>
+                  </div>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="line-clamp-1">{program.title}</CardTitle>
+                    <CardDescription>
+                      {program.duration} • {program.sessions} sessions • ₹{program.price}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{program.description}</p>
+                    {program.enrollments !== undefined && (
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {program.enrollments} {program.enrollments === 1 ? 'enrollment' : 'enrollments'}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </Tabs>
       <DialogComponent />
     </div>
   );

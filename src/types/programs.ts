@@ -1,5 +1,6 @@
 
 export type ProgramCategory = 'quick-ease' | 'resilience-building' | 'super-human' | 'issue-based';
+export type ProgramType = 'wellness' | 'academic' | 'business';
 
 export interface Program {
   id: number;
@@ -10,6 +11,7 @@ export interface Program {
   price: number;
   image: string;
   category: ProgramCategory;
+  programType: ProgramType;
   created_at: string;
   enrollments?: number;
   is_favorite?: boolean;
