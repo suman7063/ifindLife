@@ -13,14 +13,30 @@ export interface ExpertProfile {
   experience?: string;
   bio?: string;
   certificate_urls?: string[];
-  profile_picture?: string;
+  profile_picture?: string | null;
   selected_services?: number[];
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
   status?: string;
   created_at?: string;
-  reportedUsers?: any[];
+}
+
+export interface ExpertRegistrationData {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  bio?: string;
+  certificate_urls?: string[];
+  profile_picture?: string | null;
+  selected_services?: number[];
 }
 
 export interface ExpertAuthState {
@@ -32,26 +48,11 @@ export interface ExpertAuthState {
 export interface UseExpertAuthReturn extends ExpertAuthState {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  register: (expertData: ExpertRegistrationData) => Promise<boolean>;
-  updateProfile: (profileData: Partial<ExpertProfile>) => Promise<boolean>;
-  uploadCertificate: (file: File) => Promise<string | null>;
+  register: (data: ExpertRegistrationData) => Promise<boolean>;
+  updateProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
+  uploadCertificate: (certificateUrl: string) => Promise<boolean>;
   removeCertificate: (certificateUrl: string) => Promise<boolean>;
   fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>;
   isUserLoggedIn: () => Promise<boolean>;
-}
-
-export interface ExpertRegistrationData {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  certificate_urls?: string[];
-  selected_services?: number[];
+  hasUserAccount: (email: string) => Promise<boolean>;
 }

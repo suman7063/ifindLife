@@ -43,7 +43,6 @@ const UserLoginContent = () => {
             
           if (expertData && !error) {
             setExpertProfile(expertData as ExpertProfile);
-            
             // If an expert is logged in, we shouldn't show login tabs
             console.log('Expert is already logged in, user login not allowed');
           } else {
@@ -131,7 +130,7 @@ const UserLoginContent = () => {
   
   return (
     <>
-      {hasDualSessions ? (
+      {hasDualSessions && (
         <div className="space-y-4">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -156,7 +155,7 @@ const UserLoginContent = () => {
         </div>
       ) : expertProfile || synchronizedExpertProfile ? (
         <UserLogoutAlert 
-          profileName={expertProfile?.name || synchronizedExpertProfile?.name}
+          profileName={(expertProfile?.name || synchronizedExpertProfile?.name) ?? "Expert"}
           isLoggingOut={isLoggingOut}
           onLogout={handleExpertLogout}
           logoutType="expert"

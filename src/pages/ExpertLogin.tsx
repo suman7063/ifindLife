@@ -24,7 +24,7 @@ const ExpertLogin = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
   
-  const { login, expert, loading, authInitialized } = useExpertAuth();
+  const { login, expert, loading, authInitialized, hasUserAccount } = useExpertAuth();
   const { 
     isSynchronizing, 
     userLogout, 
@@ -131,6 +131,13 @@ const ExpertLogin = () => {
     // If user is logged in, don't allow expert login
     if (userProfile || isAuthenticated) {
       setLoginError('Please log out as a user before attempting to log in as an expert');
+      return false;
+    }
+    
+    // Check if this email is registered as a user account
+    const hasUserAcct = await hasUserAccount(email);
+    if (hasUserAcct) {
+      setLoginError('This email is registered as a user. Please use a different email for expert login.');
       return false;
     }
     
@@ -247,7 +254,7 @@ const ExpertLogin = () => {
           {userProfile && !hasDualSessions && (
             <div className="mb-6">
               <UserLogoutAlert
-                profileName={userProfile.name}
+                profileName={userProfile.name || "User"}
                 isLoggingOut={isLoggingOut}
                 onLogout={handleUserLogout}
                 logoutType="user"

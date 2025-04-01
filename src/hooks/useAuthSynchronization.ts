@@ -84,14 +84,14 @@ export const useAuthSynchronization = () => {
           .from('profiles')
           .select('*')
           .eq('id', data.session.user.id)
-          .maybeSingle();
+          .single();
         
         // Check if the current user has a profile in expert_accounts table
         const { data: expertProfileData, error: expertError } = await supabase
           .from('expert_accounts')
           .select('*')
           .eq('auth_id', data.session.user.id)
-          .maybeSingle();
+          .single();
         
         const hasUserProfile = !!userProfileData && !userError;
         const hasExpertProfile = !!expertProfileData && !expertError;
@@ -208,28 +208,8 @@ export const useAuthSynchronization = () => {
       // If we have dual sessions, handle differently
       if (hasDualSessions) {
         console.log('Dual sessions detected during user logout, preserving expert session...');
-        
-        try {
-          // Perform user context logout
-          await userLogoutFn();
-          
-          // Need a slight delay before continuing
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // The expert session should now be the active one
-          console.log('User session cleared, expert session should remain active');
-          setSessionType('expert');
-          setHasDualSessions(false);
-          
-          toast.success('Successfully logged out as user');
-          authCheckCompleted.current = false;
-          
-          return true;
-        } catch (error) {
-          console.error('Error during selective logout in dual session:', error);
-          // Fall back to full logout as a failsafe
-          return await fullLogout();
-        }
+        // For dual sessions, we need a complete logout and reload
+        return await fullLogout();
       }
       
       // Standard user logout
@@ -267,28 +247,8 @@ export const useAuthSynchronization = () => {
       // If we have dual sessions, handle differently
       if (hasDualSessions) {
         console.log('Dual sessions detected during expert logout, preserving user session...');
-        
-        try {
-          // Perform expert context logout
-          await expertLogoutFn();
-          
-          // Need a slight delay before continuing
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // The user session should now be the active one
-          console.log('Expert session cleared, user session should remain active');
-          setSessionType('user');
-          setHasDualSessions(false);
-          
-          toast.success('Successfully logged out as expert');
-          authCheckCompleted.current = false;
-          
-          return true;
-        } catch (error) {
-          console.error('Error during selective logout in dual session:', error);
-          // Fall back to full logout as a failsafe
-          return await fullLogout();
-        }
+        // For dual sessions, we need a complete logout and reload
+        return await fullLogout();
       }
       
       // Standard expert logout

@@ -33,6 +33,24 @@ export const useExpertLogin = (
   };
 
   /**
+   * Checks if an expert profile exists for the current session
+   */
+  const checkExpertProfile = async (userId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .select('id')
+        .eq('auth_id', userId)
+        .single();
+      
+      return !!data && !error;
+    } catch (error) {
+      console.error('Error checking expert profile:', error);
+      return false;
+    }
+  };
+
+  /**
    * Checks if there's a current active session for a regular user
    */
   const isUserLoggedIn = async (): Promise<boolean> => {
@@ -94,6 +112,17 @@ export const useExpertLogin = (
       if (!data.user) {
         console.error('Expert login: No user data returned');
         toast.error('Login failed: No user data returned');
+        return false;
+      }
+      
+      // Before setting the expert profile, verify that it actually exists
+      const hasExpertProfile = await checkExpertProfile(data.user.id);
+      if (!hasExpertProfile) {
+        console.error('Expert login: No expert profile found for this user');
+        toast.error('No expert profile found for this account. Please contact support.');
+        
+        // Sign out since this is not a valid expert
+        await supabase.auth.signOut();
         return false;
       }
       

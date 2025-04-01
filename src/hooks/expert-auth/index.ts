@@ -174,6 +174,28 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     };
   }, [navigate, fetchExpertProfile]);
 
+  // Function to check if someone is logged in with this email but as a user
+  const hasUserAccount = useCallback(async (email: string): Promise<boolean> => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      
+      if (!data.session) {
+        return false;
+      }
+      
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', data.session.user.id)
+        .maybeSingle();
+        
+      return userProfile?.email === email;
+    } catch (error) {
+      console.error('Error checking for user account:', error);
+      return false;
+    }
+  }, []);
+
   return {
     expert,
     loading,
@@ -185,7 +207,8 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     removeCertificate,
     authInitialized,
     fetchExpertProfile,
-    isUserLoggedIn
+    isUserLoggedIn,
+    hasUserAccount
   };
 };
 
