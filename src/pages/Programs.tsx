@@ -7,6 +7,7 @@ import { useUserAuth } from '@/hooks/useUserAuth';
 import { from } from '@/lib/supabase';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
+import ProgramList from '@/components/programs/ProgramList';
 
 type ProgramCategory = 'all' | 'quick-ease' | 'resilience-building' | 'super-human' | 'issue-based' | 'favorites';
 
@@ -31,8 +32,9 @@ const Programs = () => {
 
       if (programError) throw programError;
       
-      // TypeScript assertion to ensure we have valid program data
-      const validProgramData = programData as Program[];
+      // Safely cast the data to ensure type safety
+      // First cast to unknown and then to Program[] to avoid TypeScript errors
+      const validProgramData = (programData as unknown) as Program[];
       let programsWithFavorites: Program[] = validProgramData;
 
       // If user is authenticated, fetch favorites
@@ -43,8 +45,8 @@ const Programs = () => {
 
         if (favoritesError) throw favoritesError;
 
-        // Ensure we have valid favorites data
-        const validFavoritesData = favoritesData as { program_id: number }[];
+        // Safely cast favorites data to ensure type safety
+        const validFavoritesData = (favoritesData as unknown) as { program_id: number }[];
 
         // Convert favorites data to a Set for faster lookups
         const favoriteProgramIds = new Set(
