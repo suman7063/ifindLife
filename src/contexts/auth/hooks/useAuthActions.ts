@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -92,7 +92,7 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     }
   };
 
-  const logout = async (): Promise<boolean> => {
+  const logout = useCallback(async (): Promise<boolean> => {
     setActionLoading(true);
     try {
       console.log("Starting user logout process...");
@@ -109,9 +109,8 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       }
       
       console.log("Supabase signOut completed");
+      toast.success('Successfully logged out');
       
-      // Force a full page reload to clear any lingering state
-      window.location.href = '/';
       return true;
     } catch (error: any) {
       console.error("Logout error:", error);
@@ -120,7 +119,7 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
     } finally {
       setActionLoading(false);
     }
-  };
+  }, []);
 
   return { login, signup, logout, actionLoading };
 };

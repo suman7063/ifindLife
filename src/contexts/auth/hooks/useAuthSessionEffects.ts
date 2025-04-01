@@ -49,6 +49,10 @@ export const useAuthSessionEffects = (
           console.error("Error fetching profile:", error);
           if (isMounted.current) {
             setAuthLoading(false);
+          }
+        })
+        .finally(() => {
+          if (isMounted.current) {
             profileFetchAttempted.current = false;
           }
         });
@@ -57,7 +61,7 @@ export const useAuthSessionEffects = (
     else if (loading === false) {
       console.log("Supabase loading completed");
       
-      // Set a short timeout to ensure we don't have any race conditions
+      // Force complete loading after a short timeout
       if (!loadingTimeoutRef.current) {
         loadingTimeoutRef.current = setTimeout(() => {
           if (!isMounted.current) return;
@@ -73,7 +77,11 @@ export const useAuthSessionEffects = (
 
   // Add a definitive maximum loading timeout to prevent infinite loading
   useEffect(() => {
-    const maxTimeout = setTimeout(() => {
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+    
+    loadingTimeoutRef.current = setTimeout(() => {
       if (authState.authLoading && isMounted.current) {
         console.log("Force completing auth loading after timeout");
         setAuthLoading(false);
@@ -81,6 +89,11 @@ export const useAuthSessionEffects = (
       }
     }, 2000); // 2 seconds maximum loading time
     
-    return () => clearTimeout(maxTimeout);
+    return () => {
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
+    };
   }, [authState.authLoading, setAuthLoading]);
 };

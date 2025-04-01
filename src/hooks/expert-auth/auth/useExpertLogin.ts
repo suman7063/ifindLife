@@ -27,7 +27,7 @@ export const useExpertLogin = (
       
       console.log('Expert auth: Previous sessions cleared, proceeding with login');
       
-      // Now perform the login with explicit storage setting
+      // Now perform the login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -68,15 +68,13 @@ export const useExpertLogin = (
       setExpert(expertProfile);
       toast.success('Login successful!');
       
-      // Force a reload to ensure clean state
-      window.location.href = '/expert-dashboard';
+      // Use navigate instead of window.location for cleaner transitions
       return true;
     } catch (error) {
       console.error('Unexpected error in expert login:', error);
       toast.error('An unexpected error occurred');
-      return false;
-    } finally {
       setLoading(false);
+      return false;
     }
   };
 

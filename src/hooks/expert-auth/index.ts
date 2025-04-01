@@ -1,11 +1,10 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { 
   ExpertProfile, 
-  UseExpertAuthReturn, 
-  ExpertAuthState 
+  UseExpertAuthReturn
 } from './types';
 import { useExpertAuthentication } from './useExpertAuthentication';
 import { useExpertProfile } from './useExpertProfile';
@@ -16,10 +15,14 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   const [loading, setLoading] = useState(true);
   const [authInitialized, setAuthInitialized] = useState(false);
   const navigate = useNavigate();
+  const subscriptionRef = useRef<{ unsubscribe: () => void } | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMounted = useRef(true);
 
   // Create a fetchExpertProfile function that can be used directly
   const fetchExpertProfile = useCallback(async (userId: string) => {
     try {
+      if (!isMounted.current) return null;
       console.log("Fetching expert profile for user ID:", userId);
       
       // Use standard select without attempting to get a single row
@@ -57,51 +60,68 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   const { updateProfile } = useExpertProfile(expert, setExpert, setLoading);
   const { uploadCertificate, removeCertificate } = useExpertCertificates(expert, setExpert, setLoading);
 
-  // Initialize authentication and fetch expert profile
+  // Handle session state changes and cleanup properly
   useEffect(() => {
-    let isMounted = true;
+    isMounted.current = true;
+    console.log('Initializing expert auth');
+    setLoading(true);
+
     const initAuth = async () => {
       try {
-        console.log('Initializing expert auth');
-        setLoading(true);
-        
+        // Clear any existing timeout
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+
         // Set up auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log('Expert auth state changed:', event, session ? 'Has session' : 'No session');
+        const { data } = supabase.auth.onAuthStateChange(
+          (event, session) => {
+            if (!isMounted.current) return;
             
-            if (!isMounted) return;
+            console.log('Expert auth state changed:', event, session ? 'Has session' : 'No session');
             
             if (!session) {
               setExpert(null);
               setLoading(false);
+              setAuthInitialized(true);
               return;
             }
 
-            console.log('Expert auth state event - fetching profile for:', session.user.id);
-            const expertProfile = await fetchExpertProfile(session.user.id);
-            
-            // Only set the expert profile if we found one
-            if (expertProfile) {
-              console.log('Expert profile found after auth state change');
-              setExpert(expertProfile);
-            } else {
-              // If no expert profile but we have a session, this is likely a regular user
-              console.log('No expert profile found after auth state change');
-              setExpert(null);
-            }
-            
-            setLoading(false);
+            // Use setTimeout to break potential Supabase event loop
+            setTimeout(async () => {
+              if (!isMounted.current) return;
+              
+              console.log('Expert auth state event - fetching profile for:', session.user.id);
+              const expertProfile = await fetchExpertProfile(session.user.id);
+              
+              if (expertProfile && isMounted.current) {
+                console.log('Expert profile found after auth state change');
+                setExpert(expertProfile);
+              } else if (isMounted.current) {
+                // If no expert profile but we have a session, this is likely a regular user
+                console.log('No expert profile found after auth state change');
+                setExpert(null);
+              }
+              
+              if (isMounted.current) {
+                setLoading(false);
+                setAuthInitialized(true);
+              }
+            }, 0);
           }
         );
 
+        // Store subscription reference for cleanup
+        subscriptionRef.current = data.subscription;
+
         // Check for existing session
         const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
+        if (session && isMounted.current) {
           console.log('Found existing session, fetching expert profile');
           const expertProfile = await fetchExpertProfile(session.user.id);
           
-          if (isMounted) {
+          if (isMounted.current) {
             if (expertProfile) {
               console.log('Expert profile found on init');
               setExpert(expertProfile);
@@ -109,20 +129,16 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
               console.log('No expert profile found on init');
               setExpert(null);
             }
+            setLoading(false);
+            setAuthInitialized(true);
           }
-        }
-        
-        if (isMounted) {
+        } else if (isMounted.current) {
           setLoading(false);
           setAuthInitialized(true);
         }
-
-        return () => {
-          subscription.unsubscribe();
-        };
       } catch (error) {
         console.error('Error initializing expert auth:', error);
-        if (isMounted) {
+        if (isMounted.current) {
           setLoading(false);
           setAuthInitialized(true);
         }
@@ -130,28 +146,32 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     };
 
     initAuth();
-    
-    return () => {
-      isMounted = false;
-    };
-  }, [navigate, fetchExpertProfile]);
 
-  // Add a timeout to prevent infinite loading
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    
-    if (loading && !authInitialized) {
-      timeoutId = setTimeout(() => {
+    // Set a maximum timeout to prevent infinite loading
+    timeoutRef.current = setTimeout(() => {
+      if (isMounted.current && loading) {
         console.log('Expert auth loading timeout reached');
         setLoading(false);
         setAuthInitialized(true);
-      }, 5000); // 5 second timeout
-    }
+      }
+    }, 3000);
     
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      isMounted.current = false;
+      
+      // Clean up subscription
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+        subscriptionRef.current = null;
+      }
+      
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     };
-  }, [loading, authInitialized]);
+  }, [navigate, fetchExpertProfile]);
 
   return {
     expert,

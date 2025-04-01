@@ -1,30 +1,50 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import UserLoginHeader from '@/components/auth/UserLoginHeader';
 import UserLoginContent from '@/components/auth/UserLoginContent';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLoginPage = () => {
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const { userAuthLoading, isSynchronizing } = useAuthSynchronization();
-  const { isAuthenticated, currentUser } = useUserAuth();
-  const { redirectImmediately } = useAuthRedirect('/user-dashboard');
+  const { isAuthenticated, currentUser, loading } = useUserAuth();
+  const navigate = useNavigate();
   
-  // Redirect immediately if user is already authenticated
+  // Redirect to dashboard if already authenticated
   useEffect(() => {
-    if (isAuthenticated && currentUser && !userAuthLoading && !isSynchronizing) {
+    // Only redirect if:
+    // 1. User is authenticated
+    // 2. We have a user profile
+    // 3. Loading states are completed
+    // 4. We haven't already attempted a redirect
+    if (isAuthenticated && 
+        currentUser && 
+        !userAuthLoading && 
+        !isSynchronizing && 
+        !loading && 
+        !redirectAttempted) {
       console.log('UserLoginPage: User is authenticated, redirecting to dashboard');
-      redirectImmediately(true);
+      setRedirectAttempted(true);
+      navigate('/user-dashboard', { replace: true });
     }
-  }, [isAuthenticated, currentUser, userAuthLoading, isSynchronizing, redirectImmediately]);
+  }, [
+    isAuthenticated, 
+    currentUser, 
+    userAuthLoading, 
+    isSynchronizing, 
+    loading, 
+    redirectAttempted,
+    navigate
+  ]);
   
-  // Show loading screen during auth initialization or synchronization
-  if (userAuthLoading || isSynchronizing) {
+  // Show loading screen during initialization
+  if (userAuthLoading || isSynchronizing || loading) {
     console.log('UserLoginPage: Showing loading screen');
     return <LoadingScreen />;
   }
