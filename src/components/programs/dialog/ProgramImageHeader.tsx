@@ -20,9 +20,19 @@ const ProgramImageHeader: React.FC<ProgramImageHeaderProps> = ({
   isTogglingFavorite,
   onFavoriteToggle
 }) => {
+  const getCategoryDisplayName = (category: string): string => {
+    switch (category) {
+      case 'quick-ease': return 'QuickEase';
+      case 'resilience-building': return 'Resilience Building'; 
+      case 'super-human': return 'Super Human';
+      case 'issue-based': return 'Issue-Based';
+      default: return category;
+    }
+  };
+
   return (
     <div className="space-y-3">
-      <DialogClose className="absolute right-4 top-4 rounded-full p-2 bg-gray-100 hover:bg-gray-200 transition-colors">
+      <DialogClose className="absolute right-4 top-4 rounded-full p-2 bg-gray-100 hover:bg-gray-200 transition-colors z-10">
         <X className="h-5 w-5" />
       </DialogClose>
       
@@ -33,13 +43,10 @@ const ProgramImageHeader: React.FC<ProgramImageHeaderProps> = ({
           className="w-full h-full object-cover"
         />
         <Badge className="absolute top-3 left-3 bg-ifind-purple" variant="secondary">
-          {program.category === 'quick-ease' && 'QuickEase'}
-          {program.category === 'resilience-building' && 'Resilience Building'}
-          {program.category === 'super-human' && 'Super Human'}
-          {program.category === 'issue-based' && 'Issue-Based Program'}
+          {getCategoryDisplayName(program.category)}
         </Badge>
       </div>
-      <div className="flex justify-between items-start pt-4">
+      <div className="flex justify-between items-start pt-4 px-8">
         <DialogTitle className="text-2xl font-bold">{program.title}</DialogTitle>
         <Button 
           variant="outline" 

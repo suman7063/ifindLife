@@ -139,7 +139,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
 
   return (
     <>
-      <DialogContent className="sm:max-w-[700px] max-h-[85vh] p-0 gap-0 overflow-hidden mx-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-0 gap-0 overflow-hidden mx-auto">
         <ProgramImageHeader 
           program={program}
           isFavorite={isFavorite}
@@ -147,7 +147,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
           onFavoriteToggle={handleFavoriteToggle}
         />
         
-        <ScrollArea className="max-h-[calc(85vh-300px)] px-8 py-5" type="always">
+        <ScrollArea className="max-h-[calc(90vh-300px)] px-8 py-5" type="always">
           <div className="pr-4">
             <ProgramMetadata program={program} />
             <ProgramDescription description={program.description} />

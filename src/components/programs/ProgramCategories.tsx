@@ -38,7 +38,7 @@ const ProgramCategories: React.FC<ProgramCategoriesProps> = ({
             <ScrollArea className="pb-4">
               <div className="flex space-x-6 pb-2">
                 {categoryPrograms.map(program => (
-                  <div key={program.id} className="min-w-[300px] max-w-[300px]">
+                  <div key={program.id} className="min-w-[350px] max-w-[350px]">
                     <ProgramCard 
                       program={program} 
                       currentUser={currentUser}

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
 import ProgramDetailDialog from './ProgramDetailDialog';
+import { Badge } from '@/components/ui/badge';
 
 interface ProgramCardProps {
   program: Program;
@@ -88,6 +89,16 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
     );
   };
 
+  const getCategoryDisplayName = (category: string): string => {
+    switch (category) {
+      case 'quick-ease': return 'QuickEase';
+      case 'resilience-building': return 'Resilience Building'; 
+      case 'super-human': return 'Super Human';
+      case 'issue-based': return 'Issue-Based';
+      default: return category;
+    }
+  };
+
   return (
     <>
       <Card className="h-full overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer transform hover:scale-[1.02]" onClick={handleCardClick}>
@@ -97,6 +108,9 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
             alt={program.title} 
             className="w-full h-full object-cover transition-transform hover:scale-105 duration-300"
           />
+          <Badge className="absolute top-3 left-3 bg-ifind-purple" variant="secondary">
+            {getCategoryDisplayName(program.category)}
+          </Badge>
           <button 
             className={`absolute top-3 right-3 p-2 rounded-full ${
               isFavorite 
@@ -119,14 +133,6 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
                 {program.duration} • {program.sessions} sessions
               </CardDescription>
             </div>
-          </div>
-          <div className="mt-2">
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-ifind-aqua/10 text-ifind-aqua">
-              {program.category === 'quick-ease' && 'QuickEase'}
-              {program.category === 'resilience-building' && 'Resilience Building'}
-              {program.category === 'super-human' && 'Super Human'}
-              {program.category === 'issue-based' && 'Issue-Based'}
-            </span>
           </div>
         </CardHeader>
         <CardContent className="p-4 pt-0">
