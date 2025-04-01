@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -89,13 +88,13 @@ const Programs = () => {
           if (favoritesError) throw favoritesError;
           
           // Create a set of favorite program IDs for quick lookup
-          const favoriteIds = new Set((favoritesData || []).map(f => f.program_id));
+          const favoriteIds = new Set((favoritesData || []).map(item => item.program_id));
           
           // Mark favorite programs
           const typedData = data.map(program => ({
             ...program,
             is_favorite: favoriteIds.has(program.id)
-          })) as unknown as Program[];
+          })) as Program[];
           
           setPrograms(typedData);
           setFilteredPrograms(typedData);
@@ -106,7 +105,7 @@ const Programs = () => {
         
         if (error) throw error;
         
-        const typedData = data as unknown as Program[];
+        const typedData = data as Program[];
         setPrograms(typedData);
         setFilteredPrograms(typedData);
       }
@@ -131,7 +130,7 @@ const Programs = () => {
       
       if (favoriteIds && favoriteIds.length > 0) {
         // Get the actual programs
-        const programIds = favoriteIds.map(f => f.program_id);
+        const programIds = favoriteIds.map(item => item.program_id);
         
         const { data: favoritePrograms, error: programsError } = await from('programs')
           .select('*')
@@ -143,7 +142,7 @@ const Programs = () => {
         const typedFavorites = (favoritePrograms || []).map(program => ({
           ...program,
           is_favorite: true
-        })) as unknown as Program[];
+        })) as Program[];
         
         setFavoritePrograms(typedFavorites);
       } else {
