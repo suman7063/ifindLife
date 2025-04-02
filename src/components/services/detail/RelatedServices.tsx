@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { servicesData } from './servicesData';
 
 interface RelatedService {
   id: string;
@@ -15,13 +16,12 @@ interface RelatedService {
 interface RelatedServicesProps {
   currentServiceId: string;
   color: string;
-  relatedServices: RelatedService[];
+  relatedServices: any; // This will be ignored as we use servicesData directly
 }
 
 const RelatedServices: React.FC<RelatedServicesProps> = ({
   currentServiceId,
-  color,
-  relatedServices
+  color
 }) => {
   return (
     <Card className="border border-gray-200 overflow-hidden">
@@ -30,7 +30,7 @@ const RelatedServices: React.FC<RelatedServicesProps> = ({
         <CardTitle className="text-xl">Related Services</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {relatedServices
+        {servicesData
           .filter(s => s.id !== currentServiceId)
           .map(relatedService => (
             <div key={relatedService.id} className="flex items-start gap-3 group transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 p-3 rounded-lg">

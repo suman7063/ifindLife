@@ -2,44 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import InquiryForm from './InquiryForm';
 import { toast } from 'sonner';
 
 // Import refactored components
 import ServiceHero from './detail/ServiceHero';
-import ServiceAbout from './detail/ServiceAbout';
-import ServiceFAQ from './detail/ServiceFAQ';
-import ServiceCTA from './detail/ServiceCTA';
-import RelatedServices from './detail/RelatedServices';
-import ServiceTestimonial from './detail/ServiceTestimonial';
-import ExpertBookingCalendar from '../booking/ExpertBookingCalendar';
+import ServiceDetailContent from './detail/ServiceDetailContent';
+import InquiryDialog from './detail/InquiryDialog';
+import BookingDialog from './detail/BookingDialog';
+import { useExpertMatching } from './detail/useExpertMatching';
 
 // Import service data
 import { servicesData } from './detail/servicesData';
-import { supabase } from '@/lib/supabase';
-
-// Define a simpler Expert interface to prevent deep/circular type instantiation
-interface Expert {
-  id: string;
-  name: string;
-  specialization?: string;
-}
 
 const ServiceDetail = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const [isInquiryDialogOpen, setIsInquiryDialogOpen] = useState(false);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
-  const [matchingExperts, setMatchingExperts] = useState<Expert[]>([]);
-  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   
   // Get authentication state for the inquiry form
   const { isAuthenticated, currentUser } = useAuthSynchronization();
   
   // Find the service data based on the URL parameter
   const serviceData = servicesData.find(service => service.id === serviceId);
+  
+  // Use the expert matching hook
+  const { matchingExperts, selectedExpert, setSelectedExpert } = useExpertMatching(serviceData);
   
   // Handle case where service is not found
   useEffect(() => {
@@ -48,59 +37,6 @@ const ServiceDetail = () => {
       navigate('/services');
     }
   }, [serviceData, serviceId, navigate]);
-  
-  // Fetch matching experts when service changes
-  useEffect(() => {
-    const fetchMatchingExperts = async () => {
-      if (!serviceData) return;
-      
-      try {
-        // Note: Removed 'status' from the query since it doesn't exist in the experts table
-        const { data, error } = await supabase
-          .from('experts')
-          .select('id, name, specialization');
-          
-        if (error) throw error;
-        
-        // Simple type guard to ensure we have the correct data structure
-        if (!data || !Array.isArray(data)) {
-          console.error('Unexpected data format from Supabase query');
-          return;
-        }
-        
-        // Filter experts that have specializations matching this service
-        const serviceKeywords = serviceData.title.toLowerCase().split(' ');
-        
-        const filteredExperts = data
-          .filter(expert => {
-            if (!expert.specialization) return false;
-            
-            // Convert specialization string to lowercase for case-insensitive comparison
-            const expertSpecialization = expert.specialization.toLowerCase();
-                
-            return serviceKeywords.some(keyword => 
-              expertSpecialization.includes(keyword.toLowerCase())
-            );
-          })
-          .map(expert => ({
-            id: expert.id,
-            name: expert.name,
-            specialization: expert.specialization
-          }));
-        
-        setMatchingExperts(filteredExperts);
-        
-        // Set the first expert as selected by default if available
-        if (filteredExperts.length > 0) {
-          setSelectedExpert(filteredExperts[0]);
-        }
-      } catch (error) {
-        console.error('Error fetching matching experts:', error);
-      }
-    };
-    
-    fetchMatchingExperts();
-  }, [serviceData]);
   
   if (!serviceData) {
     return null;
@@ -158,48 +94,12 @@ const ServiceDetail = () => {
       />
       
       {/* Main Content Section */}
-      <div className="grid md:grid-cols-3 gap-8 mb-12">
-        <div className="md:col-span-2">
-          {/* About Service */}
-          <ServiceAbout 
-            title={serviceData.title}
-            icon={serviceData.icon}
-            textColor={serviceData.textColor}
-            color={serviceData.color}
-            gradientColor={serviceData.gradientColor}
-            detailedDescription={serviceData.detailedDescription}
-            benefits={serviceData.benefits}
-            duration={serviceData.duration}
-            process={serviceData.process}
-          />
-          
-          {/* FAQ Section */}
-          <ServiceFAQ color={serviceData.color} />
-        </div>
-        
-        <div className="space-y-8">
-          {/* Call to Action */}
-          <ServiceCTA 
-            title={serviceData.title}
-            color={serviceData.color}
-            textColor={serviceData.textColor}
-            buttonColor={serviceData.buttonColor}
-            gradientColor={serviceData.gradientColor}
-            dialogTriggerElement={dialogTriggerElement}
-            onBookNowClick={handleBookNowClick}
-          />
-          
-          {/* Related Services */}
-          <RelatedServices 
-            currentServiceId={serviceId as string}
-            color={serviceData.color}
-            relatedServices={servicesData}
-          />
-          
-          {/* Testimonial */}
-          <ServiceTestimonial serviceId={serviceId as string} />
-        </div>
-      </div>
+      <ServiceDetailContent 
+        serviceId={serviceId as string}
+        serviceData={serviceData}
+        dialogTriggerElement={dialogTriggerElement}
+        onBookNowClick={handleBookNowClick}
+      />
       
       {/* Navigation */}
       <div className="flex justify-between">
@@ -208,69 +108,25 @@ const ServiceDetail = () => {
         </Button>
       </div>
       
-      {/* Inquiry Dialog */}
-      <Dialog open={isInquiryDialogOpen} onOpenChange={setIsInquiryDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Inquire about {serviceData.title}</DialogTitle>
-            <DialogDescription>
-              Please provide your information and we'll get back to you shortly.
-            </DialogDescription>
-          </DialogHeader>
-          <InquiryForm 
-            serviceName={serviceData.title} 
-            currentUser={currentUser} 
-            isAuthenticated={isAuthenticated} 
-            onSuccess={() => setIsInquiryDialogOpen(false)} 
-          />
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs */}
+      <InquiryDialog 
+        isOpen={isInquiryDialogOpen}
+        onOpenChange={setIsInquiryDialogOpen}
+        serviceName={serviceData.title}
+        currentUser={currentUser}
+        isAuthenticated={isAuthenticated}
+        onSuccess={() => setIsInquiryDialogOpen(false)}
+      />
       
-      {/* Booking Dialog */}
-      <Dialog open={isBookingDialogOpen} onOpenChange={setIsBookingDialogOpen}>
-        <DialogContent className="sm:max-w-[800px]">
-          <DialogHeader>
-            <DialogTitle>Book a {serviceData.title} Session</DialogTitle>
-            <DialogDescription>
-              Select an expert and schedule your appointment.
-            </DialogDescription>
-          </DialogHeader>
-          
-          {matchingExperts.length > 0 ? (
-            <div className="space-y-4">
-              {matchingExperts.length > 1 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium mb-2">Choose an Expert:</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {matchingExperts.map(expert => (
-                      <Button 
-                        key={expert.id} 
-                        variant={selectedExpert?.id === expert.id ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => setSelectedExpert(expert)}
-                      >
-                        {expert.name}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {selectedExpert && (
-                <ExpertBookingCalendar 
-                  expertId={selectedExpert.id.toString()} 
-                  expertName={selectedExpert.name}
-                  onBookingComplete={handleBookingComplete}
-                />
-              )}
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <p className="text-muted-foreground">No experts are currently available for this service.</p>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <BookingDialog 
+        isOpen={isBookingDialogOpen}
+        onOpenChange={setIsBookingDialogOpen}
+        serviceName={serviceData.title}
+        matchingExperts={matchingExperts}
+        selectedExpert={selectedExpert}
+        setSelectedExpert={setSelectedExpert}
+        onBookingComplete={handleBookingComplete}
+      />
     </div>
   );
 };
