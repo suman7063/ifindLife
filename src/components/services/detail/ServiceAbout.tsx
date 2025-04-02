@@ -59,14 +59,14 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
         </div>
         
         <div className="grid md:grid-cols-2 gap-6">
-          <div className={`border-l-4 ${color} bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow-sm`}>
+          <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
             <h3 className={`text-xl font-semibold mb-3 flex items-center ${textColor}`}>
               <Clock className="h-6 w-6 mr-2" /> Duration
             </h3>
             <p className="text-lg text-gray-700 dark:text-gray-300">{duration}</p>
           </div>
           
-          <div className={`border-l-4 ${color} bg-gray-100 dark:bg-gray-800 rounded-lg p-6 shadow-sm`}>
+          <div className="p-6 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
             <h3 className={`text-xl font-semibold mb-3 flex items-center ${textColor}`}>
               <Calendar className="h-6 w-6 mr-2" /> Process
             </h3>
