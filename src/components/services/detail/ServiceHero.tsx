@@ -18,11 +18,11 @@ const ServiceHero: React.FC<ServiceHeroProps> = ({
   onInquireClick
 }) => {
   return (
-    <div className="rounded-xl overflow-hidden relative mb-12 h-[500px]">
+    <div className="rounded-xl overflow-hidden relative mb-12 h-[250px]">
       <img 
         src={image} 
         alt={title} 
-        className="w-full h-full object-cover" 
+        className="w-full h-full object-cover object-top" 
       />
       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end items-center text-white p-12">
         <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center text-shadow tracking-tight">{title}</h1>

@@ -28,7 +28,7 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
 }) => {
   return (
     <Card className={`border-l-4 ${color} shadow-lg overflow-hidden`}>
-      <div className={`bg-gradient-to-r ${gradientColor} p-8`}>
+      <div className="bg-gray-50 dark:bg-gray-800 p-8">
         <div className={`inline-flex items-center justify-center ${color} text-white p-4 rounded-full mb-4`}>
           {icon}
         </div>
@@ -42,7 +42,7 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
           </p>
         </div>
         
-        <div className={`p-6 rounded-lg bg-gradient-to-r ${gradientColor}`}>
+        <div className="p-6 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
           <h3 className={`text-xl font-semibold mb-6 flex items-center ${textColor}`}>
             <Check className="h-6 w-6 mr-2" /> Key Benefits
           </h3>
@@ -59,14 +59,14 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
         </div>
         
         <div className="grid md:grid-cols-2 gap-6">
-          <div className={`border-l-4 ${color} rounded-lg p-6 shadow-sm`}>
+          <div className={`border-l-4 ${color} bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm`}>
             <h3 className={`text-xl font-semibold mb-3 flex items-center ${textColor}`}>
               <Clock className="h-6 w-6 mr-2" /> Duration
             </h3>
             <p className="text-lg text-gray-700 dark:text-gray-300">{duration}</p>
           </div>
           
-          <div className={`border-l-4 ${color} rounded-lg p-6 shadow-sm`}>
+          <div className={`border-l-4 ${color} bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-sm`}>
             <h3 className={`text-xl font-semibold mb-3 flex items-center ${textColor}`}>
               <Calendar className="h-6 w-6 mr-2" /> Process
             </h3>

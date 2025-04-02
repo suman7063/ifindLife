@@ -14,6 +14,7 @@ interface ServiceCTAProps {
   buttonColor: string;
   gradientColor: string;
   dialogTriggerElement: React.ReactNode;
+  onBookNowClick: () => void;
 }
 
 const ServiceCTA: React.FC<ServiceCTAProps> = ({
@@ -22,28 +23,28 @@ const ServiceCTA: React.FC<ServiceCTAProps> = ({
   textColor,
   buttonColor,
   gradientColor,
-  dialogTriggerElement
+  dialogTriggerElement,
+  onBookNowClick
 }) => {
   return (
     <Card className={`border ${color} shadow-lg overflow-hidden`}>
-      <div className={`bg-gradient-to-br ${gradientColor} p-1`}>
-        <div className="bg-white dark:bg-gray-900 p-6 rounded-t-lg">
-          <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>Ready to Begin Your Journey?</h2>
-          <p className="text-gray-700 dark:text-gray-300 mb-6">
-            Take the first step toward positive change. Our experts are ready to support you on your journey to improved mental wellness.
-          </p>
+      <div className={`${color} h-2 w-full`}></div>
+      <div className="bg-white dark:bg-gray-900 p-6 rounded-t-lg">
+        <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>Ready to Begin Your Journey?</h2>
+        <p className="text-gray-700 dark:text-gray-300 mb-6">
+          Take the first step toward positive change. Our experts are ready to support you on your journey to improved mental wellness.
+        </p>
+        
+        <div className="space-y-4">
+          <Dialog>
+            <DialogTrigger asChild>
+              {dialogTriggerElement}
+            </DialogTrigger>
+          </Dialog>
           
-          <div className="space-y-4">
-            <Dialog>
-              <DialogTrigger asChild>
-                {dialogTriggerElement}
-              </DialogTrigger>
-            </Dialog>
-            
-            <Button variant="outline" className="w-full">
-              <Calendar className="mr-2 h-4 w-4" /> View Schedule
-            </Button>
-          </div>
+          <Button variant="outline" className={`w-full ${textColor} border-${color} hover:bg-${color}/10`} onClick={onBookNowClick}>
+            <Calendar className="mr-2 h-4 w-4" /> Book Now
+          </Button>
         </div>
       </div>
       
