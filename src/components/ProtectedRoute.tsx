@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -10,12 +10,12 @@ type ProtectedRouteProps = {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
-  requiredRole = false 
+  requiredRole 
 }) => {
   const { isAuthenticated, currentUser } = useUserAuth();
 
   if (!isAuthenticated) {
-    return <Navigate to="/user-login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // We need to check for admin role differently as it may not exist directly on UserProfile

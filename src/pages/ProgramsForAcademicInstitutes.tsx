@@ -1,65 +1,57 @@
 
-import React from 'react';
-import { useUserAuth } from '@/hooks/useUserAuth';
-import { Loader2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Program } from '@/types/programs';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ProgramList from '@/components/programs/ProgramList';
-import { useProgramData } from '@/hooks/useProgramData';
+import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { from } from '@/lib/supabase';
-import { toast } from 'sonner';
+import ProgramList from '@/components/programs/ProgramList';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { Loader2 } from 'lucide-react';
 
-const ProgramsForAcademicInstitutes = () => {
+const ProgramsForAcademicInstitutes: React.FC = () => {
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { currentUser, isAuthenticated } = useUserAuth();
-  const { 
-    programs,
-    isLoading,
-    refreshPrograms
-  } = useProgramData(isAuthenticated, currentUser, 'academic');
 
-  // Check for any pending actions from session storage (e.g., after login)
-  const handlePendingFavorite = async (programId: number) => {
-    try {
-      // Check if already a favorite
-      const { data, error: checkError } = await from('user_favorite_programs')
-        .select('*')
-        .eq('user_id', currentUser?.id)
-        .eq('program_id', programId)
-        .maybeSingle();
+  // Fetch academic programs
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        setIsLoading(true);
         
-      if (checkError) throw checkError;
-      
-      if (!data) {
-        // Add to favorites
-        const { error } = await from('user_favorite_programs')
-          .insert({
-            user_id: currentUser?.id,
-            program_id: programId
-          });
+        // First ensure we have sample academic programs in the database
+        await addSamplePrograms('academic');
+        
+        // Then fetch them
+        const { data, error } = await from('programs')
+          .select('*')
+          .eq('programType', 'academic')
+          .order('title');
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching academic programs:', error);
+          return;
+        }
         
-        toast.success('Added to favorites');
-        refreshPrograms(); // Refresh to update UI
+        // Properly cast the data to ensure type safety
+        const formattedPrograms = (data || []).map(program => ({
+          ...program,
+          category: program.category as Program['category'],  // Ensure correct type casting
+          programType: program.programType as Program['programType'] // Ensure correct type casting
+        }));
+        
+        setPrograms(formattedPrograms);
+      } catch (error) {
+        console.error('Error in academic programs fetch:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error handling pending favorite:', error);
-      toast.error('Failed to update favorites');
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <>
-        <Navbar />
-        <div className="container mx-auto px-4 sm:px-6 py-8 flex items-center justify-center min-h-[70vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
+    };
+    
+    fetchPrograms();
+  }, []);
+  
   return (
     <>
       <Navbar />
@@ -77,13 +69,19 @@ const ProgramsForAcademicInstitutes = () => {
           </p>
         </div>
         
-        <ProgramList 
-          programs={programs}
-          isLoading={isLoading}
-          currentUser={currentUser}
-          isAuthenticated={isAuthenticated}
-          emptyMessage="No academic programs are currently available."
-        />
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
+          </div>
+        ) : (
+          <ProgramList 
+            programs={programs}
+            isLoading={isLoading}
+            currentUser={currentUser}
+            isAuthenticated={isAuthenticated}
+            emptyMessage="No academic programs are currently available."
+          />
+        )}
       </div>
       <div className="mb-36"></div>
       <Footer />

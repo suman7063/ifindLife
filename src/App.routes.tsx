@@ -1,3 +1,4 @@
+
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -6,7 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 const Index = lazy(() => import('./pages/Index'));
 const LoginPage = lazy(() => import('./pages/UserLogin'));
 const RegisterPage = lazy(() => import('./pages/UserRegister'));
-const ProgramsPage = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
+const ProgramsPage = lazy(() => import('./pages/Programs'));
 const AcademicProgramsPage = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
 const BusinessProgramsPage = lazy(() => import('./pages/ProgramsForBusiness'));
 const ExpertsPage = lazy(() => import('./pages/Experts'));
@@ -38,11 +39,11 @@ export const routes: RouteObject[] = [
     element: <ProgramsPage />,
   },
   {
-    path: '/academic-programs',
+    path: '/programs-for-academic-institutes',
     element: <AcademicProgramsPage />,
   },
   {
-    path: '/business-programs',
+    path: '/programs-for-business',
     element: <BusinessProgramsPage />,
   },
   {
