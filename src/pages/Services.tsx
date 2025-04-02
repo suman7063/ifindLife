@@ -4,68 +4,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
-import { cn } from '@/lib/utils';
 import { ArrowDown, Brain, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
-
-// Data for each service with icons and images
-const servicesData = [
-  {
-    id: "therapy-sessions",
-    title: "Therapy Sessions",
-    description: "Professional therapy sessions to help you navigate life's challenges, manage mental health concerns, and enhance personal growth.",
-    detailedDescription: "Our therapy sessions provide a safe, confidential space where you can explore your thoughts and feelings with a licensed professional. Using evidence-based approaches tailored to your unique needs, our therapists help you develop coping strategies, process difficult emotions, and work toward meaningful change.",
-    icon: <HeartPulse className="h-16 w-16 mb-4 text-ifind-teal" />,
-    image: "/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png",
-    color: "bg-ifind-teal",
-    textColor: "text-ifind-teal",
-    borderColor: "border-ifind-teal"
-  },
-  {
-    id: "guided-meditations",
-    title: "Guided Meditations",
-    description: "Expertly led meditation sessions to reduce stress, increase mindfulness, and cultivate inner peace and mental clarity.",
-    detailedDescription: "Our guided meditation sessions help you cultivate mindfulness, reduce stress, and enhance overall well-being. Led by experienced meditation instructors, these sessions combine breathing techniques, visualization, and mindfulness practices to quiet the mind and bring awareness to the present moment.",
-    icon: <Brain className="h-16 w-16 mb-4 text-ifind-purple" />,
-    image: "/lovable-uploads/6fdf43ed-732a-4659-a397-a7d061440bc2.png",
-    color: "bg-ifind-purple",
-    textColor: "text-ifind-purple",
-    borderColor: "border-ifind-purple"
-  },
-  {
-    id: "mindful-listening",
-    title: "Mindful Listening",
-    description: "A unique space where you can express yourself freely while being deeply heard without judgment or interruption.",
-    detailedDescription: "Our Mindful Listening service provides a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy, the focus is entirely on giving you space to express yourself without interruption or advice-giving.",
-    icon: <MessageCircle className="h-16 w-16 mb-4 text-ifind-lavender" />,
-    image: "/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png",
-    color: "bg-ifind-lavender",
-    textColor: "text-ifind-lavender",
-    borderColor: "border-ifind-lavender"
-  },
-  {
-    id: "offline-retreats",
-    title: "Offline Retreats",
-    description: "Immersive wellness experiences in nature to disconnect from technology and reconnect with yourself and others.",
-    detailedDescription: "Our Offline Retreats offer a rare opportunity to disconnect from digital distractions and reconnect with yourself, nature, and authentic human connection. Set in carefully selected natural environments, these immersive experiences combine mindfulness practices, nature therapy, creative expression, and community building.",
-    icon: <Leaf className="h-16 w-16 mb-4 text-ifind-yellow" />,
-    image: "/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png",
-    color: "bg-ifind-yellow",
-    textColor: "text-ifind-yellow",
-    borderColor: "border-ifind-yellow"
-  },
-  {
-    id: "life-coaching",
-    title: "Life Coaching",
-    description: "Goal-oriented coaching to help you clarify your vision, overcome obstacles, and achieve personal and professional success.",
-    detailedDescription: "Our Life Coaching service helps you bridge the gap between where you are now and where you want to be. Working with a certified coach, you'll clarify your vision, identify obstacles, and develop actionable strategies to achieve your personal and professional goals.",
-    icon: <Sparkles className="h-16 w-16 mb-4 text-ifind-pink" />,
-    image: "/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png",
-    color: "bg-ifind-pink",
-    textColor: "text-ifind-pink",
-    borderColor: "border-ifind-pink"
-  }
-];
+import { servicesData } from '@/components/services/detail/servicesData';
 
 const Services = () => {
   // References for scrolling to sections
@@ -88,22 +28,19 @@ const Services = () => {
                 Comprehensive mental wellness services tailored to your unique needs and journey.
               </p>
               
-              {/* Service Navigation Menu */}
+              {/* Service Navigation Menu - Fixed to make all buttons visible */}
               <div className="flex justify-center mb-8">
-                <NavigationMenu>
-                  <NavigationMenuList className="flex flex-wrap justify-center gap-2">
-                    {servicesData.map((service) => (
-                      <NavigationMenuItem key={service.id}>
-                        <NavigationMenuLink 
-                          className={cn(navigationMenuTriggerStyle(), `text-white ${service.color}`)}
-                          href={`#${service.id}`}
-                        >
-                          {service.title}
-                        </NavigationMenuLink>
-                      </NavigationMenuItem>
-                    ))}
-                  </NavigationMenuList>
-                </NavigationMenu>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {servicesData.map((service) => (
+                    <a 
+                      key={service.id}
+                      href={`#${service.id}`} 
+                      className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${service.buttonColor} text-white h-10 px-4 py-2 m-1`}
+                    >
+                      {service.title}
+                    </a>
+                  ))}
+                </div>
               </div>
               
               <Button onClick={scrollToServices} variant="outline" className="mt-4 animate-bounce">
@@ -136,7 +73,7 @@ const Services = () => {
                       </div>
                       
                       <p className="text-lg text-gray-700 dark:text-gray-300">{service.description}</p>
-                      <p className="text-gray-600 dark:text-gray-400">{service.detailedDescription}</p>
+                      <p className="text-gray-600 dark:text-gray-400">{service.detailedDescription.substring(0, 150)}...</p>
                       
                       <div className="pt-4">
                         <Button asChild className={`${service.color} hover:${service.color}/90`}>
