@@ -1,3 +1,4 @@
+
 import { Program, ProgramType } from '@/types/programs';
 import { from } from '@/lib/supabase';
 import { fixProgramImages } from './programImageFix';
@@ -189,7 +190,7 @@ const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Academic Institute Programs - exactly as specified
+// Academic Institute Programs - updated with requested programs
 const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
     title: 'Student Counseling Program',
@@ -214,15 +215,15 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
     enrollments: 18
   },
   {
-    title: 'Crisis Intervention Resources',
-    description: 'Equip your educational institution with protocols, training, and support systems for mental health crisis management. Includes emergency response protocols, staff training, and post-crisis support mechanisms.',
+    title: 'Peer Pressure Proof',
+    description: 'Equip students with the skills to recognize and resist negative peer pressure while building healthier relationships. This program fosters confidence, assertiveness, and strong decision-making abilities.',
     duration: '8 weeks',
     sessions: 16,
-    price: 89999,
-    image: 'https://images.unsplash.com/photo-1573497620053-ea5300f94f21?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
+    price: 59999,
+    image: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
     category: 'academic',
     programType: 'academic',
-    enrollments: 12
+    enrollments: 14
   },
   {
     title: 'Bullying Prevention Strategies',
@@ -248,61 +249,84 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Business Programs - exactly as specified
+// Business Programs - updated with requested programs
 const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
-    title: 'Employee Wellness Program',
-    description: 'Comprehensive mental health support for your workforce, improving productivity, reducing absenteeism, and fostering wellbeing. Includes stress management workshops, mindfulness training, and resources for work-life balance.',
-    duration: '12 weeks',
-    sessions: 24,
-    price: 99999,
+    title: 'Work Life Balance',
+    description: 'Achieve harmony between personal and professional life. Learn to manage work-life boundaries, prioritize self-care, communicate effectively, and set realistic goals for sustainable balance.',
+    duration: '8 weeks',
+    sessions: 16,
+    price: 89999,
     image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
     category: 'business',
     programType: 'business',
     enrollments: 16
   },
   {
-    title: 'Leadership Mental Fitness Training',
-    description: 'Equip leaders with advanced psychological tools to handle pressure, make clear decisions, and inspire team resilience. This program develops emotional intelligence, strategic thinking, and crisis management skills.',
+    title: 'Win over Stress & Anxiety',
+    description: 'Develop resilience and coping strategies for stress and anxiety. Understand the science behind stress, practice mindfulness for calm, reframe negative thoughts, and build a support network for stress management.',
     duration: '10 weeks',
     sessions: 20,
-    price: 129999,
-    image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
-    category: 'business',
-    programType: 'business',
-    enrollments: 9
-  },
-  {
-    title: 'Workplace Stress Management',
-    description: 'Transform your organization\'s approach to stress with evidence-based techniques for individual and collective resilience. Learn to identify stress triggers, implement practical coping strategies, and create supportive workplace cultures.',
-    duration: '8 weeks',
-    sessions: 16,
-    price: 79999,
+    price: 99999,
     image: 'https://images.unsplash.com/photo-1573497620292-6379eca7155a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
     category: 'business',
     programType: 'business',
     enrollments: 14
   },
   {
-    title: 'Team Building for Psychological Safety',
-    description: 'Build high-performing teams founded on trust, openness, and psychological safety with structured exercises and facilitation. This program enhances communication, collaboration, and innovation through psychological safety principles.',
-    duration: '6 weeks',
-    sessions: 12,
-    price: 69999,
-    image: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
-    category: 'business',
-    programType: 'business',
-    enrollments: 20
-  },
-  {
-    title: 'Burnout Prevention Strategies',
-    description: 'Proactive approach to identifying burnout risk factors and implementing sustainable work practices for long-term wellbeing. Includes organizational assessment, policy review, and creating recovery-friendly workplace practices.',
+    title: 'Success With Happiness',
+    description: 'Cultivate happiness and fulfillment in personal and professional life. Learn the science of happiness, set mindful goals, practice gratitude and self-compassion, and build resilience for long-term success.',
     duration: '8 weeks',
     sessions: 16,
-    price: 89999,
+    price: 79999,
+    image: 'https://images.unsplash.com/photo-1543269865-cbf427effbad?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
+    category: 'business',
+    programType: 'business',
+    enrollments: 12
+  },
+  {
+    title: 'From Burnout to Balance',
+    description: 'Recognize and recover from burnout, achieving sustainable balance. Identify burnout signs and causes, practice mindful self-care, re-evaluate priorities, and build a support system for ongoing balance.',
+    duration: '12 weeks',
+    sessions: 24,
+    price: 109999,
     image: 'https://images.unsplash.com/photo-1591228127791-8e2eaef098d3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
     category: 'business',
     programType: 'business',
     enrollments: 11
+  },
+  {
+    title: 'Positive Performance Beyond Pressure',
+    description: 'Develop strategies for peak performance under pressure. Understand the psychology of pressure, practice mindfulness for enhanced focus, build resilience and adaptability, and communicate confidently.',
+    duration: '10 weeks',
+    sessions: 20,
+    price: 89999,
+    image: 'https://images.unsplash.com/photo-1556761175-b413da4baf72?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
+    category: 'business',
+    programType: 'business',
+    enrollments: 9
+  },
+  {
+    title: 'Communicate to Win',
+    description: 'Develop effective communication skills for personal and professional success. Understand communication styles, practice mindful listening, express yourself assertively, and master conflict resolution strategies.',
+    duration: '8 weeks',
+    sessions: 16,
+    price: 79999,
+    image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
+    category: 'business',
+    programType: 'business',
+    enrollments: 15
+  },
+  {
+    title: 'Grow Internally to Grow Professionally',
+    description: 'Cultivate inner growth for professional development and success. Understand the connection between personal and professional growth, develop mindfulness and self-awareness, build emotional intelligence, and adopt a growth mindset.',
+    duration: '12 weeks',
+    sessions: 24,
+    price: 99999,
+    image: 'https://images.unsplash.com/photo-1582213782179-e0d53f98f2ca?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
+    category: 'business',
+    programType: 'business',
+    enrollments: 13
   }
 ];
+

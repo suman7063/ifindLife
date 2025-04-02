@@ -7,10 +7,12 @@ import PageHeader from '@/components/common/PageHeader';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { supabase } from '@/lib/supabase';
 import ProgramCard from '@/components/programs/ProgramCard';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 const BusinessProgramsPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
+  const { currentUser, isAuthenticated } = useUserAuth();
 
   // Fetch business programs
   useEffect(() => {
@@ -70,8 +72,8 @@ const BusinessProgramsPage: React.FC = () => {
                 <ProgramCard 
                   key={program.id} 
                   program={program}
-                  currentUser={null}
-                  isAuthenticated={false}
+                  currentUser={currentUser}
+                  isAuthenticated={isAuthenticated}
                 />
               ))}
             </div>

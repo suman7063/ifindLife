@@ -25,6 +25,9 @@ export const useProgramData = (
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
+      // Add sample programs if needed
+      await addSamplePrograms(programType);
+      
       // Fetch programs based on program type
       let query = from('programs').select('*');
       
@@ -74,17 +77,6 @@ export const useProgramData = (
       setIsLoading(false);
     }
   };
-
-  // Add sample programs if needed
-  useEffect(() => {
-    if (programs.length === 0) {
-      addSamplePrograms(programType).then(added => {
-        if (added) {
-          fetchPrograms(); // Refresh if samples were added
-        }
-      });
-    }
-  }, [programs.length, programType]);
 
   // Apply filters when criteria change - only for wellness programs
   useEffect(() => {

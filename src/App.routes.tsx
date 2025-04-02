@@ -8,8 +8,8 @@ const Index = lazy(() => import('./pages/Index'));
 const LoginPage = lazy(() => import('./pages/UserLogin'));
 const RegisterPage = lazy(() => import('./pages/UserRegister'));
 const ProgramsPage = lazy(() => import('./pages/Programs'));
-const AcademicProgramsPage = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
-const BusinessProgramsPage = lazy(() => import('./pages/ProgramsForBusiness'));
+const AcademicProgramsPage = lazy(() => import('./pages/AcademicPrograms'));
+const BusinessProgramsPage = lazy(() => import('./pages/BusinessPrograms'));
 const ExpertsPage = lazy(() => import('./pages/Experts'));
 const ExpertProfilePage = lazy(() => import('./pages/ExpertDetail'));
 const UserProfilePage = lazy(() => import('./pages/UserDashboard'));
@@ -24,6 +24,7 @@ const ServicesPage = lazy(() => import('./pages/Services'));
 const ServiceDetailPage = lazy(() => import('./pages/service/ServiceDetailPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfService'));
+const ProgramsForWellnessSeekersPage = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
 
 export const routes: RouteObject[] = [
   {
@@ -49,6 +50,10 @@ export const routes: RouteObject[] = [
   {
     path: '/programs-for-business',
     element: <BusinessProgramsPage />,
+  },
+  {
+    path: '/programs-for-wellness',
+    element: <ProgramsForWellnessSeekersPage />,
   },
   {
     path: '/services',

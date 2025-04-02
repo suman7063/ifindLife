@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { useProgramData, categoryOptions } from '@/hooks/useProgramData';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
+import PageHeader from '@/components/common/PageHeader';
 
 const ProgramsForWellnessSeekers = () => {
   const { currentUser, isAuthenticated } = useUserAuth();
@@ -23,9 +24,9 @@ const ProgramsForWellnessSeekers = () => {
     refreshPrograms
   } = useProgramData(isAuthenticated, currentUser, 'wellness');
 
-  // Set default category to 'quick-ease' when component mounts
+  // Set default category to 'all' when component mounts to show all wellness programs
   useEffect(() => {
-    setSelectedCategory('quick-ease');
+    setSelectedCategory('all');
   }, [setSelectedCategory]);
 
   // Check for any pending actions from session storage (e.g., after login)
@@ -86,7 +87,11 @@ const ProgramsForWellnessSeekers = () => {
     return (
       <>
         <Navbar />
-        <div className="container mx-auto px-4 sm:px-6 py-8 flex items-center justify-center min-h-[70vh]">
+        <PageHeader 
+          title="Programs For Wellness Seekers" 
+          subtitle="Find personalized mental wellness solutions for your journey to better health"
+        />
+        <div className="container mx-auto px-4 sm:px-6 py-8 flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
         </div>
         <Footer />
@@ -97,9 +102,12 @@ const ProgramsForWellnessSeekers = () => {
   return (
     <>
       <Navbar />
+      <PageHeader 
+        title="Programs For Wellness Seekers" 
+        subtitle="Find personalized mental wellness solutions for your journey to better health"
+      />
+      
       <div className="container mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">Programs For Wellness Seekers</h1>
-        
         <div className="mb-8">
           <ProgramFilters 
             activeCategory={selectedCategory}
