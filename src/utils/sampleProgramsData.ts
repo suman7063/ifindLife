@@ -188,22 +188,22 @@ const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Academic Institute Programs
+// Academic Institute Programs - updated to match exactly the specified programs
 const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
     title: 'Student Counseling Program',
-    description: 'Comprehensive mental health support for students dealing with academic pressure, social challenges, and personal growth.',
+    description: 'Comprehensive mental health support for students dealing with academic pressure, social challenges, and personal growth. Our trained counselors provide a safe space for students to address their concerns and develop coping strategies.',
     duration: '16 weeks',
     sessions: 32,
     price: 79999,
     image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
-    category: 'resilience-building',
+    category: 'resilience-building', // These categories won't be used for filtering
     programType: 'academic',
     enrollments: 23
   },
   {
     title: 'Teacher Mental Health Support',
-    description: 'Specialized support for educators to manage stress, prevent burnout, and maintain wellbeing while nurturing student success.',
+    description: 'Specialized support for educators to manage stress, prevent burnout, and maintain wellbeing while nurturing student success. Includes skill-building workshops, peer support groups, and individual coaching.',
     duration: '12 weeks',
     sessions: 24,
     price: 69999,
@@ -214,7 +214,7 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   },
   {
     title: 'Crisis Intervention Resources',
-    description: 'Equip your educational institution with protocols, training, and support systems for mental health crisis management.',
+    description: 'Equip your educational institution with protocols, training, and support systems for mental health crisis management. Includes emergency response protocols, staff training, and post-crisis support mechanisms.',
     duration: '8 weeks',
     sessions: 16,
     price: 89999,
@@ -225,7 +225,7 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   },
   {
     title: 'Bullying Prevention Strategies',
-    description: 'Comprehensive approach to creating a safe, inclusive environment through prevention, intervention, and community building.',
+    description: 'Comprehensive approach to creating a safe, inclusive environment through prevention, intervention, and community building. This program employs evidence-based strategies to reduce bullying incidents and create a positive school culture.',
     duration: '10 weeks',
     sessions: 20,
     price: 59999,
@@ -236,7 +236,7 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   },
   {
     title: 'Wellness Workshops for Campus Life',
-    description: 'Interactive workshops designed to foster wellness culture across campus through student engagement and peer support.',
+    description: 'Interactive workshops designed to foster wellness culture across campus through student engagement and peer support. Topics include stress management, healthy relationships, time management, and mindfulness practices.',
     duration: '6 weeks',
     sessions: 12,
     price: 49999,
@@ -247,22 +247,22 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Business Programs
+// Business Programs - updated to match exactly the specified programs
 const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
     title: 'Employee Wellness Program',
-    description: 'Comprehensive mental health support for your workforce, improving productivity, reducing absenteeism, and fostering wellbeing.',
+    description: 'Comprehensive mental health support for your workforce, improving productivity, reducing absenteeism, and fostering wellbeing. Includes stress management workshops, mindfulness training, and resources for work-life balance.',
     duration: '12 weeks',
     sessions: 24,
     price: 99999,
     image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2000&q=80',
-    category: 'super-human',
+    category: 'super-human', // These categories won't be used for filtering
     programType: 'business',
     enrollments: 16
   },
   {
     title: 'Leadership Mental Fitness Training',
-    description: 'Equip leaders with advanced psychological tools to handle pressure, make clear decisions, and inspire team resilience.',
+    description: 'Equip leaders with advanced psychological tools to handle pressure, make clear decisions, and inspire team resilience. This program develops emotional intelligence, strategic thinking, and crisis management skills.',
     duration: '10 weeks',
     sessions: 20,
     price: 129999,
@@ -273,7 +273,7 @@ const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   },
   {
     title: 'Workplace Stress Management',
-    description: 'Transform your organization\'s approach to stress with evidence-based techniques for individual and collective resilience.',
+    description: 'Transform your organization\'s approach to stress with evidence-based techniques for individual and collective resilience. Learn to identify stress triggers, implement practical coping strategies, and create supportive workplace cultures.',
     duration: '8 weeks',
     sessions: 16,
     price: 79999,
@@ -284,7 +284,7 @@ const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   },
   {
     title: 'Team Building for Psychological Safety',
-    description: 'Build high-performing teams founded on trust, openness, and psychological safety with structured exercises and facilitation.',
+    description: 'Build high-performing teams founded on trust, openness, and psychological safety with structured exercises and facilitation. This program enhances communication, collaboration, and innovation through psychological safety principles.',
     duration: '6 weeks',
     sessions: 12,
     price: 69999,
@@ -295,7 +295,7 @@ const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   },
   {
     title: 'Burnout Prevention Strategies',
-    description: 'Proactive approach to identifying burnout risk factors and implementing sustainable work practices for long-term wellbeing.',
+    description: 'Proactive approach to identifying burnout risk factors and implementing sustainable work practices for long-term wellbeing. Includes organizational assessment, policy review, and creating recovery-friendly workplace practices.',
     duration: '8 weeks',
     sessions: 16,
     price: 89999,
@@ -305,3 +305,4 @@ const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
     enrollments: 11
   }
 ];
+
