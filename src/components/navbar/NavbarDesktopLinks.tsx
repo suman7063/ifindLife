@@ -28,9 +28,22 @@ const NavbarDesktopLinksDropdown: React.FC<{title: string}> = ({ title }) => {
       </Button>
       <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 group-hover:block">
         <div className="py-1">
-          <Link to="/programs-for-wellness-seekers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wellness Seekers</Link>
-          <Link to="/programs-for-academic-institutes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Academic Institutes</Link>
-          <Link to="/programs-for-business" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Business</Link>
+          {title === "Programs" && (
+            <>
+              <Link to="/programs-for-wellness-seekers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wellness Seekers</Link>
+              <Link to="/programs-for-academic-institutes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Academic Institutes</Link>
+              <Link to="/programs-for-business" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Business</Link>
+            </>
+          )}
+          {title === "Services" && (
+            <>
+              <Link to="/services/therapy-sessions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Therapy Sessions</Link>
+              <Link to="/services/guided-meditations" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Guided Meditations</Link>
+              <Link to="/services/mindful-listening" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mindful Listening</Link>
+              <Link to="/services/offline-retreats" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Offline Retreats</Link>
+              <Link to="/services/life-coaching" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Life Coaching</Link>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -55,6 +68,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         <Link to="/experts">Experts</Link>
       </Button>
       <NavbarDesktopLinksDropdown title="Programs" />
+      <NavbarDesktopLinksDropdown title="Services" />
       <Button variant="ghost" asChild>
         <Link to="/about">About</Link>
       </Button>

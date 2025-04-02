@@ -20,6 +20,8 @@ const ExpertDashboardPage = lazy(() => import('./pages/ExpertDashboard'));
 const AssessmentPage = lazy(() => import('./pages/MentalHealthAssessment'));
 const EnrolledCoursesPage = lazy(() => import('./pages/UserEnrolledCourses'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
+const ServicesPage = lazy(() => import('./pages/Services'));
+const ServiceDetailPage = lazy(() => import('./pages/service/ServiceDetailPage'));
 
 export const routes: RouteObject[] = [
   {
@@ -45,6 +47,14 @@ export const routes: RouteObject[] = [
   {
     path: '/programs-for-business',
     element: <BusinessProgramsPage />,
+  },
+  {
+    path: '/services',
+    element: <ServicesPage />,
+  },
+  {
+    path: '/services/:serviceId',
+    element: <ServiceDetailPage />,
   },
   {
     path: '/experts',

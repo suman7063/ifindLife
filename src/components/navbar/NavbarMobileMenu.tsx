@@ -1,11 +1,12 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, User, UserPlus, LogOut, BriefcaseBusiness, BookOpen } from "lucide-react";
+import { Menu, User, UserPlus, LogOut, BriefcaseBusiness, BookOpen, HeartPulse } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from '@/types/supabase';
 import { toast } from 'sonner';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface NavbarMobileMenuProps {
   isAuthenticated: boolean;
@@ -95,9 +96,53 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
             <Button variant="ghost" className="justify-start" asChild>
               <Link to="/experts" onClick={() => setIsOpen(false)}>Experts</Link>
             </Button>
-            <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/programs" onClick={() => setIsOpen(false)}>Programs</Link>
-            </Button>
+            
+            <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="programs">
+                <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
+                  Programs
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col space-y-1 ml-4">
+                    <Link to="/programs-for-wellness-seekers" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Wellness Seekers
+                    </Link>
+                    <Link to="/programs-for-academic-institutes" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Academic Institutes
+                    </Link>
+                    <Link to="/programs-for-business" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Business
+                    </Link>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="services">
+                <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
+                  Services
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col space-y-1 ml-4">
+                    <Link to="/services/therapy-sessions" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Therapy Sessions
+                    </Link>
+                    <Link to="/services/guided-meditations" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Guided Meditations
+                    </Link>
+                    <Link to="/services/mindful-listening" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Mindful Listening
+                    </Link>
+                    <Link to="/services/offline-retreats" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Offline Retreats
+                    </Link>
+                    <Link to="/services/life-coaching" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Life Coaching
+                    </Link>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+            
             <Button variant="ghost" className="justify-start" asChild>
               <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
             </Button>
