@@ -13,7 +13,7 @@ export const servicesData = [
     gradientColor: "from-ifind-teal/20 to-white",
     textColor: "text-ifind-teal",
     buttonColor: "bg-ifind-teal hover:bg-ifind-teal/90",
-    icon: <HeartPulse className="h-8 w-8" />,
+    icon: React.createElement(HeartPulse, { className: "h-8 w-8" }),
     detailedDescription: "Our therapy sessions provide a safe, confidential space where you can explore your thoughts and feelings with a licensed professional. Using evidence-based approaches tailored to your unique needs, our therapists help you develop coping strategies, process difficult emotions, and work toward meaningful change. Sessions can address various concerns including anxiety, depression, relationship issues, trauma, and personal growth.",
     benefits: [
       "Personalized treatment plans designed for your specific needs",
@@ -34,7 +34,7 @@ export const servicesData = [
     gradientColor: "from-ifind-purple/20 to-white",
     textColor: "text-ifind-purple",
     buttonColor: "bg-ifind-purple hover:bg-ifind-purple/90",
-    icon: <Brain className="h-8 w-8" />,
+    icon: React.createElement(Brain, { className: "h-8 w-8" }),
     detailedDescription: "Our guided meditation sessions help you cultivate mindfulness, reduce stress, and enhance overall well-being. Led by experienced meditation instructors, these sessions combine breathing techniques, visualization, and mindfulness practices to quiet the mind and bring awareness to the present moment. Perfect for both beginners and experienced practitioners, our guided meditations can be customized to address specific concerns such as stress, sleep issues, or emotional regulation.",
     benefits: [
       "Reduced stress and anxiety levels",
@@ -55,7 +55,7 @@ export const servicesData = [
     gradientColor: "from-ifind-lavender/20 to-white",
     textColor: "text-ifind-lavender",
     buttonColor: "bg-ifind-lavender hover:bg-ifind-lavender/90",
-    icon: <MessageCircle className="h-8 w-8" />,
+    icon: React.createElement(MessageCircle, { className: "h-8 w-8" }),
     detailedDescription: "Our Mindful Listening service provides a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy, the focus is entirely on giving you space to express yourself without interruption or advice-giving. Our trained listeners create a safe container for you to process thoughts, feelings, and experiences aloud, which can lead to profound insights and emotional release. This practice can be particularly helpful for clarifying thoughts, processing experiences, or simply feeling acknowledged and validated.",
     benefits: [
       "Experience of being fully heard and acknowledged",
@@ -76,7 +76,7 @@ export const servicesData = [
     gradientColor: "from-ifind-yellow/20 to-white",
     textColor: "text-ifind-yellow",
     buttonColor: "bg-ifind-yellow hover:bg-ifind-yellow/90",
-    icon: <Leaf className="h-8 w-8" />,
+    icon: React.createElement(Leaf, { className: "h-8 w-8" }),
     detailedDescription: "Our Offline Retreats offer a rare opportunity to disconnect from digital distractions and reconnect with yourself, nature, and authentic human connection. Set in carefully selected natural environments, these immersive experiences combine mindfulness practices, nature therapy, creative expression, and community building. Participants experience a digital detox while engaging in activities designed to foster presence, self-discovery, and renewal. Whether you're seeking respite from burnout, deeper connection, or simply time to reflect, our retreats provide a supportive environment for transformation.",
     benefits: [
       "Complete digital detox to reset your relationship with technology",
@@ -97,7 +97,7 @@ export const servicesData = [
     gradientColor: "from-ifind-pink/20 to-white",
     textColor: "text-ifind-pink",
     buttonColor: "bg-ifind-pink hover:bg-ifind-pink/90",
-    icon: <Sparkles className="h-8 w-8" />,
+    icon: React.createElement(Sparkles, { className: "h-8 w-8" }),
     detailedDescription: "Our Life Coaching service helps you bridge the gap between where you are now and where you want to be. Working with a certified coach, you'll clarify your vision, identify obstacles, and develop actionable strategies to achieve your personal and professional goals. Unlike therapy, which often focuses on healing past issues, coaching is future-oriented and action-based. Your coach will provide accountability, perspective, and support as you work toward creating positive change in areas such as career development, relationships, health and wellness, or personal growth.",
     benefits: [
       "Clarity about your goals and values",
