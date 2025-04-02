@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   Routes,
@@ -35,6 +34,8 @@ import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import Services from './pages/Services';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
 
 function App() {
   return (
@@ -68,6 +69,8 @@ function App() {
       <Route path="/user-profile-edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
       <Route path="/services" element={<Services />} />
       <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/terms" element={<TermsOfService />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

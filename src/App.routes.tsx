@@ -22,6 +22,8 @@ const EnrolledCoursesPage = lazy(() => import('./pages/UserEnrolledCourses'));
 const NotFoundPage = lazy(() => import('./pages/NotFound'));
 const ServicesPage = lazy(() => import('./pages/Services'));
 const ServiceDetailPage = lazy(() => import('./pages/service/ServiceDetailPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfServicePage = lazy(() => import('./pages/TermsOfService'));
 
 export const routes: RouteObject[] = [
   {
@@ -107,6 +109,14 @@ export const routes: RouteObject[] = [
         <EnrolledCoursesPage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/privacy',
+    element: <PrivacyPolicyPage />,
+  },
+  {
+    path: '/terms',
+    element: <TermsOfServicePage />,
   },
   {
     path: '*',
