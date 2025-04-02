@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import {
   Routes,
   Route,
@@ -8,15 +8,19 @@ import { routes } from './App.routes';
 
 function App() {
   return (
-    <Routes>
-      {routes.map((route, index) => (
-        <Route
-          key={index}
-          path={route.path}
-          element={route.element}
-        />
-      ))}
-    </Routes>
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ifind-teal"></div>
+    </div>}>
+      <Routes>
+        {routes.map((route, index) => (
+          <Route
+            key={index}
+            path={route.path}
+            element={route.element}
+          />
+        ))}
+      </Routes>
+    </Suspense>
   );
 }
 
