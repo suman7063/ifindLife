@@ -27,9 +27,9 @@ const ServiceCTA: React.FC<ServiceCTAProps> = ({
   onBookNowClick
 }) => {
   return (
-    <Card className={`border ${color} shadow-lg overflow-hidden`}>
+    <Card className={`border ${color.replace('bg-', 'border-')} shadow-lg overflow-hidden`}>
       <div className={`${color} h-2 w-full`}></div>
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-t-lg">
+      <div className="bg-gray-50 dark:bg-gray-900 p-6 rounded-t-lg">
         <h2 className={`text-2xl font-bold mb-4 ${textColor}`}>Ready to Begin Your Journey?</h2>
         <p className="text-gray-700 dark:text-gray-300 mb-6">
           Take the first step toward positive change. Our experts are ready to support you on your journey to improved mental wellness.
@@ -52,7 +52,7 @@ const ServiceCTA: React.FC<ServiceCTAProps> = ({
         </div>
       </div>
       
-      <div className="px-6 pb-6 pt-3">
+      <div className="px-6 pb-6 pt-3 bg-gray-50 dark:bg-gray-900">
         <Separator className="my-6" />
         
         <div className="text-sm space-y-4">

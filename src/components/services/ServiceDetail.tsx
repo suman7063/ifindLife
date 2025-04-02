@@ -19,7 +19,6 @@ import ExpertBookingCalendar from '../booking/ExpertBookingCalendar';
 // Import service data
 import { servicesData } from './detail/servicesData';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile } from '@/types/supabase/expert';
 
 // Define a simpler Expert interface to prevent deep/circular type instantiation
 interface Expert {
@@ -60,25 +59,36 @@ const ServiceDetail = () => {
         // Match experts based on specialization that might include this service title or keywords
         const { data, error } = await supabase
           .from('experts')
-          .select('id, name, specialization, status')
-          .neq('status', 'inactive');
+          .select('id, name, specialization, status');
           
         if (error) throw error;
         
+        // Simple type guard to ensure we have the correct data structure
+        if (!data || !Array.isArray(data)) {
+          console.error('Unexpected data format from Supabase query');
+          return;
+        }
+        
         // Filter experts that have specializations matching this service
-        // This is a simple implementation - in a real app, you'd have a more robust matching system
         const serviceKeywords = serviceData.title.toLowerCase().split(' ');
         
-        const filteredExperts = data?.filter(expert => {
-          if (!expert.specialization) return false;
-          
-          // Convert specialization string to lowercase for case-insensitive comparison
-          const expertSpecialization = expert.specialization.toLowerCase();
-              
-          return serviceKeywords.some(keyword => 
-            expertSpecialization.includes(keyword.toLowerCase())
-          );
-        }) || [];
+        const filteredExperts = data
+          .filter(expert => {
+            if (!expert.specialization) return false;
+            
+            // Convert specialization string to lowercase for case-insensitive comparison
+            const expertSpecialization = expert.specialization.toLowerCase();
+                
+            return serviceKeywords.some(keyword => 
+              expertSpecialization.includes(keyword.toLowerCase())
+            );
+          })
+          .map(expert => ({
+            id: expert.id,
+            name: expert.name,
+            specialization: expert.specialization,
+            status: expert.status
+          }));
         
         setMatchingExperts(filteredExperts);
         
@@ -132,6 +142,12 @@ const ServiceDetail = () => {
     toast.success(`Booking completed with ${selectedExpert?.name || 'the expert'}`);
   };
   
+  // Handler for the back to services button to ensure scrolling to top
+  const handleBackToServices = () => {
+    navigate('/services');
+    window.scrollTo(0, 0);
+  };
+  
   return (
     <div className="container mx-auto px-4 py-12 max-w-6xl">
       {/* Hero Section */}
@@ -183,13 +199,13 @@ const ServiceDetail = () => {
           />
           
           {/* Testimonial */}
-          <ServiceTestimonial />
+          <ServiceTestimonial serviceId={serviceId as string} />
         </div>
       </div>
       
       {/* Navigation */}
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => navigate('/services')} className="px-6">
+        <Button variant="outline" onClick={handleBackToServices} className="px-6">
           Back to Services
         </Button>
       </div>
