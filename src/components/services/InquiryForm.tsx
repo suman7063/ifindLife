@@ -39,7 +39,7 @@ const InquiryForm: React.FC<InquiryFormProps> = ({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: isAuthenticated && currentUser ? `${currentUser.first_name || ''} ${currentUser.last_name || ''}`.trim() : '',
+      name: isAuthenticated && currentUser ? currentUser.name || '' : '',
       email: isAuthenticated && currentUser ? currentUser.email || '' : '',
       phone: isAuthenticated && currentUser ? currentUser.phone || '' : '',
       preferredSlot: '',
