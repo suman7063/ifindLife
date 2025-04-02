@@ -111,7 +111,10 @@ export const useProgramData = (
     
     switch (sortOption) {
       case 'newest':
-        sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        sorted.sort((a, b) => {
+          if (!a.created_at || !b.created_at) return 0;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
         break;
       case 'price-low':
         sorted.sort((a, b) => a.price - b.price);

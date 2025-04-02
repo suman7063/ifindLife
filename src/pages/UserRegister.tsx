@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
-const UserLogin: React.FC = () => {
+const UserRegister: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -13,9 +13,9 @@ const UserLogin: React.FC = () => {
         <div className="max-w-md mx-auto">
           <Card className="border-ifind-lavender/20 shadow-xl">
             <CardContent className="pt-6">
-              <h1 className="text-2xl font-bold text-center mb-6">Log in to Your Account</h1>
+              <h1 className="text-2xl font-bold text-center mb-6">Create an Account</h1>
               <p className="text-center mb-4">
-                Don't have an account? <Link to="/register" className="text-ifind-teal hover:underline">Register</Link>
+                Already have an account? <Link to="/login" className="text-ifind-teal hover:underline">Login</Link>
               </p>
             </CardContent>
           </Card>
@@ -26,4 +26,4 @@ const UserLogin: React.FC = () => {
   );
 };
 
-export default UserLogin;
+export default UserRegister;

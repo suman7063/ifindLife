@@ -5,21 +5,21 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages
 const Index = lazy(() => import('./pages/Index'));
-const LoginPage = lazy(() => import('./pages/login'));
-const RegisterPage = lazy(() => import('./pages/register'));
-const ProgramsPage = lazy(() => import('./pages/programs'));
-const AcademicProgramsPage = lazy(() => import('./pages/AcademicPrograms'));
-const BusinessProgramsPage = lazy(() => import('./pages/BusinessPrograms'));
-const ExpertsPage = lazy(() => import('./pages/experts'));
-const ExpertProfilePage = lazy(() => import('./pages/expert-profile/[id]'));
-const UserProfilePage = lazy(() => import('./pages/profile'));
-const AdminPage = lazy(() => import('./pages/admin'));
-const ExpertLoginPage = lazy(() => import('./pages/expert-login'));
-const ExpertRegisterPage = lazy(() => import('./pages/expert-register'));
-const ExpertDashboardPage = lazy(() => import('./pages/expert-dashboard'));
-const AssessmentPage = lazy(() => import('./pages/mental-health-assessment'));
-const EnrolledCoursesPage = lazy(() => import('./pages/enrolled-courses'));
-const NotFoundPage = lazy(() => import('./pages/404'));
+const LoginPage = lazy(() => import('./pages/UserLogin')); // Fixed import
+const RegisterPage = lazy(() => import('./pages/UserRegister')); // Fixed import
+const ProgramsPage = lazy(() => import('./pages/ProgramsForWellnessSeekers')); // Fixed import
+const AcademicProgramsPage = lazy(() => import('./pages/ProgramsForAcademicInstitutes')); // Updated to correct component
+const BusinessProgramsPage = lazy(() => import('./pages/ProgramsForBusiness')); // Updated to correct component
+const ExpertsPage = lazy(() => import('./pages/Experts')); // Fixed import
+const ExpertProfilePage = lazy(() => import('./pages/ExpertDetail')); // Fixed import
+const UserProfilePage = lazy(() => import('./pages/UserDashboard')); // Fixed import
+const AdminPage = lazy(() => import('./pages/Admin')); // Fixed import
+const ExpertLoginPage = lazy(() => import('./pages/ExpertLogin')); // Fixed import
+const ExpertRegisterPage = lazy(() => import('./pages/ExpertRegister')); // Fixed import
+const ExpertDashboardPage = lazy(() => import('./pages/ExpertDashboard')); // Fixed import
+const AssessmentPage = lazy(() => import('./pages/MentalHealthAssessment')); // Fixed import
+const EnrolledCoursesPage = lazy(() => import('./pages/UserEnrolledCourses')); // Fixed import name
+const NotFoundPage = lazy(() => import('./pages/NotFound')); // Fixed import
 
 export const routes: RouteObject[] = [
   {

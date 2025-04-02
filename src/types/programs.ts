@@ -15,4 +15,5 @@ export interface Program {
   programType: ProgramType;
   enrollments?: number;
   created_at?: string;
+  is_favorite?: boolean;
 }

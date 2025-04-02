@@ -5,7 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { supabase } from '@/lib/supabase';
-import { ProgramCard } from '@/components/programs/ProgramCard';
+import ProgramCard from '@/components/programs/ProgramCard'; // Fixed import
 
 const BusinessProgramsPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -32,7 +32,8 @@ const BusinessProgramsPage: React.FC = () => {
           return;
         }
         
-        setPrograms(data || []);
+        // Ensure the data matches the Program type
+        setPrograms(data as unknown as Program[]);
       } catch (error) {
         console.error('Error in business programs fetch:', error);
       } finally {
@@ -71,7 +72,12 @@ const BusinessProgramsPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {programs.map((program) => (
-                <ProgramCard key={program.id} program={program} />
+                <ProgramCard 
+                  key={program.id} 
+                  program={program}
+                  currentUser={null}
+                  isAuthenticated={false}
+                />
               ))}
             </div>
           )}

@@ -35,6 +35,7 @@ interface ProgramFormDialogProps {
   onSave: (programData: Partial<Program>) => Promise<void>;
 }
 
+// Update schema to match the expanded ProgramCategory type
 const formSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
   description: z.string().min(1, "Description is required"),
@@ -42,7 +43,7 @@ const formSchema = z.object({
   sessions: z.coerce.number().min(1, "Must have at least 1 session"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   image: z.string().url("Must be a valid URL"),
-  category: z.enum(['quick-ease', 'resilience-building', 'super-human', 'issue-based'] as const),
+  category: z.enum(['quick-ease', 'resilience-building', 'super-human', 'issue-based', 'academic', 'business'] as const),
   programType: z.enum(['wellness', 'academic', 'business'] as const)
 });
 
@@ -59,8 +60,8 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
       sessions: program.sessions,
       price: program.price,
       image: program.image,
-      category: program.category as ProgramCategory,
-      programType: program.programType as ProgramType
+      category: program.category,
+      programType: program.programType
     } : {
       title: "",
       description: "",
@@ -68,8 +69,8 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
       sessions: 1,
       price: 0,
       image: "",
-      category: 'quick-ease' as ProgramCategory,
-      programType: 'wellness' as ProgramType
+      category: 'quick-ease',
+      programType: 'wellness'
     }
   });
   
@@ -223,6 +224,8 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
                     <SelectItem value="resilience-building">Resilience Building</SelectItem>
                     <SelectItem value="super-human">Super Human</SelectItem>
                     <SelectItem value="issue-based">Issue-Based Programs</SelectItem>
+                    <SelectItem value="academic">Academic Programs</SelectItem>
+                    <SelectItem value="business">Business Programs</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
