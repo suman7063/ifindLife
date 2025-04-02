@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ArrowDown, Brain, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
 import { servicesData } from '@/components/services/detail/servicesData';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const Services = () => {
   // References for scrolling to sections
@@ -49,43 +50,49 @@ const Services = () => {
             </div>
             
             <div ref={servicesRef} className="space-y-24">
-              {servicesData.map((service, index) => (
-                <section 
-                  key={service.id} 
-                  id={service.id} 
-                  className={`scroll-mt-24 ${index % 2 === 0 ? '' : 'bg-gray-50 dark:bg-gray-900 py-8 rounded-xl'}`}
-                >
-                  <div className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}>
-                    <div className="md:w-1/2">
-                      <div className="p-4 rounded-xl overflow-hidden h-80 shadow-md border border-gray-200">
-                        <img 
-                          src={service.image} 
-                          alt={service.title} 
-                          className="w-full h-full object-cover rounded-lg" 
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="md:w-1/2 space-y-4">
-                      <div className="flex flex-col items-center md:items-start">
-                        <div className={`p-3 rounded-full mb-2 ${service.color}`}>
-                          {service.icon}
+              {servicesData.map((service, index) => {
+                // Use our custom hook for each service card
+                const { ref, isVisible } = useScrollAnimation();
+                
+                return (
+                  <section 
+                    key={service.id} 
+                    id={service.id} 
+                    ref={ref}
+                    className={`scroll-mt-24 ${index % 2 === 0 ? '' : 'bg-gray-50 dark:bg-gray-900 py-8 rounded-xl'} transition-opacity duration-1000 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+                  >
+                    <div className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}>
+                      <div className="md:w-1/2">
+                        <div className="p-4 rounded-xl overflow-hidden h-80 shadow-md border border-gray-200">
+                          <img 
+                            src={service.image} 
+                            alt={service.title} 
+                            className="w-full h-full object-cover rounded-lg" 
+                          />
                         </div>
-                        <h2 className={`text-3xl font-bold ${service.textColor}`}>{service.title}</h2>
                       </div>
                       
-                      <p className="text-lg text-gray-700 dark:text-gray-300">{service.description}</p>
-                      <p className="text-gray-600 dark:text-gray-400">{service.detailedDescription.substring(0, 150)}...</p>
-                      
-                      <div className="pt-4">
-                        <Button asChild className={`${service.buttonColor}`}>
-                          <Link to={`/services/${service.id}`}>Learn More</Link>
-                        </Button>
+                      <div className="md:w-1/2 space-y-4">
+                        <div className="flex flex-col items-center md:items-start">
+                          <div className={`p-3 rounded-full mb-2 ${service.color}`}>
+                            {service.icon}
+                          </div>
+                          <h2 className={`text-3xl font-bold ${service.textColor}`}>{service.title}</h2>
+                        </div>
+                        
+                        <p className="text-lg text-gray-700 dark:text-gray-300">{service.description}</p>
+                        <p className="text-gray-600 dark:text-gray-400">{service.detailedDescription.substring(0, 150)}...</p>
+                        
+                        <div className="pt-4">
+                          <Button asChild className={`${service.buttonColor}`}>
+                            <Link to={`/services/${service.id}`}>Learn More</Link>
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </section>
-              ))}
+                  </section>
+                );
+              })}
             </div>
           </div>
         </section>
