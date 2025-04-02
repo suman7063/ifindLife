@@ -20,13 +20,21 @@ import ExpertBookingCalendar from '../booking/ExpertBookingCalendar';
 import { servicesData } from './detail/servicesData';
 import { supabase } from '@/lib/supabase';
 
+interface Expert {
+  id: string;
+  name: string;
+  specialization?: string;
+  status?: string;
+  [key: string]: any;
+}
+
 const ServiceDetail = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const [isInquiryDialogOpen, setIsInquiryDialogOpen] = useState(false);
   const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
-  const [matchingExperts, setMatchingExperts] = useState<any[]>([]);
-  const [selectedExpert, setSelectedExpert] = useState<any | null>(null);
+  const [matchingExperts, setMatchingExperts] = useState<Expert[]>([]);
+  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   
   // Get authentication state for the inquiry form
   const { isAuthenticated, currentUser } = useAuthSynchronization();
