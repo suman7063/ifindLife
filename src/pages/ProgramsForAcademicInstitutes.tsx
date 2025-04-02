@@ -4,7 +4,7 @@ import { Program } from '@/types/programs';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
-import { from } from '@/lib/supabase';
+import { from, supabase } from '@/lib/supabase';
 import ProgramList from '@/components/programs/ProgramList';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Loader2 } from 'lucide-react';
@@ -24,7 +24,8 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
         await addSamplePrograms('academic');
         
         // Then fetch them
-        const { data, error } = await from('programs')
+        const { data, error } = await supabase
+          .from('programs')
           .select('*')
           .eq('programType', 'academic')
           .order('title');
