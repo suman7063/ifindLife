@@ -27,8 +27,8 @@ const ServiceAbout: React.FC<ServiceAboutProps> = ({
   process
 }) => {
   return (
-    <Card className={`border-l-4 ${color} shadow-lg overflow-hidden`}>
-      <div className="bg-gray-50 dark:bg-gray-800 p-8">
+    <Card className={`border-l-4 ${color} shadow-lg overflow-hidden mb-8`}>
+      <div className="bg-gray-50 dark:bg-gray-900 p-8">
         <div className={`inline-flex items-center justify-center ${color} text-white p-4 rounded-full mb-4`}>
           {icon}
         </div>

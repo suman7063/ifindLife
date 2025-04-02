@@ -42,7 +42,11 @@ const ServiceCTA: React.FC<ServiceCTAProps> = ({
             </DialogTrigger>
           </Dialog>
           
-          <Button variant="outline" className={`w-full ${textColor} border-${color} hover:bg-${color}/10`} onClick={onBookNowClick}>
+          <Button 
+            variant="outline" 
+            className={`w-full ${textColor} border-${color.replace('bg-', '')} hover:${color.replace('bg-', 'bg-')}/10`} 
+            onClick={onBookNowClick}
+          >
             <Calendar className="mr-2 h-4 w-4" /> Book Now
           </Button>
         </div>

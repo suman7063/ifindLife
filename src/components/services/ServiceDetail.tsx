@@ -48,7 +48,7 @@ const ServiceDetail = () => {
       if (!serviceData) return;
       
       try {
-        // Match experts based on specialties that include this service title or keywords
+        // Match experts based on specialization that might include this service title or keywords
         const { data, error } = await supabase
           .from('experts')
           .select('*')
@@ -56,23 +56,18 @@ const ServiceDetail = () => {
           
         if (error) throw error;
         
-        // Filter experts that have specialties matching this service
+        // Filter experts that have specializations matching this service
         // This is a simple implementation - in a real app, you'd have a more robust matching system
         const serviceKeywords = serviceData.title.toLowerCase().split(' ');
         
         const filteredExperts = data?.filter(expert => {
-          if (!expert.specialties) return false;
+          if (!expert.specialization) return false;
           
-          const expertSpecialties = Array.isArray(expert.specialties) 
-            ? expert.specialties 
-            : typeof expert.specialties === 'string' 
-              ? expert.specialties.split(',') 
-              : [];
+          // Convert specialization string to lowercase for case-insensitive comparison
+          const expertSpecialization = expert.specialization.toLowerCase();
               
-          return expertSpecialties.some(specialty => 
-            serviceKeywords.some(keyword => 
-              specialty.toLowerCase().includes(keyword.toLowerCase())
-            )
+          return serviceKeywords.some(keyword => 
+            expertSpecialization.includes(keyword.toLowerCase())
           );
         }) || [];
         
