@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { Program } from '@/types/programs';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PageHeader from '@/components/common/PageHeader';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { supabase } from '@/lib/supabase';
-import ProgramCard from '@/components/programs/ProgramCard'; // Fixed import
+import ProgramCard from '@/components/programs/ProgramCard';
 
 const AcademicProgramsPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -47,18 +48,12 @@ const AcademicProgramsPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <PageHeader 
+        title="Programs for Academic Institutes" 
+        subtitle="Comprehensive mental health solutions designed for schools, colleges, and universities"
+      />
+      
       <main className="flex-1">
-        {/* Header Section */}
-        <div className="bg-ifind-charcoal text-white py-10">
-          <div className="container">
-            <h1 className="text-3xl font-bold mb-2">Programs for Academic Institutes</h1>
-            <p className="text-ifind-offwhite/80">
-              Comprehensive mental health solutions designed for schools, colleges, and universities
-            </p>
-          </div>
-        </div>
-        
-        {/* Programs Section */}
         <div className="container py-12">
           {loading ? (
             <div className="text-center py-12">

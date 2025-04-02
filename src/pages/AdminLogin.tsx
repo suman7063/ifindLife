@@ -7,6 +7,7 @@ import { EyeOff, Eye, ShieldAlert } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PageHeader from '@/components/common/PageHeader';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -32,6 +33,10 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <PageHeader 
+        title="Admin Access" 
+        subtitle="Secure login for system administrators" 
+      />
       <main className="flex-1 py-10 flex items-center justify-center">
         <div className="container max-w-md">
           <div className="bg-background/95 backdrop-blur-sm rounded-xl shadow-xl p-8 border border-ifind-teal/10">

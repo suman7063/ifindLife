@@ -2,6 +2,7 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import PageHeader from '@/components/common/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 
@@ -9,6 +10,10 @@ const ExpertRegister: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <PageHeader 
+        title="Expert Registration" 
+        subtitle="Join our network of mental health professionals" 
+      />
       <main className="flex-1 py-16 container">
         <div className="max-w-md mx-auto">
           <Card className="border-ifind-lavender/20 shadow-xl">

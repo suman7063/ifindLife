@@ -5,7 +5,7 @@ import Footer from '@/components/Footer';
 import SearchSort from '@/components/experts/SearchSort';
 import FilterPanel from '@/components/experts/FilterPanel';
 import ExpertsGrid from '@/components/experts/ExpertsGrid';
-import ExpertsHeader from '@/components/experts/ExpertsHeader';
+import PageHeader from '@/components/common/PageHeader';
 import { useExpertFilters } from '@/hooks/useExpertFilters';
 import { expertData } from '@/data/expertData';
 
@@ -20,7 +20,10 @@ const Experts = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <ExpertsHeader />
+      <PageHeader 
+        title="Mental Health Experts" 
+        subtitle="Connect with qualified professionals specialized in various mental health disciplines"
+      />
       
       <main className="flex-1 py-10">
         <div className="container">

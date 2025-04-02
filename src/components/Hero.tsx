@@ -59,7 +59,7 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with increased height (20% more) */}
+      {/* Banner Image Section with proper 20% increase in height from original 504px */}
       <div className="relative w-full h-[605px]">
         <img 
           src="/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
