@@ -12,13 +12,13 @@ import { toast } from 'sonner';
 import { Brain, Calendar, Check, Clock, HeartPulse, Leaf, MessageCircle, Sparkles, Users } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
-// Service data with detailed descriptions
+// Service data with detailed descriptions and updated images
 const servicesData = [
   {
     id: "therapy-sessions",
     title: "Therapy Sessions",
     description: "Professional therapy sessions to help you navigate life's challenges, manage mental health concerns, and enhance personal growth.",
-    image: "/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png",
+    image: "/lovable-uploads/58321caf-3b5b-4a9d-91a1-44514ae2000b.png",
     color: "bg-ifind-teal",
     gradientColor: "from-ifind-teal/20 to-white",
     textColor: "text-ifind-teal",
@@ -39,7 +39,7 @@ const servicesData = [
     id: "guided-meditations",
     title: "Guided Meditations",
     description: "Expertly led meditation sessions to reduce stress, increase mindfulness, and cultivate inner peace and mental clarity.",
-    image: "/lovable-uploads/6fdf43ed-732a-4659-a397-a7d061440bc2.png",
+    image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
     color: "bg-ifind-purple",
     gradientColor: "from-ifind-purple/20 to-white",
     textColor: "text-ifind-purple",
@@ -60,7 +60,7 @@ const servicesData = [
     id: "mindful-listening",
     title: "Mindful Listening",
     description: "A unique space where you can express yourself freely while being deeply heard without judgment or interruption.",
-    image: "/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png",
+    image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
     color: "bg-ifind-lavender",
     gradientColor: "from-ifind-lavender/20 to-white",
     textColor: "text-ifind-lavender",
@@ -146,88 +146,96 @@ const ServiceDetail = () => {
   
   return (
     <div className="container mx-auto px-4 py-12 max-w-6xl">
-      {/* Hero Section */}
-      <div className={`rounded-xl overflow-hidden relative mb-12 ${serviceData.color}`}>
+      {/* Hero Section with Full-Width Image */}
+      <div className="rounded-xl overflow-hidden relative mb-12 h-[500px]">
         <img 
           src={serviceData.image} 
           alt={serviceData.title} 
-          className="w-full h-64 object-cover mix-blend-overlay opacity-80" 
+          className="w-full h-full object-cover" 
         />
-        <div className="absolute inset-0 flex flex-col justify-center items-center text-white p-8">
-          <div className={`p-3 rounded-full ${serviceData.color} bg-opacity-70 mb-4`}>
-            {serviceData.icon}
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center text-shadow">{serviceData.title}</h1>
-          <p className="text-xl max-w-2xl text-center text-shadow-sm">{serviceData.description}</p>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end items-center text-white p-12">
+          <h1 className="text-5xl md:text-6xl font-bold mb-4 text-center text-shadow tracking-tight">{serviceData.title}</h1>
+          <p className="text-xl max-w-3xl text-center text-shadow-sm mb-8">{serviceData.description}</p>
+          <Button 
+            className={`${serviceData.buttonColor} text-white px-8 py-6 text-lg rounded-full transition-all transform hover:scale-105`}
+            onClick={() => setIsDialogOpen(true)}
+          >
+            Inquire Now
+          </Button>
         </div>
       </div>
       
+      {/* Main Content Section */}
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <div className="md:col-span-2">
-          <Card className={`border-t-4 ${serviceData.color} shadow-lg`}>
-            <CardHeader>
-              <CardTitle className={`text-2xl ${serviceData.textColor}`}>About {serviceData.title}</CardTitle>
-              <CardDescription>Comprehensive support for your mental wellness journey</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+          <Card className={`border-l-4 ${serviceData.color} shadow-lg overflow-hidden`}>
+            <div className={`bg-gradient-to-r ${serviceData.gradientColor} p-8`}>
+              <div className={`inline-flex items-center justify-center ${serviceData.color} text-white p-4 rounded-full mb-4`}>
+                {serviceData.icon}
+              </div>
+              <CardTitle className={`text-3xl ${serviceData.textColor} mb-2`}>About {serviceData.title}</CardTitle>
+              <CardDescription className="text-lg">Comprehensive support for your mental wellness journey</CardDescription>
+            </div>
+            <CardContent className="space-y-8 p-8">
               <div>
-                <p className="text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed">
                   {serviceData.detailedDescription}
                 </p>
               </div>
               
               <div className={`p-6 rounded-lg bg-gradient-to-r ${serviceData.gradientColor}`}>
-                <h3 className={`text-lg font-semibold mb-4 flex items-center ${serviceData.textColor}`}>
-                  <Check className="h-5 w-5 mr-2" /> Key Benefits
+                <h3 className={`text-xl font-semibold mb-6 flex items-center ${serviceData.textColor}`}>
+                  <Check className="h-6 w-6 mr-2" /> Key Benefits
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                   {serviceData.benefits.map((benefit, index) => (
                     <li key={index} className="flex items-start">
                       <span className={`inline-flex items-center justify-center p-1 ${serviceData.textColor} mr-3 mt-1`}>
-                        <Check className="h-4 w-4" />
+                        <Check className="h-5 w-5" />
                       </span>
-                      <span className="text-gray-700 dark:text-gray-300">{benefit}</span>
+                      <span className="text-lg text-gray-700 dark:text-gray-300">{benefit}</span>
                     </li>
                   ))}
                 </ul>
               </div>
               
               <div className="grid md:grid-cols-2 gap-6">
-                <div className="border rounded-lg p-4">
-                  <h3 className={`text-lg font-semibold mb-2 flex items-center ${serviceData.textColor}`}>
-                    <Clock className="h-5 w-5 mr-2" /> Duration
+                <div className={`border-l-4 ${serviceData.color} rounded-lg p-6 shadow-sm`}>
+                  <h3 className={`text-xl font-semibold mb-3 flex items-center ${serviceData.textColor}`}>
+                    <Clock className="h-6 w-6 mr-2" /> Duration
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">{serviceData.duration}</p>
+                  <p className="text-lg text-gray-700 dark:text-gray-300">{serviceData.duration}</p>
                 </div>
                 
-                <div className="border rounded-lg p-4">
-                  <h3 className={`text-lg font-semibold mb-2 flex items-center ${serviceData.textColor}`}>
-                    <Calendar className="h-5 w-5 mr-2" /> Process
+                <div className={`border-l-4 ${serviceData.color} rounded-lg p-6 shadow-sm`}>
+                  <h3 className={`text-xl font-semibold mb-3 flex items-center ${serviceData.textColor}`}>
+                    <Calendar className="h-6 w-6 mr-2" /> Process
                   </h3>
-                  <p className="text-gray-700 dark:text-gray-300">{serviceData.process}</p>
+                  <p className="text-lg text-gray-700 dark:text-gray-300">{serviceData.process}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <div className="mt-8">
-            <Card className="bg-gray-50 dark:bg-gray-800">
+          <div className="mt-12">
+            <Card className="bg-gray-50 dark:bg-gray-800/50 overflow-hidden rounded-xl">
+              <div className={`${serviceData.color} h-2 w-full`}></div>
               <CardHeader>
-                <CardTitle className="text-xl">Frequently Asked Questions</CardTitle>
+                <CardTitle className="text-2xl">Frequently Asked Questions</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6 p-8">
                 <div>
-                  <h4 className="font-medium mb-2">How do I prepare for my first session?</h4>
+                  <h4 className="font-medium text-lg mb-2">How do I prepare for my first session?</h4>
                   <p className="text-gray-600 dark:text-gray-400">Come as you are! There's no special preparation needed. You might want to take a few minutes before your session to reflect on what you hope to gain from the experience.</p>
                 </div>
-                <Separator />
+                <Separator className="my-2" />
                 <div>
-                  <h4 className="font-medium mb-2">Are these services covered by insurance?</h4>
+                  <h4 className="font-medium text-lg mb-2">Are these services covered by insurance?</h4>
                   <p className="text-gray-600 dark:text-gray-400">Some of our services may be covered by insurance. Please contact your insurance provider to verify coverage and contact us for assistance with paperwork.</p>
                 </div>
-                <Separator />
+                <Separator className="my-2" />
                 <div>
-                  <h4 className="font-medium mb-2">How many sessions will I need?</h4>
+                  <h4 className="font-medium text-lg mb-2">How many sessions will I need?</h4>
                   <p className="text-gray-600 dark:text-gray-400">This varies greatly depending on individual needs and goals. Some people benefit from just a few sessions, while others prefer ongoing support. We'll discuss recommendations during your initial session.</p>
                 </div>
               </CardContent>
@@ -235,49 +243,52 @@ const ServiceDetail = () => {
           </div>
         </div>
         
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* Call to Action Card */}
           <Card className={`border ${serviceData.color} shadow-lg overflow-hidden`}>
-            <div className="p-6">
-              <h2 className={`text-xl font-bold mb-4 ${serviceData.textColor}`}>Ready to Begin Your Journey?</h2>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
-                Take the first step toward positive change. Our experts are ready to support you on your journey to improved mental wellness.
-              </p>
+            <div className={`bg-gradient-to-br ${serviceData.gradientColor} p-1`}>
+              <div className="bg-white dark:bg-gray-900 p-6 rounded-t-lg">
+                <h2 className={`text-2xl font-bold mb-4 ${serviceData.textColor}`}>Ready to Begin Your Journey?</h2>
+                <p className="text-gray-700 dark:text-gray-300 mb-6">
+                  Take the first step toward positive change. Our experts are ready to support you on your journey to improved mental wellness.
+                </p>
               
-              <div className="space-y-4">
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button className={`w-full ${serviceData.buttonColor}`}>
-                      Inquire Now
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[600px]">
-                    <DialogHeader>
-                      <DialogTitle>Inquire about {serviceData.title}</DialogTitle>
-                      <DialogDescription>
-                        Please provide your information and we'll get back to you shortly.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <InquiryForm 
-                      serviceName={serviceData.title} 
-                      currentUser={currentUser} 
-                      isAuthenticated={isAuthenticated} 
-                      onSuccess={() => setIsDialogOpen(false)} 
-                    />
-                  </DialogContent>
-                </Dialog>
+                <div className="space-y-4">
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className={`w-full ${serviceData.buttonColor} text-lg py-6`}>
+                        Inquire Now
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px]">
+                      <DialogHeader>
+                        <DialogTitle>Inquire about {serviceData.title}</DialogTitle>
+                        <DialogDescription>
+                          Please provide your information and we'll get back to you shortly.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <InquiryForm 
+                        serviceName={serviceData.title} 
+                        currentUser={currentUser} 
+                        isAuthenticated={isAuthenticated} 
+                        onSuccess={() => setIsDialogOpen(false)} 
+                      />
+                    </DialogContent>
+                  </Dialog>
                 
-                <Button variant="outline" className="w-full">
-                  <Calendar className="mr-2 h-4 w-4" /> View Schedule
-                </Button>
+                  <Button variant="outline" className="w-full">
+                    <Calendar className="mr-2 h-4 w-4" /> View Schedule
+                  </Button>
+                </div>
               </div>
             </div>
             
-            <div className="px-6 pb-6">
+            <div className="px-6 pb-6 pt-3">
               <Separator className="my-6" />
               
               <div className="text-sm space-y-4">
                 <div className="flex items-center">
-                  <Badge variant="outline" className={serviceData.textColor}>Popular</Badge>
+                  <Badge variant="outline" className={`${serviceData.textColor} px-3 py-1 text-sm`}>Popular</Badge>
                   <span className="ml-2 text-gray-500">High demand service</span>
                 </div>
                 
@@ -294,21 +305,23 @@ const ServiceDetail = () => {
             </div>
           </Card>
           
-          <Card className="border border-gray-200">
+          {/* Related Services Card */}
+          <Card className="border border-gray-200 overflow-hidden">
+            <div className={`${serviceData.color} h-2 w-full`}></div>
             <CardHeader>
               <CardTitle className="text-xl">Related Services</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
               {servicesData
                 .filter(s => s.id !== serviceId)
                 .slice(0, 3)
                 .map(relatedService => (
-                  <div key={relatedService.id} className="flex items-center gap-4 group">
-                    <div className={`p-2 rounded-full ${relatedService.color}`}>
+                  <div key={relatedService.id} className="flex items-center gap-4 group transition-all hover:bg-gray-50 dark:hover:bg-gray-800/50 p-3 rounded-lg">
+                    <div className={`p-3 rounded-full ${relatedService.color}`}>
                       {relatedService.icon}
                     </div>
                     <div>
-                      <h4 className={`font-medium group-hover:${relatedService.textColor}`}>
+                      <h4 className={`font-medium text-lg group-hover:${relatedService.textColor}`}>
                         <Link to={`/services/${relatedService.id}`} className="hover:underline">
                           {relatedService.title}
                         </Link>
@@ -319,11 +332,41 @@ const ServiceDetail = () => {
                 ))}
             </CardContent>
           </Card>
+          
+          {/* Testimonial */}
+          <Card className="border border-gray-200 bg-gray-50 dark:bg-gray-800/30">
+            <CardContent className="pt-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="relative">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-12 w-12 text-gray-300 absolute -top-6 -left-6 z-0"
+                  >
+                    <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z" />
+                    <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z" />
+                  </svg>
+                  <p className="text-lg italic text-gray-700 dark:text-gray-300 relative z-10">
+                    This service completely transformed my approach to mental wellness. The personalized attention and expert guidance made all the difference.
+                  </p>
+                </div>
+                <div className="mt-4">
+                  <p className="font-semibold">Sarah J.</p>
+                  <p className="text-sm text-gray-500">Client since 2022</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
       
       <div className="flex justify-between">
-        <Button variant="outline" onClick={() => navigate('/services')}>
+        <Button variant="outline" onClick={() => navigate('/services')} className="px-6">
           Back to Services
         </Button>
       </div>
