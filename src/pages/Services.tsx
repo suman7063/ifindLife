@@ -28,14 +28,14 @@ const Services = () => {
                 Comprehensive mental wellness services tailored to your unique needs and journey.
               </p>
               
-              {/* Service Navigation Menu - Fixed to make all buttons visible */}
+              {/* Service Navigation Menu - Fixed for better visibility */}
               <div className="flex justify-center mb-8">
                 <div className="flex flex-wrap justify-center gap-2">
                   {servicesData.map((service) => (
                     <a 
                       key={service.id}
                       href={`#${service.id}`} 
-                      className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${service.buttonColor} text-white h-10 px-4 py-2 m-1`}
+                      className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${service.buttonColor} text-white h-10 px-4 py-2 m-1 shadow-sm hover:shadow-md`}
                     >
                       {service.title}
                     </a>
@@ -57,18 +57,20 @@ const Services = () => {
                 >
                   <div className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}>
                     <div className="md:w-1/2">
-                      <div className={`${service.color} p-4 rounded-xl overflow-hidden h-80`}>
+                      <div className="p-4 rounded-xl overflow-hidden h-80 shadow-md border border-gray-200">
                         <img 
                           src={service.image} 
                           alt={service.title} 
-                          className="w-full h-full object-cover mix-blend-overlay opacity-80 rounded-lg" 
+                          className="w-full h-full object-cover rounded-lg" 
                         />
                       </div>
                     </div>
                     
                     <div className="md:w-1/2 space-y-4">
                       <div className="flex flex-col items-center md:items-start">
-                        {service.icon}
+                        <div className={`p-3 rounded-full mb-2 ${service.color}`}>
+                          {service.icon}
+                        </div>
                         <h2 className={`text-3xl font-bold ${service.textColor}`}>{service.title}</h2>
                       </div>
                       
@@ -76,7 +78,7 @@ const Services = () => {
                       <p className="text-gray-600 dark:text-gray-400">{service.detailedDescription.substring(0, 150)}...</p>
                       
                       <div className="pt-4">
-                        <Button asChild className={`${service.color} hover:${service.color}/90`}>
+                        <Button asChild className={`${service.buttonColor}`}>
                           <Link to={`/services/${service.id}`}>Learn More</Link>
                         </Button>
                       </div>
