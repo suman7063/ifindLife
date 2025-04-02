@@ -10,7 +10,6 @@ const RegisterPage = lazy(() => import('./pages/UserRegister'));
 const ProgramsPage = lazy(() => import('./pages/Programs'));
 const AcademicProgramsPage = lazy(() => import('./pages/AcademicPrograms'));
 const BusinessProgramsPage = lazy(() => import('./pages/BusinessPrograms'));
-const ProgramsForWellnessSeekersPage = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
 const ExpertsPage = lazy(() => import('./pages/Experts'));
 const ExpertProfilePage = lazy(() => import('./pages/ExpertDetail'));
 const UserProfilePage = lazy(() => import('./pages/UserDashboard'));
@@ -25,7 +24,7 @@ const ServicesPage = lazy(() => import('./pages/Services'));
 const ServiceDetailPage = lazy(() => import('./pages/service/ServiceDetailPage'));
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfService'));
-const ProgramDetailPage = lazy(() => import('./pages/ProgramDetail'));
+const ProgramsForWellnessSeekersPage = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
 
 export const routes: RouteObject[] = [
   {
@@ -53,7 +52,7 @@ export const routes: RouteObject[] = [
     element: <BusinessProgramsPage />,
   },
   {
-    path: '/programs-for-wellness-seekers',
+    path: '/programs-for-wellness',
     element: <ProgramsForWellnessSeekersPage />,
   },
   {
@@ -79,10 +78,6 @@ export const routes: RouteObject[] = [
         <UserProfilePage />
       </ProtectedRoute>
     ),
-  },
-  {
-    path: '/program/:id',
-    element: <ProgramDetailPage />,
   },
   {
     path: '/admin',
