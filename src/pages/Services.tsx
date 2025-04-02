@@ -1,10 +1,22 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle } from '@/components/ui/navigation-menu';
+import { cn } from '@/lib/utils';
+import { ArrowDown, Brain, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
+
+// Icons for each service
+const serviceIcons = {
+  "therapy-sessions": <HeartPulse className="h-10 w-10 mb-4 text-ifind-teal" />,
+  "guided-meditations": <Brain className="h-10 w-10 mb-4 text-ifind-purple" />,
+  "mindful-listening": <MessageCircle className="h-10 w-10 mb-4 text-ifind-lavender" />,
+  "offline-retreats": <Leaf className="h-10 w-10 mb-4 text-ifind-yellow" />,
+  "life-coaching": <Sparkles className="h-10 w-10 mb-4 text-ifind-pink" />
+};
 
 const servicesData = [
   {
@@ -45,6 +57,14 @@ const servicesData = [
 ];
 
 const Services = () => {
+  // References for scrolling to sections
+  const servicesRef = useRef<HTMLDivElement>(null);
+  
+  // Function to scroll to services section
+  const scrollToServices = () => {
+    servicesRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  
   return (
     <>
       <Navbar />
@@ -53,15 +73,37 @@ const Services = () => {
           <div className="container mx-auto px-4 max-w-6xl">
             <div className="text-center mb-16">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Services</h1>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
                 Comprehensive mental wellness services tailored to your unique needs and journey.
               </p>
+              
+              {/* Service Navigation Menu */}
+              <div className="flex justify-center mb-8">
+                <NavigationMenu>
+                  <NavigationMenuList className="flex flex-wrap justify-center gap-2">
+                    {servicesData.map((service) => (
+                      <NavigationMenuItem key={service.id}>
+                        <NavigationMenuLink 
+                          className={cn(navigationMenuTriggerStyle(), `text-white ${service.color}`)}
+                          href={`#${service.id}`}
+                        >
+                          {service.title}
+                        </NavigationMenuLink>
+                      </NavigationMenuItem>
+                    ))}
+                  </NavigationMenuList>
+                </NavigationMenu>
+              </div>
+              
+              <Button onClick={scrollToServices} variant="outline" className="mt-4 animate-bounce">
+                <ArrowDown className="mr-2 h-4 w-4" /> Explore Our Services
+              </Button>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div ref={servicesRef} className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {servicesData.map((service) => (
-                <Card key={service.id} className="overflow-hidden h-full flex flex-col">
-                  <div className={`h-48 overflow-hidden ${service.color}`}>
+                <Card key={service.id} id={service.id} className="overflow-hidden h-full flex flex-col scroll-mt-20">
+                  <div className={`h-48 overflow-hidden ${service.color} flex items-center justify-center`}>
                     <img 
                       src={service.image} 
                       alt={service.title} 
@@ -69,16 +111,19 @@ const Services = () => {
                     />
                   </div>
                   <CardHeader>
-                    <CardTitle>{service.title}</CardTitle>
-                    <CardDescription className="line-clamp-2">{service.description}</CardDescription>
+                    <div className="flex flex-col items-center text-center">
+                      {serviceIcons[service.id as keyof typeof serviceIcons]}
+                      <CardTitle>{service.title}</CardTitle>
+                    </div>
+                    <CardDescription className="text-center">{service.description}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
                       Personalized solutions for your mental wellness journey. We provide expert guidance and support.
                     </p>
                   </CardContent>
                   <CardFooter>
-                    <Button asChild className="w-full bg-ifind-teal hover:bg-ifind-teal/90">
+                    <Button asChild className={`w-full ${service.color} hover:${service.color}/90`}>
                       <Link to={`/services/${service.id}`}>Learn More</Link>
                     </Button>
                   </CardFooter>

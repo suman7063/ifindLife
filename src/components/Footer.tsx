@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, Send, Heart, Award, BrainCircuit } from 'lucide-react';
@@ -40,28 +41,33 @@ const Footer = () => {
             <h4 className="font-medium text-lg mb-4">Services</h4>
             <ul className="space-y-3">
               <li>
-                <Link to="/services/therapy" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/services/therapy-sessions" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Therapy Sessions
                 </Link>
               </li>
               <li>
-                <Link to="/services/coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/services/guided-meditations" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Guided Meditations
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/mindful-listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Mindful Listening
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/offline-retreats" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Offline Retreats
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/life-coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Life Coaching
                 </Link>
               </li>
               <li>
-                <Link to="/services/meditation" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Guided Meditation
-                </Link>
-              </li>
-              <li>
-                <Link to="/services/groups" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Support Groups
-                </Link>
-              </li>
-              <li>
-                <Link to="/services/assessment" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Mental Health Assessment
+                <Link to="/services" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors font-medium">
+                  All Services
                 </Link>
               </li>
             </ul>

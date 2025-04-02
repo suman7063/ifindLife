@@ -33,6 +33,8 @@ import BlogTeenageAnger from "./pages/BlogTeenageAnger";
 import UserProfileEdit from './components/user/UserProfileEdit';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
+import Services from './pages/Services';
+import ServiceDetailPage from './pages/service/ServiceDetailPage';
 
 function App() {
   return (
@@ -64,6 +66,8 @@ function App() {
       <Route path="/blog/managing-thoughts" element={<BlogManagingThoughts />} />
       <Route path="/blog/teenage-anger" element={<BlogTeenageAnger />} />
       <Route path="/user-profile-edit" element={<ProtectedRoute><UserProfileEdit /></ProtectedRoute>} />
+      <Route path="/services" element={<Services />} />
+      <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
