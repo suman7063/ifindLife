@@ -25,7 +25,6 @@ interface Expert {
   id: string;
   name: string;
   specialization?: string;
-  status?: string;
 }
 
 const ServiceDetail = () => {
@@ -56,10 +55,10 @@ const ServiceDetail = () => {
       if (!serviceData) return;
       
       try {
-        // Match experts based on specialization that might include this service title or keywords
+        // Note: Removed 'status' from the query since it doesn't exist in the experts table
         const { data, error } = await supabase
           .from('experts')
-          .select('id, name, specialization, status');
+          .select('id, name, specialization');
           
         if (error) throw error;
         
@@ -86,8 +85,7 @@ const ServiceDetail = () => {
           .map(expert => ({
             id: expert.id,
             name: expert.name,
-            specialization: expert.specialization,
-            status: expert.status
+            specialization: expert.specialization
           }));
         
         setMatchingExperts(filteredExperts);
