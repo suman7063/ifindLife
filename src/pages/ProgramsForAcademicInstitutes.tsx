@@ -34,14 +34,24 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
           return;
         }
         
-        // Properly cast the data to ensure type safety
-        const formattedPrograms = (data || []).map(program => ({
-          ...program,
-          category: program.category as Program['category'],  // Ensure correct type casting
-          programType: program.programType as Program['programType'] // Ensure correct type casting
-        }));
-        
-        setPrograms(formattedPrograms);
+        if (data) {
+          // Convert the data to Program type explicitly
+          const formattedPrograms: Program[] = data.map(program => ({
+            id: program.id,
+            title: program.title,
+            description: program.description,
+            duration: program.duration,
+            sessions: program.sessions,
+            price: program.price,
+            image: program.image,
+            category: program.category as Program['category'],
+            programType: program.programType as Program['programType'],
+            enrollments: program.enrollments || 0,
+            created_at: program.created_at
+          }));
+          
+          setPrograms(formattedPrograms);
+        }
       } catch (error) {
         console.error('Error in academic programs fetch:', error);
       } finally {
