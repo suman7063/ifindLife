@@ -13,7 +13,6 @@ const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
 const CTASection = lazy(() => import('@/components/CTASection'));
 const Footer = lazy(() => import('@/components/Footer'));
-const WhatWeDoSection = lazy(() => import('@/components/WhatWeDoSection'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
 const StayInTouchSection = lazy(() => import('@/components/StayInTouchSection'));
 
@@ -42,17 +41,17 @@ const Index = () => {
         {/* Services/Categories Section - Critical for first impression */}
         <ServicesSection />
 
-        {/* Programs Section for Organizations */}
+        {/* Programs Section for Organizations - Now left-aligned */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8 text-center">Programs for Organizations</h2>
+            <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Academic Institutes</h3>
                 <p className="mb-6 text-gray-700">
                   Comprehensive mental health programs designed for schools, colleges, and universities to support students, teachers, and staff.
                 </p>
-                <Link to="/academic-programs">
+                <Link to="/programs-for-academic-institutes">
                   <Button className="w-full">View Academic Programs</Button>
                 </Link>
               </div>
@@ -61,7 +60,7 @@ const Index = () => {
                 <p className="mb-6 text-gray-700">
                   Mental health and wellness solutions to support your organization, improve productivity, and create a positive work environment.
                 </p>
-                <Link to="/business-programs">
+                <Link to="/programs-for-business">
                   <Button className="w-full">View Business Programs</Button>
                 </Link>
               </div>
@@ -82,9 +81,7 @@ const Index = () => {
           <TestimonialsSection />
         </Suspense>
         
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <WhatWeDoSection />
-        </Suspense>
+        {/* What We Do section removed */}
         
         <Suspense fallback={<SectionLoadingFallback />}>
           <BlogSection />

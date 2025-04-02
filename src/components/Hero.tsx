@@ -59,8 +59,8 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with new styling */}
-      <div className="relative w-full h-[504px]">
+      {/* Banner Image Section with increased height (20% more) */}
+      <div className="relative w-full h-[605px]">
         <img 
           src="/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
           alt="Woman with sunglasses" 
@@ -70,7 +70,7 @@ const Hero = () => {
             top: 0,
             left: 0,
             width: '100%',
-            height: '504px',
+            height: '605px',
             borderRadius: '0px'
           }}
           loading="eager" // Prioritize this image
@@ -86,11 +86,11 @@ const Hero = () => {
             className="text-white font-bold"
             style={{
               fontFamily: 'Roboto, sans-serif',
-              fontSize: '80px',
-              lineHeight: '104px',
+              fontSize: '96px',
+              lineHeight: '125px',
               fontWeight: 700,
               color: '#FFFFFF',
-              maxWidth: '449px'
+              maxWidth: '540px'
             }}
           >
             You Are<br />

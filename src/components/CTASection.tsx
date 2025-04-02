@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Phone, MessageCircle, Calendar, FileText } from 'lucide-react';
@@ -25,7 +26,7 @@ const CTASection = () => {
                 Talk to a Therapist
               </Button>
             </Link>
-            <Link to="/programs">
+            <Link to="/services">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <Calendar className="mr-2 h-5 w-5" />
                 Book an Appointment
