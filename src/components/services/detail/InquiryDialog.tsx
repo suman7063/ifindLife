@@ -2,13 +2,13 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import InquiryForm from '../InquiryForm';
-import { User } from '@supabase/supabase-js';
+import { UserProfile } from '@/types/supabase';
 
 interface InquiryDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   serviceName: string;
-  currentUser: User | null;
+  currentUser: UserProfile | null;
   isAuthenticated: boolean;
   onSuccess: () => void;
 }
