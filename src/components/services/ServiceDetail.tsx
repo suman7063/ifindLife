@@ -19,13 +19,14 @@ import ExpertBookingCalendar from '../booking/ExpertBookingCalendar';
 // Import service data
 import { servicesData } from './detail/servicesData';
 import { supabase } from '@/lib/supabase';
+import { ExpertProfile } from '@/types/supabase/expert';
 
+// Define a simpler Expert interface to prevent deep/circular type instantiation
 interface Expert {
   id: string;
   name: string;
   specialization?: string;
   status?: string;
-  [key: string]: any;
 }
 
 const ServiceDetail = () => {
@@ -59,7 +60,7 @@ const ServiceDetail = () => {
         // Match experts based on specialization that might include this service title or keywords
         const { data, error } = await supabase
           .from('experts')
-          .select('*')
+          .select('id, name, specialization, status')
           .neq('status', 'inactive');
           
         if (error) throw error;
