@@ -123,6 +123,9 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="flex flex-col space-y-1 ml-4">
+                    <Link to="/services" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded font-medium">
+                      All Services
+                    </Link>
                     <Link to="/services/therapy-sessions" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
                       Therapy Sessions
                     </Link>

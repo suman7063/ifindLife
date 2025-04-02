@@ -37,6 +37,7 @@ const NavbarDesktopLinksDropdown: React.FC<{title: string}> = ({ title }) => {
           )}
           {title === "Services" && (
             <>
+              <Link to="/services" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium">All Services</Link>
               <Link to="/services/therapy-sessions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Therapy Sessions</Link>
               <Link to="/services/guided-meditations" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Guided Meditations</Link>
               <Link to="/services/mindful-listening" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mindful Listening</Link>

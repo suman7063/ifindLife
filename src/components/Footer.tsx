@@ -41,6 +41,11 @@ const Footer = () => {
             <h4 className="font-medium text-lg mb-4">Services</h4>
             <ul className="space-y-3">
               <li>
+                <Link to="/services" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors font-medium">
+                  All Services
+                </Link>
+              </li>
+              <li>
                 <Link to="/services/therapy-sessions" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Therapy Sessions
                 </Link>
@@ -63,11 +68,6 @@ const Footer = () => {
               <li>
                 <Link to="/services/life-coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Life Coaching
-                </Link>
-              </li>
-              <li>
-                <Link to="/services" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors font-medium">
-                  All Services
                 </Link>
               </li>
             </ul>
