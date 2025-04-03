@@ -4,7 +4,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Save, LogOut } from 'lucide-react';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminUserManagement from '@/components/AdminUserManagement';
@@ -25,6 +24,9 @@ import BlogEditor from '@/components/admin/BlogEditor';
 
 // Import admin tools
 import useAdminTools from '@/hooks/useAdminTools';
+
+// Import sessions editor component we'll create
+import SessionsEditor from '@/components/admin/SessionsEditor';
 
 const Admin = () => {
   // State for each section
@@ -59,6 +61,36 @@ const Admin = () => {
     }
   }, []);
 
+  // Add auto logout functionality
+  useEffect(() => {
+    let inactivityTimer;
+    
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        console.log('Auto logout due to inactivity');
+        logout();
+      }, 30 * 60 * 1000); // 30 minutes in milliseconds
+    };
+    
+    // Reset timer on user activity
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    activityEvents.forEach(event => {
+      document.addEventListener(event, resetTimer);
+    });
+    
+    // Initialize timer
+    resetTimer();
+    
+    // Cleanup
+    return () => {
+      clearTimeout(inactivityTimer);
+      activityEvents.forEach(event => {
+        document.removeEventListener(event, resetTimer);
+      });
+    };
+  }, [logout]);
+
   // Handler for saving changes
   const handleSave = () => {
     // In a real application, this would save to a database or localStorage
@@ -73,7 +105,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      {/* Navbar removed for admin login */}
       <main className="flex-1 container py-8">
         <div className="flex justify-between items-center mb-8">
           <div className="flex items-center gap-2">
@@ -153,11 +185,7 @@ const Admin = () => {
             
             {/* Sessions Editor */}
             <TabsContent value="sessions" className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Issue Based Sessions</h2>
-              <p className="text-muted-foreground mb-6">Manage pre-recorded issue-based sessions here.</p>
-              <div className="text-center p-8 border border-dashed rounded-md">
-                <p className="text-muted-foreground">Sessions feature coming soon.</p>
-              </div>
+              <SessionsEditor />
             </TabsContent>
             
             {/* Blog Editor */}
@@ -175,13 +203,7 @@ const Admin = () => {
               <h2 className="text-xl font-semibold mb-4">Admin Tools</h2>
               <p className="text-muted-foreground mb-6">Tools for system maintenance and troubleshooting.</p>
               <div className="space-y-6">
-                {ProgramResetTool ? (
-                  <ProgramResetTool />
-                ) : (
-                  <div className="p-4 border border-amber-200 bg-amber-50 rounded-md">
-                    <p>Failed to load Program Reset Tool</p>
-                  </div>
-                )}
+                {ProgramResetTool && <ProgramResetTool />}
               </div>
             </TabsContent>
 
