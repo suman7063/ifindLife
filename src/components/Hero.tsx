@@ -20,11 +20,11 @@ const Hero = () => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Slider images - correcting the image order to replace the 1st image (sunglasses) with the uploaded teenager image
+  // Slider images - update with the three new provided images
   const sliderImages = [
-    "/lovable-uploads/43d69b36-0616-44bf-8fd1-2aa35a40a945.png",  // New teenager image (now in first position)
-    "/lovable-uploads/1debddfd-ebd1-41dd-98cb-90a9c97f0b3a.png",  // Second image
-    "/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png",  // Original third image
+    "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // First image (man)
+    "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Second image (woman)
+    "/lovable-uploads/d119547a-bdfc-45f2-b432-5da3d389dcf7.png", // Third image (child)
   ];
 
   // Load content from localStorage on component mount
@@ -81,8 +81,8 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with slider - FURTHER reduced height */}
-      <div className="relative w-full h-[350px] overflow-hidden">
+      {/* Banner Image Section with slider - updated height to 400px */}
+      <div className="relative w-full h-[400px] overflow-hidden">
         {sliderImages.map((image, index) => (
           <div 
             key={index}
@@ -100,7 +100,7 @@ const Hero = () => {
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '350px',
+                height: '400px',
                 borderRadius: '0px'
               }}
               loading={index === 0 ? "eager" : "lazy"} // Prioritize first image
@@ -119,8 +119,8 @@ const Hero = () => {
             className="text-white font-bold"
             style={{
               fontFamily: 'Roboto, sans-serif',
-              fontSize: '76px',
-              lineHeight: '95px',
+              fontSize: '86px',
+              lineHeight: '105px',
               fontWeight: 700,
               color: '#FFFFFF',
               maxWidth: '540px'
@@ -132,7 +132,7 @@ const Hero = () => {
         </div>
       </div>
       
-      {/* Help Section - FURTHER reduced height and optimized layout */}
+      {/* Help Section - optimized layout */}
       <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-4 px-6 sm:px-12 md:px-20 shadow-lg">
         <div className="container mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between">
@@ -164,7 +164,7 @@ const Hero = () => {
                 <span className="text-ifind-aqua">Mental Health Journey</span>
               </h2>
               <p className="text-gray-700 mb-6">
-                Connect with qualified mental health professionals who offer insightful guidance to address your emotional wellbeing, relationships, and personal growth. Get answers when you need it the most.
+                We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance and natural energy alignment, avoiding pills. Find your inner peace, and move forward gently. Get answers when you need it the most.
               </p>
               <div className="flex items-center space-x-2 text-sm text-gray-500 mb-6">
                 <div className="flex items-center">

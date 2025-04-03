@@ -41,7 +41,7 @@ const Index = () => {
         {/* Services/Categories Section - Critical for first impression */}
         <ServicesSection />
 
-        {/* Programs Section for Organizations - Now left-aligned */}
+        {/* Programs Section for Organizations - Updated for row alignment of buttons */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
@@ -51,18 +51,22 @@ const Index = () => {
                 <p className="mb-6 text-gray-700">
                   Comprehensive mental health programs designed for schools, colleges, and universities to support students, teachers, and staff.
                 </p>
-                <Link to="/programs-for-academic-institutes">
-                  <Button className="w-full">View Academic Programs</Button>
-                </Link>
+                <div className="flex flex-row justify-center space-x-4">
+                  <Link to="/programs-for-academic-institutes" className="w-full">
+                    <Button className="w-full">View Academic Programs</Button>
+                  </Link>
+                </div>
               </div>
               <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                 <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Businesses</h3>
                 <p className="mb-6 text-gray-700">
                   Mental health and wellness solutions to support your organization, improve productivity, and create a positive work environment.
                 </p>
-                <Link to="/programs-for-business">
-                  <Button className="w-full">View Business Programs</Button>
-                </Link>
+                <div className="flex flex-row justify-center space-x-4">
+                  <Link to="/programs-for-business" className="w-full">
+                    <Button className="w-full">View Business Programs</Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>

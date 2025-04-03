@@ -167,7 +167,7 @@ const ServicesSection = () => {
         </div>
       </div>
 
-      {/* Make sure the Dialog is properly implemented with the correct state */}
+      {/* Dialog implementation with proper state management */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
