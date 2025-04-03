@@ -8,8 +8,8 @@ const Index = lazy(() => import('./pages/Index'));
 const LoginPage = lazy(() => import('./pages/UserLogin'));
 const RegisterPage = lazy(() => import('./pages/UserRegister'));
 const ProgramsPage = lazy(() => import('./pages/Programs'));
-const AcademicProgramsPage = lazy(() => import('./pages/AcademicPrograms'));
-const BusinessProgramsPage = lazy(() => import('./pages/BusinessPrograms'));
+const AcademicProgramsPage = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
+const BusinessProgramsPage = lazy(() => import('./pages/ProgramsForBusiness'));
 const ExpertsPage = lazy(() => import('./pages/Experts'));
 const ExpertProfilePage = lazy(() => import('./pages/ExpertDetail'));
 const UserProfilePage = lazy(() => import('./pages/UserDashboard'));
@@ -52,7 +52,7 @@ export const routes: RouteObject[] = [
     element: <BusinessProgramsPage />,
   },
   {
-    path: '/programs-for-wellness',
+    path: '/programs-for-wellness-seekers',
     element: <ProgramsForWellnessSeekersPage />,
   },
   {

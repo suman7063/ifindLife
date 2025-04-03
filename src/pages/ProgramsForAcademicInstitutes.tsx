@@ -4,10 +4,11 @@ import { Program } from '@/types/programs';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
-import { from, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import ProgramList from '@/components/programs/ProgramList';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Loader2 } from 'lucide-react';
+import PageHeader from '@/components/common/PageHeader';
 
 const ProgramsForAcademicInstitutes: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -66,9 +67,11 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">Programs For Academic Institutes</h1>
-        
+      <PageHeader 
+        title="Programs For Academic Institutes" 
+        subtitle="Comprehensive mental health solutions designed for schools, colleges, and universities"
+      />
+      <div className="container mx-auto px-4 sm:px-6 py-8">        
         <div className="my-6">
           <h2 className="text-xl font-semibold mb-4 text-ifind-purple">
             Mental Wellness Solutions for Educational Institutions

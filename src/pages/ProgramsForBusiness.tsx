@@ -4,10 +4,11 @@ import { Program } from '@/types/programs';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
-import { from, supabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import ProgramList from '@/components/programs/ProgramList';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Loader2 } from 'lucide-react';
+import PageHeader from '@/components/common/PageHeader';
 
 const ProgramsForBusiness: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -66,9 +67,11 @@ const ProgramsForBusiness: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="container mx-auto px-4 sm:px-6 py-8">
-        <h1 className="text-3xl font-bold mb-8 text-center">Programs For Businesses</h1>
-        
+      <PageHeader 
+        title="Programs For Businesses" 
+        subtitle="Dedicated mental health and wellness solutions to support your organization and employees"
+      />
+      <div className="container mx-auto px-4 sm:px-6 py-8">        
         <div className="my-6">
           <h2 className="text-xl font-semibold mb-4 text-ifind-purple">
             Mental Wellness Solutions for Organizations
