@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -16,17 +15,15 @@ import {
 // Import refactored components
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
-import ExpertsEditor from '@/components/admin/ExpertsEditor';
+import ExpertsEditor from '@/components/admin/experts';
 import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
 import TestimonialsEditor from '@/components/admin/testimonials/TestimonialsEditor';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
+import SessionsEditor from '@/components/admin/sessions';
 
 // Import admin tools
 import useAdminTools from '@/hooks/useAdminTools';
-
-// Import sessions editor component
-import SessionsEditor from '@/components/admin/SessionsEditor';
 
 const Admin = () => {
   // State for each section
@@ -146,7 +143,6 @@ const Admin = () => {
               )}
             </TabsList>
             
-            {/* Hero Section Editor */}
             <TabsContent value="hero" className="p-6">
               <HeroSectionEditor 
                 heroSettings={heroSettings} 
@@ -154,7 +150,6 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Services/Categories Editor */}
             <TabsContent value="categories" className="p-6">
               <ServicesEditor 
                 categories={categories} 
@@ -162,7 +157,6 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Experts Editor */}
             <TabsContent value="experts" className="p-6">
               <ExpertsEditor 
                 experts={experts} 
@@ -170,7 +164,6 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Testimonials Editor */}
             <TabsContent value="testimonials" className="p-6">
               <TestimonialsEditor 
                 testimonials={testimonials} 
@@ -178,27 +171,22 @@ const Admin = () => {
               />
             </TabsContent>
             
-            {/* Programs Editor */}
             <TabsContent value="programs" className="p-6">
               <ProgramsEditor />
             </TabsContent>
             
-            {/* Sessions Editor */}
             <TabsContent value="sessions" className="p-6">
               <SessionsEditor />
             </TabsContent>
             
-            {/* Blog Editor */}
             <TabsContent value="blog" className="p-6">
               <BlogEditor />
             </TabsContent>
 
-            {/* Referral Settings Editor */}
             <TabsContent value="referral" className="p-6">
               <ReferralSettingsEditor />
             </TabsContent>
             
-            {/* Admin Tools */}
             <TabsContent value="tools" className="p-6">
               <h2 className="text-xl font-semibold mb-4">Admin Tools</h2>
               <p className="text-muted-foreground mb-6">Tools for system maintenance and troubleshooting.</p>
@@ -207,7 +195,6 @@ const Admin = () => {
               </div>
             </TabsContent>
 
-            {/* Admin Users Management (only for superadmin) */}
             <TabsContent value="admins" className="p-6">
               <AdminUserManagement />
             </TabsContent>
