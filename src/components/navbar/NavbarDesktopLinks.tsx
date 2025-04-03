@@ -17,7 +17,17 @@ interface NavbarDesktopLinksProps {
   isLoggingOut: boolean;
 }
 
-const NavbarDesktopLinksDropdown: React.FC<{title: string}> = ({ title }) => {
+interface NavbarDesktopLinksDropdownProps {
+  title: string;
+  isAuthenticated?: boolean;
+  hasExpertProfile?: boolean;
+}
+
+const NavbarDesktopLinksDropdown: React.FC<NavbarDesktopLinksDropdownProps> = ({ 
+  title, 
+  isAuthenticated = false,
+  hasExpertProfile = false
+}) => {
   return (
     <div className="group relative">
       <Button variant="ghost" className="flex items-center gap-1">
@@ -105,7 +115,11 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       ) : isAuthenticated ? (
         <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
       ) : (
-        <NavbarDesktopLinksDropdown title="Login" />
+        <NavbarDesktopLinksDropdown 
+          title="Login" 
+          isAuthenticated={isAuthenticated} 
+          hasExpertProfile={hasExpertProfile} 
+        />
       )}
     </div>
   );
