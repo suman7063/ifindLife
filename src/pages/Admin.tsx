@@ -17,15 +17,15 @@ import {
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
 import TherapistsEditor from '@/components/admin/TherapistsEditor';
-import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
-import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
-import ProgramsEditor from '@/components/admin/ProgramsEditor';
+import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
+import TestimonialsEditor from '@/components/admin/testimonials/TestimonialsEditor';
+import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 
 // Import admin tools
 import useAdminTools from '@/hooks/useAdminTools';
 
-// Import sessions editor component we'll create
+// Import sessions editor component
 import SessionsEditor from '@/components/admin/SessionsEditor';
 
 const Admin = () => {
