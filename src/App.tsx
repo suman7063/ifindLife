@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Routes,
@@ -36,6 +37,8 @@ import Services from './pages/Services';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
+import Contact from './pages/Contact';
+import FAQs from './pages/FAQs';
 
 function App() {
   return (
@@ -71,6 +74,8 @@ function App() {
       <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/faqs" element={<FAQs />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

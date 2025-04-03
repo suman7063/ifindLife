@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import CategoryCard from '@/components/CategoryCard';
 import { categoryData as defaultCategoryData } from '@/data/homePageData';
 import { Heart, Brain, Users, MessageCircle, Sparkles, Lightbulb, Star, CircleDot } from 'lucide-react';
@@ -16,6 +17,7 @@ const ServicesSection = () => {
     color: string;
   } | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     try {
@@ -36,7 +38,7 @@ const ServicesSection = () => {
       icon: <Brain className="h-8 w-8 text-white" />,
       title: "QuickEase Programs",
       description: "Short-term solutions for immediate stress and anxiety relief",
-      href: "/programs?category=quick-ease",
+      href: "/programs-for-wellness-seekers?category=quick-ease",
       color: "bg-gradient-to-r from-ifind-aqua/60 to-ifind-aqua/80",
       textColor: "text-white"
     },
@@ -44,7 +46,7 @@ const ServicesSection = () => {
       icon: <CircleDot className="h-8 w-8 text-white" />,
       title: "Emotional Resilience",
       description: "Build psychological strength to handle life's challenges",
-      href: "/programs?category=resilience-building",
+      href: "/programs-for-wellness-seekers?category=resilience-building",
       color: "bg-gradient-to-r from-ifind-aqua/80 to-ifind-teal",
       textColor: "text-white"
     },
@@ -52,7 +54,7 @@ const ServicesSection = () => {
       icon: <Star className="h-8 w-8 text-white" />,
       title: "Super Human Life",
       description: "Achieve your highest potential through mental optimization",
-      href: "/programs?category=super-human",
+      href: "/programs-for-wellness-seekers?category=super-human",
       color: "bg-gradient-to-r from-ifind-purple/80 to-ifind-purple",
       textColor: "text-white"
     }
@@ -108,6 +110,10 @@ const ServicesSection = () => {
     setIsDialogOpen(true);
   };
 
+  const handleProgramClick = (href: string) => {
+    navigate(href);
+  };
+
   return (
     <section className="py-16 bg-ifind-purple/5">
       <div className="container mx-auto px-6 sm:px-12">
@@ -118,16 +124,17 @@ const ServicesSection = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
           {featuredPrograms.map((program, index) => (
-            <CategoryCard 
-              key={`program-${index}`} 
-              icon={program.icon}
-              title={program.title}
-              description={program.description}
-              href={program.href}
-              color={program.color}
-              textColor={program.textColor}
-              cardStyle="program"
-            />
+            <div key={`program-${index}`} onClick={() => handleProgramClick(program.href)} className="cursor-pointer">
+              <CategoryCard 
+                icon={program.icon}
+                title={program.title}
+                description={program.description}
+                href={program.href}
+                color={program.color}
+                textColor={program.textColor}
+                cardStyle="program"
+              />
+            </div>
           ))}
         </div>
 

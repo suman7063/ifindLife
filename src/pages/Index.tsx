@@ -87,13 +87,14 @@ const Index = () => {
           <BlogSection />
         </Suspense>
         
-        {/* Stay in Touch section moved above CTA section */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <StayInTouchSection />
-        </Suspense>
-
+        {/* CTA section moved above Stay in Touch section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <CTASection />
+        </Suspense>
+        
+        {/* Stay in Touch section moved below CTA section */}
+        <Suspense fallback={<SectionLoadingFallback />}>
+          <StayInTouchSection />
         </Suspense>
       </main>
 
