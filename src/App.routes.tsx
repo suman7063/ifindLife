@@ -25,6 +25,8 @@ const ServiceDetailPage = lazy(() => import('./pages/service/ServiceDetailPage')
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfServicePage = lazy(() => import('./pages/TermsOfService'));
 const ProgramsForWellnessSeekersPage = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
+const ContactUsPage = lazy(() => import('./pages/ContactUs'));
+const FAQPage = lazy(() => import('./pages/FAQ'));
 
 export const routes: RouteObject[] = [
   {
@@ -122,6 +124,14 @@ export const routes: RouteObject[] = [
   {
     path: '/terms',
     element: <TermsOfServicePage />,
+  },
+  {
+    path: '/contact',
+    element: <ContactUsPage />,
+  },
+  {
+    path: '/faq',
+    element: <FAQPage />,
   },
   {
     path: '*',
