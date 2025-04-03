@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
@@ -121,8 +120,7 @@ const Hero = () => {
             <div>
               <h2 className="text-3xl font-bold mb-2">
                 Take Control of Your <br />
-                <span className="text-ifind-aqua">Mental Health</span> <br />
-                <span className="text-ifind-aqua">Journey</span>
+                <span className="text-ifind-aqua">Mental Health Journey</span>
               </h2>
               <p className="text-gray-700 mb-6">
                 Connect with qualified mental health professionals who offer insightful guidance to address your emotional wellbeing, relationships, and personal growth. Get answers when you need it the most.

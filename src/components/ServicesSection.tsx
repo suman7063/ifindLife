@@ -1,14 +1,22 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import CategoryCard from '@/components/CategoryCard';
 import { categoryData as defaultCategoryData } from '@/data/homePageData';
 import { Heart, Brain, Users, MessageCircle, Sparkles, Lightbulb, Star, CircleDot } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
 const ServicesSection = () => {
   const [categories, setCategories] = useState(defaultCategoryData);
+  const [selectedCategory, setSelectedCategory] = useState<{
+    title: string;
+    description: string;
+    href: string;
+    icon: React.ReactNode;
+    color: string;
+  } | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Load content from localStorage on component mount
   useEffect(() => {
     try {
       const savedContent = localStorage.getItem('ifindlife-content');
@@ -23,35 +31,33 @@ const ServicesSection = () => {
     }
   }, []);
 
-  // Featured program cards with gradient colors to show intensity
   const featuredPrograms = [
     {
       icon: <Brain className="h-8 w-8 text-white" />,
       title: "QuickEase Programs",
       description: "Short-term solutions for immediate stress and anxiety relief",
-      href: "/programs/quickease",
-      color: "bg-gradient-to-r from-ifind-aqua/60 to-ifind-aqua/80", // Lightest gradient
+      href: "/programs?category=quick-ease",
+      color: "bg-gradient-to-r from-ifind-aqua/60 to-ifind-aqua/80",
       textColor: "text-white"
     },
     {
       icon: <CircleDot className="h-8 w-8 text-white" />,
       title: "Emotional Resilience",
       description: "Build psychological strength to handle life's challenges",
-      href: "/programs/emotional-resilience",
-      color: "bg-gradient-to-r from-ifind-aqua/80 to-ifind-teal", // Medium gradient
+      href: "/programs?category=resilience-building",
+      color: "bg-gradient-to-r from-ifind-aqua/80 to-ifind-teal",
       textColor: "text-white"
     },
     {
       icon: <Star className="h-8 w-8 text-white" />,
       title: "Super Human Life",
       description: "Achieve your highest potential through mental optimization",
-      href: "/programs/superhuman-life",
-      color: "bg-gradient-to-r from-ifind-purple/80 to-ifind-purple", // Darkest gradient
+      href: "/programs?category=super-human",
+      color: "bg-gradient-to-r from-ifind-purple/80 to-ifind-purple",
       textColor: "text-white"
     }
   ];
 
-  // Hardcoded categories that match the Visily design
   const designCategories = [
     {
       icon: <Brain className="h-8 w-8 text-ifind-aqua" />,
@@ -97,15 +103,19 @@ const ServicesSection = () => {
     }
   ];
 
+  const handleCategoryClick = (category: any) => {
+    setSelectedCategory(category);
+    setIsDialogOpen(true);
+  };
+
   return (
     <section className="py-16 bg-ifind-purple/5">
       <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-3xl font-bold mb-6">IFL Programs</h2>
+        <h2 className="text-3xl font-bold mb-6">IFL Programs for Individuals</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">
           IFL provides 3 kind of programs in addition to issue/situation based sessions
         </p>
 
-        {/* Featured Programs Section */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
           {featuredPrograms.map((program, index) => (
             <CategoryCard 
@@ -121,20 +131,51 @@ const ServicesSection = () => {
           ))}
         </div>
 
-        {/* Issue/Situation Based Sessions with heading */}
         <div className="mt-16">
           <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {designCategories.map((category, index) => (
-              <CategoryCard 
-                key={`category-${index}`} 
-                {...category}
-                cardStyle="session" 
-              />
+              <div 
+                key={`category-${index}`}
+                onClick={() => handleCategoryClick(category)}
+                className="cursor-pointer"
+              >
+                <CategoryCard 
+                  {...category}
+                  cardStyle="session" 
+                />
+              </div>
             ))}
           </div>
         </div>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              {selectedCategory?.icon && React.cloneElement(selectedCategory.icon as React.ReactElement, { className: 'h-6 w-6 mr-2' })}
+              {selectedCategory?.title}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedCategory?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4">
+            <p className="mb-4 text-gray-700">
+              Our experienced professionals provide personalized guidance and support to help you navigate through your challenges.
+            </p>
+            <div className="flex justify-between mt-4">
+              <Button asChild variant="outline">
+                <Link to="/experts">Find an Expert</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/services">Book a Session</Link>
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 };

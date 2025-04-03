@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, User } from "lucide-react";
+import { UserPlus, User, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NavbarUserMenu from './NavbarUserMenu';
 import NavbarExpertMenu from './NavbarExpertMenu';
@@ -45,6 +45,31 @@ const NavbarDesktopLinksDropdown: React.FC<{title: string}> = ({ title }) => {
               <Link to="/services/life-coaching" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Life Coaching</Link>
             </>
           )}
+          {title === "Support" && (
+            <>
+              <Link to="/contact" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Contact Us</Link>
+              <Link to="/faqs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">FAQs</Link>
+              <Link to="/blog" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Blog</Link>
+            </>
+          )}
+          {title === "Login" && (
+            <>
+              <Link 
+                to="/user-login" 
+                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${hasExpertProfile ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
+                onClick={(e) => hasExpertProfile && e.preventDefault()}
+              >
+                User Login
+              </Link>
+              <Link 
+                to="/expert-login" 
+                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${isAuthenticated ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
+                onClick={(e) => isAuthenticated && e.preventDefault()}
+              >
+                Expert Login
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -73,28 +98,14 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       <Button variant="ghost" asChild>
         <Link to="/about">About</Link>
       </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/blog">Blog</Link>
-      </Button>
+      <NavbarDesktopLinksDropdown title="Support" />
       
       {hasExpertProfile ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
-      ) : (
-        <Button variant="ghost" asChild>
-          <Link to="/expert-login" className="text-ifind-teal">
-            <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
-          </Link>
-        </Button>
-      )}
-      
-      {isAuthenticated ? (
+      ) : isAuthenticated ? (
         <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
       ) : (
-        <Button variant="ghost" asChild>
-          <Link to="/user-login" className="text-ifind-teal">
-            <User className="h-4 w-4 mr-1" /> Login
-          </Link>
-        </Button>
+        <NavbarDesktopLinksDropdown title="Login" />
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, User, UserPlus, LogOut, BriefcaseBusiness, BookOpen, HeartPulse } from "lucide-react";
+import { Menu, User, UserPlus, LogOut, BriefcaseBusiness, BookOpen, HeartPulse, HelpCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from '@/types/supabase';
@@ -144,15 +144,29 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
                   </div>
                 </AccordionContent>
               </AccordionItem>
+              
+              <AccordionItem value="support">
+                <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
+                  Support
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="flex flex-col space-y-1 ml-4">
+                    <Link to="/contact" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      Contact Us
+                    </Link>
+                    <Link to="/faqs" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      FAQs
+                    </Link>
+                    <Link to="/blog" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                      <BookOpen className="h-4 w-4 mr-1 inline-block" /> Blog
+                    </Link>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             </Accordion>
             
             <Button variant="ghost" className="justify-start" asChild>
               <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
-            </Button>
-            <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/blog" onClick={() => setIsOpen(false)}>
-                <BookOpen className="h-4 w-4 mr-1" /> Blog
-              </Link>
             </Button>
             
             {hasExpertProfile ? (
@@ -172,15 +186,7 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
                   {isLoggingOut || parentIsLoggingOut ? 'Logging out...' : 'Logout as Expert'}
                 </Button>
               </>
-            ) : (
-              <Button variant="ghost" className="justify-start" asChild>
-                <Link to="/expert-login" onClick={() => setIsOpen(false)}>
-                  <UserPlus className="h-4 w-4 mr-1" /> Expert Portal
-                </Link>
-              </Button>
-            )}
-            
-            {isAuthenticated ? (
+            ) : isAuthenticated ? (
               <>
                 <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/user-dashboard" onClick={() => setIsOpen(false)}>
@@ -203,11 +209,25 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" className="justify-start" asChild>
-                <Link to="/user-login" onClick={() => setIsOpen(false)}>
-                  <User className="h-4 w-4 mr-1" /> Login
-                </Link>
-              </Button>
+              <>
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="login">
+                    <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
+                      Login
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="flex flex-col space-y-1 ml-4">
+                        <Link to="/user-login" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                          <User className="h-4 w-4 mr-1 inline-block" /> User Login
+                        </Link>
+                        <Link to="/expert-login" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
+                          <BriefcaseBusiness className="h-4 w-4 mr-1 inline-block" /> Expert Login
+                        </Link>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </>
             )}
           </div>
         </SheetContent>
