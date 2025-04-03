@@ -56,6 +56,7 @@ const getSampleProgramsForType = (programType: ProgramType): Omit<Program, 'id' 
 
 // Wellness Programs (Individual/Personal)
 const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
+  // Quick-ease category
   {
     title: 'Mindfulness Basics',
     description: 'Learn the fundamentals of mindfulness meditation and its application in daily life to reduce stress and increase focus.',
@@ -89,6 +90,7 @@ const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
     programType: 'wellness',
     enrollments: 156
   },
+  // Resilience-building category
   {
     title: 'Resilience Building Intensive',
     description: 'Develop psychological strength and emotional agility to bounce back from adversity and thrive despite challenges.',
@@ -122,6 +124,7 @@ const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
     programType: 'wellness',
     enrollments: 45
   },
+  // Super-human category
   {
     title: 'High Performance Mind',
     description: 'Elite mental training techniques used by top performers to achieve flow states and maximum productivity.',
@@ -155,6 +158,7 @@ const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
     programType: 'wellness',
     enrollments: 52
   },
+  // Issue-based category
   {
     title: 'Depression Recovery Path',
     description: 'A structured approach to understanding and managing depression through evidence-based techniques.',
@@ -190,7 +194,7 @@ const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Academic Institute Programs - updated with requested programs
+// Academic Institute Programs - correctly categorized programs
 const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
     title: 'Student Counseling Program',
@@ -249,7 +253,7 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Business Programs - updated with requested programs
+// Business Programs - correctly categorized programs
 const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
     title: 'Work Life Balance',
