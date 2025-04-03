@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ProgramFormDialog } from './ProgramFormDialog';
+import ProgramFormDialog from './ProgramFormDialog'; // Changed from named import to default import
 import { supabase } from '@/lib/supabase';
 import { Program, ProgramType } from '@/types/programs';
 import { Edit, Plus, Trash2 } from 'lucide-react';
