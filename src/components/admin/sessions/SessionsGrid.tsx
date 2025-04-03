@@ -9,7 +9,7 @@ interface SessionsGridProps {
   sessions: Session[];
   isLoading: boolean;
   onOpenDialog: (session?: Session) => void;
-  onDeleteSession: (sessionId: number) => void;
+  onDeleteSession: (sessionId: string) => void;
 }
 
 const SessionsGrid: React.FC<SessionsGridProps> = ({ 

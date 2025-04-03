@@ -31,19 +31,17 @@ export interface SessionFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (session: Omit<Session, "id">) => void;
   session?: Session;
-  onClose?: () => void;
 }
 
 export interface SessionsGridProps {
   sessions: Session[];
-  onEdit: (session: Session) => void;
-  onDelete: (id: string) => void;
+  onOpenDialog: (session?: Session) => void;
+  onDeleteSession: (id: string) => void;
   isLoading?: boolean;
-  onOpenDialog?: (session?: Session) => void;
 }
 
 export interface SessionCardProps {
   session: Session;
   onEdit: () => void;
-  onDelete: () => void;
+  onDelete: (id: string) => void;
 }

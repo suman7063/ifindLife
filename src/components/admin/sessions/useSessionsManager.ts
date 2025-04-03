@@ -73,10 +73,13 @@ export const useSessionsManager = () => {
         toast.success('Session updated successfully');
       } else {
         // Create new session with new ID
-        const newId = sessions.length > 0 
-          ? Math.max(...sessions.map(s => s.id)) + 1 
-          : 1;
+        // Generate a new string ID based on the highest existing ID + 1
+        const highestId = sessions.reduce((max, session) => {
+          const id = parseInt(session.id);
+          return id > max ? id : max;
+        }, 0);
         
+        const newId = (highestId + 1).toString();
         savedSession = { ...sessionData, id: newId };
         
         // Save to localStorage
@@ -94,7 +97,7 @@ export const useSessionsManager = () => {
   };
 
   // Delete a session
-  const handleDeleteSession = (sessionId: number) => {
+  const handleDeleteSession = (sessionId: string) => {
     if (!confirm('Are you sure you want to delete this session?')) return;
     
     try {

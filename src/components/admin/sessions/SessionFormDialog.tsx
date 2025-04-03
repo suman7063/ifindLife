@@ -48,7 +48,8 @@ const formSchema = z.object({
 const SessionFormDialog: React.FC<SessionFormDialogProps> = ({ 
   session, 
   onSave,
-  onOpenChange,
+  open,
+  onOpenChange
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

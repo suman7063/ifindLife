@@ -51,3 +51,8 @@ export const defaultSessions: Session[] = [
     href: "/teen-counseling"
   }
 ];
+
+// Create a function to get the default sessions (which was missing)
+export const getDefaultSessions = () => {
+  return [...defaultSessions];
+};

@@ -1,6 +1,11 @@
 
-import ProgramsEditor from './ProgramsEditor';
+export { default as ProgramsEditor } from './ProgramsEditor';
+export { default as ProgramGrid } from './ProgramGrid';
 
-export default ProgramsEditor;
-export { ProgramsEditor };
-export * from './types';
+// Export types
+export type { 
+  ProgramsEditorProps, 
+  ProgramFormDialogProps, 
+  ProgramGridProps, 
+  ProgramCardProps 
+} from './types';

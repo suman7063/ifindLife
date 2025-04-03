@@ -48,9 +48,10 @@ const SessionsEditor: React.FC = () => {
             <DialogTitle>{selectedSession ? 'Edit Session' : 'Add New Session'}</DialogTitle>
           </DialogHeader>
           <SessionFormDialog 
-            session={selectedSession}
+            session={selectedSession || undefined}
             onSave={handleSaveSession}
-            onClose={() => setIsDialogOpen(false)}
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
           />
         </DialogContent>
       </Dialog>
