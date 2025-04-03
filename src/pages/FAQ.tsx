@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
+import PageHeaderWithBand from '@/components/common/PageHeaderWithBand';
 
 // Initial FAQ data - in a real application, this would come from your database
 const faqCategories = [
@@ -136,27 +137,24 @@ const FAQ = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Grey band with page heading */}
-      <div className="bg-gray-200 py-12">
-        <div className="container">
-          <h1 className="text-3xl font-bold text-center">Frequently Asked Questions</h1>
-          <p className="text-center mt-2 text-gray-600">Find answers to common questions about iFindLife</p>
-          
-          {/* Search input */}
-          <div className="max-w-md mx-auto mt-6 relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-            <Input
-              type="text"
-              placeholder="Search for questions..."
-              className="pl-10"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+      <PageHeaderWithBand 
+        title="Frequently Asked Questions"
+        subtitle="Find answers to common questions about iFindLife"
+      >
+        {/* Search input */}
+        <div className="max-w-md mx-auto mt-6 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
           </div>
+          <Input
+            type="text"
+            placeholder="Search for questions..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-      </div>
+      </PageHeaderWithBand>
       
       <main className="flex-1 py-16">
         <div className="container">
