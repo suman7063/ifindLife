@@ -5,10 +5,10 @@ import Footer from '@/components/Footer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TherapistsEditor from '@/components/admin/TherapistsEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
-import ExpertsEditor from '@/components/admin/experts'; // Changed from named import to default import
+import ExpertsEditor from '@/components/admin/experts'; 
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
-import ProgramsEditor from '@/components/admin/programs/ProgramsEditor'; // Changed from named import to default import
+import ProgramsEditor from '@/components/admin/programs/ProgramsEditor'; 
 import { SessionsEditor } from '@/components/admin/sessions';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';

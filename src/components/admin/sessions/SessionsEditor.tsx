@@ -59,3 +59,5 @@ const SessionsEditor: React.FC = () => {
 };
 
 export default SessionsEditor;
+// Also export as named export to maintain compatibility with existing imports
+export { SessionsEditor };
