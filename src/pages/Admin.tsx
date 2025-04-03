@@ -40,23 +40,23 @@ const Admin = () => {
             </TabsList>
             
             <TabsContent value="therapists" className="space-y-4">
-              <TherapistsEditor />
+              <TherapistsEditor therapists={[]} setTherapists={() => {}} />
             </TabsContent>
             
             <TabsContent value="services" className="space-y-4">
-              <ServicesEditor />
+              <ServicesEditor categories={[]} setCategories={() => {}} />
             </TabsContent>
             
             <TabsContent value="experts" className="space-y-4">
-              <ExpertsEditor />
+              <ExpertsEditor experts={[]} setExperts={() => {}} />
             </TabsContent>
             
             <TabsContent value="herosection" className="space-y-4">
-              <HeroSectionEditor />
+              <HeroSectionEditor heroSettings={{}} setHeroSettings={() => {}} />
             </TabsContent>
             
             <TabsContent value="testimonials" className="space-y-4">
-              <TestimonialsEditor />
+              <TestimonialsEditor testimonials={[]} setTestimonials={() => {}} />
             </TabsContent>
             
             <TabsContent value="programs" className="space-y-4">

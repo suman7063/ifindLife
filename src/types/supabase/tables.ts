@@ -152,6 +152,15 @@ export interface CustomTable {
     created_at?: string;
     updated_at?: string;
   };
+  contact_submissions: {
+    id: number;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    is_read: boolean;
+    created_at: string;
+  };
 }
 
 // Direct type definitions from database tables
@@ -163,3 +172,4 @@ export type Program = CustomTable['programs'];
 export type UserFavoriteProgram = CustomTable['user_favorite_programs'];
 export type ProgramEnrollment = CustomTable['program_enrollments'];
 export type Profile = CustomTable['profiles'];
+export type ContactSubmission = CustomTable['contact_submissions'];

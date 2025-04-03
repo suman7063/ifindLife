@@ -1,20 +1,33 @@
 
 export interface Session {
-  id: number;
+  id: string;
   title: string;
   description: string;
-  href: string;
-  color: string;
   icon: string;
-  created_at?: string;
+  color: string;
+  href: string;
 }
 
-export interface ColorOption {
-  name: string;
-  value: string;
+export interface SessionsEditorProps {
+  sessions?: Session[];
+  setSessions?: (sessions: Session[]) => void;
 }
 
-export interface IconOption {
-  name: string;
-  value: string;
+export interface SessionFormDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (session: Omit<Session, "id">) => void;
+  session?: Session;
+}
+
+export interface SessionsGridProps {
+  sessions: Session[];
+  onEdit: (session: Session) => void;
+  onDelete: (id: string) => void;
+}
+
+export interface SessionCardProps {
+  session: Session;
+  onEdit: () => void;
+  onDelete: () => void;
 }

@@ -1,6 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, from } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { Loader2, ExternalLink } from 'lucide-react';
 import {
@@ -13,16 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-interface ContactSubmission {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
-}
+import { ContactSubmission } from '@/types/supabase/tables';
 
 const ContactSubmissionsTable = () => {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
@@ -31,8 +21,7 @@ const ContactSubmissionsTable = () => {
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('contact_submissions')
+      const { data, error } = await from('contact_submissions')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -51,8 +40,7 @@ const ContactSubmissionsTable = () => {
 
   const markAsRead = async (id: number) => {
     try {
-      const { error } = await supabase
-        .from('contact_submissions')
+      const { error } = await from('contact_submissions')
         .update({ is_read: true })
         .eq('id', id);
 
