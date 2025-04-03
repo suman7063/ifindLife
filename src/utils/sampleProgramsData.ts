@@ -7,32 +7,46 @@ import { supabase } from '@/lib/supabase';
 // Function to check if sample programs already exist and add them if not
 export const addSamplePrograms = async (programType: ProgramType = 'wellness'): Promise<boolean> => {
   try {
+    console.log(`Checking ${programType} programs existence...`);
+    
     // Check if programs of the specified type already exist
     const { data, error } = await supabase
       .from('programs')
       .select('id')
       .eq('programType', programType);
       
-    if (error) throw error;
+    if (error) {
+      console.error(`Error checking ${programType} programs:`, error);
+      throw error;
+    }
+    
+    console.log(`Found ${data?.length || 0} existing ${programType} programs`);
     
     // If programs of the specified type already exist, don't add samples
     if (data && data.length > 0) {
+      console.log(`${programType} programs already exist, skipping sample data creation`);
       return false;
     }
 
     // Get sample programs for the specified type
+    console.log(`Adding sample ${programType} programs...`);
     const samplePrograms = getSampleProgramsForType(programType);
     
     // Insert sample programs
-    const { error: insertError } = await from('programs')
-      .insert(samplePrograms);
+    const { error: insertError, data: insertedData } = await from('programs')
+      .insert(samplePrograms)
+      .select();
       
-    if (insertError) throw insertError;
+    if (insertError) {
+      console.error(`Error inserting ${programType} programs:`, insertError);
+      throw insertError;
+    }
+    
+    console.log(`Successfully added ${insertedData?.length || 0} ${programType} programs`);
     
     // Fix program images if needed
     await fixProgramImages();
     
-    console.log(`Added sample ${programType} programs to the database`);
     return true;
   } catch (error) {
     console.error('Error adding sample programs:', error);
@@ -42,6 +56,7 @@ export const addSamplePrograms = async (programType: ProgramType = 'wellness'): 
 
 // Get sample programs based on program type
 const getSampleProgramsForType = (programType: ProgramType): Omit<Program, 'id' | 'created_at'>[] => {
+  console.log(`Getting sample programs for type: ${programType}`);
   switch (programType) {
     case 'wellness':
       return wellnessPrograms;

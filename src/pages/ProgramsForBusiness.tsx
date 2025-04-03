@@ -20,6 +20,7 @@ const ProgramsForBusiness: React.FC = () => {
     const fetchPrograms = async () => {
       try {
         setIsLoading(true);
+        console.log('Fetching business programs...');
         
         // First ensure we have sample business programs in the database
         await addSamplePrograms('business');
@@ -35,6 +36,8 @@ const ProgramsForBusiness: React.FC = () => {
           console.error('Error fetching business programs:', error);
           return;
         }
+        
+        console.log('Business programs fetched:', data);
         
         if (data) {
           // Convert the data to Program type explicitly
@@ -53,6 +56,7 @@ const ProgramsForBusiness: React.FC = () => {
           }));
           
           setPrograms(formattedPrograms);
+          console.log('Business programs set to state:', formattedPrograms);
         }
       } catch (error) {
         console.error('Error in business programs fetch:', error);

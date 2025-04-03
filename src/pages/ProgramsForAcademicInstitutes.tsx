@@ -20,11 +20,12 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
     const fetchPrograms = async () => {
       try {
         setIsLoading(true);
+        console.log('Fetching academic programs...');
         
         // First ensure we have sample academic programs in the database
         await addSamplePrograms('academic');
         
-        // Then fetch all programs
+        // Then fetch all academic programs
         const { data, error } = await supabase
           .from('programs')
           .select('*')
@@ -35,6 +36,8 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
           console.error('Error fetching academic programs:', error);
           return;
         }
+        
+        console.log('Academic programs fetched:', data);
         
         if (data) {
           // Convert the data to Program type explicitly
@@ -53,6 +56,7 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
           }));
           
           setPrograms(formattedPrograms);
+          console.log('Academic programs set to state:', formattedPrograms);
         }
       } catch (error) {
         console.error('Error in academic programs fetch:', error);

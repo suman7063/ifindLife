@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -22,6 +21,7 @@ import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
 import ProgramFormDialog from './ProgramFormDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ProgramDataReset from './ProgramDataReset';
 
 const ProgramsEditor = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -37,12 +37,14 @@ const ProgramsEditor = () => {
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
+      console.log('Admin: Fetching all programs');
       const { data, error } = await from('programs')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       if (data) {
+        console.log('Admin: Programs fetched:', data.length);
         setPrograms(data as unknown as Program[]);
       }
     } catch (error) {
@@ -138,7 +140,6 @@ const ProgramsEditor = () => {
     }
   };
 
-  // Filter programs by search query and program type
   const filteredPrograms = programs.filter(program => {
     const matchesSearch = 
       program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -160,6 +161,8 @@ const ProgramsEditor = () => {
 
   return (
     <div className="space-y-6">
+      <ProgramDataReset />
+      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -188,7 +191,6 @@ const ProgramsEditor = () => {
           <TabsTrigger value="business">Business</TabsTrigger>
         </TabsList>
 
-        {/* Tab content container */}
         <div className="mt-6">
           {isLoading ? (
             <div className="flex justify-center py-8">

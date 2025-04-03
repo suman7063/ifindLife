@@ -26,6 +26,7 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     const fetchPrograms = async () => {
       try {
         setIsLoading(true);
+        console.log('Fetching wellness programs...');
         
         // Ensure sample wellness programs exist
         await addSamplePrograms('wellness');
@@ -40,6 +41,8 @@ const ProgramsForWellnessSeekers: React.FC = () => {
           console.error('Error fetching wellness programs:', error);
           return;
         }
+        
+        console.log('Wellness programs fetched:', data);
         
         if (data) {
           // Convert data to Program type
@@ -62,6 +65,17 @@ const ProgramsForWellnessSeekers: React.FC = () => {
             (b.enrollments || 0) - (a.enrollments || 0)
           );
           
+          // Check all categories are represented
+          const categoryCounts = {
+            'quick-ease': sortedPrograms.filter(p => p.category === 'quick-ease').length,
+            'resilience-building': sortedPrograms.filter(p => p.category === 'resilience-building').length,
+            'super-human': sortedPrograms.filter(p => p.category === 'super-human').length,
+            'issue-based': sortedPrograms.filter(p => p.category === 'issue-based').length
+          };
+          
+          console.log('Programs by category count:', categoryCounts);
+          console.log('Setting wellness programs to state:', sortedPrograms);
+          
           setPrograms(sortedPrograms);
           setFilteredPrograms(sortedPrograms);
         }
@@ -78,6 +92,8 @@ const ProgramsForWellnessSeekers: React.FC = () => {
   // Apply filters when criteria change
   useEffect(() => {
     if (programs.length === 0) return;
+    
+    console.log('Applying filters. Category:', selectedCategory, 'Sort option:', sortOption);
     
     // Apply category filter
     let categoryFiltered = programs;
@@ -111,6 +127,7 @@ const ProgramsForWellnessSeekers: React.FC = () => {
         break;
     }
     
+    console.log('Filtered programs count:', sorted.length);
     setFilteredPrograms(sorted);
   }, [selectedCategory, programs, sortOption]);
 
