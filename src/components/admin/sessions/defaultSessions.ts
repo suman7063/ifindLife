@@ -1,53 +1,53 @@
 
 import { Session } from './types';
 
-export const getDefaultSessions = (): Session[] => [
+export const defaultSessions: Session[] = [
   {
-    id: 1,
+    id: "1",
     title: "Anxiety & Depression",
     description: "Get help managing anxiety, depression, and stress from licensed therapists.",
-    href: "/anxiety-depression",
+    icon: "brain",
     color: "bg-blue-100",
-    icon: "Brain"
+    href: "/anxiety-depression"
   },
   {
-    id: 2,
+    id: "2",
     title: "Relationship Counseling",
     description: "Improve communication and resolve conflicts in all types of relationships.",
-    href: "/relationship-counseling",
+    icon: "heart",
     color: "bg-red-100",
-    icon: "Heart"
+    href: "/relationship-counseling"
   },
   {
-    id: 3,
+    id: "3",
     title: "Career Guidance",
     description: "Navigate work stress, career transitions, and professional development.",
-    href: "/career-guidance",
+    icon: "briefcase",
     color: "bg-yellow-100",
-    icon: "Briefcase"
+    href: "/career-guidance"
   },
   {
-    id: 4,
-    title: "Mindfulness Practice",
-    description: "Learn techniques to stay present, reduce stress, and improve mental clarity.",
-    href: "/mindfulness-practice",
+    id: "4",
+    title: "Family Therapy",
+    description: "Address family dynamics, parenting challenges, and intergenerational issues.",
+    icon: "users",
     color: "bg-green-100",
-    icon: "Brain"
+    href: "/family-therapy"
   },
   {
-    id: 5,
-    title: "Personal Development",
-    description: "Develop skills for self-improvement, goal setting, and personal growth.",
-    href: "/personal-development",
+    id: "5",
+    title: "Trauma Recovery",
+    description: "Process and heal from past trauma with specialized therapeutic approaches.",
+    icon: "sparkles",
     color: "bg-purple-100",
-    icon: "Lightbulb"
+    href: "/trauma-recovery"
   },
   {
-    id: 6,
-    title: "Communication Skills",
-    description: "Enhance your ability to express yourself clearly and listen effectively.",
-    href: "/communication-skills",
+    id: "6",
+    title: "Teen Counseling",
+    description: "Support for adolescents facing academic pressure, identity, and social challenges.",
+    icon: "message-circle",
     color: "bg-orange-100",
-    icon: "MessageCircle"
+    href: "/teen-counseling"
   }
 ];

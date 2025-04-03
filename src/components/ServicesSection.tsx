@@ -116,6 +116,12 @@ const ServicesSection = () => {
     navigate(href);
   };
 
+  // To fix any potential issues with dialog not opening, 
+  // let's add a separate handler for closing the dialog
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+  };
+
   return (
     <section className="py-16 bg-ifind-purple/5">
       <div className="container mx-auto px-6 sm:px-12">
@@ -167,8 +173,8 @@ const ServicesSection = () => {
         </div>
       </div>
 
-      {/* Dialog implementation with proper state management */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      {/* Dialog implementation with explicit onOpenChange handler */}
+      <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center">

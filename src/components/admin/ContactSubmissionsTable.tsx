@@ -1,5 +1,6 @@
+
 import React, { useEffect, useState } from 'react';
-import { supabase, from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
 import { Loader2, ExternalLink } from 'lucide-react';
 import {
@@ -21,7 +22,8 @@ const ContactSubmissionsTable = () => {
   const fetchSubmissions = async () => {
     try {
       setLoading(true);
-      const { data, error } = await from('contact_submissions')
+      const { data, error } = await supabase
+        .from('contact_submissions')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -29,7 +31,7 @@ const ContactSubmissionsTable = () => {
         throw error;
       }
 
-      setSubmissions(data || []);
+      setSubmissions(data as ContactSubmission[] || []);
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
       toast.error('Failed to load contact submissions');
@@ -40,7 +42,8 @@ const ContactSubmissionsTable = () => {
 
   const markAsRead = async (id: number) => {
     try {
-      const { error } = await from('contact_submissions')
+      const { error } = await supabase
+        .from('contact_submissions')
         .update({ is_read: true })
         .eq('id', id);
 

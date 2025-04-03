@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
@@ -24,6 +23,7 @@ const Navbar = () => {
     sessionType
   } = useAuthSynchronization();
   const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -110,6 +110,14 @@ const Navbar = () => {
     }
   };
 
+  // Darker background for internal pages, transparent for homepage
+  const getNavbarBackground = () => {
+    if (isHomePage) {
+      return scrolled ? 'bg-background/90' : 'bg-transparent';
+    }
+    return scrolled ? 'bg-gray-900/95' : 'bg-gray-900/85'; // Darker background for internal pages
+  };
+
   return (
     <>
       {hasDualSessions && (
@@ -130,7 +138,7 @@ const Navbar = () => {
           </AlertDescription>
         </Alert>
       )}
-      <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${scrolled ? 'bg-background/90 shadow-sm' : 'bg-transparent'}`}>
+      <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
         <div className="container flex h-24 items-center justify-between">
           <Link to="/" className="flex items-center">
             <img 

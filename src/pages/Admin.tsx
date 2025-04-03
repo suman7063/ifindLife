@@ -16,6 +16,18 @@ import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable'
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("therapists");
+  
+  // Dummy data for props
+  const dummyTherapists = [];
+  const dummyCategories = [];
+  const dummyExperts = [];
+  const dummyHeroSettings = {
+    title: "You Are Not Alone!",
+    subtitle: "Is there a situation, you need immediate help with?",
+    description: "Connect with our currently online experts through an instant call",
+    videoUrl: ""
+  };
+  const dummyTestimonials = [];
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -40,23 +52,23 @@ const Admin = () => {
             </TabsList>
             
             <TabsContent value="therapists" className="space-y-4">
-              <TherapistsEditor therapists={[]} setTherapists={() => {}} />
+              <TherapistsEditor therapists={dummyTherapists} setTherapists={() => {}} />
             </TabsContent>
             
             <TabsContent value="services" className="space-y-4">
-              <ServicesEditor categories={[]} setCategories={() => {}} />
+              <ServicesEditor categories={dummyCategories} setCategories={() => {}} />
             </TabsContent>
             
             <TabsContent value="experts" className="space-y-4">
-              <ExpertsEditor experts={[]} setExperts={() => {}} />
+              <ExpertsEditor experts={dummyExperts} setExperts={() => {}} />
             </TabsContent>
             
             <TabsContent value="herosection" className="space-y-4">
-              <HeroSectionEditor heroSettings={{}} setHeroSettings={() => {}} />
+              <HeroSectionEditor heroSettings={dummyHeroSettings} setHeroSettings={() => {}} />
             </TabsContent>
             
             <TabsContent value="testimonials" className="space-y-4">
-              <TestimonialsEditor testimonials={[]} setTestimonials={() => {}} />
+              <TestimonialsEditor testimonials={dummyTestimonials} setTestimonials={() => {}} />
             </TabsContent>
             
             <TabsContent value="programs" className="space-y-4">

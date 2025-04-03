@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
@@ -20,11 +19,10 @@ const Hero = () => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Slider images - update with the three new provided images
+  // Slider images - update with just two images and remove the third one
   const sliderImages = [
     "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // First image (man)
     "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Second image (woman)
-    "/lovable-uploads/d119547a-bdfc-45f2-b432-5da3d389dcf7.png", // Third image (child)
   ];
 
   // Load content from localStorage on component mount
@@ -81,8 +79,8 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with slider - updated height to 400px */}
-      <div className="relative w-full h-[400px] overflow-hidden">
+      {/* Banner Image Section with slider - updated height to 450px */}
+      <div className="relative w-full h-[450px] overflow-hidden">
         {sliderImages.map((image, index) => (
           <div 
             key={index}
@@ -100,7 +98,7 @@ const Hero = () => {
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '400px',
+                height: '450px',
                 borderRadius: '0px'
               }}
               loading={index === 0 ? "eager" : "lazy"} // Prioritize first image
@@ -119,8 +117,8 @@ const Hero = () => {
             className="text-white font-bold"
             style={{
               fontFamily: 'Roboto, sans-serif',
-              fontSize: '86px',
-              lineHeight: '105px',
+              fontSize: '96px', // Increase font size proportionally
+              lineHeight: '115px',
               fontWeight: 700,
               color: '#FFFFFF',
               maxWidth: '540px'

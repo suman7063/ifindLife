@@ -10,7 +10,7 @@ import { renderIcon } from './sessionIcons';
 interface SessionCardProps {
   session: Session;
   onEdit: (session: Session) => void;
-  onDelete: (sessionId: number) => void;
+  onDelete: (sessionId: string) => void;
 }
 
 const SessionCard: React.FC<SessionCardProps> = ({ session, onEdit, onDelete }) => {

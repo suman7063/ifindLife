@@ -1,4 +1,6 @@
 
+import { ReactNode } from 'react';
+
 export interface Session {
   id: string;
   title: string;
@@ -6,6 +8,17 @@ export interface Session {
   icon: string;
   color: string;
   href: string;
+}
+
+export interface IconOption {
+  value: string;
+  label: string;
+  icon: ReactNode;
+}
+
+export interface ColorOption {
+  value: string;
+  label: string;
 }
 
 export interface SessionsEditorProps {
@@ -18,12 +31,15 @@ export interface SessionFormDialogProps {
   onOpenChange: (open: boolean) => void;
   onSave: (session: Omit<Session, "id">) => void;
   session?: Session;
+  onClose?: () => void;
 }
 
 export interface SessionsGridProps {
   sessions: Session[];
   onEdit: (session: Session) => void;
   onDelete: (id: string) => void;
+  isLoading?: boolean;
+  onOpenDialog?: (session?: Session) => void;
 }
 
 export interface SessionCardProps {

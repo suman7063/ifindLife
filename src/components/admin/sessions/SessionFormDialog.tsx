@@ -1,16 +1,13 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -18,38 +15,53 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Session, SessionFormDialogProps } from './types';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { iconOptions, colorOptions } from './sessionIcons';
 
 const formSchema = z.object({
-  title: z.string().min(2, 'Title must be at least 2 characters'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  icon: z.string().min(1, 'Icon is required'),
-  color: z.string().min(1, 'Color is required'),
-  href: z.string().min(1, 'URL path is required'),
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  description: z.string().min(10, {
+    message: "Description must be at least 10 characters.",
+  }),
+  icon: z.string({
+    required_error: "Please select an icon.",
+  }),
+  color: z.string({
+    required_error: "Please select a color.",
+  }),
+  href: z.string().min(1, {
+    message: "URL path is required.",
+  }).startsWith("/", {
+    message: "URL path must start with a forward slash (/)."
+  })
 });
 
-type FormValues = z.infer<typeof formSchema>;
-
-const SessionFormDialog = ({ 
-  open, 
-  onOpenChange, 
-  onSave, 
-  session 
-}: SessionFormDialogProps) => {
-  const form = useForm<FormValues>({
+const SessionFormDialog: React.FC<SessionFormDialogProps> = ({ 
+  session, 
+  onSave,
+  onOpenChange,
+}) => {
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: session?.title || '',
-      description: session?.description || '',
-      icon: session?.icon || '',
-      color: session?.color || '',
-      href: session?.href || '',
+      title: session?.title || "",
+      description: session?.description || "",
+      icon: session?.icon || "brain",
+      color: session?.color || "bg-blue-100",
+      href: session?.href || "/",
     },
   });
 
-  const handleSubmit = (values: FormValues) => {
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
     onSave({
       title: values.title,
       description: values.description,
@@ -57,134 +69,127 @@ const SessionFormDialog = ({
       color: values.color,
       href: values.href,
     });
-    form.reset();
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {session ? 'Update Session' : 'Create Session'}
-          </DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="title"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="description"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Textarea {...field} rows={3} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="color"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Color</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <Input placeholder="Enter session title" {...field} />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select color" />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Enter session description" 
-                      {...field} 
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="href"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>URL Path</FormLabel>
-                  <FormControl>
-                    <Input placeholder="e.g. /anxiety-depression" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Background Color</FormLabel>
-                  <div className="grid grid-cols-3 gap-2">
-                    {colorOptions.map((color) => (
-                      <Button
-                        key={color.value}
-                        type="button"
-                        className={`${color.value} text-black border hover:${color.value} ${
-                          field.value === color.value ? 'ring-2 ring-ifind-aqua' : ''
-                        }`}
-                        onClick={() => form.setValue('color', color.value)}
+                  <SelectContent>
+                    {colorOptions.map(option => (
+                      <SelectItem 
+                        key={option.value} 
+                        value={option.value}
+                        className="flex items-center gap-2"
                       >
-                        {color.name}
-                      </Button>
+                        <div className={`w-4 h-4 rounded-full ${option.value}`}></div>
+                        <span>{option.label}</span>
+                      </SelectItem>
                     ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="icon"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Icon</FormLabel>
-                  <div className="grid grid-cols-3 gap-2">
-                    {iconOptions.map((icon) => (
-                      <Button
-                        key={icon.value}
-                        type="button"
-                        variant="outline"
-                        className={`flex items-center justify-center ${
-                          field.value === icon.value ? 'ring-2 ring-ifind-aqua' : ''
-                        }`}
-                        onClick={() => form.setValue('icon', icon.value)}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="icon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Icon</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select icon" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {iconOptions.map(option => (
+                      <SelectItem 
+                        key={option.value} 
+                        value={option.value}
+                        className="flex items-center gap-2"
                       >
-                        {icon.value === 'Brain' && <Brain className="h-5 w-5 mr-2" />}
-                        {icon.value === 'MessageCircle' && <MessageCircle className="h-5 w-5 mr-2" />}
-                        {icon.value === 'Heart' && <Heart className="h-5 w-5 mr-2" />}
-                        {icon.value === 'Briefcase' && <Briefcase className="h-5 w-5 mr-2" />}
-                        {icon.value === 'Lightbulb' && <Lightbulb className="h-5 w-5 mr-2" />}
-                        {icon.value === 'Megaphone' && <Megaphone className="h-5 w-5 mr-2" />}
-                        {icon.name}
-                      </Button>
+                        {option.icon}
+                        <span>{option.label}</span>
+                      </SelectItem>
                     ))}
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" className="bg-ifind-aqua hover:bg-ifind-teal">
-                {session ? 'Update Session' : 'Create Session'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <FormField
+          control={form.control}
+          name="href"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>URL Path</FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="/path-name" />
+              </FormControl>
+              <FormDescription>
+                The URL path for this session (e.g. /anxiety-depression)
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="flex justify-end pt-4 space-x-2">
+          <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button type="submit">Save</Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 
