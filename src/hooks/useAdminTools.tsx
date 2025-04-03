@@ -6,7 +6,12 @@ import ProgramDataReset from '@/components/admin/ProgramDataReset';
  * Hook to provide admin tools for troubleshooting and maintenance
  */
 export const useAdminTools = () => {
-  const ProgramResetTool = () => <ProgramDataReset />;
+  console.log('useAdminTools hook initialized');
+  
+  const ProgramResetTool = () => {
+    console.log('ProgramResetTool component rendered');
+    return <ProgramDataReset />;
+  };
   
   return {
     ProgramResetTool

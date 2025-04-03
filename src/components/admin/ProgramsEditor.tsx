@@ -1,271 +1,307 @@
 
 import React, { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Edit, 
-  Plus, 
-  Trash2, 
-  Search,
-  Loader2
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { from } from '@/lib/supabase';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { ProgramFormDialog } from './ProgramFormDialog';
+import { supabase } from '@/lib/supabase';
 import { Program, ProgramType } from '@/types/programs';
+import { Edit, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useDialog } from '@/hooks/useDialog';
-import ProgramFormDialog from './ProgramFormDialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ProgramsEditor = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [programType, setProgramType] = useState<ProgramType | 'all'>('all');
-  const { showDialog, DialogComponent } = useDialog();
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProgramType>('wellness');
 
+  // Fetch programs on component mount
   useEffect(() => {
+    console.log('ProgramsEditor: Fetching programs');
     fetchPrograms();
   }, []);
 
+  // Fetch programs from Supabase or localStorage
   const fetchPrograms = async () => {
     setIsLoading(true);
     try {
-      console.log('Admin: Fetching all programs');
-      const { data, error } = await from('programs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      if (data) {
-        console.log('Admin: Programs fetched:', data.length);
-        setPrograms(data as unknown as Program[]);
+      let fetchedPrograms: Program[] = [];
+      
+      try {
+        // Try to fetch from Supabase first
+        const { data, error } = await supabase
+          .from('programs')
+          .select('*');
+          
+        if (error) {
+          console.error('Error fetching programs from Supabase:', error);
+          throw error;
+        }
+        
+        if (data) {
+          fetchedPrograms = data as Program[];
+          console.log('Programs fetched from Supabase:', fetchedPrograms.length);
+        }
+      } catch (e) {
+        console.log('Supabase fetch failed, using localStorage fallback');
+        // Fallback to localStorage
+        const storedPrograms = localStorage.getItem('ifindlife-programs');
+        if (storedPrograms) {
+          fetchedPrograms = JSON.parse(storedPrograms);
+          console.log('Programs fetched from localStorage:', fetchedPrograms.length);
+        }
       }
+      
+      setPrograms(fetchedPrograms);
     } catch (error) {
       console.error('Error fetching programs:', error);
-      toast.error('Failed to load programs');
+      toast.error('Failed to fetch programs');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAddProgram = () => {
-    showDialog(
-      <ProgramFormDialog 
-        onSave={handleSaveProgram}
-      />
-    );
+  // Handle dialog open for creating/editing a program
+  const handleOpenDialog = (program?: Program) => {
+    if (program) {
+      console.log('Opening dialog for edit with program:', program);
+      setSelectedProgram(program);
+    } else {
+      console.log('Opening dialog for new program');
+      setSelectedProgram(null);
+    }
+    setIsDialogOpen(true);
   };
 
-  const handleEditProgram = (program: Program) => {
-    showDialog(
-      <ProgramFormDialog 
-        program={program}
-        onSave={handleSaveProgram}
-      />
-    );
-  };
-
-  const handleSaveProgram = async (programData: Partial<Program>) => {
+  // Save a new or updated program
+  const handleSaveProgram = async (programData: Program) => {
     try {
-      if (programData.id) {
+      let savedProgram: Program;
+      
+      if (selectedProgram?.id) {
         // Update existing program
-        const { error } = await from('programs')
-          .update({
-            title: programData.title,
-            description: programData.description,
-            duration: programData.duration,
-            sessions: programData.sessions,
-            price: programData.price,
-            image: programData.image,
-            category: programData.category,
-            programType: programData.programType
-          })
-          .eq('id', programData.id);
-          
-        if (error) throw error;
+        savedProgram = { ...programData, id: selectedProgram.id };
         
-        toast.success('Program updated successfully');
+        try {
+          // Try to update in Supabase
+          const { error } = await supabase
+            .from('programs')
+            .update(savedProgram)
+            .eq('id', selectedProgram.id);
+            
+          if (error) throw error;
+          
+          // Update local state
+          setPrograms(programs.map(p => p.id === selectedProgram.id ? savedProgram : p));
+          toast.success('Program updated successfully');
+        } catch (e) {
+          console.log('Supabase update failed, using localStorage fallback');
+          // Fallback to localStorage
+          const storedPrograms = JSON.parse(localStorage.getItem('ifindlife-programs') || '[]');
+          const updatedPrograms = storedPrograms.map((p: Program) => 
+            p.id === selectedProgram.id ? savedProgram : p
+          );
+          localStorage.setItem('ifindlife-programs', JSON.stringify(updatedPrograms));
+          setPrograms(updatedPrograms);
+          toast.success('Program updated successfully (localStorage)');
+        }
       } else {
         // Create new program
-        const { error } = await from('programs')
-          .insert({
-            title: programData.title,
-            description: programData.description,
-            duration: programData.duration,
-            sessions: programData.sessions,
-            price: programData.price,
-            image: programData.image,
-            category: programData.category,
-            programType: programData.programType,
-            created_at: new Date().toISOString(),
-            enrollments: 0
-          });
+        try {
+          // Try to insert in Supabase
+          const { data, error } = await supabase
+            .from('programs')
+            .insert({ ...programData })
+            .select();
+            
+          if (error) throw error;
           
-        if (error) throw error;
-        
-        toast.success('Program created successfully');
+          if (data && data[0]) {
+            savedProgram = data[0] as Program;
+            // Update local state
+            setPrograms([...programs, savedProgram]);
+            toast.success('Program created successfully');
+          }
+        } catch (e) {
+          console.log('Supabase insert failed, using localStorage fallback');
+          // Fallback to localStorage
+          const storedPrograms = JSON.parse(localStorage.getItem('ifindlife-programs') || '[]');
+          const newId = storedPrograms.length > 0 
+            ? Math.max(...storedPrograms.map((p: Program) => p.id)) + 1 
+            : 1;
+          
+          savedProgram = { ...programData, id: newId };
+          const updatedPrograms = [...storedPrograms, savedProgram];
+          localStorage.setItem('ifindlife-programs', JSON.stringify(updatedPrograms));
+          setPrograms(updatedPrograms);
+          toast.success('Program created successfully (localStorage)');
+        }
       }
       
-      fetchPrograms();
+      setIsDialogOpen(false);
     } catch (error) {
       console.error('Error saving program:', error);
       toast.error('Failed to save program');
     }
   };
 
+  // Delete a program
   const handleDeleteProgram = async (programId: number) => {
-    if (!confirm('Are you sure you want to delete this program? This action cannot be undone.')) {
-      return;
-    }
+    if (!confirm('Are you sure you want to delete this program?')) return;
     
     try {
-      const { error } = await from('programs')
-        .delete()
-        .eq('id', programId);
+      try {
+        // Try to delete from Supabase
+        const { error } = await supabase
+          .from('programs')
+          .delete()
+          .eq('id', programId);
+          
+        if (error) throw error;
         
-      if (error) throw error;
-      
-      setPrograms(programs.filter(p => p.id !== programId));
-      toast.success('Program deleted successfully');
+        // Update local state
+        setPrograms(programs.filter(p => p.id !== programId));
+        toast.success('Program deleted successfully');
+      } catch (e) {
+        console.log('Supabase delete failed, using localStorage fallback');
+        // Fallback to localStorage
+        const storedPrograms = JSON.parse(localStorage.getItem('ifindlife-programs') || '[]');
+        const updatedPrograms = storedPrograms.filter((p: Program) => p.id !== programId);
+        localStorage.setItem('ifindlife-programs', JSON.stringify(updatedPrograms));
+        setPrograms(updatedPrograms);
+        toast.success('Program deleted successfully (localStorage)');
+      }
     } catch (error) {
       console.error('Error deleting program:', error);
       toast.error('Failed to delete program');
     }
   };
 
-  const filteredPrograms = programs.filter(program => {
-    const matchesSearch = 
-      program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      program.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesType = programType === 'all' || program.programType === programType;
-    
-    return matchesSearch && matchesType;
-  });
+  // Filter programs by type
+  const filteredPrograms = programs.filter(program => program.programType === activeTab);
 
-  const getProgramTypeDisplay = (type: ProgramType) => {
-    switch(type) {
-      case 'wellness': return 'Wellness Programs';
-      case 'academic': return 'Academic Programs';
-      case 'business': return 'Business Programs';
-      default: return type;
+  // Function to get program category label color
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'quick-ease':
+        return 'bg-green-100 text-green-800';
+      case 'resilience-building':
+        return 'bg-blue-100 text-blue-800';
+      case 'super-human':
+        return 'bg-purple-100 text-purple-800';
+      case 'issue-based':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative w-full sm:max-w-xs">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search programs..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-xl font-semibold">Programs Manager</h2>
+          <p className="text-muted-foreground">Manage all mental wellness programs offered by iFindLife</p>
         </div>
-        <Button onClick={handleAddProgram}>
-          <Plus className="mr-2 h-4 w-4" /> Add Program
+        <Button 
+          onClick={() => handleOpenDialog()} 
+          className="bg-ifind-aqua hover:bg-ifind-teal"
+        >
+          <Plus className="h-4 w-4 mr-2" /> Add Program
         </Button>
       </div>
-      
-      <Tabs 
-        defaultValue="all" 
-        onValueChange={(value) => setProgramType(value as ProgramType | 'all')}
-        className="w-full"
-      >
-        <TabsList className="w-full md:w-auto grid grid-cols-2 md:grid-cols-4 gap-2">
-          <TabsTrigger value="all">All Programs</TabsTrigger>
-          <TabsTrigger value="wellness">Wellness</TabsTrigger>
-          <TabsTrigger value="academic">Academic</TabsTrigger>
+
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ProgramType)}>
+        <TabsList className="mb-6">
+          <TabsTrigger value="wellness">Wellness Seekers</TabsTrigger>
+          <TabsTrigger value="academic">Academic Institutes</TabsTrigger>
           <TabsTrigger value="business">Business</TabsTrigger>
         </TabsList>
-
-        <div className="mt-6">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
-            </div>
-          ) : filteredPrograms.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-8">
-                <p className="text-muted-foreground mb-4">No programs found</p>
-                <Button onClick={handleAddProgram} variant="outline">
-                  <Plus className="mr-2 h-4 w-4" /> Add Your First Program
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredPrograms.map(program => (
-                <Card key={program.id} className="overflow-hidden">
-                  <div className="aspect-video relative overflow-hidden">
-                    <img 
-                      src={program.image} 
-                      alt={program.title} 
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
-                      <span className="text-white text-sm font-medium">
-                        {program.category === 'quick-ease' && 'QuickEase'}
-                        {program.category === 'resilience-building' && 'Resilience Building'}
-                        {program.category === 'super-human' && 'Super Human'}
-                        {program.category === 'issue-based' && 'Issue-Based'}
-                      </span>
-                    </div>
-                    <div className="absolute top-2 right-2 flex space-x-2">
-                      <Button 
-                        size="icon" 
-                        variant="secondary" 
-                        className="h-8 w-8 bg-white/80 hover:bg-white"
-                        onClick={() => handleEditProgram(program)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        size="icon" 
-                        variant="destructive" 
-                        className="h-8 w-8 bg-white/80 hover:bg-red-500 text-red-500 hover:text-white"
-                        onClick={() => handleDeleteProgram(program.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="absolute top-2 left-2">
-                      <span className="bg-ifind-purple text-white text-xs px-2 py-1 rounded-full">
-                        {getProgramTypeDisplay(program.programType)}
-                      </span>
-                    </div>
+        
+        {['wellness', 'academic', 'business'].map((type) => (
+          <TabsContent key={type} value={type}>
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((n) => (
+                  <Card key={n} className="animate-pulse">
+                    <div className="h-40 bg-gray-200 rounded-t-lg" />
+                    <CardHeader>
+                      <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+                      <div className="h-4 bg-gray-200 rounded w-1/2" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-16 bg-gray-200 rounded mb-2" />
+                      <div className="flex gap-2 mt-3">
+                        <div className="h-5 bg-gray-200 rounded w-16" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <>
+                {filteredPrograms.length === 0 ? (
+                  <div className="text-center p-8 border border-dashed rounded-md">
+                    <p className="text-muted-foreground mb-4">No programs found for this category</p>
+                    <Button onClick={() => handleOpenDialog()} variant="outline">Add Your First Program</Button>
                   </div>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="line-clamp-1">{program.title}</CardTitle>
-                    <CardDescription>
-                      {program.duration} • {program.sessions} sessions • ₹{program.price}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{program.description}</p>
-                    {program.enrollments !== undefined && (
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {program.enrollments} {program.enrollments === 1 ? 'enrollment' : 'enrollments'}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredPrograms.map((program) => (
+                      <Card key={program.id} className="overflow-hidden">
+                        <div 
+                          className="h-40 bg-cover bg-center" 
+                          style={{backgroundImage: `url(${program.image || 'https://source.unsplash.com/random/800x600/?wellness'})`}}
+                        />
+                        <CardHeader className="pb-2">
+                          <div className="flex justify-between items-start">
+                            <CardTitle className="text-lg">{program.title}</CardTitle>
+                          </div>
+                          <CardDescription>₹{program.price} • {program.duration}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pb-2">
+                          <p className="text-sm line-clamp-3 mb-3">{program.description}</p>
+                          <Badge className={getCategoryColor(program.category)}>
+                            {program.category}
+                          </Badge>
+                        </CardContent>
+                        <CardFooter className="pt-2 flex justify-between bg-gray-50">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleOpenDialog(program)}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="h-4 w-4" /> Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDeleteProgram(program.id)}
+                            className="flex items-center gap-1"
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+          </TabsContent>
+        ))}
       </Tabs>
-      <DialogComponent />
+
+      {/* Program Edit/Create Dialog */}
+      <ProgramFormDialog 
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSave={handleSaveProgram}
+        program={selectedProgram}
+      />
     </div>
   );
 };

@@ -40,6 +40,8 @@ const Admin = () => {
 
   const { currentUser, logout } = useAuth();
   const { ProgramResetTool } = useAdminTools();
+  
+  console.log('Admin component rendered, currentUser:', currentUser?.username);
 
   // Load data from localStorage if available
   useEffect(() => {
@@ -173,7 +175,13 @@ const Admin = () => {
               <h2 className="text-xl font-semibold mb-4">Admin Tools</h2>
               <p className="text-muted-foreground mb-6">Tools for system maintenance and troubleshooting.</p>
               <div className="space-y-6">
-                <ProgramResetTool />
+                {ProgramResetTool ? (
+                  <ProgramResetTool />
+                ) : (
+                  <div className="p-4 border border-amber-200 bg-amber-50 rounded-md">
+                    <p>Failed to load Program Reset Tool</p>
+                  </div>
+                )}
               </div>
             </TabsContent>
 

@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
+import { toast } from 'sonner';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
@@ -16,17 +17,27 @@ const AdminLogin = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
+  console.log('AdminLogin component rendered, isAuthenticated:', isAuthenticated);
+
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('User is already authenticated, redirecting to admin panel');
       navigate('/admin');
     }
   }, [isAuthenticated, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Attempting login with username:', username);
+    
     if (login(username, password)) {
+      console.log('Login successful, redirecting to admin panel');
+      toast.success(`Welcome back, ${username}!`);
       navigate('/admin');
+    } else {
+      console.error('Login failed');
+      toast.error('Invalid username or password');
     }
   };
 
@@ -88,6 +99,12 @@ const AdminLogin = () => {
                     )}
                   </button>
                 </div>
+              </div>
+              
+              <div className="pt-2">
+                <p className="text-xs text-muted-foreground mb-2">
+                  <strong>Default credentials:</strong> Username: Soultribe | Password: Freesoul@99
+                </p>
               </div>
               
               <Button 
