@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -21,7 +22,6 @@ import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
 import ProgramFormDialog from './ProgramFormDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import ProgramDataReset from './ProgramDataReset';
 
 const ProgramsEditor = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -161,8 +161,6 @@ const ProgramsEditor = () => {
 
   return (
     <div className="space-y-6">
-      <ProgramDataReset />
-      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />

@@ -23,6 +23,9 @@ import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import ProgramsEditor from '@/components/admin/ProgramsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
 
+// Import admin tools
+import useAdminTools from '@/hooks/useAdminTools';
+
 const Admin = () => {
   // State for each section
   const [categories, setCategories] = useState(categoryData);
@@ -36,6 +39,7 @@ const Admin = () => {
   });
 
   const { currentUser, logout } = useAuth();
+  const { ProgramResetTool } = useAdminTools();
 
   // Load data from localStorage if available
   useEffect(() => {
@@ -99,8 +103,10 @@ const Admin = () => {
               <TabsTrigger value="therapists" className="rounded-none">Therapists</TabsTrigger>
               <TabsTrigger value="testimonials" className="rounded-none">Testimonials</TabsTrigger>
               <TabsTrigger value="programs" className="rounded-none">Programs</TabsTrigger>
+              <TabsTrigger value="sessions" className="rounded-none">Sessions</TabsTrigger>
               <TabsTrigger value="blog" className="rounded-none">Blog</TabsTrigger>
               <TabsTrigger value="referral" className="rounded-none">Referral Program</TabsTrigger>
+              <TabsTrigger value="tools" className="rounded-none">Admin Tools</TabsTrigger>
               {currentUser?.role === 'superadmin' && (
                 <TabsTrigger value="admins" className="rounded-none">Admin Users</TabsTrigger>
               )}
@@ -143,6 +149,15 @@ const Admin = () => {
               <ProgramsEditor />
             </TabsContent>
             
+            {/* Sessions Editor */}
+            <TabsContent value="sessions" className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Issue Based Sessions</h2>
+              <p className="text-muted-foreground mb-6">Manage pre-recorded issue-based sessions here.</p>
+              <div className="text-center p-8 border border-dashed rounded-md">
+                <p className="text-muted-foreground">Sessions feature coming soon.</p>
+              </div>
+            </TabsContent>
+            
             {/* Blog Editor */}
             <TabsContent value="blog" className="p-6">
               <BlogEditor />
@@ -151,6 +166,15 @@ const Admin = () => {
             {/* Referral Settings Editor */}
             <TabsContent value="referral" className="p-6">
               <ReferralSettingsEditor />
+            </TabsContent>
+            
+            {/* Admin Tools */}
+            <TabsContent value="tools" className="p-6">
+              <h2 className="text-xl font-semibold mb-4">Admin Tools</h2>
+              <p className="text-muted-foreground mb-6">Tools for system maintenance and troubleshooting.</p>
+              <div className="space-y-6">
+                <ProgramResetTool />
+              </div>
             </TabsContent>
 
             {/* Admin Users Management (only for superadmin) */}

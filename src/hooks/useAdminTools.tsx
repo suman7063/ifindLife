@@ -12,3 +12,5 @@ export const useAdminTools = () => {
     ProgramResetTool
   };
 };
+
+export default useAdminTools;

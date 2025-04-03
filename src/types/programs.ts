@@ -1,5 +1,5 @@
 
-export type ProgramCategory = 'quick-ease' | 'resilience-building' | 'super-human' | 'issue-based' | 'academic' | 'business';
+export type ProgramCategory = 'quick-ease' | 'resilience-building' | 'super-human' | 'issue-based';
 
 export type ProgramType = 'wellness' | 'academic' | 'business';
 
