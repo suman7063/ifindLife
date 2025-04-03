@@ -39,7 +39,7 @@ const FAQs = () => {
         },
         {
           question: 'Can I choose my therapist?',
-          answer: 'Yes, you can browse our expert profiles and select a therapist based on their specialization, experience, and approach. We also offer a matching service if you're unsure who would be the best fit for your needs.'
+          answer: "Yes, you can browse our expert profiles and select a therapist based on their specialization, experience, and approach. We also offer a matching service if you're unsure who would be the best fit for your needs."
         }
       ]
     },
@@ -52,7 +52,7 @@ const FAQs = () => {
         },
         {
           question: 'How do I enroll in a program?',
-          answer: 'To enroll in a program, browse our programs section, select the one that interests you, and click the "Enroll" button. You'll then be guided through the payment process and receive immediate access to the program materials and schedule.'
+          answer: 'To enroll in a program, browse our programs section, select the one that interests you, and click the "Enroll" button. You\'ll then be guided through the payment process and receive immediate access to the program materials and schedule.'
         },
         {
           question: 'Are programs available for organizations?',
@@ -69,7 +69,7 @@ const FAQs = () => {
         },
         {
           question: 'Do you offer refunds?',
-          answer: 'Our refund policy varies depending on the service or program. Generally, we offer full refunds for cancellations made at least 24 hours before a scheduled session. For programs, refunds may be available within the first week if you're not satisfied with the content.'
+          answer: 'Our refund policy varies depending on the service or program. Generally, we offer full refunds for cancellations made at least 24 hours before a scheduled session. For programs, refunds may be available within the first week if you\'re not satisfied with the content.'
         },
         {
           question: 'Are there any subscription plans?',
