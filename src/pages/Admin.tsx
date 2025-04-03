@@ -22,7 +22,6 @@ import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import ProgramsEditor from '@/components/admin/ProgramsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
-import FAQEditor from '@/components/admin/FAQEditor';
 
 const Admin = () => {
   // State for each section
@@ -101,7 +100,6 @@ const Admin = () => {
               <TabsTrigger value="testimonials" className="rounded-none">Testimonials</TabsTrigger>
               <TabsTrigger value="programs" className="rounded-none">Programs</TabsTrigger>
               <TabsTrigger value="blog" className="rounded-none">Blog</TabsTrigger>
-              <TabsTrigger value="faq" className="rounded-none">FAQs</TabsTrigger>
               <TabsTrigger value="referral" className="rounded-none">Referral Program</TabsTrigger>
               {currentUser?.role === 'superadmin' && (
                 <TabsTrigger value="admins" className="rounded-none">Admin Users</TabsTrigger>
@@ -148,11 +146,6 @@ const Admin = () => {
             {/* Blog Editor */}
             <TabsContent value="blog" className="p-6">
               <BlogEditor />
-            </TabsContent>
-
-            {/* FAQ Editor */}
-            <TabsContent value="faq" className="p-6">
-              <FAQEditor />
             </TabsContent>
 
             {/* Referral Settings Editor */}
