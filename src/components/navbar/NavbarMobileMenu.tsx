@@ -94,6 +94,9 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
               <Link to="/" onClick={() => setIsOpen(false)}>Home</Link>
             </Button>
             <Button variant="ghost" className="justify-start" asChild>
+              <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
+            </Button>
+            <Button variant="ghost" className="justify-start" asChild>
               <Link to="/experts" onClick={() => setIsOpen(false)}>Experts</Link>
             </Button>
             
@@ -164,10 +167,6 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
-            
-            <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
-            </Button>
             
             {hasExpertProfile ? (
               <>

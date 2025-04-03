@@ -20,11 +20,11 @@ const Hero = () => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Slider images
+  // Slider images - replacing the 3rd image with the uploaded teenager image
   const sliderImages = [
     "/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png",  // Original image
     "/lovable-uploads/1debddfd-ebd1-41dd-98cb-90a9c97f0b3a.png",  // First uploaded image
-    "/lovable-uploads/e5e8d4cc-bfd7-4343-9659-cd3af524de31.png",  // Second uploaded image
+    "/lovable-uploads/43d69b36-0616-44bf-8fd1-2aa35a40a945.png",  // New teenager image
   ];
 
   // Load content from localStorage on component mount
@@ -81,8 +81,8 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with slider */}
-      <div className="relative w-full h-[605px] overflow-hidden">
+      {/* Banner Image Section with slider - reduced height */}
+      <div className="relative w-full h-[450px] overflow-hidden">
         {sliderImages.map((image, index) => (
           <div 
             key={index}
@@ -100,7 +100,7 @@ const Hero = () => {
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '605px',
+                height: '450px',
                 borderRadius: '0px'
               }}
               loading={index === 0 ? "eager" : "lazy"} // Prioritize first image
@@ -132,23 +132,17 @@ const Hero = () => {
         </div>
       </div>
       
-      {/* Help Section - Enhanced CTA */}
-      <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-8 px-6 sm:px-12 md:px-20 shadow-lg">
+      {/* Help Section - Enhanced CTA - reduced height and combined expert info */}
+      <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-6 px-6 sm:px-12 md:px-20 shadow-lg">
         <div className="container mx-auto flex flex-col items-center">
-          <h2 className="text-xl font-medium mb-3 text-center">
+          <h2 className="text-xl font-medium mb-2 text-center">
             {heroSettings.subtitle}
           </h2>
-          <p className="text-sm text-center text-gray-300 mb-5 max-w-2xl">
-            {heroSettings.description}
+          <p className="text-sm text-center text-gray-300 mb-4 max-w-2xl">
+            {heroSettings.description} <span className="inline-flex items-center px-2 py-1 text-xs bg-gray-800/50 rounded-full"><span className="h-2 w-2 bg-green-500 rounded-full mr-1 animate-pulse"></span>12 Experts currently online</span>
           </p>
           <div className="flex justify-center">
             <FreeAssessmentCTA />
-          </div>
-          <div className="mt-5 flex justify-center items-center">
-            <span className="text-xs text-gray-400 px-3 py-1 bg-gray-800/50 rounded-full inline-flex items-center">
-              <span className="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-              12 Experts currently online
-            </span>
           </div>
         </div>
       </div>

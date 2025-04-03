@@ -107,6 +107,7 @@ const ServicesSection = () => {
   ];
 
   const handleCategoryClick = (category: any) => {
+    console.log("Category clicked:", category);
     setSelectedCategory(category);
     setIsDialogOpen(true);
   };
@@ -153,7 +154,11 @@ const ServicesSection = () => {
                 className="cursor-pointer transform transition-transform duration-300 hover:scale-105"
               >
                 <CategoryCard 
-                  {...category}
+                  icon={category.icon}
+                  title={category.title}
+                  description={category.description}
+                  href={category.href}
+                  color={category.color}
                   cardStyle="session" 
                 />
               </div>

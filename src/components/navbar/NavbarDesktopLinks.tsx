@@ -101,13 +101,13 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         <Link to="/">Home</Link>
       </Button>
       <Button variant="ghost" asChild>
+        <Link to="/about">About</Link>
+      </Button>
+      <Button variant="ghost" asChild>
         <Link to="/experts">Experts</Link>
       </Button>
       <NavbarDesktopLinksDropdown title="Programs" />
       <NavbarDesktopLinksDropdown title="Services" />
-      <Button variant="ghost" asChild>
-        <Link to="/about">About</Link>
-      </Button>
       <NavbarDesktopLinksDropdown title="Support" />
       
       {hasExpertProfile ? (
