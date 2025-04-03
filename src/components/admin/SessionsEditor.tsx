@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Plus, Trash2, Brain, MessageCircle } from 'lucide-react';
+import { Edit, Plus, Trash2, Brain, MessageCircle, Heart, Briefcase, Lightbulb, Megaphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -12,7 +12,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { supabase } from '@/lib/supabase';
 
 // Define the type for a session
 type Session = {
@@ -81,7 +80,31 @@ const SessionsEditor = () => {
             description: "Navigate work stress, career transitions, and professional development.",
             href: "/career-guidance",
             color: "bg-yellow-100",
+            icon: "Briefcase"
+          },
+          {
+            id: 4,
+            title: "Mindfulness Practice",
+            description: "Learn techniques to stay present, reduce stress, and improve mental clarity.",
+            href: "/mindfulness-practice",
+            color: "bg-green-100",
+            icon: "Brain"
+          },
+          {
+            id: 5,
+            title: "Personal Development",
+            description: "Develop skills for self-improvement, goal setting, and personal growth.",
+            href: "/personal-development",
+            color: "bg-purple-100",
             icon: "Lightbulb"
+          },
+          {
+            id: 6,
+            title: "Communication Skills",
+            description: "Enhance your ability to express yourself clearly and listen effectively.",
+            href: "/communication-skills",
+            color: "bg-orange-100",
+            icon: "MessageCircle"
           }
         ];
         
@@ -171,6 +194,14 @@ const SessionsEditor = () => {
         return <Brain className="h-6 w-6 text-ifind-aqua" />;
       case 'MessageCircle':
         return <MessageCircle className="h-6 w-6 text-ifind-aqua" />;
+      case 'Heart':
+        return <Heart className="h-6 w-6 text-ifind-aqua" />;
+      case 'Briefcase':
+        return <Briefcase className="h-6 w-6 text-ifind-aqua" />;
+      case 'Lightbulb':
+        return <Lightbulb className="h-6 w-6 text-ifind-aqua" />;
+      case 'Megaphone':
+        return <Megaphone className="h-6 w-6 text-ifind-aqua" />;
       default:
         return <Brain className="h-6 w-6 text-ifind-aqua" />;
     }
@@ -319,7 +350,11 @@ const SessionFormDialog: React.FC<SessionFormDialogProps> = ({
 
   const iconOptions = [
     { name: "Brain", value: "Brain" },
-    { name: "MessageCircle", value: "MessageCircle" }
+    { name: "MessageCircle", value: "MessageCircle" },
+    { name: "Heart", value: "Heart" },
+    { name: "Briefcase", value: "Briefcase" },
+    { name: "Lightbulb", value: "Lightbulb" },
+    { name: "Megaphone", value: "Megaphone" }
   ];
   
   return (
@@ -402,7 +437,7 @@ const SessionFormDialog: React.FC<SessionFormDialogProps> = ({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Icon</FormLabel>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {iconOptions.map((icon) => (
                   <Button
                     key={icon.value}
@@ -413,11 +448,12 @@ const SessionFormDialog: React.FC<SessionFormDialogProps> = ({
                     }`}
                     onClick={() => form.setValue('icon', icon.value)}
                   >
-                    {icon.value === 'Brain' ? (
-                      <Brain className="h-5 w-5 mr-2" />
-                    ) : (
-                      <MessageCircle className="h-5 w-5 mr-2" />
-                    )}
+                    {icon.value === 'Brain' && <Brain className="h-5 w-5 mr-2" />}
+                    {icon.value === 'MessageCircle' && <MessageCircle className="h-5 w-5 mr-2" />}
+                    {icon.value === 'Heart' && <Heart className="h-5 w-5 mr-2" />}
+                    {icon.value === 'Briefcase' && <Briefcase className="h-5 w-5 mr-2" />}
+                    {icon.value === 'Lightbulb' && <Lightbulb className="h-5 w-5 mr-2" />}
+                    {icon.value === 'Megaphone' && <Megaphone className="h-5 w-5 mr-2" />}
                     {icon.name}
                   </Button>
                 ))}

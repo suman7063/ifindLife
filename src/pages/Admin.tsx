@@ -16,7 +16,7 @@ import {
 // Import refactored components
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
-import TherapistsEditor from '@/components/admin/TherapistsEditor';
+import ExpertsEditor from '@/components/admin/ExpertsEditor';
 import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
 import TestimonialsEditor from '@/components/admin/testimonials/TestimonialsEditor';
@@ -31,7 +31,7 @@ import SessionsEditor from '@/components/admin/SessionsEditor';
 const Admin = () => {
   // State for each section
   const [categories, setCategories] = useState(categoryData);
-  const [therapists, setTherapists] = useState(therapistData);
+  const [experts, setExperts] = useState(therapistData);
   const [testimonials, setTestimonials] = useState(testimonialData);
   const [heroSettings, setHeroSettings] = useState({
     title: "Discover Your",
@@ -52,7 +52,7 @@ const Admin = () => {
       try {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.categories) setCategories(parsedContent.categories);
-        if (parsedContent.therapists) setTherapists(parsedContent.therapists);
+        if (parsedContent.experts) setExperts(parsedContent.experts);
         if (parsedContent.testimonials) setTestimonials(parsedContent.testimonials);
         if (parsedContent.heroSettings) setHeroSettings(parsedContent.heroSettings);
       } catch (e) {
@@ -96,7 +96,7 @@ const Admin = () => {
     // In a real application, this would save to a database or localStorage
     localStorage.setItem('ifindlife-content', JSON.stringify({
       categories,
-      therapists,
+      experts,
       testimonials,
       heroSettings
     }));
@@ -134,7 +134,7 @@ const Admin = () => {
             <TabsList className="w-full border-b p-0 rounded-none">
               <TabsTrigger value="hero" className="rounded-none rounded-tl-lg">Hero Section</TabsTrigger>
               <TabsTrigger value="categories" className="rounded-none">Services</TabsTrigger>
-              <TabsTrigger value="therapists" className="rounded-none">Therapists</TabsTrigger>
+              <TabsTrigger value="experts" className="rounded-none">Experts</TabsTrigger>
               <TabsTrigger value="testimonials" className="rounded-none">Testimonials</TabsTrigger>
               <TabsTrigger value="programs" className="rounded-none">Programs</TabsTrigger>
               <TabsTrigger value="sessions" className="rounded-none">Sessions</TabsTrigger>
@@ -162,11 +162,11 @@ const Admin = () => {
               />
             </TabsContent>
 
-            {/* Therapists Editor */}
-            <TabsContent value="therapists" className="p-6">
-              <TherapistsEditor 
-                therapists={therapists} 
-                setTherapists={setTherapists} 
+            {/* Experts Editor */}
+            <TabsContent value="experts" className="p-6">
+              <ExpertsEditor 
+                experts={experts} 
+                setExperts={setExperts} 
               />
             </TabsContent>
 
