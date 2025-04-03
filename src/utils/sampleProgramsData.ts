@@ -194,7 +194,7 @@ const wellnessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Academic Institute Programs - correctly categorized programs
+// Academic Institute Programs - specific academic programs
 const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
     title: 'Student Counseling Program',
@@ -253,7 +253,7 @@ const academicPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   }
 ];
 
-// Business Programs - correctly categorized programs
+// Business Programs - specific business programs
 const businessPrograms: Omit<Program, 'id' | 'created_at'>[] = [
   {
     title: 'Work Life Balance',

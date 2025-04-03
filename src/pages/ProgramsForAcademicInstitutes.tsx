@@ -24,7 +24,7 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
         // First ensure we have sample academic programs in the database
         await addSamplePrograms('academic');
         
-        // Then fetch them
+        // Then fetch all programs
         const { data, error } = await supabase
           .from('programs')
           .select('*')

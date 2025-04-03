@@ -24,7 +24,7 @@ const ProgramsForBusiness: React.FC = () => {
         // First ensure we have sample business programs in the database
         await addSamplePrograms('business');
         
-        // Then fetch them
+        // Then fetch all business programs
         const { data, error } = await supabase
           .from('programs')
           .select('*')

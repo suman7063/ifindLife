@@ -31,10 +31,8 @@ export const useProgramData = (
       // Fetch programs based on program type
       let query = from('programs').select('*');
       
-      // Apply program type filter if not 'all'
-      if (programType) {
-        query = query.eq('programType', programType);
-      }
+      // Apply program type filter - important to fetch only the correct program type
+      query = query.eq('programType', programType);
       
       const { data: programData, error: programError } = await query;
 
@@ -82,12 +80,6 @@ export const useProgramData = (
   useEffect(() => {
     if (programs.length === 0) return;
     
-    // For academic and business programs, we don't filter by category
-    if (programType !== 'wellness') {
-      setFilteredPrograms(programs);
-      return;
-    }
-    
     // Apply category filter for wellness programs
     let categoryFiltered = programs;
     if (selectedCategory !== 'all') {
@@ -122,7 +114,7 @@ export const useProgramData = (
     }
     
     setFilteredPrograms(sorted);
-  }, [selectedCategory, programs, sortOption, programType]);
+  }, [selectedCategory, programs, sortOption]);
 
   // Group programs by category
   const programsByCategory = () => {
