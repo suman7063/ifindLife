@@ -1,8 +1,14 @@
+
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
 import { Link } from 'react-router-dom';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/components/ui/carousel";
 
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
@@ -12,6 +18,14 @@ const Hero = () => {
     videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0" // Disable autoplay initially
   });
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Slider images
+  const sliderImages = [
+    "/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png",  // Original image
+    "/lovable-uploads/1debddfd-ebd1-41dd-98cb-90a9c97f0b3a.png",  // First uploaded image
+    "/lovable-uploads/e5e8d4cc-bfd7-4343-9659-cd3af524de31.png",  // Second uploaded image
+  ];
 
   // Load content from localStorage on component mount
   useEffect(() => {
@@ -56,24 +70,44 @@ const Hero = () => {
     return () => clearTimeout(timer);
   }, [heroSettings.videoUrl, isVideoLoaded]);
 
+  // Auto slide rotation with fade effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+    }, 5000); // Change slide every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [sliderImages.length]);
+
   return (
     <div className="relative">
-      {/* Banner Image Section with proper 20% increase in height from original 504px */}
-      <div className="relative w-full h-[605px]">
-        <img 
-          src="/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
-          alt="Woman with sunglasses" 
-          className="w-full h-full object-cover"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '605px',
-            borderRadius: '0px'
-          }}
-          loading="eager" // Prioritize this image
-        />
+      {/* Banner Image Section with slider */}
+      <div className="relative w-full h-[605px] overflow-hidden">
+        {sliderImages.map((image, index) => (
+          <div 
+            key={index}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+              currentSlide === index ? 'opacity-100' : 'opacity-0'
+            }`}
+            aria-hidden={currentSlide !== index}
+          >
+            <img 
+              src={image} 
+              alt={`Slide ${index + 1}`} 
+              className="w-full h-full object-cover"
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '605px',
+                borderRadius: '0px'
+              }}
+              loading={index === 0 ? "eager" : "lazy"} // Prioritize first image
+            />
+          </div>
+        ))}
+        
         <div 
           className="absolute inset-0 flex flex-col justify-center px-[60px]"
           style={{
@@ -98,17 +132,23 @@ const Hero = () => {
         </div>
       </div>
       
-      {/* Help Section - Center aligned button with link */}
-      <div className="bg-gray-800 text-white py-6 px-6 sm:px-12 md:px-20">
+      {/* Help Section - Enhanced CTA */}
+      <div className="bg-gradient-to-r from-gray-800 to-gray-900 text-white py-8 px-6 sm:px-12 md:px-20 shadow-lg">
         <div className="container mx-auto flex flex-col items-center">
-          <h2 className="text-lg font-medium mb-2 text-center">
+          <h2 className="text-xl font-medium mb-3 text-center">
             {heroSettings.subtitle}
           </h2>
-          <p className="text-sm text-center text-gray-300 mb-4">
+          <p className="text-sm text-center text-gray-300 mb-5 max-w-2xl">
             {heroSettings.description}
           </p>
           <div className="flex justify-center">
             <FreeAssessmentCTA />
+          </div>
+          <div className="mt-5 flex justify-center items-center">
+            <span className="text-xs text-gray-400 px-3 py-1 bg-gray-800/50 rounded-full inline-flex items-center">
+              <span className="h-2 w-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
+              12 Experts currently online
+            </span>
           </div>
         </div>
       </div>

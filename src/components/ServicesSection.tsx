@@ -6,6 +6,7 @@ import { categoryData as defaultCategoryData } from '@/data/homePageData';
 import { Heart, Brain, Users, MessageCircle, Sparkles, Lightbulb, Star, CircleDot } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 const ServicesSection = () => {
   const [categories, setCategories] = useState(defaultCategoryData);
@@ -124,7 +125,11 @@ const ServicesSection = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
           {featuredPrograms.map((program, index) => (
-            <div key={`program-${index}`} onClick={() => handleProgramClick(program.href)} className="cursor-pointer">
+            <div 
+              key={`program-${index}`} 
+              onClick={() => handleProgramClick(program.href)} 
+              className="cursor-pointer transform transition-transform duration-300 hover:scale-105"
+            >
               <CategoryCard 
                 icon={program.icon}
                 title={program.title}
@@ -145,7 +150,7 @@ const ServicesSection = () => {
               <div 
                 key={`category-${index}`}
                 onClick={() => handleCategoryClick(category)}
-                className="cursor-pointer"
+                className="cursor-pointer transform transition-transform duration-300 hover:scale-105"
               >
                 <CategoryCard 
                   {...category}
