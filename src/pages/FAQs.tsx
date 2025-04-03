@@ -87,7 +87,7 @@ const FAQs = () => {
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl font-bold mb-4">Frequently Asked Questions</h1>
             <p className="text-xl max-w-3xl mx-auto">
-              Find answers to common questions about our services, programs, and platform. If you don't find what you're looking for, feel free to contact us.
+              Find answers to common questions about our services, programs, and platform. If you don&apos;t find what you&apos;re looking for, feel free to contact us.
             </p>
             <div className="mt-8 max-w-2xl mx-auto flex">
               <Input 
@@ -140,7 +140,7 @@ const FAQs = () => {
                 
                 <div className="bg-gray-100 p-8 rounded-lg mt-8">
                   <h3 className="text-xl font-semibold mb-4">Still have questions?</h3>
-                  <p className="mb-4">If you couldn't find the answer to your question, please don't hesitate to reach out to our support team.</p>
+                  <p className="mb-4">If you couldn&apos;t find the answer to your question, please don&apos;t hesitate to reach out to our support team.</p>
                   <Button asChild className="bg-ifind-teal hover:bg-ifind-teal/90">
                     <a href="/contact">Contact Support</a>
                   </Button>
