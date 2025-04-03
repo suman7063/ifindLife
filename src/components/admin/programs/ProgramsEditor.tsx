@@ -10,6 +10,7 @@ import { useProgramManager } from './useProgramManager';
 
 const ProgramsEditor = () => {
   const [activeTab, setActiveTab] = useState<ProgramType>('wellness');
+  
   const {
     programs,
     isLoading,
@@ -69,3 +70,5 @@ const ProgramsEditor = () => {
 };
 
 export default ProgramsEditor;
+// Also export as named export to maintain compatibility with existing imports
+export { ProgramsEditor };

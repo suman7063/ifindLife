@@ -8,7 +8,7 @@ import ServicesEditor from '@/components/admin/ServicesEditor';
 import ExpertsEditor from '@/components/admin/experts'; // Changed from named import to default import
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
-import { ProgramsEditor } from '@/components/admin/programs/ProgramsEditor';
+import ProgramsEditor from '@/components/admin/programs/ProgramsEditor'; // Changed from named import to default import
 import { SessionsEditor } from '@/components/admin/sessions';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
