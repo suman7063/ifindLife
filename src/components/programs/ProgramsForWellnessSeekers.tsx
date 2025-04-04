@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Program, ProgramType } from '@/types/programs';
 import { from } from '@/lib/supabase';
@@ -36,7 +37,8 @@ const ProgramsForWellnessSeekers: React.FC<ProgramsForWellnessSeekersProps> = ({
           throw new Error(error.message);
         }
 
-        setFeaturedPrograms(data as Program[]);
+        // Type assertion to handle unknown data structure
+        setFeaturedPrograms((data || []) as unknown as Program[]);
 
         if (isAuthenticated) {
           fetchFavorites();
@@ -63,7 +65,8 @@ const ProgramsForWellnessSeekers: React.FC<ProgramsForWellnessSeekersProps> = ({
           throw new Error(error.message);
         }
 
-        setFavoritePrograms(data as { id: string; user_id: string; program_id: number }[]);
+        // Type assertion to handle unknown data structure
+        setFavoritePrograms((data || []) as unknown as { id: string; user_id: string; program_id: number }[]);
       } catch (err) {
         console.error('Error fetching favorite programs:', err);
       } finally {

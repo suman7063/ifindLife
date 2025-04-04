@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, UserTransaction } from '@/types/supabase';
 
 export const useUserWallet = (
   currentUser: UserProfile | null,
@@ -18,7 +18,7 @@ export const useUserWallet = (
       const { data, error } = await supabase
         .from('users')
         .update({
-          wallet_balance: (currentUser.walletBalance || 0) + amount
+          wallet_balance: (currentUser.wallet_balance || 0) + amount
         })
         .eq('id', currentUser.id);
 
@@ -28,10 +28,11 @@ export const useUserWallet = (
       const transactionData = {
         user_id: currentUser.id,
         date: new Date().toISOString(),
-        type: 'deposit',
+        type: 'credit' as const, // Enforce type to be "credit"
         amount: amount,
         currency: currentUser.currency || 'USD',
-        description: 'Wallet recharge'
+        description: 'Wallet recharge',
+        status: 'completed'
       };
 
       const { data: transactionResult, error: transactionError } = await supabase
@@ -55,18 +56,26 @@ export const useUserWallet = (
         }
       }
 
-      // Create a new transaction object to add to the user's transactions
-      const newTransaction = {
+      // Create a new transaction object that conforms to UserTransaction type
+      const newTransaction: UserTransaction = {
         id: newTransactionId,
-        ...transactionData
+        user_id: transactionData.user_id,
+        amount: transactionData.amount,
+        type: transactionData.type,
+        status: transactionData.status,
+        date: transactionData.date,
+        currency: transactionData.currency,
+        description: transactionData.description,
+        created_at: new Date().toISOString()
       };
 
       // Optimistically update the local state
       const updatedUser = {
         ...currentUser,
-        walletBalance: (currentUser.walletBalance || 0) + amount,
+        wallet_balance: (currentUser.wallet_balance || 0) + amount,
+        walletBalance: (currentUser.wallet_balance || 0) + amount,
         transactions: [...(currentUser.transactions || []), newTransaction]
-      };
+      } as UserProfile;
       
       setCurrentUser(updatedUser);
 

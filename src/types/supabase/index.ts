@@ -8,6 +8,16 @@ export * from './reviews';
 export * from './userFavorites';
 export * from './referral';
 
+// Define ReferralSettings interface
+export interface ReferralSettings {
+  id: string;
+  referrer_reward: number;
+  referred_reward: number;
+  active: boolean;
+  description?: string;
+  updated_at?: string;
+}
+
 // Additional UI-specific types
 export interface ReferralUI {
   id: string;
@@ -25,12 +35,14 @@ export interface UserTransaction {
   id: string;
   user_id: string;
   amount: number;
-  type: string;
+  type: "credit" | "debit" | string;
   status: string;
   description?: string;
   created_at: string;
   payment_id?: string;
   order_id?: string;
+  date?: string;
+  currency?: string;
 }
 
 export interface Course {
@@ -42,6 +54,11 @@ export interface Course {
   image_url?: string;
   created_at: string;
   updated_at: string;
+  expertId?: string | number;
+  expertName?: string;
+  enrollmentDate?: string;
+  progress?: number;
+  completed?: boolean;
 }
 
 // For backward compatibility

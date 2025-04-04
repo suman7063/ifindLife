@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Expert, UserProfile } from '@/types/supabase';
@@ -15,7 +16,9 @@ export const useUserFavorites = (
 
     try {
       // Check if already in favorites
-      const existingFavorite = currentUser.favoriteExperts?.find(e => e.id.toString() === expertId);
+      const favoriteExperts = currentUser.favorite_experts || [];
+      const existingFavorite = favoriteExperts.find(e => typeof e === 'object' ? e.id.toString() === expertId : e.toString() === expertId);
+      
       if (existingFavorite) {
         toast.info('This expert is already in your favorites');
         return false;
@@ -41,9 +44,10 @@ export const useUserFavorites = (
       if (expertError) throw expertError;
 
       // Update the local state
-      const updatedFavorites = [...(currentUser.favoriteExperts || []), expertData as Expert];
+      const updatedFavorites = [...(currentUser.favorite_experts || []), expertData.id.toString()];
       const updatedUser = {
         ...currentUser,
+        favorite_experts: updatedFavorites,
         favoriteExperts: updatedFavorites
       };
       setCurrentUser(updatedUser);
@@ -72,12 +76,13 @@ export const useUserFavorites = (
       if (error) throw error;
 
       // Update local state
-      const updatedFavorites = currentUser.favoriteExperts?.filter(
-        expert => expert.id.toString() !== expertId
-      ) || [];
+      const updatedFavorites = (currentUser.favorite_experts || []).filter(
+        expert => typeof expert === 'object' ? expert.id.toString() !== expertId : expert.toString() !== expertId
+      );
       
       const updatedUser = {
         ...currentUser,
+        favorite_experts: updatedFavorites,
         favoriteExperts: updatedFavorites
       };
       setCurrentUser(updatedUser);

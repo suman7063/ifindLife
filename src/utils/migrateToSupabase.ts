@@ -1,58 +1,68 @@
 
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-// Example function to import data into Supabase
-export const importData = async (data: any, tableName: string): Promise<boolean> => {
+export const runMigrations = async () => {
   try {
+    // Start running migrations
+    toast.info('Starting data migration to Supabase...');
+    
+    // Example migration
+    const result = await migrateLocalStorage();
+    
+    if (result) {
+      toast.success('Data successfully migrated to Supabase!');
+      return true;
+    } else {
+      toast.error('Migration failed. See console for details.');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error during migration:', error);
+    toast.error('Migration failed with error. See console for details.');
+    return false;
+  }
+};
+
+// Example migration function
+const migrateLocalStorage = async () => {
+  try {
+    // Get data from localStorage
+    const programsData = localStorage.getItem('ifindlife-programs');
+    
+    if (!programsData) {
+      console.log('No programs data found in localStorage');
+      return true;
+    }
+    
+    // Parse the data
+    const programs = JSON.parse(programsData);
+    
+    // Check if we already have data in Supabase
+    const { data: existingPrograms } = await supabase
+      .from('programs')
+      .select('id')
+      .limit(1);
+      
+    if (existingPrograms && existingPrograms.length > 0) {
+      console.log('Programs already exist in Supabase, skipping migration');
+      return true;
+    }
+    
+    // Insert the data into Supabase
     const { error } = await supabase
-      .from(tableName as any)
-      .insert(data);
+      .from('programs')
+      .insert(programs);
       
     if (error) {
-      console.error(`Error importing data to ${tableName}:`, error);
+      console.error('Error migrating programs:', error);
       return false;
     }
+    
+    console.log('Programs successfully migrated to Supabase');
     return true;
-  } catch (err) {
-    console.error(`Exception importing data to ${tableName}:`, err);
+  } catch (error) {
+    console.error('Error in migrateLocalStorage:', error);
     return false;
-  }
-};
-
-// Function to check if a table exists
-export const tableExists = async (tableName: string): Promise<boolean> => {
-  try {
-    const { data, error } = await supabase.rpc('check_if_table_exists', {
-      table_name: tableName
-    });
-    
-    if (error) {
-      console.error(`Error checking if table ${tableName} exists:`, error);
-      return false;
-    }
-    
-    return !!data;
-  } catch (err) {
-    console.error(`Exception checking if table ${tableName} exists:`, err);
-    return false;
-  }
-};
-
-// Function to get all records from a table
-export const getAllRecords = async (tableName: string): Promise<any[]> => {
-  try {
-    const { data, error } = await supabase
-      .from(tableName as any)
-      .select('*');
-      
-    if (error) {
-      console.error(`Error getting all records from ${tableName}:`, error);
-      return [];
-    }
-    
-    return data || [];
-  } catch (err) {
-    console.error(`Exception getting all records from ${tableName}:`, err);
-    return [];
   }
 };

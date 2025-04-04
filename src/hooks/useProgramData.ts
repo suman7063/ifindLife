@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo } from 'react';
 import { Program, ProgramType, ProgramCategory } from '@/types/programs';
 import { from } from '@/lib/supabase';
@@ -64,7 +65,8 @@ export const useProgramData = (
           throw new Error(error.message);
         }
 
-        setPrograms(data as Program[]);
+        // Use type assertion to handle the unknown data structure
+        setPrograms((data || []) as unknown as Program[]);
 
         // If user is authenticated and we need to mark favorites
         if (currentUser && memoizedOptions.withFavorites) {
@@ -93,8 +95,8 @@ export const useProgramData = (
           throw new Error(error.message);
         }
 
-        // Use type assertion to handle the unknown type
-        setFavoritePrograms(data as unknown as FavoriteProgram[]);
+        // Use type assertion to handle the unknown data structure
+        setFavoritePrograms((data || []) as unknown as FavoriteProgram[]);
       } catch (err) {
         console.error('Error fetching favorite programs:', err);
         // Don't show an error toast here as it's not critical

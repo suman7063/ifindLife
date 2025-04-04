@@ -3,6 +3,17 @@ import * as z from 'zod';
 import { ProgramType, ProgramCategory } from '@/types/programs';
 import { Program } from '@/types/programs';
 
+// Define the allowed values explicitly for the schema
+const programTypeEnum = z.enum(['wellness', 'academic', 'business', 'productivity', 'leadership']);
+type ProgramTypeEnum = z.infer<typeof programTypeEnum>;
+
+const programCategoryEnum = z.enum([
+  'quick-ease', 'resilience-building', 'super-human', 'issue-based',
+  'Meditation', 'Stress Reduction', 'Study Skills', 'Time Management',
+  'Leadership', 'Team Building'
+]);
+type ProgramCategoryEnum = z.infer<typeof programCategoryEnum>;
+
 // Form schema for program form validation
 export const programFormSchema = z.object({
   title: z.string().min(1, "Title is required").max(100),
@@ -11,8 +22,8 @@ export const programFormSchema = z.object({
   sessions: z.coerce.number().min(1, "Must have at least 1 session"),
   price: z.coerce.number().min(0, "Price cannot be negative"),
   image: z.string().url("Must be a valid URL"),
-  category: z.enum(['quick-ease', 'resilience-building', 'super-human', 'issue-based'] as const),
-  programType: z.enum(['wellness', 'academic', 'business'] as const)
+  category: programCategoryEnum,
+  programType: programTypeEnum
 });
 
 // Type for the form values from the schema
@@ -28,8 +39,8 @@ export const getProgramFormDefaults = (program?: Program | null): ProgramFormVal
       sessions: program.sessions,
       price: program.price,
       image: program.image,
-      category: program.category,
-      programType: program.programType
+      category: program.category as ProgramCategoryEnum,
+      programType: program.programType as ProgramTypeEnum
     };
   }
   
@@ -40,8 +51,8 @@ export const getProgramFormDefaults = (program?: Program | null): ProgramFormVal
     sessions: 1,
     price: 0,
     image: "",
-    category: 'quick-ease' as ProgramCategory,
-    programType: 'wellness' as ProgramType
+    category: 'quick-ease' as ProgramCategoryEnum,
+    programType: 'wellness' as ProgramTypeEnum
   };
 };
 
@@ -57,8 +68,8 @@ export const prepareProgramData = (values: ProgramFormValues, existingId?: numbe
       sessions: values.sessions,
       price: values.price,
       image: values.image,
-      category: values.category,
-      programType: values.programType
+      category: values.category as ProgramCategory,
+      programType: values.programType as ProgramType
     };
   }
   
@@ -71,7 +82,7 @@ export const prepareProgramData = (values: ProgramFormValues, existingId?: numbe
     sessions: values.sessions,
     price: values.price,
     image: values.image,
-    category: values.category,
-    programType: values.programType
+    category: values.category as ProgramCategory,
+    programType: values.programType as ProgramType
   };
 };

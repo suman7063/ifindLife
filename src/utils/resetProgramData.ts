@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { addSamplePrograms } from './sampleProgramsData';
+import { ProgramType } from '@/types/programs';
 
 /**
  * Resets all program data by deleting existing programs and re-adding sample data
@@ -24,8 +25,8 @@ export const resetProgramData = async (): Promise<boolean> => {
     
     // Re-add sample programs for each type
     const addedWellness = await addSamplePrograms('wellness');
-    const addedAcademic = await addSamplePrograms('academic');
-    const addedBusiness = await addSamplePrograms('business');
+    const addedAcademic = await addSamplePrograms('academic' as ProgramType);
+    const addedBusiness = await addSamplePrograms('business' as ProgramType);
     
     console.log('Program data reset completed successfully');
     console.log('Added wellness programs:', addedWellness);

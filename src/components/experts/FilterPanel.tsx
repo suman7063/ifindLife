@@ -48,8 +48,8 @@ const FilterPanel: React.FC<FilterPanelProps> = ({
   };
 
   // Handler for setting experience level
-  const handleExperienceLevelChange = (level: string) => {
-    setExperienceLevel(level as ExperienceLevel);
+  const handleExperienceLevelChange = (level: ExperienceLevel) => {
+    setExperienceLevel(level);
   };
 
   return (

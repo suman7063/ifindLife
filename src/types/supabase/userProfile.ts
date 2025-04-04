@@ -25,24 +25,32 @@ export interface UserProfile {
   enrolled_courses?: any[];
   referrals?: any[];
   
-  // Aliases for camelCase access
-  get profilePicture(): string | undefined {
-    return this.profile_picture;
-  }
-  
-  get walletBalance(): number | undefined {
-    return this.wallet_balance;
-  }
-  
-  get favoriteExperts(): string[] | undefined {
-    return this.favorite_experts;
-  }
-  
-  get enrolledCourses(): any[] | undefined {
-    return this.enrolled_courses;
-  }
-  
-  get referralCode(): string | undefined {
-    return this.referral_code;
-  }
+  // TypeScript doesn't allow interface methods with implementation in .ts files
+  // So let's define these as optional properties
+  profilePicture?: string;
+  walletBalance?: number;
+  favoriteExperts?: string[];
+  enrolledCourses?: any[];
+  referralCode?: string;
+}
+
+// Export aliases for camelCase access
+export function getProfilePicture(profile: UserProfile): string | undefined {
+  return profile.profile_picture;
+}
+
+export function getWalletBalance(profile: UserProfile): number | undefined {
+  return profile.wallet_balance;
+}
+
+export function getFavoriteExperts(profile: UserProfile): string[] | undefined {
+  return profile.favorite_experts;
+}
+
+export function getEnrolledCourses(profile: UserProfile): any[] | undefined {
+  return profile.enrolled_courses;
+}
+
+export function getReferralCode(profile: UserProfile): string | undefined {
+  return profile.referral_code;
 }

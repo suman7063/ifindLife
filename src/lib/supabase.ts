@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -10,8 +9,11 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
 export type Tables = Database['public']['Tables'];
 
+// Define a type-safe version for table access
+type TableNames = keyof Database['public']['Tables'] | string;
+
 // Define a simplified version for table access
-export function from(tableName: string) {
-  // Using type assertion to allow string parameter
+export function from(tableName: TableNames) {
+  // Using type assertion to prevent TypeScript errors while keeping functionality
   return supabase.from(tableName as any);
 }

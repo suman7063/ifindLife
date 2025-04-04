@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { RefreshCw, Database } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { ProgramType } from '@/types/programs';
 
 const ProgramDataReset = () => {
   const [isResetting, setIsResetting] = useState(false);
@@ -46,10 +47,10 @@ const ProgramDataReset = () => {
       const wellnessAdded = await addSamplePrograms('wellness');
       console.log("Wellness programs added:", wellnessAdded);
       
-      const academicAdded = await addSamplePrograms('academic');
+      const academicAdded = await addSamplePrograms('academic' as ProgramType);
       console.log("Academic programs added:", academicAdded);
       
-      const businessAdded = await addSamplePrograms('business');
+      const businessAdded = await addSamplePrograms('business' as ProgramType);
       console.log("Business programs added:", businessAdded);
       
       // Show success message
