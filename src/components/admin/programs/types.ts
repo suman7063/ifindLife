@@ -26,4 +26,5 @@ export interface ProgramCardProps {
   program: Program;
   onEdit: (program: Program) => void;
   onDelete: (programId: number) => void;
+  getCategoryColor?: (category: string) => string;
 }
