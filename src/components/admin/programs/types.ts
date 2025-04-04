@@ -6,7 +6,7 @@ export interface ProgramFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (programData: Program) => Promise<void>;
-  program?: Program | null;
+  program: Program | null;
 }
 
 export interface ProgramsEditorProps {

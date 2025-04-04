@@ -1,135 +1,79 @@
 
-import { useState, useEffect } from 'react';
-import { Program, ProgramType } from '@/types/programs';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect, useCallback } from 'react';
+import { Program, ProgramType, ProgramCategory } from '@/types/programs';
+import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-export const useProgramManager = (programType: ProgramType = 'wellness') => {
+export const useProgramManager = (programType: ProgramType) => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Fetch programs on component mount
-  useEffect(() => {
-    console.log('ProgramsEditor: Fetching programs');
-    fetchPrograms();
-  }, [programType]);
-
-  // Fetch programs from Supabase or localStorage
-  const fetchPrograms = async () => {
+  // Fetch programs
+  const fetchPrograms = useCallback(async () => {
     setIsLoading(true);
     try {
-      let fetchedPrograms: Program[] = [];
+      const { data, error } = await from('programs')
+        .select('*')
+        .eq('programType', programType);
+
+      if (error) throw error;
       
-      try {
-        // Try to fetch from Supabase first
-        const { data, error } = await supabase
-          .from('programs')
-          .select('*')
-          .eq('programType', programType);
-          
-        if (error) throw error;
-        
-        if (data) {
-          fetchedPrograms = data as Program[];
-          console.log('Programs fetched from Supabase:', fetchedPrograms.length);
-        }
-      } catch (e) {
-        console.log('Supabase fetch failed, using localStorage fallback');
-        // Fallback to localStorage
-        const storedPrograms = localStorage.getItem('ifindlife-programs');
-        if (storedPrograms) {
-          const allPrograms = JSON.parse(storedPrograms) as Program[];
-          fetchedPrograms = allPrograms.filter(p => p.programType === programType);
-          console.log('Programs fetched from localStorage:', fetchedPrograms.length);
-        }
-      }
-      
-      setPrograms(fetchedPrograms);
+      setPrograms(data as unknown as Program[]);
     } catch (error) {
       console.error('Error fetching programs:', error);
-      toast.error('Failed to fetch programs');
+      toast.error('Failed to load programs');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [programType]);
 
-  // Handle dialog open for creating/editing a program
+  useEffect(() => {
+    fetchPrograms();
+  }, [fetchPrograms, programType]);
+
+  // Handle opening the dialog for create/edit
   const handleOpenDialog = (program?: Program) => {
-    if (program) {
-      console.log('Opening dialog for edit with program:', program);
-      setSelectedProgram(program);
-    } else {
-      console.log('Opening dialog for new program');
-      setSelectedProgram(null);
-    }
+    setSelectedProgram(program || null);
     setIsDialogOpen(true);
   };
 
-  // Save a new or updated program
+  // Save program (create or update)
   const handleSaveProgram = async (programData: Program) => {
     try {
-      let savedProgram: Program;
-      
-      if (selectedProgram?.id) {
-        // Update existing program
-        savedProgram = { ...programData, id: selectedProgram.id };
+      // Creating a new program
+      if (!programData.id || programData.id === -1) {
+        const { data, error } = await from('programs').insert([{
+          title: programData.title,
+          description: programData.description,
+          duration: programData.duration,
+          sessions: programData.sessions,
+          price: programData.price,
+          image: programData.image,
+          category: programData.category,
+          programType: programData.programType,
+          enrollments: 0
+        }]).select('*');
+
+        if (error) throw error;
         
-        try {
-          // Try to update in Supabase
-          const { error } = await supabase
-            .from('programs')
-            .update(savedProgram)
-            .eq('id', selectedProgram.id);
-            
-          if (error) throw error;
-          
-          // Update local state
-          setPrograms(programs.map(p => p.id === selectedProgram.id ? savedProgram : p));
-          toast.success('Program updated successfully');
-        } catch (e) {
-          console.log('Supabase update failed, using localStorage fallback');
-          // Fallback to localStorage
-          const storedPrograms = JSON.parse(localStorage.getItem('ifindlife-programs') || '[]');
-          const updatedPrograms = storedPrograms.map((p: Program) => 
-            p.id === selectedProgram.id ? savedProgram : p
-          );
-          localStorage.setItem('ifindlife-programs', JSON.stringify(updatedPrograms));
-          setPrograms(prev => prev.map(p => p.id === selectedProgram.id ? savedProgram : p));
-          toast.success('Program updated successfully (localStorage)');
-        }
-      } else {
-        // Create new program
-        try {
-          // Try to insert in Supabase
-          const { data, error } = await supabase
-            .from('programs')
-            .insert({ ...programData })
-            .select();
-            
-          if (error) throw error;
-          
-          if (data && data[0]) {
-            savedProgram = data[0] as Program;
-            // Update local state
-            setPrograms(prev => [...prev, savedProgram]);
-            toast.success('Program created successfully');
-          }
-        } catch (e) {
-          console.log('Supabase insert failed, using localStorage fallback');
-          // Fallback to localStorage
-          const storedPrograms = JSON.parse(localStorage.getItem('ifindlife-programs') || '[]');
-          const newId = storedPrograms.length > 0 
-            ? Math.max(...storedPrograms.map((p: Program) => p.id)) + 1 
-            : 1;
-          
-          savedProgram = { ...programData, id: newId };
-          const updatedPrograms = [...storedPrograms, savedProgram];
-          localStorage.setItem('ifindlife-programs', JSON.stringify(updatedPrograms));
-          setPrograms(prev => [...prev, savedProgram]);
-          toast.success('Program created successfully (localStorage)');
-        }
+        toast.success('Program created successfully');
+        setPrograms(prev => [...prev, data[0] as unknown as Program]);
+      } 
+      // Updating existing program
+      else {
+        const { id, ...updateData } = programData;
+        const { error } = await from('programs')
+          .update(updateData)
+          .eq('id', id);
+
+        if (error) throw error;
+        
+        toast.success('Program updated successfully');
+        setPrograms(prev => 
+          prev.map(p => p.id === id ? { ...p, ...updateData } : p)
+        );
       }
       
       setIsDialogOpen(false);
@@ -139,41 +83,26 @@ export const useProgramManager = (programType: ProgramType = 'wellness') => {
     }
   };
 
-  // Delete a program
+  // Delete program
   const handleDeleteProgram = async (programId: number) => {
-    if (!confirm('Are you sure you want to delete this program?')) return;
-    
     try {
-      try {
-        // Try to delete from Supabase
-        const { error } = await supabase
-          .from('programs')
-          .delete()
-          .eq('id', programId);
-          
-        if (error) throw error;
-        
-        // Update local state
-        setPrograms(programs.filter(p => p.id !== programId));
-        toast.success('Program deleted successfully');
-      } catch (e) {
-        console.log('Supabase delete failed, using localStorage fallback');
-        // Fallback to localStorage
-        const storedPrograms = JSON.parse(localStorage.getItem('ifindlife-programs') || '[]');
-        const updatedPrograms = storedPrograms.filter((p: Program) => p.id !== programId);
-        localStorage.setItem('ifindlife-programs', JSON.stringify(updatedPrograms));
-        setPrograms(prev => prev.filter(p => p.id !== programId));
-        toast.success('Program deleted successfully (localStorage)');
-      }
+      const { error } = await from('programs')
+        .delete()
+        .eq('id', programId);
+
+      if (error) throw error;
+      
+      toast.success('Program deleted successfully');
+      setPrograms(prev => prev.filter(p => p.id !== programId));
     } catch (error) {
       console.error('Error deleting program:', error);
       toast.error('Failed to delete program');
     }
   };
 
-  // Function to get program category label color
+  // Get category color for UI
   const getCategoryColor = (category: string) => {
-    switch (category) {
+    switch (category as ProgramCategory) {
       case 'quick-ease':
         return 'bg-green-100 text-green-800';
       case 'resilience-building':
@@ -196,7 +125,6 @@ export const useProgramManager = (programType: ProgramType = 'wellness') => {
     handleOpenDialog,
     handleSaveProgram,
     handleDeleteProgram,
-    fetchPrograms,
     getCategoryColor
   };
 };
