@@ -20,11 +20,14 @@ export const useUserFavorites = (
       const favoriteExperts = currentUser.favorite_experts || [];
       const existingFavorite = favoriteExperts.find(e => {
         if (e === null || e === undefined) return false;
+        
         // Use type guards to ensure e is not null before accessing properties
         if (typeof e === 'object' && e !== null) {
-          return e.id ? e.id.toString() === expertId : false;
+          // Safe access using conditional check
+          return e.id !== undefined && e.id !== null ? e.id.toString() === expertId : false;
         } else {
-          return e ? e.toString() === expertId : false;
+          // Handle primitive type case (likely string)
+          return e !== null && e !== undefined ? e.toString() === expertId : false;
         }
       });
       
@@ -89,11 +92,14 @@ export const useUserFavorites = (
       // Update local state
       const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
         if (expert === null || expert === undefined) return false;
+        
         // Use type guards to ensure expert is not null before accessing properties
         if (typeof expert === 'object' && expert !== null) {
-          return expert.id ? expert.id.toString() !== expertId : true;
+          // Safe access with null check for the id property
+          return expert.id !== undefined && expert.id !== null ? expert.id.toString() !== expertId : true;
         } else {
-          return expert ? expert.toString() !== expertId : true;
+          // Handle primitive type case
+          return expert !== null && expert !== undefined ? expert.toString() !== expertId : true;
         }
       });
       
