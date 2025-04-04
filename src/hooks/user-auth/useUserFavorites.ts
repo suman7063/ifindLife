@@ -23,11 +23,17 @@ export const useUserFavorites = (
         
         // Use type guards to ensure e is not null before accessing properties
         if (typeof e === 'object' && e !== null) {
-          // Safe access using conditional check
-          return e.id !== undefined && e.id !== null ? e.id.toString() === expertId : false;
+          // Safe access using conditional check - only access id if it's not null or undefined
+          if (e.id !== undefined && e.id !== null) {
+            return e.id.toString() === expertId;
+          }
+          return false;
         } else {
           // Handle primitive type case (likely string)
-          return e !== null && e !== undefined ? e.toString() === expertId : false;
+          if (e !== null && e !== undefined) {
+            return e.toString() === expertId;
+          }
+          return false;
         }
       });
       
@@ -95,11 +101,17 @@ export const useUserFavorites = (
         
         // Use type guards to ensure expert is not null before accessing properties
         if (typeof expert === 'object' && expert !== null) {
-          // Safe access with null check for the id property
-          return expert.id !== undefined && expert.id !== null ? expert.id.toString() !== expertId : true;
+          // Safe access with null check for the id property - only access id if it's not null or undefined
+          if (expert.id !== undefined && expert.id !== null) {
+            return expert.id.toString() !== expertId;
+          }
+          return true; // Keep items without id
         } else {
           // Handle primitive type case
-          return expert !== null && expert !== undefined ? expert.toString() !== expertId : true;
+          if (expert !== null && expert !== undefined) {
+            return expert.toString() !== expertId;
+          }
+          return true; // Keep nullish items
         }
       });
       
