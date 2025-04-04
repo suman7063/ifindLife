@@ -121,7 +121,7 @@ export interface CustomTable {
     image: string;
     category: string;
     programType: string;
-    created_at: string;
+    created_at?: string;
     enrollments?: number;
   };
   user_favorite_programs: {
@@ -160,6 +160,102 @@ export interface CustomTable {
     subject: string;
     message: string;
     is_read: boolean;
+    created_at: string;
+  };
+  admin_users: {
+    id: string;
+    role: string;
+    created_at: string;
+  };
+  appointments: {
+    id: string;
+    user_id: string;
+    expert_id: string;
+    expert_name: string;
+    appointment_date: string;
+    duration: number;
+    status: string;
+    notes?: string;
+    service_id?: number;
+    created_at: string;
+    time_slot_id?: string;
+    start_time?: string;
+    end_time?: string;
+    uid?: number;
+    token?: string;
+    channel_name?: string;
+    google_calendar_event_id?: string;
+    user_calendar_event_id?: string;
+  };
+  expert_accounts: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    specialization?: string;
+    experience?: string;
+    bio?: string;
+    profile_picture?: string;
+    status?: string;
+    verified?: boolean;
+    created_at?: string;
+    auth_id?: string;
+    certificate_urls?: string[];
+    selected_services?: number[];
+    average_rating?: number;
+    reviews_count?: number;
+  };
+  expert_availabilities: {
+    id: string;
+    expert_id: string;
+    start_date: string;
+    end_date: string;
+    availability_type: string;
+    created_at?: string;
+  };
+  expert_time_slots: {
+    id: string;
+    availability_id: string;
+    start_time: string;
+    end_time: string;
+    day_of_week?: number;
+    specific_date?: string;
+    is_booked?: boolean;
+    created_at?: string;
+  };
+  moderation_actions: {
+    id: string;
+    report_id: string;
+    admin_id: string;
+    action_type: string;
+    message: string;
+    notes?: string;
+    created_at: string;
+  };
+  moderation_reports: {
+    id: string;
+    reporter_id: string;
+    reporter_type: string;
+    target_id: string;
+    target_type: string;
+    reason: string;
+    details?: string;
+    status: string;
+    session_id?: string;
+    created_at: string;
+    updated_at: string;
+  };
+  user_expert_services: {
+    id: string;
+    user_id: string;
+    expert_id: string;
+    service_id: number;
+    amount: number;
+    status: string;
     created_at: string;
   };
 }

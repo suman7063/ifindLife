@@ -50,14 +50,28 @@ export const prepareProgramData = (values: ProgramFormValues, existingId?: numbe
   if (existingId) {
     // For existing programs, ensure all required fields are present
     return { 
-      ...values, 
-      id: existingId 
+      id: existingId,
+      title: values.title,
+      description: values.description,
+      duration: values.duration,
+      sessions: values.sessions,
+      price: values.price,
+      image: values.image,
+      category: values.category,
+      programType: values.programType
     };
   }
   
   // For new programs, ensure all required fields are present with a temporary ID
   return { 
-    ...values, 
-    id: -1 
+    id: -1,
+    title: values.title,
+    description: values.description,
+    duration: values.duration,
+    sessions: values.sessions,
+    price: values.price,
+    image: values.image,
+    category: values.category,
+    programType: values.programType
   };
 };
