@@ -15,6 +15,10 @@ import ProgramDescription from './dialog/ProgramDescription';
 import ProgramPriceFooter from './dialog/ProgramPriceFooter';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+interface FavoriteData {
+  program_id: number;
+}
+
 interface ProgramDetailDialogProps {
   program: Program;
   currentUser: UserProfile | null;

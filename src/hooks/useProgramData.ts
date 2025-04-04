@@ -1,9 +1,21 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Program, ProgramCategory, ProgramType } from '@/types/programs';
 import { from } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
+
+// Create a typed interface for program-related data
+interface ProgramsByCategory {
+  'quick-ease': Program[];
+  'resilience-building': Program[];
+  'super-human': Program[];
+  'issue-based': Program[];
+}
+
+interface FavoriteProgram {
+  program_id: number;
+}
 
 export const useProgramData = (
   isAuthenticated: boolean,
@@ -22,24 +34,21 @@ export const useProgramData = (
   }, [isAuthenticated, currentUser, programType]);
 
   // Fetch programs from the database
-  const fetchPrograms = async () => {
+  const fetchPrograms = useCallback(async () => {
     setIsLoading(true);
     try {
       // Add sample programs if needed
       await addSamplePrograms(programType);
       
       // Fetch programs based on program type
-      let query = from('programs').select('*');
-      
-      // Apply program type filter - important to fetch only the correct program type
-      query = query.eq('programType', programType);
-      
-      const { data: programData, error: programError } = await query;
+      const { data: programData, error: programError } = await from('programs')
+        .select('*')
+        .eq('programType', programType);
 
       if (programError) throw programError;
       
-      // Safely cast the data to ensure type safety
-      const validProgramData = (programData as unknown) as Program[];
+      // Safely handle the data
+      const validProgramData = programData as unknown as Program[];
       let programsWithFavorites: Program[] = validProgramData;
 
       // If user is authenticated, fetch favorites
@@ -50,8 +59,8 @@ export const useProgramData = (
 
         if (favoritesError) throw favoritesError;
 
-        // Safely cast favorites data to ensure type safety
-        const validFavoritesData = (favoritesData as unknown) as { program_id: number }[];
+        // Safely handle favorites data
+        const validFavoritesData = favoritesData as FavoriteProgram[];
 
         // Convert favorites data to a Set for faster lookups
         const favoriteProgramIds = new Set(
@@ -74,7 +83,7 @@ export const useProgramData = (
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isAuthenticated, currentUser, programType]);
 
   // Apply filters when criteria change - only for wellness programs
   useEffect(() => {
@@ -117,8 +126,8 @@ export const useProgramData = (
   }, [selectedCategory, programs, sortOption]);
 
   // Group programs by category
-  const programsByCategory = () => {
-    const categories: Record<string, Program[]> = {
+  const programsByCategory = (): ProgramsByCategory => {
+    const categories: ProgramsByCategory = {
       'quick-ease': [],
       'resilience-building': [],
       'super-human': [],

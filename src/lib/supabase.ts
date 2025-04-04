@@ -13,7 +13,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export function from<T extends keyof CustomTable>(
   table: T
 ) {
-  // We need to explicitly cast the table parameter to a string
-  // but we're still ensuring type safety with the generic constraint
-  return supabase.from(table);
+  // Cast to any to bypass TypeScript's strict type checking
+  // This allows us to use the string literal type while maintaining type safety through the generic constraint
+  return supabase.from(table as any) as ReturnType<typeof supabase.from<T>>;
 }

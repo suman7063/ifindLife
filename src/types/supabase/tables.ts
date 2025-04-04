@@ -1,5 +1,6 @@
 
 // This file defines the database table interfaces
+// We're using explicit custom naming to prevent circular dependencies
 
 export interface CustomTable {
   experts: {
