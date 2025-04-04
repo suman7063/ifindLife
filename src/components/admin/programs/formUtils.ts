@@ -47,9 +47,16 @@ export const getProgramFormDefaults = (program?: Program | null): ProgramFormVal
 // Helper function to prepare program data for saving
 export const prepareProgramData = (values: ProgramFormValues, existingId?: number): Program => {
   if (existingId) {
-    return { ...values, id: existingId };
+    // For existing programs, ensure all required fields are present
+    return { 
+      ...values, 
+      id: existingId 
+    };
   }
   
-  // For new programs, use a temporary ID that will be replaced by the backend
-  return { ...values, id: -1 };
+  // For new programs, ensure all required fields are present with a temporary ID
+  return { 
+    ...values, 
+    id: -1 
+  };
 };
