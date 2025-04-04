@@ -1,18 +1,15 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 
-const LoadingScreen: React.FC = () => {
+interface LoadingScreenProps {
+  message?: string;
+}
+
+const LoadingScreen: React.FC<LoadingScreenProps> = ({ message = "Loading..." }) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 py-16 container">
-        <div className="flex justify-center items-center h-full">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ifind-teal"></div>
-        </div>
-      </main>
-      <Footer />
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="w-16 h-16 border-4 border-t-primary border-primary/30 rounded-full animate-spin mb-4"></div>
+      <p className="text-center text-muted-foreground">{message}</p>
     </div>
   );
 };

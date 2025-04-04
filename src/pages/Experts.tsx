@@ -9,7 +9,7 @@ import ExpertsHeader from '@/components/experts/ExpertsHeader';
 import FilterPanel from '@/components/experts/FilterPanel';
 import SearchSort from '@/components/experts/SearchSort';
 import { useExpertFilters } from '@/hooks/useExpertFilters';
-import { expertData } from '@/data/expertData'; // Import the expert data
+import expertData from '@/data/expertData'; // Import the expert data
 import { ExtendedExpert } from '@/types/programs';
 
 export default function Experts() {

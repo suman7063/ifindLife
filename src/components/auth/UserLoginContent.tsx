@@ -9,21 +9,24 @@ import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/hooks/expert-auth';
 
-const UserLoginContent = () => {
+interface UserLoginContentProps {
+  children?: React.ReactNode;
+}
+
+const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
   const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
   const [isCheckingExpert, setIsCheckingExpert] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const { 
-    isExpertAuthenticated, 
-    expertProfile: synchronizedExpertProfile,
-    expertLogout,
-    isLoggingOut,
-    setIsLoggingOut,
-    authCheckCompleted,
-    hasDualSessions,
-    fullLogout,
-    sessionType
+    isUserAuthenticated,
+    isExpertAuthenticated,
+    isAuthInitialized: authCheckCompleted,
+    isAuthLoading,
+    logout
   } = useAuthSynchronization();
+  
+  const hasDualSessions = isUserAuthenticated && isExpertAuthenticated;
   
   // Check if expert is logged in directly from Supabase
   useEffect(() => {
@@ -65,19 +68,9 @@ const UserLoginContent = () => {
   const handleExpertLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);
     try {
-      const success = await expertLogout();
-      
-      if (success) {
-        setExpertProfile(null);
-        // Navigation handled by the logout function
-        return true;
-      } else {
-        // Force a page reload as a last resort
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-        return false;
-      }
+      await logout();
+      setExpertProfile(null);
+      return true;
     } catch (error) {
       console.error('Error during expert logout:', error);
       
@@ -94,18 +87,8 @@ const UserLoginContent = () => {
   const handleFullLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);
     try {
-      const success = await fullLogout();
-      
-      if (success) {
-        // Navigation handled by the logout function
-        return true;
-      } else {
-        // Force a page reload as a last resort
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-        return false;
-      }
+      await logout();
+      return true;
     } catch (error) {
       console.error('Error during full logout:', error);
       
@@ -155,17 +138,17 @@ const UserLoginContent = () => {
         </Button>
       </div>
     );
-  } else if (expertProfile || synchronizedExpertProfile) {
+  } else if (expertProfile || isExpertAuthenticated) {
     content = (
       <UserLogoutAlert 
-        profileName={(expertProfile?.name || synchronizedExpertProfile?.name) ?? "Expert"}
+        profileName={(expertProfile?.name) ?? "Expert"}
         isLoggingOut={isLoggingOut}
         onLogout={handleExpertLogout}
         logoutType="expert"
       />
     );
   } else {
-    content = <UserLoginTabs />;
+    content = children || <UserLoginTabs />;
   }
 
   return <>{content}</>;

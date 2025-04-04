@@ -13,8 +13,7 @@ import { Container } from '@/components/ui/container';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { currentUser, isAuthenticated, loading: userLoading } = useUserAuth();
-  const { expert, loading: expertLoading, logout: expertLogout } = useExpertAuth();
-  const { isAuthLoading } = useAuthSynchronization();
+  const { isExpertAuthenticated, isAuthLoading } = useAuthSynchronization();
   
   // Redirect if already authenticated
   useEffect(() => {
@@ -25,11 +24,11 @@ const Login: React.FC = () => {
     }
     
     // If expert is authenticated, redirect to expert dashboard
-    if (!expertLoading && expert) {
+    if (isExpertAuthenticated) {
       navigate('/expert-dashboard');
       return;
     }
-  }, [currentUser, isAuthenticated, userLoading, expert, expertLoading, navigate]);
+  }, [currentUser, isAuthenticated, userLoading, isExpertAuthenticated, navigate]);
   
   // Show loading screen while checking authentication
   if (isAuthLoading) {

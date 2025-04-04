@@ -2,7 +2,7 @@
 import { ExtendedExpert } from '@/types/programs';
 
 // Sample data for experts
-const expertData: ExtendedExpert[] = [
+export const expertData: ExtendedExpert[] = [
   {
     id: "1",
     name: "Dr. Sarah Johnson",
