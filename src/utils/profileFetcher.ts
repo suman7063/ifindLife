@@ -1,9 +1,11 @@
+
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
 import { fetchUserReferrals } from '@/utils/referralUtils';
+import { Referral } from '@/types/supabase/referral';
 
 export const fetchUserProfile = async (
   user: SupabaseUser
@@ -112,17 +114,17 @@ export const fetchUserProfile = async (
           .select('*')
           .in('id', expertIds as any);
           
-        userProfile.favoriteExperts = expertsData || [];
+        userProfile.favorite_experts = expertsData?.map(expert => expert.id) || [];
       } else {
-        userProfile.favoriteExperts = [];
+        userProfile.favorite_experts = [];
       }
     }
     
     // Process courses if successful
     if (results[1].status === 'fulfilled') {
-      userProfile.enrolledCourses = adaptCoursesToUI(results[1].value.data || []);
+      userProfile.enrolled_courses = adaptCoursesToUI(results[1].value.data || []);
     } else {
-      userProfile.enrolledCourses = [];
+      userProfile.enrolled_courses = [];
     }
     
     // Process reviews if successful
@@ -147,7 +149,7 @@ export const fetchUserProfile = async (
     }
     
     // Ensure all users have a referral code
-    if (!userProfile.referralCode) {
+    if (!userProfile.referral_code) {
       const referralCode = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
       console.log("User missing referral code, generating new one:", referralCode);
       
@@ -157,7 +159,7 @@ export const fetchUserProfile = async (
         .eq('id', user.id);
         
       if (!updateError) {
-        userProfile.referralCode = referralCode;
+        userProfile.referral_code = referralCode;
       } else {
         console.error("Error updating user with referral code:", updateError);
       }

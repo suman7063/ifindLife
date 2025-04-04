@@ -85,7 +85,7 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   const hasUserAccount = async (email: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('users')
         .select('id')
         .eq('email', email)
         .maybeSingle();

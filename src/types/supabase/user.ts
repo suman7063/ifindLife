@@ -1,6 +1,10 @@
 
 // User-related types for UI components and business logic
 
+import { UserTransaction } from './tables';
+import { Referral } from './referral';
+import { Expert } from '../expert';
+
 export interface UserProfile {
   id: string;
   name?: string;
@@ -9,16 +13,16 @@ export interface UserProfile {
   country?: string;
   city?: string;
   currency?: string;
-  profilePicture?: string;
-  walletBalance?: number;
-  createdAt?: string;
-  referralCode?: string;
-  referredBy?: string;
-  referralLink?: string;
+  profile_picture?: string;
+  wallet_balance?: number;
+  created_at?: string;
+  referral_code?: string;
+  referred_by?: string;
+  referral_link?: string;
   
   // Related data collections
-  favoriteExperts?: Expert[];
-  enrolledCourses?: Course[];
+  favorite_experts?: string[];
+  enrolled_courses?: Course[];
   transactions?: UserTransaction[];
   reviews?: Review[];
   reports?: Report[];
@@ -51,7 +55,3 @@ export interface Course {
   progress?: number;
   completed?: boolean;
 }
-
-// Import necessary types from other files
-import { Expert, UserTransaction } from './tables';
-import { Referral } from './referral';

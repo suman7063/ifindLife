@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserTransaction } from '@/types/supabase';
+import { UserTransaction } from '@/types/supabase/tables';
 import { formatCurrency } from '@/utils/formatters';
 
 export interface RecentTransactionsCardProps {
@@ -39,12 +39,14 @@ const RecentTransactionsCard: React.FC<RecentTransactionsCardProps> = ({ transac
               className="flex justify-between items-center border-b pb-2 last:border-0"
             >
               <div>
-                <p className="font-medium">{transaction.description}</p>
-                <p className="text-xs text-muted-foreground">{transaction.date}</p>
+                <p className="font-medium">{transaction.description || 'Transaction'}</p>
+                <p className="text-xs text-muted-foreground">
+                  {transaction.date || transaction.created_at || new Date().toISOString()}
+                </p>
               </div>
               <div className={transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}>
                 {transaction.type === 'credit' ? '+' : '-'}
-                {formatCurrency(transaction.amount, transaction.currency)}
+                {formatCurrency(transaction.amount, transaction.currency || 'USD')}
               </div>
             </div>
           ))}

@@ -1,150 +1,146 @@
 
-import { Referral } from '@/types/supabase/referral';
-import { ReferralUI } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-
-// Base URL for referral links
-const REFERRAL_BASE_URL = import.meta.env.VITE_APP_URL || window.location.origin;
-
-export const formatReferral = (referral: Referral): ReferralUI => {
-  return {
-    id: referral.id,
-    referrerId: referral.referrer_id,
-    referredId: referral.referred_id,
-    referralCode: referral.referral_code,
-    status: referral.status,
-    rewardClaimed: referral.reward_claimed,
-    createdAt: referral.created_at,
-    completedAt: referral.completed_at
-  };
-};
-
-export const formatReferrals = (referrals: Referral[]): ReferralUI[] => {
-  return referrals.map(formatReferral);
-};
+import { Referral } from '@/types/supabase/referral';
 
 /**
- * Generates a referral link from a referral code
+ * Generate a referral link with the given referral code
  */
 export const getReferralLink = (referralCode: string): string => {
-  if (!referralCode) return '';
-  return `${REFERRAL_BASE_URL}/register?referral=${referralCode}`;
+  const baseUrl = window.location.origin;
+  return `${baseUrl}/signup?ref=${referralCode}`;
 };
 
 /**
- * Copy referral link to clipboard
+ * Create a referral when a user signs up using a referral code
  */
-export const copyReferralLink = (link: string): void => {
-  navigator.clipboard.writeText(link)
-    .then(() => {
-      toast.success('Referral link copied to clipboard');
-    })
-    .catch(() => {
-      toast.error('Failed to copy link to clipboard');
-    });
-};
-
-/**
- * Process a referral code after a user signs up
- */
-export const processReferralCode = async (referralCode: string, userId: string): Promise<boolean> => {
-  if (!referralCode || !userId) return false;
-  
+export const createReferral = async (
+  referrerId: string,
+  referredId: string,
+  referralCode: string
+): Promise<boolean> => {
   try {
-    // First, check if the referral code is valid
-    const { data: referrers, error: referrerError } = await supabase
-      .from('user_profiles')
-      .select('id')
-      .eq('referral_code', referralCode)
-      .single();
-    
-    if (referrerError || !referrers) {
-      console.error('Invalid referral code:', referralCode);
-      return false;
-    }
-    
-    // Create a new referral record
     const { error } = await supabase
       .from('referrals')
       .insert({
-        referrer_id: referrers.id,
-        referred_id: userId,
+        referrer_id: referrerId,
+        referred_id: referredId,
         referral_code: referralCode,
-        status: 'pending'
+        status: 'pending',
+        reward_claimed: false
       });
-      
+    
     if (error) {
-      console.error('Failed to create referral:', error);
+      console.error('Error creating referral:', error);
       return false;
     }
     
     return true;
-  } catch (error) {
-    console.error('Error processing referral:', error);
+  } catch (err) {
+    console.error('Exception creating referral:', err);
     return false;
   }
 };
 
 /**
- * Fetch referral settings from database
+ * Find a referrer based on a referral code
  */
-export const fetchReferralSettings = async () => {
+export const findReferrerByCode = async (
+  referralCode: string
+): Promise<string | null> => {
   try {
     const { data, error } = await supabase
-      .from('referral_settings')
-      .select('*')
-      .eq('active', true)
+      .from('users')
+      .select('id')
+      .eq('referral_code', referralCode)
       .single();
-      
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error fetching referral settings:', error);
+    
+    if (error || !data) {
+      console.error('Error finding referrer:', error);
+      return null;
+    }
+    
+    return data.id;
+  } catch (err) {
+    console.error('Exception finding referrer:', err);
     return null;
   }
 };
 
 /**
- * Fetch user's referrals
+ * Complete a referral and process rewards
  */
-export const fetchUserReferrals = async (userId: string): Promise<ReferralUI[]> => {
+export const completeReferral = async (
+  referralId: string
+): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .rpc('handle_completed_referral', {
+        p_referral_id: referralId
+      });
+    
+    if (error) {
+      console.error('Error completing referral:', error);
+      return false;
+    }
+    
+    return !!data;
+  } catch (err) {
+    console.error('Exception completing referral:', err);
+    return false;
+  }
+};
+
+/**
+ * Fetch referrals for a user
+ */
+export const fetchUserReferrals = async (userId: string): Promise<Referral[]> => {
   try {
     const { data, error } = await supabase
       .from('referrals')
       .select(`
-        id,
-        referrer_id,
-        referred_id,
-        referral_code,
-        status,
-        reward_claimed,
-        created_at,
-        completed_at,
-        referred_profiles:referred_id(name)
+        *,
+        referred:users!referred_id(name, email)
       `)
-      .eq('referrer_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) throw error;
+      .eq('referrer_id', userId);
     
-    if (!data) return [];
+    if (error) {
+      console.error('Error fetching referrals:', error);
+      return [];
+    }
     
-    // Format the referrals with referred user names
-    return data.map(referral => ({
-      id: referral.id,
-      referrerId: referral.referrer_id,
-      referredId: referral.referred_id,
-      referredName: referral.referred_profiles?.name,
-      referralCode: referral.referral_code,
-      status: referral.status,
-      rewardClaimed: referral.reward_claimed,
-      createdAt: referral.created_at,
-      completedAt: referral.completed_at
-    }));
-    
-  } catch (error) {
-    console.error('Error fetching user referrals:', error);
+    return (data || []) as unknown as Referral[];
+  } catch (err) {
+    console.error('Exception fetching referrals:', err);
     return [];
+  }
+};
+
+/**
+ * Get referral statistics for a user
+ */
+export const getReferralStats = async (userId: string): Promise<{
+  total: number;
+  completed: number;
+  pending: number;
+}> => {
+  try {
+    const { data, error } = await supabase
+      .from('referrals')
+      .select('status')
+      .eq('referrer_id', userId);
+    
+    if (error) {
+      console.error('Error fetching referral stats:', error);
+      return { total: 0, completed: 0, pending: 0 };
+    }
+    
+    const total = data.length;
+    const completed = data.filter(ref => ref.status === 'completed').length;
+    const pending = data.filter(ref => ref.status === 'pending').length;
+    
+    return { total, completed, pending };
+  } catch (err) {
+    console.error('Exception fetching referral stats:', err);
+    return { total: 0, completed: 0, pending: 0 };
   }
 };

@@ -1,44 +1,64 @@
 
 /**
- * Format a number as currency
- * @param amount The amount to format
- * @param currency The currency code (USD, INR, etc)
+ * Format a currency value with the appropriate symbol
+ * @param amount - The amount to format
+ * @param currency - The currency code (default: 'USD')
  * @returns Formatted currency string
  */
 export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
-  // Default to USD if no currency provided
-  const currencyCode = currency || 'USD';
+  // Get the currency symbol based on the currency code
+  const currencySymbols: Record<string, string> = {
+    USD: '$',
+    EUR: '€',
+    GBP: '£',
+    INR: '₹',
+    JPY: '¥',
+    CNY: '¥',
+  };
+
+  const symbol = currencySymbols[currency] || currency;
   
-  // Handle common currencies
+  // Format the amount
   try {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
+    return `${symbol}${amount.toLocaleString(undefined, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    })}`;
   } catch (error) {
-    // Fallback if the currency is not supported
-    console.error(`Error formatting currency ${currencyCode}:`, error);
-    return `${currencyCode} ${amount.toFixed(2)}`;
+    console.error('Error formatting currency:', error);
+    return `${symbol}${amount}`;
   }
 };
 
 /**
- * Format a date string to a readable format
- * @param dateString Date string to format
+ * Format a date string to a human-readable format
+ * @param dateString - The date string to format
  * @returns Formatted date string
  */
 export const formatDate = (dateString: string): string => {
   try {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
+    return date.toLocaleDateString(undefined, {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
-    }).format(date);
+      day: 'numeric',
+    });
   } catch (error) {
     console.error('Error formatting date:', error);
     return dateString;
+  }
+};
+
+/**
+ * Format a number with commas
+ * @param num - The number to format
+ * @returns Formatted number string
+ */
+export const formatNumber = (num: number): string => {
+  try {
+    return num.toLocaleString();
+  } catch (error) {
+    console.error('Error formatting number:', error);
+    return num.toString();
   }
 };

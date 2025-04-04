@@ -9,12 +9,3 @@ export interface Referral {
   created_at?: string;
   completed_at?: string;
 }
-
-export interface ReferralSettings {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  active: boolean;
-  description?: string;
-  updated_at?: string;
-}

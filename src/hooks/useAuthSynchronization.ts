@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { UserProfile } from '@/types/supabase';
 
 interface AuthState {
   userAuthenticated: boolean;
@@ -20,7 +21,8 @@ export const useAuthSynchronization = () => {
   const { 
     isAuthenticated: isUserAuthenticated, 
     loading: userLoading,
-    logout: userLogout 
+    logout: userLogout,
+    currentUser
   } = useUserAuth();
   
   const { 
@@ -41,6 +43,9 @@ export const useAuthSynchronization = () => {
     userLoading: true,
     expertLoading: true
   });
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [sessionType, setSessionType] = useState<'user' | 'expert' | 'dual' | null>(null);
+  const [isSynchronizing, setIsSynchronizing] = useState(true);
 
   // Track the initialization of both auth systems
   useEffect(() => {
@@ -53,53 +58,66 @@ export const useAuthSynchronization = () => {
       initializedUser: !userLoading,
       initializedExpert: authInitialized
     }));
+    
+    // Determine session type
+    if (isUserAuthenticated && isExpertAuthenticated) {
+      setSessionType('dual');
+    } else if (isUserAuthenticated) {
+      setSessionType('user');
+    } else if (isExpertAuthenticated) {
+      setSessionType('expert');
+    } else {
+      setSessionType(null);
+    }
+    
+    setIsSynchronizing(false);
   }, [isUserAuthenticated, isExpertAuthenticated, userLoading, expertLoading, authInitialized]);
   
-  // Prevent both auth types from being active at the same time
-  useEffect(() => {
-    const handleAccountTypeConflicts = async () => {
-      // Wait until both auth systems are initialized
-      if (!authState.initializedUser || !authState.initializedExpert) {
-        return;
-      }
-      
-      // If user is loading auth state, wait
-      if (authState.userLoading || authState.expertLoading) {
-        return;
-      }
-      
-      // If both contexts report the user is authenticated, log one out
-      if (authState.userAuthenticated && authState.expertAuthenticated) {
-        console.warn("Both user and expert authenticated simultaneously, resolving conflict...");
-        
-        // Prioritize user authentication by logging out of expert
-        try {
-          await expertLogout();
-          console.log("Logged out of expert account to resolve conflict");
-        } catch (error) {
-          console.error("Error logging out expert during conflict resolution:", error);
-        }
-      }
-    };
+  // Full logout function
+  const fullLogout = async (): Promise<boolean> => {
+    if (isLoggingOut) return false;
     
-    handleAccountTypeConflicts();
-  }, [authState, expertLogout]);
-  
-  // Expose the synchronized status of both auth systems
-  const logout = async () => {
-    if (authState.userAuthenticated) {
-      await userLogout();
-    }
-    if (authState.expertAuthenticated) {
-      await expertLogout();
+    try {
+      setIsLoggingOut(true);
+      let userSuccess = true;
+      let expertSuccess = true;
+      
+      if (isUserAuthenticated) {
+        userSuccess = await userLogout();
+      }
+      
+      if (isExpertAuthenticated) {
+        expertSuccess = await expertLogout();
+      }
+      
+      return userSuccess && expertSuccess;
+    } catch (error) {
+      console.error("Error during full logout:", error);
+      return false;
+    } finally {
+      setIsLoggingOut(false);
     }
   };
   
+  // Expose the synchronized status of both auth systems
   return {
-    isUserAuthenticated: authState.userAuthenticated,
-    isExpertAuthenticated: authState.expertAuthenticated,
+    isAuthenticated: isUserAuthenticated || isExpertAuthenticated,
+    isUserAuthenticated,
+    isExpertAuthenticated,
+    currentUser,
+    expertProfile: expert,
     isAuthInitialized: authState.initializedUser && authState.initializedExpert,
     isAuthLoading: authState.userLoading || authState.expertLoading,
-    logout
+    userAuthLoading: userLoading,
+    userLogout,
+    expertLogout,
+    logout: fullLogout,
+    fullLogout,
+    hasDualSessions: isUserAuthenticated && isExpertAuthenticated,
+    isSynchronizing,
+    sessionType,
+    isLoggingOut,
+    setIsLoggingOut,
+    authCheckCompleted: !userLoading && !expertLoading && authInitialized
   };
 };

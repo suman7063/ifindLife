@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { UserProfile } from '@/types/supabase';
 import { supabase } from '@/lib/supabase';
@@ -42,14 +43,7 @@ export const useWalletManagement = (currentUser: UserProfile | null) => {
     }
     
     try {
-      // If the user already has a persisted referral link, use that
-      if (currentUser.referral_link) {
-        const link = currentUser.referral_link;
-        setReferralLinkCache(link);
-        return link;
-      }
-      
-      // Otherwise generate a new one
+      // Generate a new referral link using the user's referral code
       const link = generateReferralLink(currentUser.referral_code);
       setReferralLinkCache(link);
       return link;

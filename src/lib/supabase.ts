@@ -12,5 +12,6 @@ export type Tables = Database['public']['Tables'];
 
 // Define a simplified version for table access
 export function from(tableName: string) {
-  return supabase.from(tableName);
+  // Using type assertion to allow string parameter
+  return supabase.from(tableName as any);
 }

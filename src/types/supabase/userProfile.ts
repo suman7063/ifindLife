@@ -13,6 +13,9 @@ export interface UserProfile {
   currency?: string;
   created_at?: string;
   updated_at?: string;
+  referral_code?: string;
+  referral_link?: string;
+  referred_by?: string;
   
   // Related data
   transactions?: UserTransaction[];
@@ -20,6 +23,26 @@ export interface UserProfile {
   reports?: any[];
   favorite_experts?: string[];
   enrolled_courses?: any[];
-  referral_code?: string;
   referrals?: any[];
+  
+  // Aliases for camelCase access
+  get profilePicture(): string | undefined {
+    return this.profile_picture;
+  }
+  
+  get walletBalance(): number | undefined {
+    return this.wallet_balance;
+  }
+  
+  get favoriteExperts(): string[] | undefined {
+    return this.favorite_experts;
+  }
+  
+  get enrolledCourses(): any[] | undefined {
+    return this.enrolled_courses;
+  }
+  
+  get referralCode(): string | undefined {
+    return this.referral_code;
+  }
 }

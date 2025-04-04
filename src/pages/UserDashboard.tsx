@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
@@ -11,8 +11,6 @@ import RecentTransactionsCard from '@/components/user/dashboard/RecentTransactio
 import ProfileSetupPlaceholder from '@/components/user/dashboard/ProfileSetupPlaceholder';
 import { Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Import other necessary components and hooks
 
 const UserDashboard: React.FC = () => {
   const { 

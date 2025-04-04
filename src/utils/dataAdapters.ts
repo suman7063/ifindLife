@@ -1,12 +1,13 @@
 
-import { Course, Review, Report } from '@/types/supabase';
+import { Course, UIEnrolledCourse } from '@/types/supabase/courses';
+import { Referral } from '@/types/supabase/referral';
 
-// Adapters for converting database objects to UI-friendly objects
-export const adaptCoursesToUI = (courses: any[]): Course[] => {
-  return courses.map(course => ({
+// Function to adapt raw course data to the UI format
+export const adaptCoursesToUI = (rawCourses: any[]): UIEnrolledCourse[] => {
+  return rawCourses.map(course => ({
     id: course.id,
     title: course.title,
-    expertId: course.expert_id.toString(),
+    expertId: course.expert_id,
     expertName: course.expert_name,
     enrollmentDate: course.enrollment_date,
     progress: course.progress,
@@ -14,57 +15,39 @@ export const adaptCoursesToUI = (courses: any[]): Course[] => {
   }));
 };
 
-export const adaptReviewsToUI = (reviews: any[]): Review[] => {
-  return reviews.map(review => ({
+// Function to adapt raw review data to UI format
+export const adaptReviewsToUI = (rawReviews: any[]): any[] => {
+  return rawReviews.map(review => ({
     id: review.id,
-    expertId: review.expert_id.toString(),
+    expertId: review.expert_id,
     rating: review.rating,
-    comment: review.comment,
-    date: review.date
+    comment: review.comment || '',
+    date: review.date,
+    verified: review.verified || false
   }));
 };
 
-export const adaptReportsToUI = (reports: any[]): Report[] => {
-  return reports.map(report => ({
+// Function to adapt raw report data to UI format
+export const adaptReportsToUI = (rawReports: any[]): any[] => {
+  return rawReports.map(report => ({
     id: report.id,
-    expertId: report.expert_id.toString(),
+    expertId: report.expert_id,
     reason: report.reason,
-    details: report.details,
+    details: report.details || '',
     date: report.date,
-    status: report.status
+    status: report.status || 'pending'
   }));
 };
 
-// Adapters for converting UI objects to database format
-export const adaptCoursesToDB = (courses: Course[]): any[] => {
+// Convert UI course format to database format
+export const adaptUICoursesToDB = (courses: UIEnrolledCourse[]): any[] => {
   return courses.map(course => ({
     id: course.id,
     title: course.title,
-    expert_id: parseInt(course.expertId, 10),
+    expert_id: course.expertId,
     expert_name: course.expertName,
     enrollment_date: course.enrollmentDate,
     progress: course.progress,
     completed: course.completed
-  }));
-};
-
-export const adaptReviewsToDB = (reviews: Review[]): any[] => {
-  return reviews.map(review => ({
-    id: review.id,
-    expert_id: parseInt(review.expertId, 10),
-    rating: review.rating,
-    comment: review.comment,
-    date: review.date
-  }));
-};
-
-export const adaptReportsToDB = (reports: Report[]): any[] => {
-  return reports.map(report => ({
-    id: report.id,
-    expert_id: parseInt(report.expertId, 10),
-    reason: report.reason,
-    details: report.details,
-    date: report.date,
-    status: report.status
   }));
 };
