@@ -19,21 +19,21 @@ export const useUserFavorites = (
       // Check if already in favorites
       const favoriteExperts = currentUser.favorite_experts || [];
       const existingFavorite = favoriteExperts.find(e => {
-        if (e === null || e === undefined) return false;
+        // First check if e is null or undefined
+        if (e === null || e === undefined) {
+          return false;
+        }
         
-        // Use type guards to ensure e is not null before accessing properties
-        if (typeof e === 'object' && e !== null) {
-          // Safe access using conditional check - only access id if it's not null or undefined
-          if (e.id !== undefined && e.id !== null) {
+        // Then check if it's an object
+        if (typeof e === 'object') {
+          // Check if id exists and is not null/undefined
+          if ('id' in e && e.id !== undefined && e.id !== null) {
             return e.id.toString() === expertId;
           }
           return false;
         } else {
           // Handle primitive type case (likely string)
-          if (e !== null && e !== undefined) {
-            return e.toString() === expertId;
-          }
-          return false;
+          return e.toString() === expertId;
         }
       });
       
@@ -97,21 +97,21 @@ export const useUserFavorites = (
 
       // Update local state
       const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
-        if (expert === null || expert === undefined) return false;
+        // First check if expert is null or undefined
+        if (expert === null || expert === undefined) {
+          return false;
+        }
         
-        // Use type guards to ensure expert is not null before accessing properties
-        if (typeof expert === 'object' && expert !== null) {
-          // Safe access with null check for the id property - only access id if it's not null or undefined
-          if (expert.id !== undefined && expert.id !== null) {
+        // Then check if it's an object
+        if (typeof expert === 'object') {
+          // Check if id exists and is not null/undefined
+          if ('id' in expert && expert.id !== undefined && expert.id !== null) {
             return expert.id.toString() !== expertId;
           }
           return true; // Keep items without id
         } else {
           // Handle primitive type case
-          if (expert !== null && expert !== undefined) {
-            return expert.toString() !== expertId;
-          }
-          return true; // Keep nullish items
+          return expert.toString() !== expertId;
         }
       });
       
