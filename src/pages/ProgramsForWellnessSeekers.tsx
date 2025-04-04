@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -21,17 +20,14 @@ const ProgramsForWellnessSeekers: React.FC = () => {
   const [sortOption, setSortOption] = useState<string>('popularity');
   const { currentUser, isAuthenticated } = useUserAuth();
 
-  // Fetch wellness programs on mount
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
         setIsLoading(true);
         console.log('Fetching wellness programs...');
         
-        // Ensure sample wellness programs exist
         await addSamplePrograms('wellness');
         
-        // Fetch all wellness programs
         const { data, error } = await supabase
           .from('programs')
           .select('*')
@@ -45,7 +41,6 @@ const ProgramsForWellnessSeekers: React.FC = () => {
         console.log('Wellness programs fetched:', data);
         
         if (data) {
-          // Convert data to Program type
           const programData: Program[] = data.map(program => ({
             id: program.id,
             title: program.title,
@@ -60,12 +55,10 @@ const ProgramsForWellnessSeekers: React.FC = () => {
             created_at: program.created_at
           }));
           
-          // Sort by popularity (enrollments) by default
           const sortedPrograms = [...programData].sort((a, b) => 
             (b.enrollments || 0) - (a.enrollments || 0)
           );
           
-          // Check all categories are represented
           const categoryCounts = {
             'quick-ease': sortedPrograms.filter(p => p.category === 'quick-ease').length,
             'resilience-building': sortedPrograms.filter(p => p.category === 'resilience-building').length,
@@ -89,13 +82,11 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     fetchPrograms();
   }, []);
 
-  // Apply filters when criteria change
   useEffect(() => {
     if (programs.length === 0) return;
     
     console.log('Applying filters. Category:', selectedCategory, 'Sort option:', sortOption);
     
-    // Apply category filter
     let categoryFiltered = programs;
     if (selectedCategory !== 'all') {
       if (selectedCategory === 'favorites') {
@@ -105,7 +96,6 @@ const ProgramsForWellnessSeekers: React.FC = () => {
       }
     }
     
-    // Apply sorting
     const sorted = [...categoryFiltered];
     
     switch (sortOption) {
@@ -131,7 +121,6 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     setFilteredPrograms(sorted);
   }, [selectedCategory, programs, sortOption]);
 
-  // Group programs by category 
   const programsByCategory = () => {
     const categories: Record<string, Program[]> = {
       'quick-ease': [],
@@ -192,8 +181,6 @@ const ProgramsForWellnessSeekers: React.FC = () => {
                 <ProgramFilters 
                   activeCategory={selectedCategory}
                   setActiveCategory={setSelectedCategory}
-                  sortOption={sortOption}
-                  setSortOption={setSortOption}
                   categoryOptions={categoryOptions}
                 />
                 

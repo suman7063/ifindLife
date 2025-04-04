@@ -1,6 +1,5 @@
-
 import { useState, useEffect, useMemo } from 'react';
-import { Program, ProgramType } from '@/types/programs';
+import { Program, ProgramType, ProgramCategory } from '@/types/programs';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
@@ -17,6 +16,16 @@ interface ProgramDataOptions {
   featured?: boolean;
   withFavorites?: boolean;
 }
+
+// Define categoryOptions for use in program filters
+export const categoryOptions = [
+  { value: 'all', label: 'All Categories' },
+  { value: 'quick-ease', label: 'Quick Ease' },
+  { value: 'resilience-building', label: 'Resilience Building' },
+  { value: 'super-human', label: 'Super Human' },
+  { value: 'issue-based', label: 'Issue Based' },
+  { value: 'favorites', label: 'My Favorites' }
+];
 
 export const useProgramData = (
   currentUser: UserProfile | null,
