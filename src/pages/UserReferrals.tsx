@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import ReferralsList from '@/components/user/ReferralsList';
@@ -5,7 +6,7 @@ import { ReferralUI } from '@/types/supabase';
 import { useEffect, useState } from 'react';
 import { formatReferrals } from '@/utils/referralUtils';
 import { toast } from 'sonner';
-import { from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +26,8 @@ const UserReferrals: React.FC = () => {
 
       setIsLoading(true);
       try {
-        const { data, error } = await from('referrals')
+        const { data, error } = await supabase
+          .from('referrals')
           .select('*')
           .eq('referrer_id', currentUser.id)
           .order('created_at', { ascending: false });

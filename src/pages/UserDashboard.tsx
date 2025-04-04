@@ -1,149 +1,107 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Separator } from "@/components/ui/separator";
-import { toast } from 'sonner';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 
-// Import refactored components
+import React, { useEffect } from 'react';
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
+import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
+import DashboardStatsGrid from '@/components/user/dashboard/DashboardStatsGrid';
+import UserProfileCard from '@/components/user/UserProfileCard';
+import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
 import WalletBalanceCard from '@/components/user/dashboard/WalletBalanceCard';
 import RecentTransactionsCard from '@/components/user/dashboard/RecentTransactionsCard';
-import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
 import ProfileSetupPlaceholder from '@/components/user/dashboard/ProfileSetupPlaceholder';
-import DashboardStatsGrid from '@/components/user/dashboard/DashboardStatsGrid';
-import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
-import useDashboardState from '@/hooks/user-dashboard/useDashboardState';
-import { useExpertAuth } from '@/hooks/expert-auth';
+import { Navigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/card';
 
-// Import existing components
-import UserProfileCard from '@/components/user/UserProfileCard';
-import UserReviewsCard from '@/components/user/UserReviewsCard';
-import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
+// Import other necessary components and hooks
 
-const UserDashboard = () => {
-  const navigate = useNavigate();
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
+const UserDashboard: React.FC = () => {
+  const { 
+    currentUser, 
+    isAuthenticated, 
+    loading: userLoading,
+    updateProfile
+  } = useUserAuth();
   
-  const {
-    currentUser,
-    isAuthenticated,
-    authLoading,
-    user,
-    dashboardLoading,
-    loadingTimedOut,
-    isRechargeDialogOpen,
-    logout,
-    handleOpenRechargeDialog,
-    handleCloseRechargeDialog,
-    handlePaymentSuccess,
-    handlePaymentCancel
-  } = useDashboardState();
-  
-  // Get expert auth state
-  const { currentExpert: expert, isLoading: loading } = useExpertAuth();
+  const { 
+    loading: expertLoading 
+  } = useExpertAuth();
 
-  // Debug logging
-  useEffect(() => {
-    console.log('UserDashboard - Auth states:', {
-      userAuthLoading: authLoading,
-      dashboardLoading,
-      isAuthenticated,
-      hasUserProfile: !!currentUser,
-      hasUser: !!user,
-      expertLoading,
-      hasExpertProfile: !!expert,
-      redirectAttempted
-    });
-  }, [authLoading, dashboardLoading, isAuthenticated, currentUser, user, expert, expertLoading, redirectAttempted]);
-  
-  // If expert is authenticated but not user, redirect to expert dashboard
-  useEffect(() => {
-    if (!dashboardLoading && !authLoading && !expertLoading && expert && !currentUser && !redirectAttempted) {
-      console.log('Expert authenticated but not user, redirecting to expert dashboard');
-      setRedirectAttempted(true);
-      navigate('/expert-dashboard', { replace: true });
-    }
-  }, [expert, currentUser, dashboardLoading, authLoading, expertLoading, redirectAttempted, navigate]);
+  // Make sure the user is redirected if they're not authenticated
+  if (!isAuthenticated && !userLoading && !expertLoading) {
+    return <Navigate to="/login" replace />;
+  }
 
-  // If neither user nor expert is authenticated, redirect to login
-  useEffect(() => {
-    if (!dashboardLoading && !authLoading && !expertLoading && !expert && !currentUser && !user && !redirectAttempted) {
-      console.log('Not authenticated as user or expert, redirecting to user login');
-      setRedirectAttempted(true);
-      navigate('/user-login', { replace: true });
-    }
-  }, [expert, currentUser, user, dashboardLoading, authLoading, expertLoading, redirectAttempted, navigate]);
-
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  if (dashboardLoading || loading) {
+  // Show loading state while checking authentication
+  if (userLoading || expertLoading || !currentUser) {
     return <DashboardLoader />;
   }
 
-  if (loadingTimedOut && !currentUser && user) {
-    return (
-      <ProfileSetupPlaceholder 
-        user={user} 
-        handleLogout={handleLogout} 
-        isTimedOut={true} 
-      />
-    );
-  }
+  // Check if user profile is incomplete
+  const isProfileIncomplete = !currentUser.name || !currentUser.email || !currentUser.phone;
 
-  if (!isAuthenticated && !authLoading && !user) {
-    console.log("Not authenticated (safety check), redirecting to login");
-    navigate('/user-login');
-    return null;
-  }
-
-  if (!currentUser && user) {
-    return (
-      <ProfileSetupPlaceholder 
-        user={user} 
-        handleLogout={handleLogout} 
-      />
-    );
-  }
+  // Handle user profile information
+  const handleUpdateProfile = async (data: any) => {
+    try {
+      await updateProfile({
+        name: data.name,
+        phone: data.phone,
+        city: data.city,
+        country: data.country
+      });
+      return true;
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      return false;
+    }
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 py-10">
-        <div className="container max-w-6xl">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gradient mb-2">Welcome, {currentUser?.name || user?.email?.split('@')[0] || 'User'}!</h1>
-            <p className="text-gray-600">Here's an overview of your account.</p>
+    <div className="container mx-auto py-8 px-4 md:px-6">
+      <h1 className="text-3xl font-bold mb-8">Your Dashboard</h1>
+
+      {isProfileIncomplete ? (
+        <ProfileSetupPlaceholder 
+          user={currentUser} 
+          onUpdateProfile={handleUpdateProfile}
+        />
+      ) : (
+        // User's dashboard content when profile is complete
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column */}
+          <div className="space-y-6">
+            <UserProfileCard 
+              userProfile={currentUser} 
+              loading={userLoading || expertLoading} 
+            />
+            
+            <ReferralDashboardCard 
+              userProfile={currentUser} 
+            />
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 my-8">
-            <UserProfileCard userProfile={currentUser} />
-            <WalletBalanceCard userProfile={currentUser} onRecharge={handleOpenRechargeDialog} />
-            <RecentTransactionsCard transactions={currentUser?.transactions || []} />
+          
+          {/* Right Column (spans 2 columns on large screens) */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stats Cards */}
+            <DashboardStatsGrid userProfile={currentUser} />
+            
+            {/* Tabs for Wallet & Transactions */}
+            <Tabs defaultValue="wallet" className="w-full">
+              <TabsList className="grid grid-cols-2 mb-2">
+                <TabsTrigger value="wallet">Wallet</TabsTrigger>
+                <TabsTrigger value="transactions">Transactions</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="wallet" className="mt-0">
+                <WalletBalanceCard userProfile={currentUser} />
+              </TabsContent>
+              
+              <TabsContent value="transactions" className="mt-0">
+                <RecentTransactionsCard userId={currentUser.id} />
+              </TabsContent>
+            </Tabs>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
-            <ReferralDashboardCard userProfile={currentUser || { id: user?.id || '', referralCode: '', email: user?.email || '' }} />
-            <UserReviewsCard userProfile={currentUser} />
-          </div>
-
-          <RechargeDialog 
-            isOpen={isRechargeDialogOpen}
-            onClose={handleCloseRechargeDialog}
-            onSuccess={handlePaymentSuccess}
-            onCancel={handlePaymentCancel}
-          />
-
-          <Separator className="my-6" />
-
-          <DashboardStatsGrid userProfile={currentUser} />
-
-          <Button onClick={handleLogout} className="mt-8 bg-ifind-aqua hover:bg-ifind-teal transition-colors">Logout</Button>
         </div>
-      </main>
-      <Footer />
+      )}
     </div>
   );
 };

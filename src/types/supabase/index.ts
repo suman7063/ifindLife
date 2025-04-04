@@ -21,6 +21,30 @@ export interface ReferralUI {
   completedAt?: string;
 }
 
+export interface UserTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  type: string;
+  status: string;
+  description?: string;
+  created_at: string;
+  payment_id?: string;
+  order_id?: string;
+}
+
+export interface Course {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  duration: string;
+  image_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // For backward compatibility
-import { Expert } from '../expert';
+import type { Expert } from '../expert';
+export type { Expert };
 export type ExpertProfile = Expert;

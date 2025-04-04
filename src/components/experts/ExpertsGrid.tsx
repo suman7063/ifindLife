@@ -31,8 +31,8 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
       {experts.map((expert) => (
         <ExpertCard 
           key={expert.id} 
-          id={typeof expert.id === 'string' ? parseInt(expert.id, 10) : expert.id}
-          name={expert.name}
+          id={typeof expert.id === 'string' ? parseInt(expert.id, 10) : 0}
+          name={expert.name || ''}
           experience={expert.experience || ''}
           specialties={expert.specialties || []}
           rating={expert.rating || 0}

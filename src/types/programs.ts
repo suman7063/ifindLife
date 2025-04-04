@@ -19,7 +19,18 @@ export interface Program {
 export type ProgramType = 'wellness' | 'academic' | 'business';
 
 // Program Category for filtering
-export type ProgramCategory = 'quick-ease' | 'resilience-building' | 'super-human' | 'issue-based';
+export type ProgramCategory = 
+  'quick-ease' | 
+  'resilience-building' | 
+  'super-human' | 
+  'issue-based' |
+  'Meditation' |
+  'Stress Reduction' |
+  'Study Skills' |
+  'Time Management' |
+  'Leadership' | 
+  'Team Building' |
+  'test';
 
 // Interface for favorite program
 export interface FavoriteProgram {
@@ -29,7 +40,11 @@ export interface FavoriteProgram {
 }
 
 // Extended Expert type with additional UI-specific fields
-export interface ExtendedExpert extends Expert {
+export interface ExtendedExpert {
+  id: string;
+  name: string;
+  experience?: string;
+  profilePicture?: string;
   specialties?: string[];
   rating?: number;
   consultations?: number;
@@ -37,4 +52,5 @@ export interface ExtendedExpert extends Expert {
   waitTime?: string;
   imageUrl?: string;
   online?: boolean;
+  languages?: string[];
 }

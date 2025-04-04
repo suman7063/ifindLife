@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { UserProfile, ReferralSettings } from '@/types/supabase';
-import { fetchReferralSettings, copyReferralLink, getReferralLink } from '@/utils/referralUtils';
+import { getReferralLink, copyReferralLink, fetchReferralSettings } from '@/utils/referralUtils';
 import { Link } from 'react-router-dom';
-import { Gift, Share, ExternalLink, Copy } from 'lucide-react';
+import { Gift, Share, Copy } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
 
@@ -32,7 +32,7 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
   }, []);
   
   const handleCopyLink = () => {
-    if (!userProfile?.referralCode || isCopying) return;
+    if (!userProfile?.referral_code || isCopying) return;
     
     setIsCopying(true);
     try {
@@ -45,7 +45,7 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
       
       // If that fails, use the utility function
       if (!link) {
-        link = getReferralLink(userProfile.referralCode);
+        link = getReferralLink(userProfile.referral_code);
       }
       
       if (link) {
@@ -62,7 +62,7 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
     }
   };
 
-  if (!userProfile?.referralCode) {
+  if (!userProfile?.referral_code) {
     return (
       <Card className="border-ifind-aqua/10 h-full">
         <CardHeader className="pb-2">
@@ -102,7 +102,7 @@ const ReferralDashboardCard: React.FC<ReferralDashboardCardProps> = ({ userProfi
           <span className="text-sm text-gray-500">Your Referral Code</span>
           <div className="flex items-center mt-1">
             <div className="bg-gray-50 px-3 py-1.5 rounded-md font-mono text-sm font-medium flex-grow">
-              {userProfile.referralCode}
+              {userProfile.referral_code}
             </div>
             <Button 
               variant="ghost" 

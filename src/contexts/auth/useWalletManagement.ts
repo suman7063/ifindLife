@@ -37,20 +37,20 @@ export const useWalletManagement = (currentUser: UserProfile | null) => {
       return referralLinkCache;
     }
     
-    if (!currentUser?.referralCode) {
+    if (!currentUser?.referral_code) {
       return null;
     }
     
     try {
       // If the user already has a persisted referral link, use that
-      if (currentUser.referralLink) {
-        const link = currentUser.referralLink;
+      if (currentUser.referral_link) {
+        const link = currentUser.referral_link;
         setReferralLinkCache(link);
         return link;
       }
       
       // Otherwise generate a new one
-      const link = generateReferralLink(currentUser.referralCode);
+      const link = generateReferralLink(currentUser.referral_code);
       setReferralLinkCache(link);
       return link;
     } catch (error) {

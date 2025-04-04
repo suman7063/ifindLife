@@ -1,211 +1,168 @@
+
 import { useState, useEffect, useMemo } from 'react';
-import { Expert } from '@/types/expert';
 import { ExtendedExpert } from '@/types/programs';
 
-export interface FilterState {
-  searchTerm: string;
-  priceRange: number[];
-  specialties: {
-    anxiety: boolean;
-    depression: boolean;
-    stress: boolean;
-    relationships: boolean;
-    trauma: boolean;
-    selfEsteem: boolean;
-  };
-  languages: {
-    english: boolean;
-    hindi: boolean;
-    tamil: boolean;
-    telugu: boolean;
-    kannada: boolean;
-  };
-  experience: {
-    lessThan5: boolean;
-    between5And10: boolean;
-    moreThan10: boolean;
-  };
-}
+type ExperienceLevel = 'any' | 'beginner' | 'intermediate' | 'experienced';
 
-export const useExpertFilters = (expertData: Expert[]) => {
+export function useExpertFilters(initialExperts: ExtendedExpert[] = []) {
+  // State for filters
+  const [experts, setExperts] = useState<ExtendedExpert[]>(initialExperts);
   const [searchTerm, setSearchTerm] = useState('');
-  const [priceRange, setPriceRange] = useState([0, 100]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [filterCount, setFilterCount] = useState(0);
-  
-  // Filter state
-  const [specialties, setSpecialties] = useState({
-    anxiety: false,
-    depression: false,
-    stress: false,
-    relationships: false,
-    trauma: false,
-    selfEsteem: false,
-  });
-  
-  const [languages, setLanguages] = useState({
-    english: false,
-    hindi: false,
-    tamil: false,
-    telugu: false,
-    kannada: false,
-  });
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 5000]);
+  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>('any');
+  const [sortOption, setSortOption] = useState<string>('recommended');
 
-  const [experience, setExperience] = useState({
-    lessThan5: false,
-    between5And10: false,
-    moreThan10: false,
-  });
-
-  const handleResetFilters = () => {
-    setSpecialties({
-      anxiety: false,
-      depression: false,
-      stress: false,
-      relationships: false,
-      trauma: false,
-      selfEsteem: false,
-    });
-    setLanguages({
-      english: false,
-      hindi: false,
-      tamil: false,
-      telugu: false,
-      kannada: false,
-    });
-    setExperience({
-      lessThan5: false,
-      between5And10: false,
-      moreThan10: false,
-    });
-    setPriceRange([0, 100]);
-    setFilterCount(0);
-  };
-
-  // Count active filters
+  // Update experts if initialExperts changes
   useEffect(() => {
-    let count = 0;
-    Object.values(specialties).forEach(value => { if (value) count++; });
-    Object.values(languages).forEach(value => { if (value) count++; });
-    Object.values(experience).forEach(value => { if (value) count++; });
-    if (priceRange[0] > 0 || priceRange[1] < 100) count++;
-    setFilterCount(count);
-  }, [specialties, languages, experience, priceRange]);
+    setExperts(initialExperts);
+  }, [initialExperts]);
 
-  // Filter function
+  // Get all available specialties from experts
+  const allSpecialties = useMemo(() => {
+    const specialtiesSet = new Set<string>();
+    experts.forEach(expert => {
+      if (expert.specialties) {
+        expert.specialties.forEach(specialty => {
+          specialtiesSet.add(specialty);
+        });
+      }
+    });
+    return Array.from(specialtiesSet).sort();
+  }, [experts]);
+
+  // Get all available languages from experts
+  const allLanguages = useMemo(() => {
+    const languagesSet = new Set<string>();
+    experts.forEach(expert => {
+      if (expert.languages) {
+        expert.languages.forEach(language => {
+          languagesSet.add(language);
+        });
+      }
+    });
+    return Array.from(languagesSet).sort();
+  }, [experts]);
+
+  // Filter experts based on selected filters
   const filteredExperts = useMemo(() => {
-    const applyPriceFilter = (experts: ExtendedExpert[], minPrice: number, maxPrice: number | null) => {
-      return experts.filter(expert => {
-        const expertPrice = expert.price || 0;
-        if (maxPrice === null) {
-          return expertPrice >= minPrice;
-        }
-        return expertPrice >= minPrice && expertPrice <= maxPrice;
-      });
-    };
-
-    const applySpecialtyFilter = (experts: ExtendedExpert[], selectedSpecialties: string[]) => {
-      if (!selectedSpecialties.length) return experts;
-      
-      return experts.filter(expert => 
-        expert.specialties?.some(specialty => 
-          selectedSpecialties.includes(specialty)
+    return experts.filter(expert => {
+      // Filter by search term
+      if (
+        searchTerm &&
+        !expert.name?.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !expert.specialties?.some(s => 
+          s.toLowerCase().includes(searchTerm.toLowerCase())
         )
-      );
-    };
-
-    const applyLanguageFilter = (experts: ExtendedExpert[], selectedLanguages: string[]) => {
-      if (!selectedLanguages.length) return experts;
-      
-      return experts.filter(expert => 
-        expert.languages?.some(language => 
-          selectedLanguages.includes(language)
-        )
-      );
-    };
-
-    const applyExperienceFilter = (experts: ExtendedExpert[], experienceLevel: string) => {
-      if (!experienceLevel) return experts;
-      
-      return experts.filter(expert => {
-        const years = parseInt(expert.experience || '0', 10);
-        
-        if (experienceLevel === 'beginner') {
-          return years < 5;
-        } else if (experienceLevel === 'intermediate') {
-          return years >= 5 && years < 10;
-        } else {
-          return years >= 10;
-        }
-      });
-    };
-
-    return expertData.filter((expert) => {
-      // Apply search filter
-      if (searchTerm && !expert.name.toLowerCase().includes(searchTerm.toLowerCase())) {
+      ) {
         return false;
       }
-      
-      // Apply price filter
-      if (expert.price < priceRange[0] || expert.price > priceRange[1]) {
+
+      // Filter by price range
+      if (expert.price !== undefined) {
+        if (expert.price < priceRange[0] || expert.price > priceRange[1]) {
+          return false;
+        }
+      }
+
+      // Filter by specialties
+      if (
+        selectedSpecialties.length > 0 &&
+        !selectedSpecialties.some(specialty => 
+          expert.specialties?.includes(specialty)
+        )
+      ) {
         return false;
       }
-      
-      // Apply specialties filter
-      const hasSelectedSpecialty = Object.values(specialties).some(value => value);
-      if (hasSelectedSpecialty) {
-        const expertSpecialtiesLower = expert.specialties.map(s => s.toLowerCase());
-        const matchesSpecialty = Object.entries(specialties).some(([key, value]) => {
-          return value && expertSpecialtiesLower.includes(key.toLowerCase());
-        });
-        if (!matchesSpecialty) return false;
+
+      // Filter by languages
+      if (
+        selectedLanguages.length > 0 &&
+        !selectedLanguages.some(language => 
+          expert.languages?.includes(language)
+        )
+      ) {
+        return false;
       }
-      
-      // Apply language filter
-      const hasSelectedLanguage = Object.values(languages).some(value => value);
-      if (hasSelectedLanguage) {
-        const expertLanguagesLower = expert.languages.map(l => l.toLowerCase());
-        const matchesLanguage = Object.entries(languages).some(([key, value]) => {
-          return value && expertLanguagesLower.includes(key);
-        });
-        if (!matchesLanguage) return false;
-      }
-      
-      // Apply experience filter
-      const hasSelectedExperience = Object.values(experience).some(value => value);
-      if (hasSelectedExperience) {
-        if (experience.lessThan5 && expert.experience >= 5) {
-          if (!experience.between5And10 && !experience.moreThan10) return false;
-        }
-        if (experience.between5And10 && (expert.experience < 5 || expert.experience > 10)) {
-          if (!experience.lessThan5 && !experience.moreThan10) return false;
-        }
-        if (experience.moreThan10 && expert.experience <= 10) {
-          if (!experience.lessThan5 && !experience.between5And10) return false;
+
+      // Filter by experience level
+      if (experienceLevel !== 'any' && expert.experience) {
+        const yearsMatch = expert.experience.match(/(\d+)/);
+        if (yearsMatch) {
+          const years = parseInt(yearsMatch[0], 10);
+          
+          if (experienceLevel === 'beginner' && years >= 5) {
+            return false;
+          } else if (experienceLevel === 'intermediate' && (years < 5 || years > 10)) {
+            return false;
+          } else if (experienceLevel === 'experienced' && years <= 10) {
+            return false;
+          }
         }
       }
-      
+
       return true;
     });
-  }, [searchTerm, priceRange, specialties, languages, experience]);
+  }, [
+    experts,
+    searchTerm,
+    priceRange,
+    selectedSpecialties,
+    selectedLanguages,
+    experienceLevel,
+  ]);
+
+  // Apply sorting to filtered experts
+  const sortedExperts = useMemo(() => {
+    let sorted = [...filteredExperts];
+
+    switch (sortOption) {
+      case 'price_low':
+        return sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+      case 'price_high':
+        return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+      case 'rating':
+        return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      case 'experience':
+        return sorted.sort((a, b) => {
+          const aYears = a.experience?.match(/(\d+)/)?.[0] ?? '0';
+          const bYears = b.experience?.match(/(\d+)/)?.[0] ?? '0';
+          return parseInt(bYears) - parseInt(aYears);
+        });
+      case 'recommended':
+      default:
+        return sorted;
+    }
+  }, [filteredExperts, sortOption]);
+
+  // Reset all filters
+  const resetFilters = () => {
+    setSearchTerm('');
+    setPriceRange([0, 5000]);
+    setSelectedSpecialties([]);
+    setSelectedLanguages([]);
+    setExperienceLevel('any');
+    setSortOption('recommended');
+  };
 
   return {
-    filters: {
-      searchTerm,
-      setSearchTerm,
-      priceRange,
-      setPriceRange,
-      specialties,
-      setSpecialties,
-      languages,
-      setLanguages,
-      experience,
-      setExperience,
-      showFilters,
-      setShowFilters,
-    },
-    filterCount,
-    filteredExperts,
-    handleResetFilters,
+    experts,
+    filteredExperts: sortedExperts,
+    searchTerm,
+    setSearchTerm,
+    priceRange,
+    setPriceRange,
+    selectedSpecialties,
+    setSelectedSpecialties,
+    selectedLanguages,
+    setSelectedLanguages,
+    experienceLevel,
+    setExperienceLevel,
+    sortOption,
+    setSortOption,
+    resetFilters,
+    allSpecialties,
+    allLanguages,
   };
-};
+}

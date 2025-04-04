@@ -18,7 +18,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ settings, userProfile }) =>
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Get the referral link using the hook from UserAuthContext
-  const referralLink = userProfile?.referralCode ? getReferralLink() : null;
+  const referralLink = userProfile?.referral_code ? getReferralLink() : null;
 
   // Format the reward amount with currency symbol
   const formattedAmount = settings?.referrer_reward
@@ -78,7 +78,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ settings, userProfile }) =>
             </div>
           </div>
           
-          {!referralLink && userProfile?.referralCode && (
+          {!referralLink && userProfile?.referral_code && (
             <div className="text-center">
               <Button 
                 variant="outline" 
