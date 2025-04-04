@@ -20,7 +20,8 @@ export const useUserFavorites = (
       const favoriteExperts = currentUser.favorite_experts || [];
       const existingFavorite = favoriteExperts.find(e => {
         if (e === null) return false;
-        return typeof e === 'object' && e !== null ? e.id?.toString() === expertId : e?.toString() === expertId;
+        // Add optional chaining for e.id and e itself
+        return typeof e === 'object' && e !== null ? e?.id?.toString() === expertId : e?.toString() === expertId;
       });
       
       if (existingFavorite) {
@@ -84,7 +85,8 @@ export const useUserFavorites = (
       // Update local state
       const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
         if (expert === null) return false;
-        return typeof expert === 'object' && expert !== null ? expert.id?.toString() !== expertId : expert?.toString() !== expertId;
+        // Add optional chaining for expert.id and expert itself
+        return typeof expert === 'object' && expert !== null ? expert?.id?.toString() !== expertId : expert?.toString() !== expertId;
       });
       
       const updatedUser: UserProfile = {
