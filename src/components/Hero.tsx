@@ -92,7 +92,7 @@ const Hero = () => {
             <img 
               src={image} 
               alt={`Slide ${index + 1}`} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transform scale-80 object-top"
               style={{
                 position: 'absolute',
                 top: 0,

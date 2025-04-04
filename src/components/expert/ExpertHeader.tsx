@@ -5,9 +5,9 @@ import { ArrowLeft } from 'lucide-react';
 
 const ExpertHeader = () => {
   return (
-    <div className="bg-astro-deep-blue text-white py-6">
+    <div className="bg-gray-100 text-gray-800 py-6">
       <div className="container">
-        <Link to="/experts" className="inline-flex items-center text-astro-stardust hover:text-white transition-colors mb-4">
+        <Link to="/experts" className="inline-flex items-center text-gray-600 hover:text-gray-800 transition-colors mb-4">
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to Experts
         </Link>

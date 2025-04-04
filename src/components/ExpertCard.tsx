@@ -49,14 +49,14 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   
   return (
     <Card 
-      className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer border bg-card"
+      className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer border bg-card h-full"
       onClick={handleViewProfile}
     >
       <div className="relative">
         <img 
           src={imageUrl} 
           alt={`${name}`} 
-          className="w-full h-48 object-cover"
+          className="w-full h-40 object-cover"
         />
         {online && (
           <Badge className="absolute top-2 right-2 bg-green-500 text-white">
@@ -67,39 +67,39 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
       
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold">{name}</h3>
+          <h3 className="text-base font-semibold">{name}</h3>
           <div className="flex items-center text-yellow-500">
-            <StarIcon className="h-4 w-4 fill-current" />
-            <span className="ml-1 text-foreground">{rating}</span>
+            <StarIcon className="h-3.5 w-3.5 fill-current" />
+            <span className="ml-1 text-sm text-foreground">{rating}</span>
           </div>
         </div>
         
-        <p className="text-sm text-muted-foreground mb-2">
+        <p className="text-xs text-muted-foreground mb-2">
           {experience} years experience
         </p>
         
         <div className="flex flex-wrap gap-1 mb-3">
-          {specialties.slice(0, 3).map((specialty, i) => (
+          {specialties.slice(0, 2).map((specialty, i) => (
             <Badge key={i} variant="outline" className="text-xs bg-secondary/10">
               {specialty}
             </Badge>
           ))}
-          {specialties.length > 3 && (
+          {specialties.length > 2 && (
             <Badge variant="outline" className="text-xs">
-              +{specialties.length - 3}
+              +{specialties.length - 2}
             </Badge>
           )}
         </div>
         
         <div className="flex justify-between items-center mb-3">
-          <span className="text-sm text-muted-foreground">{waitTime}</span>
-          <span className="font-medium">₹{price}/min</span>
+          <span className="text-xs text-muted-foreground">{waitTime}</span>
+          <span className="font-medium text-sm">₹{price}/min</span>
         </div>
         
         <div className="grid grid-cols-2 gap-2">
           <Button 
             size="sm" 
-            className="w-full flex items-center justify-center"
+            className="w-full flex items-center justify-center text-xs"
             onClick={handleCallNow}
             disabled={!online}
           >
@@ -110,7 +110,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
           <Button 
             size="sm" 
             variant="outline"
-            className="w-full flex items-center justify-center"
+            className="w-full flex items-center justify-center text-xs"
             onClick={handleBookAppointment}
           >
             <CalendarIcon className="h-3 w-3 mr-1" />

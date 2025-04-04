@@ -25,18 +25,19 @@ export const useUserFavorites = (
         }
         
         // Then check if it's an object
-        if (typeof e === 'object') {
+        if (typeof e === 'object' && e !== null) {
           // Check if id exists and is not null/undefined
           if ('id' in e && e.id !== undefined && e.id !== null) {
             // Use safe type conversion
             return String(e.id) === expertId;
           }
           return false;
-        } else {
+        } else if (e !== null) {
           // Handle primitive type case (likely string)
           // Make sure e is not null before using toString
-          return e !== null ? String(e) === expertId : false;
+          return String(e) === expertId;
         }
+        return false;
       });
       
       if (existingFavorite) {
@@ -105,18 +106,19 @@ export const useUserFavorites = (
         }
         
         // Then check if it's an object
-        if (typeof expert === 'object') {
+        if (typeof expert === 'object' && expert !== null) {
           // Check if id exists and is not null/undefined
           if ('id' in expert && expert.id !== undefined && expert.id !== null) {
             // Use safe type conversion
             return String(expert.id) !== expertId;
           }
           return true; // Keep items without id
-        } else {
+        } else if (expert !== null) {
           // Handle primitive type case
           // Make sure expert is not null before using toString
-          return expert !== null ? String(expert) !== expertId : false;
+          return String(expert) !== expertId;
         }
+        return false;
       });
       
       const updatedUser: UserProfile = {
