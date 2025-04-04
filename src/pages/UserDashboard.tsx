@@ -10,7 +10,7 @@ import WalletBalanceCard from '@/components/user/dashboard/WalletBalanceCard';
 import RecentTransactionsCard from '@/components/user/dashboard/RecentTransactionsCard';
 import ProfileSetupPlaceholder from '@/components/user/dashboard/ProfileSetupPlaceholder';
 import { Navigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Import other necessary components and hooks
 
@@ -70,8 +70,7 @@ const UserDashboard: React.FC = () => {
           {/* Left Column */}
           <div className="space-y-6">
             <UserProfileCard 
-              userProfile={currentUser} 
-              loading={userLoading || expertLoading} 
+              userProfile={currentUser}
             />
             
             <ReferralDashboardCard 
@@ -92,11 +91,16 @@ const UserDashboard: React.FC = () => {
               </TabsList>
               
               <TabsContent value="wallet" className="mt-0">
-                <WalletBalanceCard userProfile={currentUser} />
+                <WalletBalanceCard 
+                  userProfile={currentUser}
+                  onRecharge={() => {}} 
+                />
               </TabsContent>
               
               <TabsContent value="transactions" className="mt-0">
-                <RecentTransactionsCard userId={currentUser.id} />
+                <RecentTransactionsCard 
+                  transactions={currentUser.transactions || []}
+                />
               </TabsContent>
             </Tabs>
           </div>

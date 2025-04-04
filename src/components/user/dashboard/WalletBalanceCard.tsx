@@ -2,35 +2,46 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Wallet, CreditCard } from 'lucide-react';
 import { UserProfile } from '@/types/supabase';
+import { formatCurrency } from '@/utils/formatters';
+import { PlusCircle } from 'lucide-react';
 
-interface WalletBalanceCardProps {
-  userProfile: UserProfile | null;
+export interface WalletBalanceCardProps {
+  userProfile: UserProfile;
   onRecharge: () => void;
 }
 
-const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ userProfile, onRecharge }) => {
+const WalletBalanceCard: React.FC<WalletBalanceCardProps> = ({ 
+  userProfile,
+  onRecharge
+}) => {
+  const balance = userProfile.wallet_balance || 0;
+  const currency = userProfile.currency || 'USD';
+  
   return (
-    <Card className="border-ifind-aqua/10">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium flex items-center">
-          <Wallet className="mr-2 h-4 w-4 text-ifind-aqua" />
+        <CardTitle className="text-sm font-medium">
           Wallet Balance
         </CardTitle>
-        <CreditCard className="h-4 w-4 text-gray-500" />
+        <Button 
+          onClick={onRecharge}
+          variant="outline" 
+          size="sm" 
+          className="h-8 gap-1"
+        >
+          <PlusCircle className="h-3.5 w-3.5" />
+          <span>Add Funds</span>
+        </Button>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">
-          {userProfile?.currency} {userProfile?.walletBalance?.toFixed(2) || '0.00'}
+        <div className="text-3xl font-bold">
+          {formatCurrency(balance, currency)}
         </div>
-        <p className="text-xs text-gray-500">
-          Available for transactions and course enrollments
+        <p className="text-xs text-muted-foreground mt-1">
+          Available for consultations and programs
         </p>
       </CardContent>
-      <Button onClick={onRecharge} className="w-full mt-4 bg-ifind-aqua hover:bg-ifind-teal transition-colors">
-        Recharge Wallet
-      </Button>
     </Card>
   );
 };
