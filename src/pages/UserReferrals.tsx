@@ -5,13 +5,13 @@ import { Card } from '@/components/ui/card';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import ReferralsList from '@/components/user/ReferralsList';
 import ReferralCard from '@/components/user/ReferralCard';
-import { formatReferrals } from '@/utils/referralUtils';
 import { supabase } from '@/lib/supabase';
 
 const UserReferrals = () => {
   const { currentUser } = useUserAuth();
   const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [referralSettings, setReferralSettings] = useState<any>(null);
 
   useEffect(() => {
     const fetchReferrals = async () => {
@@ -38,8 +38,19 @@ const UserReferrals = () => {
           .in('id', referredIds);
           
         if (userError) throw userError;
+
+        // Fetch referral settings
+        const { data: settingsData, error: settingsError } = await supabase
+          .from('referral_settings')
+          .select('*')
+          .limit(1)
+          .single();
+
+        if (!settingsError && settingsData) {
+          setReferralSettings(settingsData);
+        }
         
-        // Format the data for display
+        // Format the data for display - using our own formatter since we can't import the one from referralUtils
         const formattedReferrals = formatReferrals(referralsData, userData || []);
         setReferrals(formattedReferrals);
       } catch (error) {
@@ -51,6 +62,28 @@ const UserReferrals = () => {
     
     fetchReferrals();
   }, [currentUser]);
+
+  // Format referrals data for UI display (copied from referralUtils)
+  const formatReferrals = (referrals: any[], users: any[]): any[] => {
+    if (!referrals || !users) return [];
+    
+    return referrals.map(referral => {
+      // Find the referred user to get their name
+      const referredUser = users.find(user => user.id === referral.referred_id);
+      
+      return {
+        id: referral.id,
+        referrerId: referral.referrer_id,
+        referredId: referral.referred_id,
+        referredName: referredUser ? referredUser.name : 'Unknown User',
+        referralCode: referral.referral_code,
+        status: referral.status,
+        rewardClaimed: referral.reward_claimed,
+        createdAt: referral.created_at,
+        completedAt: referral.completed_at
+      };
+    });
+  };
 
   if (!currentUser) {
     return (
@@ -66,13 +99,13 @@ const UserReferrals = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <ReferralCard referralCode={currentUser.referral_code || ''} />
+          <ReferralCard settings={referralSettings} userProfile={currentUser} />
         </div>
         
         <div className="lg:col-span-2">
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Referral History</h2>
-            <ReferralsList referrals={referrals} loading={loading} />
+            <ReferralsList referrals={referrals} isLoading={loading} />
           </Card>
         </div>
       </div>

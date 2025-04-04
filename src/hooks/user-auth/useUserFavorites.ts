@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useUserAuth } from '@/contexts/auth/UserAuthContext';
 import { Expert, UserProfile } from '@/types/supabase';
+import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export const useUserFavorites = (
@@ -19,7 +20,7 @@ export const useUserFavorites = (
       const favoriteExperts = currentUser.favorite_experts || [];
       const existingFavorite = favoriteExperts.find(e => {
         if (e === null) return false;
-        return typeof e === 'object' ? e.id.toString() === expertId : e.toString() === expertId;
+        return typeof e === 'object' && e !== null ? e.id.toString() === expertId : e.toString() === expertId;
       });
       
       if (existingFavorite) {
@@ -83,7 +84,7 @@ export const useUserFavorites = (
       // Update local state
       const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
         if (expert === null) return false;
-        return typeof expert === 'object' ? expert.id.toString() !== expertId : expert.toString() !== expertId;
+        return typeof expert === 'object' && expert !== null ? expert.id.toString() !== expertId : expert.toString() !== expertId;
       });
       
       const updatedUser: UserProfile = {
@@ -106,3 +107,4 @@ export const useUserFavorites = (
     removeFromFavorites
   };
 };
+

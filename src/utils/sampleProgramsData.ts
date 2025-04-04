@@ -1,5 +1,4 @@
-
-import { Program, ProgramType, ProgramCategory } from '@/types/programs';
+import { Program, ProgramType } from '@/types/programs';
 import { supabase } from '@/lib/supabase';
 
 // Sample program data for wellness seekers
@@ -17,53 +16,29 @@ const wellnessPrograms: Partial<Program>[] = [
     created_at: new Date().toISOString()
   },
   {
-    title: 'Emotional Resilience Building',
-    description: 'Develop skills to bounce back from adversity and build emotional strength through guided exercises and support.',
+    title: 'Mindfulness Meditation Course',
+    description: 'A beginner-friendly course to introduce mindfulness and meditation practices for stress reduction and mental clarity.',
     duration: '6 weeks',
     sessions: 8,
-    price: 6999,
-    image: 'https://source.unsplash.com/random/800x600/?resilience',
-    category: 'resilience-building',
-    programType: 'wellness',
-    enrollments: 98,
-    created_at: new Date().toISOString()
-  },
-  {
-    title: 'Mindfulness for Beginners',
-    description: 'Start your mindfulness journey with simple practices that improve focus, reduce stress, and enhance well-being.',
-    duration: '3 weeks',
-    sessions: 5,
-    price: 3499,
+    price: 5999,
     image: 'https://source.unsplash.com/random/800x600/?mindfulness',
     category: 'quick-ease',
     programType: 'wellness',
-    enrollments: 210,
+    enrollments: 120,
     created_at: new Date().toISOString()
   },
   {
-    title: 'Advanced Cognitive Behavioral Therapy',
-    description: 'Transform negative thought patterns and behaviors with advanced CBT techniques guided by expert therapists.',
+    title: 'Yoga for Beginners',
+    description: 'Gentle yoga sessions designed for beginners to improve flexibility, reduce stress, and enhance overall wellbeing.',
     duration: '8 weeks',
-    sessions: 12,
-    price: 9999,
-    image: 'https://source.unsplash.com/random/800x600/?therapy',
-    category: 'super-human',
+    sessions: 10,
+    price: 6999,
+    image: 'https://source.unsplash.com/random/800x6/yoga',
+    category: 'quick-ease',
     programType: 'wellness',
-    enrollments: 67,
+    enrollments: 95,
     created_at: new Date().toISOString()
   },
-  {
-    title: 'Anxiety Management Workshop',
-    description: 'Targeted interventions for managing anxiety through evidence-based approaches and peer support.',
-    duration: '5 weeks',
-    sessions: 8,
-    price: 5499,
-    image: 'https://source.unsplash.com/random/800x600/?anxiety',
-    category: 'issue-based',
-    programType: 'wellness',
-    enrollments: 124,
-    created_at: new Date().toISOString()
-  }
 ];
 
 // Sample program data for academic institutes
@@ -76,34 +51,34 @@ const academicPrograms: Partial<Program>[] = [
     price: 12999,
     image: 'https://source.unsplash.com/random/800x600/?students',
     category: 'quick-ease',
-    programType: 'academic' as ProgramType,
+    programType: 'wellness',
     enrollments: 42,
     created_at: new Date().toISOString()
   },
   {
-    title: 'Faculty Wellness Program',
-    description: 'Support teacher and professor wellbeing with specialized tools to manage stress and prevent burnout in academic settings.',
-    duration: '8 weeks',
-    sessions: 10,
-    price: 9999,
-    image: 'https://source.unsplash.com/random/800x600/?teacher',
-    category: 'resilience-building',
-    programType: 'academic' as ProgramType,
-    enrollments: 36,
+    title: 'Academic Stress Reduction Workshop',
+    description: 'A workshop designed to equip students with effective strategies to manage academic stress and improve study habits.',
+    duration: '2 days',
+    sessions: 4,
+    price: 2999,
+    image: 'https://source.unsplash.com/random/800x600/?workshop',
+    category: 'quick-ease',
+    programType: 'academic',
+    enrollments: 68,
     created_at: new Date().toISOString()
   },
   {
-    title: 'Campus Crisis Response Training',
-    description: 'Prepare academic staff to respond effectively to mental health crises and emergencies on campus.',
-    duration: '4 weeks',
-    sessions: 6,
-    price: 7499,
-    image: 'https://source.unsplash.com/random/800x600/?campus',
-    category: 'super-human',
-    programType: 'academic' as ProgramType,
-    enrollments: 28,
+    title: 'Mindful Study Techniques',
+    description: 'A program that teaches students how to apply mindfulness techniques to enhance focus and retention during study sessions.',
+    duration: '6 weeks',
+    sessions: 8,
+    price: 5499,
+    image: 'https://source.unsplash.com/random/800x600/?studying',
+    category: 'quick-ease',
+    programType: 'academic',
+    enrollments: 55,
     created_at: new Date().toISOString()
-  }
+  },
 ];
 
 // Sample program data for businesses
@@ -116,34 +91,34 @@ const businessPrograms: Partial<Program>[] = [
     price: 14999,
     image: 'https://source.unsplash.com/random/800x600/?workplace',
     category: 'quick-ease',
-    programType: 'business' as ProgramType,
+    programType: 'wellness',
     enrollments: 53,
     created_at: new Date().toISOString()
   },
   {
-    title: 'Executive Stress Management',
-    description: 'Specialized program for executives and leaders to manage high-pressure situations and prevent burnout.',
-    duration: '6 weeks',
-    sessions: 8,
-    price: 19999,
-    image: 'https://source.unsplash.com/random/800x600/?executive',
-    category: 'resilience-building',
-    programType: 'business' as ProgramType,
-    enrollments: 31,
+    title: 'Stress-Free Workplace Workshop',
+    description: 'A workshop designed to help employees manage stress and improve their mental wellbeing in the workplace.',
+    duration: '2 days',
+    sessions: 4,
+    price: 3999,
+    image: 'https://source.unsplash.com/random/800x600/?office',
+    category: 'quick-ease',
+    programType: 'business',
+    enrollments: 72,
     created_at: new Date().toISOString()
   },
   {
-    title: 'Team Resilience Building Workshop',
-    description: 'Strengthen team cohesion and resilience through collaborative exercises and shared mental health strategies.',
-    duration: '5 weeks',
-    sessions: 7,
-    price: 8999,
+    title: 'Mindfulness for Corporate Teams',
+    description: 'A program that teaches corporate teams how to use mindfulness techniques to improve communication and reduce workplace stress.',
+    duration: '8 weeks',
+    sessions: 10,
+    price: 7999,
     image: 'https://source.unsplash.com/random/800x600/?team',
-    category: 'super-human',
-    programType: 'business' as ProgramType,
-    enrollments: 47,
+    category: 'quick-ease',
+    programType: 'business',
+    enrollments: 48,
     created_at: new Date().toISOString()
-  }
+  },
 ];
 
 /**
@@ -158,9 +133,9 @@ export const addSamplePrograms = async (type: ProgramType): Promise<boolean> => 
     
     if (type === 'wellness') {
       programsList = wellnessPrograms;
-    } else if (type === 'academic' as ProgramType) {
+    } else if (type === 'academic') {
       programsList = academicPrograms;
-    } else if (type === 'business' as ProgramType) {
+    } else if (type === 'business') {
       programsList = businessPrograms;
     } else {
       console.warn(`Unknown program type: ${type}`);
@@ -189,10 +164,25 @@ export const addSamplePrograms = async (type: ProgramType): Promise<boolean> => 
       return true;
     }
     
+    // Convert Partial<Program>[] to the exact type expected by supabase insert
+    // by ensuring all required fields are present
+    const programsToInsert = programsList.map(program => ({
+      title: program.title || '',
+      description: program.description || '',
+      duration: program.duration || '',
+      sessions: program.sessions || 0,
+      price: program.price || 0,
+      image: program.image || '',
+      category: program.category || 'quick-ease',
+      programType: program.programType || 'wellness',
+      enrollments: program.enrollments || 0,
+      created_at: program.created_at || new Date().toISOString()
+    }));
+    
     // Add the programs to the database
     const { data, error } = await supabase
       .from('programs')
-      .insert(programsList);
+      .insert(programsToInsert);
       
     if (error) {
       console.error('Error adding sample programs:', error);
