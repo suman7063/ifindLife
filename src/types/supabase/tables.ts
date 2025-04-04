@@ -120,6 +120,7 @@ export interface CustomTable {
     price: number;
     image: string;
     category: string;
+    programType: string;
     created_at: string;
     enrollments?: number;
   };

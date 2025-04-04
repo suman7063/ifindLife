@@ -1,6 +1,6 @@
 
 import * as z from 'zod';
-import { ProgramCategory, ProgramType } from '@/types/programs';
+import { ProgramCategory, ProgramType, Program } from '@/types/programs';
 
 // Form schema for program form validation
 export const programFormSchema = z.object({
