@@ -12,12 +12,11 @@ import {
 } from "@/components/ui/dialog";
 import { Program } from '@/types/programs';
 
-// Fix the ProgramsByCategory type to properly extend Record<string, Program[]>
 interface ProgramsByCategory extends Record<string, Program[]> {
   wellness: Program[];
   academic: Program[];
   business: Program[];
-  [key: string]: Program[]; // Add index signature to satisfy Record type
+  [key: string]: Program[];
 }
 
 const Programs: React.FC = () => {
@@ -260,7 +259,7 @@ const Programs: React.FC = () => {
             title: 'test',
             description: 'test',
             programType: 'wellness',
-            category: 'test',
+            category: 'quick-ease',
             duration: 'test',
             sessions: 1,
             price: 1,

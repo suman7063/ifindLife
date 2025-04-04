@@ -1,8 +1,9 @@
-import { Program, ProgramType } from '@/types/programs';
+
+import { Program, ProgramType, ProgramCategory } from '@/types/programs';
 import { supabase } from '@/lib/supabase';
 
 // Sample program data for wellness seekers
-const wellnessPrograms: Program[] = [
+const wellnessPrograms: Partial<Program>[] = [
   {
     title: 'Stress Management Program',
     description: 'Learn techniques to manage stress and anxiety in your daily life with proven methods from expert psychologists.',
@@ -10,8 +11,8 @@ const wellnessPrograms: Program[] = [
     sessions: 6,
     price: 4999,
     image: 'https://source.unsplash.com/random/800x600/?meditation',
-    category: 'quick-ease' as ProgramCategory,
-    programType: 'wellness' as ProgramType,
+    category: 'quick-ease',
+    programType: 'wellness',
     enrollments: 156,
     created_at: new Date().toISOString()
   },
@@ -22,8 +23,8 @@ const wellnessPrograms: Program[] = [
     sessions: 8,
     price: 6999,
     image: 'https://source.unsplash.com/random/800x600/?resilience',
-    category: 'resilience-building' as ProgramCategory,
-    programType: 'wellness' as ProgramType,
+    category: 'resilience-building',
+    programType: 'wellness',
     enrollments: 98,
     created_at: new Date().toISOString()
   },
@@ -34,8 +35,8 @@ const wellnessPrograms: Program[] = [
     sessions: 5,
     price: 3499,
     image: 'https://source.unsplash.com/random/800x600/?mindfulness',
-    category: 'quick-ease' as ProgramCategory,
-    programType: 'wellness' as ProgramType,
+    category: 'quick-ease',
+    programType: 'wellness',
     enrollments: 210,
     created_at: new Date().toISOString()
   },
@@ -46,8 +47,8 @@ const wellnessPrograms: Program[] = [
     sessions: 12,
     price: 9999,
     image: 'https://source.unsplash.com/random/800x600/?therapy',
-    category: 'super-human' as ProgramCategory,
-    programType: 'wellness' as ProgramType,
+    category: 'super-human',
+    programType: 'wellness',
     enrollments: 67,
     created_at: new Date().toISOString()
   },
@@ -58,15 +59,15 @@ const wellnessPrograms: Program[] = [
     sessions: 8,
     price: 5499,
     image: 'https://source.unsplash.com/random/800x600/?anxiety',
-    category: 'issue-based' as ProgramCategory,
-    programType: 'wellness' as ProgramType,
+    category: 'issue-based',
+    programType: 'wellness',
     enrollments: 124,
     created_at: new Date().toISOString()
   }
 ];
 
 // Sample program data for academic institutes
-const academicPrograms: Program[] = [
+const academicPrograms: Partial<Program>[] = [
   {
     title: 'Student Mental Health Support',
     description: 'Comprehensive program for academic institutions to support student mental health needs and foster a positive learning environment.',
@@ -74,7 +75,7 @@ const academicPrograms: Program[] = [
     sessions: 15,
     price: 12999,
     image: 'https://source.unsplash.com/random/800x600/?students',
-    category: 'quick-ease' as ProgramCategory,
+    category: 'quick-ease',
     programType: 'academic' as ProgramType,
     enrollments: 42,
     created_at: new Date().toISOString()
@@ -86,7 +87,7 @@ const academicPrograms: Program[] = [
     sessions: 10,
     price: 9999,
     image: 'https://source.unsplash.com/random/800x600/?teacher',
-    category: 'resilience-building' as ProgramCategory,
+    category: 'resilience-building',
     programType: 'academic' as ProgramType,
     enrollments: 36,
     created_at: new Date().toISOString()
@@ -98,7 +99,7 @@ const academicPrograms: Program[] = [
     sessions: 6,
     price: 7499,
     image: 'https://source.unsplash.com/random/800x600/?campus',
-    category: 'super-human' as ProgramCategory,
+    category: 'super-human',
     programType: 'academic' as ProgramType,
     enrollments: 28,
     created_at: new Date().toISOString()
@@ -106,7 +107,7 @@ const academicPrograms: Program[] = [
 ];
 
 // Sample program data for businesses
-const businessPrograms: Program[] = [
+const businessPrograms: Partial<Program>[] = [
   {
     title: 'Workplace Wellness Program',
     description: 'Comprehensive mental health support for organizations to improve employee wellbeing and productivity.',
@@ -114,7 +115,7 @@ const businessPrograms: Program[] = [
     sessions: 12,
     price: 14999,
     image: 'https://source.unsplash.com/random/800x600/?workplace',
-    category: 'quick-ease' as ProgramCategory,
+    category: 'quick-ease',
     programType: 'business' as ProgramType,
     enrollments: 53,
     created_at: new Date().toISOString()
@@ -126,7 +127,7 @@ const businessPrograms: Program[] = [
     sessions: 8,
     price: 19999,
     image: 'https://source.unsplash.com/random/800x600/?executive',
-    category: 'resilience-building' as ProgramCategory,
+    category: 'resilience-building',
     programType: 'business' as ProgramType,
     enrollments: 31,
     created_at: new Date().toISOString()
@@ -138,7 +139,7 @@ const businessPrograms: Program[] = [
     sessions: 7,
     price: 8999,
     image: 'https://source.unsplash.com/random/800x600/?team',
-    category: 'super-human' as ProgramCategory,
+    category: 'super-human',
     programType: 'business' as ProgramType,
     enrollments: 47,
     created_at: new Date().toISOString()
@@ -153,13 +154,13 @@ const businessPrograms: Program[] = [
 export const addSamplePrograms = async (type: ProgramType): Promise<boolean> => {
   try {
     // Select the appropriate program list based on type
-    let programsList: Program[] = [];
+    let programsList: Partial<Program>[] = [];
     
     if (type === 'wellness') {
       programsList = wellnessPrograms;
-    } else if (type === 'academic') {
+    } else if (type === 'academic' as ProgramType) {
       programsList = academicPrograms;
-    } else if (type === 'business') {
+    } else if (type === 'business' as ProgramType) {
       programsList = businessPrograms;
     } else {
       console.warn(`Unknown program type: ${type}`);

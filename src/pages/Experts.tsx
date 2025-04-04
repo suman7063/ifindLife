@@ -11,6 +11,7 @@ import SearchSort from '@/components/experts/SearchSort';
 import { useExpertFilters } from '@/hooks/useExpertFilters';
 import expertData from '@/data/expertData'; // Import the expert data
 import { ExtendedExpert } from '@/types/programs';
+import { ExperienceLevel } from '@/types/experts';
 
 export default function Experts() {
   const [showFilters, setShowFilters] = useState(false);
@@ -28,7 +29,7 @@ export default function Experts() {
     experienceLevel,
     setExperienceLevel,
     resetFilters,
-  } = useExpertFilters(expertData as ExtendedExpert[]);
+  } = useExpertFilters(expertData);
 
   const toggleFilters = () => {
     setShowFilters(!showFilters);
@@ -38,6 +39,11 @@ export default function Experts() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // Search is handled in real-time in the filter hook
+  };
+
+  // Create a type-safe wrapper for the setExperienceLevel function
+  const handleExperienceLevelChange = (level: ExperienceLevel) => {
+    setExperienceLevel(level as any);
   };
 
   return (
@@ -80,8 +86,8 @@ export default function Experts() {
               setSelectedSpecialties={setSelectedSpecialties}
               selectedLanguages={selectedLanguages}
               setSelectedLanguages={setSelectedLanguages}
-              experienceLevel={experienceLevel}
-              setExperienceLevel={setExperienceLevel}
+              experienceLevel={experienceLevel as ExperienceLevel}
+              setExperienceLevel={handleExperienceLevelChange}
               resetFilters={resetFilters}
             />
           )}
@@ -89,7 +95,7 @@ export default function Experts() {
           {/* Experts Grid */}
           <div className={`flex-1 ${showFilters ? 'md:w-3/4' : 'w-full'}`}>
             <ExpertsGrid
-              experts={filteredExperts}
+              experts={filteredExperts as any}
               onResetFilters={resetFilters}
             />
           </div>

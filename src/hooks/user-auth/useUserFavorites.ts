@@ -17,7 +17,10 @@ export const useUserFavorites = (
     try {
       // Check if already in favorites
       const favoriteExperts = currentUser.favorite_experts || [];
-      const existingFavorite = favoriteExperts.find(e => typeof e === 'object' ? e.id.toString() === expertId : e.toString() === expertId);
+      const existingFavorite = favoriteExperts.find(e => {
+        if (e === null) return false;
+        return typeof e === 'object' ? e.id.toString() === expertId : e.toString() === expertId;
+      });
       
       if (existingFavorite) {
         toast.info('This expert is already in your favorites');
@@ -45,11 +48,13 @@ export const useUserFavorites = (
 
       // Update the local state
       const updatedFavorites = [...(currentUser.favorite_experts || []), expertData.id.toString()];
-      const updatedUser = {
+      
+      // Create a type-safe update to UserProfile
+      const updatedUser: UserProfile = {
         ...currentUser,
-        favorite_experts: updatedFavorites,
-        favoriteExperts: updatedFavorites
+        favorite_experts: updatedFavorites
       };
+      
       setCurrentUser(updatedUser);
 
       toast.success('Added to favorites!');
@@ -76,15 +81,16 @@ export const useUserFavorites = (
       if (error) throw error;
 
       // Update local state
-      const updatedFavorites = (currentUser.favorite_experts || []).filter(
-        expert => typeof expert === 'object' ? expert.id.toString() !== expertId : expert.toString() !== expertId
-      );
+      const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
+        if (expert === null) return false;
+        return typeof expert === 'object' ? expert.id.toString() !== expertId : expert.toString() !== expertId;
+      });
       
-      const updatedUser = {
+      const updatedUser: UserProfile = {
         ...currentUser,
-        favorite_experts: updatedFavorites,
-        favoriteExperts: updatedFavorites
+        favorite_experts: updatedFavorites
       };
+      
       setCurrentUser(updatedUser);
 
       toast.success('Removed from favorites');

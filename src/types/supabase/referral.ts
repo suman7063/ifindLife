@@ -1,4 +1,5 @@
 
+// Referral related types
 export interface Referral {
   id: string;
   referrer_id: string;
@@ -8,4 +9,17 @@ export interface Referral {
   reward_claimed: boolean;
   created_at?: string;
   completed_at?: string;
+}
+
+// Referral UI related interfaces
+export interface ReferralUI {
+  id: string;
+  referrerId: string;
+  referredId: string;
+  referredName?: string;
+  referralCode: string;
+  status: string;
+  rewardClaimed: boolean;
+  createdAt?: string;
+  completedAt?: string;
 }

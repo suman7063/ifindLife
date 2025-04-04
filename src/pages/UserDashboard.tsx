@@ -1,110 +1,123 @@
+import React, { useState, useEffect } from 'react';
+import { Container } from '@/components/ui/container';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { User } from '@supabase/supabase-js';
+import { UserProfile } from '@/types/supabase';
 
-import React from 'react';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
-import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
-import DashboardStatsGrid from '@/components/user/dashboard/DashboardStatsGrid';
-import UserProfileCard from '@/components/user/UserProfileCard';
-import ReferralDashboardCard from '@/components/user/ReferralDashboardCard';
-import WalletBalanceCard from '@/components/user/dashboard/WalletBalanceCard';
-import RecentTransactionsCard from '@/components/user/dashboard/RecentTransactionsCard';
-import ProfileSetupPlaceholder from '@/components/user/dashboard/ProfileSetupPlaceholder';
-import { Navigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+const UserDashboard = () => {
+  const { currentUser, isAuthenticated } = useUserAuth();
+  const [user, setUser] = useState<User | null>(null);
 
-const UserDashboard: React.FC = () => {
-  const { 
-    currentUser, 
-    isAuthenticated, 
-    loading: userLoading,
-    updateProfile
-  } = useUserAuth();
-  
-  const { 
-    loading: expertLoading 
-  } = useExpertAuth();
-
-  // Make sure the user is redirected if they're not authenticated
-  if (!isAuthenticated && !userLoading && !expertLoading) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // Show loading state while checking authentication
-  if (userLoading || expertLoading || !currentUser) {
-    return <DashboardLoader />;
-  }
-
-  // Check if user profile is incomplete
-  const isProfileIncomplete = !currentUser.name || !currentUser.email || !currentUser.phone;
-
-  // Handle user profile information
-  const handleUpdateProfile = async (data: any) => {
-    try {
-      await updateProfile({
-        name: data.name,
-        phone: data.phone,
-        city: data.city,
-        country: data.country
-      });
-      return true;
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-      return false;
+  useEffect(() => {
+    if (currentUser && isAuthenticated) {
+      // Type assertion to treat UserProfile as compatible with User
+      // This is safe because we're only using common properties
+      const userForDashboard = currentUser as unknown as User;
+      setUser(userForDashboard);
     }
-  };
+  }, [currentUser, isAuthenticated]);
+
+  if (!isAuthenticated) {
+    return (
+      <Container className="py-8">
+        <p>Please log in to view your dashboard.</p>
+        <Button asChild>
+          <Link to="/login">Log In</Link>
+        </Button>
+      </Container>
+    );
+  }
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6">
-      <h1 className="text-3xl font-bold mb-8">Your Dashboard</h1>
+    <Container className="py-8">
+      <h1 className="text-2xl font-bold mb-6">Welcome to Your Dashboard</h1>
 
-      {isProfileIncomplete ? (
-        <ProfileSetupPlaceholder 
-          user={currentUser} 
-          onUpdateProfile={handleUpdateProfile}
-        />
-      ) : (
-        // User's dashboard content when profile is complete
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column */}
-          <div className="space-y-6">
-            <UserProfileCard 
-              userProfile={currentUser}
-            />
-            
-            <ReferralDashboardCard 
-              userProfile={currentUser} 
-            />
-          </div>
-          
-          {/* Right Column (spans 2 columns on large screens) */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Stats Cards */}
-            <DashboardStatsGrid userProfile={currentUser} />
-            
-            {/* Tabs for Wallet & Transactions */}
-            <Tabs defaultValue="wallet" className="w-full">
-              <TabsList className="grid grid-cols-2 mb-2">
-                <TabsTrigger value="wallet">Wallet</TabsTrigger>
-                <TabsTrigger value="transactions">Transactions</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="wallet" className="mt-0">
-                <WalletBalanceCard 
-                  userProfile={currentUser}
-                  onRecharge={() => {}} 
-                />
-              </TabsContent>
-              
-              <TabsContent value="transactions" className="mt-0">
-                <RecentTransactionsCard 
-                  transactions={currentUser.transactions || []}
-                />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </div>
-      )}
-    </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Profile Information</CardTitle>
+            <CardDescription>View and manage your profile details.</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center space-x-4">
+            <Avatar>
+              <AvatarImage src={currentUser?.profile_picture} alt={currentUser?.name || "Profile Picture"} />
+              <AvatarFallback>{currentUser?.name?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-lg font-semibold">{currentUser?.name || 'User'}</p>
+              <p className="text-muted-foreground">{currentUser?.email}</p>
+            </div>
+          </CardContent>
+          <CardContent>
+            <Button asChild>
+              <Link to="/profile">Edit Profile</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Settings</CardTitle>
+            <CardDescription>Manage your account preferences and security.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              <li>
+                <Link to="/change-password" className="hover:underline">Change Password</Link>
+              </li>
+              <li>
+                <Link to="/billing" className="hover:underline">Billing Information</Link>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>My Courses</CardTitle>
+            <CardDescription>View your enrolled courses and progress.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>You have enrolled in 0 courses.</p>
+            <Button asChild>
+              <Link to="/courses">View Courses</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Favorites</CardTitle>
+            <CardDescription>Access your favorite experts and resources.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>You have 0 experts in your favorites.</p>
+            <Button asChild>
+              <Link to="/favorites">View Favorites</Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Referrals</CardTitle>
+            <CardDescription>Share your referral code and earn rewards.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p>Share your referral code with friends and family.</p>
+            <Button asChild>
+              <Link to="/referrals">View Referrals</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </Container>
   );
 };
 

@@ -11,7 +11,8 @@ export type ProgramCategory =
   | 'Study Skills'
   | 'Time Management'
   | 'Leadership'
-  | 'Team Building';
+  | 'Team Building'
+  | 'test'; // Adding 'test' to support the mock data
 
 export interface Program {
   id: number;
@@ -28,7 +29,7 @@ export interface Program {
   is_favorite?: boolean;
 }
 
-// Add ExtendedExpert interface needed by Experts page
+// Update ExtendedExpert interface to use profile_picture instead of profilePicture
 export interface ExtendedExpert {
   id: string | number;
   name: string;

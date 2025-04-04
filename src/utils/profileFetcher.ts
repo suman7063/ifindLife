@@ -143,7 +143,15 @@ export const fetchUserProfile = async (
     
     // Process transactions if successful
     if (results[4].status === 'fulfilled') {
-      userProfile.transactions = results[4].value.data || [];
+      // Convert the transaction types to the expected format
+      const transactions = results[4].value.data?.map((tx: any) => {
+        return {
+          ...tx,
+          // Ensure type is either "credit" or "debit"
+          type: tx.type === "credit" || tx.type === "debit" ? tx.type : "credit"
+        };
+      }) || [];
+      userProfile.transactions = transactions;
     } else {
       userProfile.transactions = [];
     }

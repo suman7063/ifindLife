@@ -44,6 +44,46 @@ export const fetchReferralSettings = async (): Promise<ReferralSettings | null> 
 };
 
 /**
+ * Fetch user referrals from the database
+ */
+export const fetchUserReferrals = async (userId: string): Promise<any[]> => {
+  try {
+    // Fetch referrals where this user is the referrer
+    const { data: referrals, error } = await supabase
+      .from('referrals')
+      .select('*')
+      .eq('referrer_id', userId);
+
+    if (error) throw error;
+    
+    // Get the IDs of referred users
+    const referredUserIds = referrals.map(referral => referral.referred_id);
+    
+    // If there are no referred users, return the referrals as is
+    if (referredUserIds.length === 0) {
+      return referrals;
+    }
+    
+    // Get names of referred users
+    const { data: users, error: usersError } = await supabase
+      .from('users')
+      .select('id, name')
+      .in('id', referredUserIds);
+      
+    if (usersError) {
+      console.error('Error fetching referred user names:', usersError);
+      return referrals;
+    }
+    
+    // Combine the data
+    return formatReferrals(referrals, users || []);
+  } catch (error) {
+    console.error('Error fetching user referrals:', error);
+    return [];
+  }
+};
+
+/**
  * Process a referral code when a user signs up
  */
 export const processReferralCode = async (referralCode: string, userId: string): Promise<boolean> => {

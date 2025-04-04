@@ -20,13 +20,6 @@ export const convertUserToUserProfile = (user: any): UserProfile => {
     referred_by: user.referred_by,
     referral_link: user.referral_link,
     
-    // Compatibility properties
-    profilePicture: user.profile_picture,
-    walletBalance: user.wallet_balance,
-    favoriteExperts: user.favorite_experts || [],
-    enrolledCourses: user.enrolled_courses || [],
-    referralCode: user.referral_code,
-    
     // Empty related collections if not provided
     favorite_experts: user.favorite_experts || [],
     enrolled_courses: user.enrolled_courses || [],
