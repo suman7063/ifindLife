@@ -28,12 +28,12 @@ export const useUserFavorites = (
         if (typeof e === 'object') {
           // Check if id exists and is not null/undefined
           if ('id' in e && e.id !== undefined && e.id !== null) {
-            return e.id.toString() === expertId;
+            return String(e.id) === expertId;
           }
           return false;
         } else {
           // Handle primitive type case (likely string)
-          return e.toString() === expertId;
+          return String(e) === expertId;
         }
       });
       
@@ -106,12 +106,12 @@ export const useUserFavorites = (
         if (typeof expert === 'object') {
           // Check if id exists and is not null/undefined
           if ('id' in expert && expert.id !== undefined && expert.id !== null) {
-            return expert.id.toString() !== expertId;
+            return String(expert.id) !== expertId;
           }
           return true; // Keep items without id
         } else {
           // Handle primitive type case
-          return expert.toString() !== expertId;
+          return String(expert) !== expertId;
         }
       });
       
