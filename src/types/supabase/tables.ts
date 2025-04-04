@@ -25,15 +25,7 @@ export interface CustomTable {
     transaction_id?: string;
   };
   profiles: UserProfile;
-  contact_submissions: {
-    id: number;
-    name: string;
-    email: string;
-    subject: string;
-    message: string;
-    created_at?: string;
-    is_read?: boolean;
-  };
+  contact_submissions: ContactSubmission;
   admin_users: {
     id: string;
     role: string;
@@ -97,4 +89,46 @@ export interface CustomTable {
     status: string;
   };
   user_favorites: UserFavorite;
+  expert_reports: {
+    id: string;
+    expert_id: string;
+    user_id: string;
+    user_name?: string;
+    reason: string;
+    details?: string;
+    date: string;
+    status: string;
+  };
+  user_courses: {
+    id: string;
+    user_id?: string;
+    expert_id: number;
+    expert_name: string;
+    title: string;
+    enrollment_date: string;
+    completed?: boolean;
+    progress?: number;
+  };
+  services: {
+    id: number;
+    name: string;
+    description?: string;
+    rate_usd: number;
+    rate_inr: number;
+  };
 }
+
+// Define the ContactSubmission type
+export interface ContactSubmission {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at?: string;
+  is_read?: boolean;
+}
+
+// Export the Expert type to ensure it's available
+export { Expert } from '../expert';
+export { UserTransaction } from './transactions';

@@ -142,13 +142,11 @@ const Programs: React.FC = () => {
   };
 
   const handleSaveProgram = (programData: Program) => {
-    // Implement save logic here (e.g., update state, API call)
     console.log('Saving program:', programData);
     handleCloseDialog();
   };
 
   const handleDeleteProgram = (programId: number) => {
-    // Implement delete logic here (e.g., update state, API call)
     console.log('Deleting program with ID:', programId);
   };
 
@@ -188,10 +186,30 @@ const Programs: React.FC = () => {
       </div>
 
       <div className="flex justify-center space-x-4 mb-4">
-        <Button active={activeTab === 'all'} onClick={() => setActiveTab('all')}>All</Button>
-        <Button active={activeTab === 'wellness'} onClick={() => setActiveTab('wellness')}>Wellness</Button>
-        <Button active={activeTab === 'academic'} onClick={() => setActiveTab('academic')}>Academic</Button>
-        <Button active={activeTab === 'business'} onClick={() => setActiveTab('business')}>Business</Button>
+        <Button 
+          variant={activeTab === 'all' ? "default" : "outline"}
+          onClick={() => setActiveTab('all')}
+        >
+          All
+        </Button>
+        <Button 
+          variant={activeTab === 'wellness' ? "default" : "outline"} 
+          onClick={() => setActiveTab('wellness')}
+        >
+          Wellness
+        </Button>
+        <Button 
+          variant={activeTab === 'academic' ? "default" : "outline"} 
+          onClick={() => setActiveTab('academic')}
+        >
+          Academic
+        </Button>
+        <Button 
+          variant={activeTab === 'business' ? "default" : "outline"} 
+          onClick={() => setActiveTab('business')}
+        >
+          Business
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

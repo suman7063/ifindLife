@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { User as SupabaseUser } from '@supabase/supabase-js';
@@ -169,17 +168,7 @@ export const fetchUserProfile = async (
       const referralsData = await fetchUserReferrals(user.id);
       
       // Convert to the Referral type format
-      userProfile.referrals = referralsData.map(ref => ({
-        id: ref.id,
-        referrerId: ref.referrerId,
-        referredId: ref.referredId,
-        referredName: ref.referredName,
-        referralCode: ref.referralCode,
-        status: ref.status,
-        rewardClaimed: ref.rewardClaimed,
-        createdAt: ref.createdAt,
-        completedAt: ref.completedAt
-      }));
+      userProfile.referrals = formatReferralData(referralsData);
     } catch (error) {
       console.error("Error fetching referrals:", error);
       userProfile.referrals = [];
@@ -191,4 +180,17 @@ export const fetchUserProfile = async (
     console.error('Error in fetchUserProfile:', error);
     return null;
   }
+};
+
+const formatReferralData = (referrals: any[]): Referral[] => {
+  return referrals.map(r => ({
+    id: r.id,
+    referrer_id: r.referrerId || r.referrer_id,
+    referred_id: r.referredId || r.referred_id,
+    referral_code: r.referralCode || r.referral_code,
+    status: r.status,
+    reward_claimed: r.rewardClaimed || r.reward_claimed,
+    created_at: r.createdAt || r.created_at,
+    completed_at: r.completedAt || r.completed_at
+  }));
 };

@@ -9,8 +9,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIU
 // Create Supabase client
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 
-// Define a type-safe from function for custom tables without explicit return type
-export function from<T extends keyof CustomTable>(table: T) {
-  // Cast table name to string to avoid type inference issues
+// Define a type-safe from function for custom tables
+export function from<T extends keyof CustomTable>(
+  table: T
+): ReturnType<typeof supabase.from<string>> {
   return supabase.from(table as string);
 }

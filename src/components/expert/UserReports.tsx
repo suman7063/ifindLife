@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { ReportUserType } from './types';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { useExpertAuth } from '@/hooks/expert-auth';
 import { supabase } from '@/lib/supabase';
 
 interface UserReportsProps {
@@ -13,7 +13,9 @@ interface UserReportsProps {
 }
 
 const UserReports: React.FC<UserReportsProps> = ({ users }) => {
-  const { expert } = useExpertAuth();
+  const { currentExpert } = useExpertAuth();
+  const expert = currentExpert; // Map to the property expected by the component
+
   const [userId, setUserId] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [details, setDetails] = useState<string>('');
@@ -22,7 +24,6 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch existing reports
     const fetchReports = async () => {
       if (!expert) return;
       
@@ -47,7 +48,7 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
             details: report.details || '',
             date: report.date || new Date().toISOString(),
             status: report.status || 'pending',
-            userName: report.user_name // For display compatibility
+            userName: report.user_name
           }));
           setReports(formattedReports);
         }
@@ -77,11 +78,9 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
     setIsSubmitting(true);
     
     try {
-      // Get user name
       const reportedUser = users.find(user => user.id === userId);
       const userName = reportedUser ? reportedUser.name : 'Unknown User';
       
-      // Create the report object
       const newReport = {
         expert_id: expert.id,
         user_id: userId,
@@ -92,7 +91,6 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
         status: 'pending'
       };
       
-      // Insert report into database
       const { data, error } = await supabase
         .from('expert_reports')
         .insert(newReport)
@@ -105,7 +103,6 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
       }
       
       if (data) {
-        // Format the report for display
         const formattedReport: ReportUserType = {
           id: data.id,
           user_id: data.user_id || '',
@@ -117,10 +114,8 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
           userName: data.user_name
         };
         
-        // Update local state
         setReports([...reports, formattedReport]);
         
-        // Reset form
         setUserId('');
         setReason('');
         setDetails('');

@@ -1,6 +1,5 @@
-
 import { supabase } from '@/lib/supabase';
-import { ProgramType, ProgramCategory } from '@/types/programs';
+import { Program, ProgramType, ProgramCategory } from '@/types/programs';
 
 /**
  * Adds sample programs to the database for a specific program type

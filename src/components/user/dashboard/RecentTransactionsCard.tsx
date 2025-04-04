@@ -1,16 +1,8 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CreditCard } from 'lucide-react';
-import { UserTransaction } from '@/types/supabase';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ExternalLink } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { UserTransaction } from '@/types/supabase/transactions';
 
 interface RecentTransactionsCardProps {
   transactions: UserTransaction[];
@@ -18,36 +10,48 @@ interface RecentTransactionsCardProps {
 
 const RecentTransactionsCard: React.FC<RecentTransactionsCardProps> = ({ transactions }) => {
   return (
-    <Card className="border-ifind-aqua/10">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-sm font-medium flex items-center">
-          <CreditCard className="mr-2 h-4 w-4 text-ifind-aqua" />
-          Recent Transactions
-        </CardTitle>
+        <CardTitle>Recent Transactions</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        {transactions.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Date</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.slice(0, 5).map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell className="font-medium">{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{transaction.type}</TableCell>
-                  <TableCell className="text-right">{transaction.currency} {transaction.amount.toFixed(2)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="text-center p-4 text-gray-500">No recent transactions</div>
-        )}
+        <ScrollArea className="h-[300px] w-full">
+          <div className="p-4">
+            {transactions.length === 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                No recent transactions.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {transactions.map((transaction) => (
+                  <div key={transaction.id} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h4 className="font-medium">{transaction.type}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(transaction.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-lg font-semibold ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {transaction.amount > 0 ? '+' : '-'}₹{Math.abs(transaction.amount)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {transaction.currency}
+                        </p>
+                      </div>
+                    </div>
+                    {transaction.description && (
+                      <p className="text-sm mt-2 text-muted-foreground">
+                        {transaction.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

@@ -2,10 +2,10 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import ExpertCard from '@/components/ExpertCard';
-import { Expert } from '@/types/expert';
+import { ExtendedExpert } from '@/types/programs';
 
 interface ExpertsGridProps {
-  experts: Expert[];
+  experts: ExtendedExpert[];
   onResetFilters: () => void;
 }
 
@@ -31,16 +31,16 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
       {experts.map((expert) => (
         <ExpertCard 
           key={expert.id} 
-          id={expert.id}
+          id={typeof expert.id === 'string' ? parseInt(expert.id, 10) : expert.id}
           name={expert.name}
-          experience={expert.experience}
-          specialties={expert.specialties}
-          rating={expert.rating}
-          consultations={expert.consultations}
-          price={expert.price}
-          waitTime={expert.waitTime}
-          imageUrl={expert.imageUrl}
-          online={expert.online}
+          experience={expert.experience || ''}
+          specialties={expert.specialties || []}
+          rating={expert.rating || 0}
+          consultations={expert.consultations || 0}
+          price={expert.price || 0}
+          waitTime={expert.waitTime || ''}
+          imageUrl={expert.imageUrl || expert.profilePicture || ''}
+          online={expert.online || false}
         />
       ))}
     </div>

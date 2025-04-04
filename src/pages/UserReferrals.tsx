@@ -1,80 +1,74 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
-import { ReferralUI, ReferralSettings } from '@/types/supabase';
-import { fetchReferralSettings, fetchUserReferrals } from '@/utils/referralUtils';
-import ReferralCard from '@/components/user/ReferralCard';
 import ReferralsList from '@/components/user/ReferralsList';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import { ReferralUI } from '@/types/supabase';
+import { useEffect, useState } from 'react';
+import { formatReferrals } from '@/utils/referralUtils';
+import { toast } from 'sonner';
+import { from } from '@/lib/supabase';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
-import { Link, Navigate } from 'react-router-dom';
+import { PlusCircle } from 'lucide-react';
 
 const UserReferrals: React.FC = () => {
   const { currentUser, isAuthenticated } = useUserAuth();
   const [referrals, setReferrals] = useState<ReferralUI[]>([]);
-  const [settings, setSettings] = useState<ReferralSettings | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadReferrals = async () => {
-      if (currentUser?.id) {
-        setIsLoading(true);
-        try {
-          const data = await fetchUserReferrals(currentUser.id);
-          setReferrals(data);
-        } catch (error) {
-          console.error("Error loading referrals:", error);
-        } finally {
-          setIsLoading(false);
-        }
+    const fetchReferrals = async () => {
+      if (!isAuthenticated || !currentUser) {
+        setIsLoading(false);
+        return;
       }
-    };
 
-    const loadSettings = async () => {
+      setIsLoading(true);
       try {
-        const data = await fetchReferralSettings();
-        setSettings(data);
+        const { data, error } = await from('referrals')
+          .select('*')
+          .eq('referrer_id', currentUser.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching referrals:', error);
+          toast.error('Failed to load referrals. Please try again.');
+          return;
+        }
+
+        if (data) {
+          const formattedReferrals = formatReferrals(data);
+          setReferrals(formattedReferrals);
+        }
       } catch (error) {
-        console.error("Error loading referral settings:", error);
+        console.error('Error processing referrals:', error);
+        toast.error('Error processing referral data.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    loadReferrals();
-    loadSettings();
-  }, [currentUser]);
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
+    fetchReferrals();
+  }, [currentUser, isAuthenticated]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 py-10">
-        <div className="container max-w-4xl">
-          <div className="mb-6">
-            <Link to="/user-dashboard">
-              <Button variant="ghost" size="sm" className="mb-4">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
+    <div className="container mx-auto py-8">
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="text-2xl font-bold">Your Referrals</CardTitle>
+            <Link to="/referral-invite">
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Invite Friends
               </Button>
             </Link>
-            <h1 className="text-3xl font-bold text-gradient mb-2">Your Referral Program</h1>
-            <p className="text-gray-600">
-              Invite friends to iFindLife and earn rewards when they make their first purchase.
-            </p>
           </div>
-
-          {currentUser && <ReferralCard userProfile={currentUser} settings={settings} />}
-          
-          <div className="mt-8">
-            <ReferralsList referrals={referrals} isLoading={isLoading} />
-          </div>
-        </div>
-      </main>
-      <Footer />
+        </CardHeader>
+        <CardContent>
+          <ReferralsList referrals={referrals} isLoading={isLoading} />
+        </CardContent>
+      </Card>
     </div>
   );
 };

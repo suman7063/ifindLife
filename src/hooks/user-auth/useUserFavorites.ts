@@ -1,7 +1,7 @@
-
-import { toast } from 'sonner';
-import { UserProfile, Expert } from '@/types/supabase';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { Expert, UserProfile } from '@/types/supabase';
+import { toast } from 'sonner';
 
 export const useUserFavorites = (
   currentUser: UserProfile | null,

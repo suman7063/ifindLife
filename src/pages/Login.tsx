@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,9 +18,8 @@ export const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated, authLoading } = useUserAuth();
-  const { expert, loading: expertLoading, logout: expertLogout } = useExpertAuth();
+  const { currentExpert: expert, isLoading: loading } = useExpertAuth();
   
-  // Check if user is coming from email verification
   const queryParams = new URLSearchParams(location.search);
   const verified = queryParams.get('verified') === 'true';
 
@@ -53,7 +51,6 @@ export const Login = () => {
   const handleExpertLogout = async () => {
     await expertLogout();
     toast.success('Successfully logged out as expert');
-    // Refresh the page to clear any lingering state
     window.location.reload();
   };
 
@@ -80,7 +77,7 @@ export const Login = () => {
     }
   };
 
-  if (expertLoading || authLoading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />

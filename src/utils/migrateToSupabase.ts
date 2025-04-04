@@ -1,4 +1,3 @@
-
 import { supabase, from } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -35,6 +34,11 @@ const safeQuery = async (tableName: string, query: any) => {
     console.error(`Error querying table ${tableName}:`, error);
     return { data: null, error };
   }
+};
+
+// Type-safe helper function for tables that might not be defined in CustomTable
+const fromAnyTable = (table: string) => {
+  return supabase.from(table);
 };
 
 export const migrateExpertsToSupabase = async (): Promise<boolean> => {
@@ -118,7 +122,7 @@ export const migrateExpertsToSupabase = async (): Promise<boolean> => {
           }));
           
           const { error: reportError } = await safeQuery('expert_reports', () => 
-            from('expert_reports').insert(expertReports)
+            fromAnyTable('expert_reports').insert(expertReports)
           );
           
           if (reportError) {
@@ -288,7 +292,7 @@ export const migrateUsersToSupabase = async (): Promise<boolean> => {
           }));
           
           await safeQuery('user_courses', () => 
-            from('user_courses').insert(courses)
+            fromAnyTable('user_courses').insert(courses)
           );
         }
       }

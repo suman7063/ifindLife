@@ -35,8 +35,17 @@ export interface ExpertRegistrationData {
 }
 
 export interface UseExpertAuthReturn extends ExpertAuthState {
+  // Core authenticated user data
+  expert: ExpertProfile | null;
+  loading: boolean;
+  authInitialized: boolean;
+  
+  // Helper methods
+  hasUserAccount: (email: string) => Promise<boolean>;
+  
+  // Authentication methods
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>;
   register: (data: ExpertRegistrationData) => Promise<boolean>;
   updateProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
 }

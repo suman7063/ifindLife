@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -42,7 +41,7 @@ const UserDashboard = () => {
   } = useDashboardState();
   
   // Get expert auth state
-  const { expert, loading: expertLoading } = useExpertAuth();
+  const { currentExpert: expert, isLoading: loading } = useExpertAuth();
 
   // Debug logging
   useEffect(() => {
@@ -80,7 +79,7 @@ const UserDashboard = () => {
     await logout();
   };
 
-  if (dashboardLoading || expertLoading) {
+  if (dashboardLoading || loading) {
     return <DashboardLoader />;
   }
 

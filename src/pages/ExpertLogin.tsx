@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -24,7 +23,7 @@ const ExpertLogin = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
   
-  const { login, expert, loading, authInitialized, hasUserAccount } = useExpertAuth();
+  const { login, currentExpert: expert, isLoading: loading, authInitialized, hasUserAccount } = useExpertAuth();
   const { 
     isSynchronizing, 
     userLogout, 
@@ -40,7 +39,6 @@ const ExpertLogin = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check if user is logged in
   useEffect(() => {
     const checkUserLogin = async () => {
       setIsCheckingUser(true);
@@ -49,7 +47,6 @@ const ExpertLogin = () => {
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
-          // Check if there's a profile in the profiles table
           const { data: profileData, error } = await supabase
             .from('profiles')
             .select('*')
@@ -76,7 +73,6 @@ const ExpertLogin = () => {
     checkUserLogin();
   }, []);
   
-  // Debug logging
   useEffect(() => {
     console.log('ExpertLogin component - Auth states:', {
       expertLoading: loading,
@@ -92,7 +88,6 @@ const ExpertLogin = () => {
     });
   }, [loading, authInitialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, isAuthenticated]);
   
-  // Check URL parameters
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('register') === 'true') {
@@ -101,9 +96,7 @@ const ExpertLogin = () => {
     }
   }, [location]);
   
-  // Redirect if authenticated as expert
   useEffect(() => {
-    // Skip if conditions aren't met
     if (!expert || !authInitialized || loading || redirectAttempted) {
       return;
     }
@@ -111,7 +104,6 @@ const ExpertLogin = () => {
     console.log('Redirecting to expert dashboard - Expert profile found');
     setRedirectAttempted(true);
     
-    // Redirect to dashboard
     navigate('/expert-dashboard', { replace: true });
   }, [expert, loading, authInitialized, redirectAttempted, navigate]);
   
@@ -128,13 +120,11 @@ const ExpertLogin = () => {
       return false;
     }
     
-    // If user is logged in, don't allow expert login
     if (userProfile || isAuthenticated) {
       setLoginError('Please log out as a user before attempting to log in as an expert');
       return false;
     }
     
-    // Check if this email is registered as a user account
     const hasUserAcct = await hasUserAccount(email);
     if (hasUserAcct) {
       setLoginError('This email is registered as a user. Please use a different email for expert login.');
@@ -147,7 +137,6 @@ const ExpertLogin = () => {
     try {
       console.log('Expert auth: Starting login process for', email);
       
-      // Now attempt login
       const success = await login(email, password);
       
       if (!success) {
@@ -155,7 +144,6 @@ const ExpertLogin = () => {
       } else {
         console.log('Expert login successful');
         toast.success('Login successful! Redirecting to dashboard...');
-        // Explicitly navigate to expert dashboard rather than relying on login function
         setTimeout(() => {
           navigate('/expert-dashboard', { replace: true });
         }, 500);
@@ -211,7 +199,6 @@ const ExpertLogin = () => {
     }
   };
 
-  // Show loading screen when appropriate
   if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing || isCheckingUser) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;

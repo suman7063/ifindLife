@@ -1,105 +1,69 @@
+import { useState, useEffect } from 'react';
+import { useUserAuth } from '@/contexts/auth/UserAuthContext';
+import { Expert, UserTransaction, UserProfile } from '@/types/supabase';
+import { from } from '@/lib/supabase';
+import { toast } from 'sonner';
 
-import { supabase } from '@/lib/supabase';
-import { UserProfile, Expert } from '@/types/supabase';
-import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
+interface UseUserDataFetcherResult {
+  favoriteExperts: Expert[];
+  transactions: UserTransaction[];
+  loading: boolean;
+  error: Error | null;
+}
 
-export const useUserDataFetcher = (
-  setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>
-) => {
-  const fetchUserData = async (userId: string) => {
-    try {
-      // Get base user data
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+export const useUserDataFetcher = (): UseUserDataFetcherResult => {
+  const [favoriteExperts, setFavoriteExperts] = useState<Expert[]>([]);
+  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const { currentUser } = useUserAuth();
 
-      if (userError) throw userError;
-
-      // Get user favorites (expert IDs)
-      const { data: favoritesData, error: favoritesError } = await supabase
-        .from('user_favorites')
-        .select('expert_id')
-        .eq('user_id', userId);
-
-      if (favoritesError) throw favoritesError;
-
-      // Get user's courses
-      const { data: coursesData, error: coursesError } = await supabase
-        .from('user_courses')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (coursesError) throw coursesError;
-
-      // Get user's reviews
-      const { data: reviewsData, error: reviewsError } = await supabase
-        .from('user_reviews')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (reviewsError) throw reviewsError;
-
-      // Get user's reports
-      const { data: reportsData, error: reportsError } = await supabase
-        .from('user_reports')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (reportsError) throw reportsError;
-
-      // Get user's transactions
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from('user_transactions')
-        .select('*')
-        .eq('user_id', userId);
-
-      if (transactionsError) throw transactionsError;
-
-      // Convert expert_id to strings for favorites and fetch expert details
-      let favoriteExperts: Expert[] = [];
-      if (favoritesData && favoritesData.length > 0) {
-        const expertIds = favoritesData.map(fav => fav.expert_id.toString());
-        
-        // Fetch the full expert details
-        const { data: expertsData } = await supabase
-          .from('experts')
-          .select('*')
-          .in('id', expertIds);
-          
-        favoriteExperts = expertsData || [];
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!currentUser) {
+        setLoading(false);
+        return;
       }
 
-      // Create UserProfile object
-      const userProfile: UserProfile = {
-        id: userData.id,
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        country: userData.country,
-        city: userData.city,
-        profilePicture: userData.profile_picture,
-        walletBalance: userData.wallet_balance || 0,
-        currency: userData.currency || 'USD',
-        referralCode: userData.referral_code,
-        referredBy: userData.referred_by,
-        referralLink: userData.referral_link,
-        favoriteExperts: favoriteExperts,
-        enrolledCourses: adaptCoursesToUI(coursesData || []),
-        reviews: adaptReviewsToUI(reviewsData || []),
-        reports: adaptReportsToUI(reportsData || []),
-        transactions: transactionsData || [],
-      };
+      try {
+        setLoading(true);
+        const [favoritesData, transactionsData] = await Promise.all([
+          from('user_favorites')
+            .select('expert (*)')
+            .eq('user_id', currentUser.id)
+            .returns<{ expert: Expert }[]>(),
+          from('user_transactions')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .returns<UserTransaction[]>()
+        ]);
 
-      setCurrentUser(userProfile);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    } finally {
-      setLoading(false);
-    }
+        if (favoritesData.error) {
+          throw new Error(favoritesData.error.message);
+        }
+
+        if (transactionsData.error) {
+          throw new Error(transactionsData.error.message);
+        }
+
+        setFavoriteExperts(favoritesData.data.map(item => item.expert));
+        setTransactions(transactionsData.data);
+        setError(null);
+      } catch (err: any) {
+        setError(err instanceof Error ? err : new Error('Failed to fetch data'));
+        toast.error('Failed to load user data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [currentUser]);
+
+  return {
+    favoriteExperts,
+    transactions,
+    loading,
+    error
   };
-
-  return { fetchUserData };
 };

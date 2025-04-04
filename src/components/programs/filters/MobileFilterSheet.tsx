@@ -1,98 +1,88 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Filter } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { SlidersHorizontal } from 'lucide-react';
 import { ProgramCategory } from '@/types/programs';
-import {
-  Sheet,
-  SheetTrigger,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetClose
-} from '@/components/ui/sheet';
 
 interface MobileFilterSheetProps {
   activeCategory: string;
   setActiveCategory: (category: string) => void;
-  sortOption: string;
-  setSortOption: (option: string) => void;
   categoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[];
+  sortOrder: string;
+  setSortOrder: (order: string) => void;
+  onResetFilters: () => void;
 }
 
 const MobileFilterSheet: React.FC<MobileFilterSheetProps> = ({
   activeCategory,
   setActiveCategory,
-  sortOption,
-  setSortOption,
-  categoryOptions
+  categoryOptions,
+  sortOrder,
+  setSortOrder,
+  onResetFilters
 }) => {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="outline" className="w-full">
-          <Filter className="mr-2 h-4 w-4" />
-          Filters & Sort
+        <Button variant="outline" size="sm" className="sm:hidden">
+          <SlidersHorizontal className="mr-2 h-4 w-4" />
+          Filters
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="h-[70vh]">
+      <SheetContent side="bottom" className="sm:hidden">
         <SheetHeader>
-          <SheetTitle>Filter & Sort Programs</SheetTitle>
-          <SheetDescription>
-            Narrow down programs based on your preferences
-          </SheetDescription>
+          <SheetTitle>Filters</SheetTitle>
         </SheetHeader>
-        
-        <div className="py-4 overflow-y-auto max-h-[calc(70vh-120px)]">
-          <h3 className="font-medium mb-3">Categories</h3>
-          <RadioGroup 
-            value={activeCategory} 
-            onValueChange={setActiveCategory}
-            className="space-y-3"
-          >
-            {categoryOptions.map(category => (
-              <div key={category.value} className="flex items-center space-x-2">
-                <RadioGroupItem value={category.value} id={`mobile-category-${category.value}`} />
-                <Label htmlFor={`mobile-category-${category.value}`}>{category.label}</Label>
-              </div>
-            ))}
-          </RadioGroup>
-          
-          <Separator className="my-4" />
-          
-          <h3 className="font-medium mb-3">Sort by</h3>
-          <RadioGroup 
-            value={sortOption} 
-            onValueChange={setSortOption}
-            className="space-y-3"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="newest" id="mobile-sort-newest" />
-              <Label htmlFor="mobile-sort-newest">Newest First</Label>
+        <div className="grid gap-4 py-4">
+          <div>
+            <h4 className="mb-2 font-semibold">Category</h4>
+            <div className="flex flex-wrap gap-2">
+              {categoryOptions.map(category => (
+                <Button
+                  key={category.value}
+                  variant={activeCategory === category.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setActiveCategory(category.value)}
+                  className="whitespace-nowrap"
+                >
+                  {category.label}
+                </Button>
+              ))}
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="price-low" id="mobile-sort-price-low" />
-              <Label htmlFor="mobile-sort-price-low">Price: Low to High</Label>
+          </div>
+          <Separator />
+          <div>
+            <h4 className="mb-2 font-semibold">Sort By</h4>
+            <div className="grid gap-2">
+              <Button
+                variant={sortOrder === 'newest' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortOrder('newest')}
+              >
+                Newest
+              </Button>
+              <Button
+                variant={sortOrder === 'price-asc' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortOrder('price-asc')}
+              >
+                Price: Low to High
+              </Button>
+              <Button
+                variant={sortOrder === 'price-desc' ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortOrder('price-desc')}
+              >
+                Price: High to Low
+              </Button>
             </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="price-high" id="mobile-sort-price-high" />
-              <Label htmlFor="mobile-sort-price-high">Price: High to Low</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="popularity" id="mobile-sort-popularity" />
-              <Label htmlFor="mobile-sort-popularity">Most Popular</Label>
-            </div>
-          </RadioGroup>
+          </div>
         </div>
-        
-        <div className="flex justify-end mt-4">
-          <SheetClose asChild>
-            <Button>Apply Filters</Button>
-          </SheetClose>
+        <div className="flex justify-end">
+          <Button variant="secondary" size="sm" onClick={onResetFilters}>
+            Reset Filters
+          </Button>
         </div>
       </SheetContent>
     </Sheet>

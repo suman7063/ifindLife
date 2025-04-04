@@ -1,166 +1,118 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { Program, ProgramCategory, ProgramType } from '@/types/programs';
+import { useState, useEffect, useMemo } from 'react';
+import { Program, ProgramType } from '@/types/programs';
 import { from } from '@/lib/supabase';
+import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { addSamplePrograms } from '@/utils/sampleProgramsData';
-
-// Create a typed interface for program-related data
-interface ProgramsByCategory {
-  'quick-ease': Program[];
-  'resilience-building': Program[];
-  'super-human': Program[];
-  'issue-based': Program[];
-}
 
 interface FavoriteProgram {
+  id: string;
+  user_id: string;
   program_id: number;
 }
 
+interface ProgramDataOptions {
+  includeEnrollments?: boolean;
+  programType?: ProgramType;
+  featured?: boolean;
+  withFavorites?: boolean;
+}
+
 export const useProgramData = (
-  isAuthenticated: boolean,
   currentUser: UserProfile | null,
-  programType: ProgramType = 'wellness'
+  options: ProgramDataOptions = {}
 ) => {
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [filteredPrograms, setFilteredPrograms] = useState<Program[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortOption, setSortOption] = useState<string>('popularity');
+  const [favoritePrograms, setFavoritePrograms] = useState<FavoriteProgram[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Fetch programs on mount or when auth state changes
+  // Memoize the options to prevent unnecessary re-fetches
+  const memoizedOptions = useMemo(() => options, [
+    options.includeEnrollments,
+    options.programType,
+    options.featured,
+    options.withFavorites
+  ]);
+
+  // Fetch programs from Supabase
   useEffect(() => {
-    fetchPrograms();
-  }, [isAuthenticated, currentUser, programType]);
+    const fetchPrograms = async () => {
+      setLoading(true);
+      try {
+        // Start building the query
+        let query = from('programs').select('*');
 
-  // Fetch programs from the database
-  const fetchPrograms = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // Add sample programs if needed
-      await addSamplePrograms(programType);
-      
-      // Fetch programs based on program type
-      const { data: programData, error: programError } = await from('programs')
-        .select('*')
-        .eq('programType', programType);
+        // Add filters based on options
+        if (memoizedOptions.programType) {
+          query = query.eq('programType', memoizedOptions.programType);
+        }
 
-      if (programError) throw programError;
-      
-      // Safely handle the data
-      const validProgramData = programData as unknown as Program[];
-      let programsWithFavorites: Program[] = validProgramData;
+        // Execute the query
+        const { data, error } = await query;
 
-      // If user is authenticated, fetch favorites
-      if (isAuthenticated && currentUser) {
-        const { data: favoritesData, error: favoritesError } = await from('user_favorite_programs')
-          .select('program_id')
+        if (error) {
+          throw new Error(error.message);
+        }
+
+        setPrograms(data as Program[]);
+
+        // If user is authenticated and we need to mark favorites
+        if (currentUser && memoizedOptions.withFavorites) {
+          fetchFavorites();
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Error fetching programs:', err);
+        setError(err instanceof Error ? err : new Error('Failed to fetch programs'));
+        setLoading(false);
+        toast.error('Failed to load programs. Please try again later.');
+      }
+    };
+
+    // Fetch user's favorite programs
+    const fetchFavorites = async () => {
+      if (!currentUser) return;
+
+      try {
+        const { data, error } = await from('user_favorite_programs')
+          .select('*')
           .eq('user_id', currentUser.id);
 
-        if (favoritesError) throw favoritesError;
+        if (error) {
+          throw new Error(error.message);
+        }
 
-        // Safely handle favorites data
-        const validFavoritesData = favoritesData as FavoriteProgram[];
-
-        // Convert favorites data to a Set for faster lookups
-        const favoriteProgramIds = new Set(
-          validFavoritesData.map(favorite => favorite.program_id)
-        );
-
-        // Mark programs as favorites
-        programsWithFavorites = programsWithFavorites.map(program => ({
-          ...program,
-          is_favorite: favoriteProgramIds.has(program.id)
-        }));
+        // Use type assertion to handle the unknown type
+        setFavoritePrograms(data as unknown as FavoriteProgram[]);
+      } catch (err) {
+        console.error('Error fetching favorite programs:', err);
+        // Don't show an error toast here as it's not critical
+      } finally {
+        setLoading(false);
       }
-
-      // Sort by popularity (number of enrollments) by default
-      const sortedPrograms = [...programsWithFavorites].sort((a, b) => (b.enrollments || 0) - (a.enrollments || 0));
-      setPrograms(sortedPrograms);
-      setFilteredPrograms(sortedPrograms);
-    } catch (error) {
-      console.error('Error fetching programs:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isAuthenticated, currentUser, programType]);
-
-  // Apply filters when criteria change - only for wellness programs
-  useEffect(() => {
-    if (programs.length === 0) return;
-    
-    // Apply category filter for wellness programs
-    let categoryFiltered = programs;
-    if (selectedCategory !== 'all') {
-      if (selectedCategory === 'favorites') {
-        categoryFiltered = programs.filter(program => program.is_favorite);
-      } else {
-        categoryFiltered = programs.filter(program => program.category === selectedCategory);
-      }
-    }
-    
-    // Apply sorting
-    const sorted = [...categoryFiltered];
-    
-    switch (sortOption) {
-      case 'newest':
-        sorted.sort((a, b) => {
-          if (!a.created_at || !b.created_at) return 0;
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        });
-        break;
-      case 'price-low':
-        sorted.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        sorted.sort((a, b) => b.price - a.price);
-        break;
-      case 'popularity':
-        sorted.sort((a, b) => (b.enrollments || 0) - (a.enrollments || 0));
-        break;
-      default:
-        break;
-    }
-    
-    setFilteredPrograms(sorted);
-  }, [selectedCategory, programs, sortOption]);
-
-  // Group programs by category
-  const programsByCategory = (): ProgramsByCategory => {
-    const categories: ProgramsByCategory = {
-      'quick-ease': [],
-      'resilience-building': [],
-      'super-human': [],
-      'issue-based': []
     };
-    
-    programs.forEach(program => {
-      if (program.category in categories) {
-        categories[program.category].push(program);
-      }
-    });
-    
-    return categories;
-  };
+
+    fetchPrograms();
+  }, [currentUser, memoizedOptions]);
+
+  // Mark programs as favorites
+  const programsWithFavorites = useMemo(() => {
+    if (!memoizedOptions.withFavorites || favoritePrograms.length === 0) {
+      return programs;
+    }
+
+    return programs.map(program => ({
+      ...program,
+      is_favorite: favoritePrograms.some(fp => fp.program_id === program.id)
+    }));
+  }, [programs, favoritePrograms, memoizedOptions.withFavorites]);
 
   return {
-    programs,
-    filteredPrograms,
-    isLoading,
-    selectedCategory,
-    setSelectedCategory,
-    sortOption,
-    setSortOption,
-    programsByCategory: programsByCategory(),
-    refreshPrograms: fetchPrograms
+    programs: programsWithFavorites,
+    loading,
+    error,
+    favoritePrograms
   };
 };
-
-export const categoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[] = [
-  { value: 'all', label: 'All Programs' },
-  { value: 'quick-ease', label: 'QuickEase' },
-  { value: 'resilience-building', label: 'Resilience Building' },
-  { value: 'super-human', label: 'Super Human' },
-  { value: 'issue-based', label: 'Issue-Based' },
-  { value: 'favorites', label: 'Favorites' }
-];

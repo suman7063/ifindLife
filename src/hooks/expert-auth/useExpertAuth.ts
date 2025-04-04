@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { useExpertAuthentication } from './useExpertAuthentication';
 import { useExpertProfile } from './useExpertProfile';
 import { ExpertProfile, ExpertAuthState, UseExpertAuthReturn, ExpertRegistrationData } from './types';
@@ -8,6 +9,7 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   const [expert, setExpert] = useState<ExpertProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [initialized, setInitialized] = useState<boolean>(false);
+  const [authInitialized, setAuthInitialized] = useState<boolean>(false);
 
   // This function will fetch the expert profile from the database
   const fetchExpertProfile = async (userId: string): Promise<ExpertProfile | null> => {
@@ -35,7 +37,8 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     login,
     logout,
     register,
-    isUserLoggedIn
+    isUserLoggedIn,
+    hasUserAccount
   } = useExpertAuthentication(setExpert, setLoading, fetchExpertProfile);
 
   // Import profile update functionality
@@ -65,6 +68,7 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
       } finally {
         setLoading(false);
         setInitialized(true);
+        setAuthInitialized(true);
       }
     };
     
@@ -80,6 +84,10 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
 
   return {
     ...authState,
+    expert,
+    loading,
+    authInitialized,
+    hasUserAccount,
     login,
     logout,
     register,

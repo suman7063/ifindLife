@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase';
 import { Loader2 } from 'lucide-react';
-import { from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import EnrollmentDialog from './EnrollmentDialog';
@@ -48,7 +47,8 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
 
   const checkFavoriteStatus = async () => {
     try {
-      const { data, error } = await from('user_favorite_programs')
+      const { data, error } = await supabase
+        .from('user_favorite_programs')
         .select('*')
         .eq('user_id', currentUser?.id)
         .eq('program_id', program.id)
@@ -82,7 +82,8 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
     try {
       if (isFavorite) {
         // Remove from favorites
-        const { error } = await from('user_favorite_programs')
+        const { error } = await supabase
+          .from('user_favorite_programs')
           .delete()
           .eq('user_id', currentUser?.id)
           .eq('program_id', program.id);
@@ -92,7 +93,8 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
         toast.success('Removed from favorites');
       } else {
         // Add to favorites
-        const { error } = await from('user_favorite_programs')
+        const { error } = await supabase
+          .from('user_favorite_programs')
           .insert({
             user_id: currentUser?.id,
             program_id: program.id

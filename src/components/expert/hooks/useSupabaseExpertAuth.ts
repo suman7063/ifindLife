@@ -1,10 +1,9 @@
-
 // Import the correct router package based on the framework
 import { useNavigate } from 'react-router-dom'; // Using react-router instead of next
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Expert } from '@/types/supabase';
+import { Expert } from '@/types/expert';
 
 export const useSupabaseExpertAuth = () => {
   const [loading, setLoading] = useState(false);

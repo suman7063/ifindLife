@@ -1,126 +1,192 @@
-
-import { useExpertLogin } from './auth/useExpertLogin';
-import { useExpertLogout } from './auth/useExpertLogout';
-import { useExpertRegistration } from './auth/useExpertRegistration';
-import { ExpertProfile, ExpertRegistrationData } from './types';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { ExpertProfile, ExpertRegistrationData } from './types';
 import { toast } from 'sonner';
 
-/**
- * Main hook that combines all expert authentication operations
- */
 export const useExpertAuthentication = (
-  setExpert: React.Dispatch<React.SetStateAction<ExpertProfile | null>>,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>,
+  setExpert: (expert: ExpertProfile | null) => void,
+  setLoading: (loading: boolean) => void,
   fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>
 ) => {
-  // Login functionality
-  const { login: expertLogin } = useExpertLogin(setExpert, setLoading, fetchExpertProfile);
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   
-  // Logout functionality
-  const { logout: expertLogout } = useExpertLogout(setExpert, setLoading);
-  
-  // Registration functionality
-  const { register } = useExpertRegistration(setExpert, setLoading);
-
-  // Check if user is logged in
-  const isUserLoggedIn = async (): Promise<boolean> => {
+  // Check if email is registered as a user
+  const hasUserAccount = async (email: string): Promise<boolean> => {
     try {
-      const { data } = await supabase.auth.getSession();
-      if (!data.session) return false;
-      
-      // Check if there's a profile in the 'profiles' table for this user
-      const { data: profileData, error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select('*')
-        .eq('id', data.session.user.id)
-        .single();
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
       
-      // If there's no error and we have profile data, the user is logged in
-      return !!profileData && !error;
+      if (error) {
+        console.error('Error checking user account:', error);
+        return false;
+      }
+      
+      return !!data;
     } catch (error) {
-      console.error('Error checking user login status:', error);
+      console.error('Error in hasUserAccount:', error);
       return false;
     }
   };
 
-  // Clean the auth state before login to prevent dual sessions
-  const cleanAuthState = async (): Promise<void> => {
-    console.log('Expert auth: Cleaning auth state before login');
-    
+  // Login function
+  const login = async (email: string, password: string): Promise<boolean> => {
+    setLoading(true);
     try {
-      // Sign out from Supabase to clear current session
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // Clear any Supabase-related items from localStorage
-      const storageKeys = Object.keys(localStorage);
-      const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
-      
-      supabaseKeys.forEach(key => {
-        localStorage.removeItem(key);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
       
-      console.log('Expert auth: Auth state cleaned successfully');
-    } catch (e) {
-      console.warn('Error cleaning auth state:', e);
-    }
-  };
-
-  // Enhanced login to prevent dual sessions
-  const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('Expert auth: Starting login process for', email);
-    
-    try {
-      // Check if a user is already logged in
-      const userLoggedIn = await isUserLoggedIn();
-      if (userLoggedIn) {
-        console.error('Expert auth: A user is already logged in');
-        toast.error('Please log out as a user before logging in as an expert');
+      if (error) {
+        toast.error(error.message);
         return false;
       }
       
-      // First ensure we're properly logged out to prevent session issues
-      await cleanAuthState();
-      
-      console.log('Expert auth: Previous sessions cleared, proceeding with login');
-      
-      // Now proceed with expert login
-      const success = await expertLogin(email, password);
-      
-      if (success) {
-        console.log('Expert auth: Successfully authenticated, fetching expert profile');
-        // The profile fetch is handled within expertLogin
-        return true;
-      } else {
-        console.error('Expert auth: Authentication failed');
+      if (!data.session) {
+        toast.error('Login failed. No session created.');
         return false;
       }
-    } catch (error) {
-      console.error('Expert auth: Login error:', error);
-      toast.error('An unexpected error occurred during login');
-      return false;
-    }
-  };
-
-  // Improved logout that ensures clean state
-  const logout = async (): Promise<boolean> => {
-    try {
-      console.log('Expert auth: Initiating logout process');
       
-      // First reset our expert state
-      setExpert(null);
+      // Check if this user has an expert profile
+      const expertProfile = await fetchExpertProfile(data.session.user.id);
       
-      // Then perform actual logout
-      await expertLogout();
+      if (!expertProfile) {
+        toast.error('No expert profile found for this account.');
+        await supabase.auth.signOut();
+        return false;
+      }
       
-      // After successful logout, force a page reload
-      window.location.href = '/expert-login';
+      setExpert(expertProfile);
+      setIsUserLoggedIn(true);
       return true;
     } catch (error) {
-      console.error('Expert auth: Logout error:', error);
+      console.error('Login error:', error);
+      toast.error('An error occurred during login.');
       return false;
+    } finally {
+      setLoading(false);
     }
   };
-
-  return { login, logout, register, isUserLoggedIn };
+  
+  // Logout function
+  const logout = async (): Promise<boolean> => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      
+      setExpert(null);
+      setIsUserLoggedIn(false);
+      return true;
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('An error occurred during logout.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Registration function
+  const register = async (data: ExpertRegistrationData): Promise<boolean> => {
+    try {
+      setLoading(true);
+      
+      // Create user in Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            phone: data.phone,
+            address: data.address,
+            city: data.city,
+            state: data.state,
+            country: data.country,
+            specialization: data.specialization,
+            experience: data.experience,
+            bio: data.bio,
+            certificate_urls: data.certificate_urls,
+            selected_services: data.selected_services
+          }
+        }
+      });
+      
+      if (authError) {
+        console.error('Registration auth error:', authError);
+        toast.error(authError.message);
+        return false;
+      }
+      
+      if (!authData.session) {
+        toast.error('Registration failed. No session created.');
+        return false;
+      }
+      
+      // Create expert profile in expert_accounts table
+      const { error: profileError } = await supabase
+        .from('expert_accounts')
+        .insert([
+          {
+            auth_id: authData.session.user.id,
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+            city: data.city,
+            state: data.state,
+            country: data.country,
+            specialization: data.specialization,
+            experience: data.experience,
+            bio: data.bio,
+            certificate_urls: data.certificate_urls,
+            selected_services: data.selected_services
+          }
+        ]);
+      
+      if (profileError) {
+        console.error('Registration profile error:', profileError);
+        toast.error(profileError.message);
+        
+        // Clean up user from auth if profile creation fails
+        await supabase.auth.signOut();
+        return false;
+      }
+      
+      // Fetch the newly created expert profile
+      const expertProfile = await fetchExpertProfile(authData.session.user.id);
+      
+      if (!expertProfile) {
+        toast.error('Failed to fetch expert profile after registration.');
+        return false;
+      }
+      
+      setExpert(expertProfile);
+      setIsUserLoggedIn(true);
+      toast.success('Registration successful!');
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('An error occurred during registration.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return {
+    login,
+    logout,
+    register,
+    isUserLoggedIn,
+    hasUserAccount
+  };
 };

@@ -1,6 +1,6 @@
 
 import * as z from 'zod';
-import { ProgramCategory, ProgramType } from '@/types/programs';
+import { ProgramType, ProgramCategory } from '@/types/programs';
 import { Program } from '@/types/programs';
 
 // Form schema for program form validation

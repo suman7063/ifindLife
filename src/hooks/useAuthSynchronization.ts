@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useExpertAuth } from '@/hooks/expert-auth';
 import { useUserAuth } from '@/contexts/UserAuthContext';
@@ -26,8 +25,8 @@ export const useAuthSynchronization = () => {
   
   // Get expert auth state
   const { 
-    expert, 
-    loading: expertLoading, 
+    currentExpert: expert, 
+    isLoading: expertLoading, 
     authInitialized, 
     logout: expertLogoutFn 
   } = useExpertAuth();
@@ -255,11 +254,8 @@ export const useAuthSynchronization = () => {
       console.log('Attempting expert logout...');
       const success = await expertLogoutFn();
       
-      // Reset auth check completed flag
-      authCheckCompleted.current = false;
-      setSessionType('none');
-      
-      if (success) {
+      // Check boolean return value properly
+      if (success === true) {
         toast.success('Successfully logged out as expert');
         return true;
       } else {
