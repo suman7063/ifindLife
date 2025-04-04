@@ -9,6 +9,7 @@ export interface ExpertProfile {
   specialization?: string;
   experience?: string;
   profilePicture?: string;
+  certificate_urls?: string[];  // Added this property to fix the build error
 }
 
 export interface ExpertAuthState {

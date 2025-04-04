@@ -1,33 +1,20 @@
 
-// Referral program related types
-
 export interface Referral {
   id: string;
-  referrerId: string;
-  referredId: string;
-  referredName?: string;
-  referralCode: string;
-  status: 'pending' | 'completed' | 'expired';
-  rewardClaimed: boolean;
-  createdAt?: string;
-  completedAt?: string;
+  referrer_id: string;
+  referred_id: string;
+  referral_code: string;
+  status: string;
+  reward_claimed: boolean;
+  created_at?: string;
+  completed_at?: string;
 }
 
-export interface ReferralUI {
+export interface ReferralSettings {
   id: string;
-  referrerId: string;
-  referredId: string;
-  referredName?: string;
-  referralCode: string;
-  status: 'pending' | 'completed' | 'expired';
-  rewardClaimed: boolean;
-  createdAt?: string;
-  completedAt?: string;
-}
-
-export interface ReferralSettingsUI {
-  referrerReward: number;
-  referredReward: number;
+  referrer_reward: number;
+  referred_reward: number;
   active: boolean;
   description?: string;
+  updated_at?: string;
 }

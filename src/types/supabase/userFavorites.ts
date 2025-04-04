@@ -1,5 +1,5 @@
 
-import { Expert } from './expert';
+import { Expert } from '../expert';
 
 // Create a separate type for user favorites to avoid circular references
 export interface UserFavorite {
