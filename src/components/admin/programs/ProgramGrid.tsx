@@ -5,14 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from 'lucide-react';
 import { Program } from '@/types/programs';
-
-type ProgramGridProps = {
-  programs: Program[];
-  isLoading: boolean;
-  onEdit: (program: Program) => void;
-  onDelete: (programId: number) => void;
-  getCategoryColor: (category: string) => string;
-};
+import { ProgramGridProps } from './types';
 
 const ProgramGrid: React.FC<ProgramGridProps> = ({ 
   programs, 
@@ -47,10 +40,29 @@ const ProgramGrid: React.FC<ProgramGridProps> = ({
     return (
       <div className="text-center p-8 border border-dashed rounded-md">
         <p className="text-muted-foreground mb-4">No programs found for this category</p>
-        <Button onClick={() => onEdit()} variant="outline">Add Your First Program</Button>
+        <Button onClick={() => onEdit({} as Program)} variant="outline">Add Your First Program</Button>
       </div>
     );
   }
+
+  // Function to get program category label color if not provided as prop
+  const getDefaultCategoryColor = (category: string) => {
+    switch (category) {
+      case 'quick-ease':
+        return 'bg-green-100 text-green-800';
+      case 'resilience-building':
+        return 'bg-blue-100 text-blue-800';
+      case 'super-human':
+        return 'bg-purple-100 text-purple-800';
+      case 'issue-based':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Use provided getCategoryColor function or fall back to default
+  const categoryColorFn = getCategoryColor || getDefaultCategoryColor;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -68,7 +80,7 @@ const ProgramGrid: React.FC<ProgramGridProps> = ({
           </CardHeader>
           <CardContent className="pb-2">
             <p className="text-sm line-clamp-3 mb-3">{program.description}</p>
-            <Badge className={getCategoryColor(program.category)}>
+            <Badge className={categoryColorFn(program.category)}>
               {program.category}
             </Badge>
           </CardContent>

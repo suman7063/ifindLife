@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Program, ProgramCategory, ProgramType } from '@/types/programs';
 import { 
@@ -29,11 +28,7 @@ import {
   FormMessage 
 } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
-
-interface ProgramFormDialogProps {
-  program?: Program;
-  onSave: (programData: Partial<Program>) => Promise<void>;
-}
+import { ProgramFormDialogProps } from './programs/types';
 
 // Update schema to match the expanded ProgramCategory type
 const formSchema = z.object({
@@ -49,7 +44,9 @@ const formSchema = z.object({
 
 const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({ 
   program, 
-  onSave 
+  onSave,
+  isOpen,
+  onClose 
 }) => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,7 +74,6 @@ const ProgramFormDialog: React.FC<ProgramFormDialogProps> = ({
   const isSubmitting = form.formState.isSubmitting;
   
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Add program ID if editing
     const programData = program?.id ? { ...values, id: program.id } : values;
     await onSave(programData);
   };

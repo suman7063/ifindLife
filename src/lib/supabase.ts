@@ -13,6 +13,5 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
 export function from<T extends keyof CustomTable>(
   table: T
 ) {
-  type TableRow = CustomTable[T];
   return supabase.from(table as string);
 }

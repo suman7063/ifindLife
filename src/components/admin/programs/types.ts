@@ -3,10 +3,10 @@ import { ReactNode } from 'react';
 import { Program } from '@/types/programs';
 
 export interface ProgramFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
   onSave: (programData: Program) => Promise<void>;
-  program?: Program;
+  program?: Program | null;
 }
 
 export interface ProgramsEditorProps {
@@ -18,11 +18,12 @@ export interface ProgramGridProps {
   programs: Program[];
   isLoading: boolean;
   onEdit: (program: Program) => void;
-  onDelete: (programId: string) => void;
+  onDelete: (programId: number) => void;
+  getCategoryColor?: (category: string) => string;
 }
 
 export interface ProgramCardProps {
   program: Program;
   onEdit: (program: Program) => void;
-  onDelete: (programId: string) => void;
+  onDelete: (programId: number) => void;
 }
