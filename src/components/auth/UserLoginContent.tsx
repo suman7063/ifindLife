@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/hooks/expert-auth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface UserLoginContentProps {
   children?: React.ReactNode;
 }
 
 const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
+  const navigate = useNavigate();
   const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
   const [isCheckingExpert, setIsCheckingExpert] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -21,12 +24,13 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
   const { 
     isUserAuthenticated,
     isExpertAuthenticated,
-    isAuthInitialized: authCheckCompleted,
+    isAuthInitialized,
     isAuthLoading,
-    logout
+    userLogout,
+    expertLogout,
+    fullLogout,
+    hasDualSessions
   } = useAuthSynchronization();
-  
-  const hasDualSessions = isUserAuthenticated && isExpertAuthenticated;
   
   // Check if expert is logged in directly from Supabase
   useEffect(() => {
@@ -48,6 +52,7 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
             setExpertProfile(expertData as ExpertProfile);
             // If an expert is logged in, we shouldn't show login tabs
             console.log('Expert is already logged in, user login not allowed');
+            toast.info('You are currently logged in as an expert');
           } else {
             setExpertProfile(null);
           }
@@ -65,14 +70,24 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
     checkExpertLogin();
   }, []);
   
+  // If user is already authenticated, redirect to dashboard
+  useEffect(() => {
+    if (isUserAuthenticated && isAuthInitialized && !isAuthLoading) {
+      console.log("User is authenticated, redirecting to dashboard");
+      navigate('/user-dashboard');
+    }
+  }, [isUserAuthenticated, isAuthInitialized, isAuthLoading, navigate]);
+  
   const handleExpertLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);
     try {
-      await logout();
+      await expertLogout();
       setExpertProfile(null);
+      toast.success('Logged out successfully');
       return true;
     } catch (error) {
       console.error('Error during expert logout:', error);
+      toast.error('Failed to log out');
       
       // Force a page reload as a last resort
       setTimeout(() => {
@@ -87,10 +102,12 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
   const handleFullLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);
     try {
-      await logout();
+      await fullLogout();
+      toast.success('Logged out of all accounts');
       return true;
     } catch (error) {
       console.error('Error during full logout:', error);
+      toast.error('Failed to log out');
       
       // Force a page reload as a last resort
       setTimeout(() => {

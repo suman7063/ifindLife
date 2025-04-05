@@ -101,12 +101,6 @@ const AdminLogin = () => {
                 </div>
               </div>
               
-              <div className="pt-2">
-                <p className="text-xs text-muted-foreground mb-2">
-                  <strong>Default credentials:</strong> Username: Soultribe | Password: Freesoul@99
-                </p>
-              </div>
-              
               <Button 
                 type="submit" 
                 className="w-full bg-ifind-teal hover:bg-ifind-aqua"

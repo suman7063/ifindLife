@@ -1,16 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/supabase';
+import { LogOut, User as UserIcon, Settings, CreditCard, BookOpen, Heart, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const UserDashboard = () => {
-  const { currentUser, isAuthenticated } = useUserAuth();
+  const { currentUser, isAuthenticated, logout } = useUserAuth();
   const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (currentUser && isAuthenticated) {
@@ -18,8 +22,22 @@ const UserDashboard = () => {
       // This is safe because we're only using common properties
       const userForDashboard = currentUser as unknown as User;
       setUser(userForDashboard);
+    } else if (!isAuthenticated) {
+      // Redirect to login if not authenticated
+      navigate('/user-login');
     }
-  }, [currentUser, isAuthenticated]);
+  }, [currentUser, isAuthenticated, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Successfully logged out');
+      navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Error logging out');
+    }
+  };
 
   if (!isAuthenticated) {
     return (
@@ -34,7 +52,12 @@ const UserDashboard = () => {
 
   return (
     <Container className="py-8">
-      <h1 className="text-2xl font-bold mb-6">Welcome to Your Dashboard</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Welcome to Your Dashboard</h1>
+        <Button variant="outline" onClick={handleLogout}>
+          <LogOut className="mr-2 h-4 w-4" /> Logout
+        </Button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
@@ -52,11 +75,13 @@ const UserDashboard = () => {
               <p className="text-muted-foreground">{currentUser?.email}</p>
             </div>
           </CardContent>
-          <CardContent>
-            <Button asChild>
-              <Link to="/profile">Edit Profile</Link>
+          <CardFooter>
+            <Button asChild variant="secondary" className="w-full">
+              <Link to="/user-profile-edit">
+                <UserIcon className="mr-2 h-4 w-4" /> Edit Profile
+              </Link>
             </Button>
-          </CardContent>
+          </CardFooter>
         </Card>
 
         <Card>
@@ -66,10 +91,12 @@ const UserDashboard = () => {
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
-              <li>
+              <li className="flex items-center">
+                <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
                 <Link to="/change-password" className="hover:underline">Change Password</Link>
               </li>
-              <li>
+              <li className="flex items-center">
+                <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
                 <Link to="/billing" className="hover:underline">Billing Information</Link>
               </li>
             </ul>
@@ -85,10 +112,14 @@ const UserDashboard = () => {
           </CardHeader>
           <CardContent>
             <p>You have enrolled in 0 courses.</p>
-            <Button asChild>
-              <Link to="/courses">View Courses</Link>
-            </Button>
           </CardContent>
+          <CardFooter>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/courses">
+                <BookOpen className="mr-2 h-4 w-4" /> View Courses
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
 
         <Card>
@@ -98,10 +129,14 @@ const UserDashboard = () => {
           </CardHeader>
           <CardContent>
             <p>You have 0 experts in your favorites.</p>
-            <Button asChild>
-              <Link to="/favorites">View Favorites</Link>
-            </Button>
           </CardContent>
+          <CardFooter>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/experts">
+                <Heart className="mr-2 h-4 w-4" /> View Experts
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
 
         <Card>
@@ -111,10 +146,14 @@ const UserDashboard = () => {
           </CardHeader>
           <CardContent>
             <p>Share your referral code with friends and family.</p>
-            <Button asChild>
-              <Link to="/referrals">View Referrals</Link>
-            </Button>
           </CardContent>
+          <CardFooter>
+            <Button asChild variant="outline" className="w-full">
+              <Link to="/referrals">
+                <Share2 className="mr-2 h-4 w-4" /> View Referrals
+              </Link>
+            </Button>
+          </CardFooter>
         </Card>
       </div>
     </Container>

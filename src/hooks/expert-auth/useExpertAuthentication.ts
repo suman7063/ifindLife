@@ -36,6 +36,23 @@ export const useExpertAuthentication = (
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
+      console.log('Expert login: Starting with email:', email);
+      
+      // First check for existing user session to prevent dual login
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', sessionData.session.user.id)
+          .maybeSingle();
+          
+        if (profileData) {
+          toast.error('You are already logged in as a user. Please log out first.');
+          return false;
+        }
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -62,6 +79,7 @@ export const useExpertAuthentication = (
       
       setExpert(expertProfile);
       setIsUserLoggedIn(true);
+      toast.success('Successfully logged in as expert');
       return true;
     } catch (error) {
       console.error('Login error:', error);
@@ -85,6 +103,7 @@ export const useExpertAuthentication = (
       
       setExpert(null);
       setIsUserLoggedIn(false);
+      toast.success('Logged out successfully');
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -99,6 +118,13 @@ export const useExpertAuthentication = (
   const register = async (data: ExpertRegistrationData): Promise<boolean> => {
     try {
       setLoading(true);
+      
+      // Check for existing user session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        toast.error('Please log out of your current session before registering as an expert.');
+        return false;
+      }
       
       // Create user in Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -132,7 +158,7 @@ export const useExpertAuthentication = (
         return false;
       }
       
-      // Convert selected_services to number array if it's a string array
+      // Convert selected_services to number array
       const selectedServices = Array.isArray(data.selected_services) 
         ? data.selected_services.map(id => typeof id === 'string' ? parseInt(id, 10) : id)
         : [];

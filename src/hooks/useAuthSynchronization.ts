@@ -6,6 +6,7 @@ import { useExpertAuth } from './useExpertAuth';
 import { logEvent } from '@/lib/analytics';
 import { UserProfile } from '@/types/supabase';
 import { ExpertProfile } from './expert-auth/types';
+import { toast } from 'sonner';
 
 export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
@@ -13,14 +14,14 @@ export const useAuthSynchronization = () => {
   const { 
     isAuthenticated: isUserAuthenticated, 
     currentUser, 
-    loading: userIsLoading,  // Use 'loading' instead of 'isLoading' to match UserAuthContextType
+    loading: userLoading,
     logout: userLogout
   } = useUserAuth();
   
   const { 
     isAuthenticated: isExpertAuthenticated, 
     currentExpert, 
-    isLoading: expertIsLoading,
+    isLoading: expertLoading,
     authInitialized: expertAuthInitialized,
     logout: expertLogout
   } = useExpertAuth();
@@ -45,10 +46,10 @@ export const useAuthSynchronization = () => {
   
   // Combined auth state properties
   const isAuthInitialized = expertAuthInitialized;
-  const isAuthLoading = userIsLoading || expertIsLoading;
-  const isSynchronizing = false; // Added for compatibility
-  const authCheckCompleted = isAuthInitialized && !isAuthLoading; // Added for compatibility
-  const expertProfile = currentExpert; // Alias for compatibility
+  const isAuthLoading = userLoading || expertLoading;
+  const isSynchronizing = false;
+  const authCheckCompleted = isAuthInitialized && !isAuthLoading;
+  const expertProfile = currentExpert;
 
   // Synchronize experts with user profiles and vice versa
   useEffect(() => {
@@ -57,6 +58,9 @@ export const useAuthSynchronization = () => {
         user_id: currentUser?.id,
         expert_id: currentExpert?.id 
       });
+      
+      // Show warning to user about dual sessions
+      toast.warning('You are logged in as both user and expert. This may cause issues.');
     }
   }, [isUserAuthenticated, isExpertAuthenticated, currentUser, currentExpert]);
 
@@ -79,11 +83,13 @@ export const useAuthSynchronization = () => {
       
       if (success) {
         navigate('/');
+        toast.success('Successfully logged out of all accounts');
       }
       
       return success;
     } catch (error) {
       console.error('Error during full logout:', error);
+      toast.error('Error occurred during logout');
       return false;
     } finally {
       setIsLoggingOut(false);
@@ -106,8 +112,8 @@ export const useAuthSynchronization = () => {
     isExpertAuthenticated,
     currentUser,
     currentExpert,
-    isUserLoading: userIsLoading,
-    isExpertLoading: expertIsLoading,
+    userLoading,
+    expertLoading,
     expertAuthInitialized,
     
     // Computed properties
@@ -121,7 +127,6 @@ export const useAuthSynchronization = () => {
     isAuthLoading,
     isSynchronizing,
     authCheckCompleted,
-    userAuthLoading: userIsLoading,
     
     // Actions
     userLogout,

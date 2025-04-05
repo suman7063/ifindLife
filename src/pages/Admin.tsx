@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import TherapistsEditor from '@/components/admin/TherapistsEditor';
 import ServicesEditor from '@/components/admin/ServicesEditor';
 import ExpertsEditor from '@/components/admin/experts'; 
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
@@ -21,7 +20,7 @@ import { toast } from 'sonner';
 const SESSION_TIMEOUT = 10 * 60 * 1000; 
 
 const Admin = () => {
-  const [activeTab, setActiveTab] = useState("therapists");
+  const [activeTab, setActiveTab] = useState("experts");
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [sessionTimer, setSessionTimer] = useState<NodeJS.Timeout | null>(null);
@@ -30,7 +29,10 @@ const Admin = () => {
   // Session timeout handling
   useEffect(() => {
     // Reset the activity timer on any user interaction
-    const resetTimer = () => setLastActivity(Date.now());
+    const resetTimer = () => {
+      setLastActivity(Date.now());
+      console.log("Admin activity detected, resetting session timer");
+    };
     
     // Add event listeners for user activity
     window.addEventListener('mousemove', resetTimer);
@@ -40,8 +42,12 @@ const Admin = () => {
     // Check session timeout every minute
     const interval = setInterval(() => {
       const now = Date.now();
-      if (now - lastActivity > SESSION_TIMEOUT) {
+      const timeElapsed = now - lastActivity;
+      console.log(`Time since last activity: ${Math.round(timeElapsed / 1000)} seconds`);
+      
+      if (timeElapsed > SESSION_TIMEOUT) {
         // Session timed out, log out
+        console.log("Session timeout reached, logging out");
         toast.warning('Your session has expired due to inactivity.');
         handleLogout();
       }
@@ -61,22 +67,10 @@ const Admin = () => {
     logout();
     navigate('/admin-login');
   };
-  
-  // Dummy data for props
-  const dummyTherapists = [];
-  const dummyCategories = [];
-  const dummyExperts = [];
-  const dummyHeroSettings = {
-    title: "You Are Not Alone!",
-    subtitle: "Is there a situation, you need immediate help with?",
-    description: "Connect with our currently online experts through an instant call",
-    videoUrl: ""
-  };
-  const dummyTestimonials = [];
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Admin Header */}
+      {/* Admin Header - No header visible when logged in */}
       <header className="bg-ifind-teal text-white py-4 shadow-md">
         <div className="container mx-auto px-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold">iFindLife Admin</h1>
@@ -84,10 +78,9 @@ const Admin = () => {
             <Button
               variant="ghost"
               className="text-white hover:text-white/80"
-              onClick={() => setActiveTab("admin-tools")}
+              onClick={() => navigate('/')}
             >
-              <Settings className="mr-2 h-4 w-4" />
-              Admin Tools
+              View Site
             </Button>
             <Button
               variant="ghost"
@@ -104,9 +97,8 @@ const Admin = () => {
       <main className="flex-1 py-8 container mx-auto px-4">
         <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-8 flex flex-wrap h-auto">
-            <TabsTrigger value="therapists">Therapists</TabsTrigger>
-            <TabsTrigger value="services">Services</TabsTrigger>
             <TabsTrigger value="experts">Experts</TabsTrigger>
+            <TabsTrigger value="services">Services</TabsTrigger>
             <TabsTrigger value="herosection">Hero Section</TabsTrigger>
             <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
             <TabsTrigger value="programs">Programs</TabsTrigger>
@@ -114,27 +106,22 @@ const Admin = () => {
             <TabsTrigger value="referrals">Referrals</TabsTrigger>
             <TabsTrigger value="blog">Blog</TabsTrigger>
             <TabsTrigger value="contact">Contact Submissions</TabsTrigger>
-            <TabsTrigger value="admin-tools">Admin Tools</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="therapists" className="space-y-4">
-            <TherapistsEditor therapists={dummyTherapists} setTherapists={() => {}} />
+          <TabsContent value="experts" className="space-y-4">
+            <ExpertsEditor />
           </TabsContent>
           
           <TabsContent value="services" className="space-y-4">
-            <ServicesEditor categories={dummyCategories} setCategories={() => {}} />
-          </TabsContent>
-          
-          <TabsContent value="experts" className="space-y-4">
-            <ExpertsEditor experts={dummyExperts} setExperts={() => {}} />
+            <ServicesEditor />
           </TabsContent>
           
           <TabsContent value="herosection" className="space-y-4">
-            <HeroSectionEditor heroSettings={dummyHeroSettings} setHeroSettings={() => {}} />
+            <HeroSectionEditor />
           </TabsContent>
           
           <TabsContent value="testimonials" className="space-y-4">
-            <TestimonialsEditor testimonials={dummyTestimonials} setTestimonials={() => {}} />
+            <TestimonialsEditor />
           </TabsContent>
           
           <TabsContent value="programs" className="space-y-4">
@@ -155,35 +142,6 @@ const Admin = () => {
 
           <TabsContent value="contact" className="space-y-4">
             <ContactSubmissionsTable />
-          </TabsContent>
-
-          <TabsContent value="admin-tools" className="space-y-4">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold mb-4">Admin Settings</h2>
-              <div className="space-y-6">
-                {/* Content Management Settings */}
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Content Management</h3>
-                  <Button variant="outline" className="mr-2">Import Data</Button>
-                  <Button variant="outline" className="mr-2">Export Data</Button>
-                  <Button variant="outline">Clear Cache</Button>
-                </div>
-                
-                {/* Security Settings */}
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Security</h3>
-                  <Button variant="outline" className="mr-2">Change Password</Button>
-                  <Button variant="outline">Manage Access</Button>
-                </div>
-                
-                {/* System Information */}
-                <div className="border-t pt-4">
-                  <h3 className="text-lg font-medium mb-2">System Information</h3>
-                  <p className="text-sm text-gray-500">Current session timeout: 10 minutes</p>
-                  <p className="text-sm text-gray-500">Last login: {new Date().toLocaleString()}</p>
-                </div>
-              </div>
-            </div>
           </TabsContent>
         </Tabs>
       </main>

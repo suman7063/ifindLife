@@ -44,6 +44,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     { username: 'Soultribe', password: 'Freesoul@99', role: 'superadmin' as const }
   ]);
   const navigate = useNavigate();
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const SESSION_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 
   // Check for stored authentication
   useEffect(() => {
@@ -51,6 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (storedUser) {
       try {
         setCurrentUser(JSON.parse(storedUser));
+        // Reset last activity timestamp when restoring session
+        setLastActivity(Date.now());
       } catch (e) {
         localStorage.removeItem('ifindlife-auth');
       }
@@ -80,6 +84,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Admin session timeout check
+  useEffect(() => {
+    if (!currentUser) return;
+
+    // Reset the activity timer on user interaction
+    const resetTimer = () => {
+      setLastActivity(Date.now());
+    };
+
+    // Add event listeners for user activity 
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keypress', resetTimer);
+    window.addEventListener('click', resetTimer);
+
+    // Check session timeout every minute
+    const interval = setInterval(() => {
+      const now = Date.now();
+      if (now - lastActivity > SESSION_TIMEOUT) {
+        // Session timed out, log out
+        console.log('Admin session timeout reached');
+        toast.warning('Your session has expired due to inactivity.');
+        logout();
+      }
+    }, 60000); // Check every minute
+
+    return () => {
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keypress', resetTimer);
+      window.removeEventListener('click', resetTimer);
+      clearInterval(interval);
+    };
+  }, [currentUser, lastActivity]);
+
   const login = (username: string, password: string): boolean => {
     const user = adminUsers.find(
       (user) => user.username === username && user.password === password
@@ -89,6 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const userData = { username: user.username, role: user.role };
       setCurrentUser(userData);
       localStorage.setItem('ifindlife-auth', JSON.stringify(userData));
+      setLastActivity(Date.now());
       toast.success(`Welcome back, ${user.username}!`);
       return true;
     } else {
@@ -148,7 +186,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         isAuthenticated: !!currentUser,
-        adminUsers: adminUsers.map(({username, role}) => ({username, role})), // Exclude passwords
+        adminUsers: adminUsers.map(({ username, role }) => ({ username, role })),
         addAdmin,
         removeAdmin,
         isSuperAdmin

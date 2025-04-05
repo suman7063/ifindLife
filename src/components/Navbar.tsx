@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { toast } from 'sonner';
@@ -14,7 +14,8 @@ const Navbar = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { 
     isAuthenticated, 
-    isExpertAuthenticated, 
+    isExpertAuthenticated,
+    isUserAuthenticated,
     currentUser, 
     expertProfile,
     userLogout,
@@ -24,6 +25,7 @@ const Navbar = () => {
     sessionType
   } = useAuthSynchronization();
   const location = useLocation();
+  const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
 
   useEffect(() => {
@@ -51,7 +53,7 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: User logout successful");
-        // UI update should be handled by auth state changes
+        navigate('/');
         return true;
       } else {
         console.error("Navbar: User logout failed");
@@ -78,7 +80,7 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: Expert logout completed");
-        // UI update should be handled by auth state changes
+        navigate('/');
         return true;
       } else {
         console.error("Navbar: Expert logout failed");
@@ -101,7 +103,13 @@ const Navbar = () => {
     try {
       setIsLoggingOut(true);
       console.log("Navbar: Initiating full logout...");
-      return await fullLogout();
+      const success = await fullLogout();
+      
+      if (success) {
+        navigate('/');
+      }
+      
+      return success;
     } catch (error) {
       console.error('Error during full logout:', error);
       toast.error('Failed to log out. Please try again.');
@@ -113,7 +121,6 @@ const Navbar = () => {
 
   // Updated to have consistent light background across all pages
   const getNavbarBackground = () => {
-    // Always use the same style as homepage (light background)
     return scrolled ? 'bg-background/90' : 'bg-transparent';
   };
 
