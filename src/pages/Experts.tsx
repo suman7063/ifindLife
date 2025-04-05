@@ -10,7 +10,6 @@ import FilterPanel from '@/components/experts/FilterPanel';
 import SearchSort from '@/components/experts/SearchSort';
 import { useExpertFilters } from '@/hooks/useExpertFilters';
 import expertData from '@/data/expertData'; // Import the expert data
-import { ExtendedExpert } from '@/types/programs';
 import { ExperienceLevel } from '@/types/experts';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -30,7 +29,9 @@ export default function Experts() {
     setSelectedLanguages,
     experienceLevel,
     setExperienceLevel,
+    updateFilter,
     resetFilters,
+    applyFilters
   } = useExpertFilters(expertData);
 
   const toggleFilters = () => {
@@ -40,12 +41,13 @@ export default function Experts() {
   // Handle search
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Search is handled in real-time in the filter hook
+    updateFilter('searchQuery', searchTerm);
+    applyFilters();
   };
 
   // Create a type-safe wrapper for the setExperienceLevel function
   const handleExperienceLevelChange = (level: ExperienceLevel) => {
-    setExperienceLevel(level as any);
+    setExperienceLevel(level);
   };
 
   return (

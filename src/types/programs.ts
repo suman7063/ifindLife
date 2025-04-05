@@ -25,7 +25,7 @@ export interface Program {
   enrollments?: number;
 }
 
-// Add the missing ExtendedExpert type with all required properties
+// Updated ExtendedExpert type with all required properties
 export interface ExtendedExpert {
   id: number | string;
   name: string;

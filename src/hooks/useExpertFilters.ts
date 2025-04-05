@@ -56,7 +56,7 @@ export const useExpertFilters = (initialExperts: ExtendedExpert[]) => {
   }, [experts]);
 
   // Get price range (min, max) from experts data
-  const getPriceRange = useCallback(() => {
+  const getPriceRange = useCallback((): [number, number] => {
     let min = Infinity;
     let max = 0;
     
@@ -66,7 +66,7 @@ export const useExpertFilters = (initialExperts: ExtendedExpert[]) => {
       max = Math.max(max, price);
     });
     
-    return [min === Infinity ? 0 : min, max];
+    return [min === Infinity ? 0 : min, max === 0 ? 5000 : max];
   }, [experts]);
 
   // Apply filters
@@ -150,11 +150,12 @@ export const useExpertFilters = (initialExperts: ExtendedExpert[]) => {
   
   // Reset filters to default
   const resetFilters = () => {
+    const range = getPriceRange();
     setFilters({
       searchQuery: '',
       selectedLanguages: [],
       selectedSpecialties: [],
-      priceRange: getPriceRange(),
+      priceRange: range,
       experienceLevel: 'Any',
       availability: 'Any',
       sortBy: 'rating',
@@ -162,6 +163,7 @@ export const useExpertFilters = (initialExperts: ExtendedExpert[]) => {
     });
   };
 
+  // Return all necessary values for filters
   return {
     experts,
     setExperts,
@@ -172,6 +174,14 @@ export const useExpertFilters = (initialExperts: ExtendedExpert[]) => {
     resetFilters,
     getAvailableLanguages,
     getAvailableSpecialties,
-    getPriceRange
+    getPriceRange,
+    selectedLanguages: filters.selectedLanguages,
+    setSelectedLanguages: (languages: string[]) => updateFilter('selectedLanguages', languages),
+    selectedSpecialties: filters.selectedSpecialties,
+    setSelectedSpecialties: (specialties: string[]) => updateFilter('selectedSpecialties', specialties),
+    priceRange: filters.priceRange,
+    setPriceRange: (range: [number, number]) => updateFilter('priceRange', range),
+    experienceLevel: filters.experienceLevel,
+    setExperienceLevel: (level: string) => updateFilter('experienceLevel', level)
   };
 };

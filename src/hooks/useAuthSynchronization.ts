@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from './useUserAuth';
-import { useExpertAuth } from './expert-auth';
+import { useExpertAuth } from './useExpertAuth';
 import { logEvent } from '@/lib/analytics';
 import { UserProfile } from '@/types/supabase';
 import { ExpertProfile } from './expert-auth/types';
@@ -13,7 +13,7 @@ export const useAuthSynchronization = () => {
   const { 
     isAuthenticated: isUserAuthenticated, 
     currentUser, 
-    loading: userIsLoading,
+    loading: userIsLoading,  // Changed from isLoading to loading to match UserAuthContextType
     logout: userLogout
   } = useUserAuth();
   
