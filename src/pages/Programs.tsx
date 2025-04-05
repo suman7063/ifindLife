@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -153,8 +152,13 @@ const Programs = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredPrograms.length > 0 ? (
-            filteredPrograms.map(program => (
-              <ProgramCard key={program.id} program={program} />
+            filteredPrograms.map((program) => (
+              <ProgramCard 
+                key={program.id} 
+                program={program} 
+                currentUser={null} 
+                isAuthenticated={false} 
+              />
             ))
           ) : (
             <div className="col-span-full py-12 text-center">

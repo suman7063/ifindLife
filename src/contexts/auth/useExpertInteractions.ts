@@ -11,7 +11,6 @@ export const useExpertInteractions = (
   setCurrentUser: (user: UserProfile | null) => void
 ) => {
   const { 
-    toggleExpertFavorite,
     addExpertToFavorites,
     removeExpertFromFavorites
   } = useUserFavorites(currentUser?.id);
@@ -82,7 +81,7 @@ export const useExpertInteractions = (
       const { error } = await supabase
         .from('user_reviews')
         .insert({
-          expert_id: expertId,
+          expert_id: parseInt(expertId, 10), // Convert string to number
           user_id: currentUser.id,
           rating,
           comment,
@@ -113,7 +112,7 @@ export const useExpertInteractions = (
       const { error } = await supabase
         .from('user_reports')
         .insert({
-          expert_id: expertId,
+          expert_id: parseInt(expertId, 10), // Convert string to number
           user_id: currentUser.id,
           reason,
           details,

@@ -10,7 +10,7 @@ export const expertData: ExtendedExpert[] = [
     profile_picture: "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png",
     specialties: ["Anxiety", "Depression", "Stress Management"],
     rating: 4.9,
-    price: 1500,
+    pricing: { consultation_fee: 1500 },
     availability: ["24 hours"],
     languages: ["English", "Spanish"]
   },
@@ -21,7 +21,7 @@ export const expertData: ExtendedExpert[] = [
     profile_picture: "/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png",
     specialties: ["Cognitive Behavioral Therapy", "Relationship Issues", "Trauma"],
     rating: 4.7,
-    price: 1200,
+    pricing: { consultation_fee: 1200 },
     availability: ["48 hours"],
     languages: ["English", "Mandarin"]
   },
@@ -32,7 +32,7 @@ export const expertData: ExtendedExpert[] = [
     profile_picture: "/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png",
     specialties: ["Family Therapy", "Grief", "Life Transitions"],
     rating: 4.8,
-    price: 1800,
+    pricing: { consultation_fee: 1800 },
     availability: ["Same day"],
     languages: ["English", "Hindi", "Gujarati"]
   },
@@ -43,7 +43,7 @@ export const expertData: ExtendedExpert[] = [
     profile_picture: "/lovable-uploads/1debddfd-ebd1-41dd-98cb-90a9c97f0b3a.png",
     specialties: ["ADHD", "Career Counseling", "Self-Esteem"],
     rating: 4.5,
-    price: 1000,
+    pricing: { consultation_fee: 1000 },
     availability: ["3 days"],
     languages: ["English"]
   },
@@ -54,7 +54,7 @@ export const expertData: ExtendedExpert[] = [
     profile_picture: "/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png",
     specialties: ["Mindfulness", "Bipolar Disorder", "PTSD"],
     rating: 4.9,
-    price: 2000,
+    pricing: { consultation_fee: 2000 },
     availability: ["72 hours"],
     languages: ["English", "Spanish", "Portuguese"]
   },
@@ -65,7 +65,7 @@ export const expertData: ExtendedExpert[] = [
     profile_picture: "/lovable-uploads/1086590e-2848-41ea-a5f9-40b33666bb9d.png",
     specialties: ["Addiction", "Depression", "Sleep Issues"],
     rating: 4.6,
-    price: 1300,
+    pricing: { consultation_fee: 1300 },
     availability: ["48 hours"],
     languages: ["English", "Korean"]
   }

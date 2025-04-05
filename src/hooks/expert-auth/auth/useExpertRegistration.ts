@@ -1,109 +1,53 @@
 
+// This file has typical Supabase insert errors with auth_id field.
+// Let's fix the expert registration flow by creating a utility function to format the data properly.
+
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile, ExpertRegistrationData } from '../types';
 
-/**
- * Hook for handling expert registration functionality
- */
-export const useExpertRegistration = (
-  setExpert: React.Dispatch<React.SetStateAction<ExpertProfile | null>>,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>
-) => {
-  /**
-   * Registers a new expert user and creates their profile
-   */
-  const register = async (expertData: ExpertRegistrationData): Promise<boolean> => {
-    setLoading(true);
+export const registerExpertWithSupabase = async (userData: any) => {
+  try {
+    // First create the user in auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+    });
     
-    try {
-      // Check for any validation issues before proceeding
-      if (!expertData.email || !expertData.password || !expertData.name) {
-        throw new Error('Missing required fields: name, email or password');
-      }
-      
-      console.log('Starting registration process with data:', { 
-        name: expertData.name, 
-        email: expertData.email,
-        // Don't log password for security
-      });
-      
-      // Ensure we don't have an existing session before signup
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // 1. Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: expertData.email,
-        password: expertData.password,
-        options: {
-          data: {
-            name: expertData.name,
-            role: 'expert'
-          }
-        }
-      });
-
-      if (authError) {
-        console.error('Auth signup error:', authError);
-        
-        // Handle the specific case of already registered users
-        if (authError.message.includes('User already registered')) {
-          console.log('Email already registered:', expertData.email);
-          throw new Error('Email is already registered. Please use a different email or try logging in.');
-        }
-        
-        throw authError;
-      }
-
-      if (!authData.user) {
-        throw new Error('Failed to create user account');
-      }
-      
-      console.log('Auth user created with ID:', authData.user.id);
-
-      // 2. Create expert profile with explicit auth_id
-      const { error: profileError } = await supabase
-        .from('expert_accounts')
-        .insert({
-          auth_id: authData.user.id,
-          name: expertData.name,
-          email: expertData.email,
-          phone: expertData.phone || null,
-          address: expertData.address || null,
-          city: expertData.city || null,
-          state: expertData.state || null,
-          country: expertData.country || null,
-          specialization: expertData.specialization || null,
-          experience: expertData.experience || null,
-          bio: expertData.bio || null,
-          certificate_urls: expertData.certificate_urls || [],
-          selected_services: expertData.selected_services || []
-        });
-
-      if (profileError) {
-        console.error('Error creating expert profile:', profileError);
-        // Try to clean up the auth user since profile creation failed
-        try {
-          await supabase.auth.signOut();
-          console.log('Cleaned up auth user after profile creation failure');
-        } catch (cleanupError) {
-          console.error('Failed to clean up auth user:', cleanupError);
-        }
-        throw new Error('Failed to create expert profile: ' + profileError.message);
-      }
-      
-      console.log('Expert profile created successfully');
-
-      toast.success('Registration successful! Please check your email for verification.');
-      return true;
-    } catch (error: any) {
-      console.error('Registration error:', error);
-      toast.error(error.message || 'Registration failed. Please try again.');
-      return false;
-    } finally {
-      setLoading(false);
+    if (authError) throw authError;
+    
+    if (!authData.user) {
+      throw new Error('Failed to create user');
     }
-  };
-
-  return { register };
+    
+    // Then create expert profile with the auth ID
+    const { error: expertError } = await supabase
+      .from('expert_accounts')
+      .insert({
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        address: userData.address,
+        city: userData.city,
+        state: userData.state,
+        country: userData.country,
+        specialization: userData.specialization,
+        experience: userData.experience,
+        bio: userData.bio,
+        certificate_urls: userData.certificate_urls,
+        selected_services: userData.selected_services,
+        auth_id: authData.user.id
+      });
+    
+    if (expertError) {
+      // Clean up the auth user if profile creation fails
+      await supabase.auth.signOut();
+      throw expertError;
+    }
+    
+    return { success: true, user: authData.user };
+  } catch (error: any) {
+    console.error('Expert registration error:', error);
+    toast.error(error.message || 'Registration failed');
+    return { success: false, error };
+  }
 };

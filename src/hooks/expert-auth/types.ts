@@ -1,4 +1,3 @@
-
 // Expert authentication related types
 
 export interface ExpertProfile {
@@ -14,10 +13,10 @@ export interface ExpertProfile {
   country?: string;
   profile_picture?: string;
   specialization?: string;
-  experience?: string | number;
+  experience?: string; // Changed to string to be consistent
   verified?: boolean;
   certificate_urls?: string[];
-  selected_services?: string[] | number[];
+  selected_services?: number[]; // Changed to number[] for consistency
   created_at?: string;
   updated_at?: string;
   average_rating?: number;
@@ -77,7 +76,7 @@ export interface ProfileUpdateData {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string | number;
+  experience?: string; // Changed to string to be consistent
 }
 
 export interface UseExpertAuthReturn extends ExpertAuthState {

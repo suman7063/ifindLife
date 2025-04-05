@@ -25,7 +25,7 @@ export interface Program {
   enrollments?: number;
 }
 
-// Add the missing ExtendedExpert type
+// Add the missing ExtendedExpert type with all required properties
 export interface ExtendedExpert {
   id: number | string;
   name: string;
@@ -45,6 +45,8 @@ export interface ExtendedExpert {
   sessionCount?: number;
   availability?: any[];
   specialties?: string[];
+  languages?: string[]; // Add missing languages property
+  price?: number; // Add missing price property
   pricing?: {
     price_per_min?: number;
     consultation_fee?: number;

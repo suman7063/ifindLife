@@ -11,7 +11,7 @@ export interface FavoriteProgram {
 
 export interface FavoriteExpert {
   id: string;
-  expert_id: string;
+  expert_id: string; // Changed to string to match the type expected
   user_id: string;
 }
 
@@ -51,7 +51,13 @@ export const useUserFavorites = (userId?: string) => {
         
       if (expertError) throw expertError;
       
-      setFavoriteExperts(expertData || []);
+      // Convert expert_id to string to match FavoriteExpert type
+      const convertedExpertData = expertData?.map(item => ({
+        ...item,
+        expert_id: String(item.expert_id)
+      })) || [];
+      
+      setFavoriteExperts(convertedExpertData as FavoriteExpert[]);
     } catch (err) {
       console.error('Error loading favorites:', err);
       setError(err instanceof Error ? err : new Error('Failed to load favorites'));
@@ -109,7 +115,8 @@ export const useUserFavorites = (userId?: string) => {
     if (!userId || !expert?.id) return false;
     
     try {
-      const isFavorite = favoriteExperts.some(fe => String(fe.expert_id) === String(expert.id));
+      const expertId = String(expert.id);
+      const isFavorite = favoriteExperts.some(fe => String(fe.expert_id) === expertId);
       
       if (isFavorite) {
         return await removeExpertFromFavorites(expert);
@@ -132,7 +139,7 @@ export const useUserFavorites = (userId?: string) => {
         .from('user_favorites')
         .insert({ 
           user_id: userId, 
-          expert_id: expertId 
+          expert_id: parseInt(expertId, 10) // Convert to number for the database
         });
         
       if (error) throw error;
@@ -156,7 +163,7 @@ export const useUserFavorites = (userId?: string) => {
         .from('user_favorites')
         .delete()
         .eq('user_id', userId)
-        .eq('expert_id', expertId);
+        .eq('expert_id', parseInt(expertId, 10)); // Convert to number for the database
         
       if (error) throw error;
       

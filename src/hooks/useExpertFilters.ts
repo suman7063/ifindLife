@@ -38,7 +38,7 @@ export function useExpertFilters(initialExperts: ExtendedExpert[] = []) {
     experts.forEach(expert => {
       if (expert.languages) {
         expert.languages.forEach(language => {
-          languagesSet.add(language);
+          if (language) languagesSet.add(language);
         });
       }
     });
@@ -60,10 +60,13 @@ export function useExpertFilters(initialExperts: ExtendedExpert[] = []) {
       }
 
       // Filter by price range
-      if (expert.price !== undefined) {
-        if (expert.price < priceRange[0] || expert.price > priceRange[1]) {
-          return false;
-        }
+      const expertPrice = 
+        expert.pricing?.consultation_fee || 
+        expert.pricing?.price_per_min || 
+        0;
+        
+      if (expertPrice < priceRange[0] || expertPrice > priceRange[1]) {
+        return false;
       }
 
       // Filter by specialties
@@ -79,16 +82,19 @@ export function useExpertFilters(initialExperts: ExtendedExpert[] = []) {
       // Filter by languages
       if (
         selectedLanguages.length > 0 &&
-        !selectedLanguages.some(language => 
+        (!expert.languages || !selectedLanguages.some(language => 
           expert.languages?.includes(language)
-        )
+        ))
       ) {
         return false;
       }
 
       // Filter by experience level
       if (experienceLevel !== 'any' && expert.experience) {
-        const yearsMatch = expert.experience.match(/(\d+)/);
+        // Check if experience is a string
+        const experienceStr = typeof expert.experience === 'string' ? expert.experience : String(expert.experience);
+        const yearsMatch = experienceStr.match(/(\d+)/);
+        
         if (yearsMatch) {
           const years = parseInt(yearsMatch[0], 10);
           
@@ -119,16 +125,29 @@ export function useExpertFilters(initialExperts: ExtendedExpert[] = []) {
 
     switch (sortOption) {
       case 'price_low':
-        return sorted.sort((a, b) => (a.price || 0) - (b.price || 0));
+        return sorted.sort((a, b) => {
+          const priceA = a.pricing?.consultation_fee || a.pricing?.price_per_min || 0;
+          const priceB = b.pricing?.consultation_fee || b.pricing?.price_per_min || 0;
+          return priceA - priceB;
+        });
       case 'price_high':
-        return sorted.sort((a, b) => (b.price || 0) - (a.price || 0));
+        return sorted.sort((a, b) => {
+          const priceA = a.pricing?.consultation_fee || a.pricing?.price_per_min || 0;
+          const priceB = b.pricing?.consultation_fee || b.pricing?.price_per_min || 0;
+          return priceB - priceA;
+        });
       case 'rating':
         return sorted.sort((a, b) => (b.rating || 0) - (a.rating || 0));
       case 'experience':
         return sorted.sort((a, b) => {
-          const aYears = a.experience?.match(/(\d+)/)?.[0] ?? '0';
-          const bYears = b.experience?.match(/(\d+)/)?.[0] ?? '0';
-          return parseInt(bYears) - parseInt(aYears);
+          // Convert experience to string if it's a number
+          const expA = typeof a.experience === 'string' ? a.experience : String(a.experience || '');
+          const expB = typeof b.experience === 'string' ? b.experience : String(b.experience || '');
+          
+          const yearsA = expA.match(/(\d+)/)?.[0] ?? '0';
+          const yearsB = expB.match(/(\d+)/)?.[0] ?? '0';
+          
+          return parseInt(yearsB) - parseInt(yearsA);
         });
       case 'recommended':
       default:
