@@ -19,7 +19,7 @@ export const useUserFavorites = (
       // Check if already in favorites
       const favoriteExperts = currentUser.favorite_experts || [];
       
-      // Use a type-safe filter to check for existing favorites
+      // Use a type-safe filter to check for existing favorites with null safety
       const existingFavorite = favoriteExperts.find(e => {
         // First check if e exists
         if (e === null || e === undefined) {
@@ -27,8 +27,8 @@ export const useUserFavorites = (
         }
         
         // Then check if it's an object with an id property
-        if (typeof e === 'object' && e !== null) {
-          return 'id' in e && e.id !== null && e.id !== undefined && String(e.id) === expertId;
+        if (typeof e === 'object' && e !== null && 'id' in e) {
+          return String(e.id) === expertId;
         }
         
         // Handle primitive type case
@@ -93,7 +93,7 @@ export const useUserFavorites = (
 
       if (error) throw error;
 
-      // Update local state with a properly type-safe filter
+      // Update local state with a properly type-safe filter with null safety
       const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
         // Check if expert exists
         if (expert === null || expert === undefined) {
@@ -101,9 +101,8 @@ export const useUserFavorites = (
         }
         
         // Handle object type safely
-        if (typeof expert === 'object' && expert !== null) {
-          return !('id' in expert) || expert.id === null || expert.id === undefined || 
-                 String(expert.id) !== expertId;
+        if (typeof expert === 'object' && expert !== null && 'id' in expert) {
+          return String(expert.id) !== expertId;
         }
         
         // Handle primitive type case
