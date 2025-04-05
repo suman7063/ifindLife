@@ -28,7 +28,12 @@ export const useUserFavorites = (
         
         // Then check if it's an object with an id property
         if (typeof e === 'object' && e !== null && 'id' in e) {
-          return String(e.id) === expertId;
+          // Additional null check before accessing e.id
+          const eId = e.id;
+          if (eId === null || eId === undefined) {
+            return false;
+          }
+          return String(eId) === expertId;
         }
         
         // Handle primitive type case
@@ -102,7 +107,12 @@ export const useUserFavorites = (
         
         // Handle object type safely
         if (typeof expert === 'object' && expert !== null && 'id' in expert) {
-          return String(expert.id) !== expertId;
+          // Additional null check before accessing expert.id
+          const expertId2 = expert.id;
+          if (expertId2 === null || expertId2 === undefined) {
+            return true; // Keep entries with null IDs
+          }
+          return String(expertId2) !== expertId;
         }
         
         // Handle primitive type case
