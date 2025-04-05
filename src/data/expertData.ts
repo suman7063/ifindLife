@@ -6,6 +6,7 @@ export const expertData: ExtendedExpert[] = [
   {
     id: "1",
     name: "Dr. Sarah Johnson",
+    email: "sarah.johnson@example.com",
     experience: "10+ years",
     profile_picture: "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png",
     specialties: ["Anxiety", "Depression", "Stress Management"],
@@ -17,6 +18,7 @@ export const expertData: ExtendedExpert[] = [
   {
     id: "2",
     name: "Dr. Michael Chen",
+    email: "michael.chen@example.com",
     experience: "8 years",
     profile_picture: "/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png",
     specialties: ["Cognitive Behavioral Therapy", "Relationship Issues", "Trauma"],
@@ -28,6 +30,7 @@ export const expertData: ExtendedExpert[] = [
   {
     id: "3",
     name: "Dr. Emily Patel",
+    email: "emily.patel@example.com",
     experience: "12 years",
     profile_picture: "/lovable-uploads/ae4adda3-ac1f-4376-9e2b-081922120b00.png",
     specialties: ["Family Therapy", "Grief", "Life Transitions"],
@@ -39,6 +42,7 @@ export const expertData: ExtendedExpert[] = [
   {
     id: "4",
     name: "Dr. James Wilson",
+    email: "james.wilson@example.com",
     experience: "6 years",
     profile_picture: "/lovable-uploads/1debddfd-ebd1-41dd-98cb-90a9c97f0b3a.png",
     specialties: ["ADHD", "Career Counseling", "Self-Esteem"],
@@ -50,6 +54,7 @@ export const expertData: ExtendedExpert[] = [
   {
     id: "5",
     name: "Dr. Sophia Rodriguez",
+    email: "sophia.rodriguez@example.com",
     experience: "15 years",
     profile_picture: "/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png",
     specialties: ["Mindfulness", "Bipolar Disorder", "PTSD"],
@@ -61,6 +66,7 @@ export const expertData: ExtendedExpert[] = [
   {
     id: "6",
     name: "Dr. David Kim",
+    email: "david.kim@example.com",
     experience: "9 years",
     profile_picture: "/lovable-uploads/1086590e-2848-41ea-a5f9-40b33666bb9d.png",
     specialties: ["Addiction", "Depression", "Sleep Issues"],

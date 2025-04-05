@@ -143,7 +143,7 @@ export const useExpertAuthentication = (
         state: data.state,
         country: data.country,
         specialization: data.specialization,
-        experience: data.experience,
+        experience: typeof data.experience === 'number' ? String(data.experience) : data.experience,
         bio: data.bio,
         certificate_urls: data.certificate_urls,
         selected_services: data.selected_services

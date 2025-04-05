@@ -1,53 +1,43 @@
 
-/**
- * Simple analytics logging utility for the application
- */
-
-type EventCategory = 'auth' | 'user' | 'expert' | 'program' | 'service' | 'navigation';
-type EventAction = string;
-type EventData = Record<string, any>;
+// Simple analytics logging utility
 
 /**
- * Log an event with optional data payload
+ * Log an event to analytics
  * 
- * @param category - The event category (e.g., 'auth', 'user')
- * @param action - The specific action being performed
- * @param data - Optional data related to the event
+ * @param category - The category of the event
+ * @param action - The action performed
+ * @param data - Additional data for the event
  */
-export const logEvent = (
-  category: EventCategory,
-  action: EventAction,
-  data?: EventData
-): void => {
-  // In development, log to console
-  if (process.env.NODE_ENV !== 'production') {
-    console.log(`[Analytics] ${category}:${action}`, data || '');
+export const logEvent = (category: string, action: string, data?: Record<string, any>): void => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[Analytics] ${category} - ${action}`, data);
     return;
   }
 
-  // In production, this would send data to a proper analytics service
-  // This is just a placeholder for future implementation
+  // In production, this would send data to your analytics service
+  // For example, using Google Analytics, Mixpanel, etc.
   try {
-    // Here you would implement connection to an analytics service
-    // Example: sendToAnalyticsService(category, action, data);
+    // This is a placeholder for actual analytics implementation
+    // Example: analytics.track(category, action, data);
+    
+    // For now, just log to console in production as well
+    console.log(`[Analytics] ${category} - ${action}`, data);
   } catch (error) {
-    console.error('[Analytics] Error logging event:', error);
+    console.error('Analytics error:', error);
   }
 };
 
 /**
- * Track page views
+ * Track a page view
  * 
- * @param pageName - The name or path of the page being viewed
- * @param properties - Additional properties to log with the page view
+ * @param pageName - The name or path of the page
+ * @param pageData - Additional page data
  */
-export const trackPageView = (
-  pageName: string, 
-  properties?: Record<string, any>
-): void => {
-  logEvent('navigation', 'page_view', {
-    page: pageName,
-    timestamp: new Date().toISOString(),
-    ...properties
-  });
+export const trackPageView = (pageName: string, pageData?: Record<string, any>): void => {
+  logEvent('pageview', pageName, pageData);
+};
+
+export default {
+  logEvent,
+  trackPageView
 };

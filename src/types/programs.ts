@@ -43,10 +43,9 @@ export interface ExtendedExpert {
   reviewCount?: number;
   isFavorite?: boolean;
   sessionCount?: number;
-  availability?: any[];
+  availability?: any[] | string[];
   specialties?: string[];
-  languages?: string[]; // Add missing languages property
-  price?: number; // Add missing price property
+  languages?: string[];
   pricing?: {
     price_per_min?: number;
     consultation_fee?: number;
