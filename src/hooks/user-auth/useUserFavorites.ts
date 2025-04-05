@@ -26,7 +26,7 @@ export const useUserFavorites = (
         
         // Then check if it's an object
         if (typeof e === 'object') {
-          // Check if id exists and is not null/undefined
+          // Check if id exists and is not null/undefined - with additional null check before property access
           if (e !== null && 'id' in e && e.id !== undefined && e.id !== null) {
             return String(e.id) === expertId;
           }
@@ -104,7 +104,7 @@ export const useUserFavorites = (
         
         // Then check if it's an object
         if (typeof expert === 'object') {
-          // Check if id exists and is not null/undefined
+          // Check if id exists and is not null/undefined - with additional null check before property access
           if (expert !== null && 'id' in expert && expert.id !== undefined && expert.id !== null) {
             return String(expert.id) !== expertId;
           }
