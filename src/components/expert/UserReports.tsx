@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,7 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
         const { data, error } = await supabase
           .from('expert_reports')
           .select('*')
-          .eq('expert_id', expert.id);
+          .eq('expert_id', expert.id ? String(expert.id) : '');
         
         if (error) {
           console.error('Error fetching reports:', error);
@@ -82,7 +83,7 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
       const userName = reportedUser ? reportedUser.name : 'Unknown User';
       
       const newReport = {
-        expert_id: expert.id,
+        expert_id: expert.id ? String(expert.id) : '',
         user_id: userId,
         user_name: userName,
         reason: reason,
@@ -93,7 +94,7 @@ const UserReports: React.FC<UserReportsProps> = ({ users }) => {
       
       const { data, error } = await supabase
         .from('expert_reports')
-        .insert(newReport)
+        .insert([newReport])
         .select()
         .single();
       

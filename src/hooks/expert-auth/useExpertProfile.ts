@@ -14,10 +14,16 @@ export const useExpertProfile = (
     }
 
     try {
+      // Convert experience to string if it's a number
+      const updateData = {
+        ...data,
+        experience: data.experience ? String(data.experience) : undefined
+      };
+
       const { error } = await supabase
         .from('expert_accounts')
-        .update(data)
-        .eq('id', currentExpert.id);
+        .update(updateData)
+        .eq('id', String(currentExpert.id));
 
       if (error) throw error;
       
@@ -45,21 +51,23 @@ export const useExpertProfile = (
     try {
       // First delete existing availability
       await supabase
-        .from('expert_availability')
+        .from('expert_availabilities')
         .delete()
-        .eq('expert_id', currentExpert.id);
+        .eq('expert_id', String(currentExpert.id));
 
       // Then insert new availability
-      const { error } = await supabase
-        .from('expert_availability')
-        .insert(
-          availability.map(slot => ({
-            expert_id: currentExpert.id,
-            ...slot
-          }))
-        );
+      if (availability.length > 0) {
+        const { error } = await supabase
+          .from('expert_availabilities')
+          .insert(
+            availability.map(slot => ({
+              expert_id: String(currentExpert.id),
+              ...slot
+            }))
+          );
 
-      if (error) throw error;
+        if (error) throw error;
+      }
 
       // Update local state
       setExpert({
@@ -83,13 +91,16 @@ export const useExpertProfile = (
     }
 
     try {
+      // Convert service IDs to strings
+      const serviceIds = services.map(s => String(s.id));
+      
       // Update the expert record with selected service IDs
       const { error } = await supabase
         .from('expert_accounts')
         .update({
-          selected_services: services.map(s => s.id)
+          selected_services: serviceIds
         })
-        .eq('id', currentExpert.id);
+        .eq('id', String(currentExpert.id));
 
       if (error) throw error;
 
@@ -97,7 +108,7 @@ export const useExpertProfile = (
       setExpert({
         ...currentExpert,
         services,
-        selected_services: services.map(s => s.id)
+        selected_services: serviceIds
       });
 
       toast.success('Services updated successfully');
