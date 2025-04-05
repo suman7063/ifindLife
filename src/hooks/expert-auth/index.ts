@@ -1,8 +1,5 @@
 
+// Export all expert auth hooks and types
 export { useExpertAuth } from './useExpertAuth';
-export type { 
-  ExpertProfile, 
-  ExpertAuthState, 
-  UseExpertAuthReturn, 
-  ExpertRegistrationData 
-} from './types';
+export { useExpertProfile } from './useExpertProfile';
+export * from './types';

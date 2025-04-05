@@ -1,49 +1,17 @@
 
-export type ProgramType = 'wellness' | 'academic' | 'business' | 'productivity' | 'leadership';
-
-export type ProgramCategory = 
-  | 'quick-ease' 
-  | 'resilience-building' 
-  | 'super-human' 
-  | 'issue-based'
-  | 'Meditation'
-  | 'Stress Reduction'
-  | 'Study Skills'
-  | 'Time Management'
-  | 'Leadership'
-  | 'Team Building'
-  | 'test'; // Adding 'test' to support the mock data
+export type ProgramType = 'individual' | 'group' | 'self-paced';
+export type ProgramCategory = 'quick-ease' | 'resilience-building' | 'super-human' | 'issue-based';
 
 export interface Program {
   id: number;
   title: string;
   description: string;
-  duration: string;
-  sessions: number;
+  category: string;
+  image_url: string;
+  duration_weeks: number;
+  session_frequency: string;
   price: number;
-  image: string;
-  category: ProgramCategory;
-  programType: ProgramType;
-  enrollments?: number;
-  created_at?: string;
+  created_at: string;
+  is_featured?: boolean;
   is_favorite?: boolean;
-}
-
-// Update ExtendedExpert interface to use profile_picture instead of profilePicture
-export interface ExtendedExpert {
-  id: string | number;
-  name: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  profile_picture?: string;
-  rating?: number;
-  reviews_count?: number;
-  specialties?: string[];
-  languages?: string[];
-  price?: number;
-  availability?: string[];
-  verified?: boolean;
-  email?: string;
-  phone?: string;
 }

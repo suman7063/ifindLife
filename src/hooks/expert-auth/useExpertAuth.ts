@@ -1,138 +1,133 @@
 
-import { useState, useEffect } from 'react';
-import type { UseExpertAuthReturn, ExpertProfile } from './types';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { ExpertProfile, ExpertAuthState, UseExpertAuthReturn } from './types';
+import { useExpertAuthentication } from './useExpertAuthentication';
+import { useExpertProfile } from './useExpertProfile';
+import { toast } from 'sonner';
 
 export const useExpertAuth = (): UseExpertAuthReturn => {
-  const [currentExpert, setCurrentExpert] = useState<ExpertProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authInitialized, setAuthInitialized] = useState(false);
-
-  useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Expert auth state change:', event);
-        
-        // Always update auth state
-        setIsAuthenticated(!!session);
-        
-        if (event === 'SIGNED_IN' && session) {
-          await fetchExpertProfile(session.user.id);
-        }
-        
-        if (event === 'SIGNED_OUT') {
-          setCurrentExpert(null);
-        }
-        
-        setAuthInitialized(true);
-      }
-    );
-
-    // Initial auth check
-    checkAuth();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      setIsLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        await fetchExpertProfile(session.user.id);
-        setIsAuthenticated(true);
-      } else {
-        setCurrentExpert(null);
-        setIsAuthenticated(false);
-      }
-    } catch (error) {
-      console.error('Error checking expert auth:', error);
-      setCurrentExpert(null);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
-      setAuthInitialized(true);
-    }
-  };
-
-  const fetchExpertProfile = async (userId: string) => {
+  const [authState, setAuthState] = useState<ExpertAuthState>({
+    currentExpert: null,
+    isLoading: true,
+    authInitialized: false,
+    isAuthenticated: false,
+  });
+  
+  const fetchExpertProfile = useCallback(async (userId: string) => {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
         .single();
-
-      if (error) throw error;
-      
-      if (data) {
-        setCurrentExpert(data);
-      } else {
-        setCurrentExpert(null);
-      }
-    } catch (error) {
-      console.error('Error fetching expert profile:', error);
-      setCurrentExpert(null);
-    }
-  };
-
-  // Function to check if a user exists with the given email
-  const hasUserAccount = async (email: string): Promise<boolean> => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
         
-      if (error) throw error;
-      return !!data;
+      if (error || !data) {
+        console.error('Error fetching expert profile:', error);
+        return null;
+      }
+      
+      return data as ExpertProfile;
     } catch (error) {
-      console.error('Error checking user account:', error);
-      return false;
+      console.error('Error in fetchExpertProfile:', error);
+      return null;
     }
-  };
+  }, []);
 
-  const login = (email: string, password: string) => {
-    // Implement login
-    return Promise.resolve(false);
-  };
+  const { 
+    login, 
+    logout, 
+    register, 
+    hasUserAccount 
+  } = useExpertAuthentication(
+    (expert) => setAuthState(prev => ({ ...prev, currentExpert: expert, isAuthenticated: !!expert })),
+    (loading) => setAuthState(prev => ({ ...prev, isLoading: loading })),
+    fetchExpertProfile
+  );
+  
+  const { 
+    updateProfile, 
+    updateAvailability, 
+    updateServices 
+  } = useExpertProfile(
+    authState.currentExpert,
+    (expert) => setAuthState(prev => ({ ...prev, currentExpert: expert }))
+  );
 
-  const logout = async () => {
-    // Implement logout
-    return Promise.resolve(true);
-  };
+  // Initialize auth state
+  useEffect(() => {
+    const initializeAuth = async () => {
+      try {
+        // Check for existing session
+        const { data } = await supabase.auth.getSession();
+        
+        if (!data.session) {
+          setAuthState({
+            currentExpert: null,
+            isLoading: false,
+            authInitialized: true,
+            isAuthenticated: false,
+          });
+          return;
+        }
+        
+        // Fetch expert profile
+        const expertProfile = await fetchExpertProfile(data.session.user.id);
+        
+        setAuthState({
+          currentExpert: expertProfile,
+          isLoading: false,
+          authInitialized: true,
+          isAuthenticated: !!expertProfile,
+        });
+      } catch (error) {
+        console.error('Error initializing expert auth:', error);
+        setAuthState({
+          currentExpert: null,
+          isLoading: false,
+          authInitialized: true,
+          isAuthenticated: false,
+        });
+      }
+    };
+    
+    initializeAuth();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          const expertProfile = await fetchExpertProfile(session.user.id);
+          setAuthState({
+            currentExpert: expertProfile,
+            isLoading: false,
+            authInitialized: true,
+            isAuthenticated: !!expertProfile,
+          });
+        } else if (event === 'SIGNED_OUT') {
+          setAuthState({
+            currentExpert: null,
+            isLoading: false,
+            authInitialized: true,
+            isAuthenticated: false,
+          });
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchExpertProfile]);
 
-  const register = () => {
-    // Implement register
-    return Promise.resolve(false);
-  };
-
-  const updateProfile = () => {
-    // Implement update profile
-    return Promise.resolve(false);
-  };
-
-  // Provide the required interface
   return {
-    expert: currentExpert,
-    currentExpert,
-    isAuthenticated,
-    loading: isLoading,
-    authInitialized,
-    isLoading,
-    hasUserAccount,
+    ...authState,
     login,
-    logout: async () => {
-      const result = await logout();
-      return result;
-    },
+    logout,
     register,
-    updateProfile
+    hasUserAccount,
+    updateProfile,
+    updateAvailability,
+    updateServices,
   };
 };

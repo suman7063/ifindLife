@@ -1,24 +1,18 @@
 
 export interface Expert {
-  id: string;
+  id: number | string;
   name: string;
   email: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;
   bio?: string;
   profile_picture?: string;
-  certificate_urls?: string[];
-  average_rating?: number;
-  reviews_count?: number;
+  specialization?: string;
+  experience?: number;
   verified?: boolean;
   created_at?: string;
-  auth_id?: string;
-  selected_services?: number[];
+  updated_at?: string;
+  average_rating?: number;
+  pricing?: {
+    price_per_min?: number;
+    consultation_fee?: number;
+  };
 }
-
-export type { Expert as ExpertProfile };

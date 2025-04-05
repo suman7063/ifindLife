@@ -1,24 +1,39 @@
 
-import { useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-export const useAuthRedirect = (defaultPath: string) => {
+export const useAuthRedirect = (defaultRedirectPath: string = '/') => {
   const navigate = useNavigate();
-
-  /**
-   * Redirects user to specified path or default path
-   * @param replace Whether to replace current history entry (prevents back button going to login page)
-   * @param path Optional custom path to redirect to
-   */
-  const redirectImmediately = useCallback((replace: boolean = true, path?: string) => {
-    const redirectPath = path || defaultPath;
-    console.log(`Redirecting to ${redirectPath} with replace=${replace}`);
+  const location = useLocation();
+  
+  const getRedirectPath = (): string => {
+    // Check for intended URL in state if coming from a protected route
+    const state = location.state as { from?: { pathname: string } } | undefined;
     
-    // Use direct navigation without timeout to prevent potential blocking
-    navigate(redirectPath, { replace });
-  }, [navigate, defaultPath]);
-
+    // First try to get from state (used when redirected from protected routes)
+    if (state && state.from && state.from.pathname) {
+      return state.from.pathname;
+    }
+    
+    // Then try to get from URL search parameter (for login/register pages)
+    const searchParams = new URLSearchParams(location.search);
+    const redirectParam = searchParams.get('redirect');
+    if (redirectParam) {
+      return redirectParam;
+    }
+    
+    // Finally, use the default path
+    return defaultRedirectPath;
+  };
+  
+  const redirectImmediately = () => {
+    const redirectPath = getRedirectPath();
+    console.log(`Redirecting to: ${redirectPath}`);
+    navigate(redirectPath, { replace: true });
+  };
+  
   return {
     redirectImmediately,
+    getRedirectPath
   };
 };

@@ -80,8 +80,8 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with slider - updated height to 530px */}
-      <div className="relative w-full h-[530px] overflow-hidden">
+      {/* Banner Image Section with slider - updated height to 600px */}
+      <div className="relative w-full h-[600px] overflow-hidden">
         {sliderImages.map((image, index) => (
           <div 
             key={index}
@@ -93,13 +93,15 @@ const Hero = () => {
             <img 
               src={image} 
               alt={`Slide ${index + 1}`} 
-              className="w-full h-full object-cover transform scale-70 object-top" // Reduced scale to 70% (10% reduction from 80%)
+              className="w-full h-full object-cover"
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '530px', // Updated to 530px
+                height: '600px', // Updated to 600px
+                objectFit: 'cover',
+                objectPosition: 'center 30%', // Position to show more of the person
                 borderRadius: '0px'
               }}
               loading={index === 0 ? "eager" : "lazy"} // Prioritize first image
