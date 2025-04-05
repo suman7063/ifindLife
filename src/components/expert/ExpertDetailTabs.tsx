@@ -1,5 +1,6 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExpertAbout from './ExpertAbout';
 import ExpertReviews from './ExpertReviews';
@@ -25,8 +26,21 @@ interface ExpertDetailTabsProps {
 }
 
 const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const defaultTab = searchParams.get('book') === 'true' ? 'booking' : 'about';
+
+  // Effect to handle URL params for direct booking tab access
+  useEffect(() => {
+    if (searchParams.get('book') === 'true') {
+      // Remove the parameter after setting the tab
+      // to avoid reactivating the tab on navigation
+      searchParams.delete('book');
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
+
   return (
-    <Tabs defaultValue="about">
+    <Tabs defaultValue={defaultTab}>
       <TabsList className="w-full grid grid-cols-3 mb-8">
         <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="reviews">Reviews</TabsTrigger>

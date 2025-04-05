@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
@@ -79,8 +80,8 @@ const Hero = () => {
 
   return (
     <div className="relative">
-      {/* Banner Image Section with slider - updated height to 450px */}
-      <div className="relative w-full h-[450px] overflow-hidden">
+      {/* Banner Image Section with slider - updated height to 530px */}
+      <div className="relative w-full h-[530px] overflow-hidden">
         {sliderImages.map((image, index) => (
           <div 
             key={index}
@@ -92,13 +93,13 @@ const Hero = () => {
             <img 
               src={image} 
               alt={`Slide ${index + 1}`} 
-              className="w-full h-full object-cover transform scale-80 object-top"
+              className="w-full h-full object-cover transform scale-70 object-top" // Reduced scale to 70% (10% reduction from 80%)
               style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '450px',
+                height: '530px', // Updated to 530px
                 borderRadius: '0px'
               }}
               loading={index === 0 ? "eager" : "lazy"} // Prioritize first image

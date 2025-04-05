@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
@@ -110,12 +111,10 @@ const Navbar = () => {
     }
   };
 
-  // Darker background for internal pages, transparent for homepage
+  // Updated to have consistent light background across all pages
   const getNavbarBackground = () => {
-    if (isHomePage) {
-      return scrolled ? 'bg-background/90' : 'bg-transparent';
-    }
-    return scrolled ? 'bg-gray-900/95' : 'bg-gray-900/85'; // Darker background for internal pages
+    // Always use the same style as homepage (light background)
+    return scrolled ? 'bg-background/90' : 'bg-transparent';
   };
 
   return (
