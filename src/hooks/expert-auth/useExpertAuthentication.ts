@@ -137,6 +137,11 @@ export const useExpertAuthentication = (
         ? data.selected_services.map(id => typeof id === 'string' ? parseInt(id, 10) : id)
         : [];
 
+      // Ensure experience is stored as string
+      const expertExperience = typeof data.experience === 'number' 
+        ? String(data.experience) 
+        : (data.experience || '');
+
       // Create expert profile in expert_accounts table
       const expertData = {
         auth_id: authData.session.user.id,
@@ -148,7 +153,7 @@ export const useExpertAuthentication = (
         state: data.state || '',
         country: data.country || '',
         specialization: data.specialization || '',
-        experience: typeof data.experience === 'number' ? String(data.experience) : (data.experience || ''),
+        experience: expertExperience,
         bio: data.bio || '',
         certificate_urls: data.certificate_urls || [],
         selected_services: selectedServices

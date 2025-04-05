@@ -13,7 +13,7 @@ export const useAuthSynchronization = () => {
   const { 
     isAuthenticated: isUserAuthenticated, 
     currentUser, 
-    loading: userIsLoading,  // Changed from isLoading to loading to match UserAuthContextType
+    loading: userIsLoading,  // Use 'loading' instead of 'isLoading' to match UserAuthContextType
     logout: userLogout
   } = useUserAuth();
   
