@@ -12,7 +12,7 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLoginPage = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const { userAuthLoading, isSynchronizing, authCheckCompleted } = useAuthSynchronization();
+  const { isUserAuthenticated, userLoading, isSynchronizing, authCheckCompleted } = useAuthSynchronization();
   const { isAuthenticated, currentUser, loading } = useUserAuth();
   const navigate = useNavigate();
   
@@ -26,7 +26,7 @@ const UserLoginPage = () => {
     // 5. We haven't already attempted a redirect
     if (isAuthenticated && 
         currentUser && 
-        !userAuthLoading && 
+        !userLoading && 
         !isSynchronizing && 
         !loading && 
         authCheckCompleted && 
@@ -38,7 +38,7 @@ const UserLoginPage = () => {
   }, [
     isAuthenticated, 
     currentUser, 
-    userAuthLoading, 
+    userLoading, 
     isSynchronizing, 
     loading, 
     redirectAttempted,
@@ -47,7 +47,7 @@ const UserLoginPage = () => {
   ]);
   
   // Show loading screen during initialization
-  if (userAuthLoading || isSynchronizing || loading) {
+  if (userLoading || isSynchronizing || loading) {
     console.log('UserLoginPage: Showing loading screen');
     return <LoadingScreen />;
   }

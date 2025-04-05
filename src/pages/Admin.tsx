@@ -15,11 +15,72 @@ import { LogOut, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Expert } from '@/components/admin/experts/types';
+import { expertData } from '@/data/expertData';
+
+// Sample data for services
+const initialServices = [
+  {
+    icon: <span className="text-3xl">🧠</span>,
+    title: "Mental Health Counseling",
+    description: "Professional guidance for emotional well-being and mental health challenges",
+    href: "/services/mental-health",
+    color: "bg-ifind-teal/10"
+  },
+  {
+    icon: <span className="text-3xl">💭</span>,
+    title: "Cognitive Behavioral Therapy",
+    description: "Evidence-based approach to identify and change negative thought patterns",
+    href: "/services/cbt",
+    color: "bg-ifind-purple/10"
+  },
+  {
+    icon: <span className="text-3xl">🌱</span>,
+    title: "Personal Growth",
+    description: "Guidance for self-improvement, confidence building, and personal development",
+    href: "/services/personal-growth",
+    color: "bg-ifind-aqua/10"
+  },
+];
+
+// Sample data for hero section
+const initialHeroSettings = {
+  title: "Discover Mental Wellness Solutions",
+  subtitle: "Professional Support When You Need It",
+  description: "Connect with experienced therapists and wellness experts for personalized guidance to improve your mental well-being and lead a more balanced life.",
+  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1",
+};
+
+// Sample data for testimonials
+const initialTestimonials = [
+  {
+    name: "Sarah Johnson",
+    location: "New York",
+    rating: 5,
+    text: "The guidance I received was transformative. My therapist helped me develop coping strategies that I use every day.",
+    date: "2 months ago",
+    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80"
+  },
+  {
+    name: "Michael Lee",
+    location: "San Francisco",
+    rating: 4,
+    text: "After just a few sessions, I noticed a significant improvement in my anxiety levels. Highly recommend.",
+    date: "1 month ago",
+    imageUrl: "https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80"
+  },
+];
 
 // Set the session timeout for 10 minutes (in milliseconds)
 const SESSION_TIMEOUT = 10 * 60 * 1000; 
 
 const Admin = () => {
+  // State management for each section
+  const [experts, setExperts] = useState<Expert[]>(expertData); 
+  const [services, setServices] = useState(initialServices);
+  const [heroSettings, setHeroSettings] = useState(initialHeroSettings);
+  const [testimonials, setTestimonials] = useState(initialTestimonials);
+  
   const [activeTab, setActiveTab] = useState("experts");
   const { logout } = useAuth();
   const navigate = useNavigate();
@@ -109,19 +170,19 @@ const Admin = () => {
           </TabsList>
           
           <TabsContent value="experts" className="space-y-4">
-            <ExpertsEditor />
+            <ExpertsEditor experts={experts} setExperts={setExperts} />
           </TabsContent>
           
           <TabsContent value="services" className="space-y-4">
-            <ServicesEditor />
+            <ServicesEditor categories={services} setCategories={setServices} />
           </TabsContent>
           
           <TabsContent value="herosection" className="space-y-4">
-            <HeroSectionEditor />
+            <HeroSectionEditor heroSettings={heroSettings} setHeroSettings={setHeroSettings} />
           </TabsContent>
           
           <TabsContent value="testimonials" className="space-y-4">
-            <TestimonialsEditor />
+            <TestimonialsEditor testimonials={testimonials} setTestimonials={setTestimonials} />
           </TabsContent>
           
           <TabsContent value="programs" className="space-y-4">
