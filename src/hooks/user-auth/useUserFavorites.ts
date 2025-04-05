@@ -24,8 +24,7 @@ export const useUserFavorites = (
         }
         
         // Then check if it's an object
-        if (typeof e === 'object') {
-          // We've already checked that e is not null above
+        if (typeof e === 'object' && e !== null) {
           // Now safely check for the id property
           if (!('id' in e)) {
             return false;
@@ -103,8 +102,8 @@ export const useUserFavorites = (
           return false;
         }
         
-        // We've already checked that expert is not null above
-        if (typeof expert === 'object') {
+        // Handle object type properly
+        if (typeof expert === 'object' && expert !== null) {
           // Only keep items that don't match the expertId
           if (!('id' in expert)) {
             return true;
