@@ -26,14 +26,11 @@ export const useUserFavorites = (
         
         // Then check if it's an object
         if (typeof e === 'object') {
-          // Check if id exists and is not null/undefined - with additional null check before property access
-          if (e !== null && 'id' in e && e.id !== undefined && e.id !== null) {
-            return String(e.id) === expertId;
-          }
-          return false;
+          // Check if id exists and is not null/undefined with additional safety checks
+          return e !== null && 'id' in e && e.id !== null && e.id !== undefined && String(e.id) === expertId;
         } else {
           // Handle primitive type case (likely string)
-          return String(e) === expertId;
+          return e !== null && String(e) === expertId;
         }
       });
       
@@ -104,14 +101,12 @@ export const useUserFavorites = (
         
         // Then check if it's an object
         if (typeof expert === 'object') {
-          // Check if id exists and is not null/undefined - with additional null check before property access
-          if (expert !== null && 'id' in expert && expert.id !== undefined && expert.id !== null) {
-            return String(expert.id) !== expertId;
-          }
-          return true; // Keep items without id
+          // Check if id exists and is not null/undefined with additional safety checks
+          return expert === null || !('id' in expert) || expert.id === null || expert.id === undefined || 
+                 String(expert.id) !== expertId;
         } else {
           // Handle primitive type case
-          return String(expert) !== expertId;
+          return expert === null || String(expert) !== expertId;
         }
       });
       
