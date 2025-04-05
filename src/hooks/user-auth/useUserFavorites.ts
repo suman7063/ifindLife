@@ -95,7 +95,7 @@ export const useUserFavorites = (
 
       if (error) throw error;
 
-      // Update local state
+      // Update local state with a proper filter that handles null values
       const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
         // First check if expert is null or undefined
         if (expert === null || expert === undefined) {
