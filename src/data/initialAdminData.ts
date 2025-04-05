@@ -1,24 +1,22 @@
 
-import React from 'react';
-
 // Sample data for services
 export const initialServices = [
   {
-    icon: <span className="text-3xl">🧠</span>,
+    icon: "🧠",
     title: "Mental Health Counseling",
     description: "Professional guidance for emotional well-being and mental health challenges",
     href: "/services/mental-health",
     color: "bg-ifind-teal/10"
   },
   {
-    icon: <span className="text-3xl">💭</span>,
+    icon: "💭",
     title: "Cognitive Behavioral Therapy",
     description: "Evidence-based approach to identify and change negative thought patterns",
     href: "/services/cbt",
     color: "bg-ifind-purple/10"
   },
   {
-    icon: <span className="text-3xl">🌱</span>,
+    icon: "🌱",
     title: "Personal Growth",
     description: "Guidance for self-improvement, confidence building, and personal development",
     href: "/services/personal-growth",
