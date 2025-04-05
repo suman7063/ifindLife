@@ -28,8 +28,10 @@ export const useUserFavorites = (
         
         // Then check if it's an object with an id property
         if (typeof e === 'object' && e !== null && 'id' in e) {
-          // Additional null check before accessing e.id
-          const eId = e.id;
+          // Safely extract the id with null checks
+          if (e === null) return false;
+          
+          const eId = e?.id;
           if (eId === null || eId === undefined) {
             return false;
           }
@@ -107,8 +109,10 @@ export const useUserFavorites = (
         
         // Handle object type safely
         if (typeof expert === 'object' && expert !== null && 'id' in expert) {
-          // Additional null check before accessing expert.id
-          const expertId2 = expert.id;
+          // Safely extract the id with null checks
+          if (expert === null) return true; // Skip null items
+          
+          const expertId2 = expert?.id;
           if (expertId2 === null || expertId2 === undefined) {
             return true; // Keep entries with null IDs
           }
