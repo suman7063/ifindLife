@@ -26,4 +26,5 @@ export interface ExtendedExpert extends Expert {
   sessionCount?: number;
   availability?: any[];
   specialties?: string[];
+  languages?: string[]; // Add the languages property
 }
