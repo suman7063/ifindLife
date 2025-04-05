@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServicesEditor from '@/components/admin/ServicesEditor';
@@ -16,7 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { Expert } from '@/components/admin/experts/types';
-import { expertData } from '@/data/expertData';
+import expertData from '@/data/expertData';
 
 // Sample data for services
 const initialServices = [
