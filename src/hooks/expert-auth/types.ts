@@ -45,12 +45,46 @@ export interface ExpertRegistrationData {
   selected_services?: (string | number)[];
 }
 
+export interface ProfileUpdateData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string | number;
+  bio?: string;
+  profile_picture?: string;
+  [key: string]: any;
+}
+
+export interface ExpertAvailability {
+  id?: string;
+  expert_id?: string;
+  day: string; 
+  start_time: string;
+  end_time: string;
+  availability_type?: string;
+  is_recurring?: boolean;
+}
+
+export interface ExpertService {
+  id: string | number;
+  name?: string;
+  description?: string;
+  price?: number;
+  duration?: number;
+  enabled?: boolean;
+}
+
 export interface UseExpertAuthReturn extends ExpertAuthState {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   register: (data: ExpertRegistrationData) => Promise<boolean>;
   hasUserAccount: (email: string) => Promise<boolean>;
   updateProfile?: (data: Partial<ExpertProfile>) => Promise<boolean>;
-  updateAvailability?: (availabilityData: any) => Promise<boolean>;
+  updateAvailability?: (availabilityData: ExpertAvailability[]) => Promise<boolean>;
   updateServices?: (services: number[]) => Promise<boolean>;
 }

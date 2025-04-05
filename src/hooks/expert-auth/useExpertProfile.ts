@@ -93,11 +93,7 @@ export const useExpertProfile = (
       }
 
       // Update local state
-      setExpert({
-        ...currentExpert,
-        availability
-      });
-
+      // We don't modify currentExpert directly since availability is managed separately
       toast.success('Availability updated successfully');
       return true;
     } catch (error: any) {
@@ -107,16 +103,13 @@ export const useExpertProfile = (
     }
   };
 
-  const updateServices = async (services: ExpertService[]): Promise<boolean> => {
+  const updateServices = async (serviceIds: number[]): Promise<boolean> => {
     if (!currentExpert) {
       toast.error('Not logged in as an expert');
       return false;
     }
 
     try {
-      // Convert service IDs to numbers for consistency with the database
-      const serviceIds = services.map(s => typeof s.id === 'string' ? parseInt(s.id, 10) : s.id);
-      
       // Update the expert record with selected service IDs
       const { error } = await supabase
         .from('expert_accounts')
@@ -130,7 +123,6 @@ export const useExpertProfile = (
       // Update local state
       setExpert({
         ...currentExpert,
-        services,
         selected_services: serviceIds
       });
 
