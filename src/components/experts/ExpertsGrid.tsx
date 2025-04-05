@@ -42,14 +42,13 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {experts.map((expert) => {
-        // Extract specialties from either specialties array or specialization string
-        const specialtiesArray = expert.specialties || 
-                                (expert.specialization ? [expert.specialization] : []);
+        // Extract specialties from specialization or default to empty array
+        const specialtiesArray = expert.specialization ? [expert.specialization] : [];
         
-        // Get price from price_per_min or fallback to a default value
-        const price = expert.price || 30;
+        // Get price from price_per_min or default value
+        const price = expert.price_per_min || 30;
         
-        // Check online status from is_online or verified property
+        // Check online status from verified property
         const isOnline = expert.verified || false;
         
         return (
