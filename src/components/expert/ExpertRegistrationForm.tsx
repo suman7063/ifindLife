@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import PersonalInfoStep from './PersonalInfoStep';
 import AddressInfoStep from './AddressInfoStep';
 import ProfessionalInfoStep from './ProfessionalInfoStep';
@@ -13,6 +14,8 @@ import { Label } from '@/components/ui/label';
 import { FormMessage } from '@/components/ui/form';
 
 const ExpertRegistrationForm = () => {
+  const navigate = useNavigate();
+  
   const {
     step,
     services,
@@ -49,9 +52,19 @@ const ExpertRegistrationForm = () => {
     }
   });
 
+  const onSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await handleSubmit(e);
+    
+    if (success) {
+      // Redirect to login page with status parameter
+      navigate('/expert-login?status=registered');
+    }
+  };
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={onSubmitForm} className="space-y-6">
         {formError && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4 mr-2" />
@@ -125,6 +138,13 @@ const ExpertRegistrationForm = () => {
               {errors.acceptedTerms && (
                 <FormMessage>{errors.acceptedTerms}</FormMessage>
               )}
+              
+              <Alert className="bg-gray-100 border-gray-200">
+                <AlertDescription>
+                  By submitting this form, you acknowledge that your application will be reviewed by our administrators.
+                  You will receive an email notification once your application has been processed.
+                </AlertDescription>
+              </Alert>
             </div>
             
             <div className="flex justify-between mt-6">

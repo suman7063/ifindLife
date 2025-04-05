@@ -1,6 +1,5 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ExpertFormData, formDataToRegistrationData } from '../types';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
@@ -9,7 +8,6 @@ import { fetchServices } from '../services/expertServicesService';
 import { ServiceType } from '../types';
 
 export const useExpertRegistration = () => {
-  const navigate = useNavigate();
   const { register } = useExpertAuth();
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<ServiceType[]>([]);
@@ -150,7 +148,7 @@ export const useExpertRegistration = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (isSubmitting) return;
+    if (isSubmitting) return false;
     
     // Clear any previous form errors
     setFormError(null);
@@ -159,7 +157,7 @@ export const useExpertRegistration = () => {
     if (!validateCurrentStep()) {
       // Show toast for validation errors
       toast.error('Please correct the errors before submitting');
-      return;
+      return false;
     }
     
     setIsSubmitting(true);
@@ -175,11 +173,11 @@ export const useExpertRegistration = () => {
       const success = await register(registrationData);
       
       if (success) {
-        toast.success("Registration successful! Please check your email for verification and then log in.");
-        navigate('/expert-login');
+        return true;
       } else {
         setFormError("Registration failed. Please try again with a different email.");
         toast.error("Registration failed. Please try again with a different email.");
+        return false;
       }
     } catch (error: any) {
       console.error('Error during registration:', error);
@@ -195,6 +193,7 @@ export const useExpertRegistration = () => {
       } else {
         toast.error("Registration failed. Please try again later.");
       }
+      return false;
     } finally {
       setIsSubmitting(false);
     }

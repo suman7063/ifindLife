@@ -77,6 +77,20 @@ export const useExpertAuthentication = (
         return false;
       }
       
+      // Check if expert's account is approved
+      if (expertProfile.status !== 'approved') {
+        let message = 'Your account has not been approved yet.';
+        if (expertProfile.status === 'pending') {
+          message = 'Your account is pending approval. Please check back later.';
+        } else if (expertProfile.status === 'disapproved') {
+          message = 'Your account has been disapproved. Please check your email for details.';
+        }
+        
+        toast.error(message);
+        await supabase.auth.signOut();
+        return false;
+      }
+      
       setExpert(expertProfile);
       setIsUserLoggedIn(true);
       toast.success('Successfully logged in as expert');
@@ -182,7 +196,8 @@ export const useExpertAuthentication = (
         experience: expertExperience,
         bio: data.bio || '',
         certificate_urls: data.certificate_urls || [],
-        selected_services: selectedServices
+        selected_services: selectedServices,
+        status: 'pending' // All new registrations start with pending status
       };
       
       const { error: profileError } = await supabase
@@ -198,17 +213,10 @@ export const useExpertAuthentication = (
         return false;
       }
       
-      // Fetch the newly created expert profile
-      const expertProfile = await fetchExpertProfile(authData.session.user.id);
+      // Sign out after successful registration
+      await supabase.auth.signOut();
       
-      if (!expertProfile) {
-        toast.error('Failed to fetch expert profile after registration.');
-        return false;
-      }
-      
-      setExpert(expertProfile);
-      setIsUserLoggedIn(true);
-      toast.success('Registration successful!');
+      toast.success('Registration successful! Your account is pending approval. You will be notified via email once approved.');
       return true;
     } catch (error) {
       console.error('Registration error:', error);

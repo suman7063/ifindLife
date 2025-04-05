@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -11,7 +12,7 @@ import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, LogOut } from 'lucide-react';
+import { AlertCircle, LogOut, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/types/supabase';
 
@@ -22,6 +23,7 @@ const ExpertLogin = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isCheckingUser, setIsCheckingUser] = useState(true);
+  const [statusMessage, setStatusMessage] = useState<{type: 'info' | 'warning' | 'success' | 'error', message: string} | null>(null);
   
   const { login, currentExpert: expert, isLoading: loading, authInitialized, hasUserAccount } = useExpertAuth();
   const { 
@@ -38,6 +40,29 @@ const ExpertLogin = () => {
   
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Check for status message in the URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const status = params.get('status');
+    
+    if (status === 'registered') {
+      setStatusMessage({
+        type: 'success',
+        message: 'Registration successful! Your account is pending approval. You will be notified via email once approved.'
+      });
+    } else if (status === 'pending') {
+      setStatusMessage({
+        type: 'info',
+        message: 'Your account is still pending approval. You will be notified via email once approved.'
+      });
+    } else if (status === 'disapproved') {
+      setStatusMessage({
+        type: 'warning',
+        message: 'Your account has been disapproved. Please check your email for details or contact support.'
+      });
+    }
+  }, [location.search]);
   
   useEffect(() => {
     const checkUserLogin = async () => {
@@ -96,6 +121,7 @@ const ExpertLogin = () => {
     }
   }, [location]);
   
+  // Navigate to dashboard if authenticated
   useEffect(() => {
     if (!expert || !authInitialized || loading || redirectAttempted) {
       return;
@@ -140,13 +166,12 @@ const ExpertLogin = () => {
       const success = await login(email, password);
       
       if (!success) {
+        // Login error is handled in the useExpertAuthentication hook with toast messages
         setLoginError('Login failed. Please check your credentials and try again.');
       } else {
         console.log('Expert login successful');
         toast.success('Login successful! Redirecting to dashboard...');
-        setTimeout(() => {
-          navigate('/expert-dashboard', { replace: true });
-        }, 500);
+        // No need to use setTimeout - the useEffect will handle redirection
       }
       
       return success;
@@ -209,6 +234,22 @@ const ExpertLogin = () => {
       <Navbar />
       <main className="flex-1 py-10 flex items-center justify-center bg-stars">
         <div className="container max-w-4xl">
+          {statusMessage && (
+            <div className="mb-6">
+              <Alert variant={statusMessage.type === 'error' ? "destructive" : "default"}>
+                {statusMessage.type === 'info' && <Info className="h-4 w-4" />}
+                {statusMessage.type === 'warning' && <AlertCircle className="h-4 w-4" />}
+                {statusMessage.type === 'error' && <AlertCircle className="h-4 w-4" />}
+                <AlertTitle>
+                  {statusMessage.type === 'success' ? 'Success' : 
+                   statusMessage.type === 'info' ? 'Information' : 
+                   statusMessage.type === 'warning' ? 'Warning' : 'Error'}
+                </AlertTitle>
+                <AlertDescription>{statusMessage.message}</AlertDescription>
+              </Alert>
+            </div>
+          )}
+          
           {hasDualSessions && (
             <div className="mb-6">
               <Alert variant="destructive">

@@ -10,6 +10,7 @@ import { SessionsEditor } from '@/components/admin/sessions';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
 import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable';
+import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 import { Expert } from '@/components/admin/experts/types';
 
 interface AdminTabsProps {
@@ -41,6 +42,7 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
     <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="mb-8 flex flex-wrap h-auto">
         <TabsTrigger value="experts">Experts</TabsTrigger>
+        <TabsTrigger value="expertApprovals">Expert Approvals</TabsTrigger>
         <TabsTrigger value="services">Services</TabsTrigger>
         <TabsTrigger value="herosection">Hero Section</TabsTrigger>
         <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
@@ -53,6 +55,10 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
       
       <TabsContent value="experts" className="space-y-4">
         <ExpertsEditor experts={experts} setExperts={setExperts} />
+      </TabsContent>
+      
+      <TabsContent value="expertApprovals" className="space-y-4">
+        <ExpertApprovals />
       </TabsContent>
       
       <TabsContent value="services" className="space-y-4">
