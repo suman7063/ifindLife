@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useUserAuth } from '@/contexts/auth/UserAuthContext';
 import { Expert, UserProfile } from '@/types/supabase';
@@ -17,24 +18,21 @@ export const useUserFavorites = (
     try {
       // Check if already in favorites
       const favoriteExperts = currentUser.favorite_experts || [];
+      
+      // Use a type-safe filter to check for existing favorites
       const existingFavorite = favoriteExperts.find(e => {
-        // First check if e is null or undefined
+        // First check if e exists
         if (e === null || e === undefined) {
           return false;
         }
         
-        // Then check if it's an object
+        // Then check if it's an object with an id property
         if (typeof e === 'object' && e !== null) {
-          // Now safely check for the id property
-          if (!('id' in e)) {
-            return false;
-          }
-          // Then check if id exists and is valid
-          return e.id !== null && e.id !== undefined && String(e.id) === expertId;
-        } else {
-          // Handle primitive type case (likely string)
-          return String(e) === expertId;
+          return 'id' in e && e.id !== null && e.id !== undefined && String(e.id) === expertId;
         }
+        
+        // Handle primitive type case
+        return String(e) === expertId;
       });
       
       if (existingFavorite) {
@@ -95,25 +93,21 @@ export const useUserFavorites = (
 
       if (error) throw error;
 
-      // Update local state with a proper filter that handles null values
+      // Update local state with a properly type-safe filter
       const updatedFavorites = (currentUser.favorite_experts || []).filter(expert => {
-        // First check if expert is null or undefined
+        // Check if expert exists
         if (expert === null || expert === undefined) {
           return false;
         }
         
-        // Handle object type properly
+        // Handle object type safely
         if (typeof expert === 'object' && expert !== null) {
-          // Only keep items that don't match the expertId
-          if (!('id' in expert)) {
-            return true;
-          }
-          // Safe check for the id value
-          return expert.id === null || expert.id === undefined || String(expert.id) !== expertId;
-        } else {
-          // Handle primitive type case
-          return String(expert) !== expertId;
+          return !('id' in expert) || expert.id === null || expert.id === undefined || 
+                 String(expert.id) !== expertId;
         }
+        
+        // Handle primitive type case
+        return String(expert) !== expertId;
       });
       
       const updatedUser: UserProfile = {

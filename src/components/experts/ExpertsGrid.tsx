@@ -41,80 +41,92 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {experts.map((expert) => (
-        <Card 
-          key={expert.id}
-          className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer border bg-card h-full"
-          onClick={() => handleViewProfile(expert.id)}
-        >
-          <div className="relative">
-            <img 
-              src={expert.profile_picture || '/placeholder.svg'} 
-              alt={expert.name}
-              className="w-full h-40 object-cover"
-            />
-            {expert.verified && (
-              <Badge className="absolute top-2 right-2 bg-green-500 text-white">
-                Online
-              </Badge>
-            )}
-          </div>
-          
-          <div className="p-4">
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="text-base font-semibold">{expert.name}</h3>
-              <div className="flex items-center text-yellow-500">
-                <Star className="h-3.5 w-3.5 fill-current" />
-                <span className="ml-1 text-sm text-foreground">{expert.average_rating?.toFixed(1) || '0.0'}</span>
-              </div>
-            </div>
-            
-            <p className="text-xs text-muted-foreground mb-2">
-              {expert.experience || '0'} years experience
-            </p>
-            
-            <div className="flex flex-wrap gap-1 mb-3">
-              {(expert.specialties || []).slice(0, 2).map((specialty, i) => (
-                <Badge key={i} variant="outline" className="text-xs bg-secondary/10">
-                  {specialty}
-                </Badge>
-              ))}
-              {(expert.specialties?.length || 0) > 2 && (
-                <Badge variant="outline" className="text-xs">
-                  +{(expert.specialties?.length || 0) - 2}
+      {experts.map((expert) => {
+        // Extract specialties from either specialties array or specialization string
+        const specialtiesArray = expert.specialties || 
+                                (expert.specialization ? [expert.specialization] : []);
+        
+        // Get price from price_per_min or fallback to a default value
+        const price = expert.price || 30;
+        
+        // Check online status from is_online or verified property
+        const isOnline = expert.verified || false;
+        
+        return (
+          <Card 
+            key={expert.id}
+            className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer border bg-card h-full"
+            onClick={() => handleViewProfile(expert.id)}
+          >
+            <div className="relative">
+              <img 
+                src={expert.profile_picture || '/placeholder.svg'} 
+                alt={expert.name}
+                className="w-full h-40 object-cover"
+              />
+              {isOnline && (
+                <Badge className="absolute top-2 right-2 bg-green-500 text-white">
+                  Online
                 </Badge>
               )}
             </div>
             
-            <div className="flex justify-between items-center mb-3">
-              <span className="text-xs text-muted-foreground">Available</span>
-              <span className="font-medium text-sm">₹{expert.price_per_min || 30}/min</span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <Button 
-                size="sm" 
-                className="w-full flex items-center justify-center text-xs"
-                onClick={(e) => handleCallNow(e, expert.id)}
-                disabled={!expert.is_online}
-              >
-                <PhoneCall className="h-3 w-3 mr-1" />
-                Call Now
-              </Button>
+            <div className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <h3 className="text-base font-semibold">{expert.name}</h3>
+                <div className="flex items-center text-yellow-500">
+                  <Star className="h-3.5 w-3.5 fill-current" />
+                  <span className="ml-1 text-sm text-foreground">{expert.average_rating?.toFixed(1) || '0.0'}</span>
+                </div>
+              </div>
               
-              <Button 
-                size="sm" 
-                variant="outline"
-                className="w-full flex items-center justify-center text-xs"
-                onClick={(e) => handleBookAppointment(e, expert.id)}
-              >
-                <Calendar className="h-3 w-3 mr-1" />
-                Book
-              </Button>
+              <p className="text-xs text-muted-foreground mb-2">
+                {expert.experience || '0'} years experience
+              </p>
+              
+              <div className="flex flex-wrap gap-1 mb-3">
+                {specialtiesArray.slice(0, 2).map((specialty, i) => (
+                  <Badge key={i} variant="outline" className="text-xs bg-secondary/10">
+                    {specialty}
+                  </Badge>
+                ))}
+                {specialtiesArray.length > 2 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{specialtiesArray.length - 2}
+                  </Badge>
+                )}
+              </div>
+              
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-xs text-muted-foreground">Available</span>
+                <span className="font-medium text-sm">₹{price}/min</span>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-2">
+                <Button 
+                  size="sm" 
+                  className="w-full flex items-center justify-center text-xs"
+                  onClick={(e) => handleCallNow(e, expert.id)}
+                  disabled={!isOnline}
+                >
+                  <PhoneCall className="h-3 w-3 mr-1" />
+                  Call Now
+                </Button>
+                
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  className="w-full flex items-center justify-center text-xs"
+                  onClick={(e) => handleBookAppointment(e, expert.id)}
+                >
+                  <Calendar className="h-3 w-3 mr-1" />
+                  Book
+                </Button>
+              </div>
             </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        );
+      })}
     </div>
   );
 };
