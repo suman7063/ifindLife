@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useUserAuth } from '@/contexts/auth/UserAuthContext';
 import { Expert, UserProfile } from '@/types/supabase';
@@ -25,8 +26,10 @@ export const useUserFavorites = (
         
         // Then check if it's an object
         if (typeof e === 'object') {
-          // Safe null check before accessing properties
-          return 'id' in e && e.id !== null && e.id !== undefined && String(e.id) === expertId;
+          // Safe null check before accessing properties - e is guaranteed not null here
+          if (!('id' in e)) return false;
+          if (e.id === null || e.id === undefined) return false;
+          return String(e.id) === expertId;
         } else {
           // Handle primitive type case (likely string)
           return String(e) === expertId;
@@ -98,7 +101,7 @@ export const useUserFavorites = (
           return false;
         }
         
-        // Safe handling for object types
+        // Safe handling for object types - expert is guaranteed not null here
         if (typeof expert === 'object') {
           // Only keep items that don't match the expertId
           if (!('id' in expert)) return true;
