@@ -4,180 +4,167 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ExpertProfile } from './types';
 
-/**
- * Custom hook for managing expert certificates
- */
 export const useExpertCertificates = (
-  expert: ExpertProfile | null,
-  setExpert: React.Dispatch<React.SetStateAction<ExpertProfile | null>>,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>
+  currentExpert: ExpertProfile | null,
+  setExpert: (expert: ExpertProfile | null) => void
 ) => {
-  const [uploading, setUploading] = useState<boolean>(false);
-  
-  /**
-   * Upload certificate files to storage
-   */
-  const uploadCertificates = async (files: File[]): Promise<string[]> => {
-    if (!expert?.id) {
-      toast.error('Expert profile not found');
-      return [];
+  const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  // Upload certificate
+  const uploadCertificate = async (file: File): Promise<string | null> => {
+    if (!currentExpert) {
+      toast.error('Not logged in as an expert');
+      return null;
     }
 
-    setUploading(true);
-    const uploadedUrls: string[] = [];
+    if (!file) {
+      toast.error('No file selected');
+      return null;
+    }
+
+    setIsUploading(true);
+    setProgress(0);
     
     try {
-      // Process each file
-      for (const file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${expert.id}-${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        const filePath = `certificates/${fileName}`;
-        
-        // Upload file to storage
-        const { error: uploadError } = await supabase.storage
-          .from('expert-certificates')
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-          
-        if (uploadError) {
-          toast.error(`Error uploading certificate: ${uploadError.message}`);
-          continue;
-        }
-        
-        // Get public URL
-        const { data } = supabase.storage
-          .from('expert-certificates')
-          .getPublicUrl(filePath);
-          
-        uploadedUrls.push(data.publicUrl);
+      // Check file type
+      const fileExt = file.name.split('.').pop()?.toLowerCase();
+      if (!['pdf', 'jpg', 'jpeg', 'png'].includes(fileExt || '')) {
+        toast.error('Invalid file type. Only PDF, JPG, JPEG, PNG are allowed');
+        return null;
       }
       
-      return uploadedUrls;
-    } catch (error) {
-      console.error('Error uploading certificates:', error);
-      toast.error('Failed to upload certificates');
-      return [];
-    } finally {
-      setUploading(false);
-    }
-  };
-  
-  /**
-   * Update expert profile with new certificates
-   */
-  const updateCertificates = async (files: File[]): Promise<boolean> => {
-    if (!expert) {
-      toast.error('Expert profile not found');
-      return false;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // Upload the files
-      const newCertificateUrls = await uploadCertificates(files);
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size exceeds 5MB limit');
+        return null;
+      }
+
+      // Generate unique file name
+      const fileName = `${Date.now()}_${file.name}`;
+      const filePath = `expert_certificates/${currentExpert.id}/${fileName}`;
       
-      if (newCertificateUrls.length === 0) {
-        toast.error('No certificates were uploaded');
-        return false;
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setProgress((prev) => {
+          const newProgress = prev + 10;
+          return newProgress <= 90 ? newProgress : prev;
+        });
+      }, 500);
+
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('certificates')
+        .upload(filePath, file);
+        
+      clearInterval(progressInterval);
+      
+      if (uploadError) {
+        console.error('Certificate upload error:', uploadError);
+        toast.error(uploadError.message || 'Failed to upload certificate');
+        return null;
       }
       
-      // Combine existing and new certificates
-      const existingUrls = expert.certificate_urls || [];
-      const updatedUrls = [...existingUrls, ...newCertificateUrls];
+      setProgress(100);
       
-      // Update expert profile
-      const { error } = await supabase
+      // Get the file URL
+      const { data } = supabase.storage
+        .from('certificates')
+        .getPublicUrl(filePath);
+        
+      const fileUrl = data.publicUrl;
+      
+      // Update the expert's certificate URLs
+      const certificateUrls = currentExpert.certificate_urls || [];
+      const updatedUrls = [...certificateUrls, fileUrl];
+      
+      // Update certificate URLs in database
+      const { error: updateError } = await supabase
         .from('expert_accounts')
         .update({ certificate_urls: updatedUrls })
-        .eq('id', expert.id);
+        .eq('id', String(currentExpert.id));
         
-      if (error) {
-        toast.error('Failed to update certificates in profile');
-        return false;
+      if (updateError) {
+        console.error('Error updating certificate URLs:', updateError);
+        toast.error(updateError.message || 'Failed to update certificate URLs');
+        return null;
       }
       
       // Update local state
       setExpert({
-        ...expert,
+        ...currentExpert,
         certificate_urls: updatedUrls
       });
       
-      toast.success('Certificates uploaded successfully');
-      return true;
-    } catch (error) {
-      console.error('Error updating certificates:', error);
-      toast.error('An unexpected error occurred');
-      return false;
+      toast.success('Certificate uploaded successfully');
+      return fileUrl;
+    } catch (error: any) {
+      console.error('Error uploading certificate:', error);
+      toast.error(error.message || 'Failed to upload certificate');
+      return null;
     } finally {
-      setLoading(false);
+      setIsUploading(false);
     }
   };
   
-  /**
-   * Delete certificate from storage and profile
-   */
-  const deleteCertificate = async (certificateUrl: string): Promise<boolean> => {
-    if (!expert) {
-      toast.error('Expert profile not found');
+  // Remove certificate
+  const removeCertificate = async (url: string): Promise<boolean> => {
+    if (!currentExpert) {
+      toast.error('Not logged in as an expert');
       return false;
     }
-    
-    setLoading(true);
-    
+
     try {
-      // Extract file path from URL
-      const urlParts = certificateUrl.split('/');
-      const filePath = `certificates/${urlParts[urlParts.length - 1]}`;
+      // Get the file path from the URL
+      const urlObj = new URL(url);
+      const pathname = urlObj.pathname;
+      const filePath = pathname.split('/').slice(2).join('/'); // Remove /storage/v1/object
       
-      // Remove from storage
+      // Delete file from storage
       const { error: deleteError } = await supabase.storage
-        .from('expert-certificates')
+        .from('certificates')
         .remove([filePath]);
         
       if (deleteError) {
-        console.warn('Error removing file from storage:', deleteError);
-        // Continue anyway, as we still want to remove it from the profile
+        console.error('Error deleting certificate:', deleteError);
+        toast.error(deleteError.message || 'Failed to delete certificate');
+        return false;
       }
       
-      // Get current certificate URLs and filter out the deleted one
-      const currentUrls = expert.certificate_urls || [];
-      const updatedUrls = currentUrls.filter(url => url !== certificateUrl);
+      // Update certificate URLs in database
+      const certificateUrls = currentExpert.certificate_urls || [];
+      const updatedUrls = certificateUrls.filter(cert => cert !== url);
       
-      // Update expert profile
-      const { error } = await supabase
+      const { error: updateError } = await supabase
         .from('expert_accounts')
         .update({ certificate_urls: updatedUrls })
-        .eq('id', expert.id);
+        .eq('id', String(currentExpert.id));
         
-      if (error) {
-        toast.error('Failed to update certificates in profile');
+      if (updateError) {
+        console.error('Error updating certificate URLs:', updateError);
+        toast.error(updateError.message || 'Failed to update certificate URLs');
         return false;
       }
       
       // Update local state
       setExpert({
-        ...expert,
+        ...currentExpert,
         certificate_urls: updatedUrls
       });
       
-      toast.success('Certificate deleted successfully');
+      toast.success('Certificate removed successfully');
       return true;
-    } catch (error) {
-      console.error('Error deleting certificate:', error);
-      toast.error('An unexpected error occurred');
+    } catch (error: any) {
+      console.error('Error removing certificate:', error);
+      toast.error(error.message || 'Failed to remove certificate');
       return false;
-    } finally {
-      setLoading(false);
     }
   };
-  
-  return { 
-    uploadCertificates,
-    updateCertificates,
-    deleteCertificate,
-    uploading 
+
+  return {
+    isUploading,
+    progress,
+    uploadCertificate,
+    removeCertificate
   };
 };

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile, ExpertRegistrationData } from './types';
@@ -134,23 +135,21 @@ export const useExpertAuthentication = (
       // Create expert profile in expert_accounts table
       const { error: profileError } = await supabase
         .from('expert_accounts')
-        .insert([
-          {
-            auth_id: authData.session.user.id,
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            address: data.address,
-            city: data.city,
-            state: data.state,
-            country: data.country,
-            specialization: data.specialization,
-            experience: data.experience,
-            bio: data.bio,
-            certificate_urls: data.certificate_urls,
-            selected_services: data.selected_services
-          }
-        ]);
+        .insert({
+          auth_id: authData.session.user.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          city: data.city,
+          state: data.state,
+          country: data.country,
+          specialization: data.specialization,
+          experience: data.experience,
+          bio: data.bio,
+          certificate_urls: data.certificate_urls,
+          selected_services: data.selected_services
+        });
       
       if (profileError) {
         console.error('Registration profile error:', profileError);

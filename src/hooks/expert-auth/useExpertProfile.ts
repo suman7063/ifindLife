@@ -17,7 +17,7 @@ export const useExpertProfile = (
       // Convert experience to string if it's a number
       const updateData = {
         ...data,
-        experience: data.experience ? String(data.experience) : undefined
+        experience: data.experience !== undefined ? String(data.experience) : undefined
       };
 
       const { error } = await supabase
@@ -49,24 +49,49 @@ export const useExpertProfile = (
     }
 
     try {
+      const expertId = String(currentExpert.id);
+      
       // First delete existing availability
       await supabase
         .from('expert_availabilities')
         .delete()
-        .eq('expert_id', String(currentExpert.id));
+        .eq('expert_id', expertId);
 
-      // Then insert new availability
-      if (availability.length > 0) {
-        const { error } = await supabase
+      // For each availability slot, create a record
+      for (const slot of availability) {
+        // Insert into expert_availabilities
+        const { error: availabilityError } = await supabase
           .from('expert_availabilities')
-          .insert(
-            availability.map(slot => ({
-              expert_id: String(currentExpert.id),
-              ...slot
-            }))
-          );
+          .insert({
+            expert_id: expertId,
+            availability_type: 'weekly', // Default type
+            start_date: new Date().toISOString().split('T')[0], // Current date
+            end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 90 days from now
+          });
 
-        if (error) throw error;
+        if (availabilityError) throw availabilityError;
+
+        // Get the latest availability ID
+        const { data: latestAvailability } = await supabase
+          .from('expert_availabilities')
+          .select('id')
+          .eq('expert_id', expertId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        // Add time slots for this availability
+        const { error: timeSlotError } = await supabase
+          .from('expert_time_slots')
+          .insert({
+            availability_id: latestAvailability.id,
+            day_of_week: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(slot.day),
+            start_time: slot.start_time,
+            end_time: slot.end_time,
+            is_booked: false
+          });
+
+        if (timeSlotError) throw timeSlotError;
       }
 
       // Update local state
@@ -91,7 +116,7 @@ export const useExpertProfile = (
     }
 
     try {
-      // Convert service IDs to strings
+      // Convert service IDs to strings for consistency
       const serviceIds = services.map(s => String(s.id));
       
       // Update the expert record with selected service IDs

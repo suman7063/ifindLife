@@ -1,3 +1,4 @@
+
 // Expert authentication related types
 
 export interface ExpertProfile {
@@ -76,7 +77,7 @@ export interface ProfileUpdateData {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: number;
+  experience?: string | number;
 }
 
 export interface UseExpertAuthReturn extends ExpertAuthState {

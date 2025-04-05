@@ -1,274 +1,226 @@
+
 import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
+import { Container } from '@/components/ui/container';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Program } from '@/types/programs';
+import { Button } from '@/components/ui/button';
+import { Search } from 'lucide-react';
+import { Program, ProgramType } from '@/types/programs';
+import ProgramCard from '@/components/programs/ProgramCard';
 
-interface ProgramsByCategory extends Record<string, Program[]> {
-  wellness: Program[];
-  academic: Program[];
-  business: Program[];
-  [key: string]: Program[];
-}
+const Programs = () => {
+  const [activeTab, setActiveTab] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [programs, setPrograms] = useState<Program[]>([
+    // Sample wellness programs
+    {
+      id: 1,
+      title: "Stress Management Mastery",
+      description: "Learn powerful techniques to manage stress and anxiety in your daily life. This program combines cognitive strategies, mindfulness practices, and lifestyle adjustments.",
+      programType: "wellness",
+      category: "Stress Reduction",
+      duration: "4 weeks",
+      sessions: 8,
+      price: 199.99,
+      image: "/lovable-uploads/program-stress.jpg",
+      enrollments: 248,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 2,
+      title: "Mindfulness Meditation",
+      description: "Develop a consistent meditation practice that helps you stay present and focused. Perfect for beginners wanting to reduce stress and improve mental clarity.",
+      programType: "wellness",
+      category: "Meditation",
+      duration: "6 weeks",
+      sessions: 12,
+      price: 149.99,
+      image: "/lovable-uploads/program-meditation.jpg",
+      enrollments: 352,
+      created_at: new Date().toISOString()
+    },
+    
+    // Sample academic programs
+    {
+      id: 3,
+      title: "Exam Anxiety Solution",
+      description: "Practical techniques to overcome test anxiety and perform at your best. Designed specifically for students facing high-pressure academic situations.",
+      programType: "academic",
+      category: "Study Skills",
+      duration: "3 weeks",
+      sessions: 6,
+      price: 99.99,
+      image: "/lovable-uploads/program-exam.jpg",
+      enrollments: 175,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 4,
+      title: "Time Management for Students",
+      description: "Master effective time management to balance academics, extracurriculars, and personal life. Learn to prioritize tasks and increase productivity.",
+      programType: "academic",
+      category: "Time Management",
+      duration: "4 weeks",
+      sessions: 8,
+      price: 129.99,
+      image: "/lovable-uploads/program-time.jpg",
+      enrollments: 210,
+      created_at: new Date().toISOString()
+    },
+    
+    // Sample business programs
+    {
+      id: 5,
+      title: "Leadership Wellness",
+      description: "A comprehensive approach to sustainable leadership that prevents burnout and promotes long-term success. Designed for executives and team leaders.",
+      programType: "business",
+      category: "Leadership",
+      duration: "8 weeks",
+      sessions: 16,
+      price: 399.99,
+      image: "/lovable-uploads/program-leadership.jpg",
+      enrollments: 124,
+      created_at: new Date().toISOString()
+    },
+    {
+      id: 6,
+      title: "Team Resilience Building",
+      description: "Strengthen your team's ability to adapt to challenges and thrive under pressure. Includes team exercises and individual resilience strategies.",
+      programType: "business",
+      category: "Team Building",
+      duration: "6 weeks",
+      sessions: 12,
+      price: 349.99,
+      image: "/lovable-uploads/program-team.jpg",
+      enrollments: 97,
+      created_at: new Date().toISOString()
+    }
+  ]);
 
-const Programs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  
-  const programsData: ProgramsByCategory = {
-    wellness: [
-      {
-        id: 1,
-        title: 'Mindfulness Meditation',
-        description: 'A program to help you practice mindfulness and reduce stress.',
-        programType: 'wellness',
-        category: 'Meditation',
-        duration: '4 weeks',
-        sessions: 12,
-        price: 49.99,
-        image: 'https://source.unsplash.com/400x300/?meditation',
-        enrollments: 50
-      },
-      {
-        id: 2,
-        title: 'Stress Management Workshop',
-        description: 'Learn effective strategies for managing stress in your daily life.',
-        programType: 'wellness',
-        category: 'Stress Reduction',
-        duration: '2 days',
-        sessions: 6,
-        price: 99.00,
-        image: 'https://source.unsplash.com/400x300/?stress',
-        enrollments: 30
-      },
-    ],
-    academic: [
-      {
-        id: 3,
-        title: 'Study Skills Seminar',
-        description: 'Improve your study habits and academic performance.',
-        programType: 'academic',
-        category: 'Study Skills',
-        duration: '3 weeks',
-        sessions: 9,
-        price: 79.50,
-        image: 'https://source.unsplash.com/400x300/?study',
-        enrollments: 40
-      },
-      {
-        id: 4,
-        title: 'Time Management for Students',
-        description: 'Learn how to effectively manage your time as a student.',
-        programType: 'academic',
-        category: 'Time Management',
-        duration: '1 week',
-        sessions: 3,
-        price: 29.99,
-        image: 'https://source.unsplash.com/400x300/?time',
-        enrollments: 25
-      },
-    ],
-    business: [
-      {
-        id: 5,
-        title: 'Leadership Development Program',
-        description: 'Develop your leadership skills and advance your career.',
-        programType: 'business',
-        category: 'Leadership',
-        duration: '6 weeks',
-        sessions: 18,
-        price: 149.00,
-        image: 'https://source.unsplash.com/400x300/?leadership',
-        enrollments: 60
-      },
-      {
-        id: 6,
-        title: 'Team Building Workshop',
-        description: 'Enhance teamwork and collaboration in your organization.',
-        programType: 'business',
-        category: 'Team Building',
-        duration: '2 days',
-        sessions: 6,
-        price: 129.50,
-        image: 'https://source.unsplash.com/400x300/?team',
-        enrollments: 35
-      },
-    ],
-  };
-
-  const [programs, setPrograms] = useState<Program[]>([]);
+  const filteredPrograms = programs.filter(program => {
+    // Filter by active tab (program type)
+    if (activeTab !== 'all' && program.programType !== activeTab) {
+      return false;
+    }
+    
+    // Filter by search term
+    if (searchTerm && !program.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !program.description.toLowerCase().includes(searchTerm.toLowerCase()) &&
+        !program.category.toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    
+    return true;
+  });
 
   useEffect(() => {
-    let filteredPrograms = Object.values(programsData).flat();
-
-    if (activeTab !== 'all') {
-      filteredPrograms = filteredPrograms.filter(program => program.programType === activeTab);
-    }
-
-    if (searchQuery) {
-      filteredPrograms = filteredPrograms.filter(program =>
-        program.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        program.description.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    if (selectedCategory) {
-      filteredPrograms = filteredPrograms.filter(program => program.category === selectedCategory);
-    }
-
-    setPrograms(filteredPrograms);
-  }, [activeTab, searchQuery, selectedCategory]);
-
-  const handleOpenDialog = (program: Program | null = null) => {
-    setSelectedProgram(program);
-    setIsDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
-    setSelectedProgram(null);
-  };
-
-  const handleSaveProgram = (programData: Program) => {
-    console.log('Saving program:', programData);
-    handleCloseDialog();
-  };
-
-  const handleDeleteProgram = (programId: number) => {
-    console.log('Deleting program with ID:', programId);
-  };
-
-  const categories = [...new Set(Object.values(programsData).flat().map(program => program.category))];
+    // Reset search when changing tabs
+    setSearchTerm('');
+  }, [activeTab]);
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Mental Wellness Programs</h1>
-
-      <div className="flex flex-col md:flex-row items-center justify-between mb-4">
-        <div className="flex items-center mb-2 md:mb-0">
-          <Label htmlFor="search" className="mr-2">Search:</Label>
-          <Input
-            type="text"
-            id="search"
-            placeholder="Search programs..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-xs"
-          />
+    <Container className="py-12">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Mental Wellness Programs</h1>
+          <p className="text-muted-foreground">
+            Discover programs designed to help you achieve mental wellness and personal growth
+          </p>
         </div>
 
-        <div className="flex items-center">
-          <Label htmlFor="category" className="mr-2">Category:</Label>
-          <select
-            id="category"
-            value={selectedCategory || ''}
-            onChange={(e) => setSelectedCategory(e.target.value === '' ? null : e.target.value)}
-            className="border rounded px-2 py-1"
-          >
-            <option value="">All Categories</option>
-            {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
-            ))}
-          </select>
+        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
+            <TabsList>
+              <TabsTrigger value="all">All Programs</TabsTrigger>
+              <TabsTrigger value="wellness">Wellness</TabsTrigger>
+              <TabsTrigger value="academic">Academic</TabsTrigger>
+              <TabsTrigger value="business">Business</TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          <div className="relative w-full md:w-80">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search programs..."
+              className="w-full pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredPrograms.length > 0 ? (
+            filteredPrograms.map(program => (
+              <ProgramCard key={program.id} program={program} />
+            ))
+          ) : (
+            <div className="col-span-full py-12 text-center">
+              <h3 className="text-xl font-medium">No programs found</h3>
+              <p className="text-muted-foreground mt-2">
+                Try adjusting your search or filter criteria
+              </p>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setActiveTab('all');
+                  setSearchTerm('');
+                }}
+                className="mt-4"
+              >
+                Clear filters
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <div className="pt-6 text-center">
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredPrograms.length} out of {programs.length} programs
+          </p>
+        </div>
+
+        {/* Featured Program Section */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-6">Featured Program</h2>
+          
+          <div className="bg-gradient-to-r from-ifind-aqua/10 to-ifind-lavender/10 rounded-lg p-6 shadow-lg">
+            <div className="flex flex-col lg:flex-row gap-6">
+              <div className="lg:w-1/3">
+                <img 
+                  src={programs[0].image} 
+                  alt={programs[0].title}
+                  className="rounded-md w-full h-[250px] object-cover"
+                />
+              </div>
+              <div className="lg:w-2/3 space-y-4">
+                <span className="inline-flex items-center rounded-md bg-ifind-aqua/10 px-2 py-1 text-xs font-medium text-ifind-aqua ring-1 ring-inset ring-ifind-aqua/20">
+                  {programs[0].category}
+                </span>
+                <h3 className="text-2xl font-bold">{programs[0].title}</h3>
+                <p className="text-muted-foreground">{programs[0].description}</p>
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div>
+                    <span className="font-semibold">Duration:</span> {programs[0].duration}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Sessions:</span> {programs[0].sessions}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Enrolled:</span> {programs[0].enrollments}+ students
+                  </div>
+                </div>
+                <div className="pt-4">
+                  <Button className="bg-ifind-aqua hover:bg-ifind-teal">View Program Details</Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div className="flex justify-center space-x-4 mb-4">
-        <Button 
-          variant={activeTab === 'all' ? "default" : "outline"}
-          onClick={() => setActiveTab('all')}
-        >
-          All
-        </Button>
-        <Button 
-          variant={activeTab === 'wellness' ? "default" : "outline"} 
-          onClick={() => setActiveTab('wellness')}
-        >
-          Wellness
-        </Button>
-        <Button 
-          variant={activeTab === 'academic' ? "default" : "outline"} 
-          onClick={() => setActiveTab('academic')}
-        >
-          Academic
-        </Button>
-        <Button 
-          variant={activeTab === 'business' ? "default" : "outline"} 
-          onClick={() => setActiveTab('business')}
-        >
-          Business
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {programs.map(program => (
-          <div key={program.id} className="border rounded p-4">
-            <img src={program.image} alt={program.title} className="w-full h-48 object-cover mb-2 rounded" />
-            <h2 className="text-lg font-semibold">{program.title}</h2>
-            <p className="text-gray-600">{program.description}</p>
-            <div className="mt-2">
-              <span className="text-sm">Category: {program.category}</span>
-              <span className="text-sm ml-2">Duration: {program.duration}</span>
-            </div>
-            <div className="mt-4 flex justify-between">
-              <Button variant="outline" onClick={() => handleOpenDialog(program)}>Edit</Button>
-              <Button variant="destructive" onClick={() => handleDeleteProgram(program.id)}>Delete</Button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline">Add Program</Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{selectedProgram ? 'Edit Program' : 'Add Program'}</DialogTitle>
-            <DialogDescription>
-              {selectedProgram ? 'Update program details.' : 'Create a new program.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="name" className="text-right">
-                Name
-              </Label>
-              <Input id="name" value={selectedProgram?.title || ''} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
-                Description
-              </Label>
-              <Input id="description" value={selectedProgram?.description || ''} className="col-span-3" />
-            </div>
-          </div>
-          <Button onClick={() => handleSaveProgram({
-            id: 7,
-            title: 'test',
-            description: 'test',
-            programType: 'wellness',
-            category: 'quick-ease',
-            duration: 'test',
-            sessions: 1,
-            price: 1,
-            image: 'test',
-            enrollments: 1
-          })}>Save</Button>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </Container>
   );
 };
 

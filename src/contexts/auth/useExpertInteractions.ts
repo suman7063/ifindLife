@@ -1,54 +1,171 @@
 
-import { useState } from 'react';
+import { useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Expert } from '@/types/expert';
 import { UserProfile } from '@/types/supabase';
+import { toast } from 'sonner';
 import { useUserFavorites } from '@/hooks/user-auth/useUserFavorites';
-import { useUserReviews } from '@/hooks/user-auth/useUserReviews';
-import { useUserReports } from '@/hooks/user-auth/useUserReports';
-import { useExpertInteraction } from '@/hooks/user-auth/useExpertInteraction';
 
 export const useExpertInteractions = (
   currentUser: UserProfile | null,
-  setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
+  setCurrentUser: (user: UserProfile | null) => void
 ) => {
-  // Get the original functions
-  const { addToFavorites, removeFromFavorites } = useUserFavorites(currentUser, setCurrentUser);
-  const { addReview } = useUserReviews(currentUser, setCurrentUser);
-  const { addReport } = useUserReports(currentUser, setCurrentUser);
-  const { hasTakenServiceFrom, getExpertShareLink } = useExpertInteraction(currentUser);
-
-  // Create string-compatible versions of these functions
-  const addToFavoritesWrapper = async (expertId: string) => {
-    return addToFavorites(expertId);
+  const { 
+    toggleExpertFavorite,
+    addExpertToFavorites,
+    removeExpertFromFavorites
+  } = useUserFavorites(currentUser?.id);
+  
+  // Add to favorites - for backward compatibility
+  const addToFavorites = async (expertId: string): Promise<boolean> => {
+    if (!currentUser) {
+      toast.error('You need to login to add favorites');
+      return false;
+    }
+    
+    try {
+      const { data: expertData } = await supabase
+        .from('experts')
+        .select('*')
+        .eq('id', expertId)
+        .single();
+        
+      if (!expertData) {
+        toast.error('Expert not found');
+        return false;
+      }
+      
+      return await addExpertToFavorites(expertData as Expert);
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+      toast.error('Failed to add expert to favorites');
+      return false;
+    }
+  };
+  
+  // Remove from favorites - for backward compatibility
+  const removeFromFavorites = async (expertId: string): Promise<boolean> => {
+    if (!currentUser) {
+      toast.error('You need to login to manage favorites');
+      return false;
+    }
+    
+    try {
+      const { data: expertData } = await supabase
+        .from('experts')
+        .select('*')
+        .eq('id', expertId)
+        .single();
+        
+      if (!expertData) {
+        toast.error('Expert not found');
+        return false;
+      }
+      
+      return await removeExpertFromFavorites(expertData as Expert);
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
+      toast.error('Failed to remove expert from favorites');
+      return false;
+    }
   };
 
-  const removeFromFavoritesWrapper = async (expertId: string) => {
-    return removeFromFavorites(expertId);
+  // Add a review for an expert
+  const addReview = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+    if (!currentUser) {
+      toast.error('You need to login to add a review');
+      return false;
+    }
+    
+    try {
+      // Add review to user_reviews table
+      const { error } = await supabase
+        .from('user_reviews')
+        .insert({
+          expert_id: expertId,
+          user_id: currentUser.id,
+          rating,
+          comment,
+          date: new Date().toISOString(),
+          verified: true
+        });
+        
+      if (error) throw error;
+      
+      toast.success('Review submitted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error adding review:', error);
+      toast.error('Failed to add review');
+      return false;
+    }
   };
 
-  const addReviewWrapper = async (expertId: string, rating: number, comment: string) => {
-    return addReview(expertId, rating, comment);
+  // Report an expert
+  const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
+    if (!currentUser) {
+      toast.error('You need to login to report an expert');
+      return false;
+    }
+    
+    try {
+      // Add report to user_reports table
+      const { error } = await supabase
+        .from('user_reports')
+        .insert({
+          expert_id: expertId,
+          user_id: currentUser.id,
+          reason,
+          details,
+          date: new Date().toISOString(),
+          status: 'pending'
+        });
+        
+      if (error) throw error;
+      
+      toast.success('Report submitted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error reporting expert:', error);
+      toast.error('Failed to submit report');
+      return false;
+    }
   };
 
-  const reportExpertWrapper = async (expertId: string, reason: string, details: string) => {
-    return addReport(expertId, reason, details);
+  // Check if user has taken a service from this expert
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+    if (!currentUser) return false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_expert_services')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('expert_id', expertId)
+        .eq('status', 'completed')
+        .limit(1);
+        
+      if (error) throw error;
+      
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking service history:', error);
+      return false;
+    }
   };
 
-  const hasTakenServiceFromWrapper = async (expertId: string) => {
-    // Convert to number if the hook expects a number, or handle string directly
-    return await hasTakenServiceFrom(expertId);
+  // Get a shareable link for an expert
+  const getExpertShareLink = (expertId: string): string => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/experts/${expertId}`;
   };
 
-  const getExpertShareLinkWrapper = (expertId: string) => {
-    return getExpertShareLink(expertId);
-  };
-
-  // Return the wrapped functions
   return {
-    addToFavorites: addToFavoritesWrapper,
-    removeFromFavorites: removeFromFavoritesWrapper,
-    addReview: addReviewWrapper,
-    reportExpert: reportExpertWrapper,
-    hasTakenServiceFrom: hasTakenServiceFromWrapper,
-    getExpertShareLink: getExpertShareLinkWrapper
+    addToFavorites,
+    removeFromFavorites,
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink
   };
 };
