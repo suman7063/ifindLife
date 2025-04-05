@@ -14,7 +14,7 @@ export const useExpertProfile = (
     }
 
     try {
-      // Convert experience to string if it's a number
+      // Convert experience to string if it's provided
       const updateData = {
         ...data,
         experience: data.experience !== undefined ? String(data.experience) : undefined
@@ -30,7 +30,7 @@ export const useExpertProfile = (
       // Update local state
       setExpert({
         ...currentExpert,
-        ...data
+        ...updateData
       });
 
       toast.success('Profile updated successfully');

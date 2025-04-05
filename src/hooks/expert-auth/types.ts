@@ -10,7 +10,7 @@ export interface ExpertProfile {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string;
+  experience?: string;  // This should be string only to match the database column type
   bio?: string;
   certificate_urls?: string[];
   selected_services?: number[];
@@ -39,7 +39,7 @@ export interface ExpertRegistrationData {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string | number;
+  experience?: string;  // Changed to string only for consistency
   bio?: string;
   certificate_urls?: string[];
   selected_services?: (string | number)[];
@@ -54,7 +54,7 @@ export interface ProfileUpdateData {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string | number;
+  experience?: string;  // Changed to string only for consistency
   bio?: string;
   profile_picture?: string;
   [key: string]: any;
