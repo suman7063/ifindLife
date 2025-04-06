@@ -35,18 +35,22 @@ export const useExpertLogin = (
   /**
    * Checks if an expert profile exists for the current session
    */
-  const checkExpertProfile = async (userId: string): Promise<boolean> => {
+  const checkExpertProfile = async (userId: string): Promise<{ exists: boolean; status?: string }> => {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
-        .select('id')
+        .select('id, status')
         .eq('auth_id', userId)
         .single();
       
-      return !!data && !error;
+      if (error || !data) {
+        return { exists: false };
+      }
+      
+      return { exists: true, status: data.status };
     } catch (error) {
       console.error('Error checking expert profile:', error);
-      return false;
+      return { exists: false };
     }
   };
 
@@ -115,13 +119,47 @@ export const useExpertLogin = (
         return false;
       }
       
-      // Before setting the expert profile, verify that it actually exists
-      const hasExpertProfile = await checkExpertProfile(data.user.id);
-      if (!hasExpertProfile) {
+      // Before setting the expert profile, verify that it actually exists and check its status
+      const { exists, status } = await checkExpertProfile(data.user.id);
+      if (!exists) {
         console.error('Expert login: No expert profile found for this user');
         toast.error('No expert profile found for this account. Please contact support.');
         
         // Sign out since this is not a valid expert
+        await supabase.auth.signOut();
+        return false;
+      }
+      
+      // Check expert approval status
+      if (status === 'pending') {
+        console.error('Expert login: Account is pending approval');
+        toast.error('Your account is pending approval. You will be notified once approved.');
+        
+        // Sign out since this expert is not approved yet
+        await supabase.auth.signOut();
+        
+        // Redirect to the expert login page with status=pending
+        window.location.href = '/expert-login?status=pending';
+        return false;
+      }
+      
+      if (status === 'disapproved') {
+        console.error('Expert login: Account is disapproved');
+        toast.error('Your account has been disapproved. Please check your email for details.');
+        
+        // Sign out since this expert is disapproved
+        await supabase.auth.signOut();
+        
+        // Redirect to the expert login page with status=disapproved
+        window.location.href = '/expert-login?status=disapproved';
+        return false;
+      }
+      
+      if (status !== 'approved') {
+        console.error(`Expert login: Unknown account status: ${status}`);
+        toast.error('Your account has an unknown status. Please contact support.');
+        
+        // Sign out since this expert has an unknown status
         await supabase.auth.signOut();
         return false;
       }
