@@ -1,12 +1,12 @@
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export const useAuthRedirect = (defaultRedirectPath: string = '/') => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const getRedirectPath = (): string => {
+  const getRedirectPath = useCallback((): string => {
     // Check for intended URL in state if coming from a protected route
     const state = location.state as { from?: { pathname: string } } | undefined;
     
@@ -24,13 +24,13 @@ export const useAuthRedirect = (defaultRedirectPath: string = '/') => {
     
     // Finally, use the default path
     return defaultRedirectPath;
-  };
+  }, [location, defaultRedirectPath]);
   
-  const redirectImmediately = () => {
+  const redirectImmediately = useCallback(() => {
     const redirectPath = getRedirectPath();
     console.log(`Redirecting to: ${redirectPath}`);
     navigate(redirectPath, { replace: true });
-  };
+  }, [getRedirectPath, navigate]);
   
   return {
     redirectImmediately,

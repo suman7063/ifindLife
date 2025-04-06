@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile, ExpertRegistrationData } from './types';
 import { toast } from 'sonner';
+import { useExpertLogin } from './auth/useExpertLogin';
 
 export const useExpertAuthentication = (
   setExpert: (expert: ExpertProfile | null) => void,
@@ -10,6 +11,7 @@ export const useExpertAuthentication = (
   fetchExpertProfile: (userId: string) => Promise<ExpertProfile | null>
 ) => {
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
+  const { login } = useExpertLogin(setExpert, setLoading, fetchExpertProfile);
   
   // Check if email is registered as a user
   const hasUserAccount = async (email: string): Promise<boolean> => {
@@ -31,93 +33,30 @@ export const useExpertAuthentication = (
       return false;
     }
   };
-
-  // Login function
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    try {
-      console.log('Expert login: Starting with email:', email);
-      
-      // First check for existing user session to prevent dual login
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (sessionData.session) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', sessionData.session.user.id)
-          .maybeSingle();
-          
-        if (profileData) {
-          toast.error('You are already logged in as a user. Please log out first.');
-          return false;
-        }
-      }
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-      
-      if (!data.session) {
-        toast.error('Login failed. No session created.');
-        return false;
-      }
-      
-      // Check if this user has an expert profile
-      const expertProfile = await fetchExpertProfile(data.session.user.id);
-      
-      if (!expertProfile) {
-        toast.error('No expert profile found for this account.');
-        await supabase.auth.signOut();
-        return false;
-      }
-      
-      // Check if expert's account is approved
-      if (expertProfile.status !== 'approved') {
-        let message = 'Your account has not been approved yet.';
-        if (expertProfile.status === 'pending') {
-          message = 'Your account is pending approval. Please check back later.';
-        } else if (expertProfile.status === 'disapproved') {
-          message = 'Your account has been disapproved. Please check your email for details.';
-        }
-        
-        toast.error(message);
-        await supabase.auth.signOut();
-        return false;
-      }
-      
-      setExpert(expertProfile);
-      setIsUserLoggedIn(true);
-      toast.success('Successfully logged in as expert');
-      return true;
-    } catch (error) {
-      console.error('Login error:', error);
-      toast.error('An error occurred during login.');
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
   
   // Logout function
   const logout = async (): Promise<boolean> => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       
       if (error) {
         toast.error(error.message);
         return false;
       }
       
+      // Clear local storage items related to expert session
+      localStorage.removeItem('expertProfile');
+      
       setExpert(null);
       setIsUserLoggedIn(false);
       toast.success('Logged out successfully');
+      
+      setTimeout(() => {
+        // Navigate to login page after a short delay
+        window.location.href = '/expert-login';
+      }, 500);
+      
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -216,7 +155,9 @@ export const useExpertAuthentication = (
       // Sign out after successful registration
       await supabase.auth.signOut();
       
-      toast.success('Registration successful! Your account is pending approval. You will be notified via email once approved.');
+      // Redirect to expert login with registration success status
+      window.location.href = '/expert-login?status=registered';
+      
       return true;
     } catch (error) {
       console.error('Registration error:', error);

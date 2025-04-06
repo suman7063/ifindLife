@@ -25,7 +25,14 @@ const ExpertLogin = () => {
   const [isCheckingUser, setIsCheckingUser] = useState(true);
   const [statusMessage, setStatusMessage] = useState<{type: 'info' | 'warning' | 'success' | 'error', message: string} | null>(null);
   
-  const { login, currentExpert: expert, isLoading: loading, authInitialized, hasUserAccount } = useExpertAuth();
+  const { 
+    login, 
+    currentExpert: expert, 
+    isLoading: loading, 
+    authInitialized, 
+    hasUserAccount 
+  } = useExpertAuth();
+  
   const { 
     isSynchronizing, 
     userLogout, 
@@ -64,6 +71,7 @@ const ExpertLogin = () => {
     }
   }, [location.search]);
   
+  // Check if user is already logged in
   useEffect(() => {
     const checkUserLogin = async () => {
       setIsCheckingUser(true);
@@ -79,8 +87,8 @@ const ExpertLogin = () => {
             .maybeSingle();
             
           if (profileData && !error) {
+            console.log('User profile found during expert login check:', profileData);
             setUserProfile(profileData as UserProfile);
-            console.log('User is already logged in, expert login not allowed');
           } else {
             setUserProfile(null);
           }
@@ -98,6 +106,7 @@ const ExpertLogin = () => {
     checkUserLogin();
   }, []);
   
+  // Debug logging
   useEffect(() => {
     console.log('ExpertLogin component - Auth states:', {
       expertLoading: loading,
@@ -113,6 +122,7 @@ const ExpertLogin = () => {
     });
   }, [loading, authInitialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, isAuthenticated]);
   
+  // Set the active tab based on the URL
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('register') === 'true') {
@@ -127,12 +137,18 @@ const ExpertLogin = () => {
       return;
     }
     
-    console.log('Redirecting to expert dashboard - Expert profile found');
+    // Don't redirect if expert is not approved
+    if (expert.status !== 'approved') {
+      return;
+    }
+    
+    console.log('Redirecting to expert dashboard - Expert profile found and approved');
     setRedirectAttempted(true);
     
     navigate('/expert-dashboard', { replace: true });
   }, [expert, loading, authInitialized, redirectAttempted, navigate]);
   
+  // Handle login
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (isLoggingIn) return false;
     
@@ -224,6 +240,7 @@ const ExpertLogin = () => {
     }
   };
 
+  // Show loading view during initialization
   if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing || isCheckingUser) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;

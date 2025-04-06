@@ -12,9 +12,24 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLoginPage = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const { isUserAuthenticated, userLoading, isSynchronizing, authCheckCompleted } = useAuthSynchronization();
+  const { isUserAuthenticated, userLoading, isSynchronizing, authCheckCompleted, isExpertAuthenticated } = useAuthSynchronization();
   const { isAuthenticated, currentUser, loading } = useUserAuth();
   const navigate = useNavigate();
+  
+  // Debug logging
+  useEffect(() => {
+    console.log('UserLoginPage - Auth states:', {
+      isUserAuthenticated,
+      userLoading,
+      isSynchronizing,
+      authCheckCompleted,
+      isAuthenticated,
+      hasUserProfile: !!currentUser,
+      loading,
+      redirectAttempted,
+      isExpertAuthenticated
+    });
+  }, [isUserAuthenticated, userLoading, isSynchronizing, authCheckCompleted, isAuthenticated, currentUser, loading, redirectAttempted, isExpertAuthenticated]);
   
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -35,6 +50,18 @@ const UserLoginPage = () => {
       setRedirectAttempted(true);
       navigate('/user-dashboard', { replace: true });
     }
+    
+    // Redirect to expert dashboard if expert is authenticated
+    if (isExpertAuthenticated && 
+        !userLoading && 
+        !isSynchronizing && 
+        !loading && 
+        authCheckCompleted && 
+        !redirectAttempted) {
+      console.log('UserLoginPage: Expert is authenticated, redirecting to expert dashboard');
+      setRedirectAttempted(true);
+      navigate('/expert-dashboard', { replace: true });
+    }
   }, [
     isAuthenticated, 
     currentUser, 
@@ -43,6 +70,7 @@ const UserLoginPage = () => {
     loading, 
     redirectAttempted,
     authCheckCompleted,
+    isExpertAuthenticated,
     navigate
   ]);
   

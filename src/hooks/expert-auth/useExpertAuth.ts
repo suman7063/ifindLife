@@ -16,22 +16,43 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   
   const fetchExpertProfile = useCallback(async (userId: string) => {
     try {
+      console.log(`Fetching expert profile for user ID: ${userId}`);
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
         .single();
         
-      if (error || !data) {
+      if (error) {
         console.error('Error fetching expert profile:', error);
         return null;
       }
       
+      if (!data) {
+        console.log('No expert profile found for user ID:', userId);
+        return null;
+      }
+      
+      console.log('Expert profile found:', data);
       return data as ExpertProfile;
     } catch (error) {
       console.error('Error in fetchExpertProfile:', error);
       return null;
     }
+  }, []);
+
+  const setExpertProfile = useCallback((expert: ExpertProfile | null) => {
+    console.log('Setting expert profile:', expert ? `ID: ${expert.id}` : 'null');
+    setAuthState(prev => ({ 
+      ...prev, 
+      currentExpert: expert, 
+      isAuthenticated: !!expert,
+      isLoading: false
+    }));
+  }, []);
+
+  const setLoading = useCallback((loading: boolean) => {
+    setAuthState(prev => ({ ...prev, isLoading: loading }));
   }, []);
 
   const { 
@@ -40,8 +61,8 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     register, 
     hasUserAccount 
   } = useExpertAuthentication(
-    (expert) => setAuthState(prev => ({ ...prev, currentExpert: expert, isAuthenticated: !!expert })),
-    (loading) => setAuthState(prev => ({ ...prev, isLoading: loading })),
+    setExpertProfile,
+    setLoading,
     fetchExpertProfile
   );
   
@@ -51,17 +72,21 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     updateServices 
   } = useExpertProfile(
     authState.currentExpert,
-    (expert) => setAuthState(prev => ({ ...prev, currentExpert: expert }))
+    setExpertProfile
   );
 
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
       try {
+        setLoading(true);
+        console.log('Initializing expert auth state');
+        
         // Check for existing session
         const { data } = await supabase.auth.getSession();
         
         if (!data.session) {
+          console.log('No active session found');
           setAuthState({
             currentExpert: null,
             isLoading: false,
@@ -71,14 +96,60 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
           return;
         }
         
+        console.log('Active session found, checking for expert profile');
         // Fetch expert profile
         const expertProfile = await fetchExpertProfile(data.session.user.id);
         
+        if (!expertProfile) {
+          console.log('No expert profile found for active session');
+          setAuthState({
+            currentExpert: null,
+            isLoading: false,
+            authInitialized: true,
+            isAuthenticated: false,
+          });
+          return;
+        }
+
+        // Check if expert is approved
+        if (expertProfile.status !== 'approved') {
+          console.log(`Expert account status is ${expertProfile.status}, not approved`);
+          
+          // Sign out since the expert is not approved
+          await supabase.auth.signOut({ scope: 'local' });
+          
+          // Show appropriate toast message
+          if (expertProfile.status === 'pending') {
+            toast.info('Your expert account is pending approval.');
+            
+            // Redirect to login page with status
+            setTimeout(() => {
+              window.location.href = '/expert-login?status=pending';
+            }, 1500);
+          } else if (expertProfile.status === 'disapproved') {
+            toast.error('Your expert account has been disapproved. Please check your email for details.');
+            
+            // Redirect to login page with status
+            setTimeout(() => {
+              window.location.href = '/expert-login?status=disapproved';
+            }, 1500);
+          }
+          
+          setAuthState({
+            currentExpert: null,
+            isLoading: false,
+            authInitialized: true,
+            isAuthenticated: false,
+          });
+          return;
+        }
+        
+        console.log('Expert profile found and approved, setting auth state');
         setAuthState({
           currentExpert: expertProfile,
           isLoading: false,
           authInitialized: true,
-          isAuthenticated: !!expertProfile,
+          isAuthenticated: true,
         });
       } catch (error) {
         console.error('Error initializing expert auth:', error);
@@ -96,21 +167,75 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log(`Auth state change event: ${event}`);
+        
         if (event === 'SIGNED_IN' && session) {
+          console.log('Signed in event detected, fetching expert profile');
+          // Don't set loading to true here to avoid UI flicker
           const expertProfile = await fetchExpertProfile(session.user.id);
+          
+          if (!expertProfile) {
+            console.log('No expert profile found after sign in');
+            setAuthState(prev => ({
+              ...prev,
+              currentExpert: null,
+              isAuthenticated: false,
+              authInitialized: true,
+            }));
+            return;
+          }
+          
+          // Check if expert is approved
+          if (expertProfile.status !== 'approved') {
+            console.log(`Expert account status is ${expertProfile.status}, not approved`);
+            
+            // Sign out since the expert is not approved
+            await supabase.auth.signOut({ scope: 'local' });
+            
+            // Show appropriate toast message
+            if (expertProfile.status === 'pending') {
+              toast.info('Your expert account is pending approval.');
+              
+              // Redirect to login page with status
+              window.location.href = '/expert-login?status=pending';
+            } else if (expertProfile.status === 'disapproved') {
+              toast.error('Your expert account has been disapproved.');
+              
+              // Redirect to login page with status
+              window.location.href = '/expert-login?status=disapproved';
+            }
+            
+            setAuthState(prev => ({
+              ...prev,
+              currentExpert: null,
+              isAuthenticated: false,
+              authInitialized: true,
+              isLoading: false,
+            }));
+            return;
+          }
+          
+          console.log('Expert profile found and approved, updating auth state');
           setAuthState({
             currentExpert: expertProfile,
             isLoading: false,
             authInitialized: true,
-            isAuthenticated: !!expertProfile,
+            isAuthenticated: true,
           });
         } else if (event === 'SIGNED_OUT') {
+          console.log('Signed out event detected, clearing expert profile');
           setAuthState({
             currentExpert: null,
             isLoading: false,
             authInitialized: true,
             isAuthenticated: false,
           });
+        } else {
+          // For other events, just update the initialized flag
+          setAuthState(prev => ({
+            ...prev,
+            authInitialized: true,
+          }));
         }
       }
     );
@@ -118,7 +243,23 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [fetchExpertProfile]);
+  }, [fetchExpertProfile, setLoading]);
+
+  // Add a timeout to complete auth loading if it takes too long
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (authState.isLoading) {
+        console.log('Auth loading timeout reached, forcing completion');
+        setAuthState(prev => ({
+          ...prev,
+          isLoading: false,
+          authInitialized: true,
+        }));
+      }
+    }, 3000); // 3 seconds timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [authState.isLoading]);
 
   return {
     ...authState,
