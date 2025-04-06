@@ -1,82 +1,40 @@
 
-// Expert authentication types
+import { User } from '@supabase/supabase-js';
 
 export interface ExpertProfile {
-  id: uuid;
-  auth_id?: string;
+  id: string;
   name: string;
   email: string;
   phone?: string;
+  bio?: string;
+  specialization?: string;
+  experience?: string;
+  certificate_urls?: string[];
+  profile_picture?: string;
   address?: string;
   city?: string;
   state?: string;
   country?: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  certificate_urls?: string[];
-  profile_picture?: string;
-  status?: string;
-  selected_services?: number[];
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
-  created_at?: string;
-}
-
-export interface ExpertAuthState {
-  currentExpert: ExpertProfile | null;
-  isLoading: boolean;
-  authInitialized: boolean;
-  isAuthenticated: boolean;
-}
-
-export interface ExpertRegistrationData {
-  name: string;
-  email: string;
-  password: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string | number;
-  bio?: string;
-  certificate_urls?: string[];
   selected_services?: number[];
-}
-
-export interface ProfileUpdateData {
-  name?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  profile_picture?: string;
+  auth_id?: string;
+  status?: string;
 }
 
 export interface ExpertAvailability {
-  id?: string;
+  id: string;
   expert_id: string;
   availability_type: string;
   start_date: string;
   end_date: string;
-  time_slots?: ExpertTimeSlot[];
 }
 
 export interface ExpertTimeSlot {
-  id?: string;
-  availability_id: string;
+  day: string;
   start_time: string;
   end_time: string;
-  day_of_week?: number;
-  specific_date?: string;
-  is_booked?: boolean;
 }
 
 export interface ExpertService {
@@ -87,15 +45,43 @@ export interface ExpertService {
   description?: string;
 }
 
-export interface UseExpertAuthReturn extends ExpertAuthState {
+export type ProfileUpdateData = Partial<Omit<ExpertProfile, 'id'>>;
+
+export interface ExpertAuthState {
+  user: User | null;
+  currentExpert: ExpertProfile | null;
+  loading: boolean;
+  error: string | null;
+  initialized: boolean;
+  isAuthenticated: boolean;
+}
+
+export interface ExpertRegistrationData {
+  name: string;
+  email: string;
+  phone: string;
+  password: string;
+  bio?: string;
+  specialization?: string;
+  experience?: string | number;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  selected_services?: number[];
+}
+
+export interface UseExpertAuthReturn {
+  user: User | null;
+  currentExpert: ExpertProfile | null;
+  loading: boolean;
+  error: string | null;
+  initialized: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   register: (data: ExpertRegistrationData) => Promise<boolean>;
-  hasUserAccount: (email: string) => Promise<boolean>;
-  updateProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
-  updateAvailability: (availabilityData: any) => Promise<boolean>;
-  updateServices: (services: number[]) => Promise<boolean>;
+  updateProfile: (data: ProfileUpdateData) => Promise<boolean>;
+  updateAvailability: (availability: ExpertTimeSlot[]) => Promise<boolean>;
+  updateServices: (serviceIds: number[]) => Promise<boolean>;
 }
-
-// Helper type for UUID fields
-type uuid = string;

@@ -2,12 +2,15 @@
 import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserProfile } from '@/types/supabase';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
 
 interface DashboardHeaderProps {
   user: UserProfile | null;
+  onLogout?: () => Promise<boolean>;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user, onLogout }) => {
   if (!user) {
     return (
       <div className="flex items-center justify-between pb-6 border-b">
@@ -36,6 +39,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ user }) => {
           <p className="text-muted-foreground">{user.email}</p>
         </div>
       </div>
+      
+      {onLogout && (
+        <Button variant="outline" onClick={onLogout} className="gap-2">
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
+      )}
     </div>
   );
 };

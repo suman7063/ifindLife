@@ -18,12 +18,28 @@ interface RechargeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  onCancel?: () => void;
+  isProcessing?: boolean;
+  setIsProcessing?: (isProcessing: boolean) => void;
+  user?: any;
 }
 
-const RechargeDialog: React.FC<RechargeDialogProps> = ({ open, onOpenChange, onSuccess }) => {
+const RechargeDialog: React.FC<RechargeDialogProps> = ({ 
+  open, 
+  onOpenChange, 
+  onSuccess,
+  onCancel,
+  isProcessing: controlledIsProcessing,
+  setIsProcessing: setControlledIsProcessing,
+  user
+}) => {
   const [amount, setAmount] = useState(10);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [internalIsProcessing, setInternalIsProcessing] = useState(false);
   const { rechargeWallet } = useUserAuth();
+
+  // Use either controlled or internal state for processing status
+  const isProcessing = controlledIsProcessing !== undefined ? controlledIsProcessing : internalIsProcessing;
+  const setIsProcessing = setControlledIsProcessing || setInternalIsProcessing;
 
   const handleRechargeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +57,7 @@ const RechargeDialog: React.FC<RechargeDialogProps> = ({ open, onOpenChange, onS
     } catch (error) {
       console.error('Recharge failed:', error);
       setIsProcessing(false);
+      if (onCancel) onCancel();
     }
   };
 

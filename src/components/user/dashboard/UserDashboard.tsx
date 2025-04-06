@@ -10,7 +10,8 @@ import UserPurchasesSection from '@/components/user/dashboard/UserPurchasesSecti
 import UserStatsSummary from '@/components/user/dashboard/UserStatsSummary';
 import useDashboardState from '@/hooks/user-dashboard/useDashboardState';
 import { UserTransaction } from '@/types/supabase/transactions';
-import { RechargeDialog } from '@/components/user/dashboard/RechargeDialog';
+import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
+import { supabase } from '@/lib/supabase';
 
 const UserDashboard: React.FC = () => {
   const { 
@@ -74,7 +75,6 @@ const UserDashboard: React.FC = () => {
     <Container className="py-8">
       <DashboardHeader 
         user={currentUser}
-        onLogout={logout}
       />
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
@@ -87,8 +87,8 @@ const UserDashboard: React.FC = () => {
         <TabsContent value="overview" className="mt-6">
           <UserStatsSummary 
             user={currentUser}
-            transactions={transactions}
-            onRecharge={handleOpenRechargeDialog}
+            appointmentsCount={0}
+            programsCount={0}
           />
         </TabsContent>
         
@@ -110,10 +110,6 @@ const UserDashboard: React.FC = () => {
           open={isRechargeDialogOpen}
           onOpenChange={handleCloseRechargeDialog}
           onSuccess={handlePaymentSuccess}
-          onCancel={handlePaymentCancel}
-          isProcessing={isProcessingPayment}
-          setIsProcessing={setIsProcessingPayment}
-          user={currentUser}
         />
       )}
     </Container>

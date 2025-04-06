@@ -3,6 +3,12 @@ import { supabase } from '@/lib/supabase';
 import { ExpertProfile, ProfileUpdateData, ExpertAvailability, ExpertService } from './types';
 import { toast } from 'sonner';
 
+export interface ExpertTimeSlot {
+  day: string;
+  start_time: string;
+  end_time: string;
+}
+
 export const useExpertProfile = (
   currentExpert: ExpertProfile | null,
   setExpert: (expert: ExpertProfile | null) => void
@@ -42,7 +48,7 @@ export const useExpertProfile = (
     }
   };
 
-  const updateAvailability = async (availability: ExpertAvailability[]): Promise<boolean> => {
+  const updateAvailability = async (availability: ExpertTimeSlot[]): Promise<boolean> => {
     if (!currentExpert) {
       toast.error('Not logged in as an expert');
       return false;
