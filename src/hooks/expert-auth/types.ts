@@ -1,6 +1,8 @@
 
+// Expert authentication types
+
 export interface ExpertProfile {
-  id: string;
+  id: uuid;
   auth_id?: string;
   name: string;
   email: string;
@@ -10,16 +12,16 @@ export interface ExpertProfile {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string;  // This should be string only to match the database column type
+  experience?: string;
   bio?: string;
   certificate_urls?: string[];
-  selected_services?: number[];
-  created_at?: string;
-  status: 'pending' | 'approved' | 'disapproved';
   profile_picture?: string;
+  status?: string;
+  selected_services?: number[];
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
+  created_at?: string;
 }
 
 export interface ExpertAuthState {
@@ -32,51 +34,17 @@ export interface ExpertAuthState {
 export interface ExpertRegistrationData {
   name: string;
   email: string;
-  phone?: string;
   password: string;
+  phone?: string;
   address?: string;
   city?: string;
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string;  // Changed to string only for consistency
+  experience?: string | number;
   bio?: string;
   certificate_urls?: string[];
-  selected_services?: (string | number)[];
-}
-
-export interface ProfileUpdateData {
-  name?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;  // Changed to string only for consistency
-  bio?: string;
-  profile_picture?: string;
-  [key: string]: any;
-}
-
-export interface ExpertAvailability {
-  id?: string;
-  expert_id?: string;
-  day: string; 
-  start_time: string;
-  end_time: string;
-  availability_type?: string;
-  is_recurring?: boolean;
-}
-
-export interface ExpertService {
-  id: string | number;
-  name?: string;
-  description?: string;
-  price?: number;
-  duration?: number;
-  enabled?: boolean;
+  selected_services?: number[];
 }
 
 export interface UseExpertAuthReturn extends ExpertAuthState {
@@ -84,7 +52,10 @@ export interface UseExpertAuthReturn extends ExpertAuthState {
   logout: () => Promise<boolean>;
   register: (data: ExpertRegistrationData) => Promise<boolean>;
   hasUserAccount: (email: string) => Promise<boolean>;
-  updateProfile?: (data: Partial<ExpertProfile>) => Promise<boolean>;
-  updateAvailability?: (availabilityData: ExpertAvailability[]) => Promise<boolean>;
-  updateServices?: (services: number[]) => Promise<boolean>;
+  updateProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
+  updateAvailability: (availabilityData: any) => Promise<boolean>;
+  updateServices: (services: number[]) => Promise<boolean>;
 }
+
+// Helper type for UUID fields
+type uuid = string;

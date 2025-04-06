@@ -1,64 +1,54 @@
 
-/**
- * Format a currency value with the appropriate symbol
- * @param amount - The amount to format
- * @param currency - The currency code (default: 'USD')
- * @returns Formatted currency string
- */
-export const formatCurrency = (amount: number, currency: string = 'USD'): string => {
-  // Get the currency symbol based on the currency code
-  const currencySymbols: Record<string, string> = {
-    USD: '$',
-    EUR: '€',
-    GBP: '£',
-    INR: '₹',
-    JPY: '¥',
-    CNY: '¥',
-  };
-
-  const symbol = currencySymbols[currency] || currency;
-  
-  // Format the amount
-  try {
-    return `${symbol}${amount.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    })}`;
-  } catch (error) {
-    console.error('Error formatting currency:', error);
-    return `${symbol}${amount}`;
-  }
-};
+// Utility functions for formatting data
 
 /**
- * Format a date string to a human-readable format
- * @param dateString - The date string to format
- * @returns Formatted date string
+ * Format a date string to a more readable format
  */
 export const formatDate = (dateString: string): string => {
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return dateString;
-  }
+  if (!dateString) return 'N/A';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
 };
 
 /**
- * Format a number with commas
- * @param num - The number to format
- * @returns Formatted number string
+ * Format a currency value
  */
-export const formatNumber = (num: number): string => {
-  try {
-    return num.toLocaleString();
-  } catch (error) {
-    console.error('Error formatting number:', error);
-    return num.toString();
-  }
+export const formatCurrency = (
+  amount: number | undefined, 
+  currency: string = 'USD'
+): string => {
+  if (amount === undefined) return '$0.00';
+  
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2
+  });
+  
+  return formatter.format(amount);
+};
+
+/**
+ * Format a time string (HH:MM) to a more readable format
+ */
+export const formatTime = (timeString: string): string => {
+  if (!timeString) return 'N/A';
+  
+  // Check if the timeString is in HH:MM format
+  const match = timeString.match(/^([0-9]{1,2}):([0-9]{2})(?::([0-9]{2}))?$/);
+  if (!match) return timeString;
+  
+  const hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  
+  return `${hour12}:${minutes} ${period}`;
 };

@@ -1,141 +1,235 @@
 
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from './useUserAuth';
-import { useExpertAuth } from './useExpertAuth';
-import { logEvent } from '@/lib/analytics';
-import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from './expert-auth/types';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-export type SessionType = 'none' | 'user' | 'expert' | 'dual';
+import { useUserAuth } from '@/contexts/auth/UserAuthContext';
+import { useExpertAuth } from '@/hooks/expert-auth';
 
 export const useAuthSynchronization = () => {
-  const { 
-    isAuthenticated: isUserAuthenticated, 
-    currentUser, 
-    loading: userLoading,
-    logout: userLogout
-  } = useUserAuth();
-  
-  const { 
-    isAuthenticated: isExpertAuthenticated, 
-    currentExpert, 
-    isLoading: expertLoading,
-    authInitialized: expertAuthInitialized,
-    logout: expertLogout
-  } = useExpertAuth();
-  
+  const [isSynchronizing, setIsSynchronizing] = useState(true);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
+  const [isExpertAuthenticated, setIsExpertAuthenticated] = useState(false);
+  const [hasDualSessions, setHasDualSessions] = useState(false);
+  const [sessionType, setSessionType] = useState<'user' | 'expert' | 'dual' | 'none'>('none');
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const navigate = useNavigate();
-
-  // Calculate if we have dual sessions
-  const hasDualSessions = isUserAuthenticated && isExpertAuthenticated;
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
   
-  // Determine current session type
-  const sessionType: SessionType = hasDualSessions 
-    ? 'dual'
-    : isUserAuthenticated 
-      ? 'user' 
-      : isExpertAuthenticated 
-        ? 'expert' 
-        : 'none';
-        
-  // For backward compatibility
-  const isAuthenticated = isUserAuthenticated || isExpertAuthenticated;
+  const { currentUser, isAuthenticated, logout } = useUserAuth();
+  const { currentExpert, isAuthenticated: expertIsAuthenticated, logout: expertLogout } = useExpertAuth();
   
-  // Combined auth state properties
-  const isAuthInitialized = expertAuthInitialized;
-  const isAuthLoading = userLoading || expertLoading;
-  const isSynchronizing = false;
-  const authCheckCompleted = isAuthInitialized && !isAuthLoading;
-  const expertProfile = currentExpert;
-
-  // Synchronize experts with user profiles and vice versa
+  // Check authentication status on mount
   useEffect(() => {
-    if (isUserAuthenticated && isExpertAuthenticated) {
-      logEvent('auth', 'dual_login_detected', { 
-        user_id: currentUser?.id,
-        expert_id: currentExpert?.id 
-      });
+    const checkAuth = async () => {
+      try {
+        console.log('AuthSync: Checking authentication status');
+        setIsSynchronizing(true);
+        
+        // Check for a Supabase session
+        const { data } = await supabase.auth.getSession();
+        const hasSession = !!data.session;
+        
+        if (!hasSession) {
+          console.log('AuthSync: No session found');
+          setIsUserAuthenticated(false);
+          setIsExpertAuthenticated(false);
+          setHasDualSessions(false);
+          setSessionType('none');
+        } else {
+          console.log('AuthSync: Session found, checking user/expert status');
+          // Check whether the session is for a user, expert, or both
+          const hasUserProfile = !!currentUser;
+          const hasExpertProfile = !!currentExpert;
+          
+          setIsUserAuthenticated(isAuthenticated);
+          setIsExpertAuthenticated(expertIsAuthenticated);
+          
+          // Detect conflicting sessions
+          if (hasUserProfile && hasExpertProfile) {
+            console.log('AuthSync: Dual profiles detected');
+            setHasDualSessions(true);
+            setSessionType('dual');
+          } else if (hasUserProfile) {
+            console.log('AuthSync: User profile detected');
+            setHasDualSessions(false);
+            setSessionType('user');
+          } else if (hasExpertProfile) {
+            console.log('AuthSync: Expert profile detected');
+            setHasDualSessions(false);
+            setSessionType('expert');
+          } else {
+            console.log('AuthSync: No profiles detected despite session');
+            setHasDualSessions(false);
+            setSessionType('none');
+          }
+        }
+      } catch (error) {
+        console.error('Error in auth synchronization:', error);
+      } finally {
+        setIsSynchronizing(false);
+        setIsAuthInitialized(true);
+        setAuthCheckCompleted(true);
+      }
+    };
+    
+    checkAuth();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`AuthSync: Auth state changed: ${event}`);
+      if (event === 'SIGNED_IN') {
+        // Will be handled by the checkAuth function later
+      } else if (event === 'SIGNED_OUT') {
+        setIsUserAuthenticated(false);
+        setIsExpertAuthenticated(false);
+        setHasDualSessions(false);
+        setSessionType('none');
+      }
       
-      // Show warning to user about dual sessions
-      toast.warning('You are logged in as both user and expert. This may cause issues.');
-    }
-  }, [isUserAuthenticated, isExpertAuthenticated, currentUser, currentExpert]);
-
-  // Function to log out of both accounts
-  const fullLogout = async (): Promise<boolean> => {
+      // Re-run the auth check after an auth state change
+      checkAuth();
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [currentUser, currentExpert, isAuthenticated, expertIsAuthenticated]);
+  
+  // Add a timeout to ensure auth check completes
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (!authCheckCompleted) {
+        console.log('AuthSync: Auth check timeout reached, forcing completion');
+        setIsSynchronizing(false);
+        setIsAuthInitialized(true);
+        setAuthCheckCompleted(true);
+      }
+    }, 5000); // 5 seconds timeout
+    
+    return () => clearTimeout(timeoutId);
+  }, [authCheckCompleted]);
+  
+  // User logout function
+  const userLogout = useCallback(async (): Promise<boolean> => {
     setIsLoggingOut(true);
+    
     try {
-      let userSuccess = true;
-      let expertSuccess = true;
-      
-      if (isUserAuthenticated) {
-        userSuccess = await userLogout();
-      }
-      
-      if (isExpertAuthenticated) {
-        expertSuccess = await expertLogout();
-      }
-      
-      const success = userSuccess && expertSuccess;
+      console.log('AuthSync: Starting user logout');
+      const success = await logout();
       
       if (success) {
-        navigate('/');
-        toast.success('Successfully logged out of all accounts');
+        setIsUserAuthenticated(false);
+        if (sessionType === 'dual') {
+          setSessionType('expert');
+        } else {
+          setSessionType('none');
+        }
+        setHasDualSessions(false);
+        toast.success('Successfully logged out as user');
+      } else {
+        toast.error('Failed to log out as user');
       }
       
       return success;
     } catch (error) {
-      console.error('Error during full logout:', error);
-      toast.error('Error occurred during logout');
+      console.error('Error during user logout:', error);
+      toast.error('An error occurred during logout');
       return false;
     } finally {
       setIsLoggingOut(false);
     }
-  };
-
-  // Function to log out current user (for compatibility)
-  const logout = async (): Promise<boolean> => {
-    if (isUserAuthenticated) {
-      return await userLogout();
-    } else if (isExpertAuthenticated) {
-      return await expertLogout();
+  }, [logout, sessionType]);
+  
+  // Expert logout function
+  const expertLogout = useCallback(async (): Promise<boolean> => {
+    setIsLoggingOut(true);
+    
+    try {
+      console.log('AuthSync: Starting expert logout');
+      const success = await expertLogout();
+      
+      if (success) {
+        setIsExpertAuthenticated(false);
+        if (sessionType === 'dual') {
+          setSessionType('user');
+        } else {
+          setSessionType('none');
+        }
+        setHasDualSessions(false);
+        toast.success('Successfully logged out as expert');
+      } else {
+        toast.error('Failed to log out as expert');
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error during expert logout:', error);
+      toast.error('An error occurred during logout');
+      return false;
+    } finally {
+      setIsLoggingOut(false);
     }
-    return true;
-  };
-
+  }, [expertLogout, sessionType]);
+  
+  // Full logout function (both user and expert)
+  const fullLogout = useCallback(async (): Promise<boolean> => {
+    setIsLoggingOut(true);
+    
+    try {
+      console.log('AuthSync: Starting full logout');
+      
+      // Sign out from Supabase completely
+      const { error } = await supabase.auth.signOut({
+        scope: 'global'
+      });
+      
+      if (error) {
+        console.error('Error during full logout:', error);
+        toast.error('Failed to log out: ' + error.message);
+        return false;
+      }
+      
+      // Clear any local storage related to authentication
+      localStorage.removeItem('expertProfile');
+      
+      // Update state
+      setIsUserAuthenticated(false);
+      setIsExpertAuthenticated(false);
+      setHasDualSessions(false);
+      setSessionType('none');
+      
+      toast.success('Successfully logged out of all accounts');
+      
+      // Redirect to home page
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+      
+      return true;
+    } catch (error) {
+      console.error('Error during full logout:', error);
+      toast.error('An error occurred during logout');
+      return false;
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, []);
+  
   return {
-    // Original properties
     isUserAuthenticated,
     isExpertAuthenticated,
-    currentUser,
-    currentExpert,
-    userLoading,
-    expertLoading,
-    expertAuthInitialized,
-    
-    // Computed properties
+    isSynchronizing,
+    isAuthInitialized,
+    authCheckCompleted,
     hasDualSessions,
     sessionType,
-    
-    // Backwards compatibility aliases
-    isAuthenticated,
-    expertProfile,
-    isAuthInitialized,
-    isAuthLoading,
-    isSynchronizing,
-    authCheckCompleted,
-    
-    // Actions
+    isAuthenticated: isUserAuthenticated,
+    isExpertAuthenticated,
+    isAuthLoading: isSynchronizing,
+    isLoggingOut,
+    setIsLoggingOut,
     userLogout,
     expertLogout,
-    fullLogout,
-    logout,
-    
-    // State
-    isLoggingOut,
-    setIsLoggingOut
+    fullLogout
   };
 };
