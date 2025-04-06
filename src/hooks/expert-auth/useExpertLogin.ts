@@ -1,7 +1,7 @@
 
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile } from '../types';
+import { ExpertProfile } from './types';
 import { useState } from 'react';
 
 /**
