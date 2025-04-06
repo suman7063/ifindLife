@@ -34,7 +34,7 @@ export interface ExpertRegistrationData {
   name: string;
   email: string;
   password: string;
-  phone?: string; // Optional to match the hook version
+  phone?: string;
   address?: string;
   city?: string;
   state?: string;

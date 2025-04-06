@@ -1,13 +1,11 @@
-
 import { useState, useEffect } from 'react';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
 import { fetchServices } from '../services/expertServicesService';
 import { ServiceType } from '../types';
 
 const useDashboardState = () => {
-  const { currentExpert, isLoading } = useExpertAuth();
+  const { currentExpert, loading } = useExpertAuth();
   const expert = currentExpert; // Map to the properties expected
-  const loading = isLoading;   // by the component
   
   const [services, setServices] = useState<ServiceType[]>([]);
   const [users, setUsers] = useState<any[]>([]);

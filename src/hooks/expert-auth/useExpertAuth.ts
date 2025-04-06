@@ -9,8 +9,10 @@ import { toast } from 'sonner';
 export const useExpertAuth = (): UseExpertAuthReturn => {
   const [authState, setAuthState] = useState<ExpertAuthState>({
     currentExpert: null,
-    isLoading: true,
-    authInitialized: false,
+    user: null,
+    loading: true,
+    error: null,
+    initialized: false,
     isAuthenticated: false,
   });
   
@@ -47,12 +49,12 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
       ...prev, 
       currentExpert: expert, 
       isAuthenticated: !!expert,
-      isLoading: false
+      loading: false
     }));
   }, []);
 
   const setLoading = useCallback((loading: boolean) => {
-    setAuthState(prev => ({ ...prev, isLoading: loading }));
+    setAuthState(prev => ({ ...prev, loading }));
   }, []);
 
   const { 
@@ -89,8 +91,10 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
           console.log('No active session found');
           setAuthState({
             currentExpert: null,
-            isLoading: false,
-            authInitialized: true,
+            user: null,
+            loading: false,
+            error: null,
+            initialized: true,
             isAuthenticated: false,
           });
           return;
@@ -104,8 +108,10 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
           console.log('No expert profile found for active session');
           setAuthState({
             currentExpert: null,
-            isLoading: false,
-            authInitialized: true,
+            user: null,
+            loading: false,
+            error: null,
+            initialized: true,
             isAuthenticated: false,
           });
           return;
@@ -137,8 +143,10 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
           
           setAuthState({
             currentExpert: null,
-            isLoading: false,
-            authInitialized: true,
+            user: null,
+            loading: false,
+            error: null,
+            initialized: true,
             isAuthenticated: false,
           });
           return;
@@ -147,16 +155,20 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
         console.log('Expert profile found and approved, setting auth state');
         setAuthState({
           currentExpert: expertProfile,
-          isLoading: false,
-          authInitialized: true,
+          user: data.session.user,
+          loading: false,
+          error: null,
+          initialized: true,
           isAuthenticated: true,
         });
       } catch (error) {
         console.error('Error initializing expert auth:', error);
         setAuthState({
           currentExpert: null,
-          isLoading: false,
-          authInitialized: true,
+          user: null,
+          loading: false,
+          error: 'Failed to initialize auth',
+          initialized: true,
           isAuthenticated: false,
         });
       }
@@ -248,18 +260,18 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
   // Add a timeout to complete auth loading if it takes too long
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (authState.isLoading) {
+      if (authState.loading) {
         console.log('Auth loading timeout reached, forcing completion');
         setAuthState(prev => ({
           ...prev,
-          isLoading: false,
-          authInitialized: true,
+          loading: false,
+          initialized: true,
         }));
       }
     }, 3000); // 3 seconds timeout
     
     return () => clearTimeout(timeoutId);
-  }, [authState.isLoading]);
+  }, [authState.loading]);
 
   return {
     ...authState,
@@ -270,5 +282,8 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
     updateProfile,
     updateAvailability,
     updateServices,
+    // Add aliases to match the updated interface
+    isLoading: authState.loading,
+    authInitialized: authState.initialized
   };
 };

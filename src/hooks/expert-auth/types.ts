@@ -59,7 +59,7 @@ export interface ExpertAuthState {
 export interface ExpertRegistrationData {
   name: string;
   email: string;
-  phone: string;
+  phone?: string; // Make phone optional to match component's version
   password: string;
   bio?: string;
   specialization?: string;
@@ -69,6 +69,7 @@ export interface ExpertRegistrationData {
   state?: string;
   country?: string;
   selected_services?: number[];
+  certificate_urls?: string[]; // Add this property to match usage
 }
 
 export interface UseExpertAuthReturn {
@@ -84,4 +85,8 @@ export interface UseExpertAuthReturn {
   updateProfile: (data: ProfileUpdateData) => Promise<boolean>;
   updateAvailability: (availability: ExpertTimeSlot[]) => Promise<boolean>;
   updateServices: (serviceIds: number[]) => Promise<boolean>;
+  // Add missing properties referenced in code
+  isLoading: boolean; // Alias for loading for consistency
+  authInitialized: boolean; // Alias for initialized for consistency
+  hasUserAccount: (email: string) => Promise<boolean>;
 }

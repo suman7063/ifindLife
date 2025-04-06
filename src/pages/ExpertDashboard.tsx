@@ -19,7 +19,7 @@ const ExpertDashboard = () => {
   const navigate = useNavigate();
   const { isAuthenticated, currentUser } = useAuthSynchronization();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const { currentExpert: expertAuthProfile, isLoading: expertAuthLoading } = useExpertAuth();
+  const { currentExpert: expertAuthProfile, loading: expertAuthLoading } = useExpertAuth();
   
   const loading = expertStateLoading || expertAuthLoading;
   

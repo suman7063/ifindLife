@@ -28,8 +28,8 @@ const ExpertLogin = () => {
   const { 
     login, 
     currentExpert: expert, 
-    isLoading: loading, 
-    authInitialized, 
+    loading, 
+    initialized, 
     hasUserAccount 
   } = useExpertAuth();
   
@@ -241,7 +241,7 @@ const ExpertLogin = () => {
   };
 
   // Show loading view during initialization
-  if ((loading && !isLoggingIn && !authInitialized) || (authInitialized && loading && !isLoggingIn) || isSynchronizing || isCheckingUser) {
+  if ((loading && !isLoggingIn && !initialized) || (initialized && loading && !isLoggingIn) || isSynchronizing || isCheckingUser) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;
   }

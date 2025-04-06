@@ -1,149 +1,157 @@
 
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile, ProfileUpdateData, ExpertAvailability, ExpertService } from './types';
+import { ExpertProfile, ProfileUpdateData, ExpertTimeSlot } from './types';
 import { toast } from 'sonner';
-
-export interface ExpertTimeSlot {
-  day: string;
-  start_time: string;
-  end_time: string;
-}
 
 export const useExpertProfile = (
   currentExpert: ExpertProfile | null,
   setExpert: (expert: ExpertProfile | null) => void
 ) => {
-  const updateProfile = async (data: ProfileUpdateData): Promise<boolean> => {
+  const [updating, setUpdating] = useState(false);
+
+  /**
+   * Updates the expert's profile information
+   */
+  const updateProfile = async (profileData: ProfileUpdateData): Promise<boolean> => {
     if (!currentExpert) {
-      toast.error('Not logged in as an expert');
+      toast.error('No expert profile found. Please log in again.');
       return false;
     }
 
     try {
-      // Convert experience to string if it's provided
-      const updateData = {
-        ...data,
-        experience: data.experience !== undefined ? String(data.experience) : undefined
-      };
-
+      setUpdating(true);
+      
+      // Update the expert_accounts table
       const { error } = await supabase
         .from('expert_accounts')
-        .update(updateData)
-        .eq('id', String(currentExpert.id));
-
-      if (error) throw error;
+        .update(profileData)
+        .eq('id', currentExpert.id);
       
-      // Update local state
-      setExpert({
+      if (error) {
+        console.error('Profile update error:', error);
+        toast.error('Failed to update profile: ' + error.message);
+        return false;
+      }
+      
+      // Update the local state
+      const updatedExpert = {
         ...currentExpert,
-        ...updateData
-      });
-
+        ...profileData
+      };
+      
+      setExpert(updatedExpert);
       toast.success('Profile updated successfully');
       return true;
-    } catch (error: any) {
-      console.error('Error updating expert profile:', error);
-      toast.error(error.message || 'Failed to update profile');
+    } catch (error) {
+      console.error('Profile update error:', error);
+      toast.error('An unexpected error occurred while updating your profile');
       return false;
+    } finally {
+      setUpdating(false);
     }
   };
 
-  const updateAvailability = async (availability: ExpertTimeSlot[]): Promise<boolean> => {
+  /**
+   * Updates the expert's availability schedule
+   */
+  const updateAvailability = async (timeSlots: ExpertTimeSlot[]): Promise<boolean> => {
     if (!currentExpert) {
-      toast.error('Not logged in as an expert');
+      toast.error('No expert profile found. Please log in again.');
       return false;
     }
-
+    
     try {
-      const expertId = String(currentExpert.id);
+      setUpdating(true);
       
-      // First delete existing availability
-      await supabase
-        .from('expert_availabilities')
+      // First, delete all existing availability entries for this expert
+      const { error: deleteError } = await supabase
+        .from('expert_availability')
         .delete()
-        .eq('expert_id', expertId);
-
-      // For each availability slot, create a record
-      for (const slot of availability) {
-        // Prepare availability data for this expert
-        const availabilityData = {
-          expert_id: expertId,
-          availability_type: 'weekly', // Default type
-          start_date: new Date().toISOString().split('T')[0], // Current date
-          end_date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 90 days from now
-        };
-        
-        // Insert into expert_availabilities
-        const { data: availabilityRecord, error: availabilityError } = await supabase
-          .from('expert_availabilities')
-          .insert(availabilityData)
-          .select('id')
-          .single();
-
-        if (availabilityError) throw availabilityError;
-
-        if (!availabilityRecord) throw new Error('Failed to create availability record');
-
-        // Add time slots for this availability
-        const { error: timeSlotError } = await supabase
-          .from('expert_time_slots')
-          .insert({
-            availability_id: availabilityRecord.id,
-            day_of_week: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'].indexOf(slot.day),
-            start_time: slot.start_time,
-            end_time: slot.end_time,
-            is_booked: false
-          });
-
-        if (timeSlotError) throw timeSlotError;
+        .eq('expert_id', currentExpert.id);
+      
+      if (deleteError) {
+        console.error('Error deleting existing availability:', deleteError);
+        toast.error('Failed to update availability: ' + deleteError.message);
+        return false;
       }
-
-      // Update local state
-      // We don't modify currentExpert directly since availability is managed separately
+      
+      // Then, insert the new availability entries
+      const availabilityData = timeSlots.map(slot => ({
+        expert_id: currentExpert.id,
+        availability_type: 'regular',
+        start_date: slot.start_time,
+        end_date: slot.end_time,
+        day_of_week: slot.day,
+      }));
+      
+      const { error: insertError } = await supabase
+        .from('expert_availability')
+        .insert(availabilityData);
+      
+      if (insertError) {
+        console.error('Error updating availability:', insertError);
+        toast.error('Failed to update availability: ' + insertError.message);
+        return false;
+      }
+      
       toast.success('Availability updated successfully');
       return true;
-    } catch (error: any) {
-      console.error('Error updating expert availability:', error);
-      toast.error(error.message || 'Failed to update availability');
+    } catch (error) {
+      console.error('Availability update error:', error);
+      toast.error('An unexpected error occurred while updating your availability');
       return false;
+    } finally {
+      setUpdating(false);
     }
   };
 
+  /**
+   * Updates the services offered by the expert
+   */
   const updateServices = async (serviceIds: number[]): Promise<boolean> => {
     if (!currentExpert) {
-      toast.error('Not logged in as an expert');
+      toast.error('No expert profile found. Please log in again.');
       return false;
     }
-
+    
     try {
-      // Update the expert record with selected service IDs
+      setUpdating(true);
+      
+      // Update the selected_services field in the expert_accounts table
       const { error } = await supabase
         .from('expert_accounts')
-        .update({
-          selected_services: serviceIds
-        })
-        .eq('id', String(currentExpert.id));
-
-      if (error) throw error;
-
-      // Update local state
-      setExpert({
+        .update({ selected_services: serviceIds })
+        .eq('id', currentExpert.id);
+      
+      if (error) {
+        console.error('Services update error:', error);
+        toast.error('Failed to update services: ' + error.message);
+        return false;
+      }
+      
+      // Update the local state
+      const updatedExpert = {
         ...currentExpert,
         selected_services: serviceIds
-      });
-
+      };
+      
+      setExpert(updatedExpert);
       toast.success('Services updated successfully');
       return true;
-    } catch (error: any) {
-      console.error('Error updating expert services:', error);
-      toast.error(error.message || 'Failed to update services');
+    } catch (error) {
+      console.error('Services update error:', error);
+      toast.error('An unexpected error occurred while updating your services');
       return false;
+    } finally {
+      setUpdating(false);
     }
   };
 
   return {
     updateProfile,
     updateAvailability,
-    updateServices
+    updateServices,
+    updating
   };
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ExpertFormData, formDataToRegistrationData } from '../types';
@@ -126,14 +125,12 @@ export const useExpertRegistration = () => {
         }
       });
     } else if (step === 4) {
-      // Check for selected services
       const servicesError = validateField('selectedServices', formData.selectedServices);
       if (servicesError) {
         newErrors.selectedServices = servicesError;
         isValid = false;
       }
       
-      // Check for terms acceptance
       const termsError = validateField('acceptedTerms', formData.acceptedTerms);
       if (termsError) {
         newErrors.acceptedTerms = termsError;
@@ -150,12 +147,9 @@ export const useExpertRegistration = () => {
     
     if (isSubmitting) return false;
     
-    // Clear any previous form errors
     setFormError(null);
     
-    // Validate the current step (which is the final step)
     if (!validateCurrentStep()) {
-      // Show toast for validation errors
       toast.error('Please correct the errors before submitting');
       return false;
     }
@@ -165,11 +159,10 @@ export const useExpertRegistration = () => {
     try {
       console.log('Submitting form with data:', formData);
       
-      // Convert form data to registration data
       const registrationData = formDataToRegistrationData(formData);
       
-      // Attempt to register the expert
       console.log('Registering with data:', registrationData);
+      
       const success = await register(registrationData);
       
       if (success) {
@@ -182,10 +175,8 @@ export const useExpertRegistration = () => {
     } catch (error: any) {
       console.error('Error during registration:', error);
       
-      // Set the error message to be displayed in the form
       setFormError(error.message || "Registration failed. Please try again later.");
       
-      // Check if it's a 422 error (validation error or user already exists)
       if (error.message && error.message.includes('Email is already registered')) {
         toast.error("This email is already registered. Please try logging in or use a different email.");
       } else if (error.message && error.message.includes('422')) {
@@ -201,7 +192,6 @@ export const useExpertRegistration = () => {
 
   const nextStep = () => {
     if (!validateCurrentStep()) {
-      // Show validation errors
       toast.error('Please correct the errors before proceeding');
       return;
     }

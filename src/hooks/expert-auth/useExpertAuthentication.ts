@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile, ExpertRegistrationData } from './types';
@@ -13,7 +12,6 @@ export const useExpertAuthentication = (
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
   const { login } = useExpertLogin(setExpert, setLoading, fetchExpertProfile);
   
-  // Check if email is registered as a user
   const hasUserAccount = async (email: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase
@@ -34,7 +32,6 @@ export const useExpertAuthentication = (
     }
   };
   
-  // Logout function
   const logout = async (): Promise<boolean> => {
     setLoading(true);
     try {
@@ -45,7 +42,6 @@ export const useExpertAuthentication = (
         return false;
       }
       
-      // Clear local storage items related to expert session
       localStorage.removeItem('expertProfile');
       
       setExpert(null);
@@ -53,7 +49,6 @@ export const useExpertAuthentication = (
       toast.success('Logged out successfully');
       
       setTimeout(() => {
-        // Navigate to login page after a short delay
         window.location.href = '/expert-login';
       }, 500);
       
@@ -67,19 +62,16 @@ export const useExpertAuthentication = (
     }
   };
   
-  // Registration function
   const register = async (data: ExpertRegistrationData): Promise<boolean> => {
     try {
       setLoading(true);
       
-      // Check for existing user session
       const { data: sessionData } = await supabase.auth.getSession();
       if (sessionData.session) {
         toast.error('Please log out of your current session before registering as an expert.');
         return false;
       }
       
-      // Create user in Supabase auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
@@ -94,7 +86,7 @@ export const useExpertAuthentication = (
             specialization: data.specialization,
             experience: data.experience,
             bio: data.bio,
-            certificate_urls: data.certificate_urls,
+            certificate_urls: data.certificate_urls || [],
             selected_services: data.selected_services
           }
         }
@@ -111,17 +103,14 @@ export const useExpertAuthentication = (
         return false;
       }
       
-      // Convert selected_services to number array
       const selectedServices = Array.isArray(data.selected_services) 
         ? data.selected_services.map(id => typeof id === 'string' ? parseInt(id, 10) : id)
         : [];
 
-      // Ensure experience is stored as string
       const expertExperience = typeof data.experience === 'number' 
         ? String(data.experience) 
         : (data.experience || '');
 
-      // Create expert profile in expert_accounts table
       const expertData = {
         auth_id: authData.session.user.id,
         name: data.name,
@@ -136,7 +125,7 @@ export const useExpertAuthentication = (
         bio: data.bio || '',
         certificate_urls: data.certificate_urls || [],
         selected_services: selectedServices,
-        status: 'pending' // All new registrations start with pending status
+        status: 'pending'
       };
       
       const { error: profileError } = await supabase
@@ -147,15 +136,12 @@ export const useExpertAuthentication = (
         console.error('Registration profile error:', profileError);
         toast.error(profileError.message);
         
-        // Clean up user from auth if profile creation fails
         await supabase.auth.signOut();
         return false;
       }
       
-      // Sign out after successful registration
       await supabase.auth.signOut();
       
-      // Redirect to expert login with registration success status
       window.location.href = '/expert-login?status=registered';
       
       return true;
