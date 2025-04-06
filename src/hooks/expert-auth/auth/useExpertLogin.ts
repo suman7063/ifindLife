@@ -183,17 +183,17 @@ export const useExpertLogin = (
       // Set the expert data
       setExpert(expertProfile);
       
-      toast.success('Expert login successful');
+      toast.success('Login successful');
       return true;
     } catch (error) {
-      console.error('Expert login unexpected error:', error);
-      toast.error('An unexpected error occurred during login');
+      console.error('Expert login error:', error);
+      toast.error('Login failed: An unexpected error occurred');
       return false;
     } finally {
-      setLoading(false);
       setLoginInProgress(false);
+      setLoading(false);
     }
   };
 
-  return { login, loginInProgress };
+  return { login, isUserLoggedIn };
 };

@@ -1,56 +1,71 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { UserTransaction } from '@/types/supabase/tables';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
-export interface RecentTransactionsCardProps {
+interface UserTransaction {
+  id: string;
+  user_id?: string;
+  amount: number;
+  currency: string;
+  type: string;
+  date: string;
+  description?: string;
+}
+
+interface RecentTransactionsCardProps {
   transactions: UserTransaction[];
 }
 
 const RecentTransactionsCard: React.FC<RecentTransactionsCardProps> = ({ transactions }) => {
-  // If there are no transactions, show a message
-  if (!transactions || transactions.length === 0) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-sm">No transactions yet.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  // Show the most recent 5 transactions
+  // Show only the most recent 5 transactions
   const recentTransactions = transactions.slice(0, 5);
-  
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle>Recent Transactions</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {recentTransactions.map((transaction, index) => (
-            <div 
-              key={transaction.id || index} 
-              className="flex justify-between items-center border-b pb-2 last:border-0"
-            >
-              <div>
-                <p className="font-medium">{transaction.description || 'Transaction'}</p>
-                <p className="text-xs text-muted-foreground">
-                  {transaction.date || transaction.created_at || new Date().toISOString()}
+        {recentTransactions.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground py-4">
+            No transactions yet
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {recentTransactions.map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-full ${
+                    transaction.type.toLowerCase() === 'credit' 
+                      ? 'bg-green-100 text-green-600' 
+                      : 'bg-red-100 text-red-600'
+                  }`}>
+                    {transaction.type.toLowerCase() === 'credit' ? (
+                      <ArrowDownRight className="h-4 w-4" />
+                    ) : (
+                      <ArrowUpRight className="h-4 w-4" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">
+                      {transaction.description || 
+                        (transaction.type.toLowerCase() === 'credit' ? 'Wallet Recharge' : 'Purchase')}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formatDate(transaction.date)}</p>
+                  </div>
+                </div>
+                <p className={`font-medium ${
+                  transaction.type.toLowerCase() === 'credit' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {transaction.type.toLowerCase() === 'credit' ? '+' : '-'}
+                  {formatCurrency(transaction.amount)}
                 </p>
               </div>
-              <div className={transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}>
-                {transaction.type === 'credit' ? '+' : '-'}
-                {formatCurrency(transaction.amount, transaction.currency || 'USD')}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

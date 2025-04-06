@@ -47,6 +47,46 @@ export interface ExpertRegistrationData {
   selected_services?: number[];
 }
 
+export interface ProfileUpdateData {
+  name?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  bio?: string;
+  profile_picture?: string;
+}
+
+export interface ExpertAvailability {
+  id?: string;
+  expert_id: string;
+  availability_type: string;
+  start_date: string;
+  end_date: string;
+  time_slots?: ExpertTimeSlot[];
+}
+
+export interface ExpertTimeSlot {
+  id?: string;
+  availability_id: string;
+  start_time: string;
+  end_time: string;
+  day_of_week?: number;
+  specific_date?: string;
+  is_booked?: boolean;
+}
+
+export interface ExpertService {
+  id: number;
+  name: string;
+  rate_usd: number;
+  rate_inr: number;
+  description?: string;
+}
+
 export interface UseExpertAuthReturn extends ExpertAuthState {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;

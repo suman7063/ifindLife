@@ -12,7 +12,13 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLoginPage = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const { isUserAuthenticated, userLoading, isSynchronizing, authCheckCompleted, isExpertAuthenticated } = useAuthSynchronization();
+  const { 
+    isUserAuthenticated, 
+    isSynchronizing, 
+    authCheckCompleted, 
+    isExpertAuthenticated, 
+    isAuthLoading 
+  } = useAuthSynchronization();
   const { isAuthenticated, currentUser, loading } = useUserAuth();
   const navigate = useNavigate();
   
@@ -20,7 +26,6 @@ const UserLoginPage = () => {
   useEffect(() => {
     console.log('UserLoginPage - Auth states:', {
       isUserAuthenticated,
-      userLoading,
       isSynchronizing,
       authCheckCompleted,
       isAuthenticated,
@@ -29,7 +34,7 @@ const UserLoginPage = () => {
       redirectAttempted,
       isExpertAuthenticated
     });
-  }, [isUserAuthenticated, userLoading, isSynchronizing, authCheckCompleted, isAuthenticated, currentUser, loading, redirectAttempted, isExpertAuthenticated]);
+  }, [isUserAuthenticated, isSynchronizing, authCheckCompleted, isAuthenticated, currentUser, loading, redirectAttempted, isExpertAuthenticated]);
   
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -41,7 +46,6 @@ const UserLoginPage = () => {
     // 5. We haven't already attempted a redirect
     if (isAuthenticated && 
         currentUser && 
-        !userLoading && 
         !isSynchronizing && 
         !loading && 
         authCheckCompleted && 
@@ -53,7 +57,6 @@ const UserLoginPage = () => {
     
     // Redirect to expert dashboard if expert is authenticated
     if (isExpertAuthenticated && 
-        !userLoading && 
         !isSynchronizing && 
         !loading && 
         authCheckCompleted && 
@@ -65,7 +68,6 @@ const UserLoginPage = () => {
   }, [
     isAuthenticated, 
     currentUser, 
-    userLoading, 
     isSynchronizing, 
     loading, 
     redirectAttempted,
@@ -75,7 +77,7 @@ const UserLoginPage = () => {
   ]);
   
   // Show loading screen during initialization
-  if (userLoading || isSynchronizing || loading) {
+  if (isSynchronizing || loading) {
     console.log('UserLoginPage: Showing loading screen');
     return <LoadingScreen />;
   }

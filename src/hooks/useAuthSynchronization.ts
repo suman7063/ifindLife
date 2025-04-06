@@ -16,7 +16,11 @@ export const useAuthSynchronization = () => {
   const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
   
   const { currentUser, isAuthenticated, logout } = useUserAuth();
-  const { currentExpert, isAuthenticated: expertIsAuthenticated, logout: expertLogout } = useExpertAuth();
+  const { 
+    currentExpert, 
+    isAuthenticated: expertIsAuthenticated, 
+    logout: expertLogoutFn 
+  } = useExpertAuth();
   
   // Check authentication status on mount
   useEffect(() => {
@@ -146,7 +150,7 @@ export const useAuthSynchronization = () => {
     
     try {
       console.log('AuthSync: Starting expert logout');
-      const success = await expertLogout();
+      const success = await expertLogoutFn();
       
       if (success) {
         setIsExpertAuthenticated(false);
@@ -169,7 +173,7 @@ export const useAuthSynchronization = () => {
     } finally {
       setIsLoggingOut(false);
     }
-  }, [expertLogout, sessionType]);
+  }, [expertLogoutFn, sessionType]);
   
   // Full logout function (both user and expert)
   const fullLogout = useCallback(async (): Promise<boolean> => {
@@ -224,7 +228,8 @@ export const useAuthSynchronization = () => {
     hasDualSessions,
     sessionType,
     isAuthenticated: isUserAuthenticated,
-    isExpertAuthenticated,
+    currentUser,
+    currentExpert,
     isAuthLoading: isSynchronizing,
     isLoggingOut,
     setIsLoggingOut,

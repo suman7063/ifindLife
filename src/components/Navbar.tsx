@@ -17,7 +17,7 @@ const Navbar = () => {
     isExpertAuthenticated,
     isUserAuthenticated,
     currentUser, 
-    expertProfile,
+    currentExpert,
     userLogout,
     expertLogout,
     fullLogout,
