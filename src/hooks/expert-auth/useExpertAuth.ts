@@ -192,7 +192,7 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
               ...prev,
               currentExpert: null,
               isAuthenticated: false,
-              authInitialized: true,
+              initialized: true,
             }));
             return;
           }
@@ -221,32 +221,34 @@ export const useExpertAuth = (): UseExpertAuthReturn => {
               ...prev,
               currentExpert: null,
               isAuthenticated: false,
-              authInitialized: true,
-              isLoading: false,
+              initialized: true,
+              loading: false,
             }));
             return;
           }
           
           console.log('Expert profile found and approved, updating auth state');
-          setAuthState({
+          setAuthState(prev => ({
+            ...prev,
             currentExpert: expertProfile,
-            isLoading: false,
-            authInitialized: true,
+            loading: false,
+            initialized: true,
             isAuthenticated: true,
-          });
+          }));
         } else if (event === 'SIGNED_OUT') {
           console.log('Signed out event detected, clearing expert profile');
-          setAuthState({
+          setAuthState(prev => ({
+            ...prev,
             currentExpert: null,
-            isLoading: false,
-            authInitialized: true,
+            loading: false,
+            initialized: true,
             isAuthenticated: false,
-          });
+          }));
         } else {
           // For other events, just update the initialized flag
           setAuthState(prev => ({
             ...prev,
-            authInitialized: true,
+            initialized: true,
           }));
         }
       }

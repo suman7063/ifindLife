@@ -66,7 +66,7 @@ export const useExpertProfile = (
       
       // First, delete all existing availability entries for this expert
       const { error: deleteError } = await supabase
-        .from('expert_availability')
+        .from('expert_availabilities')
         .delete()
         .eq('expert_id', currentExpert.id);
       
@@ -86,7 +86,7 @@ export const useExpertProfile = (
       }));
       
       const { error: insertError } = await supabase
-        .from('expert_availability')
+        .from('expert_availabilities')
         .insert(availabilityData);
       
       if (insertError) {

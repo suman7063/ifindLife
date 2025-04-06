@@ -29,6 +29,7 @@ export interface ExpertAvailability {
   availability_type: string;
   start_date: string;
   end_date: string;
+  day_of_week?: string;
 }
 
 export interface ExpertTimeSlot {
@@ -54,12 +55,13 @@ export interface ExpertAuthState {
   error: string | null;
   initialized: boolean;
   isAuthenticated: boolean;
+  isLoading?: boolean; // Add isLoading as optional for backward compatibility
 }
 
 export interface ExpertRegistrationData {
   name: string;
   email: string;
-  phone?: string; // Make phone optional to match component's version
+  phone?: string;
   password: string;
   bio?: string;
   specialization?: string;
@@ -69,7 +71,7 @@ export interface ExpertRegistrationData {
   state?: string;
   country?: string;
   selected_services?: number[];
-  certificate_urls?: string[]; // Add this property to match usage
+  certificate_urls?: string[];
 }
 
 export interface UseExpertAuthReturn {
@@ -85,8 +87,7 @@ export interface UseExpertAuthReturn {
   updateProfile: (data: ProfileUpdateData) => Promise<boolean>;
   updateAvailability: (availability: ExpertTimeSlot[]) => Promise<boolean>;
   updateServices: (serviceIds: number[]) => Promise<boolean>;
-  // Add missing properties referenced in code
-  isLoading: boolean; // Alias for loading for consistency
-  authInitialized: boolean; // Alias for initialized for consistency
+  isLoading: boolean;
+  authInitialized: boolean;
   hasUserAccount: (email: string) => Promise<boolean>;
 }
