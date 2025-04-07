@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Session } from './types';
-import { getDefaultSessions } from './defaultSessions';
+import { defaultSessions } from './defaultSessions';
 
 export const useSessionsManager = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -28,7 +28,7 @@ export const useSessionsManager = () => {
         console.log('Sessions fetched from localStorage:', fetchedSessions.length);
       } else {
         // Initialize with default sessions if none found
-        fetchedSessions = getDefaultSessions();
+        fetchedSessions = [...defaultSessions];
         
         // Save defaults to localStorage
         localStorage.setItem('ifindlife-sessions', JSON.stringify(fetchedSessions));
