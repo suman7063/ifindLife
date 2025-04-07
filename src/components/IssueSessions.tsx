@@ -49,8 +49,8 @@ const IssueSessions: React.FC = () => {
     setIsDialogOpen(true);
   };
 
-  // This is the correct way to prevent default navigation
-  const handleCardClick = (e: React.MouseEvent, session: Session) => {
+  // Handler for both click and keyboard events
+  const handleCardInteraction = (e: React.MouseEvent | React.KeyboardEvent, session: Session) => {
     e.preventDefault(); // Prevent default navigation
     e.stopPropagation(); // Stop event bubbling
     handleOpenSession(session);
@@ -79,15 +79,15 @@ const IssueSessions: React.FC = () => {
               <div
                 key={session.id}
                 className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow"
-                onClick={(e) => handleCardClick(e, session)}
+                onClick={(e) => handleCardInteraction(e, session)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleCardInteraction(e, session);
+                  }
+                }}
                 role="button"
                 tabIndex={0}
                 aria-label={`View details about ${session.title}`}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCardClick(e as unknown as React.MouseEvent, session);
-                  }
-                }}
               >
                 <div className={`w-12 h-12 ${session.color} rounded-full flex items-center justify-center mb-3`}>
                   {renderIcon(session.icon)}

@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 interface CategoryCardProps {
   icon: React.ReactNode;
@@ -38,18 +37,17 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     ? `text-sm ${textColor}/90`
     : 'text-sm text-gray-600';
 
+  // Return a plain div instead of a Link to prevent navigation
   return (
-    <Link to={href}>
-      <div className={cardClasses}>
-        <div className={iconClasses}>
-          {icon}
-        </div>
-        <h3 className={titleClasses}>
-          {title}
-        </h3>
-        <p className={descriptionClasses}>{description}</p>
+    <div className={cardClasses}>
+      <div className={iconClasses}>
+        {icon}
       </div>
-    </Link>
+      <h3 className={titleClasses}>
+        {title}
+      </h3>
+      <p className={descriptionClasses}>{description}</p>
+    </div>
   );
 };
 
