@@ -3,6 +3,7 @@ import React, { lazy, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import ServicesSection from '@/components/ServicesSection';
+import IssueSessions from '@/components/IssueSessions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -40,6 +41,9 @@ const Index = () => {
         
         {/* Services/Categories Section - Critical for first impression */}
         <ServicesSection />
+        
+        {/* Issue Sessions Section - Added to ensure it appears on the page */}
+        <IssueSessions />
         
         {/* Programs Section for Organizations - Updated for row alignment of buttons */}
         <section className="py-16 bg-gray-50">

@@ -4,55 +4,66 @@ import { Session } from './types';
 export const defaultSessions: Session[] = [
   {
     id: "1",
-    title: "Anxiety & Depression",
-    description: "Get help managing anxiety, depression, and stress from licensed therapists.",
+    title: "Anxiety & Stress",
+    description: "Get help managing anxiety, panic attacks, and daily stress",
+    color: "bg-ifind-aqua/10",
     icon: "brain",
-    color: "bg-blue-100",
-    href: "/anxiety-depression"
+    href: "/experts?issue=anxiety"
   },
   {
     id: "2",
-    title: "Relationship Counseling",
-    description: "Improve communication and resolve conflicts in all types of relationships.",
-    icon: "heart",
-    color: "bg-red-100",
-    href: "/relationship-counseling"
+    title: "Depression",
+    description: "Support for feelings of sadness, hopelessness, or low mood",
+    color: "bg-ifind-purple/10",
+    icon: "cloud-rain",
+    href: "/experts?issue=depression"
   },
   {
     id: "3",
-    title: "Career Guidance",
-    description: "Navigate work stress, career transitions, and professional development.",
-    icon: "briefcase",
-    color: "bg-yellow-100",
-    href: "/career-guidance"
+    title: "Relationships",
+    description: "Help with family conflicts, couples issues, and social challenges",
+    color: "bg-ifind-teal/10",
+    icon: "heart",
+    href: "/experts?issue=relationships"
   },
   {
     id: "4",
-    title: "Family Therapy",
-    description: "Address family dynamics, parenting challenges, and intergenerational issues.",
-    icon: "users",
-    color: "bg-green-100",
-    href: "/family-therapy"
+    title: "Self-Esteem",
+    description: "Build confidence and develop a more positive self-image",
+    color: "bg-ifind-charcoal/10",
+    icon: "star",
+    href: "/experts?issue=self-esteem"
   },
   {
     id: "5",
-    title: "Trauma Recovery",
-    description: "Process and heal from past trauma with specialized therapeutic approaches.",
-    icon: "sparkles",
-    color: "bg-purple-100",
-    href: "/trauma-recovery"
+    title: "Sleep Issues",
+    description: "Improve your sleep quality and overcome insomnia",
+    color: "bg-ifind-aqua/10",
+    icon: "moon",
+    href: "/experts?issue=sleep"
   },
   {
     id: "6",
-    title: "Teen Counseling",
-    description: "Support for adolescents facing academic pressure, identity, and social challenges.",
-    icon: "message-circle",
-    color: "bg-orange-100",
-    href: "/teen-counseling"
+    title: "Trauma & PTSD",
+    description: "Process difficult experiences and find healing",
+    color: "bg-ifind-purple/10",
+    icon: "shield",
+    href: "/experts?issue=trauma"
+  },
+  {
+    id: "7",
+    title: "Grief & Loss",
+    description: "Navigate the emotions that come with significant loss",
+    color: "bg-ifind-teal/10",
+    icon: "heart-handshake",
+    href: "/experts?issue=grief"
+  },
+  {
+    id: "8",
+    title: "Life Transitions",
+    description: "Support for major changes like career shifts or relocation",
+    color: "bg-ifind-charcoal/10",
+    icon: "milestone",
+    href: "/experts?issue=transitions"
   }
 ];
-
-// Create a function to get the default sessions (which was missing)
-export const getDefaultSessions = () => {
-  return [...defaultSessions];
-};
