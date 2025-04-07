@@ -1,4 +1,12 @@
 
-// Import the hook from the correct location
-import { useUserAuth } from '../contexts/auth/UserAuthContext';
-export { useUserAuth };
+// Backward compatibility layer for existing components
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuthBackCompat } from './auth/useAuthBackCompat';
+
+export const useUserAuth = () => {
+  const { userAuth } = useAuthBackCompat();
+  return userAuth;
+};
+
+// Export the new hook directly as well
+export { useAuth } from '@/contexts/auth/AuthContext';

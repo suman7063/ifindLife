@@ -1,9 +1,11 @@
 
-// Re-export the useExpertAuth hook and types from the refactored module
-export { useExpertAuth } from './expert-auth';
-export type { ExpertProfile } from './expert-auth/types';
-export type { 
-  ExpertAuthState, 
-  UseExpertAuthReturn, 
-  ExpertRegistrationData 
-} from './expert-auth/types';
+// Backward compatibility layer for existing components
+import { useAuthBackCompat } from './auth/useAuthBackCompat';
+
+export const useExpertAuth = () => {
+  const { expertAuth } = useAuthBackCompat();
+  return expertAuth;
+};
+
+// Export the new hook directly as well
+export { useAuth as useAuthUnified } from '@/contexts/auth/AuthContext';
