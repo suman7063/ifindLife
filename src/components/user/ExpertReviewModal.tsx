@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,13 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({
 
     setSubmitting(true);
     try {
-      const success = await addReview(expertId, rating, comment);
+      // Updated to match the expected parameter format
+      const success = await addReview({
+        expertId,
+        rating,
+        comment
+      });
+      
       if (success) {
         toast({
           title: "Review Submitted",

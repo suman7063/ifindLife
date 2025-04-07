@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -40,20 +39,24 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
       return;
     }
     
-    reportExpert(expertId, reason, details);
+    reportExpert({
+      expertId, 
+      reason, 
+      details
+    });
+    
     setOpen(false);
     setReason('');
     setDetails('');
   };
   
-  // Check if the user has taken service from this expert
-  // Pass expertId directly as a string to hasTakenServiceFrom
   const [canReport, setCanReport] = useState(false);
   
   React.useEffect(() => {
     const checkServiceHistory = async () => {
       try {
-        const hasService = await hasTakenServiceFrom(expertId);
+        const numericExpertId = Number(expertId);
+        const hasService = await hasTakenServiceFrom(numericExpertId);
         setCanReport(hasService);
       } catch (error) {
         console.error("Error checking service history:", error);

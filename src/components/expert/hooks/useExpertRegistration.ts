@@ -7,7 +7,7 @@ import { fetchServices } from '../services/expertServicesService';
 import { ServiceType } from '../types';
 
 export const useExpertRegistration = () => {
-  const { register } = useExpertAuth();
+  const { register: expertAuthRegister } = useExpertAuth();
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<ServiceType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,7 +163,7 @@ export const useExpertRegistration = () => {
       
       console.log('Registering with data:', registrationData);
       
-      const success = await register(registrationData);
+      const success = await expertAuthRegister(registrationData);
       
       if (success) {
         return true;

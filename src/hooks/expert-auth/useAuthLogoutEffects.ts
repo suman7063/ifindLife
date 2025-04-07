@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import { UserProfile } from '@/types/supabase';
 
 export const useAuthLogoutEffects = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -48,6 +47,7 @@ export const useAuthLogoutEffects = () => {
     
     try {
       console.log('Attempting full logout...');
+      // Update to match the expected function signature - no parameters
       await fullLogout();
       return true;
     } catch (error) {

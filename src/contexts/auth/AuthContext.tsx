@@ -3,8 +3,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from '@/types/expert';
 import { toast } from 'sonner';
+
+// Import ExpertProfile from the correct location
+import { ExpertProfile } from '@/types/supabase/expert';
 
 // Define role types
 export type UserRole = 'user' | 'expert' | 'admin' | null;

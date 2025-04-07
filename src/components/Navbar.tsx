@@ -160,7 +160,7 @@ const Navbar = () => {
             hasExpertProfile={isExpertAuthenticated}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={sessionType}
+            sessionType={sessionType as 'user' | 'expert' | 'none' | 'dual'}
             isLoggingOut={isLoggingOut}
           />
           
@@ -170,7 +170,7 @@ const Navbar = () => {
             hasExpertProfile={isExpertAuthenticated}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={sessionType}
+            sessionType={sessionType as 'user' | 'expert' | 'none' | 'dual'}
             isLoggingOut={isLoggingOut}
           />
         </div>
