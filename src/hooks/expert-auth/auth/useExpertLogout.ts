@@ -1,62 +1,42 @@
 
-import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile } from '../types';
+import { toast } from 'sonner';
 
-/**
- * Hook for handling expert logout functionality
- */
 export const useExpertLogout = (
-  setExpert: React.Dispatch<React.SetStateAction<ExpertProfile | null>>,
-  setLoading: React.Dispatch<React.SetStateAction<boolean>>
+  setExpert: (expert: null) => void,
+  setLoading: (loading: boolean) => void,
+  setIsUserLoggedIn: (isLoggedIn: boolean) => void
 ) => {
-  /**
-   * Logs out the current expert user
-   */
   const logout = async (): Promise<boolean> => {
     setLoading(true);
     try {
-      console.log('Expert logout: Starting logout process');
-      
-      // First clear the expert state
-      setExpert(null);
-      
-      // Ensure a complete logout using scope: 'local' to only log out current tab/window
-      // This allows user context to remain logged in if present in another tab
-      const { error } = await supabase.auth.signOut({
-        scope: 'local'
-      });
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       
       if (error) {
-        console.error('Expert logout error:', error);
-        toast.error('Failed to log out: ' + error.message);
-        throw error;
+        console.error('Logout error:', error);
+        toast.error(error.message);
+        return false;
       }
       
-      // Additional cleanup to ensure auth state is fully reset
-      try {
-        // Manually clear any lingering session data
-        // This will clear all Supabase-related items from localStorage
-        const storageKeys = Object.keys(localStorage);
-        const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
-        
-        supabaseKeys.forEach(key => {
-          localStorage.removeItem(key);
-        });
-      } catch (e) {
-        console.warn('Error cleaning up local storage:', e);
-      }
+      localStorage.removeItem('expertProfile');
       
-      toast.success('Logged out successfully as expert');
+      setExpert(null);
+      setIsUserLoggedIn(false);
+      toast.success('Logged out successfully');
+      
+      setTimeout(() => {
+        window.location.href = '/expert-login';
+      }, 500);
+      
       return true;
     } catch (error) {
-      console.error('Expert logout error:', error);
-      toast.error('Failed to log out as expert');
+      console.error('Logout error:', error);
+      toast.error('An error occurred during logout.');
       return false;
     } finally {
       setLoading(false);
     }
   };
-
+  
   return { logout };
 };
