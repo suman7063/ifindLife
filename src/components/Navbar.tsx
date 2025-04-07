@@ -28,6 +28,16 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
 
+  // Ensure sessionType is one of the allowed values
+  const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
+    if (type === 'user' || type === 'expert' || type === 'none' || type === 'dual') {
+      return type;
+    }
+    // Default to 'none' if value is unexpected
+    console.warn(`Invalid session type detected: ${type}. Defaulting to 'none'`);
+    return 'none';
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
@@ -124,6 +134,9 @@ const Navbar = () => {
     return scrolled ? 'bg-background/90' : 'bg-transparent';
   };
 
+  // Safely cast sessionType to the valid union type
+  const typedSessionType = getValidSessionType(sessionType);
+
   return (
     <>
       {hasDualSessions && (
@@ -160,7 +173,7 @@ const Navbar = () => {
             hasExpertProfile={isExpertAuthenticated}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={sessionType as 'user' | 'expert' | 'none' | 'dual'}
+            sessionType={typedSessionType}
             isLoggingOut={isLoggingOut}
           />
           
@@ -170,7 +183,7 @@ const Navbar = () => {
             hasExpertProfile={isExpertAuthenticated}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={sessionType as 'user' | 'expert' | 'none' | 'dual'}
+            sessionType={typedSessionType}
             isLoggingOut={isLoggingOut}
           />
         </div>

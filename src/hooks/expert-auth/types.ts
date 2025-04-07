@@ -63,3 +63,50 @@ export interface UseExpertAuthReturn {
   // User check methods
   hasUserAccount?: () => Promise<boolean>;
 }
+
+// Add ExpertAuthState type
+export interface ExpertAuthState {
+  currentExpert: ExpertProfile | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | null;
+  initialized: boolean;
+  user: User | null;
+}
+
+// Add ProfileUpdateData type
+export interface ProfileUpdateData {
+  name?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  bio?: string;
+  profile_picture?: string;
+}
+
+// Add ExpertTimeSlot type
+export interface ExpertTimeSlot {
+  id?: string | number;
+  availability_id?: string | number;
+  day_of_week?: number;
+  specific_date?: string;
+  start_time: string;
+  end_time: string;
+  is_booked?: boolean;
+}
+
+// Add ReportUserType
+export interface ReportUserType {
+  id?: string;
+  user_id: string;
+  expert_id: number | string;
+  reason: string;
+  details: string;
+  date?: string;
+  status?: string;
+  userName?: string;
+}

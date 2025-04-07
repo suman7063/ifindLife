@@ -70,13 +70,15 @@ export const useExpertInteractions = (
   };
 
   // Add a review for an expert
-  const addReview = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+  const addReview = async (reviewData: { expertId: string; rating: number; comment: string }): Promise<boolean> => {
     if (!currentUser) {
       toast.error('You need to login to add a review');
       return false;
     }
     
     try {
+      const { expertId, rating, comment } = reviewData;
+      
       // Add review to user_reviews table
       const { error } = await supabase
         .from('user_reviews')
@@ -101,13 +103,15 @@ export const useExpertInteractions = (
   };
 
   // Report an expert
-  const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
+  const reportExpert = async (reportData: { expertId: string; reason: string; details: string }): Promise<boolean> => {
     if (!currentUser) {
       toast.error('You need to login to report an expert');
       return false;
     }
     
     try {
+      const { expertId, reason, details } = reportData;
+      
       // Add report to user_reports table
       const { error } = await supabase
         .from('user_reports')
@@ -132,7 +136,7 @@ export const useExpertInteractions = (
   };
 
   // Check if user has taken a service from this expert
-  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+  const hasTakenServiceFrom = async (expertId: string | number): Promise<boolean> => {
     if (!currentUser) return false;
     
     try {

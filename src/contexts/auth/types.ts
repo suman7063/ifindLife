@@ -23,9 +23,9 @@ export interface UserAuthContextType {
   addToFavorites: (expertId: string) => Promise<boolean>;
   removeFromFavorites: (expertId: string) => Promise<boolean>;
   rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
-  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
+  addReview: (reviewData: { expertId: string; rating: number; comment: string }) => Promise<boolean>;
+  reportExpert: (reportData: { expertId: string; reason: string; details: string }) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
   getExpertShareLink: (expertId: string) => string;
   getReferralLink: () => string | null;
 }
