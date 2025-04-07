@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useUserAuth } from '@/contexts/auth/UserAuthContext';
-import { Expert, UserTransaction, UserProfile } from '@/types/supabase';
+import { ExpertProfile } from '@/types/supabase/expert';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 interface UseUserDataFetcherResult {
-  favoriteExperts: Expert[];
+  favoriteExperts: ExpertProfile[];
   transactions: UserTransaction[];
   loading: boolean;
   error: Error | null;
 }
 
 export const useUserDataFetcher = (): UseUserDataFetcherResult => {
-  const [favoriteExperts, setFavoriteExperts] = useState<Expert[]>([]);
+  const [favoriteExperts, setFavoriteExperts] = useState<ExpertProfile[]>([]);
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
@@ -31,7 +31,7 @@ export const useUserDataFetcher = (): UseUserDataFetcherResult => {
           from('user_favorites')
             .select('expert (*)')
             .eq('user_id', currentUser.id)
-            .returns<{ expert: Expert }[]>(),
+            .returns<{ expert: ExpertProfile }[]>(),
           from('user_transactions')
             .select('*')
             .eq('user_id', currentUser.id)

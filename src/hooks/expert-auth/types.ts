@@ -2,7 +2,7 @@
 import { User } from '@supabase/supabase-js';
 
 export interface ExpertProfile {
-  id: string | number;
+  id: string;
   name: string;
   email: string;
   phone?: string;
@@ -88,22 +88,23 @@ export interface ProfileUpdateData {
   profile_picture?: string;
 }
 
-// Add ExpertTimeSlot type
+// Update ExpertTimeSlot type to include day field
 export interface ExpertTimeSlot {
-  id?: string | number;
-  availability_id?: string | number;
+  id?: string;
+  availability_id?: string;
   day_of_week?: number;
   specific_date?: string;
   start_time: string;
   end_time: string;
   is_booked?: boolean;
+  day?: number; // Adding day field that was being used
 }
 
 // Add ReportUserType
 export interface ReportUserType {
   id?: string;
   user_id: string;
-  expert_id: number | string;
+  expert_id: string; // Changed to string
   reason: string;
   details: string;
   date?: string;

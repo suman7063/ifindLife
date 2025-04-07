@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
@@ -22,20 +21,20 @@ export const useAuthLogoutEffects = () => {
     setIsLoggingOut(true);
     
     try {
-      console.log('Attempting to log out user...');
+      console.log('Initiating userLogout in useAuthLogoutEffects');
       const success = await userLogout();
       
       if (success) {
-        console.log('User logout completed');
+        console.log('userLogout successful');
         return true;
       } else {
-        console.error('User logout failed');
-        window.location.reload();
+        console.error('userLogout failed');
+        toast.error('Failed to log out user account. Please try again.');
         return false;
       }
     } catch (error) {
-      console.error('Error during user logout:', error);
-      window.location.reload();
+      console.error('Error in userLogout:', error);
+      toast.error('An error occurred during user logout');
       return false;
     } finally {
       setIsLoggingOut(false);
@@ -47,7 +46,6 @@ export const useAuthLogoutEffects = () => {
     
     try {
       console.log('Attempting full logout...');
-      // Update to match the expected function signature - no parameters
       await fullLogout();
       return true;
     } catch (error) {

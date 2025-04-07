@@ -2,7 +2,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile } from './types';
+import { ExpertProfile, ExpertRegistrationData } from './types';
+import { toast } from 'sonner';
 
 export const useExpertAuth = () => {
   const [currentExpert, setCurrentExpert] = useState<ExpertProfile | null>(null);
@@ -137,6 +138,108 @@ export const useExpertAuth = () => {
     }
   };
   
+  // Register function
+  const register = async (data: ExpertRegistrationData): Promise<boolean> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Check if there's an active session
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        toast.error('Please log out of your current session before registering as an expert.');
+        return false;
+      }
+      
+      // Create auth account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            phone: data.phone,
+            address: data.address,
+            city: data.city,
+            state: data.state,
+            country: data.country,
+            specialization: data.specialization,
+            experience: data.experience,
+            bio: data.bio,
+            certificate_urls: data.certificate_urls || [],
+            selected_services: data.selected_services
+          }
+        }
+      });
+      
+      if (authError) {
+        console.error('Registration auth error:', authError);
+        setError(authError.message);
+        toast.error(authError.message);
+        return false;
+      }
+      
+      if (!authData.session) {
+        setError('Registration failed. No session created.');
+        toast.error('Registration failed. No session created.');
+        return false;
+      }
+      
+      // Format data for expert profile
+      const selectedServices = Array.isArray(data.selected_services) 
+        ? data.selected_services.map(id => typeof id === 'string' ? parseInt(id, 10) : id)
+        : [];
+
+      const expertExperience = typeof data.experience === 'number' 
+        ? String(data.experience) 
+        : (data.experience || '');
+
+      // Create expert profile
+      const expertData = {
+        auth_id: authData.session.user.id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone || '',
+        address: data.address || '',
+        city: data.city || '',
+        state: data.state || '',
+        country: data.country || '',
+        specialization: data.specialization || '',
+        experience: expertExperience,
+        bio: data.bio || '',
+        certificate_urls: data.certificate_urls || [],
+        selected_services: selectedServices,
+        status: 'pending'
+      };
+      
+      const { error: profileError } = await supabase
+        .from('expert_accounts')
+        .insert([expertData]);
+      
+      if (profileError) {
+        console.error('Registration profile error:', profileError);
+        setError(profileError.message);
+        toast.error(profileError.message);
+        
+        // Clean up - sign out the created auth account
+        await supabase.auth.signOut();
+        return false;
+      }
+      
+      // Sign out and redirect to login page
+      await supabase.auth.signOut();
+      window.location.href = '/expert-login?status=registered';
+      
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('An error occurred during registration.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Logout function
   const logout = async (): Promise<boolean> => {
     try {
@@ -162,7 +265,7 @@ export const useExpertAuth = () => {
     }
   };
   
-  // Update profile function
+  // Update profile function with proper ID typing
   const updateProfile = async (updates: Partial<ExpertProfile>): Promise<boolean> => {
     if (!currentExpert?.id) {
       setError('No expert profile to update');
@@ -172,10 +275,13 @@ export const useExpertAuth = () => {
     try {
       setLoading(true);
       
+      // Ensure the ID is treated as a string
+      const expertId = String(currentExpert.id);
+      
       const { error } = await supabase
         .from('expert_accounts')
         .update(updates)
-        .eq('id', currentExpert.id);
+        .eq('id', expertId);
       
       if (error) {
         console.error('Profile update error:', error);
@@ -233,6 +339,7 @@ export const useExpertAuth = () => {
     user,
     login,
     logout,
+    register,
     updateProfile,
     hasUserAccount
   };

@@ -22,11 +22,14 @@ export const useExpertProfile = (
     try {
       setUpdating(true);
       
+      // Ensure ID is treated as a string
+      const expertId = String(currentExpert.id);
+      
       // Update the expert_accounts table
       const { error } = await supabase
         .from('expert_accounts')
         .update(profileData)
-        .eq('id', currentExpert.id);
+        .eq('id', expertId);
       
       if (error) {
         console.error('Profile update error:', error);
@@ -64,11 +67,14 @@ export const useExpertProfile = (
     try {
       setUpdating(true);
       
+      // Ensure ID is treated as a string
+      const expertId = String(currentExpert.id);
+      
       // First, delete all existing availability entries for this expert
       const { error: deleteError } = await supabase
         .from('expert_availabilities')
         .delete()
-        .eq('expert_id', currentExpert.id);
+        .eq('expert_id', expertId);
       
       if (deleteError) {
         console.error('Error deleting existing availability:', deleteError);
@@ -77,14 +83,16 @@ export const useExpertProfile = (
       }
       
       // Then, insert the new availability entries
+      // Map the timeSlots to match the database schema
       const availabilityData = timeSlots.map(slot => ({
-        expert_id: currentExpert.id,
+        expert_id: expertId,
         availability_type: 'regular',
         start_date: slot.start_time,
         end_date: slot.end_time,
-        day_of_week: slot.day,
+        day_of_week: slot.day_of_week || slot.day // Use day_of_week or fallback to day
       }));
       
+      // Insert the transformed data
       const { error: insertError } = await supabase
         .from('expert_availabilities')
         .insert(availabilityData);
@@ -118,11 +126,14 @@ export const useExpertProfile = (
     try {
       setUpdating(true);
       
+      // Ensure ID is treated as a string
+      const expertId = String(currentExpert.id);
+      
       // Update the selected_services field in the expert_accounts table
       const { error } = await supabase
         .from('expert_accounts')
         .update({ selected_services: serviceIds })
-        .eq('id', currentExpert.id);
+        .eq('id', expertId);
       
       if (error) {
         console.error('Services update error:', error);

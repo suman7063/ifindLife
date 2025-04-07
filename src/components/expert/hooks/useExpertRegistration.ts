@@ -1,13 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ExpertFormData, formDataToRegistrationData } from '../types';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
 import { useExpertForm } from './useExpertForm';
 import { fetchServices } from '../services/expertServicesService';
 import { ServiceType } from '../types';
 
 export const useExpertRegistration = () => {
-  const { register: expertAuthRegister } = useExpertAuth();
+  const { register } = useExpertAuth();
   const [step, setStep] = useState(1);
   const [services, setServices] = useState<ServiceType[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,7 +164,7 @@ export const useExpertRegistration = () => {
       
       console.log('Registering with data:', registrationData);
       
-      const success = await expertAuthRegister(registrationData);
+      const success = await register(registrationData);
       
       if (success) {
         return true;

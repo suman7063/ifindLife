@@ -2,7 +2,7 @@
 // Expert profile type for Supabase
 
 export interface ExpertProfile {
-  id: string | number;
+  id: string;
   auth_id?: string;
   name: string;
   email: string;
@@ -27,8 +27,8 @@ export interface ExpertProfile {
 
 // Export types related to expert reviews
 export interface ExpertReview {
-  id: string | number;
-  expert_id: string | number;
+  id: string;
+  expert_id: string;
   user_id: string;
   rating: number;
   comment?: string;
@@ -38,7 +38,7 @@ export interface ExpertReview {
 // Export types related to expert services
 export interface ExpertService {
   id: number;
-  expert_id: string | number;
+  expert_id: string;
   service_id: number;
   price?: number;
   is_available: boolean;
@@ -46,8 +46,8 @@ export interface ExpertService {
 
 // Export types for expert availability
 export interface ExpertAvailability {
-  id: string | number;
-  expert_id: string | number;
+  id: string;
+  expert_id: string;
   day_of_week: number;
   start_time: string;
   end_time: string;

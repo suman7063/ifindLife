@@ -7,7 +7,12 @@ export * from './transactions';
 export * from './reviews';
 export * from './userFavorites';
 export * from './referral';
-export * from './expert';
+export type { 
+  ExpertProfile,
+  ExpertReview,
+  ExpertService,
+  ExpertAvailability
+} from './expert';
 
 // Define ReferralSettings interface
 export interface ReferralSettings {
@@ -28,5 +33,5 @@ export interface ReferralUI {
   referralCode: string;
   status: string;
   rewardClaimed: boolean;
-  created_at: string;
+  created_at: string; // Ensure consistency with snake_case
 }

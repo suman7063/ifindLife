@@ -1,23 +1,74 @@
+import { useState, useEffect } from 'react';
+import { useExpertAuth } from './useExpertAuth';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
-import { useExpertAuth } from '@/hooks/expert-auth';
-import { useLoginPageStatus } from './login-page/useLoginPageStatus';
-import { useUserProfileCheck } from './login-page/useUserProfileCheck';
-import { useLoginFormHandler } from './login-page/useLoginFormHandler';
-import { useRedirectHandler } from './login-page/useRedirectHandler';
-import { useTabHandler } from './login-page/useTabHandler';
-import { useDebugLogging } from './login-page/useDebugLogging';
-import { UseExpertLoginPageReturn } from './login-page/loginPageTypes';
-
-export const useExpertLoginPage = (): UseExpertLoginPageReturn => {
-  const { currentExpert: expert, loading, initialized } = useExpertAuth();
-  const { statusMessage } = useLoginPageStatus();
-  const { userProfile, isCheckingUser } = useUserProfileCheck();
-  const { isLoggingIn, loginError, handleLogin } = useLoginFormHandler(userProfile);
-  const { redirectAttempted } = useRedirectHandler(expert, loading, initialized);
-  const { activeTab, setActiveTab } = useTabHandler();
+export const useExpertLoginPage = () => {
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [userProfile, setUserProfile] = useState(null);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [expert, setExpert] = useState(null);
+  const [initialized, setInitialized] = useState(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(false);
+  const [userHasAccount, setUserHasAccount] = useState(false);
   
-  // Set up debug logging
-  useDebugLogging(loading, initialized, expert, userProfile, redirectAttempted);
+  const { login, hasUserAccount, initialized: authInitialized, loading, currentExpert } = useExpertAuth();
+  const { currentUser } = useUserAuth();
+  
+  useEffect(() => {
+    if (window.location.search.includes('status=registered')) {
+      setStatusMessage({
+        type: 'success',
+        message: 'Registration successful! Please log in to continue.'
+      });
+    }
+  }, []);
+  
+  useEffect(() => {
+    setInitialized(authInitialized);
+  }, [authInitialized]);
+  
+  useEffect(() => {
+    setExpert(currentExpert);
+  }, [currentExpert]);
+  
+  useEffect(() => {
+    setUserProfile(currentUser);
+  }, [currentUser]);
+
+  useEffect(() => {
+    // Remove any unnecessary parameters in function calls
+    if (initialized && !isLoggingIn) {
+      console.log('Checking user...');
+      setIsCheckingUser(true);
+      // Call without unnecessary parameter
+      const hasUser = await hasUserAccount();
+      setUserHasAccount(hasUser);
+      setIsCheckingUser(false);
+    }
+  }, [initialized, isLoggingIn, hasUserAccount]);
+  
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+    setIsLoggingIn(true);
+    setLoginError(null);
+    
+    try {
+      const success = await login(email, password);
+      
+      if (!success) {
+        setLoginError('Login failed. Please check your credentials.');
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('An error occurred during login');
+      return false;
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
   
   return {
     isLoggingIn,
@@ -30,7 +81,6 @@ export const useExpertLoginPage = (): UseExpertLoginPageReturn => {
     loading,
     initialized,
     isCheckingUser,
-    handleLogin,
-    redirectAttempted
+    handleLogin
   };
 };

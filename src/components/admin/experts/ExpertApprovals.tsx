@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/hooks/expert-auth/types';
@@ -148,6 +147,37 @@ const ExpertApprovals = () => {
       return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>;
     } else {
       return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Disapproved</Badge>;
+    }
+  };
+
+  // Find and fix the issue with passing string | number to a function expecting string
+  const handleApprove = async (expertId: string | number) => {
+    try {
+      // Convert expertId to string for database operations
+      const expertIdString = String(expertId);
+      
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update({ status: 'approved' })
+        .eq('id', expertIdString);
+        
+      if (error) {
+        console.error('Error approving expert:', error);
+        toast.error('Failed to approve expert');
+        return;
+      }
+      
+      // Update local state
+      setExperts(prev => 
+        prev.map(expert => 
+          expert.id === expertId ? { ...expert, status: 'approved' } : expert
+        )
+      );
+      
+      toast.success('Expert approved successfully');
+    } catch (error) {
+      console.error('Error approving expert:', error);
+      toast.error('An error occurred while approving the expert');
     }
   };
 

@@ -1,12 +1,12 @@
 
 export interface Expert {
-  id: number | string;
+  id: string; // Changed to string only
   name: string;
   email: string;
   bio?: string;
   profile_picture?: string;
   specialization?: string;
-  experience?: string | number;  // Change to accept both string and number
+  experience?: string | number;
   verified?: boolean;
   created_at?: string;
   updated_at?: string;
@@ -26,5 +26,5 @@ export interface ExtendedExpert extends Expert {
   sessionCount?: number;
   availability?: any[];
   specialties?: string[];
-  languages?: string[]; // Add the languages property
+  languages?: string[];
 }
