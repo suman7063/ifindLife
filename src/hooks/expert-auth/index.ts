@@ -4,4 +4,5 @@ export { useExpertAuth } from './useExpertAuth';
 export { useExpertLogin } from './auth/useExpertLogin';
 export { useExpertProfile } from './useExpertProfile';
 export { useExpertAuthentication } from './useExpertAuthentication';
+export { useFetchExpertProfile } from './auth/useFetchExpertProfile';
 export type { ExpertProfile, ExpertAuthState, ExpertRegistrationData, UseExpertAuthReturn } from './types';
