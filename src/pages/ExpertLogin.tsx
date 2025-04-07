@@ -110,7 +110,7 @@ const ExpertLogin = () => {
   useEffect(() => {
     console.log('ExpertLogin component - Auth states:', {
       expertLoading: loading,
-      expertAuthInitialized: authInitialized,
+      expertAuthInitialized: initialized,
       hasExpertProfile: !!expert,
       directlyFetchedUserProfile: !!userProfile,
       isSynchronizing,
@@ -120,7 +120,7 @@ const ExpertLogin = () => {
       sessionType,
       isUserAuthenticated: isAuthenticated
     });
-  }, [loading, authInitialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, isAuthenticated]);
+  }, [loading, initialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, isAuthenticated]);
   
   // Set the active tab based on the URL
   useEffect(() => {
@@ -133,7 +133,7 @@ const ExpertLogin = () => {
   
   // Navigate to dashboard if authenticated
   useEffect(() => {
-    if (!expert || !authInitialized || loading || redirectAttempted) {
+    if (!expert || !initialized || loading || redirectAttempted) {
       return;
     }
     
@@ -146,7 +146,7 @@ const ExpertLogin = () => {
     setRedirectAttempted(true);
     
     navigate('/expert-dashboard', { replace: true });
-  }, [expert, loading, authInitialized, redirectAttempted, navigate]);
+  }, [expert, loading, initialized, redirectAttempted, navigate]);
   
   // Handle login
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -253,7 +253,7 @@ const ExpertLogin = () => {
         <div className="container max-w-4xl">
           {statusMessage && (
             <div className="mb-6">
-              <Alert variant={statusMessage.type === 'error' ? "destructive" : "default"}>
+              <Alert variant={statusMessage.type === "error" ? "destructive" : "default"}>
                 {statusMessage.type === 'info' && <Info className="h-4 w-4" />}
                 {statusMessage.type === 'warning' && <AlertCircle className="h-4 w-4" />}
                 {statusMessage.type === 'error' && <AlertCircle className="h-4 w-4" />}
