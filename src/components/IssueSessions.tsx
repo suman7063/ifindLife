@@ -49,6 +49,13 @@ const IssueSessions: React.FC = () => {
     setIsDialogOpen(true);
   };
 
+  // This is the correct way to prevent default navigation
+  const handleCardClick = (e: React.MouseEvent, session: Session) => {
+    e.preventDefault(); // Prevent default navigation
+    e.stopPropagation(); // Stop event bubbling
+    handleOpenSession(session);
+  };
+
   return (
     <section className="py-12 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -72,10 +79,15 @@ const IssueSessions: React.FC = () => {
               <div
                 key={session.id}
                 className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => handleOpenSession(session)}
+                onClick={(e) => handleCardClick(e, session)}
                 role="button"
                 tabIndex={0}
                 aria-label={`View details about ${session.title}`}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCardClick(e as unknown as React.MouseEvent, session);
+                  }
+                }}
               >
                 <div className={`w-12 h-12 ${session.color} rounded-full flex items-center justify-center mb-3`}>
                   {renderIcon(session.icon)}
