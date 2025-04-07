@@ -1,247 +1,44 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { toast } from 'sonner';
-import { useExpertAuth } from '@/hooks/expert-auth';
-import ExpertLoginHeader from '@/components/expert/auth/ExpertLoginHeader';
-import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import LoadingView from '@/components/expert/auth/LoadingView';
 import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import { supabase } from '@/lib/supabase';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, LogOut, Info } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { UserProfile } from '@/types/supabase';
+import StatusMessage from '@/components/expert/auth/StatusMessage';
+import DualSessionAlert from '@/components/expert/auth/DualSessionAlert';
+import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
+import { useExpertLoginPage } from '@/hooks/expert-auth/useExpertLoginPage';
+import { useAuthLogoutEffects } from '@/hooks/expert-auth/useAuthLogoutEffects';
 
 const ExpertLogin = () => {
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('login');
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [isCheckingUser, setIsCheckingUser] = useState(true);
-  const [statusMessage, setStatusMessage] = useState<{type: 'info' | 'warning' | 'success' | 'error', message: string} | null>(null);
+  // Get state and handlers from custom hooks
+  const {
+    isLoggingIn,
+    loginError,
+    activeTab,
+    setActiveTab,
+    userProfile,
+    statusMessage,
+    expert,
+    loading,
+    initialized,
+    isCheckingUser,
+    handleLogin
+  } = useExpertLoginPage();
   
-  const { 
-    login, 
-    currentExpert: expert, 
-    loading, 
-    initialized, 
-    hasUserAccount 
-  } = useExpertAuth();
-  
-  const { 
-    isSynchronizing, 
-    userLogout, 
-    isLoggingOut, 
-    setIsLoggingOut,
-    authCheckCompleted,
+  const {
+    isSynchronizing,
+    isLoggingOut,
     hasDualSessions,
-    fullLogout,
-    sessionType,
-    isAuthenticated
-  } = useAuthSynchronization();
-  
-  const navigate = useNavigate();
-  const location = useLocation();
-  
-  // Check for status message in the URL
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const status = params.get('status');
-    
-    if (status === 'registered') {
-      setStatusMessage({
-        type: 'success',
-        message: 'Registration successful! Your account is pending approval. You will be notified via email once approved.'
-      });
-    } else if (status === 'pending') {
-      setStatusMessage({
-        type: 'info',
-        message: 'Your account is still pending approval. You will be notified via email once approved.'
-      });
-    } else if (status === 'disapproved') {
-      setStatusMessage({
-        type: 'warning',
-        message: 'Your account has been disapproved. Please check your email for details or contact support.'
-      });
-    }
-  }, [location.search]);
-  
-  // Check if user is already logged in
-  useEffect(() => {
-    const checkUserLogin = async () => {
-      setIsCheckingUser(true);
-      
-      try {
-        const { data } = await supabase.auth.getSession();
-        
-        if (data.session) {
-          const { data: profileData, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.session.user.id)
-            .maybeSingle();
-            
-          if (profileData && !error) {
-            console.log('User profile found during expert login check:', profileData);
-            setUserProfile(profileData as UserProfile);
-          } else {
-            setUserProfile(null);
-          }
-        } else {
-          setUserProfile(null);
-        }
-      } catch (error) {
-        console.error('Error checking user login:', error);
-        setUserProfile(null);
-      } finally {
-        setIsCheckingUser(false);
-      }
-    };
-    
-    checkUserLogin();
-  }, []);
-  
-  // Debug logging
-  useEffect(() => {
-    console.log('ExpertLogin component - Auth states:', {
-      expertLoading: loading,
-      expertAuthInitialized: initialized,
-      hasExpertProfile: !!expert,
-      directlyFetchedUserProfile: !!userProfile,
-      isSynchronizing,
-      redirectAttempted,
-      authCheckCompleted,
-      hasDualSessions,
-      sessionType,
-      isUserAuthenticated: isAuthenticated
-    });
-  }, [loading, initialized, expert, userProfile, isSynchronizing, redirectAttempted, authCheckCompleted, hasDualSessions, sessionType, isAuthenticated]);
-  
-  // Set the active tab based on the URL
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('register') === 'true') {
-      setActiveTab('register');
-      toast.info('Please complete your expert registration to continue');
-    }
-  }, [location]);
-  
-  // Navigate to dashboard if authenticated
-  useEffect(() => {
-    if (!expert || !initialized || loading || redirectAttempted) {
-      return;
-    }
-    
-    // Don't redirect if expert is not approved
-    if (expert.status !== 'approved') {
-      return;
-    }
-    
-    console.log('Redirecting to expert dashboard - Expert profile found and approved');
-    setRedirectAttempted(true);
-    
-    navigate('/expert-dashboard', { replace: true });
-  }, [expert, loading, initialized, redirectAttempted, navigate]);
-  
-  // Handle login
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
-    if (isLoggingIn) return false;
-    
-    if (!email.trim()) {
-      setLoginError('Email is required');
-      return false;
-    }
-    
-    if (!password.trim()) {
-      setLoginError('Password is required');
-      return false;
-    }
-    
-    if (userProfile || isAuthenticated) {
-      setLoginError('Please log out as a user before attempting to log in as an expert');
-      return false;
-    }
-    
-    const hasUserAcct = await hasUserAccount(email);
-    if (hasUserAcct) {
-      setLoginError('This email is registered as a user. Please use a different email for expert login.');
-      return false;
-    }
-    
-    setLoginError(null);
-    setIsLoggingIn(true);
-    
-    try {
-      console.log('Expert auth: Starting login process for', email);
-      
-      const success = await login(email, password);
-      
-      if (!success) {
-        // Login error is handled in the useExpertAuthentication hook with toast messages
-        setLoginError('Login failed. Please check your credentials and try again.');
-      } else {
-        console.log('Expert login successful');
-        toast.success('Login successful! Redirecting to dashboard...');
-        // No need to use setTimeout - the useEffect will handle redirection
-      }
-      
-      return success;
-    } catch (error) {
-      console.error('Login error:', error);
-      setLoginError('An unexpected error occurred. Please try again.');
-      return false;
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const handleUserLogout = async () => {
-    setIsLoggingOut(true);
-    
-    try {
-      console.log('Attempting to log out user...');
-      const success = await userLogout();
-      
-      if (success) {
-        setUserProfile(null);
-        console.log('User logout completed');
-        return true;
-      } else {
-        console.error('User logout failed');
-        window.location.reload();
-        return false;
-      }
-    } catch (error) {
-      console.error('Error during user logout:', error);
-      window.location.reload();
-      return false;
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  const handleFullLogout = async () => {
-    setIsLoggingOut(true);
-    
-    try {
-      console.log('Attempting full logout...');
-      await fullLogout();
-      return true;
-    } catch (error) {
-      console.error('Error during full logout:', error);
-      return false;
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+    handleUserLogout,
+    handleFullLogout
+  } = useAuthLogoutEffects();
 
   // Show loading view during initialization
-  if ((loading && !isLoggingIn && !initialized) || (initialized && loading && !isLoggingIn) || isSynchronizing || isCheckingUser) {
+  if ((loading && !isLoggingIn && !initialized) || 
+      (initialized && loading && !isLoggingIn) || 
+      isSynchronizing || 
+      isCheckingUser) {
     console.log('Showing LoadingView on ExpertLogin page');
     return <LoadingView />;
   }
@@ -251,51 +48,27 @@ const ExpertLogin = () => {
       <Navbar />
       <main className="flex-1 py-10 flex items-center justify-center bg-stars">
         <div className="container max-w-4xl">
+          {/* Status message alerts */}
           {statusMessage && (
             <div className="mb-6">
-              <Alert variant={statusMessage.type === "error" ? "destructive" : "default"}>
-                {statusMessage.type === 'info' && <Info className="h-4 w-4" />}
-                {statusMessage.type === 'warning' && <AlertCircle className="h-4 w-4" />}
-                {statusMessage.type === 'error' && <AlertCircle className="h-4 w-4" />}
-                <AlertTitle>
-                  {statusMessage.type === 'success' ? 'Success' : 
-                   statusMessage.type === 'info' ? 'Information' : 
-                   statusMessage.type === 'warning' ? 'Warning' : 'Error'}
-                </AlertTitle>
-                <AlertDescription>{statusMessage.message}</AlertDescription>
-              </Alert>
+              <StatusMessage 
+                type={statusMessage.type} 
+                message={statusMessage.message}
+              />
             </div>
           )}
           
+          {/* Dual session alert */}
           {hasDualSessions && (
             <div className="mb-6">
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Multiple Sessions Detected</AlertTitle>
-                <AlertDescription className="flex flex-col space-y-4">
-                  <p>You are currently logged in as both a user and an expert. This can cause authentication issues.</p>
-                  <Button 
-                    onClick={handleFullLogout} 
-                    variant="destructive" 
-                    disabled={isLoggingOut}
-                  >
-                    {isLoggingOut ? (
-                      <>
-                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                        Logging Out...
-                      </>
-                    ) : (
-                      <>
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Log Out of All Accounts
-                      </>
-                    )}
-                  </Button>
-                </AlertDescription>
-              </Alert>
+              <DualSessionAlert
+                isLoggingOut={isLoggingOut}
+                onLogout={handleFullLogout}
+              />
             </div>
           )}
           
+          {/* User logout alert */}
           {userProfile && !hasDualSessions && (
             <div className="mb-6">
               <UserLogoutAlert
@@ -307,18 +80,15 @@ const ExpertLogin = () => {
             </div>
           )}
           
+          {/* Login content */}
           {!userProfile && !hasDualSessions && (
-            <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
-              <ExpertLoginHeader />
-              
-              <ExpertLoginTabs
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                onLogin={handleLogin}
-                isLoggingIn={isLoggingIn}
-                loginError={loginError}
-              />
-            </div>
+            <ExpertLoginContent
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onLogin={handleLogin}
+              isLoggingIn={isLoggingIn}
+              loginError={loginError}
+            />
           )}
         </div>
       </main>
