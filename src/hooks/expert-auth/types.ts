@@ -97,7 +97,7 @@ export interface ExpertTimeSlot {
   start_time: string;
   end_time: string;
   is_booked?: boolean;
-  day?: number; // Adding day field that was being used
+  day?: number; // Added day field that was being used
 }
 
 // Add ReportUserType

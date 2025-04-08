@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   Table,
@@ -8,12 +9,24 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { ReferralUI } from '@/types/supabase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ReferralsListProps {
   referrals: ReferralUI[];
+  isLoading?: boolean; // Added the isLoading prop
 }
 
-const ReferralsList: React.FC<ReferralsListProps> = ({ referrals }) => {
+const ReferralsList: React.FC<ReferralsListProps> = ({ referrals, isLoading = false }) => {
+  if (isLoading) {
+    return (
+      <div className="space-y-2">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
   return (
     <Table>
       <TableHeader>

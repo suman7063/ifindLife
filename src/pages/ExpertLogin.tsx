@@ -43,6 +43,13 @@ const ExpertLogin = () => {
     return <LoadingView />;
   }
   
+  // Define a wrapper function to handle type conversion
+  const handleTabChange = (tab: string) => {
+    if (tab === 'login' || tab === 'register') {
+      setActiveTab(tab);
+    }
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -84,7 +91,7 @@ const ExpertLogin = () => {
           {!userProfile && !hasDualSessions && (
             <ExpertLoginContent
               activeTab={activeTab}
-              setActiveTab={setActiveTab}
+              setActiveTab={handleTabChange}
               onLogin={handleLogin}
               isLoggingIn={isLoggingIn}
               loginError={loginError}

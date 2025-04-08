@@ -7,7 +7,7 @@ import { StarIcon, PhoneIcon, CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface ExpertCardProps {
-  id: number;
+  id: string; // Changed to string
   name: string;
   experience: number;
   specialties: string[];

@@ -56,7 +56,7 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
   React.useEffect(() => {
     const checkServiceHistory = async () => {
       try {
-        // Ensure expertId is passed as string
+        // Convert expertId to the expected type (if needed)
         const hasService = await hasTakenServiceFrom(expertId);
         setCanReport(hasService);
       } catch (error) {

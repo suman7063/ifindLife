@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useUserAuth } from '@/contexts/auth/UserAuthContext';
 import { ExpertProfile } from '@/types/supabase/expert';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { UserTransaction } from '@/types/supabase/transactions';
 
 interface UseUserDataFetcherResult {
   favoriteExperts: ExpertProfile[];

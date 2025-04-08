@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import ExpertCard from '@/components/ExpertCard';
 import { therapistData as defaultTherapistData } from '@/data/homePageData';
-import { Expert } from '@/types/expert';
 
-// Update the interface to include missing properties
+// Update the interface to include missing properties and ensure id is string
 interface TherapistData {
-  id: number;
+  id: string; // Changed to string
   name: string;
   experience: number;
   specialties: string[];
@@ -25,16 +24,30 @@ interface TherapistData {
 }
 
 const TopTherapistsSection = () => {
-  const [therapists, setTherapists] = useState<TherapistData[]>(defaultTherapistData as TherapistData[]);
+  const [therapists, setTherapists] = useState<TherapistData[]>([]);
 
   // Load content from localStorage on component mount
   useEffect(() => {
     try {
+      // Convert default therapist data IDs to strings
+      const defaultTherapistsWithStringIds = defaultTherapistData.map(therapist => ({
+        ...therapist,
+        id: String(therapist.id) // Convert id to string
+      }));
+      
+      setTherapists(defaultTherapistsWithStringIds as TherapistData[]);
+      
+      // Try to load from localStorage if available
       const savedContent = localStorage.getItem('ifindlife-content');
       if (savedContent) {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.therapists) {
-          setTherapists(parsedContent.therapists);
+          // Ensure all IDs are strings
+          const therapistsWithStringIds = parsedContent.therapists.map((therapist: any) => ({
+            ...therapist,
+            id: String(therapist.id) // Convert id to string
+          }));
+          setTherapists(therapistsWithStringIds);
         }
       }
     } catch (error) {

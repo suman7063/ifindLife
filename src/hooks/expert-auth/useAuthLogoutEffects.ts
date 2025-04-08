@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
@@ -46,7 +47,7 @@ export const useAuthLogoutEffects = () => {
     
     try {
       console.log('Attempting full logout...');
-      await fullLogout();
+      await fullLogout(); // Remove the argument
       return true;
     } catch (error) {
       console.error('Error during full logout:', error);
