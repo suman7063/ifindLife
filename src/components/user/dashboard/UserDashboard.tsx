@@ -55,12 +55,13 @@ const UserDashboard: React.FC = () => {
             id: item.id,
             user_id: item.user_id,
             amount: item.amount,
-            transaction_type: item.type || '',
+            currency: item.currency || 'USD',
+            type: item.type as 'credit' | 'debit',
+            transaction_type: item.type,
             description: item.description,
+            date: item.date || new Date().toISOString(),
             status: item.status || 'completed',
             created_at: item.date || new Date().toISOString(),
-            payment_id: undefined,
-            payment_method: undefined
           })) as UserTransaction[];
           
           setTransactions(formattedTransactions);

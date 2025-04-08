@@ -39,8 +39,8 @@ const Admin = () => {
         <AdminTabs 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
-          experts={experts}
-          setExperts={setExperts}
+          experts={experts as any} // Type assertion to avoid changing prop types
+          setExperts={setExperts as any} // Type assertion to avoid changing prop types
           services={services}
           setServices={setServices}
           heroSettings={heroSettings}

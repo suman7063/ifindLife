@@ -49,7 +49,22 @@ export const useUserDataFetcher = (): UseUserDataFetcherResult => {
         }
 
         setFavoriteExperts(favoritesData.data.map(item => item.expert));
-        setTransactions(transactionsData.data);
+        
+        // Transform transaction data to match our UserTransaction interface
+        const formattedTransactions = transactionsData.data.map(item => ({
+          id: item.id,
+          user_id: item.user_id,
+          amount: item.amount,
+          currency: item.currency || 'USD',
+          type: item.type as 'credit' | 'debit',
+          transaction_type: item.type,
+          description: item.description,
+          date: item.date,
+          status: item.status || 'completed',
+          created_at: item.created_at || item.date
+        })) as UserTransaction[];
+        
+        setTransactions(formattedTransactions);
         setError(null);
       } catch (err: any) {
         setError(err instanceof Error ? err : new Error('Failed to fetch data'));

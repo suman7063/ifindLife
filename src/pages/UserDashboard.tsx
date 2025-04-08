@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -47,12 +48,13 @@ const UserDashboard: React.FC = () => {
               id: item.id,
               user_id: item.user_id,
               amount: item.amount,
-              transaction_type: item.type || '',
+              currency: item.currency || 'USD',
+              type: item.type as 'credit' | 'debit',
+              transaction_type: item.type,
               description: item.description,
+              date: item.date || new Date().toISOString(),
               status: item.status || 'completed',
-              created_at: item.date || new Date().toISOString(),
-              payment_id: undefined,
-              payment_method: undefined
+              created_at: item.date || new Date().toISOString()
             })) as UserTransaction[];
             
             setTransactions(formattedTransactions);
@@ -99,7 +101,21 @@ const UserDashboard: React.FC = () => {
         .order('date', { ascending: false })
         .then(({ data, error }) => {
           if (!error && data) {
-            setTransactions(data);
+            // Convert the response to match the UserTransaction type
+            const formattedTransactions = (data || []).map(item => ({
+              id: item.id,
+              user_id: item.user_id,
+              amount: item.amount,
+              currency: item.currency || 'USD',
+              type: item.type as 'credit' | 'debit',
+              transaction_type: item.type,
+              description: item.description,
+              date: item.date || new Date().toISOString(),
+              status: item.status || 'completed',
+              created_at: item.date || new Date().toISOString()
+            })) as UserTransaction[];
+            
+            setTransactions(formattedTransactions);
           }
         });
     }

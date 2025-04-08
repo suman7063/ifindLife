@@ -3,16 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency, formatDate } from '@/utils/formatters';
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-
-interface UserTransaction {
-  id: string;
-  user_id?: string;
-  amount: number;
-  currency: string;
-  type: string;
-  date: string;
-  description?: string;
-}
+import { UserTransaction } from '@/types/supabase/tables';
 
 interface RecentTransactionsCardProps {
   transactions: UserTransaction[];
@@ -38,11 +29,11 @@ const RecentTransactionsCard: React.FC<RecentTransactionsCardProps> = ({ transac
               <div key={transaction.id} className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className={`p-2 rounded-full ${
-                    transaction.type.toLowerCase() === 'credit' 
+                    (transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') 
                       ? 'bg-green-100 text-green-600' 
                       : 'bg-red-100 text-red-600'
                   }`}>
-                    {transaction.type.toLowerCase() === 'credit' ? (
+                    {(transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? (
                       <ArrowDownRight className="h-4 w-4" />
                     ) : (
                       <ArrowUpRight className="h-4 w-4" />
@@ -51,15 +42,15 @@ const RecentTransactionsCard: React.FC<RecentTransactionsCardProps> = ({ transac
                   <div>
                     <p className="text-sm font-medium">
                       {transaction.description || 
-                        (transaction.type.toLowerCase() === 'credit' ? 'Wallet Recharge' : 'Purchase')}
+                        ((transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? 'Wallet Recharge' : 'Purchase')}
                     </p>
-                    <p className="text-xs text-muted-foreground">{formatDate(transaction.date)}</p>
+                    <p className="text-xs text-muted-foreground">{formatDate(transaction.date || transaction.created_at || '')}</p>
                   </div>
                 </div>
                 <p className={`font-medium ${
-                  transaction.type.toLowerCase() === 'credit' ? 'text-green-600' : 'text-red-600'
+                  (transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? 'text-green-600' : 'text-red-600'
                 }`}>
-                  {transaction.type.toLowerCase() === 'credit' ? '+' : '-'}
+                  {(transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? '+' : '-'}
                   {formatCurrency(transaction.amount)}
                 </p>
               </div>

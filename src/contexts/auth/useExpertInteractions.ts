@@ -1,120 +1,118 @@
-// Find and fix the issue with passing a string | number to a function expecting string
+
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { UserReview } from '@/types/supabase/reviews';
 import { supabase } from '@/lib/supabase';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useUserAuth } from '@/hooks/useUserAuth';
-import { ExpertProfile } from '@/types/supabase/expert';
+export const useExpertInteractions = (userId: string | undefined) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-export const useExpertInteractions = () => {
-  const { currentUser, logout } = useUserAuth();
-  const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const addReview = async (
+    expertId: string,
+    rating: number,
+    comment: string
+  ): Promise<boolean> => {
+    if (!userId) {
+      toast.error('You must be logged in to leave a review');
+      return false;
+    }
 
-  const fetchExpertProfile = useCallback(async (userId: string) => {
-    setLoading(true);
-    setError(null);
     try {
-      const { data, error } = await supabase
-        .from('expert_accounts')
+      setIsSubmitting(true);
+
+      // Check if user has already reviewed this expert
+      const { data: existingReviews, error: checkError } = await supabase
+        .from('user_reviews')
         .select('*')
-        .eq('auth_id', userId)
-        .single();
+        .eq('user_id', userId)
+        .eq('expert_id', expertId);
 
-      if (error) {
-        console.error('Error fetching expert profile:', error);
-        setError(error.message);
-      } else {
-        setExpertProfile(data);
-      }
-    } catch (err: any) {
-      console.error('Unexpected error fetching expert profile:', err);
-      setError(err.message || 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (currentUser?.id) {
-      fetchExpertProfile(currentUser.id);
-    }
-  }, [currentUser, fetchExpertProfile]);
-
-  // Fix the issue with setting expert profile from unknown data
-  const updateExpertProfile = async (updates: Partial<ExpertProfile>) => {
-    setLoading(true);
-    setError(null);
-    try {
-      if (!expertProfile?.id) {
-        throw new Error('Expert profile ID is missing.');
-      }
-
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .update(updates)
-        .eq('id', expertProfile.id)
-        .single();
-
-      if (error) {
-        console.error('Error updating expert profile:', error);
-        setError(error.message);
+      if (checkError) {
+        console.error('Error checking existing reviews:', checkError);
+        toast.error('Failed to check if you already reviewed this expert');
         return false;
-      } else {
-        // Type cast the data to ensure it's an ExpertProfile before setting state
-        setExpertProfile(data as ExpertProfile);
-        return true;
       }
-    } catch (err: any) {
-      console.error('Unexpected error updating expert profile:', err);
-      setError(err.message || 'An unexpected error occurred');
+
+      if (existingReviews && existingReviews.length > 0) {
+        toast.error('You have already reviewed this expert');
+        return false;
+      }
+
+      // Add new review
+      const reviewData: UserReview = {
+        expert_id: expertId,
+        user_id: userId,
+        rating,
+        comment,
+        date: new Date().toISOString(),
+        verified: false,
+      };
+
+      const { error } = await supabase
+        .from('user_reviews')
+        .insert([reviewData]);
+
+      if (error) {
+        console.error('Error adding review:', error);
+        toast.error('Failed to add your review');
+        return false;
+      }
+
+      toast.success('Your review has been submitted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error in addReview:', error);
+      toast.error('An error occurred while submitting your review');
       return false;
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const signOutExpert = async () => {
-    setLoading(true);
-    setError(null);
+  const reportExpert = async (
+    expertId: string,
+    reason: string,
+    details: string
+  ): Promise<boolean> => {
+    if (!userId) {
+      toast.error('You must be logged in to report an expert');
+      return false;
+    }
+
     try {
-      const { error } = await logout();
+      setIsSubmitting(true);
+
+      const { error } = await supabase.from('expert_reports').insert([
+        {
+          expert_id: expertId,
+          user_id: userId,
+          reason,
+          details,
+          date: new Date().toISOString(),
+          status: 'pending',
+        },
+      ]);
 
       if (error) {
-        console.error('Error signing out expert:', error);
-        setError(error.message);
-      } else {
-        setExpertProfile(null);
+        console.error('Error reporting expert:', error);
+        toast.error('Failed to submit your report');
+        return false;
       }
-    } catch (err: any) {
-      console.error('Unexpected error signing out expert:', err);
-      setError(err.message || 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // If there's a function that incorrectly handles expert IDs, fix it:
-  const someFunction = async (expertId: string | number) => {
-    // Ensure expertId is string when passing to functions that expect string
-    const expertIdString = String(expertId);
-    
-    // Use the string version in database calls
-    const { data } = await supabase
-      .from('experts')
-      .select('*')
-      .eq('id', expertIdString)
-      .single();
-      
-    // ...rest of the function
+      toast.success('Your report has been submitted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error in reportExpert:', error);
+      toast.error('An error occurred while submitting your report');
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return {
-    expertProfile,
-    loading,
-    error,
-    fetchExpertProfile,
-    updateExpertProfile,
-    signOutExpert,
+    isSubmitting,
+    addReview,
+    reportExpert,
   };
 };

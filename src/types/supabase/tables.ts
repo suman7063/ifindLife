@@ -4,10 +4,11 @@ export interface UserTransaction {
   id: string;
   user_id?: string;
   amount: number;
-  currency: string;
-  type: 'credit' | 'debit';
+  currency?: string;
+  type?: 'credit' | 'debit';
+  transaction_type?: string;
   description?: string;
-  date: string;
+  date?: string;
   status?: string;
   created_at?: string;
 }
