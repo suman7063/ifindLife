@@ -4,7 +4,7 @@ import { useUserAuth } from '@/contexts/auth/UserAuthContext';
 import { ExpertProfile } from '@/types/supabase/expert';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserTransaction } from '@/types/supabase/transactions';
+import { UserTransaction } from '@/types/supabase/tables';
 
 interface UseUserDataFetcherResult {
   favoriteExperts: ExpertProfile[];

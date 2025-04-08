@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import { UserTransaction } from '@/types/supabase/transactions';
+import { UserTransaction } from '@/types/supabase/tables';
 import { supabase } from '@/lib/supabase';
 import { Loader2 } from 'lucide-react';
 
@@ -43,7 +42,20 @@ const UserDashboard: React.FC = () => {
             console.error('Error fetching transactions:', error);
             toast.error('Failed to load transaction history');
           } else {
-            setTransactions(data || []);
+            // Convert the response to match the UserTransaction type
+            const formattedTransactions = (data || []).map(item => ({
+              id: item.id,
+              user_id: item.user_id,
+              amount: item.amount,
+              transaction_type: item.type || '',
+              description: item.description,
+              status: item.status || 'completed',
+              created_at: item.date || new Date().toISOString(),
+              payment_id: undefined,
+              payment_method: undefined
+            })) as UserTransaction[];
+            
+            setTransactions(formattedTransactions);
           }
         } catch (error) {
           console.error('Error in transaction fetch:', error);

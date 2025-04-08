@@ -9,11 +9,11 @@ import { initialServices, initialHeroSettings, initialTestimonials } from '@/dat
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminTabs from '@/components/admin/AdminTabs';
-import { Expert } from '@/components/admin/experts/types';
+import { ExtendedExpert } from '@/types/expert';
 
 const Admin = () => {
   // State management for each section
-  const [experts, setExperts] = useState<Expert[]>(() => convertToExpertFormat(expertData));
+  const [experts, setExperts] = useState<ExtendedExpert[]>(() => convertToExpertFormat(expertData));
   const [services, setServices] = useState(initialServices);
   const [heroSettings, setHeroSettings] = useState(initialHeroSettings);
   const [testimonials, setTestimonials] = useState(initialTestimonials);

@@ -5,9 +5,10 @@ export * from './tables';
 export * from './userProfile';
 // Export transactions without UserTransaction which is already exported from tables
 export type { 
-  Transaction, 
-  TransactionStatus, 
-  TransactionSummary 
+  // Remove these exports since they don't exist in the module
+  // Transaction, 
+  // TransactionStatus, 
+  // TransactionSummary 
 } from './transactions';
 export * from './reviews';
 export * from './userFavorites';

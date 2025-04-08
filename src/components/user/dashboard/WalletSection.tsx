@@ -3,16 +3,7 @@ import React from 'react';
 import { UserProfile } from '@/types/supabase';
 import WalletBalanceCard from './WalletBalanceCard';
 import RecentTransactionsCard from './RecentTransactionsCard';
-
-interface UserTransaction {
-  id: string;
-  user_id?: string;
-  amount: number;
-  currency: string;
-  type: string;
-  date: string;
-  description?: string;
-}
+import { UserTransaction } from '@/types/supabase/tables';
 
 interface WalletSectionProps {
   user: UserProfile | null;

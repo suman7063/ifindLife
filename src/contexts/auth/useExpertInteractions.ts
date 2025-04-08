@@ -2,11 +2,11 @@
 import { supabase } from '@/lib/supabase';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useUserAuth } from '../UserAuthContext';
+import { useUserAuth } from '@/hooks/useUserAuth';
 import { ExpertProfile } from '@/types/supabase/expert';
 
 export const useExpertInteractions = () => {
-  const { currentUser, session, signOut } = useUserAuth();
+  const { currentUser, logout } = useUserAuth();
   const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +41,7 @@ export const useExpertInteractions = () => {
     }
   }, [currentUser, fetchExpertProfile]);
 
+  // Fix the issue with setting expert profile from unknown data
   const updateExpertProfile = async (updates: Partial<ExpertProfile>) => {
     setLoading(true);
     setError(null);
@@ -60,7 +61,8 @@ export const useExpertInteractions = () => {
         setError(error.message);
         return false;
       } else {
-        setExpertProfile(data);
+        // Type cast the data to ensure it's an ExpertProfile before setting state
+        setExpertProfile(data as ExpertProfile);
         return true;
       }
     } catch (err: any) {
@@ -76,7 +78,7 @@ export const useExpertInteractions = () => {
     setLoading(true);
     setError(null);
     try {
-      const { error } = await signOut();
+      const { error } = await logout();
 
       if (error) {
         console.error('Error signing out expert:', error);

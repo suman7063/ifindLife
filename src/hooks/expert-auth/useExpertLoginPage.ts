@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useExpertAuth } from './useExpertAuth';
 import { useUserAuth } from '@/contexts/UserAuthContext';
@@ -39,12 +38,10 @@ export const useExpertLoginPage = () => {
   }, [currentUser]);
 
   useEffect(() => {
-    // Make this an async function and immediately invoke it
     const checkUserAccount = async () => {
       if (initialized && !isLoggingIn) {
         console.log('Checking user...');
         setIsCheckingUser(true);
-        // Call without unnecessary parameter
         const hasUser = await hasUserAccount();
         setUserHasAccount(hasUser);
         setIsCheckingUser(false);

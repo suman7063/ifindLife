@@ -9,7 +9,7 @@ import WalletSection from '@/components/user/dashboard/WalletSection';
 import UserPurchasesSection from '@/components/user/dashboard/UserPurchasesSection';
 import UserStatsSummary from '@/components/user/dashboard/UserStatsSummary';
 import useDashboardState from '@/hooks/user-dashboard/useDashboardState';
-import { UserTransaction } from '@/types/supabase/transactions';
+import { UserTransaction } from '@/types/supabase/tables';
 import { supabase } from '@/lib/supabase';
 import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
 
@@ -50,7 +50,20 @@ const UserDashboard: React.FC = () => {
             return;
           }
           
-          setTransactions(data || []);
+          // Convert the response to match the UserTransaction type
+          const formattedTransactions = (data || []).map(item => ({
+            id: item.id,
+            user_id: item.user_id,
+            amount: item.amount,
+            transaction_type: item.type || '',
+            description: item.description,
+            status: item.status || 'completed',
+            created_at: item.date || new Date().toISOString(),
+            payment_id: undefined,
+            payment_method: undefined
+          })) as UserTransaction[];
+          
+          setTransactions(formattedTransactions);
         } catch (error) {
           console.error('Error in fetchTransactions:', error);
         }
