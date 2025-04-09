@@ -7,16 +7,16 @@ interface ExpertLoginContentProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onLogin: (email: string, password: string) => Promise<boolean>;
-  isLoggingIn: boolean;
-  loginError: string | null;
+  isLogging?: boolean;
+  loginError?: string | null;
 }
 
 const ExpertLoginContent: React.FC<ExpertLoginContentProps> = ({
   activeTab,
   setActiveTab,
   onLogin,
-  isLoggingIn,
-  loginError
+  isLogging = false,
+  loginError = null
 }) => {
   return (
     <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
@@ -26,7 +26,7 @@ const ExpertLoginContent: React.FC<ExpertLoginContentProps> = ({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onLogin={onLogin}
-        isLoggingIn={isLoggingIn}
+        isLoggingIn={isLogging}
         loginError={loginError}
       />
     </div>

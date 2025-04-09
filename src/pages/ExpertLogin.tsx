@@ -11,11 +11,13 @@ const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { expertLogin, expertSignup } = useAuth();
   const { isExpertAuthenticated, isAuthInitialized } = useAuthSynchronization();
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
+    setLoginError(null);
     try {
       const success = await expertLogin(email, password);
       if (success) {
@@ -24,11 +26,13 @@ const ExpertLogin: React.FC = () => {
         return true;
       } else {
         toast.error('Invalid credentials. Please try again.');
+        setLoginError('Invalid credentials. Please try again.');
         return false;
       }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Failed to login. Please try again.');
+      setLoginError('Failed to login. Please try again.');
       return false;
     } finally {
       setIsLoading(false);
@@ -74,8 +78,8 @@ const ExpertLogin: React.FC = () => {
         activeTab={activeTab}
         setActiveTab={handleTabChange}
         onLogin={handleLogin}
-        onRegister={handleRegister}
-        isLoading={isLoading}
+        isLogging={isLoading}
+        loginError={loginError}
       />
     </Container>
   );

@@ -33,7 +33,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return false;
     },
     hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
-    getExpertShareLink: auth.getExpertShareLink || ((expertId: string) => ''),
+    getExpertShareLink: auth.getExpertShareLink || ((expertId: string | number) => ''), // Updated to accept either string or number
     getReferralLink: auth.getReferralLink || (() => ''),
     user: auth.user,
     loading: auth.isLoading,

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,14 +54,14 @@ const UserDashboard: React.FC = () => {
             user_id: item.user_id,
             amount: item.amount,
             currency: item.currency || 'USD',
-            type: item.type as 'credit' | 'debit',
-            transaction_type: item.type,
-            description: item.description,
-            date: item.date || new Date().toISOString(),
+            type: item.type,
+            transaction_type: item.transaction_type || item.type,
+            description: item.description || '',
+            date: item.date,
             status: item.status || 'completed',
-            created_at: item.created_at || item.date || new Date().toISOString(),
-            payment_id: item.payment_id,
-            payment_method: item.payment_method
+            created_at: item.created_at || item.date,
+            payment_id: item.payment_id || `pay_${Date.now()}`,
+            payment_method: item.payment_method || 'wallet'
           })) as UserTransaction[];
           
           setTransactions(formattedTransactions);

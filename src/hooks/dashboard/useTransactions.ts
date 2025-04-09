@@ -37,8 +37,8 @@ const useTransactions = (userId?: string): UseTransactionsProps => {
         id: item.id,
         user_id: item.user_id,
         amount: item.amount,
-        currency: item.currency,
-        description: item.description,
+        currency: item.currency || 'USD',
+        description: item.description || '',
         date: item.date,
         type: item.type,
         status: item.status || 'completed', // Default status if missing
@@ -46,7 +46,7 @@ const useTransactions = (userId?: string): UseTransactionsProps => {
         payment_id: item.payment_id || `pay_${Date.now()}`, // Generate fallback ID
         payment_method: item.payment_method || 'wallet', // Default payment method
         transaction_type: item.transaction_type || item.type // Keep backwards compatibility
-      }));
+      })) as UserTransaction[];
 
       setTransactions(formattedTransactions);
     } catch (err) {
@@ -64,31 +64,6 @@ const useTransactions = (userId?: string): UseTransactionsProps => {
 
   const refreshTransactions = async () => {
     await fetchTransactions();
-  };
-
-  // Add transaction helper (not used here but could be useful)
-  const addTransaction = async (transaction: Omit<UserTransaction, 'id'>): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('user_transactions')
-        .insert({
-          ...transaction,
-          created_at: new Date().toISOString(),
-          status: transaction.status || 'completed',
-          payment_id: transaction.payment_id || `pay_${Date.now()}`,
-          payment_method: transaction.payment_method || 'wallet',
-          transaction_type: transaction.transaction_type || transaction.type
-        });
-
-      if (error) throw error;
-
-      // Refresh transactions
-      await fetchTransactions();
-      return true;
-    } catch (err) {
-      console.error('Error adding transaction:', err);
-      return false;
-    }
   };
 
   return {
