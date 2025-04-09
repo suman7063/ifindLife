@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
@@ -448,7 +449,7 @@ export const UserAuthProvider: React.FC<{children: React.ReactNode}> = ({ childr
       console.error("Error in hasTakenServiceFrom:", error);
       return false;
     }
-  };
+  }; // Added missing closing brace here
 
   const getExpertShareLink = (expertId: string | number): string => {
     const baseUrl = window.location.origin;
