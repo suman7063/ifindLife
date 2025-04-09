@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
@@ -54,10 +55,13 @@ export const useAuthLogoutEffects = (
       console.error('Logout error:', error);
     }
   };
+  
+  useEffect(() => {
+    // Cleanup code...
     
-  return () => {
+    return () => {
       // Cleanup code...
-  };
+    };
   }, [isAuthenticated, fullLogout, navigate]);
   
   return {
