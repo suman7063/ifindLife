@@ -4,8 +4,8 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { Toaster } from 'sonner';
-import { UserAuthProvider } from '@/contexts/UserAuthContext';
-import { ExpertAuthProvider } from '@/contexts/ExpertAuthProvider';
+import { UserAuthProvider } from '@/contexts/auth/UserAuthProvider';
+import { ExpertAuthProvider } from '@/contexts/auth/ExpertAuthProvider';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

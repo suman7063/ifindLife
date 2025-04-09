@@ -1,51 +1,71 @@
 
-import { Session, User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from '@/types/supabase/expert';
-
-export type UserRole = 'user' | 'expert' | 'admin' | null;
+import { UserSettings, ReferralInfo } from '@/types/user';
 
 export interface AuthState {
-  session: Session | null;
+  // User auth state
   user: User | null;
+  session: Session | null;
   userProfile: UserProfile | null;
-  expertProfile: ExpertProfile | null;
-  role: UserRole;
-  isLoading: boolean;
+  expertProfile: any | null;  // Using any to maintain compatibility
+  
+  // Auth status
   isAuthenticated: boolean;
+  isLoading: boolean;
+  hasProfile: boolean;
+  profileLoading: boolean;
+  authError: string | null;
+  profileError: string | null;
+  
+  // Role information
+  role: 'user' | 'expert' | null;
+  isExpertUser: boolean;
+  expertId: string | null;
+  
+  // User data
+  favoritesCount: number;
+  referrals: ReferralInfo[];
+  userSettings: UserSettings | null;
+  walletBalance: number;
 }
 
-export interface AuthFunctions {
+export interface UserAuthContextType {
+  currentUser: UserProfile | null;
+  user: User | null;
+  session: Session | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  authLoading: boolean;
+  authError: string | null;
+  favoritesCount: number;
+  referrals: ReferralInfo[];
+  userSettings: UserSettings | null;
+  walletBalance: number;
+  hasProfile: boolean;
+  profileLoading: boolean;
+  profileError: string | null;
+  isExpertUser: boolean;
+  expertId: string | null;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
-  expertLogin: (email: string, password: string) => Promise<boolean>;
-  expertSignup: (registrationData: any) => Promise<boolean>;
+  signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  checkUserRole: () => Promise<UserRole>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
-  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateUserSettings: (settings: Partial<UserSettings>) => Promise<boolean>;
+  updateEmail: (newEmail: string) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
-  updatePassword: (password: string) => Promise<boolean>;
-  addReview?: (expertId: string, rating: number, comment: string) => Promise<boolean>;
-  reportExpert?: (expertId: string, reason: string, details: string) => Promise<boolean>;
-  hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
-  getExpertShareLink?: (expertId: string) => string;
-  getReferralLink?: () => string | null;
+  sendVerificationEmail: () => Promise<boolean>;
+  addToFavorites: (expertId: string) => Promise<boolean>;
+  removeFromFavorites: (expertId: string) => Promise<boolean>;
+  checkIsFavorite: (expertId: string) => Promise<boolean>;
+  refreshFavoritesCount: () => Promise<void>;
+  getReferrals: () => Promise<ReferralInfo[]>;
+  refreshWalletBalance: () => Promise<number>;
+  addFunds: (amount: number) => Promise<boolean>;
+  deductFunds: (amount: number, description: string) => Promise<boolean>;
+  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  reviewExpert: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  getExpertShareLink: (expertId: string | number) => string;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
 }
-
-export interface AuthContextType extends AuthState, AuthFunctions {
-  // Add back compatibility properties
-  currentUser?: UserProfile | null;
-  currentExpert?: ExpertProfile | null;
-  sessionType?: 'none' | 'user' | 'expert' | 'dual';
-}
-
-export const initialAuthState: AuthState = {
-  session: null,
-  user: null,
-  userProfile: null,
-  expertProfile: null,
-  role: null,
-  isLoading: true,
-  isAuthenticated: false,
-};

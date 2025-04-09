@@ -1,12 +1,15 @@
 
-// Backward compatibility layer for existing components
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useAuthBackCompat } from './auth/useAuthBackCompat';
+import { useContext } from 'react';
+import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
+import { UserAuthContextType } from '@/contexts/auth/types';
 
-export const useUserAuth = () => {
-  const { userAuth } = useAuthBackCompat();
-  return userAuth;
+// Export the hook with proper type definitions
+export const useUserAuth = (): UserAuthContextType => {
+  const context = useContext(UserAuthContext);
+  
+  if (context === undefined) {
+    throw new Error('useUserAuth must be used within a UserAuthProvider');
+  }
+  
+  return context;
 };
-
-// Export the new hook directly as well
-export { useAuth } from '@/contexts/auth/AuthContext';

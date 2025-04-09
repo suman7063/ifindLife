@@ -1,178 +1,178 @@
 
-import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserReview } from '@/types/supabase/tables';
 
-export const useExpertInteractions = (userId: string | null) => {
-  const [isProcessing, setIsProcessing] = useState(false);
-
-  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
-    if (!userId) return false;
-    
-    try {
-      setIsProcessing(true);
-      
-      // Check appointments
-      const { data: appointments, error: appointmentsError } = await supabase
-        .from('appointments')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('expert_id', expertId)
-        .eq('status', 'completed')
-        .limit(1);
-      
-      if (appointmentsError) {
-        console.error('Error checking appointments:', appointmentsError);
-        return false;
-      }
-      
-      if (appointments && appointments.length > 0) {
-        return true;
-      }
-      
-      // Check programs - convert expertId to number for this query
-      const { data: programs, error: programsError } = await supabase
-        .from('user_courses')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('expert_id', parseInt(expertId, 10))
-        .limit(1);
-      
-      if (programsError) {
-        console.error('Error checking programs:', programsError);
-        return false;
-      }
-      
-      return programs && programs.length > 0;
-    } catch (error) {
-      console.error('Error checking service history:', error);
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const addReview = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
-    if (!userId) {
-      toast.error('You must be logged in to leave a review');
-      return false;
-    }
-    
-    try {
-      setIsProcessing(true);
-      
-      // First check if user has already reviewed this expert
-      const { data: existingReviews, error: checkError } = await supabase
-        .from('user_reviews')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('expert_id', parseInt(expertId, 10))
-        .limit(1);
-      
-      if (checkError) {
-        console.error('Error checking existing reviews:', checkError);
-        toast.error('Error checking your previous reviews');
-        return false;
-      }
-      
-      if (existingReviews && existingReviews.length > 0) {
-        toast.error('You have already reviewed this expert');
-        return false;
-      }
-      
-      // Validate the user has actually received service from this expert
-      const hasReceivedService = await hasTakenServiceFrom(expertId);
-      
-      if (!hasReceivedService) {
-        toast.error('You can only review experts you have taken services from');
-        return false;
-      }
-      
-      // Create the review
-      const review = {
-        user_id: userId,
-        expert_id: parseInt(expertId, 10),
-        rating,
-        comment,
-        date: new Date().toISOString(),
-        verified: true
-      };
-      
-      const { error } = await supabase
-        .from('user_reviews')
-        .insert(review);
-      
-      if (error) {
-        console.error('Error adding review:', error);
-        toast.error('Failed to add your review');
-        return false;
-      }
-      
-      toast.success('Your review has been submitted');
-      return true;
-    } catch (error) {
-      console.error('Error adding review:', error);
-      toast.error('An error occurred while submitting your review');
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
+export const useExpertInteractions = (user: any) => {
+  // Report an expert
   const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
-    if (!userId) {
+    if (!user) {
       toast.error('You must be logged in to report an expert');
       return false;
     }
     
     try {
-      setIsProcessing(true);
-      
-      const report = {
-        user_id: userId,
-        expert_id: parseInt(expertId, 10),
-        reason,
-        details,
-        date: new Date().toISOString(),
-        status: 'pending'
-      };
-      
+      // Create the report
       const { error } = await supabase
         .from('user_reports')
-        .insert(report);
+        .insert([{
+          reporter_id: user.id,
+          reported_entity_id: expertId,
+          entity_type: 'expert',
+          reason,
+          details,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }]);
       
       if (error) {
         console.error('Error reporting expert:', error);
-        toast.error('Failed to submit your report');
+        toast.error('Failed to submit report');
         return false;
       }
       
-      toast.success('Your report has been submitted for review');
+      toast.success('Report submitted successfully');
       return true;
     } catch (error) {
       console.error('Error reporting expert:', error);
-      toast.error('An error occurred while submitting your report');
+      toast.error('An error occurred while submitting report');
       return false;
-    } finally {
-      setIsProcessing(false);
+    }
+  };
+  
+  // Review an expert
+  const reviewExpert = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to review an expert');
+      return false;
+    }
+    
+    try {
+      // Check if already reviewed
+      const { data: existingReview, error: checkError } = await supabase
+        .from('expert_reviews')
+        .select('id')
+        .match({ user_id: user.id, expert_id: expertId })
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking reviews:', checkError);
+        toast.error('Failed to submit review');
+        return false;
+      }
+      
+      let success = false;
+      
+      if (existingReview) {
+        // Update existing review
+        const { error: updateError } = await supabase
+          .from('expert_reviews')
+          .update({
+            rating,
+            comment,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingReview.id);
+        
+        if (updateError) {
+          console.error('Error updating review:', updateError);
+          toast.error('Failed to update review');
+          return false;
+        }
+        
+        success = true;
+        toast.success('Review updated successfully');
+      } else {
+        // Create new review
+        const { error: insertError } = await supabase
+          .from('expert_reviews')
+          .insert([{
+            user_id: user.id,
+            expert_id: expertId,
+            rating,
+            comment,
+            created_at: new Date().toISOString(),
+            status: 'published'
+          }]);
+        
+        if (insertError) {
+          console.error('Error submitting review:', insertError);
+          toast.error('Failed to submit review');
+          return false;
+        }
+        
+        success = true;
+        toast.success('Review submitted successfully');
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error reviewing expert:', error);
+      toast.error('An error occurred while submitting review');
+      return false;
     }
   };
 
-  const getExpertShareLink = (expertId: string): string => {
-    return `${window.location.origin}/experts/${expertId}`;
+  // Check if user has taken a service from an expert
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Check appointments
+      const { data: appointments, error: appointmentError } = await supabase
+        .from('appointments')
+        .select('id')
+        .match({ user_id: user.id, expert_id: expertId, status: 'completed' })
+        .limit(1);
+      
+      if (appointmentError) {
+        console.error('Error checking appointments:', appointmentError);
+        return false;
+      }
+      
+      // If they have completed appointments, they've taken service
+      if (appointments && appointments.length > 0) {
+        return true;
+      }
+      
+      // Also check program enrollments (if expert is a program instructor)
+      const { data: enrollments, error: enrollmentError } = await supabase
+        .from('program_enrollments')
+        .select(`
+          id,
+          programs (
+            instructor_id
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(1);
+      
+      if (enrollmentError) {
+        console.error('Error checking enrollments:', enrollmentError);
+        return false;
+      }
+      
+      // Check if any enrollments have the expert as instructor
+      const hasProgram = (enrollments || []).some(
+        enrollment => enrollment.programs && enrollment.programs.instructor_id === expertId
+      );
+      
+      return hasProgram;
+    } catch (error) {
+      console.error("Error in hasTakenServiceFrom:", error);
+      return false;
+    }
   };
 
-  const getReferralLink = (): string | null => {
-    return null; // Implemented in user-specific context
+  const getExpertShareLink = (expertId: string | number): string => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/experts/${expertId}`;
   };
 
   return {
-    addReview,
     reportExpert,
+    reviewExpert,
     hasTakenServiceFrom,
-    getExpertShareLink,
-    getReferralLink,
-    isProcessing
+    getExpertShareLink
   };
 };

@@ -1,104 +1,78 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useState, useEffect } from 'react';
+import { UserAuthContextType } from '@/contexts/auth/types';
 
+// A compatibility layer to provide both old-style user auth and expert auth 
+// interfaces for components that haven't been updated to use the unified auth
 export const useAuthBackCompat = () => {
   const auth = useAuth();
-  const [isInitializing, setIsInitializing] = useState(true);
   
-  // Wait for auth initialization to complete
-  useEffect(() => {
-    if (!auth.isLoading) {
-      setIsInitializing(false);
-    }
-  }, [auth.isLoading]);
-  
-  // Compatibility layer for useUserAuth
-  const userAuth = {
-    currentUser: auth.userProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    authLoading: auth.isLoading || isInitializing,
-    profileNotFound: !auth.userProfile && !auth.isLoading && auth.isAuthenticated,
-    user: auth.user,
-    loading: auth.isLoading,
+  // Create a user auth compatible context
+  const userAuth: UserAuthContextType = {
+    currentUser: auth.state.userProfile,
+    user: auth.state.user,
+    session: auth.state.session,
+    isAuthenticated: auth.state.isAuthenticated && auth.state.role === 'user',
+    loading: auth.state.isLoading,
+    authLoading: auth.state.authLoading,
+    authError: auth.state.authError,
+    favoritesCount: auth.state.favoritesCount,
+    referrals: auth.state.referrals,
+    userSettings: auth.state.userSettings,
+    walletBalance: auth.state.walletBalance,
+    hasProfile: auth.state.hasProfile,
+    profileLoading: auth.state.profileLoading,
+    profileError: auth.state.profileError,
+    isExpertUser: auth.state.isExpertUser,
+    expertId: auth.state.expertId,
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout,
     updateProfile: auth.updateUserProfile,
-    updateProfilePicture: async () => null, // Not implemented in unified auth
+    updateUserSettings: auth.updateUserSettings,
+    updateEmail: auth.updateEmail,
     updatePassword: auth.updatePassword,
-    addToFavorites: async () => false, // Not implemented in unified auth
-    removeFromFavorites: async () => false, // Not implemented in unified auth
-    rechargeWallet: async () => false, // Not implemented in unified auth
-    addReview: async (review: any) => {
-      if (auth.addReview && review) {
-        if (typeof review === 'object') {
-          const expertId = review.expertId || review.expert_id;
-          const rating = review.rating;
-          const comment = review.comment;
-          if (expertId && rating) {
-            return auth.addReview(expertId.toString(), rating, comment || '');
-          }
-        }
-      }
-      return false;
-    },
-    reportExpert: async (report: any) => {
-      if (auth.reportExpert && report) {
-        if (typeof report === 'object') {
-          const expertId = report.expertId || report.expert_id;
-          const reason = report.reason;
-          const details = report.details || '';
-          if (expertId && reason) {
-            return auth.reportExpert(expertId.toString(), reason, details);
-          }
-        }
-      }
-      return false;
-    },
-    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
-    getExpertShareLink: auth.getExpertShareLink || (() => ''),
-    getReferralLink: auth.getReferralLink || (() => null)
+    resetPassword: auth.resetPassword,
+    sendVerificationEmail: auth.sendVerificationEmail,
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
+    checkIsFavorite: auth.checkIsFavorite,
+    refreshFavoritesCount: auth.refreshFavoritesCount,
+    getReferrals: auth.getReferrals,
+    refreshWalletBalance: auth.refreshWalletBalance,
+    addFunds: auth.addFunds,
+    deductFunds: auth.deductFunds,
+    reportExpert: auth.reportExpert,
+    reviewExpert: auth.reviewExpert,
+    getExpertShareLink: auth.getExpertShareLink,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom
   };
   
-  // Compatibility layer for useExpertAuth
+  // Create an expert auth compatible context (simplified for now)
   const expertAuth = {
-    currentExpert: auth.expertProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    loading: auth.isLoading,
-    isLoading: auth.isLoading,
-    error: null,
-    initialized: !auth.isLoading,
-    authInitialized: !auth.isLoading,
-    user: auth.user,
-    login: auth.expertLogin,
-    logout: auth.logout,
-    register: auth.expertSignup,
-    updateProfile: auth.updateExpertProfile,
-    hasUserAccount: async () => {
-      const role = await auth.checkUserRole();
-      return role === 'user';
+    // Expert-specific fields would be added here
+    currentExpert: auth.state.expertProfile,
+    isExpert: auth.state.role === 'expert',
+    // Common fields
+    user: auth.state.user,
+    session: auth.state.session,
+    isAuthenticated: auth.state.isAuthenticated && auth.state.role === 'expert',
+    loading: auth.state.isLoading
+  };
+
+  // Auth synchronization methods
+  const authSync = {
+    syncAuthState: async () => {
+      console.log('Auth state sync requested');
+      await auth.refreshFavoritesCount();
+      await auth.refreshWalletBalance();
+      return true;
     }
   };
   
-  // Compatibility layer for useAuthSynchronization
-  const authSync = {
-    isAuthInitialized: !auth.isLoading,
-    isAuthLoading: auth.isLoading,
-    isUserAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    isExpertAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    userLogout: auth.logout,
-    expertLogout: auth.logout,
-    fullLogout: auth.logout,
-    hasDualSessions: false, // Not supported in unified auth
-    isSynchronizing: false, // Not supported in unified auth
-    authCheckCompleted: !auth.isLoading,
-    // Add back compatibility properties
-    isAuthenticated: auth.isAuthenticated,
-    currentUser: auth.userProfile,
-    currentExpert: auth.expertProfile,
-    sessionType: auth.sessionType || 'none'
+  return {
+    userAuth,
+    expertAuth,
+    authSync
   };
-  
-  return { userAuth, expertAuth, authSync };
 };
