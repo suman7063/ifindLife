@@ -32,8 +32,11 @@ const useTransactions = (userId?: string): UseTransactionsProps => {
 
       if (error) throw error;
 
+      // Explicitly cast the data as UserTransaction[]
+      const typedData = data as UserTransaction[];
+      
       // Transform and standardize the transaction data
-      const formattedTransactions = (data || []).map(item => ({
+      const formattedTransactions = typedData.map(item => ({
         id: item.id,
         user_id: item.user_id,
         amount: item.amount,
@@ -46,7 +49,7 @@ const useTransactions = (userId?: string): UseTransactionsProps => {
         payment_id: item.payment_id || `pay_${Date.now()}`, // Generate fallback ID
         payment_method: item.payment_method || 'wallet', // Default payment method
         transaction_type: item.transaction_type || item.type // Keep backwards compatibility
-      })) as UserTransaction[];
+      }));
 
       setTransactions(formattedTransactions);
     } catch (err) {
