@@ -36,7 +36,7 @@ export const useExpertInteractions = (userId: string | null) => {
         .from('user_courses')
         .select('id')
         .eq('user_id', userId)
-        .eq('expert_id', expertId)
+        .eq('expert_id', parseInt(expertId, 10))
         .limit(1);
       
       if (programsError) {
@@ -67,7 +67,7 @@ export const useExpertInteractions = (userId: string | null) => {
         .from('user_reviews')
         .select('id')
         .eq('user_id', userId)
-        .eq('expert_id', expertId)
+        .eq('expert_id', parseInt(expertId, 10))
         .limit(1);
       
       if (checkError) {
@@ -92,7 +92,7 @@ export const useExpertInteractions = (userId: string | null) => {
       // Create the review
       const review = {
         user_id: userId,
-        expert_id: expertId,
+        expert_id: parseInt(expertId, 10),
         rating,
         comment,
         date: new Date().toISOString(),
@@ -131,7 +131,7 @@ export const useExpertInteractions = (userId: string | null) => {
       
       const report = {
         user_id: userId,
-        expert_id: expertId,
+        expert_id: parseInt(expertId, 10),
         reason,
         details,
         date: new Date().toISOString(),

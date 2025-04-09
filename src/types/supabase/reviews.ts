@@ -1,27 +1,11 @@
-export interface Review {
-  id: string;
-  expertId: string;
-  rating: number;
-  comment?: string;
-  date: string;
-  verified?: boolean;
-}
 
-export interface Report {
-  id: string;
-  expertId: string;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-}
+// We'll import UserReview from tables to avoid duplication
+import { UserReview } from './tables';
 
-export interface UserReview {
-  id?: string;
-  expert_id: string;
-  user_id: string;
-  rating: number;
-  comment?: string;
-  date: string;
-  verified?: boolean;
+export type { UserReview };
+
+export interface ReviewStats {
+  averageRating: number;
+  totalCount: number;
+  ratingCounts: Record<number, number>;
 }

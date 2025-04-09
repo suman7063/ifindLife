@@ -22,18 +22,18 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     rechargeWallet: async () => false, // Not implemented in unified auth
     addReview: async (review: any) => {
       if (review && typeof review === 'object' && 'expertId' in review && 'rating' in review && 'comment' in review) {
-        return auth.addReview ? auth.addReview(review.expertId, review.rating, review.comment) : false;
+        return auth.addReview ? auth.addReview(review.expertId.toString(), review.rating, review.comment) : false;
       }
       return false;
     },
     reportExpert: async (report: any) => {
       if (report && typeof report === 'object' && 'expertId' in report && 'reason' in report && 'details' in report) {
-        return auth.reportExpert ? auth.reportExpert(report.expertId, report.reason, report.details) : false;
+        return auth.reportExpert ? auth.reportExpert(report.expertId.toString(), report.reason, report.details) : false;
       }
       return false;
     },
     hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
-    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getExpertShareLink: auth.getExpertShareLink || ((expertId: string) => ''),
     getReferralLink: auth.getReferralLink || (() => ''),
     user: auth.user,
     loading: auth.isLoading,

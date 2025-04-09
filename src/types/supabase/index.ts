@@ -1,18 +1,21 @@
 
 // Main index file re-exporting all types from the specialized files
-
-export * from './tables';
 export * from './userProfile';
 export * from './transactions';
-export * from './reviews';
 export * from './userFavorites';
 export * from './referral';
-export type { 
-  ExpertProfile,
-  ExpertReview,
-  ExpertService,
-  ExpertAvailability
-} from './expert';
+
+// Re-export from tables.ts
+export type {
+  UserTransaction,
+  UserReview,
+  ContactSubmission
+} from './tables';
+
+// Re-export from reviews.ts without UserReview (to prevent duplicate)
+export type {
+  ReviewStats
+} from './reviews';
 
 // Define ReferralSettings interface
 export interface ReferralSettings {
@@ -35,3 +38,10 @@ export interface ReferralUI {
   rewardClaimed: boolean;
   created_at: string; // Ensure consistency with snake_case
 }
+
+export type { 
+  ExpertProfile,
+  ExpertReview,
+  ExpertService,
+  ExpertAvailability
+} from './expert';

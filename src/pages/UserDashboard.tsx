@@ -30,18 +30,21 @@ const UserDashboard: React.FC = () => {
     handleRechargeSuccess
   } = useRechargeDialog(refreshTransactions);
 
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<boolean> => {
     try {
       const success = await logout();
       if (success) {
         toast.success('Successfully logged out');
         navigate('/');
+        return true;
       } else {
         toast.error('Error logging out');
+        return false;
       }
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Error logging out');
+      return false;
     }
   };
 

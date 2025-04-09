@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 
 const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
-  const [activeView, setActiveView] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const { expertLogin, expertSignup } = useAuth();
   const { isExpertAuthenticated, isAuthInitialized } = useAuthSynchronization();
@@ -64,8 +64,8 @@ const ExpertLogin: React.FC = () => {
   return (
     <Container className="max-w-md py-12">
       <ExpertLoginContent
-        activeView={activeView}
-        setActiveView={setActiveView}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
         onLogin={handleLogin}
         onRegister={handleRegister}
         isLoading={isLoading}

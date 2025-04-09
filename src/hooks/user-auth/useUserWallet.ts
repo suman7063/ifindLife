@@ -33,7 +33,9 @@ export const useUserWallet = (
         amount: amount,
         currency: currentUser.currency || 'USD',
         description: 'Wallet recharge',
-        status: 'completed'
+        status: 'completed',
+        payment_method: 'online',
+        payment_id: `recharge_${Date.now()}`
       };
 
       const { data: transactionResult, error: transactionError } = await supabase
@@ -67,7 +69,9 @@ export const useUserWallet = (
         date: transactionData.date,
         currency: transactionData.currency,
         description: transactionData.description,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        payment_id: transactionData.payment_id,
+        payment_method: transactionData.payment_method
       };
 
       // Optimistically update the local state

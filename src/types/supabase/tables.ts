@@ -16,7 +16,7 @@ export interface UserTransaction {
 
 export interface UserReview {
   id?: string;
-  expert_id: string;
+  expert_id: number; // Changed to number to match the database schema
   user_id?: string;
   rating: number;
   comment?: string;

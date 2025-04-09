@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { UserReview } from '@/types/supabase/tables';
@@ -24,7 +25,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
         .from('user_reviews')
         .select('*')
         .eq('user_id', userId)
-        .eq('expert_id', expertId);
+        .eq('expert_id', parseInt(expertId, 10));
 
       if (checkError) {
         console.error('Error checking existing reviews:', checkError);
@@ -39,7 +40,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
 
       // Add new review
       const reviewData = {
-        expert_id: expertId,
+        expert_id: parseInt(expertId, 10),
         user_id: userId,
         rating,
         comment,
@@ -82,7 +83,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
       setIsSubmitting(true);
 
       const reportData = {
-        expert_id: expertId,
+        expert_id: parseInt(expertId, 10),
         user_id: userId,
         reason,
         details,
