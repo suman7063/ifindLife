@@ -1,22 +1,22 @@
 
 import React from 'react';
+import { Container } from '@/components/ui/container';
 import { Loader2 } from 'lucide-react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 
-const DashboardLoader: React.FC = () => {
+interface DashboardLoaderProps {
+  message?: string;
+}
+
+const DashboardLoader: React.FC<DashboardLoaderProps> = ({ 
+  message = "Loading dashboard..." 
+}) => {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 className="mx-auto h-10 w-10 animate-spin text-ifind-aqua" />
-          <h2 className="text-2xl font-semibold">Loading your dashboard...</h2>
-          <p className="text-gray-500">Please wait while we fetch your information</p>
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <Container className="py-8 flex justify-center items-center min-h-[60vh]">
+      <div className="flex flex-col items-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="mt-4 text-lg">{message}</p>
+      </div>
+    </Container>
   );
 };
 

@@ -40,7 +40,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
 
       // Add new review
       const reviewData: UserReview = {
-        expert_id: parseInt(expertId, 10), // Keep as number for the type
+        expert_id: expertId.toString(), // Use toString as requested
         user_id: userId,
         rating,
         comment,

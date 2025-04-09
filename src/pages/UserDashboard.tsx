@@ -1,75 +1,34 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect } from 'react';
 import { Container } from '@/components/ui/container';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import { UserTransaction } from '@/types/supabase/tables';
-import { supabase } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
-
-// Import dashboard components
 import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
-import WalletSection from '@/components/user/dashboard/WalletSection';
-import UserStatsSummary from '@/components/user/dashboard/UserStatsSummary';
+import DashboardContent from '@/components/user/dashboard/DashboardContent';
+import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
 import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
-import { useDashboardState } from '@/hooks/user-dashboard/useDashboardState';
+import useTransactions from '@/hooks/dashboard/useTransactions';
+import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
 const UserDashboard: React.FC = () => {
-  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
-  
   const { currentUser, isAuthenticated, logout } = useUserAuth();
   const { isAuthInitialized, isAuthLoading } = useAuthSynchronization();
-  const { dashboardLoading } = useDashboardState();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      if (currentUser?.id) {
-        try {
-          setIsLoading(true);
-          const { data, error } = await supabase
-            .from('user_transactions')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .order('date', { ascending: false });
-
-          if (error) {
-            console.error('Error fetching transactions:', error);
-            toast.error('Failed to load transaction history');
-          } else {
-            const formattedTransactions = (data || []).map(item => ({
-              id: item.id,
-              user_id: item.user_id,
-              amount: item.amount,
-              currency: item.currency || 'USD',
-              type: item.type as 'credit' | 'debit',
-              transaction_type: item.type,
-              description: item.description,
-              date: item.date || new Date().toISOString(),
-              status: item.status || 'completed',
-              created_at: item.created_at || item.date || new Date().toISOString(),
-              payment_id: item.payment_id,
-              payment_method: item.payment_method
-            })) as UserTransaction[];
-            
-            setTransactions(formattedTransactions);
-          }
-        } catch (error) {
-          console.error('Error in transaction fetch:', error);
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    if (isAuthenticated && currentUser) {
-      fetchTransactions();
-    }
-  }, [currentUser, isAuthenticated]);
+  
+  const { 
+    transactions, 
+    isLoading: transactionsLoading, 
+    refreshTransactions 
+  } = useTransactions(currentUser?.id);
+  
+  const {
+    isRechargeDialogOpen,
+    handleOpenRechargeDialog,
+    handleCloseRechargeDialog,
+    handleRechargeSuccess
+  } = useRechargeDialog(refreshTransactions);
 
   const handleLogout = async () => {
     try {
@@ -81,58 +40,15 @@ const UserDashboard: React.FC = () => {
       toast.error('Error logging out');
     }
   };
-  
-  const handleOpenRechargeDialog = () => {
-    setIsRechargeDialogOpen(true);
-  };
-  
-  const handleRechargeSuccess = () => {
-    setIsRechargeDialogOpen(false);
-    toast.success('Funds added to your wallet successfully!');
-    if (currentUser?.id) {
-      supabase
-        .from('user_transactions')
-        .select('*')
-        .eq('user_id', currentUser.id)
-        .order('date', { ascending: false })
-        .then(({ data, error }) => {
-          if (!error && data) {
-            const formattedTransactions = (data || []).map(item => ({
-              id: item.id,
-              user_id: item.user_id,
-              amount: item.amount,
-              currency: item.currency || 'USD',
-              type: item.type as 'credit' | 'debit',
-              transaction_type: item.type,
-              description: item.description,
-              date: item.date || new Date().toISOString(),
-              status: item.status || 'completed',
-              created_at: item.created_at || item.date || new Date().toISOString(),
-              payment_id: item.payment_id,
-              payment_method: item.payment_method
-            })) as UserTransaction[];
-            
-            setTransactions(formattedTransactions);
-          }
-        });
-    }
-  };
 
   useEffect(() => {
-    if (!isAuthLoading && !dashboardLoading && isAuthInitialized && !isAuthenticated) {
+    if (!isAuthLoading && isAuthInitialized && !isAuthenticated) {
       navigate('/user-login');
     }
-  }, [isAuthenticated, isAuthLoading, dashboardLoading, isAuthInitialized, navigate]);
+  }, [isAuthenticated, isAuthLoading, isAuthInitialized, navigate]);
 
-  if (isAuthLoading || dashboardLoading) {
-    return (
-      <Container className="py-8 flex justify-center items-center min-h-[60vh]">
-        <div className="flex flex-col items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-lg">Loading dashboard...</p>
-        </div>
-      </Container>
-    );
+  if (isAuthLoading) {
+    return <DashboardLoader />;
   }
 
   if (!isAuthenticated) {
@@ -141,63 +57,21 @@ const UserDashboard: React.FC = () => {
 
   return (
     <Container className="py-8">
-      <DashboardHeader user={currentUser} />
+      <DashboardHeader 
+        user={currentUser} 
+        onLogout={handleLogout}
+      />
       
-      <div className="mt-6">
-        <UserStatsSummary user={currentUser} />
-        
-        <Tabs defaultValue="wallet" className="mt-6">
-          <TabsList>
-            <TabsTrigger value="wallet">Wallet</TabsTrigger>
-            <TabsTrigger value="purchases">Your Purchases</TabsTrigger>
-            <TabsTrigger value="favorites">Favorites</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="wallet" className="mt-6">
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <WalletSection 
-                user={currentUser} 
-                transactions={transactions} 
-                onRecharge={handleOpenRechargeDialog} 
-              />
-            )}
-          </TabsContent>
-          
-          <TabsContent value="purchases" className="mt-6">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">Your Purchases</h2>
-              
-              <div className="bg-muted p-8 rounded-md text-center">
-                <p>You haven't made any purchases yet.</p>
-                <p className="text-muted-foreground mt-2">
-                  Explore our services and programs to get started.
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="favorites" className="mt-6">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">Your Favorites</h2>
-              
-              <div className="bg-muted p-8 rounded-md text-center">
-                <p>You haven't added any favorites yet.</p>
-                <p className="text-muted-foreground mt-2">
-                  Find experts and programs you like and add them to favorites.
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+      <DashboardContent
+        user={currentUser}
+        transactions={transactions}
+        isLoading={transactionsLoading}
+        onRecharge={handleOpenRechargeDialog}
+      />
       
       <RechargeDialog 
         open={isRechargeDialogOpen}
-        onOpenChange={setIsRechargeDialogOpen}
+        onOpenChange={handleCloseRechargeDialog}
         onSuccess={handleRechargeSuccess}
       />
     </Container>
