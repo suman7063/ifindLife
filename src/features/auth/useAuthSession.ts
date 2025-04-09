@@ -22,3 +22,5 @@ export const useAuthSession = (
 
   return { getSession };
 };
+
+export default useAuthSession;

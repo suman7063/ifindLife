@@ -1,7 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { handleAuthError } from '@/utils/authUtils';
+import { handleAuthError } from '@/lib/authUtils';
 
 export const useAuthPassword = (setLoading: (value: boolean) => void) => {
   const resetPassword = async (email: string): Promise<boolean> => {
@@ -48,3 +48,5 @@ export const useAuthPassword = (setLoading: (value: boolean) => void) => {
 
   return { resetPassword, updatePassword };
 };
+
+export default useAuthPassword;

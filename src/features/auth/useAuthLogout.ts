@@ -1,9 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 
-// Convert this to a function that returns hooks rather than using hooks directly
 export const useAuthLogout = (setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
-  // Move the useState inside the returned function
   const logout = async (): Promise<boolean> => {
     try {
       setLoading(true);
@@ -32,3 +30,5 @@ export const useAuthLogout = (setLoading: React.Dispatch<React.SetStateAction<bo
 
   return { logout, logoutLoading: false };
 };
+
+export default useAuthLogout;

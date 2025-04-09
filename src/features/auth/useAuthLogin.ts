@@ -2,7 +2,7 @@
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Session } from '@supabase/supabase-js';
-import { handleAuthError } from '@/utils/authUtils';
+import { handleAuthError } from '@/lib/authUtils';
 
 export const useAuthLogin = (
   setLoading: (value: boolean) => void,
@@ -45,3 +45,5 @@ export const useAuthLogin = (
 
   return { login };
 };
+
+export default useAuthLogin;

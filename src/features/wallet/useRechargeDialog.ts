@@ -1,9 +1,8 @@
 
 import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
-export const useRechargeDialog = (onSuccess?: () => void) => {
+const useRechargeDialog = (onSuccess?: () => void) => {
   const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
   
   const handleOpenRechargeDialog = () => {

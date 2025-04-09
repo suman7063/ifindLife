@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import WalletSection from './WalletSection';
 import UserStatsSummary from './UserStatsSummary';
-import { UserTransaction } from '@/types/supabase/transactions';
+import { UserTransaction } from '@/types/supabase/tables';
 import { UserProfile } from '@/types/supabase';
 
 interface DashboardContentProps {

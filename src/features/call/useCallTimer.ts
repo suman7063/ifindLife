@@ -1,5 +1,6 @@
+
 import { useState, useRef, useCallback } from 'react';
-import { calculateCallCost } from '@/utils/agoraService';
+import { calculateCallCost } from '@/lib/agoraService';
 
 export const useCallTimer = (expertPrice: number) => {
   const [duration, setDuration] = useState(0);
@@ -87,3 +88,5 @@ export const useCallTimer = (expertPrice: number) => {
     initialSlotMinutes
   };
 };
+
+export default useCallTimer;
