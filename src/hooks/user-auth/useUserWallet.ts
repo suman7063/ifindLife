@@ -71,7 +71,8 @@ export const useUserWallet = (
         description: transactionData.description,
         created_at: new Date().toISOString(),
         payment_id: transactionData.payment_id,
-        payment_method: transactionData.payment_method
+        payment_method: transactionData.payment_method,
+        transaction_type: transactionData.type // Set the transaction_type field
       };
 
       // Optimistically update the local state
