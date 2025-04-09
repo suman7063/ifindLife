@@ -40,8 +40,10 @@ export const useAuthLogoutEffects = (
     try {
       await userLogout();
       navigate('/');
+      return true;
     } catch (error) {
       console.error('User logout error:', error);
+      return false;
     } finally {
       setIsLoggingOut(false);
     }
@@ -51,8 +53,10 @@ export const useAuthLogoutEffects = (
     try {
       await fullLogout();
       navigate('/');
+      return true;
     } catch (error) {
       console.error('Logout error:', error);
+      return false;
     }
   };
   

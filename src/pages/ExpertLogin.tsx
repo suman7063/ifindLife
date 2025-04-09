@@ -1,106 +1,76 @@
 
-import React from 'react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import LoadingView from '@/components/expert/auth/LoadingView';
-import UserLogoutAlert from '@/components/auth/UserLogoutAlert';
-import StatusMessage from '@/components/expert/auth/StatusMessage';
-import DualSessionAlert from '@/components/expert/auth/DualSessionAlert';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { Container } from '@/components/ui/container';
 import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
-import { useExpertLoginPage } from '@/hooks/expert-auth/useExpertLoginPage';
-import { useAuthLogoutEffects } from '@/hooks/expert-auth/useAuthLogoutEffects';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
-const ExpertLogin = () => {
-  // Get state and handlers from custom hooks
-  const {
-    isLoggingIn,
-    loginError,
-    activeTab,
-    setActiveTab,
-    userProfile,
-    statusMessage,
-    expert,
-    loading,
-    initialized,
-    isCheckingUser,
-    handleLogin
-  } = useExpertLoginPage();
-  
-  const {
-    isSynchronizing,
-    isLoggingOut,
-    hasDualSessions,
-    handleUserLogout,
-    handleFullLogout
-  } = useAuthLogoutEffects();
+const ExpertLogin: React.FC = () => {
+  const navigate = useNavigate();
+  const [activeView, setActiveView] = useState<'login' | 'register'>('login');
+  const [isLoading, setIsLoading] = useState(false);
+  const { expertLogin, expertSignup } = useAuth();
+  const { isExpertAuthenticated, isAuthInitialized } = useAuthSynchronization();
 
-  // Show loading view during initialization
-  if ((loading && !isLoggingIn && !initialized) || 
-      (initialized && loading && !isLoggingIn) || 
-      isSynchronizing || 
-      isCheckingUser) {
-    console.log('Showing LoadingView on ExpertLogin page');
-    return <LoadingView />;
-  }
-  
-  // Define a wrapper function to handle type conversion
-  const handleTabChange = (tab: string) => {
-    if (tab === 'login' || tab === 'register') {
-      setActiveTab(tab);
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const success = await expertLogin(email, password);
+      if (success) {
+        toast.success('Successfully logged in!');
+        navigate('/expert-dashboard');
+        return true;
+      } else {
+        toast.error('Invalid credentials. Please try again.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Failed to login. Please try again.');
+      return false;
+    } finally {
+      setIsLoading(false);
     }
   };
-  
+
+  const handleRegister = async (formData: any): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const success = await expertSignup(formData);
+      if (success) {
+        toast.success('Registration successful! Please check your email to verify your account.');
+        return true;
+      } else {
+        toast.error('Failed to register. Please try again.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error('Failed to register. Please try again.');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthInitialized && isExpertAuthenticated) {
+      navigate('/expert-dashboard');
+    }
+  }, [isAuthInitialized, isExpertAuthenticated, navigate]);
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-1 py-10 flex items-center justify-center bg-stars">
-        <div className="container max-w-4xl">
-          {/* Status message alerts */}
-          {statusMessage && (
-            <div className="mb-6">
-              <StatusMessage 
-                type={statusMessage.type} 
-                message={statusMessage.message}
-              />
-            </div>
-          )}
-          
-          {/* Dual session alert */}
-          {hasDualSessions && (
-            <div className="mb-6">
-              <DualSessionAlert
-                isLoggingOut={isLoggingOut}
-                onLogout={handleFullLogout}
-              />
-            </div>
-          )}
-          
-          {/* User logout alert */}
-          {userProfile && !hasDualSessions && (
-            <div className="mb-6">
-              <UserLogoutAlert
-                profileName={userProfile.name || "User"}
-                isLoggingOut={isLoggingOut}
-                onLogout={handleUserLogout}
-                logoutType="user"
-              />
-            </div>
-          )}
-          
-          {/* Login content */}
-          {!userProfile && !hasDualSessions && (
-            <ExpertLoginContent
-              activeTab={activeTab}
-              setActiveTab={handleTabChange}
-              onLogin={handleLogin}
-              isLoggingIn={isLoggingIn}
-              loginError={loginError}
-            />
-          )}
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <Container className="max-w-md py-12">
+      <ExpertLoginContent
+        activeView={activeView}
+        setActiveView={setActiveView}
+        onLogin={handleLogin}
+        onRegister={handleRegister}
+        isLoading={isLoading}
+      />
+    </Container>
   );
 };
 

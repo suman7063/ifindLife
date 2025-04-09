@@ -32,9 +32,13 @@ const UserDashboard: React.FC = () => {
 
   const handleLogout = async () => {
     try {
-      await logout();
-      toast.success('Successfully logged out');
-      navigate('/');
+      const success = await logout();
+      if (success) {
+        toast.success('Successfully logged out');
+        navigate('/');
+      } else {
+        toast.error('Error logging out');
+      }
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('Error logging out');

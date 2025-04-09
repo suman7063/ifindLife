@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserTransaction } from '@/types/supabase/transactions';
+import { UserTransaction } from '@/types/supabase/tables';
 import { toast } from 'sonner';
 
 export const useTransactions = (userId: string | undefined) => {
@@ -28,14 +28,14 @@ export const useTransactions = (userId: string | undefined) => {
               user_id: item.user_id,
               amount: item.amount,
               currency: item.currency || 'USD',
-              type: item.type as 'credit' | 'debit',
-              transaction_type: item.type,
-              description: item.description,
+              type: item.type as string,
+              transaction_type: item.transaction_type || item.type,
+              description: item.description || '',
               date: item.date || new Date().toISOString(),
               status: item.status || 'completed',
               created_at: item.created_at || item.date || new Date().toISOString(),
-              payment_id: item.payment_id,
-              payment_method: item.payment_method
+              payment_id: item.payment_id || '',
+              payment_method: item.payment_method || ''
             })) as UserTransaction[];
             
             setTransactions(formattedTransactions);
@@ -73,14 +73,14 @@ export const useTransactions = (userId: string | undefined) => {
           user_id: item.user_id,
           amount: item.amount,
           currency: item.currency || 'USD',
-          type: item.type as 'credit' | 'debit',
-          transaction_type: item.type,
-          description: item.description,
+          type: item.type as string,
+          transaction_type: item.transaction_type || item.type,
+          description: item.description || '',
           date: item.date || new Date().toISOString(),
           status: item.status || 'completed',
           created_at: item.created_at || item.date || new Date().toISOString(),
-          payment_id: item.payment_id,
-          payment_method: item.payment_method
+          payment_id: item.payment_id || '',
+          payment_method: item.payment_method || ''
         })) as UserTransaction[];
         
         setTransactions(formattedTransactions);

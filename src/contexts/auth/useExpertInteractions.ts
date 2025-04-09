@@ -1,7 +1,6 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { UserReview } from '@/types/supabase/reviews';
+import { UserReview } from '@/types/supabase/tables';
 import { supabase } from '@/lib/supabase';
 
 export const useExpertInteractions = (userId: string | undefined) => {
@@ -25,7 +24,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
         .from('user_reviews')
         .select('*')
         .eq('user_id', userId)
-        .eq('expert_id', expertId.toString());
+        .eq('expert_id', expertId);
 
       if (checkError) {
         console.error('Error checking existing reviews:', checkError);
@@ -39,8 +38,8 @@ export const useExpertInteractions = (userId: string | undefined) => {
       }
 
       // Add new review
-      const reviewData: UserReview = {
-        expert_id: expertId.toString(), // Use toString as requested
+      const reviewData = {
+        expert_id: expertId,
         user_id: userId,
         rating,
         comment,
@@ -50,7 +49,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
 
       const { error } = await supabase
         .from('user_reviews')
-        .insert([reviewData]);
+        .insert(reviewData);
 
       if (error) {
         console.error('Error adding review:', error);
@@ -82,16 +81,18 @@ export const useExpertInteractions = (userId: string | undefined) => {
     try {
       setIsSubmitting(true);
 
-      const { error } = await supabase.from('expert_reports').insert([
-        {
-          expert_id: expertId.toString(), // Use toString as requested
-          user_id: userId,
-          reason,
-          details,
-          date: new Date().toISOString(),
-          status: 'pending',
-        },
-      ]);
+      const reportData = {
+        expert_id: expertId,
+        user_id: userId,
+        reason,
+        details,
+        date: new Date().toISOString(),
+        status: 'pending',
+      };
+
+      const { error } = await supabase
+        .from('user_reports')
+        .insert(reportData);
 
       if (error) {
         console.error('Error reporting expert:', error);
@@ -110,9 +111,24 @@ export const useExpertInteractions = (userId: string | undefined) => {
     }
   };
 
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+    return true; // Placeholder for now
+  };
+
+  const getExpertShareLink = (expertId: string): string => {
+    return `${window.location.origin}/experts/${expertId}`;
+  };
+
+  const getReferralLink = (): string | null => {
+    return null; // Placeholder implementation
+  };
+
   return {
     isSubmitting,
     addReview,
     reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink
   };
 };

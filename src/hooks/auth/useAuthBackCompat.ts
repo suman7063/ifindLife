@@ -30,8 +30,32 @@ export const useAuthBackCompat = () => {
     addToFavorites: async () => false, // Not implemented in unified auth
     removeFromFavorites: async () => false, // Not implemented in unified auth
     rechargeWallet: async () => false, // Not implemented in unified auth
-    addReview: auth.addReview || (async () => false),
-    reportExpert: auth.reportExpert || (async () => false),
+    addReview: async (review: any) => {
+      if (auth.addReview && review) {
+        if (typeof review === 'object') {
+          const expertId = review.expertId || review.expert_id;
+          const rating = review.rating;
+          const comment = review.comment;
+          if (expertId && rating) {
+            return auth.addReview(expertId.toString(), rating, comment || '');
+          }
+        }
+      }
+      return false;
+    },
+    reportExpert: async (report: any) => {
+      if (auth.reportExpert && report) {
+        if (typeof report === 'object') {
+          const expertId = report.expertId || report.expert_id;
+          const reason = report.reason;
+          const details = report.details || '';
+          if (expertId && reason) {
+            return auth.reportExpert(expertId.toString(), reason, details);
+          }
+        }
+      }
+      return false;
+    },
     hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null)

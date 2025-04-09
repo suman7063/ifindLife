@@ -7,11 +7,11 @@ export interface UserTransaction {
   description: string;
   date: string;
   type: string;
-  status?: string;
-  created_at?: string;
-  payment_id?: string;
-  payment_method?: string;
-  transaction_type?: string; // Add this property which is used in components
+  status: string;
+  created_at: string;
+  payment_id: string;
+  payment_method: string;
+  transaction_type?: string; // Maintain this field for backwards compatibility
 }
 
 export interface UserReview {
@@ -22,4 +22,14 @@ export interface UserReview {
   comment?: string;
   date: string;
   verified?: boolean;
+}
+
+export interface ContactSubmission {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string | null;
+  is_read: boolean | null;
 }

@@ -3,8 +3,7 @@
 
 export * from './tables';
 export * from './userProfile';
-// Export transactions without UserTransaction which is already exported from tables
-export type { } from './transactions';
+export * from './transactions';
 export * from './reviews';
 export * from './userFavorites';
 export * from './referral';

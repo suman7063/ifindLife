@@ -101,7 +101,7 @@ export const useExpertInteractions = (userId: string | null) => {
       
       const { error } = await supabase
         .from('user_reviews')
-        .insert([review]);
+        .insert(review);
       
       if (error) {
         console.error('Error adding review:', error);
@@ -129,16 +129,18 @@ export const useExpertInteractions = (userId: string | null) => {
     try {
       setIsProcessing(true);
       
+      const report = {
+        user_id: userId,
+        expert_id: expertId,
+        reason,
+        details,
+        date: new Date().toISOString(),
+        status: 'pending'
+      };
+      
       const { error } = await supabase
         .from('user_reports')
-        .insert([{
-          user_id: userId,
-          expert_id: expertId,
-          reason,
-          details,
-          date: new Date().toISOString(),
-          status: 'pending'
-        }]);
+        .insert(report);
       
       if (error) {
         console.error('Error reporting expert:', error);
