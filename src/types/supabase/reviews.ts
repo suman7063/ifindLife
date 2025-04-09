@@ -1,6 +1,6 @@
 
-// We'll import UserReview from tables to avoid duplication
-import { UserReview } from './tables';
+// Import UserReview from tables
+import type { UserReview } from './tables';
 
 export type { UserReview };
 

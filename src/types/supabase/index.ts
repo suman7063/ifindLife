@@ -1,18 +1,17 @@
 
 // Main index file re-exporting all types from the specialized files
 export * from './userProfile';
-export * from './transactions';
 export * from './userFavorites';
 export * from './referral';
 
-// Re-export from tables.ts
+// Re-export from tables.ts - use explicit exports to avoid duplicates
 export type {
   UserTransaction,
   UserReview,
   ContactSubmission
 } from './tables';
 
-// Re-export from reviews.ts without UserReview (to prevent duplicate)
+// Re-export from reviews.ts - but not UserReview (it comes from tables.ts)
 export type {
   ReviewStats
 } from './reviews';

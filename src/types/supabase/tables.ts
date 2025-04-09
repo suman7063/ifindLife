@@ -11,7 +11,7 @@ export interface UserTransaction {
   created_at: string;
   payment_id: string;
   payment_method: string;
-  transaction_type?: string; // Maintain this field for backwards compatibility
+  transaction_type: string; // Include this field for backwards compatibility
 }
 
 export interface UserReview {
