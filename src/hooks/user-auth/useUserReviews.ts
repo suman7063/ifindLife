@@ -1,6 +1,7 @@
 
 import { toast } from 'sonner';
-import { UserProfile, Review } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase';
+import { Review } from '@/types/supabase/index';
 import { supabase } from '@/lib/supabase';
 
 export const useUserReviews = (

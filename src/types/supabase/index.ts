@@ -39,6 +39,26 @@ export interface ReferralUI {
   created_at: string; // Ensure consistency with snake_case
 }
 
+// Define Review type for UI purposes
+export interface Review {
+  id: string;
+  expertId: string | number;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+}
+
+// Define Report type for UI purposes
+export interface Report {
+  id: string;
+  expertId: string | number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+}
+
 export type { 
   ExpertProfile,
   ExpertReview,

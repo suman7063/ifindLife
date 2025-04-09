@@ -61,11 +61,18 @@ const ExpertLogin: React.FC = () => {
     }
   }, [isAuthInitialized, isExpertAuthenticated, navigate]);
 
+  // Create a wrapper function to handle type conversion
+  const handleTabChange = (tab: string) => {
+    if (tab === 'login' || tab === 'register') {
+      setActiveTab(tab);
+    }
+  };
+
   return (
     <Container className="max-w-md py-12">
       <ExpertLoginContent
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabChange}
         onLogin={handleLogin}
         onRegister={handleRegister}
         isLoading={isLoading}

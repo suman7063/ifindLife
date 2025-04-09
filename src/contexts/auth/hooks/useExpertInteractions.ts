@@ -31,7 +31,7 @@ export const useExpertInteractions = (userId: string | null) => {
         return true;
       }
       
-      // Check programs
+      // Check programs - convert expertId to number for this query
       const { data: programs, error: programsError } = await supabase
         .from('user_courses')
         .select('id')
