@@ -16,3 +16,12 @@ export interface Report {
   date: string;
   status: string;
 }
+
+export interface UserReview {
+  expert_id: string;
+  user_id: string;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+}

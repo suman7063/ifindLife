@@ -54,7 +54,9 @@ const UserDashboard: React.FC = () => {
               description: item.description,
               date: item.date || new Date().toISOString(),
               status: item.status || 'completed',
-              created_at: item.date || new Date().toISOString()
+              created_at: item.created_at || item.date || new Date().toISOString(),
+              payment_id: item.payment_id,
+              payment_method: item.payment_method
             })) as UserTransaction[];
             
             setTransactions(formattedTransactions);
@@ -112,7 +114,9 @@ const UserDashboard: React.FC = () => {
               description: item.description,
               date: item.date || new Date().toISOString(),
               status: item.status || 'completed',
-              created_at: item.date || new Date().toISOString()
+              created_at: item.created_at || item.date || new Date().toISOString(),
+              payment_id: item.payment_id,
+              payment_method: item.payment_method
             })) as UserTransaction[];
             
             setTransactions(formattedTransactions);

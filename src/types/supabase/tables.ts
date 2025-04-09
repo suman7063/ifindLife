@@ -11,6 +11,8 @@ export interface UserTransaction {
   date?: string;
   status?: string;
   created_at?: string;
+  payment_id?: string;
+  payment_method?: string;
 }
 
 // Add other table interfaces here...
