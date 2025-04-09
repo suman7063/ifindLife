@@ -1,74 +1,75 @@
 
-import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useState, useEffect } from 'react';
 
-/**
- * This hook provides backward compatibility with the old authentication hooks.
- * It maps the unified authentication context to the interfaces expected by legacy components.
- * 
- * This should be used as a temporary solution during migration.
- */
 export const useAuthBackCompat = () => {
   const auth = useAuth();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   
-  // Mark as initialized once we've completed the first auth check
+  // Wait for auth initialization to complete
   useEffect(() => {
     if (!auth.isLoading) {
-      setIsInitialized(true);
+      setIsInitializing(false);
     }
   }, [auth.isLoading]);
-
-  // Legacy useUserAuth compatibility layer
+  
+  // Compatibility layer for useUserAuth
   const userAuth = {
     currentUser: auth.userProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
+    authLoading: auth.isLoading || isInitializing,
+    profileNotFound: !auth.userProfile && !auth.isLoading && auth.isAuthenticated,
+    user: auth.user,
     loading: auth.isLoading,
-    authLoading: auth.isLoading,
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout,
     updateProfile: auth.updateUserProfile,
+    updateProfilePicture: async () => null, // Not implemented in unified auth
     updatePassword: auth.updatePassword,
-    user: auth.user,
-    profileNotFound: false,  // This was used for error handling in the old system
+    addToFavorites: async () => false, // Not implemented in unified auth
+    removeFromFavorites: async () => false, // Not implemented in unified auth
+    rechargeWallet: async () => false, // Not implemented in unified auth
+    addReview: auth.addReview,
+    reportExpert: auth.reportExpert,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom,
+    getExpertShareLink: auth.getExpertShareLink,
+    getReferralLink: auth.getReferralLink
   };
-
-  // Legacy useExpertAuth compatibility layer
+  
+  // Compatibility layer for useExpertAuth
   const expertAuth = {
     currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
     loading: auth.isLoading,
     isLoading: auth.isLoading,
-    authInitialized: isInitialized,
+    error: null,
+    initialized: !auth.isLoading,
+    authInitialized: !auth.isLoading,
+    user: auth.user,
     login: auth.expertLogin,
     logout: auth.logout,
+    register: auth.expertSignup,
     updateProfile: auth.updateExpertProfile,
+    hasUserAccount: async () => {
+      const role = await auth.checkUserRole();
+      return role === 'user';
+    }
   };
-
-  // Legacy auth synchronization layer
+  
+  // Compatibility layer for useAuthSynchronization
   const authSync = {
+    isAuthInitialized: !auth.isLoading,
+    isAuthLoading: auth.isLoading,
     isUserAuthenticated: auth.isAuthenticated && auth.role === 'user',
     isExpertAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    isSynchronizing: auth.isLoading,
-    isAuthInitialized: isInitialized,
-    authCheckCompleted: !auth.isLoading,
-    hasDualSessions: false,  // This concept is eliminated in the new system
-    sessionType: auth.role || 'none',
-    isLoggingOut: false,
     userLogout: auth.logout,
     expertLogout: auth.logout,
     fullLogout: auth.logout,
-    setIsLoggingOut: () => {},  // No-op, managed internally now
-    isAuthenticated: auth.isAuthenticated,
-    currentUser: auth.userProfile,
-    currentExpert: auth.expertProfile,
-    isAuthLoading: auth.isLoading,
+    hasDualSessions: false, // Not supported in unified auth
+    isSynchronizing: false, // Not supported in unified auth
+    authCheckCompleted: !auth.isLoading
   };
-
-  return {
-    userAuth,
-    expertAuth,
-    authSync,
-  };
+  
+  return { userAuth, expertAuth, authSync };
 };

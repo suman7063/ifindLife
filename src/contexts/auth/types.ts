@@ -1,48 +1,41 @@
 
-import { User } from '@supabase/supabase-js';
+import { Session, User } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/supabase';
+import { ExpertProfile } from '@/types/supabase/expert';
 
-export interface UserAuthContextType {
-  currentUser: UserProfile | null;
-  isAuthenticated: boolean;
-  authLoading: boolean;
-  profileNotFound: boolean;
+export type UserRole = 'user' | 'expert' | 'admin' | null;
+
+export interface AuthState {
+  session: Session | null;
   user: User | null;
-  loading: boolean;
+  userProfile: UserProfile | null;
+  expertProfile: ExpertProfile | null;
+  role: UserRole;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+export interface AuthFunctions {
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (
-    email: string, 
-    password: string, 
-    userData: Partial<UserProfile>, 
-    referralCode?: string
-  ) => Promise<boolean>;
+  signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
+  expertLogin: (email: string, password: string) => Promise<boolean>;
+  expertSignup: (registrationData: any) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
-  updateProfilePicture: (file: File) => Promise<string | null>;
-  updatePassword: (newPassword: string) => Promise<boolean>;
-  addToFavorites: (expertId: string) => Promise<boolean>;
-  removeFromFavorites: (expertId: string) => Promise<boolean>;
-  rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (reviewData: { expertId: string; rating: number; comment: string }) => Promise<boolean>;
-  reportExpert: (reportData: { expertId: string; reason: string; details: string }) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
-  getExpertShareLink: (expertId: string) => string;
-  getReferralLink: () => string | null;
+  checkUserRole: () => Promise<UserRole>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
 }
 
-export interface LoginFormData {
-  email: string;
-  password: string;
-}
+export interface AuthContextType extends AuthState, AuthFunctions {}
 
-export interface RegisterFormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  name: string;
-  phone: string;
-  country: string;
-  city?: string;
-  referralCode?: string;
-  acceptTerms: boolean;
-}
+export const initialAuthState: AuthState = {
+  session: null,
+  user: null,
+  userProfile: null,
+  expertProfile: null,
+  role: null,
+  isLoading: true,
+  isAuthenticated: false,
+};

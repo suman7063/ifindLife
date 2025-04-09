@@ -1,28 +1,24 @@
 
-// User transaction
 export interface UserTransaction {
   id: string;
-  user_id?: string;
+  user_id: string;
   amount: number;
-  currency?: string;
-  type?: 'credit' | 'debit';
-  transaction_type?: string;
-  description?: string;
-  date?: string;
+  currency: string;
+  description: string;
+  date: string;
+  type: string;
   status?: string;
   created_at?: string;
   payment_id?: string;
   payment_method?: string;
 }
 
-// Add other table interfaces here...
-
-export interface ContactSubmission {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  created_at?: string;
-  is_read?: boolean;
+export interface UserReview {
+  id?: string;
+  expert_id: string; // Using string type to match the database
+  user_id?: string;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
 }
