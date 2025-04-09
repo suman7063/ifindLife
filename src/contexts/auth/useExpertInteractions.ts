@@ -25,7 +25,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
         .from('user_reviews')
         .select('*')
         .eq('user_id', userId)
-        .eq('expert_id', parseInt(expertId, 10));
+        .eq('expert_id', expertId.toString());
 
       if (checkError) {
         console.error('Error checking existing reviews:', checkError);
@@ -40,7 +40,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
 
       // Add new review
       const reviewData: UserReview = {
-        expert_id: parseInt(expertId, 10),
+        expert_id: parseInt(expertId, 10), // Keep as number for the type
         user_id: userId,
         rating,
         comment,
@@ -84,7 +84,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
 
       const { error } = await supabase.from('expert_reports').insert([
         {
-          expert_id: parseInt(expertId, 10),
+          expert_id: expertId.toString(), // Use toString as requested
           user_id: userId,
           reason,
           details,

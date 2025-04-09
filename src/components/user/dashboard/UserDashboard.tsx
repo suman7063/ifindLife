@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -34,7 +33,6 @@ const UserDashboard: React.FC = () => {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [activeTab, setActiveTab] = useState('overview');
 
-  // Fetch user transactions when user is authenticated
   useEffect(() => {
     const fetchTransactions = async () => {
       if (currentUser?.id) {
@@ -50,7 +48,6 @@ const UserDashboard: React.FC = () => {
             return;
           }
           
-          // Convert the response to match the UserTransaction type
           const formattedTransactions = (data || []).map(item => ({
             id: item.id,
             user_id: item.user_id,
@@ -83,7 +80,6 @@ const UserDashboard: React.FC = () => {
   }
 
   if (!isAuthenticated && !authLoading) {
-    // Redirect handled in the useDashboardState hook
     return <LoadingScreen message="Redirecting to login..." />;
   }
 

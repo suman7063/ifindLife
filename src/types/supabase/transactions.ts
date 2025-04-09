@@ -3,13 +3,13 @@ export interface UserTransaction {
   id: string;
   user_id?: string;
   amount: number;
-  transaction_type?: string;
-  type?: 'credit' | 'debit';
+  currency?: string;
   description?: string;
+  date?: string;
+  type?: 'credit' | 'debit';
+  transaction_type?: string;
   status?: string;
   created_at?: string;
-  date?: string;
-  currency?: string;
   payment_id?: string;
   payment_method?: string;
 }

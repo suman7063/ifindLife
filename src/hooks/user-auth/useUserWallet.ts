@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserProfile, UserTransaction } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase';
+import { UserTransaction } from '@/types/supabase/tables';
 
 export const useUserWallet = (
   currentUser: UserProfile | null,

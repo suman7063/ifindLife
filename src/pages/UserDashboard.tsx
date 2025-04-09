@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -27,7 +26,6 @@ const UserDashboard: React.FC = () => {
   const { dashboardLoading } = useDashboardState();
   const navigate = useNavigate();
 
-  // Fetch user transactions
   useEffect(() => {
     const fetchTransactions = async () => {
       if (currentUser?.id) {
@@ -43,7 +41,6 @@ const UserDashboard: React.FC = () => {
             console.error('Error fetching transactions:', error);
             toast.error('Failed to load transaction history');
           } else {
-            // Convert the response to match the UserTransaction type
             const formattedTransactions = (data || []).map(item => ({
               id: item.id,
               user_id: item.user_id,
@@ -74,7 +71,6 @@ const UserDashboard: React.FC = () => {
     }
   }, [currentUser, isAuthenticated]);
 
-  // Handle logout
   const handleLogout = async () => {
     try {
       await logout();
@@ -86,7 +82,6 @@ const UserDashboard: React.FC = () => {
     }
   };
   
-  // Handle recharge dialog
   const handleOpenRechargeDialog = () => {
     setIsRechargeDialogOpen(true);
   };
@@ -94,7 +89,6 @@ const UserDashboard: React.FC = () => {
   const handleRechargeSuccess = () => {
     setIsRechargeDialogOpen(false);
     toast.success('Funds added to your wallet successfully!');
-    // Refetch transactions after successful recharge
     if (currentUser?.id) {
       supabase
         .from('user_transactions')
@@ -103,7 +97,6 @@ const UserDashboard: React.FC = () => {
         .order('date', { ascending: false })
         .then(({ data, error }) => {
           if (!error && data) {
-            // Convert the response to match the UserTransaction type
             const formattedTransactions = (data || []).map(item => ({
               id: item.id,
               user_id: item.user_id,
@@ -125,14 +118,12 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthLoading && !dashboardLoading && isAuthInitialized && !isAuthenticated) {
       navigate('/user-login');
     }
   }, [isAuthenticated, isAuthLoading, dashboardLoading, isAuthInitialized, navigate]);
 
-  // Show loading state
   if (isAuthLoading || dashboardLoading) {
     return (
       <Container className="py-8 flex justify-center items-center min-h-[60vh]">
@@ -144,9 +135,8 @@ const UserDashboard: React.FC = () => {
     );
   }
 
-  // Show if not authenticated
   if (!isAuthenticated) {
-    return null; // Redirecting via useEffect
+    return null;
   }
 
   return (
