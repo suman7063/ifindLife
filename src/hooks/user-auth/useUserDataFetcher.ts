@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { useUserAuth } from '@/contexts/auth/UserAuthContext';
+import { useContext } from 'react';
+import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
 import { ExpertProfile } from '@/types/supabase/expert';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -18,7 +19,7 @@ export const useUserDataFetcher = (): UseUserDataFetcherResult => {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
-  const { currentUser } = useUserAuth();
+  const { currentUser } = useContext(UserAuthContext);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,7 +62,9 @@ export const useUserDataFetcher = (): UseUserDataFetcherResult => {
           description: item.description,
           date: item.date,
           status: item.status || 'completed',
-          created_at: item.created_at || item.date
+          created_at: item.created_at || item.date,
+          payment_id: item.payment_id || `temp_${Date.now()}`,
+          payment_method: item.payment_method || 'wallet'
         })) as UserTransaction[];
         
         setTransactions(formattedTransactions);

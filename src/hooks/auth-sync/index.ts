@@ -1,6 +1,7 @@
 
 import { useState, useCallback } from 'react';
-import { useUserAuth } from '@/contexts/auth/UserAuthContext';
+import { useContext } from 'react';
+import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
 import { useExpertAuth } from '@/hooks/expert-auth';
 import { useAuthCheckEffect } from './useAuthCheckEffect';
 import { useAuthLogoutMethods } from './useAuthLogoutMethods';
@@ -13,7 +14,8 @@ export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
   const [isExpertAuthenticated, setIsExpertAuthenticated] = useState(false);
   const [hasDualSessions, setHasDualSessions] = useState(false);
 
-  const { currentUser, isAuthenticated, logout } = useUserAuth();
+  const userAuth = useContext(UserAuthContext);
+  const { currentUser, isAuthenticated, logout } = userAuth;
   const { 
     currentExpert, 
     isAuthenticated: expertIsAuthenticated, 

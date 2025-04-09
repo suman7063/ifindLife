@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { UserProfile } from '../types/supabase';
-import { Review, Report } from '../types/supabase';
+import { UserProfile } from '@/types/supabase';
+import { Review, Report } from '@/types/supabase';
 
 export interface UserAuthContextType {
   currentUser: UserProfile | null;

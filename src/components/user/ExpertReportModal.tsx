@@ -56,9 +56,8 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
   React.useEffect(() => {
     const checkServiceHistory = async () => {
       try {
-        // Convert expertId to number to match function expectation
-        const numericExpertId = parseInt(expertId, 10);
-        const hasService = await hasTakenServiceFrom(numericExpertId);
+        // Use the expertId as a string directly, since hasTakenServiceFrom expects a string
+        const hasService = await hasTakenServiceFrom(expertId);
         setCanReport(hasService);
       } catch (error) {
         console.error("Error checking service history:", error);
