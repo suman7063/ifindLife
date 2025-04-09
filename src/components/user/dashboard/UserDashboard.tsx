@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Container } from '@/components/ui/container';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -76,60 +75,57 @@ const UserDashboard: React.FC = () => {
     }
   }, [isAuthenticated, currentUser]);
 
-  if (dashboardLoading || authLoading) {
+  const handleLogout = async (): Promise<boolean> => {
+    try {
+      const success = await logout();
+      if (success) {
+        toast.success('Successfully logged out');
+        navigate('/');
+        return true;
+      } else {
+        toast.error('Error logging out');
+        return false;
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Error logging out');
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthInitialized && !isAuthenticated) {
+      navigate('/user-login');
+    }
+  }, [isAuthenticated, isAuthLoading, isAuthInitialized, navigate]);
+
+  if (isAuthLoading) {
     return <LoadingScreen />;
   }
 
-  if (!isAuthenticated && !authLoading) {
-    return <LoadingScreen message="Redirecting to login..." />;
+  if (!isAuthenticated) {
+    return null;
   }
 
   return (
     <Container className="py-8">
       <DashboardHeader 
-        user={currentUser}
-        onLogout={logout}
+        user={currentUser} 
+        onLogout={handleLogout}
       />
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="wallet">Wallet</TabsTrigger>
-          <TabsTrigger value="purchases">Your Purchases</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="overview" className="mt-6">
-          <UserStatsSummary 
-            user={currentUser}
-            appointmentsCount={0}
-            programsCount={0}
-          />
-        </TabsContent>
-        
-        <TabsContent value="wallet" className="mt-6">
-          <WalletSection 
-            user={currentUser}
-            transactions={transactions}
-            onRecharge={handleOpenRechargeDialog}
-          />
-        </TabsContent>
-        
-        <TabsContent value="purchases" className="mt-6">
-          <UserPurchasesSection userId={currentUser?.id} />
-        </TabsContent>
-      </Tabs>
+      <DashboardContent
+        user={currentUser}
+        transactions={transactions}
+        isLoading={transactionsLoading}
+        onRecharge={handleOpenRechargeDialog}
+      />
       
-      {isRechargeDialogOpen && (
-        <RechargeDialog
-          open={isRechargeDialogOpen}
-          onOpenChange={handleCloseRechargeDialog}
-          onSuccess={handlePaymentSuccess}
-          onCancel={handlePaymentCancel}
-          isProcessing={isProcessingPayment}
-          setIsProcessing={setIsProcessingPayment}
-          user={currentUser}
-        />
-      )}
+      <RechargeDialog 
+        open={isRechargeDialogOpen}
+        onOpenChange={handleCloseRechargeDialog}
+        onSuccess={handleRechargeSuccess}
+      />
     </Container>
   );
 };

@@ -1,14 +1,14 @@
 
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { Review } from '@/types/supabase/index';
+import { Review, NewReview } from '@/types/supabase/tables';
 import { supabase } from '@/lib/supabase';
 
 export const useUserReviews = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const addReview = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+  const addReview = async (reviewData: NewReview): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to add a review');
       return false;
@@ -17,9 +17,9 @@ export const useUserReviews = (
     try {
       const newReview = {
         user_id: currentUser.id,
-        expert_id: parseInt(expertId, 10), // Convert to number for database
-        rating: rating,
-        comment: comment,
+        expert_id: parseInt(String(reviewData.expertId), 10), // Convert to number for database
+        rating: reviewData.rating,
+        comment: reviewData.comment,
         date: new Date().toISOString(),
       };
 
@@ -47,9 +47,9 @@ export const useUserReviews = (
       // Optimistically update the local state
       const adaptedReview: Review = {
         id: newId,
-        expertId: expertId,
-        rating: rating,
-        comment: comment,
+        expertId: reviewData.expertId,
+        rating: reviewData.rating,
+        comment: reviewData.comment,
         date: new Date().toISOString(),
       };
 

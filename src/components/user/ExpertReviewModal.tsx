@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Star } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
+import { NewReview } from '@/types/supabase/tables';
 
 interface ExpertReviewModalProps {
   isOpen: boolean;
@@ -38,12 +39,14 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({
 
     setSubmitting(true);
     try {
-      // Updated to match the expected parameter format
-      const success = await addReview({
+      // Create review object with the correct type
+      const review: NewReview = {
         expertId,
         rating,
         comment
-      });
+      };
+      
+      const success = await addReview(review);
       
       if (success) {
         toast({

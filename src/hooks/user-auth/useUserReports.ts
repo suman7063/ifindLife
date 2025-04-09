@@ -1,14 +1,14 @@
 
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
-import { Report } from '@/types/supabase/index';
+import { Report, NewReport } from '@/types/supabase/tables';
 import { supabase } from '@/lib/supabase';
 
 export const useUserReports = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const addReport = async (expertId: string, reason: string, details: string): Promise<boolean> => {
+  const addReport = async (reportData: NewReport): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to report an expert');
       return false;
@@ -17,9 +17,9 @@ export const useUserReports = (
     try {
       const newReport = {
         user_id: currentUser.id,
-        expert_id: parseInt(expertId, 10), // Convert to number for database
-        reason: reason,
-        details: details,
+        expert_id: parseInt(String(reportData.expertId), 10), // Convert to number for database
+        reason: reportData.reason,
+        details: reportData.details,
         date: new Date().toISOString(),
         status: 'pending'
       };
@@ -48,9 +48,9 @@ export const useUserReports = (
       // Optimistically update the local state
       const adaptedReport: Report = {
         id: newId,
-        expertId: expertId,
-        reason: reason,
-        details: details,
+        expertId: reportData.expertId,
+        reason: reportData.reason,
+        details: reportData.details || '',
         date: new Date().toISOString(),
         status: 'pending'
       };

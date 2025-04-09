@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UserProfile } from '@/types/supabase';
-import { Review, Report } from '@/types/supabase';
+import { Review, Report, NewReview, NewReport } from '@/types/supabase/tables';
 
 export interface UserAuthContextType {
   currentUser: UserProfile | null;
@@ -16,10 +16,10 @@ export interface UserAuthContextType {
   addToFavorites: (expertId: number) => Promise<boolean>;
   removeFromFavorites: (expertId: number) => Promise<boolean>;
   rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (review: Review) => Promise<boolean>;
-  reportExpert: (report: Report) => Promise<boolean>;
+  addReview: (review: NewReview) => Promise<boolean>;
+  reportExpert: (report: NewReport) => Promise<boolean>;
   hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
-  getExpertShareLink: (expertId: string | number) => string; // Accept both string and number
+  getExpertShareLink: (expertId: string | number) => string; 
   getReferralLink: () => string | null;
   user: any;
   loading: boolean;

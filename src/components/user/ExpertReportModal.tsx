@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertTriangle } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
+import { NewReport } from '@/types/supabase/tables';
 
 interface ExpertReportModalProps {
   expertId: string;
@@ -40,11 +41,13 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
       return;
     }
     
-    reportExpert({
+    const report: NewReport = {
       expertId, 
       reason, 
       details
-    });
+    };
+    
+    reportExpert(report);
     
     setOpen(false);
     setReason('');
