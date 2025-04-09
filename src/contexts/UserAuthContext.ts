@@ -2,449 +2,1107 @@
 import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { Review, Report, NewReview, NewReport } from '@/types/supabase/tables';
+import { User, Session } from '@supabase/supabase-js';
+import { handleAuthError } from '@/lib/authUtils';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { UserSettings, ReferralInfo } from '@/types/user';
+import { walletDataDefaults } from '@/data/userDefaults';
 
+// Define types for the context
 export interface UserAuthContextType {
   currentUser: UserProfile | null;
+  user: User | null;
+  session: Session | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  authLoading: boolean;
-  profileNotFound: boolean;
-  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
-  updateProfilePicture: (file: File) => Promise<string | null>;
-  updatePassword: (password: string) => Promise<boolean>;
-  addToFavorites: (expertId: number) => Promise<boolean>;
-  removeFromFavorites: (expertId: number) => Promise<boolean>;
-  rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (review: NewReview) => Promise<boolean>;
-  reportExpert: (report: NewReport) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
-  getExpertShareLink: (expertId: string | number) => string;
-  getReferralLink: () => string | null;
-  user: any;
   loading: boolean;
+  authLoading: boolean;
+  authError: string | null;
+  favoritesCount: number;
+  referrals: ReferralInfo[];
+  userSettings: UserSettings | null;
+  walletBalance: number;
+  hasProfile: boolean;
+  profileLoading: boolean;
+  profileError: string | null;
+  isExpertUser: boolean;
+  expertId: string | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateUserSettings: (settings: Partial<UserSettings>) => Promise<boolean>;
+  updateEmail: (newEmail: string) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
+  sendVerificationEmail: () => Promise<boolean>;
+  addToFavorites: (expertId: string) => Promise<boolean>;
+  removeFromFavorites: (expertId: string) => Promise<boolean>;
+  checkIsFavorite: (expertId: string) => Promise<boolean>;
+  refreshFavoritesCount: () => Promise<void>;
+  getReferrals: () => Promise<ReferralInfo[]>;
+  refreshWalletBalance: () => Promise<number>;
+  addFunds: (amount: number) => Promise<boolean>;
+  deductFunds: (amount: number, description: string) => Promise<boolean>;
+  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  reviewExpert: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  getExpertShareLink: (expertId: string | number) => string;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
 }
 
-export const UserAuthContext = createContext<UserAuthContextType>({} as UserAuthContextType);
+// Create context with default values
+export const UserAuthContext = createContext<UserAuthContextType>({
+  currentUser: null,
+  user: null,
+  session: null,
+  isAuthenticated: false,
+  loading: true,
+  authLoading: false,
+  authError: null,
+  favoritesCount: 0,
+  referrals: [],
+  userSettings: null,
+  walletBalance: 0,
+  hasProfile: false,
+  profileLoading: false,
+  profileError: null,
+  isExpertUser: false,
+  expertId: null,
+  login: async () => false,
+  signup: async () => false,
+  logout: async () => false,
+  updateProfile: async () => false,
+  updateUserSettings: async () => false,
+  updateEmail: async () => false,
+  updatePassword: async () => false,
+  resetPassword: async () => false,
+  sendVerificationEmail: async () => false,
+  addToFavorites: async () => false,
+  removeFromFavorites: async () => false,
+  checkIsFavorite: async () => false,
+  refreshFavoritesCount: async () => {},
+  getReferrals: async () => [],
+  refreshWalletBalance: async () => 0,
+  addFunds: async () => false,
+  deductFunds: async () => false,
+  reportExpert: async () => false,
+  reviewExpert: async () => false,
+  getExpertShareLink: () => '',
+  hasTakenServiceFrom: async () => false,
+});
 
-export const UserAuthProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+// Provider component
+export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // User auth state
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // User profile state
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [profileNotFound, setProfileNotFound] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  const [hasProfile, setHasProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  
+  // Auth state
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  
+  // User data state
+  const [favoritesCount, setFavoritesCount] = useState(0);
+  const [referrals, setReferrals] = useState<ReferralInfo[]>([]);
+  const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+  
+  // Expert related state
+  const [isExpertUser, setIsExpertUser] = useState(false);
+  const [expertId, setExpertId] = useState<string | null>(null);
 
+  // Initialize auth state
   useEffect(() => {
-    const getSession = async () => {
-      setAuthLoading(true);
+    const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        // Set up auth state listener FIRST
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log("Auth state changed:", event, "Session:", session ? "exists" : "none");
+            setSession(session);
+            setUser(session?.user ?? null);
+            
+            if (session?.user) {
+              await fetchUserProfile(session.user.id);
+            } else {
+              setCurrentUser(null);
+              setHasProfile(false);
+            }
+          }
+        );
 
-        if (session) {
-          setIsAuthenticated(true);
-          setUser(session.user);
-          await fetchUserProfile(session.user.id);
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-          setCurrentUser(null);
+        // THEN check for existing session
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        
+        if (data.session?.user) {
+          await fetchUserProfile(data.session.user.id);
         }
+        
+        return () => {
+          subscription.unsubscribe();
+        };
       } catch (error) {
-        console.error("Error during session retrieval:", error);
-        toast.error("Failed to retrieve session. Please try again.");
+        console.error('Error initializing auth:', error);
       } finally {
-        setAuthLoading(false);
+        setLoading(false);
       }
     };
 
-    getSession();
+    initAuth();
+  }, []);
 
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        setIsAuthenticated(true);
-        setUser(session.user);
-        fetchUserProfile(session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        setIsAuthenticated(false);
-        setUser(null);
-        setCurrentUser(null);
-      }
-    });
-  }, [navigate]);
-
+  // Fetch user profile data
   const fetchUserProfile = async (userId: string) => {
-    setAuthLoading(true);
-    setProfileNotFound(false);
+    if (!userId) {
+      setProfileLoading(false);
+      return;
+    }
+    
     try {
-      const { data: userProfile, error } = await supabase
-        .from('user_profiles')
+      setProfileLoading(true);
+      
+      // Fetch basic profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
-
-      if (error) {
-        console.error("Error fetching user profile:", error);
-        setProfileNotFound(true);
-        setCurrentUser(null);
+      
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          // Not found - new user, no profile yet
+          setCurrentUser(null);
+          setHasProfile(false);
+        } else {
+          console.error('Error fetching profile:', profileError);
+          setProfileError('Failed to load user profile');
+        }
       } else {
-        setCurrentUser(userProfile);
+        setCurrentUser(profile as UserProfile);
+        setHasProfile(true);
+        
+        // Once profile is loaded, fetch additional data
+        await Promise.all([
+          fetchUserSettings(userId),
+          checkExpertAccount(userId),
+          refreshFavoritesCount(),
+          fetchWalletBalance(userId),
+          getReferrals(),
+        ]);
       }
     } catch (error) {
-      console.error("Unexpected error fetching user profile:", error);
-      toast.error("Failed to fetch user profile. Please try again.");
-      setProfileNotFound(true);
-      setCurrentUser(null);
+      console.error('Error in fetchUserProfile:', error);
+      setProfileError('An unexpected error occurred loading user data');
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // Fetch user settings
+  const fetchUserSettings = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user settings:', error);
+        return null;
+      }
+      
+      setUserSettings(data as UserSettings);
+      return data;
+    } catch (error) {
+      console.error('Error in fetchUserSettings:', error);
+      return null;
+    }
+  };
+  
+  // Check if user has an expert account
+  const checkExpertAccount = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .select('id')
+        .eq('auth_id', userId)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking expert account:', error);
+        return false;
+      }
+      
+      const hasExpertAccount = !!data;
+      setIsExpertUser(hasExpertAccount);
+      setExpertId(data ? data.id : null);
+      return hasExpertAccount;
+    } catch (error) {
+      console.error('Error in checkExpertAccount:', error);
+      return false;
+    }
+  };
+
+  // Login with email/password
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      setAuthLoading(true);
+      setAuthError(null);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        handleAuthError(error, 'Login failed');
+        setAuthError(error.message);
+        return false;
+      }
+      
+      return !!data.session;
+    } catch (error) {
+      handleAuthError(error, 'Login failed');
+      setAuthError('An unexpected error occurred during login');
+      return false;
     } finally {
       setAuthLoading(false);
     }
   };
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
+  
+  // Signup new user
+  const signup = async (
+    email: string, 
+    password: string, 
+    userData?: Partial<UserProfile>,
+    referralCode?: string
+  ): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      setAuthLoading(true);
+      setAuthError(null);
+      
+      // 1. Create auth account
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-      });
-
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-
-      if (data.user) {
-        setUser(data.user);
-        setIsAuthenticated(true);
-        await fetchUserProfile(data.user.id);
-        return true;
-      }
-
-      return false;
-    } catch (error: any) {
-      toast.error(error.message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signup = async (email: string, password: string, userData: any, referralCode?: string): Promise<boolean> => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
         options: {
           data: {
-            name: userData.name,
-            phone: userData.phone,
-            country: userData.country,
-            city: userData.city || '',
-            referralCode: referralCode || null,
+            name: userData?.name,
+            phone: userData?.phone,
           },
-          emailRedirectTo: `${window.location.origin}/login?verified=true`,
+          emailRedirectTo: `${window.location.origin}/auth/confirm`
         }
       });
-
+      
       if (error) {
-        toast.error(error.message);
+        handleAuthError(error, 'Signup failed');
+        setAuthError(error.message);
+        return false;
+      }
+      
+      // 2. Check if the signup was successful
+      if (!data.user) {
+        setAuthError('Signup failed: No user data returned');
+        toast.error('Signup failed: No user data returned');
         return false;
       }
 
-      if (data.user) {
-        setUser(data.user);
-        setIsAuthenticated(true);
-        await fetchUserProfile(data.user.id);
-        return true;
+      // 3. Create user profile
+      const userId = data.user.id;
+      const profile: Partial<UserProfile> = {
+        id: userId,
+        name: userData?.name || '',
+        email: email,
+        phone: userData?.phone || '',
+        country: userData?.country || '',
+        city: userData?.city || '',
+        created_at: new Date().toISOString(),
+        avatar_url: userData?.avatar_url || null,
+        referral_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
+        referred_by: referralCode || null
+      };
+      
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert([profile]);
+      
+      if (profileError) {
+        console.error('Error creating profile:', profileError);
+        toast.error('Account created but profile setup failed. Please contact support.');
+        // Continue anyway as the auth account is created
       }
-
-      return false;
-    } catch (error: any) {
-      toast.error(error.message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async (): Promise<boolean> => {
-    setLoading(true);
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        toast.error(error.message);
-        return false;
+      
+      // 4. Create default wallet record
+      const wallet = {
+        user_id: userId,
+        balance: walletDataDefaults.initialBalance,
+        currency: walletDataDefaults.currency,
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error: walletError } = await supabase
+        .from('wallet')
+        .insert([wallet]);
+      
+      if (walletError) {
+        console.error('Error creating wallet:', walletError);
+        // Non-blocking error, continue
       }
-      setIsAuthenticated(false);
-      setCurrentUser(null);
-      setUser(null);
+      
+      // 5. Create default user settings
+      const settings = {
+        user_id: userId,
+        theme: 'system',
+        notifications_enabled: true,
+        email_notifications: true,
+        newsletter: false,
+        two_factor_auth: false,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: 'english'
+      };
+      
+      const { error: settingsError } = await supabase
+        .from('user_settings')
+        .insert([settings]);
+      
+      if (settingsError) {
+        console.error('Error creating settings:', settingsError);
+        // Non-blocking error, continue
+      }
+      
+      // 6. Record referral if one was provided
+      if (referralCode) {
+        // Find the referring user
+        const { data: referrer } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('referral_code', referralCode)
+          .single();
+          
+        if (referrer) {
+          const referral = {
+            referrer_id: referrer.id,
+            referred_id: userId,
+            created_at: new Date().toISOString(),
+            status: 'pending'
+          };
+          
+          await supabase
+            .from('referrals')
+            .insert([referral]);
+            
+          // Log for debugging
+          console.log('Referral recorded:', referralCode);
+        }
+      }
+      
+      // If needs email verification, show message
+      if (data.user.identities?.[0]?.identity_data?.email_verified === false) {
+        toast.success('Signup successful! Please check your email for verification.');
+      } else {
+        toast.success('Signup successful!');
+      }
+      
       return true;
-    } catch (error: any) {
-      toast.error(error.message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
-    setLoading(true);
-    try {
-      const { data: updatedProfile, error } = await supabase
-        .from('user_profiles')
-        .update(data)
-        .eq('id', currentUser?.id)
-        .select()
-        .single();
-
-      if (error) {
-        toast.error(error.message);
-        return false;
-      }
-
-      setCurrentUser(updatedProfile);
-      return true;
-    } catch (error: any) {
-      toast.error(error.message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfilePicture = async (file: File): Promise<string | null> => {
-    setLoading(true);
-    try {
-      // Upload the file to Supabase storage
-      const filePath = `profile-pictures/${user?.id}/${file.name}`;
-      const { data, error: uploadError } = await supabase.storage
-        .from('profile-pictures')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error("Error uploading image:", uploadError);
-        toast.error('Failed to upload image. Please try again.');
-        return null;
-      }
-
-      // Get the public URL of the uploaded image
-      const { data: { publicUrl } } = supabase.storage
-        .from('profile-pictures')
-        .getPublicUrl(filePath);
-
-      // Update the user's profile with the public URL
-      const { error: updateError } = await supabase
-        .from('user_profiles')
-        .update({ profile_picture: publicUrl })
-        .eq('id', user?.id);
-
-      if (updateError) {
-        console.error("Error updating profile:", updateError);
-        toast.error('Failed to update profile. Please try again.');
-        return null;
-      }
-
-      // Update local state
-      setCurrentUser(prev => ({ ...prev, profile_picture: publicUrl } as UserProfile));
-      return publicUrl;
     } catch (error) {
-      console.error("Error in updateProfilePicture:", error);
-      toast.error('An unexpected error occurred. Please try again.');
-      return null;
+      handleAuthError(error, 'Signup failed');
+      setAuthError('An unexpected error occurred during signup');
+      return false;
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   };
-
-  const updatePassword = async (password: string): Promise<boolean> => {
-    setLoading(true);
+  
+  // Logout user
+  const logout = async (): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.auth.updateUser({ password });
-
+      setAuthLoading(true);
+      
+      const { error } = await supabase.auth.signOut();
+      
       if (error) {
-        toast.error(error.message);
+        handleAuthError(error, 'Logout failed');
         return false;
       }
-
+      
+      // Clear local state
+      setUser(null);
+      setSession(null);
+      setCurrentUser(null);
+      setHasProfile(false);
+      
+      toast.success('Successfully logged out');
+      return true;
+    } catch (error) {
+      handleAuthError(error, 'Logout failed');
+      return false;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+  
+  // Update user profile
+  const updateProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to update profile');
+      return false;
+    }
+    
+    try {
+      setProfileLoading(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Profile update error:', error);
+        toast.error('Failed to update profile: ' + error.message);
+        return false;
+      }
+      
+      // Update local state
+      setCurrentUser(current => current ? { ...current, ...updates } : null);
+      toast.success('Profile updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Profile update error:', error);
+      toast.error('An error occurred while updating profile');
+      return false;
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+  
+  // Update user settings
+  const updateUserSettings = async (settings: Partial<UserSettings>): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to update settings');
+      return false;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('user_settings')
+        .update(settings)
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Settings update error:', error);
+        toast.error('Failed to update settings: ' + error.message);
+        return false;
+      }
+      
+      // Update local state
+      setUserSettings(current => current ? { ...current, ...settings } : null);
+      toast.success('Settings updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Settings update error:', error);
+      toast.error('An error occurred while updating settings');
+      return false;
+    }
+  };
+  
+  // Update user email
+  const updateEmail = async (newEmail: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to update email');
+      return false;
+    }
+    
+    try {
+      setAuthLoading(true);
+      
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      
+      if (error) {
+        handleAuthError(error, 'Email update failed');
+        return false;
+      }
+      
+      toast.success('Verification email sent to the new address. Please check your inbox.');
+      return true;
+    } catch (error) {
+      handleAuthError(error, 'Email update failed');
+      return false;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+  
+  // Update user password
+  const updatePassword = async (newPassword: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to update password');
+      return false;
+    }
+    
+    try {
+      setAuthLoading(true);
+      
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      
+      if (error) {
+        handleAuthError(error, 'Password update failed');
+        return false;
+      }
+      
       toast.success('Password updated successfully');
       return true;
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      handleAuthError(error, 'Password update failed');
       return false;
     } finally {
-      setLoading(false);
+      setAuthLoading(false);
     }
   };
-
-  const addToFavorites = async (expertId: number): Promise<boolean> => {
-    // Placeholder implementation
-    console.log(`Adding expert ${expertId} to favorites`);
-    return true;
-  };
-
-  const removeFromFavorites = async (expertId: number): Promise<boolean> => {
-    // Placeholder implementation
-    console.log(`Removing expert ${expertId} from favorites`);
-    return true;
-  };
-
-  const rechargeWallet = async (amount: number): Promise<boolean> => {
-    setLoading(true);
+  
+  // Reset password
+  const resetPassword = async (email: string): Promise<boolean> => {
     try {
-      // Simulate wallet recharge
-      const newBalance = (currentUser?.wallet_balance || 0) + amount;
-
+      setAuthLoading(true);
+      
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      
+      if (error) {
+        handleAuthError(error, 'Password reset failed');
+        return false;
+      }
+      
+      toast.success('Password reset instructions sent to your email');
+      return true;
+    } catch (error) {
+      handleAuthError(error, 'Password reset failed');
+      return false;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+  
+  // Send verification email
+  const sendVerificationEmail = async (): Promise<boolean> => {
+    if (!user || !user.email) {
+      toast.error('No user or email to verify');
+      return false;
+    }
+    
+    try {
+      setAuthLoading(true);
+      
+      // Re-send verification email
+      // Note: The API for this may change in supabase versions
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email
+      });
+      
+      if (error) {
+        handleAuthError(error, 'Failed to send verification email');
+        return false;
+      }
+      
+      toast.success('Verification email sent. Please check your inbox.');
+      return true;
+    } catch (error) {
+      handleAuthError(error, 'Failed to send verification email');
+      return false;
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+  
+  // Add expert to favorites
+  const addToFavorites = async (expertId: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to add favorites');
+      return false;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('user_favorites')
+        .insert([{ user_id: user.id, expert_id: expertId }]);
+      
+      if (error) {
+        if (error.code === '23505') { // Unique constraint violation
+          toast.error('This expert is already in your favorites');
+        } else {
+          console.error('Error adding favorite:', error);
+          toast.error('Failed to add to favorites');
+        }
+        return false;
+      }
+      
+      // Update count
+      await refreshFavoritesCount();
+      toast.success('Added to favorites');
+      return true;
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+      toast.error('An error occurred while adding to favorites');
+      return false;
+    }
+  };
+  
+  // Remove expert from favorites
+  const removeFromFavorites = async (expertId: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to manage favorites');
+      return false;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .match({ user_id: user.id, expert_id: expertId });
+      
+      if (error) {
+        console.error('Error removing favorite:', error);
+        toast.error('Failed to remove from favorites');
+        return false;
+      }
+      
+      // Update count
+      await refreshFavoritesCount();
+      toast.success('Removed from favorites');
+      return true;
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      toast.error('An error occurred while removing from favorites');
+      return false;
+    }
+  };
+  
+  // Check if expert is in favorites
+  const checkIsFavorite = async (expertId: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
       const { data, error } = await supabase
-        .from('user_profiles')
-        .update({ wallet_balance: newBalance })
-        .eq('id', currentUser?.id)
-        .select()
+        .from('user_favorites')
+        .select('id')
+        .match({ user_id: user.id, expert_id: expertId })
         .single();
-
-      if (error) {
-        toast.error(error.message);
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking favorite:', error);
         return false;
       }
-
-      setCurrentUser(data);
-      toast.success(`Wallet recharged with $${amount}`);
-      return true;
-    } catch (error: any) {
-      toast.error(error.message);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const addReview = async (review: NewReview): Promise<boolean> => {
-    if (!currentUser) {
-      toast.error('Please log in to add a review');
-      return false;
-    }
-
-    try {
-      const newReview = {
-        user_id: currentUser.id,
-        expert_id: parseInt(String(review.expertId), 10), // Convert to number for database
-        rating: review.rating,
-        comment: review.comment,
-        date: new Date().toISOString(),
-      };
-
-      const { data, error } = await supabase
-        .from('user_reviews')
-        .insert(newReview)
-        .select()
-
-      if (error) throw error;
-
-      // Create a safer way to get the ID
-      let newId = `temp_${Date.now()}`;
-
-      if (data && data.length > 0 && data[0].id) {
-          newId = data[0].id;
-      }
-
-      // Optimistically update the local state
-      const adaptedReview: Review = {
-        id: newId,
-        expertId: review.expertId,
-        rating: review.rating,
-        comment: review.comment,
-        date: new Date().toISOString(),
-      };
-
-      const updatedUser = {
-        ...currentUser,
-        reviews: [...(currentUser.reviews || []), adaptedReview],
-      };
-      setCurrentUser(updatedUser);
-
-      toast.success('Review added successfully!');
-      return true;
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to add review');
+      
+      return !!data;
+    } catch (error) {
+      console.error('Error checking favorite:', error);
       return false;
     }
   };
-
-  const reportExpert = async (report: NewReport): Promise<boolean> => {
-    setLoading(true);
+  
+  // Refresh favorites count
+  const refreshFavoritesCount = async (): Promise<void> => {
+    if (!user) {
+      setFavoritesCount(0);
+      return;
+    }
+    
     try {
-      const newReport = {
-        expertId: report.expertId,
-        reason: report.reason,
-        details: report.details,
-        date: new Date().toISOString(),
-        status: 'pending'
-      };
-
-      // Insert the new report into the 'expert_reports' table
       const { data, error } = await supabase
-        .from('expert_reports')
-        .insert([newReport])
-        .select()
-
+        .from('user_favorites')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user.id);
+      
       if (error) {
-        console.error("Error submitting report:", error);
-        toast.error('Failed to submit report. Please try again.');
+        console.error('Error getting favorites count:', error);
+        return;
+      }
+      
+      setFavoritesCount(data.length);
+    } catch (error) {
+      console.error('Error getting favorites count:', error);
+    }
+  };
+  
+  // Get user referrals
+  const getReferrals = async (): Promise<ReferralInfo[]> => {
+    if (!user) return [];
+    
+    try {
+      // Get people user has referred
+      const { data: referredUsers, error: referredError } = await supabase
+        .from('referrals')
+        .select(`
+          id,
+          created_at,
+          status,
+          referred_id,
+          profiles:referred_id (
+            name,
+            email,
+            avatar_url
+          )
+        `)
+        .eq('referrer_id', user.id);
+      
+      if (referredError) {
+        console.error('Error getting referrals:', referredError);
+        return [];
+      }
+      
+      // Format referral data
+      const formattedReferrals = (referredUsers || []).map(ref => ({
+        id: ref.id,
+        userId: ref.referred_id,
+        name: ref.profiles?.name || 'Unknown User',
+        email: ref.profiles?.email || 'unknown@example.com',
+        avatar: ref.profiles?.avatar_url,
+        date: ref.created_at,
+        status: ref.status
+      }));
+      
+      setReferrals(formattedReferrals);
+      return formattedReferrals;
+    } catch (error) {
+      console.error('Error getting referrals:', error);
+      return [];
+    }
+  };
+  
+  // Get wallet balance
+  const fetchWalletBalance = async (userId: string): Promise<number> => {
+    try {
+      const { data, error } = await supabase
+        .from('wallet')
+        .select('balance')
+        .eq('user_id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error getting wallet balance:', error);
+        return 0;
+      }
+      
+      const balance = data?.balance || 0;
+      setWalletBalance(balance);
+      return balance;
+    } catch (error) {
+      console.error('Error getting wallet balance:', error);
+      return 0;
+    }
+  };
+  
+  // Refresh wallet balance
+  const refreshWalletBalance = async (): Promise<number> => {
+    if (!user) return 0;
+    return fetchWalletBalance(user.id);
+  };
+  
+  // Add funds to wallet
+  const addFunds = async (amount: number): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to add funds');
+      return false;
+    }
+    
+    try {
+      // First get current balance
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallet')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (walletError) {
+        console.error('Error getting wallet:', walletError);
+        toast.error('Failed to update wallet');
         return false;
       }
-
-      // Optimistically update the local state
-      const adaptedReport: Report = {
-        id: data[0].id,
-        expertId: report.expertId,
-        reason: report.reason,
-        details: report.details,
-        date: new Date().toISOString(),
-        status: 'pending'
-      };
-
-      const updatedUser = {
-        ...currentUser,
-        reports: [...(currentUser.reports || []), adaptedReport],
-      };
-      setCurrentUser(updatedUser);
-
-      toast.success('Report submitted successfully! Our team will review it shortly.');
+      
+      const currentBalance = walletData?.balance || 0;
+      const newBalance = currentBalance + amount;
+      
+      // Update wallet
+      const { error: updateError } = await supabase
+        .from('wallet')
+        .update({ 
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+      
+      if (updateError) {
+        console.error('Error updating wallet:', updateError);
+        toast.error('Failed to update wallet');
+        return false;
+      }
+      
+      // Record transaction
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert([{
+          user_id: user.id,
+          amount: amount,
+          type: 'credit',
+          status: 'completed',
+          description: 'Wallet recharge',
+          created_at: new Date().toISOString()
+        }]);
+      
+      if (transactionError) {
+        console.error('Error recording transaction:', transactionError);
+        // Non-blocking error, continue
+      }
+      
+      // Update local state
+      setWalletBalance(newBalance);
+      toast.success(`$${amount} added to your wallet`);
       return true;
-    } catch (error: any) {
-      console.error("Error reporting expert:", error);
-      toast.error('Failed to submit report. Please try again.');
+    } catch (error) {
+      console.error('Error adding funds:', error);
+      toast.error('An error occurred while adding funds');
       return false;
-    } finally {
-      setLoading(false);
+    }
+  };
+  
+  // Deduct funds from wallet
+  const deductFunds = async (amount: number, description: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to use wallet');
+      return false;
+    }
+    
+    try {
+      // First get current balance
+      const { data: walletData, error: walletError } = await supabase
+        .from('wallet')
+        .select('balance')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (walletError) {
+        console.error('Error getting wallet:', walletError);
+        toast.error('Failed to update wallet');
+        return false;
+      }
+      
+      const currentBalance = walletData?.balance || 0;
+      
+      // Check if balance is sufficient
+      if (currentBalance < amount) {
+        toast.error('Insufficient balance. Please recharge your wallet.');
+        return false;
+      }
+      
+      const newBalance = currentBalance - amount;
+      
+      // Update wallet
+      const { error: updateError } = await supabase
+        .from('wallet')
+        .update({ 
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+      
+      if (updateError) {
+        console.error('Error updating wallet:', updateError);
+        toast.error('Failed to update wallet');
+        return false;
+      }
+      
+      // Record transaction
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert([{
+          user_id: user.id,
+          amount: amount,
+          type: 'debit',
+          status: 'completed',
+          description: description || 'Service fee',
+          created_at: new Date().toISOString()
+        }]);
+      
+      if (transactionError) {
+        console.error('Error recording transaction:', transactionError);
+        // Non-blocking error, continue
+      }
+      
+      // Update local state
+      setWalletBalance(newBalance);
+      return true;
+    } catch (error) {
+      console.error('Error deducting funds:', error);
+      toast.error('An error occurred while processing payment');
+      return false;
+    }
+  };
+  
+  // Report an expert
+  const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to report an expert');
+      return false;
+    }
+    
+    try {
+      // Create the report
+      const { error } = await supabase
+        .from('user_reports')
+        .insert([{
+          reporter_id: user.id,
+          reported_entity_id: expertId,
+          entity_type: 'expert',
+          reason,
+          details,
+          status: 'pending',
+          created_at: new Date().toISOString()
+        }]);
+      
+      if (error) {
+        console.error('Error reporting expert:', error);
+        toast.error('Failed to submit report');
+        return false;
+      }
+      
+      toast.success('Report submitted successfully');
+      return true;
+    } catch (error) {
+      console.error('Error reporting expert:', error);
+      toast.error('An error occurred while submitting report');
+      return false;
+    }
+  };
+  
+  // Review an expert
+  const reviewExpert = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to review an expert');
+      return false;
+    }
+    
+    try {
+      // Check if already reviewed
+      const { data: existingReview, error: checkError } = await supabase
+        .from('expert_reviews')
+        .select('id')
+        .match({ user_id: user.id, expert_id: expertId })
+        .single();
+      
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('Error checking reviews:', checkError);
+        toast.error('Failed to submit review');
+        return false;
+      }
+      
+      let success = false;
+      
+      if (existingReview) {
+        // Update existing review
+        const { error: updateError } = await supabase
+          .from('expert_reviews')
+          .update({
+            rating,
+            comment,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingReview.id);
+        
+        if (updateError) {
+          console.error('Error updating review:', updateError);
+          toast.error('Failed to update review');
+          return false;
+        }
+        
+        success = true;
+        toast.success('Review updated successfully');
+      } else {
+        // Create new review
+        const { error: insertError } = await supabase
+          .from('expert_reviews')
+          .insert([{
+            user_id: user.id,
+            expert_id: expertId,
+            rating,
+            comment,
+            created_at: new Date().toISOString(),
+            status: 'published'
+          }]);
+        
+        if (insertError) {
+          console.error('Error submitting review:', insertError);
+          toast.error('Failed to submit review');
+          return false;
+        }
+        
+        success = true;
+        toast.success('Review submitted successfully');
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error reviewing expert:', error);
+      toast.error('An error occurred while submitting review');
+      return false;
     }
   };
 
+  // Check if user has taken a service from an expert
   const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+    if (!user) return false;
+    
     try {
-      // Check if the current user has any past appointments with the expert
-      const { data, error } = await supabase
+      // Check appointments
+      const { data: appointments, error: appointmentError } = await supabase
         .from('appointments')
-        .select('*')
-        .eq('user_id', currentUser?.id)
-        .eq('expert_id', expertId)
+        .select('id')
+        .match({ user_id: user.id, expert_id: expertId, status: 'completed' })
         .limit(1);
-
-      if (error) {
-        console.error("Error checking appointments:", error);
+      
+      if (appointmentError) {
+        console.error('Error checking appointments:', appointmentError);
         return false;
       }
-
-      // If there's at least one appointment, the user has taken service from the expert
-      return data && data.length > 0;
+      
+      // If they have completed appointments, they've taken service
+      if (appointments && appointments.length > 0) {
+        return true;
+      }
+      
+      // Also check program enrollments (if expert is a program instructor)
+      const { data: enrollments, error: enrollmentError } = await supabase
+        .from('program_enrollments')
+        .select(`
+          id,
+          programs (
+            instructor_id
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(1);
+      
+      if (enrollmentError) {
+        console.error('Error checking enrollments:', enrollmentError);
+        return false;
+      }
+      
+      // Check if any enrollments have the expert as instructor
+      const hasProgram = (enrollments || []).some(
+        enrollment => enrollment.programs && enrollment.programs.instructor_id === expertId
+      );
+      
+      return hasProgram;
     } catch (error) {
       console.error("Error in hasTakenServiceFrom:", error);
       return false;
@@ -453,45 +1111,50 @@ export const UserAuthProvider: React.FC<{children: React.ReactNode}> = ({ childr
 
   const getExpertShareLink = (expertId: string | number): string => {
     const baseUrl = window.location.origin;
-    return `${baseUrl}/expert/${expertId}`;
+    return `${baseUrl}/experts/${expertId}`;
   };
-
-  const getReferralLink = (): string | null => {
-    if (!currentUser?.referral_code) {
-      return null;
-    }
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/signup?referralCode=${currentUser.referral_code}`;
-  };
-
-  const value = {
-    currentUser,
-    isAuthenticated,
-    login,
-    signup,
-    logout,
-    authLoading,
-    profileNotFound,
-    updateProfile,
-    updateProfilePicture,
-    updatePassword,
-    addToFavorites,
-    removeFromFavorites,
-    rechargeWallet,
-    addReview,
-    reportExpert,
-    hasTakenServiceFrom,
-    getExpertShareLink,
-    getReferralLink,
-    user,
-    loading
-  };
-
+  
   return (
-    <UserAuthContext.Provider value={value}>
+    <UserAuthContext.Provider value={{
+      currentUser,
+      user,
+      session,
+      isAuthenticated: !!session,
+      loading,
+      authLoading,
+      authError,
+      favoritesCount,
+      referrals,
+      userSettings,
+      walletBalance,
+      hasProfile,
+      profileLoading,
+      profileError,
+      isExpertUser,
+      expertId,
+      login,
+      signup,
+      logout,
+      updateProfile,
+      updateUserSettings,
+      updateEmail,
+      updatePassword,
+      resetPassword,
+      sendVerificationEmail,
+      addToFavorites,
+      removeFromFavorites,
+      checkIsFavorite,
+      refreshFavoritesCount,
+      getReferrals,
+      refreshWalletBalance,
+      addFunds,
+      deductFunds,
+      reportExpert,
+      reviewExpert,
+      getExpertShareLink,
+      hasTakenServiceFrom
+    }}>
       {children}
     </UserAuthContext.Provider>
   );
 };
-
-export const useUserAuth = () => React.useContext(UserAuthContext);
