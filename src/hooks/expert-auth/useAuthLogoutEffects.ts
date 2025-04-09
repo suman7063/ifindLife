@@ -5,7 +5,7 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 
 export const useAuthLogoutEffects = (
   isAuthenticated: boolean, 
-  fullLogout: () => Promise<void>
+  fullLogout: () => Promise<boolean>
 ) => {
   const navigate = useNavigate();
   const [isSynchronizing, setIsSynchronizing] = useState(false);
@@ -49,7 +49,7 @@ export const useAuthLogoutEffects = (
 
   const handleLogout = async () => {
     try {
-      await fullLogout(); // Fixed: No arguments passed here
+      await fullLogout();
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);

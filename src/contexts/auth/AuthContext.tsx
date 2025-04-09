@@ -27,9 +27,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPassword,
     updatePassword
   } = useProfileFunctions(authState, setAuthState);
-  
+
   const userId = authState.user?.id || null;
   const expertInteractions = useExpertInteractions(userId);
+  
+  // Determine session type
+  let sessionType: 'none' | 'user' | 'expert' | 'dual' = 'none';
+  if (authState.role === 'user') sessionType = 'user';
+  else if (authState.role === 'expert') sessionType = 'expert';
+  // Dual is not currently supported in the unified auth system
   
   // Combine all functions and state into context value
   const contextValue: AuthContextType = {
@@ -44,7 +50,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateExpertProfile,
     resetPassword,
     updatePassword,
-    ...expertInteractions
+    ...expertInteractions,
+    
+    // Add back compatibility properties
+    currentUser: authState.userProfile,
+    currentExpert: authState.expertProfile,
+    sessionType
   };
 
   return (

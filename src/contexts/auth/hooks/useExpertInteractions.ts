@@ -7,19 +7,18 @@ import { UserReview } from '@/types/supabase/tables';
 export const useExpertInteractions = (userId: string | null) => {
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const hasTakenServiceFrom = async (expertId: string | number): Promise<boolean> => {
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
     if (!userId) return false;
     
     try {
       setIsProcessing(true);
-      const expertIdString = expertId.toString();
       
       // Check appointments
       const { data: appointments, error: appointmentsError } = await supabase
         .from('appointments')
         .select('id')
         .eq('user_id', userId)
-        .eq('expert_id', expertIdString)
+        .eq('expert_id', expertId)
         .eq('status', 'completed')
         .limit(1);
       
@@ -37,7 +36,7 @@ export const useExpertInteractions = (userId: string | null) => {
         .from('user_courses')
         .select('id')
         .eq('user_id', userId)
-        .eq('expert_id', expertIdString)
+        .eq('expert_id', expertId)
         .limit(1);
       
       if (programsError) {
@@ -54,7 +53,7 @@ export const useExpertInteractions = (userId: string | null) => {
     }
   };
 
-  const addReview = async (reviewData: { expertId: string; rating: number; comment: string }): Promise<boolean> => {
+  const addReview = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
     if (!userId) {
       toast.error('You must be logged in to leave a review');
       return false;
@@ -68,7 +67,7 @@ export const useExpertInteractions = (userId: string | null) => {
         .from('user_reviews')
         .select('id')
         .eq('user_id', userId)
-        .eq('expert_id', reviewData.expertId.toString())
+        .eq('expert_id', expertId)
         .limit(1);
       
       if (checkError) {
@@ -83,7 +82,7 @@ export const useExpertInteractions = (userId: string | null) => {
       }
       
       // Validate the user has actually received service from this expert
-      const hasReceivedService = await hasTakenServiceFrom(reviewData.expertId);
+      const hasReceivedService = await hasTakenServiceFrom(expertId);
       
       if (!hasReceivedService) {
         toast.error('You can only review experts you have taken services from');
@@ -91,18 +90,18 @@ export const useExpertInteractions = (userId: string | null) => {
       }
       
       // Create the review
-      const review: UserReview = {
+      const review = {
         user_id: userId,
-        expert_id: reviewData.expertId.toString(),
-        rating: reviewData.rating,
-        comment: reviewData.comment,
+        expert_id: expertId,
+        rating,
+        comment,
         date: new Date().toISOString(),
         verified: true
       };
       
       const { error } = await supabase
         .from('user_reviews')
-        .insert(review);
+        .insert([review]);
       
       if (error) {
         console.error('Error adding review:', error);
@@ -121,7 +120,7 @@ export const useExpertInteractions = (userId: string | null) => {
     }
   };
 
-  const reportExpert = async (reportData: { expertId: string; reason: string; details: string }): Promise<boolean> => {
+  const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
     if (!userId) {
       toast.error('You must be logged in to report an expert');
       return false;
@@ -132,14 +131,14 @@ export const useExpertInteractions = (userId: string | null) => {
       
       const { error } = await supabase
         .from('user_reports')
-        .insert({
+        .insert([{
           user_id: userId,
-          expert_id: reportData.expertId,
-          reason: reportData.reason,
-          details: reportData.details,
+          expert_id: expertId,
+          reason,
+          details,
           date: new Date().toISOString(),
           status: 'pending'
-        });
+        }]);
       
       if (error) {
         console.error('Error reporting expert:', error);

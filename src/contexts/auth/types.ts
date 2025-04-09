@@ -26,9 +26,19 @@ export interface AuthFunctions {
   updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
+  addReview?: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  reportExpert?: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
+  getExpertShareLink?: (expertId: string) => string;
+  getReferralLink?: () => string | null;
 }
 
-export interface AuthContextType extends AuthState, AuthFunctions {}
+export interface AuthContextType extends AuthState, AuthFunctions {
+  // Add back compatibility properties
+  currentUser?: UserProfile | null;
+  currentExpert?: ExpertProfile | null;
+  sessionType?: 'none' | 'user' | 'expert' | 'dual';
+}
 
 export const initialAuthState: AuthState = {
   session: null,

@@ -30,11 +30,11 @@ export const useAuthBackCompat = () => {
     addToFavorites: async () => false, // Not implemented in unified auth
     removeFromFavorites: async () => false, // Not implemented in unified auth
     rechargeWallet: async () => false, // Not implemented in unified auth
-    addReview: auth.addReview,
-    reportExpert: auth.reportExpert,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink,
-    getReferralLink: auth.getReferralLink
+    addReview: auth.addReview || (async () => false),
+    reportExpert: auth.reportExpert || (async () => false),
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getReferralLink: auth.getReferralLink || (() => null)
   };
   
   // Compatibility layer for useExpertAuth
@@ -68,7 +68,12 @@ export const useAuthBackCompat = () => {
     fullLogout: auth.logout,
     hasDualSessions: false, // Not supported in unified auth
     isSynchronizing: false, // Not supported in unified auth
-    authCheckCompleted: !auth.isLoading
+    authCheckCompleted: !auth.isLoading,
+    // Add back compatibility properties
+    isAuthenticated: auth.isAuthenticated,
+    currentUser: auth.userProfile,
+    currentExpert: auth.expertProfile,
+    sessionType: auth.sessionType || 'none'
   };
   
   return { userAuth, expertAuth, authSync };

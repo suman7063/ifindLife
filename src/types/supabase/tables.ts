@@ -11,11 +11,12 @@ export interface UserTransaction {
   created_at?: string;
   payment_id?: string;
   payment_method?: string;
+  transaction_type?: string; // Add this property which is used in components
 }
 
 export interface UserReview {
   id?: string;
-  expert_id: string; // Using string type to match the database
+  expert_id: string;
   user_id?: string;
   rating: number;
   comment?: string;
