@@ -18,7 +18,7 @@ export interface Report {
 }
 
 export interface UserReview {
-  expert_id: string;
+  expert_id: number;
   user_id: string;
   rating: number;
   comment?: string;

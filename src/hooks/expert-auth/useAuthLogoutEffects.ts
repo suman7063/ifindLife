@@ -47,7 +47,7 @@ export const useAuthLogoutEffects = () => {
     
     try {
       console.log('Attempting full logout...');
-      await fullLogout(); // Remove the argument
+      await fullLogout(); // Removed the argument
       return true;
     } catch (error) {
       console.error('Error during full logout:', error);
