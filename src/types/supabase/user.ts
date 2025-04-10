@@ -1,10 +1,5 @@
 
-// User-related types for UI components and business logic
-
-import { UserTransaction } from './tables';
-import { Referral } from './referral';
-import { Expert } from '../expert';
-
+// User-related types for the application
 export interface UserProfile {
   id: string;
   name?: string;
@@ -12,46 +7,17 @@ export interface UserProfile {
   phone?: string;
   country?: string;
   city?: string;
-  currency?: string;
-  profile_picture?: string;
-  wallet_balance?: number;
   created_at?: string;
+  avatar_url?: string | null;
   referral_code?: string;
-  referred_by?: string;
-  referral_link?: string;
-  
-  // Related data collections
-  favorite_experts?: string[];
-  enrolled_courses?: Course[];
-  transactions?: UserTransaction[];
-  reviews?: Review[];
-  reports?: Report[];
-  referrals?: Referral[];
+  referred_by?: string | null;
+  wallet_balance?: number;
 }
 
-export interface Review {
-  id: string;
-  expertId: string;
-  rating: number;
-  comment: string;
-  date: string;
-}
-
-export interface Report {
-  id: string;
-  expertId: string;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-}
-
-export interface Course {
-  id: string;
-  title: string;
-  expertId: string;
-  expertName: string;
-  enrollmentDate: string;
-  progress?: number;
-  completed?: boolean;
+export interface ReferralSettings {
+  id?: number;
+  referrer_reward: number;
+  referred_reward: number;
+  enabled: boolean;
+  updated_at?: string;
 }
