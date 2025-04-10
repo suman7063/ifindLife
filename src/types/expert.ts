@@ -1,30 +1,39 @@
 
-export interface Expert {
-  id: string; // Changed to string only
+export interface ExpertProfile {
+  id: string;
+  auth_id?: string;
   name: string;
   email: string;
-  bio?: string;
-  profile_picture?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
   specialization?: string;
-  experience?: string | number;
+  experience?: string;
+  bio?: string;
+  certificate_urls?: string[];
+  profile_picture?: string;
+  status?: string;
+  average_rating?: number;
+  reviews_count?: number;
   verified?: boolean;
   created_at?: string;
-  updated_at?: string;
-  average_rating?: number;
-  pricing?: {
-    price_per_min?: number;
-    consultation_fee?: number;
-  };
+  selected_services?: number[];
 }
 
-// Add the missing ExtendedExpert type
-export interface ExtendedExpert extends Expert {
-  distance?: number;
-  rating?: number;
-  reviewCount?: number;
-  isFavorite?: boolean;
-  sessionCount?: number;
-  availability?: any[];
-  specialties?: string[];
-  languages?: string[];
+export interface ExpertRegistrationData {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string | number;
+  bio?: string;
+  certificate_urls?: string[];
+  selected_services?: number[] | string[];
 }
