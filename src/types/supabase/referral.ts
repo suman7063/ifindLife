@@ -23,3 +23,28 @@ export interface ReferralUI {
   createdAt?: string;
   completedAt?: string;
 }
+
+// User referral info for context data
+export interface ReferralInfo {
+  id: string;
+  referrer_id: string;
+  referred_id: string;
+  created_at: string;
+  status: string;
+  reward_claimed: boolean;
+  user_info?: {
+    name: string;
+    email: string;
+    avatar: string;
+  };
+}
+
+export interface ReferralSettings {
+  id?: string | number;
+  referrer_reward: number;
+  referred_reward: number;
+  enabled: boolean;
+  active: boolean; // Compatibility with existing code
+  description?: string;
+  updated_at?: string;
+}

@@ -8,35 +8,35 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Create a compatible context value that matches the UserAuthContextType
   const userAuthValue = {
-    currentUser: auth.userProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
+    currentUser: auth.state.userProfile,
+    isAuthenticated: auth.state.isAuthenticated && auth.state.role === 'user',
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout,
-    authLoading: auth.isLoading,
-    profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
+    authLoading: auth.state.isLoading,
+    loading: auth.state.isLoading,
+    profileNotFound: !auth.state.userProfile && !auth.state.isAuthenticated && !auth.state.isLoading,
     updateProfile: auth.updateUserProfile,
     updatePassword: auth.updatePassword,
-    addToFavorites: async () => false, // Not implemented in unified auth
-    removeFromFavorites: async () => false, // Not implemented in unified auth
-    rechargeWallet: async () => false, // Not implemented in unified auth
+    user: auth.state.user,
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
+    rechargeWallet: auth.addFunds,
     addReview: async (review: any) => {
       if (review && typeof review === 'object' && 'expertId' in review && 'rating' in review && 'comment' in review) {
-        return auth.addReview ? auth.addReview(review.expertId.toString(), review.rating, review.comment) : false;
+        return auth.reviewExpert(review.expertId.toString(), review.rating, review.comment);
       }
       return false;
     },
     reportExpert: async (report: any) => {
       if (report && typeof report === 'object' && 'expertId' in report && 'reason' in report && 'details' in report) {
-        return auth.reportExpert ? auth.reportExpert(report.expertId.toString(), report.reason, report.details) : false;
+        return auth.reportExpert(report.expertId.toString(), report.reason, report.details);
       }
       return false;
     },
-    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
-    getExpertShareLink: auth.getExpertShareLink || ((expertId: string | number) => ''),
-    getReferralLink: auth.getReferralLink || (() => ''),
-    user: auth.user,
-    loading: auth.isLoading,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom,
+    getExpertShareLink: auth.getExpertShareLink,
+    getReferralLink: auth.getReferralLink,
     updateProfilePicture: async () => null
   };
 

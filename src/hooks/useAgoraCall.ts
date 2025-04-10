@@ -1,10 +1,11 @@
 
-import { useCallState } from './call/useCallState';
-import { useCallTimer } from './call/useCallTimer';
-import { useCallOperations } from './call/useCallOperations';
+import { useState, useEffect } from 'react';
+import { useCallTimer } from './useCallTimer';
 
-export const useAgoraCall = (expertId: number, expertPrice: number) => {
-  const { callState, setCallState } = useCallState();
+export const useAgoraCall = (initialDuration = 0, ratePerMinute = 0) => {
+  const [isConnected, setIsConnected] = useState(false);
+  const [hasJoined, setHasJoined] = useState(false);
+  const callTimer = useCallTimer(initialDuration, ratePerMinute);
   
   const {
     duration,
@@ -14,39 +15,52 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
     startTimers,
     stopTimers,
     extendCall,
-    calculateFinalCost,
-    formatTime
-  } = useCallTimer(expertPrice);
-  
-  const {
-    callType,
-    callError,
-    startCall,
-    endCall,
-    handleToggleMute,
-    handleToggleVideo
-  } = useCallOperations(
-    expertId,
-    setCallState,
-    callState,
-    startTimers,
-    stopTimers,
     calculateFinalCost
-  );
-
+  } = callTimer;
+  
+  // Handle connection status changes
+  useEffect(() => {
+    if (isConnected && hasJoined) {
+      startTimers(initialDuration, ratePerMinute);
+    } else {
+      stopTimers();
+    }
+  }, [isConnected, hasJoined]);
+  
+  // Connect to call
+  const connectToCall = () => {
+    setIsConnected(true);
+  };
+  
+  // Disconnect from call
+  const disconnectFromCall = () => {
+    setIsConnected(false);
+    setHasJoined(false);
+  };
+  
+  // Join the channel
+  const joinChannel = (channelName: string, token: string) => {
+    // Implementation would include actual Agora SDK calls
+    console.log('Joining channel:', channelName, 'with token:', token);
+    setHasJoined(true);
+    return true; // Return boolean for success
+  };
+  
   return {
-    callState,
-    callType,
+    isConnected,
+    hasJoined,
     duration,
     cost,
     remainingTime,
     isExtending,
-    callError,
-    startCall,
-    endCall,
-    handleToggleMute,
-    handleToggleVideo,
+    connectToCall,
+    disconnectFromCall,
+    joinChannel,
+    startTimers,
+    stopTimers,
     extendCall,
-    formatTime
+    calculateFinalCost
   };
 };
+
+export default useAgoraCall;

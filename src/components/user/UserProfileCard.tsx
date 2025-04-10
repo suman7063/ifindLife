@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { Link } from 'react-router-dom';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/userProfile';
 
 interface UserProfileCardProps {
   userProfile?: UserProfile | null;
@@ -42,9 +42,9 @@ const UserProfileCard: React.FC<UserProfileCardProps> = ({ userProfile }) => {
       <CardContent className="space-y-4">
         <div className="flex flex-col md:flex-row items-center space-y-4 md:space-y-0 md:space-x-4">
           <div className="flex-shrink-0">
-            {userData.profilePicture ? (
+            {userData.profile_picture ? (
               <img
-                src={userData.profilePicture}
+                src={userData.profile_picture}
                 alt={userData.name || 'User'}
                 className="h-24 w-24 rounded-full object-cover border-2 border-primary/20"
               />

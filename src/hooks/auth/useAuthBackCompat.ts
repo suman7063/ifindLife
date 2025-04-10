@@ -1,55 +1,72 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { useAuthSynchronization } from '@/hooks/auth-sync';
-import { useExpertAuth } from '@/features/expert-auth';
+import { UserProfile } from '@/types/supabase/userProfile';
+import { ExpertProfile } from '@/types/expert';
+import { User } from '@supabase/supabase-js';
+import { UseAuthSynchronizationReturn } from '@/hooks/auth-sync/types';
 
-// This hook serves as a compatibility layer to help components transition to the new auth system
-export const useAuthBackCompat = () => {
-  const unifiedAuth = useAuth();
-  const userAuth = useUserAuth();
-  const expertAuth = useExpertAuth();
-  const authSync = useAuthSynchronization();
+export interface UseAuthBackCompatReturn {
+  currentUser: UserProfile;
+  user: User;
+  currentExpert: ExpertProfile;
+  isAuthenticated: boolean;
+  isExpertAuthenticated: boolean;
+  loading: boolean;
+  expertAuth: {
+    currentExpert: ExpertProfile | null;
+    isAuthenticated: boolean;
+    isLoading: boolean;
+    login: (email: string, password: string) => Promise<boolean>;
+    logout: () => Promise<boolean>;
+    register: (data: any) => Promise<boolean>;
+  };
+  authSync: UseAuthSynchronizationReturn;
+}
+
+export const useAuthBackCompat = (): UseAuthBackCompatReturn => {
+  const auth = useAuth();
   
-  // Create a compatible object that merges all auth systems
-  // and favors the unified auth when available
-  const compatAuth = {
-    // User data
-    currentUser: unifiedAuth.state.userProfile || userAuth.currentUser,
-    user: unifiedAuth.state.user || userAuth.user,
+  // Create a backward compatible API
+  return {
+    currentUser: auth.userProfile || {} as UserProfile,
+    user: auth.user || {} as User,
+    currentExpert: auth.expertProfile || {} as ExpertProfile,
+    isAuthenticated: auth.isAuthenticated,
+    isExpertAuthenticated: auth.role === 'expert',
+    loading: auth.isLoading,
     
-    // Expert data
-    currentExpert: unifiedAuth.state.expertProfile || expertAuth.currentExpert,
-    
-    // Auth states
-    isAuthenticated: unifiedAuth.state.isAuthenticated || userAuth.isAuthenticated || authSync.isAuthenticated,
-    isLoading: unifiedAuth.state.isLoading || userAuth.loading || authSync.isAuthLoading,
-    
-    // Methods
-    login: unifiedAuth.login || userAuth.login,
-    signup: unifiedAuth.signup || userAuth.signup,
-    logout: unifiedAuth.logout || userAuth.logout || authSync.userLogout,
-    
-    // Profile updates
-    updateProfile: unifiedAuth.updateUserProfile || userAuth.updateProfile,
-    updatePassword: unifiedAuth.updatePassword || userAuth.updatePassword,
-    
-    // Expert interactions
-    reportExpert: (report: any) => {
-      if (unifiedAuth.reportExpert) {
-        return unifiedAuth.reportExpert(report.expertId, report.reason, report.details);
+    // Expert auth backward compatibility
+    expertAuth: {
+      currentExpert: auth.expertProfile,
+      isAuthenticated: auth.role === 'expert',
+      isLoading: auth.isLoading,
+      login: auth.login,
+      logout: auth.logout,
+      register: async (data) => {
+        // Placeholder for expert registration
+        console.warn('Expert registration through legacy API is deprecated');
+        return false;
       }
-      return userAuth.reportExpert(report);
     },
     
-    hasTakenServiceFrom: unifiedAuth.hasTakenServiceFrom || userAuth.hasTakenServiceFrom,
-    
-    // Specific to new auth
-    unifiedAuth,
-    
-    // Auth sync system
-    authSync,
+    // Auth sync compatibility
+    authSync: {
+      syncAuthState: async () => true,
+      isUserAuthenticated: auth.role === 'user',
+      isExpertAuthenticated: auth.role === 'expert',
+      isAuthenticated: auth.isAuthenticated,
+      isAuthInitialized: !auth.isLoading,
+      isAuthLoading: auth.isLoading,
+      authCheckCompleted: !auth.isLoading,
+      isSynchronizing: auth.isLoading,
+      currentUser: auth.userProfile,
+      currentExpert: auth.expertProfile,
+      userLogout: auth.logout,
+      expertLogout: auth.logout,
+      fullLogout: auth.logout,
+      hasDualSessions: false,
+      sessionType: auth.role === 'user' ? 'user' : auth.role === 'expert' ? 'expert' : 'none',
+      isLoggingOut: false
+    }
   };
-  
-  return compatAuth;
 };

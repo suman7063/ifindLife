@@ -1,10 +1,9 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/userProfile';
 import { toast } from 'sonner';
-import { AuthState } from './types';
+import { AuthState, initialAuthState, UserRole } from './types';
 import { useAuthAccount } from './hooks/useAuthAccount';
 import { useProfile } from './hooks/useProfile';
 import { useFavorites } from './hooks/useFavorites';
@@ -13,9 +12,16 @@ import { useReferrals } from './hooks/useReferrals';
 import { useExpertInteractions } from './hooks/useExpertInteractions';
 import { UserSettings } from '@/types/user';
 
-// Create the context
-const AuthContext = createContext<{
+export interface AuthContextValue {
   state: AuthState;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  userProfile: UserProfile | null;
+  expertProfile: ExpertProfile | null;
+  user: User | null;
+  session: Session | null;
+  role: UserRole;
+  
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
@@ -25,86 +31,29 @@ const AuthContext = createContext<{
   updateEmail: (email: string) => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
   sendVerificationEmail: () => Promise<boolean>;
+  
   updateUserSettings: (settings: Partial<UserSettings>) => Promise<boolean>;
   addToFavorites: (expertId: string) => Promise<boolean>;
   removeFromFavorites: (expertId: string) => Promise<boolean>;
   checkIsFavorite: (expertId: string) => Promise<boolean>;
-  refreshFavoritesCount: () => Promise<void>;
+  refreshFavoritesCount: () => Promise<number | void>;
+  
   getReferrals: () => Promise<any[]>;
   refreshWalletBalance: () => Promise<number>;
   addFunds: (amount: number) => Promise<boolean>;
   deductFunds: (amount: number, description: string) => Promise<boolean>;
+  
   reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
   reviewExpert: (expertId: string, rating: number, comment: string) => Promise<boolean>;
   hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
   getExpertShareLink: (expertId: string | number) => string;
   getReferralLink: () => string | null;
-}>({
-  state: {
-    user: null,
-    session: null,
-    userProfile: null,
-    expertProfile: null,
-    isAuthenticated: false,
-    isLoading: true,
-    hasProfile: false,
-    profileLoading: false,
-    authError: null,
-    profileError: null,
-    role: null,
-    isExpertUser: false,
-    expertId: null,
-    favoritesCount: 0,
-    referrals: [],
-    userSettings: null,
-    walletBalance: 0
-  },
-  login: async () => false,
-  signup: async () => false,
-  logout: async () => false,
-  updateUserProfile: async () => false,
-  updateExpertProfile: async () => false,
-  updatePassword: async () => false,
-  updateEmail: async () => false,
-  resetPassword: async () => false,
-  sendVerificationEmail: async () => false,
-  updateUserSettings: async () => false,
-  addToFavorites: async () => false,
-  removeFromFavorites: async () => false,
-  checkIsFavorite: async () => false,
-  refreshFavoritesCount: async () => {},
-  getReferrals: async () => [],
-  refreshWalletBalance: async () => 0,
-  addFunds: async () => false,
-  deductFunds: async () => false,
-  reportExpert: async () => false,
-  reviewExpert: async () => false,
-  hasTakenServiceFrom: async () => false,
-  getExpertShareLink: () => '',
-  getReferralLink: () => null
-});
+}
 
-// Provider component
+const AuthContext = createContext<AuthContextValue>({} as AuthContextValue);
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>({
-    user: null,
-    session: null,
-    userProfile: null,
-    expertProfile: null,
-    isAuthenticated: false,
-    isLoading: true,
-    hasProfile: false,
-    profileLoading: false,
-    authError: null,
-    profileError: null,
-    role: null,
-    isExpertUser: false,
-    expertId: null,
-    favoritesCount: 0,
-    referrals: [],
-    userSettings: null,
-    walletBalance: 0
-  });
+  const [state, setState] = useState<AuthState>(initialAuthState);
 
   const { 
     authLoading, 
@@ -157,11 +106,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getExpertShareLink
   } = useExpertInteractions(state.user);
 
-  // Initialize auth state
   useEffect(() => {
     const initAuth = async () => {
       try {
-        // Set up auth state listener FIRST
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
           async (event, session) => {
             console.log("Auth state changed:", event, "Session:", session ? "exists" : "none");
@@ -171,7 +118,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               session,
               user: session?.user ?? null,
               isAuthenticated: !!session,
-              isLoading: prev.isLoading // Don't change loading state here
+              isLoading: prev.isLoading
             }));
             
             if (session?.user) {
@@ -192,7 +139,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         );
 
-        // THEN check for existing session
         const { data } = await supabase.auth.getSession();
         setState(prev => ({ 
           ...prev, 
@@ -219,12 +165,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, []);
 
-  // Fetch all user data
   const fetchUserData = async (userId: string) => {
     try {
       setState(prev => ({ ...prev, profileLoading: true }));
       
-      // Fetch profile and determine if user is also an expert
       const [userProfile, expertData, settings] = await Promise.all([
         fetchUserProfile(userId),
         checkExpertAccount(userId),
@@ -233,7 +177,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const { isExpertUser, expertId } = expertData;
       
-      // Update state with user and expert data
       setState(prev => ({ 
         ...prev, 
         userProfile,
@@ -245,17 +188,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profileError: null
       }));
       
-      // Now fetch non-critical data
       const [favCount, walletBal, referralsList] = await Promise.all([
         refreshFavoritesCount(),
         fetchWalletBalance(userId),
         getReferrals()
       ]);
       
-      // Update state with additional data
       setState(prev => ({
         ...prev,
-        favoritesCount: favCount ?? 0,
+        favoritesCount: favCount || 0,
         walletBalance: walletBal,
         referrals: referralsList
       }));
@@ -272,7 +213,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Auth handlers with state updates
   const login = async (email: string, password: string): Promise<boolean> => {
     setState(prev => ({ ...prev, authLoading: true }));
     const success = await authLogin(email, password);
@@ -345,18 +285,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return success;
   };
 
-  // Placeholder for expert profile update
-  const updateExpertProfile = async (data: any): Promise<boolean> => {
-    // This would be implemented when expert functionality is needed
-    toast.info('Expert profile update not implemented yet');
-    return false;
-  };
-  
-  const contextValue = {
-    state: {
-      ...state,
-      authLoading,
-    },
+  const contextValue: AuthContextValue = {
+    state,
+    isAuthenticated: state.isAuthenticated,
+    isLoading: state.isLoading,
+    userProfile: state.userProfile,
+    expertProfile: state.expertProfile,
+    user: state.user,
+    session: state.session,
+    role: state.role,
+    
     login,
     signup,
     logout,
@@ -366,15 +304,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateEmail: (email: string) => authUpdateEmail(email, state.user),
     resetPassword: authResetPassword,
     sendVerificationEmail: () => authSendVerification(state.user),
+    
     updateUserSettings,
     addToFavorites,
     removeFromFavorites,
     checkIsFavorite,
     refreshFavoritesCount,
+    
     getReferrals,
     refreshWalletBalance,
     addFunds,
     deductFunds,
+    
     reportExpert,
     reviewExpert,
     hasTakenServiceFrom,
@@ -389,7 +330,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

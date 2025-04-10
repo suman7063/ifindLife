@@ -1,29 +1,35 @@
 
+import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
-export const useExpertInteractions = (user: any) => {
+export const useExpertInteractions = (user: User | null) => {
   // Report an expert
-  const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
+  const reportExpert = useCallback(async (
+    expertId: string, 
+    reason: string, 
+    details: string
+  ): Promise<boolean> => {
     if (!user) {
       toast.error('You must be logged in to report an expert');
       return false;
     }
     
     try {
-      // Create the report
+      const report = {
+        user_id: user.id,
+        expert_id: expertId,
+        reason,
+        details,
+        date: new Date().toISOString(),
+        status: 'pending'
+      };
+      
       const { error } = await supabase
         .from('user_reports')
-        .insert([{
-          reporter_id: user.id,
-          reported_entity_id: expertId,
-          entity_type: 'expert',
-          reason,
-          details,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        }]);
-      
+        .insert(report);
+        
       if (error) {
         console.error('Error reporting expert:', error);
         toast.error('Failed to submit report');
@@ -33,146 +39,204 @@ export const useExpertInteractions = (user: any) => {
       toast.success('Report submitted successfully');
       return true;
     } catch (error) {
-      console.error('Error reporting expert:', error);
-      toast.error('An error occurred while submitting report');
+      console.error('Error in reportExpert:', error);
+      toast.error('An unexpected error occurred');
       return false;
     }
-  };
+  }, [user]);
   
-  // Review an expert
-  const reviewExpert = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+  // Submit a review for an expert
+  const reviewExpert = useCallback(async (
+    expertId: string, 
+    rating: number, 
+    comment: string
+  ): Promise<boolean> => {
     if (!user) {
       toast.error('You must be logged in to review an expert');
       return false;
     }
     
     try {
-      // Check if already reviewed
-      const { data: existingReview, error: checkError } = await supabase
-        .from('expert_reviews')
-        .select('id')
-        .match({ user_id: user.id, expert_id: expertId })
-        .single();
+      // Check if the user has taken a service from this expert
+      const hasTaken = await hasTakenServiceFrom(expertId);
       
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking reviews:', checkError);
-        toast.error('Failed to submit review');
+      if (!hasTaken) {
+        toast.error('You can only review experts you have taken services from');
         return false;
       }
       
-      let success = false;
-      
+      // Check if already reviewed
+      const { data: existingReview } = await supabase
+        .from('user_reviews')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('expert_id', expertId)
+        .single();
+        
       if (existingReview) {
         // Update existing review
-        const { error: updateError } = await supabase
-          .from('expert_reviews')
+        const { error } = await supabase
+          .from('user_reviews')
           .update({
             rating,
             comment,
-            updated_at: new Date().toISOString()
+            date: new Date().toISOString()
           })
           .eq('id', existingReview.id);
-        
-        if (updateError) {
-          console.error('Error updating review:', updateError);
+          
+        if (error) {
+          console.error('Error updating review:', error);
           toast.error('Failed to update review');
           return false;
         }
         
-        success = true;
         toast.success('Review updated successfully');
       } else {
         // Create new review
-        const { error: insertError } = await supabase
-          .from('expert_reviews')
-          .insert([{
+        const { error } = await supabase
+          .from('user_reviews')
+          .insert({
             user_id: user.id,
             expert_id: expertId,
             rating,
             comment,
-            created_at: new Date().toISOString(),
-            status: 'published'
-          }]);
-        
-        if (insertError) {
-          console.error('Error submitting review:', insertError);
+            date: new Date().toISOString(),
+            verified: true
+          });
+          
+        if (error) {
+          console.error('Error submitting review:', error);
           toast.error('Failed to submit review');
           return false;
         }
         
-        success = true;
         toast.success('Review submitted successfully');
       }
       
-      return success;
+      // Update the expert's average rating
+      await updateExpertRating(expertId);
+      
+      return true;
     } catch (error) {
-      console.error('Error reviewing expert:', error);
-      toast.error('An error occurred while submitting review');
+      console.error('Error in reviewExpert:', error);
+      toast.error('An unexpected error occurred');
       return false;
     }
-  };
-
+  }, [user]);
+  
   // Check if user has taken a service from an expert
-  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+  const hasTakenServiceFrom = useCallback(async (expertId: string): Promise<boolean> => {
     if (!user) return false;
     
     try {
-      // Check appointments
-      const { data: appointments, error: appointmentError } = await supabase
-        .from('appointments')
+      // Check for completed services with this expert
+      const { data, error } = await supabase
+        .from('user_expert_services')
         .select('id')
-        .match({ user_id: user.id, expert_id: expertId, status: 'completed' })
+        .eq('user_id', user.id)
+        .eq('expert_id', expertId)
+        .eq('status', 'completed')
         .limit(1);
-      
-      if (appointmentError) {
-        console.error('Error checking appointments:', appointmentError);
+        
+      if (error) {
+        console.error('Error checking service history:', error);
         return false;
       }
       
-      // If they have completed appointments, they've taken service
-      if (appointments && appointments.length > 0) {
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error in hasTakenServiceFrom:', error);
+      return false;
+    }
+  }, [user]);
+  
+  // Update expert's average rating
+  const updateExpertRating = async (expertId: string): Promise<void> => {
+    try {
+      // Get all reviews for this expert
+      const { data: reviews, error } = await supabase
+        .from('user_reviews')
+        .select('rating')
+        .eq('expert_id', expertId);
+        
+      if (error || !reviews) {
+        console.error('Error fetching reviews for rating update:', error);
+        return;
+      }
+      
+      // Calculate average rating
+      const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+      const avgRating = reviews.length > 0 ? totalRating / reviews.length : 0;
+      
+      // Update expert's record
+      await supabase
+        .from('expert_accounts')
+        .update({
+          average_rating: avgRating,
+          reviews_count: reviews.length
+        })
+        .eq('id', expertId);
+    } catch (error) {
+      console.error('Error updating expert rating:', error);
+    }
+  };
+  
+  // Check if a user has booked or is currently enrolled in a course with an instructor
+  const hasBookedWithInstructor = useCallback(async (instructorId: string): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      // Check for any appointments with this instructor
+      const { data: appointments, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('expert_id', instructorId)
+        .limit(1);
+        
+      if (appointmentsError) {
+        console.error('Error checking appointment history:', appointmentsError);
+      } else if (appointments && appointments.length > 0) {
         return true;
       }
       
-      // Also check program enrollments (if expert is a program instructor)
-      const { data: enrollments, error: enrollmentError } = await supabase
-        .from('program_enrollments')
-        .select(`
-          id,
-          programs (
-            instructor_id
-          )
-        `)
+      // Check for any courses with this instructor
+      const { data: courses, error: coursesError } = await supabase
+        .from('user_courses')
+        .select('expert_id')
         .eq('user_id', user.id)
-        .eq('status', 'active')
-        .limit(1);
-      
-      if (enrollmentError) {
-        console.error('Error checking enrollments:', enrollmentError);
+        .limit(10);
+        
+      if (coursesError) {
+        console.error('Error checking course history:', coursesError);
         return false;
       }
       
-      // Check if any enrollments have the expert as instructor
-      const hasProgram = (enrollments || []).some(
-        enrollment => enrollment.programs && enrollment.programs.instructor_id === expertId
-      );
+      // Check if any course is associated with the given instructor
+      // Safe access to avoid the property error
+      const hasInstructor = courses ? courses.some(course => 
+        course && typeof course === 'object' && 
+        'expert_id' in course && 
+        course.expert_id === instructorId
+      ) : false;
       
-      return hasProgram;
+      return hasInstructor;
     } catch (error) {
-      console.error("Error in hasTakenServiceFrom:", error);
+      console.error('Error in hasBookedWithInstructor:', error);
       return false;
     }
-  };
-
+  }, [user]);
+  
+  // Generate share link for an expert
   const getExpertShareLink = (expertId: string | number): string => {
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/experts/${expertId}`;
+    return `${window.location.origin}/experts/${expertId}`;
   };
 
   return {
     reportExpert,
     reviewExpert,
     hasTakenServiceFrom,
+    hasBookedWithInstructor,
     getExpertShareLink
   };
 };

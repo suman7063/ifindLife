@@ -1,8 +1,8 @@
 
 export interface UserProfile {
   id: string;
-  name: string;
-  email: string;
+  name: string | undefined;
+  email: string | undefined;
   phone?: string;
   country?: string;
   city?: string;
@@ -13,7 +13,18 @@ export interface UserProfile {
   referral_code?: string;
   referred_by?: string;
   wallet_balance?: number;
+  walletBalance?: number; // Alias for wallet_balance
   enrolled_courses?: number[];
+  enrolledCourses?: number[]; // Alias for enrolled_courses
   total_sessions?: number;
   last_login?: string;
+  currency?: string;
+  
+  // Extended properties for UI
+  favorite_experts?: any[];
+  transactions?: any[];
+  reports?: any[];
+  reviews?: any[];
+  referrals?: any[];
+  referral_link?: string;
 }

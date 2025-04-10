@@ -7,15 +7,18 @@ import { toast } from 'sonner';
 const useTransactions = (userId?: string) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true); // Added alias for consistency
   
   const fetchTransactions = async () => {
     if (!userId) {
       setLoading(false);
+      setIsLoading(false);
       return;
     }
     
     try {
       setLoading(true);
+      setIsLoading(true);
       
       const { data, error } = await supabase
         .from('wallet_transactions')
@@ -32,6 +35,7 @@ const useTransactions = (userId?: string) => {
       toast.error('Failed to load transaction history');
     } finally {
       setLoading(false);
+      setIsLoading(false);
     }
   };
   
@@ -46,6 +50,7 @@ const useTransactions = (userId?: string) => {
   return { 
     transactions, 
     loading, 
+    isLoading, // Added alias
     fetchTransactions,
     refreshTransactions
   };

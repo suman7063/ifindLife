@@ -18,7 +18,8 @@ export const convertUserToUserProfile = (user: any): UserProfile => {
     created_at: user.created_at,
     referral_code: user.referral_code,
     referred_by: user.referred_by,
-    referral_link: user.referral_link,
+    // Include referral_link only if it exists in the input
+    ...(user.referral_link ? { referral_link: user.referral_link } : {}),
     
     // Empty related collections if not provided
     favorite_experts: user.favorite_experts || [],

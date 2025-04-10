@@ -3,22 +3,9 @@ import { User, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/supabase/userProfile';
 import { ExpertProfile } from '@/types/expert';
 import { UserSettings } from '@/types/user';
+import { ReferralInfo } from '@/types/supabase/referral';
 
 export type UserRole = 'admin' | 'user' | 'expert' | null;
-
-export interface ReferralInfo {
-  id: string;
-  referrer_id: string;
-  referred_id: string;
-  created_at: string;
-  status: string;
-  reward_claimed: boolean;
-  user_info?: {
-    name: string;
-    email: string;
-    avatar: string;
-  };
-}
 
 export interface AuthState {
   user: User | null;

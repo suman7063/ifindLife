@@ -6,18 +6,22 @@ export interface Transaction {
   currency: string;
   status: string;
   created_at: string;
+  date?: string; // For backward compatibility
   payment_id?: string;
   payment_method?: string;
   transaction_type: string;
+  type?: string; // For backward compatibility
   description?: string;
 }
 
 export interface UserTransaction extends Transaction {
   status: string;
   created_at: string;
+  date: string; // For UI display
   payment_id: string;
   payment_method: string;
   transaction_type: string;
+  type: string; // For UI display
 }
 
 export interface WalletTransaction extends Transaction {
