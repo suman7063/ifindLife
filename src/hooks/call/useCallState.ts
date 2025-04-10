@@ -1,6 +1,21 @@
 
 import { useState, useCallback } from 'react';
-import { CallState } from '@/lib/agoraService';
+import { IAgoraRTCRemoteUser, IAgoraRTCClient, ILocalAudioTrack, ILocalVideoTrack } from 'agora-rtc-sdk-ng';
+
+export interface CallState {
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  isConnecting: boolean;
+  isConnected: boolean;
+  hasError: boolean;
+  isMuted: boolean;
+  isVideoEnabled: boolean;
+  isJoined: boolean;
+  localAudioTrack?: ILocalAudioTrack;
+  localVideoTrack?: ILocalVideoTrack;
+  remoteUsers?: IAgoraRTCRemoteUser[];
+  client?: IAgoraRTCClient;
+}
 
 export const useCallState = () => {
   const [callState, setCallState] = useState<CallState>({
@@ -11,7 +26,8 @@ export const useCallState = () => {
     hasError: false,
     isMuted: false,
     isVideoEnabled: true,
-    isJoined: false
+    isJoined: false,
+    remoteUsers: []
   });
   
   return {

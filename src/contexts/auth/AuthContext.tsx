@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
@@ -190,11 +191,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profileError: null
       }));
       
-      const [favCount, walletBal, referralsList] = await Promise.all([
-        refreshFavoritesCount(),
-        fetchWalletBalance(userId),
-        getReferrals()
-      ]);
+      const favCount = await refreshFavoritesCount();
+      const walletBal = await fetchWalletBalance(userId);
+      const referralsList = await getReferrals();
       
       setState(prev => ({
         ...prev,
@@ -288,7 +287,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateExpertProfile = async (data: Partial<ExpertProfile>): Promise<boolean> => {
-    return false;
+    if (!state.user || !state.expertProfile) {
+      toast.error("No authenticated expert found");
+      return false;
+    }
+    
+    try {
+      setState(prev => ({ ...prev, profileLoading: true }));
+      
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(data)
+        .eq('auth_id', state.user.id);
+        
+      if (error) {
+        console.error("Expert profile update error:", error);
+        toast.error(error.message);
+        return false;
+      }
+      
+      setState(prev => ({
+        ...prev,
+        expertProfile: { ...prev.expertProfile!, ...data },
+        profileLoading: false
+      }));
+      
+      toast.success("Expert profile updated successfully");
+      return true;
+    } catch (error: any) {
+      console.error("Expert profile update error:", error);
+      toast.error(error.message || "An error occurred during profile update");
+      setState(prev => ({ ...prev, profileLoading: false }));
+      return false;
+    }
   };
 
   const contextValue: AuthContextValue = {

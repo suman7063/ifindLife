@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Expert } from '@/types/expert';
 import { Badge } from '@/components/ui/badge';
@@ -46,7 +45,7 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
         const specialtiesArray = expert.specialization ? [expert.specialization] : [];
         
         // Get price from expert.pricing if it exists, otherwise use default
-        const price = expert.pricing?.price_per_min || 30; // Default price of 30
+        const expertPrice = expert.price_per_min || expert.pricing || 0;
         
         // Check online status from verified property
         const isOnline = expert.verified || false;
@@ -98,7 +97,7 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
               
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs text-muted-foreground">Available</span>
-                <span className="font-medium text-sm">₹{price}/min</span>
+                <span className="font-medium text-sm">₹{expertPrice}/min</span>
               </div>
               
               <div className="grid grid-cols-2 gap-2">
