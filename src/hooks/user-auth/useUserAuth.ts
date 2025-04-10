@@ -1,14 +1,5 @@
 
-import { useContext } from 'react';
-import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
+import { useUserAuth as useContextUserAuth } from '@/contexts/UserAuthContext';
 
 // Export the hook with proper type definitions
-export const useUserAuth = () => {
-  const context = useContext(UserAuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useUserAuth must be used within a UserAuthProvider');
-  }
-  
-  return context;
-};
+export const useUserAuth = useContextUserAuth;

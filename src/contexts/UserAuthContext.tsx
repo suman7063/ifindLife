@@ -1,8 +1,9 @@
+
 import React, { createContext, useState, useEffect } from 'react';
 import { UserProfile } from '@/types/supabase';
 import { useAuthSession, useAuthLogin, useAuthLogout, useAuthPassword } from '@/features/auth';
 import { useUserReviews } from '@/features/reviews';
-import { UserAuthContextType } from './UserAuthContext';
+import { UserAuthContextType } from './auth/types';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -337,7 +338,28 @@ export const UserAuthProvider: React.FC<{children: React.ReactNode}> = ({ childr
     getReferralLink,
     user,
     loading,
-    updateProfilePicture
+    updateProfilePicture,
+    session,
+    expertId: null,
+    isExpertUser: false,
+    userSettings: null,
+    walletBalance: currentUser?.wallet_balance || 0,
+    referrals: [],
+    profileLoading: loading,
+    profileError: null,
+    favoritesCount: 0,
+    authError: null,
+    refreshFavoritesCount: async () => Promise.resolve(),
+    getReferrals: async () => Promise.resolve([]),
+    refreshWalletBalance: async () => Promise.resolve(currentUser?.wallet_balance || 0),
+    addFunds: rechargeWallet,
+    deductFunds: async () => Promise.resolve(false),
+    reviewExpert: async () => Promise.resolve(false),
+    updateEmail: async () => Promise.resolve(false),
+    resetPassword: async () => Promise.resolve(false),
+    sendVerificationEmail: async () => Promise.resolve(false),
+    checkIsFavorite: async () => Promise.resolve(false),
+    updateUserSettings: async () => Promise.resolve(false)
   };
 
   return (
