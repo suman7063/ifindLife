@@ -2,6 +2,7 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/supabase/userProfile';
+import { ExpertProfile } from '@/types/expert';
 import { toast } from 'sonner';
 import { AuthState, initialAuthState, UserRole } from './types';
 import { useAuthAccount } from './hooks/useAuthAccount';
@@ -11,6 +12,7 @@ import { useWallet } from './hooks/useWallet';
 import { useReferrals } from './hooks/useReferrals';
 import { useExpertInteractions } from './hooks/useExpertInteractions';
 import { UserSettings } from '@/types/user';
+import { useProfileFunctions } from './hooks/useProfileFunctions';
 
 export interface AuthContextValue {
   state: AuthState;
@@ -26,7 +28,7 @@ export interface AuthContextValue {
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
-  updateExpertProfile: (data: any) => Promise<boolean>;
+  updateExpertProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   updateEmail: (email: string) => Promise<boolean>;
   resetPassword: (email: string) => Promise<boolean>;
@@ -283,6 +285,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setState(prev => ({ ...prev, profileLoading: false }));
     }
     return success;
+  };
+
+  const updateExpertProfile = async (data: Partial<ExpertProfile>): Promise<boolean> => {
+    return false;
   };
 
   const contextValue: AuthContextValue = {

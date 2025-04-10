@@ -1,8 +1,8 @@
 
 export interface UserProfile {
   id: string;
-  name: string | undefined;
-  email: string | undefined;
+  name: string;
+  email: string;
   phone?: string;
   country?: string;
   city?: string;
@@ -19,6 +19,7 @@ export interface UserProfile {
   total_sessions?: number;
   last_login?: string;
   currency?: string;
+  referral_link?: string; // Added for compatibility
   
   // Extended properties for UI
   favorite_experts?: any[];
@@ -26,5 +27,4 @@ export interface UserProfile {
   reports?: any[];
   reviews?: any[];
   referrals?: any[];
-  referral_link?: string;
 }

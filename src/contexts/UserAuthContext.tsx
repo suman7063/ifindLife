@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase/userProfile';
@@ -147,6 +148,147 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  // Add the required methods to match the UserAuthContextType
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('An error occurred during login');
+      return false;
+    }
+  };
+
+  const signup = async (email: string, password: string, userData: any, referralCode?: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            ...userData,
+            referral_code: referralCode
+          }
+        }
+      });
+      
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      
+      toast.success('Signup successful! Please check your email to verify your account.');
+      return true;
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error('An error occurred during signup');
+      return false;
+    }
+  };
+
+  const logout = async (): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success('Logged out successfully');
+      return true;
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('An error occurred during logout');
+      return false;
+    }
+  };
+
+  const updateProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+    try {
+      if (!user) {
+        toast.error('You must be logged in to update your profile');
+        return false;
+      }
+      
+      const { error } = await supabase
+        .from('users')
+        .update(data)
+        .eq('id', user.id);
+        
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      
+      setCurrentUser(prev => prev ? { ...prev, ...data } : null);
+      toast.success('Profile updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      toast.error('An error occurred while updating your profile');
+      return false;
+    }
+  };
+
+  const updatePassword = async (password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        toast.error(error.message);
+        return false;
+      }
+      toast.success('Password updated successfully');
+      return true;
+    } catch (error) {
+      console.error('Update password error:', error);
+      toast.error('An error occurred while updating your password');
+      return false;
+    }
+  };
+
+  // Add more required methods with placeholder implementations
+  const addToFavorites = async (expertId: number): Promise<boolean> => {
+    toast.info(`Adding expert #${expertId} to favorites`);
+    return true;
+  };
+
+  const removeFromFavorites = async (expertId: number): Promise<boolean> => {
+    toast.info(`Removing expert #${expertId} from favorites`);
+    return true;
+  };
+
+  const rechargeWallet = async (amount: number): Promise<boolean> => {
+    toast.info(`Recharging wallet with ${amount}`);
+    return true;
+  };
+
+  const addReview = async (review: any): Promise<boolean> => {
+    toast.info(`Adding review for expert #${review.expertId}`);
+    return true;
+  };
+
+  const reportExpert = async (report: any): Promise<boolean> => {
+    toast.info(`Reporting expert #${report.expertId}`);
+    return true;
+  };
+
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+    return true;
+  };
+
+  const getExpertShareLink = (expertId: string | number): string => {
+    return `/expert/${expertId}?shared=true`;
+  };
+
+  const getReferralLink = (): string | null => {
+    if (!currentUser?.referral_code) return null;
+    return `/signup?ref=${currentUser.referral_code}`;
+  };
+
   return (
     <UserAuthContext.Provider
       value={{
@@ -155,16 +297,26 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         authLoading: loading,
         loading,
         user,
-        login: async () => false,
-        signup: async () => false,
-        logout: async () => false,
-        updateProfile: async () => false,
-        updatePassword: async () => false,
+        login,
+        signup,
+        logout,
+        updateProfile,
+        updatePassword,
         updateProfilePicture,
-        profileNotFound
+        profileNotFound,
+        addToFavorites,
+        removeFromFavorites,
+        rechargeWallet,
+        addReview,
+        reportExpert,
+        hasTakenServiceFrom,
+        getExpertShareLink,
+        getReferralLink
       }}
     >
       {children}
     </UserAuthContext.Provider>
   );
 };
+
+export { UserAuthProvider };

@@ -19,8 +19,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     updateProfile: auth.updateUserProfile,
     updatePassword: auth.updatePassword,
     user: auth.state.user,
-    addToFavorites: auth.addToFavorites,
-    removeFromFavorites: auth.removeFromFavorites,
+    addToFavorites: (expertId: number) => auth.addToFavorites(expertId.toString()),
+    removeFromFavorites: (expertId: number) => auth.removeFromFavorites(expertId.toString()),
     rechargeWallet: auth.addFunds,
     addReview: async (review: any) => {
       if (review && typeof review === 'object' && 'expertId' in review && 'rating' in review && 'comment' in review) {
@@ -37,7 +37,10 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     hasTakenServiceFrom: auth.hasTakenServiceFrom,
     getExpertShareLink: auth.getExpertShareLink,
     getReferralLink: auth.getReferralLink,
-    updateProfilePicture: async () => null
+    updateProfilePicture: async (file: File) => {
+      // This is a placeholder - implement actual functionality
+      return null;
+    }
   };
 
   return (

@@ -27,6 +27,7 @@ export interface Expert extends ExpertProfile {
   name: string;
   email: string;
   pricing?: number; // Added pricing property
+  price_per_min?: number; // Added price_per_min property
 }
 
 export interface ExtendedExpert extends Expert {

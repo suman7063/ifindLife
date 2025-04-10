@@ -10,14 +10,16 @@ export interface UseCallTimerReturn {
   stopTimers: () => void;
   extendCall: (additionalMinutes: number) => void;
   calculateFinalCost: () => number;
+  formatTime: (seconds: number) => string;
 }
 
-export const useCallTimer = (initialDurationMinutes: number = 0, ratePerMinute: number = 0): UseCallTimerReturn => {
-  const [duration, setDuration] = useState<number>(initialDurationMinutes * 60);
-  const [remainingTime, setRemainingTime] = useState<number>(initialDurationMinutes * 60);
+export const useCallTimer = (ratePerMinute: number = 0): UseCallTimerReturn => {
+  const [duration, setDuration] = useState<number>(0);
+  const [remainingTime, setRemainingTime] = useState<number>(0);
   const [cost, setCost] = useState<number>(0);
   const [isActive, setIsActive] = useState<boolean>(false);
   const [isExtending, setIsExtending] = useState<boolean>(false);
+  const [initialSlot, setInitialSlot] = useState<number>(15 * 60); // 15 minutes in seconds
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -25,20 +27,28 @@ export const useCallTimer = (initialDurationMinutes: number = 0, ratePerMinute: 
     if (isActive && remainingTime > 0) {
       intervalId = setInterval(() => {
         setRemainingTime(prevTime => prevTime - 1);
-        setCost(prevCost => prevCost + (ratePerMinute / 60));
+        setDuration(prevDuration => prevDuration + 1);
+        
+        // Calculate cost only after initial free minutes
+        if (duration >= initialSlot) {
+          setCost(prevCost => prevCost + (ratePerMinute / 60));
+        }
       }, 1000);
     } else if (remainingTime === 0) {
       setIsActive(false);
+      setIsExtending(true);
     }
     
     return () => {
       if (intervalId) clearInterval(intervalId);
     };
-  }, [isActive, remainingTime, ratePerMinute]);
+  }, [isActive, remainingTime, ratePerMinute, duration, initialSlot]);
 
-  const startTimers = (initialDuration: number, rate: number): void => {
-    setDuration(initialDuration * 60);
-    setRemainingTime(initialDuration * 60);
+  const startTimers = (initialDurationMinutes: number, rate: number): void => {
+    const initialDurationSeconds = initialDurationMinutes * 60;
+    setInitialSlot(initialDurationSeconds);
+    setDuration(0);
+    setRemainingTime(initialDurationSeconds);
     setCost(0);
     setIsActive(true);
   };
@@ -48,14 +58,25 @@ export const useCallTimer = (initialDurationMinutes: number = 0, ratePerMinute: 
   };
 
   const extendCall = (additionalMinutes: number): void => {
-    setIsExtending(true);
-    setDuration(prevDuration => prevDuration + (additionalMinutes * 60));
+    setIsExtending(false);
     setRemainingTime(prevRemaining => prevRemaining + (additionalMinutes * 60));
-    setTimeout(() => setIsExtending(false), 1000);
+    setIsActive(true);
   };
 
   const calculateFinalCost = (): number => {
-    return parseFloat((cost).toFixed(2));
+    return parseFloat(cost.toFixed(2));
+  };
+
+  const formatTime = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    return [
+      hours.toString().padStart(2, '0'),
+      minutes.toString().padStart(2, '0'),
+      secs.toString().padStart(2, '0')
+    ].join(':');
   };
 
   return {
@@ -66,7 +87,8 @@ export const useCallTimer = (initialDurationMinutes: number = 0, ratePerMinute: 
     startTimers,
     stopTimers,
     extendCall,
-    calculateFinalCost
+    calculateFinalCost,
+    formatTime
   };
 };
 

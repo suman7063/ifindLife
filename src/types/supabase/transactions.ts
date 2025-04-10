@@ -22,6 +22,7 @@ export interface UserTransaction extends Transaction {
   payment_method: string;
   transaction_type: string;
   type: string; // For UI display
+  description: string; // Made required in UserTransaction
 }
 
 export interface WalletTransaction extends Transaction {

@@ -10,7 +10,7 @@ const ProfilePictureSection: React.FC = () => {
   console.log('ProfilePictureSection rendering:', { 
     currentUserExists: !!currentUser,
     currentUserId: currentUser?.id,
-    profilePicture: currentUser?.profilePicture,
+    profilePicture: currentUser?.profile_picture,
     updateProfilePictureFunction: !!updateProfilePicture
   });
 
@@ -56,13 +56,13 @@ const ProfilePictureSection: React.FC = () => {
 
   console.log("ProfilePictureSection: Rendering with user data", { 
     name: currentUser.name,
-    profilePicture: currentUser.profilePicture
+    profilePicture: currentUser.profile_picture
   });
 
   return (
     <div className="flex justify-center mb-6">
       <ProfilePictureUploader
-        currentImage={currentUser.profilePicture}
+        currentImage={currentUser.profile_picture}
         onImageUpload={handleImageUpload}
         name={currentUser.name || ''}
       />

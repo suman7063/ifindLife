@@ -9,6 +9,17 @@ export interface CallState {
   isConnected: boolean;
   hasError: boolean;
   errorMessage?: string;
+  isMuted?: boolean;
+  isVideoEnabled?: boolean;
+  isJoined?: boolean;
+}
+
+export type CallType = 'audio' | 'video';
+
+export interface CallSettings {
+  channelName: string;
+  callType: CallType;
+  token?: string;
 }
 
 export const calculateCallCost = (
@@ -31,4 +42,28 @@ export const calculateCallCost = (
   const cost = billableMinutes * pricePerMinute;
   
   return parseFloat(cost.toFixed(2)); // Round to 2 decimal places
+};
+
+// Dummy implementation for the call functions
+export const createClient = () => {
+  return {};
+};
+
+export const joinCall = async (settings: CallSettings, client: any) => {
+  return {
+    localAudioTrack: {},
+    localVideoTrack: settings.callType === 'video' ? {} : null
+  };
+};
+
+export const leaveCall = async (client: any, localAudioTrack: any, localVideoTrack: any) => {
+  return true;
+};
+
+export const toggleMute = (track: any, isMuted: boolean) => {
+  return !isMuted;
+};
+
+export const toggleVideo = (track: any, isEnabled: boolean) => {
+  return !isEnabled;
 };

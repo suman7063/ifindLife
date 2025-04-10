@@ -1,12 +1,15 @@
 
 import { useState, useEffect } from 'react';
 import { useCallTimer } from './useCallTimer';
+import { CallState } from '@/lib/agoraService';
+import { useCallOperations } from '@/hooks/call/useCallOperations';
+import { useCallState } from '@/hooks/call/useCallState';
 
-export const useAgoraCall = (initialDuration = 0, ratePerMinute = 0) => {
-  const [isConnected, setIsConnected] = useState(false);
-  const [hasJoined, setHasJoined] = useState(false);
-  const callTimer = useCallTimer(initialDuration, ratePerMinute);
+export const useAgoraCall = (expertId: number, ratePerMinute: number) => {
+  const [callType, setCallType] = useState<'audio' | 'video'>('video');
+  const [callError, setCallError] = useState<string | null>(null);
   
+  // Initialize the call timer with expert price
   const {
     duration,
     cost,
@@ -15,51 +18,42 @@ export const useAgoraCall = (initialDuration = 0, ratePerMinute = 0) => {
     startTimers,
     stopTimers,
     extendCall,
+    calculateFinalCost,
+    formatTime
+  } = useCallTimer(ratePerMinute);
+  
+  // Initialize call state management
+  const { callState, setCallState } = useCallState();
+  
+  // Initialize call operations
+  const {
+    startCall,
+    endCall,
+    handleToggleMute,
+    handleToggleVideo
+  } = useCallOperations(
+    expertId,
+    setCallState,
+    callState,
+    startTimers,
+    stopTimers,
     calculateFinalCost
-  } = callTimer;
-  
-  // Handle connection status changes
-  useEffect(() => {
-    if (isConnected && hasJoined) {
-      startTimers(initialDuration, ratePerMinute);
-    } else {
-      stopTimers();
-    }
-  }, [isConnected, hasJoined]);
-  
-  // Connect to call
-  const connectToCall = () => {
-    setIsConnected(true);
-  };
-  
-  // Disconnect from call
-  const disconnectFromCall = () => {
-    setIsConnected(false);
-    setHasJoined(false);
-  };
-  
-  // Join the channel
-  const joinChannel = (channelName: string, token: string) => {
-    // Implementation would include actual Agora SDK calls
-    console.log('Joining channel:', channelName, 'with token:', token);
-    setHasJoined(true);
-    return true; // Return boolean for success
-  };
+  );
   
   return {
-    isConnected,
-    hasJoined,
+    callState,
+    callType,
     duration,
     cost,
     remainingTime,
     isExtending,
-    connectToCall,
-    disconnectFromCall,
-    joinChannel,
-    startTimers,
-    stopTimers,
+    callError,
+    startCall,
+    endCall,
+    handleToggleMute,
+    handleToggleVideo,
     extendCall,
-    calculateFinalCost
+    formatTime
   };
 };
 
