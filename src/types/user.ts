@@ -1,25 +1,23 @@
 
-// User-related types for the application
 export interface UserSettings {
+  id?: string;
   user_id: string;
-  theme: string;
+  theme: 'light' | 'dark' | 'system';
   notifications_enabled: boolean;
   email_notifications: boolean;
   newsletter: boolean;
   two_factor_auth: boolean;
   timezone: string;
   language: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface ReferralInfo {
-  id: string;
-  referrer_id: string;
-  referred_id: string;
-  status: string;
-  created_at: string;
-  completed_at?: string;
-  reward_claimed: boolean;
-  referrer_name?: string;
-  referrer_email?: string;
-  referrer_avatar?: string | null;
+export interface WalletData {
+  id?: string;
+  user_id: string;
+  balance: number;
+  currency: string;
+  created_at?: string;
+  updated_at?: string;
 }

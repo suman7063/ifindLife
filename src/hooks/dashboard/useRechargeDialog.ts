@@ -1,64 +1,105 @@
 
 import { useState } from 'react';
-import { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
-export const useRechargeDialog = (user: User | null, refreshBalance: () => Promise<void>) => {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+const useRechargeDialog = (onSuccess?: () => Promise<void>) => {
+  const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
   const [amount, setAmount] = useState(0);
-
-  const openDialog = () => {
-    setAmount(0);
-    setIsDialogOpen(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { currentUser } = useUserAuth();
+  
+  const handleOpenRechargeDialog = () => {
+    setIsRechargeDialogOpen(true);
   };
-
-  const closeDialog = () => {
-    setIsDialogOpen(false);
+  
+  const handleCloseRechargeDialog = () => {
+    setIsRechargeDialogOpen(false);
   };
-
+  
   const handleAmountChange = (value: number) => {
     setAmount(value);
   };
-
-  const handleRecharge = async () => {
-    if (amount <= 0) {
+  
+  const handleRechargeWallet = async () => {
+    if (!currentUser?.id || amount <= 0) {
       toast.error('Please enter a valid amount');
       return;
     }
-
-    if (!user) {
-      toast.error('You must be logged in to add funds');
-      return;
-    }
-
+    
     try {
       setIsProcessing(true);
       
-      // In a real app, this would integrate with a payment gateway
-      toast.success(`Added ${amount} credits to your wallet`);
+      // For demo purposes, directly update wallet balance
+      // In production, this would be handled by a payment gateway
       
-      // Refresh the wallet balance
-      await refreshBalance();
+      // 1. Get current wallet
+      const { data: wallet, error: walletError } = await supabase
+        .from('wallet')
+        .select('balance')
+        .eq('user_id', currentUser.id)
+        .single();
       
-      // Close the dialog
-      closeDialog();
-    } catch (error) {
+      if (walletError) throw walletError;
+      
+      const newBalance = (wallet?.balance || 0) + amount;
+      
+      // 2. Update wallet balance
+      const { error: updateError } = await supabase
+        .from('wallet')
+        .update({ 
+          balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', currentUser.id);
+      
+      if (updateError) throw updateError;
+      
+      // 3. Record transaction
+      await supabase
+        .from('wallet_transactions')
+        .insert([{
+          user_id: currentUser.id,
+          amount: amount,
+          currency: 'INR',
+          status: 'completed',
+          transaction_type: 'recharge',
+          description: 'Wallet recharge',
+          payment_method: 'demo',
+          created_at: new Date().toISOString()
+        }]);
+      
+      toast.success(`Successfully added ₹${amount} to your wallet`);
+      
+      if (onSuccess) {
+        await onSuccess();
+      }
+      
+      handleCloseRechargeDialog();
+    } catch (error: any) {
       console.error('Error processing recharge:', error);
-      toast.error('Failed to process payment');
+      toast.error('Failed to process recharge');
     } finally {
       setIsProcessing(false);
     }
   };
-
+  
+  const handleRechargeSuccess = async () => {
+    if (onSuccess) {
+      await onSuccess();
+    }
+  };
+  
   return {
-    isDialogOpen,
+    isRechargeDialogOpen,
+    handleOpenRechargeDialog,
+    handleCloseRechargeDialog,
+    handleRechargeSuccess,
     isProcessing,
     amount,
-    openDialog,
-    closeDialog,
     handleAmountChange,
-    handleRecharge
+    handleRecharge: handleRechargeWallet
   };
 };
 

@@ -1,52 +1,53 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
+import { Transaction } from '@/types/supabase/transactions';
+import { toast } from 'sonner';
 
-interface Transaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  date: string;
-  currency: string;
-  type: string;
-  description?: string;
-}
-
-export const useTransactions = (user: User | null) => {
+const useTransactions = (userId?: string) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState<boolean>(true);
+  
   const fetchTransactions = async () => {
-    if (!user) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
     
     try {
       setLoading(true);
+      
       const { data, error } = await supabase
-        .from('user_transactions')
+        .from('wallet_transactions')
         .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
         .limit(10);
       
       if (error) throw error;
       
       setTransactions(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching transactions:', error);
+      toast.error('Failed to load transaction history');
     } finally {
       setLoading(false);
     }
   };
-
+  
   useEffect(() => {
-    if (user) fetchTransactions();
-  }, [user]);
-
-  return {
-    transactions,
-    loading,
-    fetchTransactions
+    fetchTransactions();
+  }, [userId]);
+  
+  const refreshTransactions = async () => {
+    await fetchTransactions();
+  };
+  
+  return { 
+    transactions, 
+    loading, 
+    fetchTransactions,
+    refreshTransactions
   };
 };
 

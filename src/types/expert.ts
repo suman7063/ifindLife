@@ -22,6 +22,23 @@ export interface ExpertProfile {
   selected_services?: number[];
 }
 
+export interface Expert extends ExpertProfile {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface ExtendedExpert extends Expert {
+  specialties: string[];
+  rating: number;
+  reviewCount: number;
+  image: string;
+  price: number;
+  currency: string;
+  available: boolean;
+  featured: boolean;
+}
+
 export interface ExpertRegistrationData {
   name: string;
   email: string;
