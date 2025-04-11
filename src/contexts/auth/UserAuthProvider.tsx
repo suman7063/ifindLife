@@ -16,7 +16,16 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateUserProfile || auth.updateProfile,
+    updateProfile: async (data: Partial<UserProfile>): Promise<boolean> => {
+      if (auth.updateUserProfile) {
+        return auth.updateUserProfile(data);
+      }
+      if (auth.updateProfile) {
+        await auth.updateProfile(data as UserProfile);
+        return true;
+      }
+      return false;
+    },
     updatePassword: auth.updatePassword || (async () => false),
     user: auth.user,
     addToFavorites: (expertId: string) => auth.addToFavorites ? auth.addToFavorites(expertId) : Promise.resolve(false),

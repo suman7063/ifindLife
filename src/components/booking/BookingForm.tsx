@@ -1,112 +1,142 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
-import { ExpertProfile } from '@/types/supabase/expert';
-import { useUserAuth } from '@/hooks/useUserAuth';
-import { formatCurrency } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 interface BookingFormProps {
-  expert: ExpertProfile;
+  expertId: string;
+  expertName: string;
+  onClose: () => void;
 }
 
-const BookingForm: React.FC<BookingFormProps> = ({ expert }) => {
-  const [duration, setDuration] = useState<number>(15);
-  const [notes, setNotes] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(false);
-  const { toast } = useToast();
-  const { currentUser, isAuthenticated } = useUserAuth();
-  
-  const handleSubmit = async (e: React.FormEvent) => {
+const BookingForm: React.FC<BookingFormProps> = ({ expertId, expertName, onClose }) => {
+  const [date, setDate] = useState<Date>();
+  const [timeSlot, setTimeSlot] = useState<string>('');
+  const [duration, setDuration] = useState<number>(30);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { currentUser } = useUserAuth();
+
+  const timeSlots = [
+    '09:00 AM', '10:00 AM', '11:00 AM', 
+    '12:00 PM', '01:00 PM', '02:00 PM', 
+    '03:00 PM', '04:00 PM', '05:00 PM'
+  ];
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to book a session",
-        variant: "destructive",
-      });
+    if (!date || !timeSlot) {
+      alert('Please select both date and time');
       return;
     }
     
-    setLoading(true);
-    
     try {
-      // In a real app, this would send data to the backend
-      toast({
-        title: "Booking Request Sent",
-        description: "Your booking request has been sent. The expert will confirm soon.",
+      setIsSubmitting(true);
+      // Booking API call would go here
+      console.log('Booking submitted:', {
+        expertId,
+        userId: currentUser?.id,
+        date: format(date, 'yyyy-MM-dd'),
+        timeSlot,
+        duration
       });
       
-      // Reset form
-      setNotes('');
+      alert(`Booking scheduled with ${expertName} on ${format(date, 'PPP')} at ${timeSlot}`);
+      onClose();
     } catch (error) {
-      console.error("Booking error:", error);
-      toast({
-        title: "Booking Failed",
-        description: "There was an error processing your booking request.",
-        variant: "destructive",
-      });
+      console.error('Error submitting booking:', error);
+      alert('Failed to schedule booking. Please try again.');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
-  
-  const calculatedPrice = (expert.price_per_min || 0) * duration;
-  
-  const durationOptions = [
-    { value: 15, label: '15 minutes' },
-    { value: 30, label: '30 minutes' },
-    { value: 45, label: '45 minutes' },
-    { value: 60, label: '1 hour' },
-  ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="duration">Session Duration</Label>
-        <select
-          id="duration"
-          value={duration}
-          onChange={(e) => setDuration(Number(e.target.value))}
-          className="w-full p-2 border rounded-md mt-1"
-          required
-        >
-          {durationOptions.map(option => (
-            <option key={option.value} value={option.value}>
-              {option.label} ({formatCurrency(expert.price_per_min * option.value || 0)})
-            </option>
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">Select Date</label>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              className={cn(
+                "w-full justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date ? format(date, 'PPP') : <span>Pick a date</span>}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0">
+            <Calendar
+              mode="single"
+              selected={date}
+              onSelect={setDate}
+              initialFocus
+              disabled={(date) => date < new Date()}
+              className="pointer-events-auto"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+      
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">Select Time</label>
+        <div className="grid grid-cols-3 gap-2">
+          {timeSlots.map((slot) => (
+            <Button 
+              key={slot}
+              type="button"
+              variant={timeSlot === slot ? "default" : "outline"}
+              className="text-sm"
+              onClick={() => setTimeSlot(slot)}
+            >
+              {slot}
+            </Button>
           ))}
-        </select>
+        </div>
       </div>
       
-      <div>
-        <Label htmlFor="notes">Notes for the Expert</Label>
-        <Textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Describe what you'd like to discuss..."
-          className="mt-1"
-          rows={4}
-        />
+      <div className="space-y-2">
+        <label className="block text-sm font-medium">Duration</label>
+        <div className="flex space-x-2">
+          {[30, 45, 60].map((mins) => (
+            <Button 
+              key={mins}
+              type="button"
+              variant={duration === mins ? "default" : "outline"}
+              className="flex-1"
+              onClick={() => setDuration(mins)}
+            >
+              {mins} min
+            </Button>
+          ))}
+        </div>
       </div>
       
-      <div className="flex justify-between items-center font-medium">
-        <span>Total Price:</span>
-        <span className="text-lg">{formatCurrency(calculatedPrice)}</span>
+      <div className="pt-4 flex space-x-2">
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="flex-1"
+          onClick={onClose}
+        >
+          Cancel
+        </Button>
+        <Button 
+          type="submit" 
+          className="flex-1"
+          disabled={isSubmitting || !date || !timeSlot}
+        >
+          {isSubmitting ? 'Scheduling...' : 'Schedule'}
+        </Button>
       </div>
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-ifind-aqua hover:bg-ifind-teal"
-        disabled={loading}
-      >
-        {loading ? 'Processing...' : 'Book Now'}
-      </Button>
     </form>
   );
 };

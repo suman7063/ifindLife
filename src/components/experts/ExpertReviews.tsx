@@ -1,137 +1,80 @@
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Card } from '@/components/ui/card';
+import React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Star } from 'lucide-react';
-import LoadingSpinner from '@/components/ui/loading-spinner';
 
-interface ReviewType {
+interface Review {
   id: string;
-  comment: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
   rating: number;
+  comment: string;
   date: string;
-  user_id: string;
-  user_name?: string;
-  user_avatar?: string;
+  verified: boolean;
 }
 
 interface ExpertReviewsProps {
   expertId: string;
+  reviews: Review[];
+  isLoading?: boolean;
 }
 
-const ExpertReviews: React.FC<ExpertReviewsProps> = ({ expertId }) => {
-  const [reviews, setReviews] = useState<ReviewType[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        setLoading(true);
-        
-        const { data, error } = await supabase
-          .from('user_reviews')
-          .select(`
-            id,
-            comment,
-            rating,
-            date,
-            user_id,
-            profiles:user_id (
-              name,
-              profile_picture
-            )
-          `)
-          .eq('expert_id', expertId)
-          .order('date', { ascending: false });
-
-        if (error) throw error;
-        
-        // Transform the data to match our ReviewType
-        const transformedReviews = data.map((review: any) => ({
-          id: review.id,
-          comment: review.comment,
-          rating: review.rating,
-          date: review.date,
-          user_id: review.user_id,
-          user_name: review.profiles?.name || 'Anonymous User',
-          user_avatar: review.profiles?.profile_picture || undefined
-        }));
-        
-        setReviews(transformedReviews);
-      } catch (err: any) {
-        console.error("Error fetching reviews:", err);
-        setError(err.message || "Failed to load reviews");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (expertId) {
-      fetchReviews();
-    }
-  }, [expertId]);
-
-  if (loading) {
-    return (
-      <div className="py-8 flex justify-center">
-        <LoadingSpinner size="md" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-8 text-center">
-        <p className="text-red-500">{error}</p>
-      </div>
-    );
+const ExpertReviews: React.FC<ExpertReviewsProps> = ({ expertId, reviews, isLoading = false }) => {
+  if (isLoading) {
+    return <div className="animate-pulse p-4 space-y-4">
+      {[1, 2].map((i) => (
+        <div key={i} className="flex space-x-4">
+          <div className="rounded-full bg-gray-300 h-10 w-10"></div>
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
+          </div>
+        </div>
+      ))}
+    </div>;
   }
 
   if (reviews.length === 0) {
     return (
-      <div className="py-8 text-center">
-        <p className="text-gray-500">No reviews yet. Be the first to leave a review.</p>
+      <div className="text-center py-8">
+        <p className="text-gray-500">No reviews yet</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {reviews.map((review) => (
-        <Card key={review.id} className="p-4">
-          <div className="flex items-start space-x-4">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={review.user_avatar} alt={review.user_name} />
-              <AvatarFallback>
-                {review.user_name?.substring(0, 2).toUpperCase() || "??"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h4 className="font-medium">{review.user_name}</h4>
-                  <div className="flex items-center mt-1">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={16}
-                        className={i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <span className="text-sm text-gray-500">
+        <div key={review.id} className="border-b border-gray-100 pb-4">
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex items-center">
+              <Avatar className="h-8 w-8 mr-2">
+                <AvatarImage src={review.userAvatar} alt={review.userName} />
+                <AvatarFallback>{review.userName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium text-sm">{review.userName}</p>
+                <p className="text-xs text-gray-500">
                   {new Date(review.date).toLocaleDateString()}
-                </span>
+                </p>
               </div>
-              {review.comment && (
-                <p className="mt-2 text-gray-700">{review.comment}</p>
-              )}
+            </div>
+            <div className="flex items-center bg-gray-100 px-2 py-1 rounded">
+              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" />
+              <span className="text-xs font-medium">{review.rating}</span>
             </div>
           </div>
-        </Card>
+          <p className="text-sm text-gray-700">{review.comment}</p>
+          {review.verified && (
+            <div className="mt-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                Verified Session
+              </span>
+            </div>
+          )}
+        </div>
       ))}
     </div>
   );

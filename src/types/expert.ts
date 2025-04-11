@@ -1,5 +1,5 @@
 
-export interface ExpertProfile {
+export interface Expert {
   id: string;
   auth_id?: string;
   name: string;
@@ -23,4 +23,15 @@ export interface ExpertProfile {
   reviews_count?: number;
   selected_services?: number[];
   price_per_min?: number;
+}
+
+export interface ExtendedExpert extends Expert {
+  pricing?: number;
+  online?: boolean;
+  languages?: string[];
+  availability?: string;
+  waitTime?: string;
+  consultations?: number;
+  rating?: number;
+  price?: number;
 }

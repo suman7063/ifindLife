@@ -11,7 +11,7 @@ export const useExpertAuth = () => {
   
   useEffect(() => {
     if (auth) {
-      setCurrentExpert(auth.expertProfile as unknown as ExpertProfile);
+      setCurrentExpert(auth.expertProfile as ExpertProfile);
       setIsAuthenticated(auth.isAuthenticated && auth.role === 'expert');
       setIsLoading(auth.isLoading);
     }

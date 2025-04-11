@@ -316,7 +316,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
   
       const { data: profileData, error: profileError } = await supabaseClient
-        .from<UserProfile>('profiles')
+        .from<UserProfile, 'profiles'>('profiles')
         .select('*')
         .eq('id', user.id)
         .single();
@@ -345,7 +345,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
   
       const { data: expertData, error: expertError } = await supabaseClient
-        .from<ExpertProfile>('expert_profiles')
+        .from<ExpertProfile, 'expert_profiles'>('expert_profiles')
         .select('*')
         .eq('auth_id', user.id)
         .single();
@@ -564,7 +564,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const fetchReferralSettings = async (): Promise<void> => {
     try {
       const { data, error } = await supabaseClient
-        .from<ReferralSettings>('referral_settings')
+        .from<ReferralSettings, 'referral_settings'>('referral_settings')
         .select('*')
         .eq('active', true)
         .single();
@@ -615,6 +615,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     refreshUserProfile,
     refreshExpertProfile,
     uploadProfilePicture,
+    updateProfilePicture: async (file: File): Promise<string> => {
+      const result = await uploadProfilePicture(file);
+      return result || '';
+    },
     uploadExpertProfilePicture,
     deleteProfilePicture,
     deleteExpertProfilePicture,
