@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -7,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { ReferralSettings } from "@/types/supabase/referral";
+import { ReferralSettings } from "@/types/supabase";
 
 const ReferralSettingsEditor: React.FC = () => {
   const [settings, setSettings] = useState<ReferralSettings>({
@@ -15,7 +16,6 @@ const ReferralSettingsEditor: React.FC = () => {
     referrer_reward: 10,
     referred_reward: 5,
     active: true,
-    enabled: true,
     description: 'Invite friends and earn rewards when they make their first purchase.',
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -64,7 +64,6 @@ const ReferralSettingsEditor: React.FC = () => {
           referrer_reward: settings.referrer_reward,
           referred_reward: settings.referred_reward,
           active: settings.active,
-          enabled: settings.enabled,
           description: settings.description,
           updated_at: new Date().toISOString()
         })
@@ -109,7 +108,6 @@ const ReferralSettingsEditor: React.FC = () => {
     setSettings((prev) => ({
       ...prev,
       active: checked,
-      enabled: checked,
     }));
   };
 

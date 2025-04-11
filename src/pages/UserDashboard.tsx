@@ -4,14 +4,13 @@ import { Container } from '@/components/ui/container';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
-import { useAuthSynchronization } from '@/hooks/auth-sync';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
 import DashboardContent from '@/components/user/dashboard/DashboardContent';
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
 import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
-import { useTransactions } from '@/features/transactions';
-import { useRechargeDialog } from '@/features/wallet';
-import { UserTransaction } from '@/types/supabase/transactions';
+import useTransactions from '@/hooks/dashboard/useTransactions';
+import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
 const UserDashboard: React.FC = () => {
   const { currentUser, isAuthenticated, logout } = useUserAuth();
@@ -63,26 +62,16 @@ const UserDashboard: React.FC = () => {
     return null;
   }
 
-  // Add default values for missing properties to prevent errors
-  const enhancedUser = currentUser ? {
-    ...currentUser,
-    consultation_count: currentUser.consultation_count ?? 0,
-    referral_count: currentUser.referral_code ? 1 : 0,
-  } : null;
-
-  // Explicitly cast transactions to UserTransaction[]
-  const typedTransactions = transactions as unknown as UserTransaction[];
-
   return (
     <Container className="py-8">
       <DashboardHeader 
-        user={enhancedUser} 
+        user={currentUser} 
         onLogout={handleLogout}
       />
       
       <DashboardContent
-        user={enhancedUser}
-        transactions={typedTransactions}
+        user={currentUser}
+        transactions={transactions}
         isLoading={transactionsLoading}
         onRecharge={handleOpenRechargeDialog}
       />

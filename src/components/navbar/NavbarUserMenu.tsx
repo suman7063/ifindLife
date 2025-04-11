@@ -1,56 +1,98 @@
-import React from 'react';
-import {
+
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { User, LogOut, CreditCard } from "lucide-react";
+import { 
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { UserProfile } from '@/types/supabase';
 import { toast } from 'sonner';
 
-const NavbarUserMenu = () => {
-  const { currentUser, logout } = useUserAuth();
-  const navigate = useNavigate();
+interface NavbarUserMenuProps {
+  currentUser: UserProfile | null;
+  onLogout: () => Promise<boolean>;
+  isLoggingOut: boolean;
+}
+
+const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({ 
+  currentUser, 
+  onLogout,
+  isLoggingOut: parentIsLoggingOut
+}) => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
   const handleLogout = async () => {
-    const success = await logout();
-    if (success) {
-      toast.success('Logged out successfully');
-      navigate('/');
-    } else {
-      toast.error('Failed to log out');
+    if (isLoggingOut || parentIsLoggingOut) return;
+    
+    setIsLoggingOut(true);
+    setIsOpen(false);
+    
+    try {
+      const success = await onLogout();
+      
+      if (!success) {
+        console.error("Logout failed");
+        toast.error('Failed to log out. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Failed to log out. Please try again.');
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Avatar>
-          {currentUser?.profile_picture ? (
-            <img
-              src={currentUser.profile_picture}
-              alt={currentUser.name || 'User'}
-              className="rounded-full w-8 h-8 object-cover"
-            />
-          ) : (
-            <AvatarFallback>{currentUser?.name?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
-          )}
-        </Avatar>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={currentUser?.profilePicture || ''} alt={currentUser?.name || 'User'} />
+            <AvatarFallback>{currentUser?.name ? getInitials(currentUser.name) : 'U'}</AvatarFallback>
+          </Avatar>
+        </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56" align="end" forceMount>
+      <DropdownMenuContent align="end">
         <DropdownMenuLabel>My Account</DropdownMenuLabel>
+        <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to="/user-dashboard">Dashboard</Link>
+          <Link to="/user-dashboard" className="cursor-pointer" onClick={() => setIsOpen(false)}>
+            <User className="mr-2 h-4 w-4" />
+            Dashboard
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link to="/user-profile-edit">Profile</Link>
+          <Link to="/referrals" className="cursor-pointer" onClick={() => setIsOpen(false)}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            My Referrals
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={handleLogout} 
+          className="text-red-500 cursor-pointer"
+          disabled={isLoggingOut || parentIsLoggingOut}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          {isLoggingOut || parentIsLoggingOut ? 'Logging out...' : 'Log out'}
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

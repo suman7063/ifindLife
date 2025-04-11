@@ -1,19 +1,17 @@
 
-import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { Session } from '@supabase/supabase-js';
+import { handleAuthError } from '@/utils/authUtils';
 
 export const useAuthLogin = (
   setLoading: (value: boolean) => void,
   setSession: (session: Session | null) => void
 ) => {
-  const [error, setError] = useState<string | null>(null);
-
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      setError(null);
+      console.log("Attempting login with email:", email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -21,28 +19,29 @@ export const useAuthLogin = (
       });
 
       if (error) {
-        setError(error.message);
+        console.error("Login error:", error);
         toast.error(error.message);
+        setLoading(false);
         return false;
       }
 
-      if (data.session) {
+      if (data.user && data.session) {
+        console.log("Login successful, user:", data.user.email);
         setSession(data.session);
         return true;
       }
       
-      toast.error('Login failed. Please try again.');
+      console.log("No user returned from login attempt");
+      toast.error("Login failed. Please try again.");
+      setLoading(false);
       return false;
     } catch (error: any) {
-      setError(error.message || 'An error occurred during login');
-      toast.error(error.message || 'An error occurred during login');
-      return false;
-    } finally {
+      console.error("Unexpected login error:", error);
+      handleAuthError(error, 'Login failed');
       setLoading(false);
+      return false;
     }
   };
 
-  return { login, error };
+  return { login };
 };
-
-export default useAuthLogin;

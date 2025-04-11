@@ -1,135 +1,67 @@
 
-// Backward compatibility layer for existing components
-import { useState, useEffect, useCallback } from 'react';
-import { useUserAuth } from '@/contexts/UserAuthContext'; 
+import { useState, useCallback } from 'react';
+import { useContext } from 'react';
+import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
 import { useExpertAuth } from '@/hooks/expert-auth';
-import { AuthSyncState, UseAuthSynchronizationReturn, SessionType } from '@/features/auth-sync/types';
+import { useAuthCheckEffect } from './useAuthCheckEffect';
+import { useAuthLogoutMethods } from './useAuthLogoutMethods';
+import { SessionType, UseAuthSynchronizationReturn } from './types';
 
 export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
-  const [state, setState] = useState<AuthSyncState>({
-    isUserAuthenticated: false,
-    isExpertAuthenticated: false,
-    isSynchronizing: true,
-    isAuthInitialized: false,
-    authCheckCompleted: false,
-    hasDualSessions: false,
-    sessionType: 'none',
-    currentUser: null,
-    currentExpert: null
-  });
-  
+  const [sessionType, setSessionType] = useState<SessionType>('none');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
+  const [isExpertAuthenticated, setIsExpertAuthenticated] = useState(false);
+  const [hasDualSessions, setHasDualSessions] = useState(false);
+
+  const userAuth = useContext(UserAuthContext);
+  const { currentUser, isAuthenticated, logout } = userAuth;
+  const { 
+    currentExpert, 
+    isAuthenticated: expertIsAuthenticated, 
+    logout: expertLogoutFn 
+  } = useExpertAuth();
+
+  // Use the auth check effect
+  const authState = useAuthCheckEffect(
+    currentUser,
+    currentExpert,
+    isAuthenticated,
+    expertIsAuthenticated
+  );
   
-  // Get auth contexts
-  const userAuth = useUserAuth();
-  const expertAuth = useExpertAuth();
-  
-  // Setup auth check effect
-  useEffect(() => {
-    const checkAuth = async () => {
-      setState(prev => ({
-        ...prev,
-        isUserAuthenticated: userAuth.isAuthenticated,
-        isExpertAuthenticated: expertAuth.isAuthenticated,
-        currentUser: userAuth.currentUser,
-        currentExpert: expertAuth.currentExpert,
-        isAuthInitialized: true
-      }));
-    };
-    
-    checkAuth();
-  }, [userAuth, expertAuth]);
-  
-  // Setup auth state sync
-  const syncAuthState = async () => {
-    try {
-      // Refresh user profile if authenticated and has refreshProfile method
-      if (userAuth.isAuthenticated && typeof userAuth.refreshProfile === 'function') {
-        await userAuth.refreshProfile();
-      }
-      
-      // Handle expertAuth.refreshProfile if it exists
-      if (expertAuth.isAuthenticated && expertAuth.refreshProfile) {
-        await expertAuth.refreshProfile();
-      }
-      
-      // Update state
-      setState(prev => ({
-        ...prev,
-        isUserAuthenticated: userAuth.isAuthenticated,
-        isExpertAuthenticated: expertAuth.isAuthenticated,
-        currentUser: userAuth.currentUser,
-        currentExpert: expertAuth.currentExpert,
-        isSynchronizing: false,
-        isAuthInitialized: true,
-        authCheckCompleted: true,
-        hasDualSessions: userAuth.isAuthenticated && expertAuth.isAuthenticated,
-        sessionType: determineSessionType(userAuth.isAuthenticated, expertAuth.isAuthenticated)
-      }));
-      
-      return true;
-    } catch (error) {
-      console.error('Error during auth sync:', error);
-      return false;
-    }
-  };
-  
-  // Setup auth logout methods
-  const userLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      const result = await userAuth.logout();
-      setIsLoggingOut(false);
-      return result;
-    } catch (error) {
-      setIsLoggingOut(false);
-      return false;
-    }
-  };
-  
-  const expertLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      const result = await expertAuth.logout();
-      setIsLoggingOut(false);
-      return result;
-    } catch (error) {
-      setIsLoggingOut(false);
-      return false;
-    }
-  };
-  
-  const fullLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      await userAuth.logout();
-      await expertAuth.logout();
-      setIsLoggingOut(false);
-      return true;
-    } catch (error) {
-      setIsLoggingOut(false);
-      return false;
-    }
-  };
+  // Use auth logout methods
+  const { userLogout, expertLogout, fullLogout } = useAuthLogoutMethods(
+    sessionType,
+    setIsUserAuthenticated,
+    setIsExpertAuthenticated,
+    setSessionType,
+    setHasDualSessions,
+    setIsLoggingOut
+  );
+
+  const handleSetIsLoggingOut = useCallback((value: boolean) => {
+    setIsLoggingOut(value);
+  }, []);
   
   return {
-    ...state,
-    isAuthenticated: state.isUserAuthenticated || state.isExpertAuthenticated,
-    isAuthLoading: state.isSynchronizing || !state.isAuthInitialized,
-    syncAuthState,
+    // Combine state from auth check effect
+    ...authState,
+    // Add user and expert authentication state
+    isUserAuthenticated: authState.isUserAuthenticated,
+    isExpertAuthenticated: authState.isExpertAuthenticated,
+    currentUser,
+    currentExpert,
+    isAuthenticated: authState.isUserAuthenticated,
+    isAuthLoading: authState.isSynchronizing,
+    // Logout methods
     userLogout,
     expertLogout,
     fullLogout,
+    // Logging out state handler
     isLoggingOut,
-    currentUser: state.currentUser || null,
-    currentExpert: state.currentExpert || null
+    setIsLoggingOut: handleSetIsLoggingOut
   };
 };
 
-// Helper function to determine session type
-const determineSessionType = (isUserAuth: boolean, isExpertAuth: boolean): SessionType => {
-  if (isUserAuth && isExpertAuth) return 'dual';
-  if (isUserAuth) return 'user';
-  if (isExpertAuth) return 'expert';
-  return 'none';
-};
+export * from './types';

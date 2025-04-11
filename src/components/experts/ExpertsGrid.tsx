@@ -45,8 +45,8 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
         // Extract specialties from specialization or default to empty array
         const specialtiesArray = expert.specialization ? [expert.specialization] : [];
         
-        // Get price from price_per_min as pricing doesn't exist in the type
-        const expertPrice = expert.price_per_min || 0;
+        // Get price from expert.pricing if it exists, otherwise use default
+        const price = expert.pricing?.price_per_min || 30; // Default price of 30
         
         // Check online status from verified property
         const isOnline = expert.verified || false;
@@ -98,7 +98,7 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
               
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs text-muted-foreground">Available</span>
-                <span className="font-medium text-sm">₹{expertPrice}/min</span>
+                <span className="font-medium text-sm">₹{price}/min</span>
               </div>
               
               <div className="grid grid-cols-2 gap-2">

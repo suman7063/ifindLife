@@ -1,31 +1,25 @@
 
-import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { handleAuthError } from '@/utils/authUtils';
 
 export const useAuthPassword = (setLoading: (value: boolean) => void) => {
-  const [error, setError] = useState<string | null>(null);
-
   const resetPassword = async (email: string): Promise<boolean> => {
     try {
       setLoading(true);
-      setError(null);
-      
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
-      
+
       if (error) {
-        setError(error.message);
         toast.error(error.message);
         return false;
       }
-      
+
       toast.success('Password reset instructions sent to your email');
       return true;
     } catch (error: any) {
-      setError(error.message || 'An error occurred while requesting password reset');
-      toast.error(error.message || 'An error occurred while requesting password reset');
+      handleAuthError(error, 'Failed to send reset instructions');
       return false;
     } finally {
       setLoading(false);
@@ -35,30 +29,22 @@ export const useAuthPassword = (setLoading: (value: boolean) => void) => {
   const updatePassword = async (password: string): Promise<boolean> => {
     try {
       setLoading(true);
-      setError(null);
-      
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
-      
+      const { error } = await supabase.auth.updateUser({ password });
+
       if (error) {
-        setError(error.message);
         toast.error(error.message);
         return false;
       }
-      
+
       toast.success('Password updated successfully');
       return true;
     } catch (error: any) {
-      setError(error.message || 'An error occurred while updating password');
-      toast.error(error.message || 'An error occurred while updating password');
+      handleAuthError(error, 'Failed to update password');
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { resetPassword, updatePassword, error };
+  return { resetPassword, updatePassword };
 };
-
-export default useAuthPassword;

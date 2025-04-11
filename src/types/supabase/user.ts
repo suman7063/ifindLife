@@ -1,5 +1,10 @@
 
-// User-related types for the application
+// User-related types for UI components and business logic
+
+import { UserTransaction } from './tables';
+import { Referral } from './referral';
+import { Expert } from '../expert';
+
 export interface UserProfile {
   id: string;
   name?: string;
@@ -7,32 +12,46 @@ export interface UserProfile {
   phone?: string;
   country?: string;
   city?: string;
-  created_at?: string;
-  avatar_url?: string | null;
-  profile_picture?: string | null; // Alternative property name for avatar_url
-  referral_code?: string;
-  referred_by?: string | null;
-  wallet_balance?: number;
   currency?: string;
+  profile_picture?: string;
+  wallet_balance?: number;
+  created_at?: string;
+  referral_code?: string;
+  referred_by?: string;
+  referral_link?: string;
   
-  // Extended properties that might be populated by joins but not in the actual database table
-  transactions?: any[];
-  reports?: any[];
-  reviews?: any[];
-  enrolled_courses?: any[];
-  favorite_experts?: any[];
-  referrals?: any[];
-  
-  // Property aliases for backward compatibility
-  walletBalance?: number; // Alias for wallet_balance
+  // Related data collections
+  favorite_experts?: string[];
+  enrolled_courses?: Course[];
+  transactions?: UserTransaction[];
+  reviews?: Review[];
+  reports?: Report[];
+  referrals?: Referral[];
 }
 
-export interface ReferralSettings {
-  id?: string | number;
-  referrer_reward: number;
-  referred_reward: number;
-  enabled: boolean;
-  active: boolean; // Compatibility with existing code
-  description?: string;
-  updated_at?: string;
+export interface Review {
+  id: string;
+  expertId: string;
+  rating: number;
+  comment: string;
+  date: string;
+}
+
+export interface Report {
+  id: string;
+  expertId: string;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  expertId: string;
+  expertName: string;
+  enrollmentDate: string;
+  progress?: number;
+  completed?: boolean;
 }

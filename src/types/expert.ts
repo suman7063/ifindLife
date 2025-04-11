@@ -1,41 +1,30 @@
 
 export interface Expert {
-  id: string;
-  auth_id?: string;
+  id: string; // Changed to string only
   name: string;
   email: string;
-  phone?: string;
   bio?: string;
-  specialization?: string;
-  experience?: string;
-  country?: string;
-  state?: string;
-  city?: string;
-  address?: string;
   profile_picture?: string;
-  avatar_url?: string;
-  imageUrl?: string;
-  certificate_urls?: string[];
-  created_at?: string;
-  status?: string; // Changed from enum to string to allow any status value
+  specialization?: string;
+  experience?: string | number;
   verified?: boolean;
+  created_at?: string;
+  updated_at?: string;
   average_rating?: number;
-  reviews_count?: number;
-  selected_services?: number[];
-  price_per_min?: number;
+  pricing?: {
+    price_per_min?: number;
+    consultation_fee?: number;
+  };
 }
 
+// Add the missing ExtendedExpert type
 export interface ExtendedExpert extends Expert {
-  pricing?: number;
-  online?: boolean;
-  languages?: string[];
-  availability?: string;
-  waitTime?: string;
-  consultations?: number;
+  distance?: number;
   rating?: number;
-  price?: number;
-}
-
-export interface ExpertProfile extends Expert {
-  // Additional fields specific to ExpertProfile, if any
+  reviewCount?: number;
+  isFavorite?: boolean;
+  sessionCount?: number;
+  availability?: any[];
+  specialties?: string[];
+  languages?: string[];
 }

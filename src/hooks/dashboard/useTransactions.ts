@@ -1,57 +1,75 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Transaction } from '@/types/supabase/transactions';
-import { toast } from 'sonner';
+import { UserTransaction } from '@/types/supabase/tables';
 
-const useTransactions = (userId?: string) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isLoading, setIsLoading] = useState<boolean>(true); // Added alias for consistency
-  
+interface UseTransactionsProps {
+  transactions: UserTransaction[];
+  isLoading: boolean;
+  error: Error | null;
+  refreshTransactions: () => Promise<void>;
+}
+
+const useTransactions = (userId?: string): UseTransactionsProps => {
+  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+
   const fetchTransactions = async () => {
     if (!userId) {
-      setLoading(false);
+      setTransactions([]);
       setIsLoading(false);
       return;
     }
-    
+
+    setIsLoading(true);
     try {
-      setLoading(true);
-      setIsLoading(true);
-      
       const { data, error } = await supabase
-        .from('wallet_transactions')
+        .from('user_transactions')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      
+        .order('date', { ascending: false });
+
       if (error) throw error;
-      
-      setTransactions(data || []);
-    } catch (error: any) {
-      console.error('Error fetching transactions:', error);
-      toast.error('Failed to load transaction history');
+
+      // Transform and standardize the transaction data
+      const formattedTransactions = (data || []).map(item => ({
+        id: item.id,
+        user_id: item.user_id,
+        amount: item.amount,
+        currency: item.currency || 'USD',
+        description: item.description || '',
+        date: item.date,
+        type: item.type,
+        status: item.status || 'completed', // Default status if missing
+        created_at: item.created_at || item.date, // Use date as fallback
+        payment_id: item.payment_id || `pay_${Date.now()}`, // Generate fallback ID
+        payment_method: item.payment_method || 'wallet', // Default payment method
+        transaction_type: item.transaction_type || item.type // Keep backwards compatibility
+      })) as UserTransaction[];
+
+      setTransactions(formattedTransactions);
+    } catch (err) {
+      console.error('Error fetching transactions:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch transactions'));
     } finally {
-      setLoading(false);
       setIsLoading(false);
     }
   };
-  
+
+  // Initial fetch
   useEffect(() => {
     fetchTransactions();
   }, [userId]);
-  
+
   const refreshTransactions = async () => {
     await fetchTransactions();
   };
-  
-  return { 
-    transactions, 
-    loading, 
-    isLoading, // Added alias
-    fetchTransactions,
+
+  return {
+    transactions,
+    isLoading,
+    error,
     refreshTransactions
   };
 };

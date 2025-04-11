@@ -1,85 +1,104 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserProfile } from '@/types/supabase/userProfile';
-import { ExpertProfile as SBExpertProfile } from '@/types/supabase/expert';
-import { ExpertProfile as AppExpertProfile } from '@/types/expert';
-import { User } from '@supabase/supabase-js';
-import { UseAuthSynchronizationReturn } from '@/hooks/auth-sync/types';
+import { useState, useEffect } from 'react';
 
-export interface UseAuthBackCompatReturn {
-  currentUser: UserProfile;
-  user: User;
-  currentExpert: AppExpertProfile;
-  isAuthenticated: boolean;
-  isExpertAuthenticated: boolean;
-  loading: boolean;
-  expertAuth: {
-    currentExpert: AppExpertProfile | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    login: (email: string, password: string) => Promise<boolean>;
-    logout: () => Promise<boolean>;
-    register: (data: any) => Promise<boolean>;
-  };
-  authSync: UseAuthSynchronizationReturn;
-}
-
-// Helper to convert between ExpertProfile types
-const convertExpertProfile = (expert: SBExpertProfile | null): AppExpertProfile | null => {
-  if (!expert) return null;
-  
-  return {
-    ...expert,
-    id: String(expert.id) // Ensure id is a string
-  } as AppExpertProfile;
-};
-
-export const useAuthBackCompat = (): UseAuthBackCompatReturn => {
+export const useAuthBackCompat = () => {
   const auth = useAuth();
+  const [isInitializing, setIsInitializing] = useState(true);
   
-  const expertProfile = convertExpertProfile(auth.expertProfile);
+  // Wait for auth initialization to complete
+  useEffect(() => {
+    if (!auth.isLoading) {
+      setIsInitializing(false);
+    }
+  }, [auth.isLoading]);
   
-  // Create a backward compatible API
-  return {
-    currentUser: auth.userProfile || {} as UserProfile,
-    user: auth.user || {} as User,
-    currentExpert: expertProfile || {} as AppExpertProfile,
-    isAuthenticated: auth.isAuthenticated,
-    isExpertAuthenticated: auth.role === 'expert',
+  // Compatibility layer for useUserAuth
+  const userAuth = {
+    currentUser: auth.userProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
+    authLoading: auth.isLoading || isInitializing,
+    profileNotFound: !auth.userProfile && !auth.isLoading && auth.isAuthenticated,
+    user: auth.user,
     loading: auth.isLoading,
-    
-    // Expert auth backward compatibility
-    expertAuth: {
-      currentExpert: expertProfile,
-      isAuthenticated: auth.role === 'expert',
-      isLoading: auth.isLoading,
-      login: auth.login,
-      logout: auth.logout,
-      register: async (data) => {
-        // Placeholder for expert registration
-        console.warn('Expert registration through legacy API is deprecated');
-        return false;
+    login: auth.login,
+    signup: auth.signup,
+    logout: auth.logout,
+    updateProfile: auth.updateUserProfile,
+    updateProfilePicture: async () => null, // Not implemented in unified auth
+    updatePassword: auth.updatePassword,
+    addToFavorites: async () => false, // Not implemented in unified auth
+    removeFromFavorites: async () => false, // Not implemented in unified auth
+    rechargeWallet: async () => false, // Not implemented in unified auth
+    addReview: async (review: any) => {
+      if (auth.addReview && review) {
+        if (typeof review === 'object') {
+          const expertId = review.expertId || review.expert_id;
+          const rating = review.rating;
+          const comment = review.comment;
+          if (expertId && rating) {
+            return auth.addReview(expertId.toString(), rating, comment || '');
+          }
+        }
       }
+      return false;
     },
-    
-    // Auth sync compatibility
-    authSync: {
-      syncAuthState: async () => true,
-      isUserAuthenticated: auth.role === 'user',
-      isExpertAuthenticated: auth.role === 'expert',
-      isAuthenticated: auth.isAuthenticated,
-      isAuthInitialized: !auth.isLoading,
-      isAuthLoading: auth.isLoading,
-      authCheckCompleted: !auth.isLoading,
-      isSynchronizing: auth.isLoading,
-      currentUser: auth.userProfile,
-      currentExpert: expertProfile,
-      userLogout: auth.logout,
-      expertLogout: auth.logout,
-      fullLogout: auth.logout,
-      hasDualSessions: false,
-      sessionType: auth.role === 'user' ? 'user' : auth.role === 'expert' ? 'expert' : 'none',
-      isLoggingOut: false
+    reportExpert: async (report: any) => {
+      if (auth.reportExpert && report) {
+        if (typeof report === 'object') {
+          const expertId = report.expertId || report.expert_id;
+          const reason = report.reason;
+          const details = report.details || '';
+          if (expertId && reason) {
+            return auth.reportExpert(expertId.toString(), reason, details);
+          }
+        }
+      }
+      return false;
+    },
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getReferralLink: auth.getReferralLink || (() => null)
+  };
+  
+  // Compatibility layer for useExpertAuth
+  const expertAuth = {
+    currentExpert: auth.expertProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+    loading: auth.isLoading,
+    isLoading: auth.isLoading,
+    error: null,
+    initialized: !auth.isLoading,
+    authInitialized: !auth.isLoading,
+    user: auth.user,
+    login: auth.expertLogin,
+    logout: auth.logout,
+    register: auth.expertSignup,
+    updateProfile: auth.updateExpertProfile,
+    hasUserAccount: async () => {
+      const role = await auth.checkUserRole();
+      return role === 'user';
     }
   };
+  
+  // Compatibility layer for useAuthSynchronization
+  const authSync = {
+    isAuthInitialized: !auth.isLoading,
+    isAuthLoading: auth.isLoading,
+    isUserAuthenticated: auth.isAuthenticated && auth.role === 'user',
+    isExpertAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+    userLogout: auth.logout,
+    expertLogout: auth.logout,
+    fullLogout: auth.logout,
+    hasDualSessions: false, // Not supported in unified auth
+    isSynchronizing: false, // Not supported in unified auth
+    authCheckCompleted: !auth.isLoading,
+    // Add back compatibility properties
+    isAuthenticated: auth.isAuthenticated,
+    currentUser: auth.userProfile,
+    currentExpert: auth.expertProfile,
+    sessionType: auth.sessionType || 'none'
+  };
+  
+  return { userAuth, expertAuth, authSync };
 };

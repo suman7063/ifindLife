@@ -1,264 +1,127 @@
 
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { UserProfile } from '@/types/supabase/userProfile';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Home,
-  User,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Search,
-  CreditCard,
-} from 'lucide-react';
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { UserPlus, User, HelpCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import NavbarUserMenu from './NavbarUserMenu';
+import NavbarExpertMenu from './NavbarExpertMenu';
+import { UserProfile } from '@/types/supabase';
 
 interface NavbarDesktopLinksProps {
-  currentUser?: UserProfile | null;
-  onLogout?: () => Promise<boolean>;
-  isLoggingOut?: boolean;
-  // Add the missing props
-  isAuthenticated?: boolean;
-  hasExpertProfile?: boolean;
-  sessionType?: 'user' | 'expert' | 'none' | 'dual';
-  userLogout?: () => Promise<boolean>;
-  expertLogout?: () => Promise<boolean>;
+  isAuthenticated: boolean;
+  currentUser: UserProfile | null;
+  hasExpertProfile: boolean;
+  userLogout: () => Promise<boolean>;
+  expertLogout: () => Promise<boolean>;
+  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  isLoggingOut: boolean;
 }
 
-const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
-  currentUser,
-  onLogout,
-  isLoggingOut,
+interface NavbarDesktopLinksDropdownProps {
+  title: string;
+  isAuthenticated?: boolean;
+  hasExpertProfile?: boolean;
+}
+
+const NavbarDesktopLinksDropdown: React.FC<NavbarDesktopLinksDropdownProps> = ({ 
+  title, 
+  isAuthenticated = false,
+  hasExpertProfile = false
 }) => {
-  const location = useLocation();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const handleLogout = async () => {
-    if (onLogout) {
-      await onLogout();
-    }
-  };
-
-  const getInitials = (name?: string) => {
-    if (!name) return 'U';
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  const mobileMenuLinks = [
-    { path: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
-    {
-      path: '/search',
-      label: 'Search Experts',
-      icon: <Search className="h-5 w-5" />,
-    },
-    {
-      path: '/user-dashboard',
-      label: 'Dashboard',
-      icon: <User className="h-5 w-5" />,
-      authRequired: true,
-    },
-    {
-      path: '/wallet',
-      label: 'Wallet',
-      icon: <CreditCard className="h-5 w-5" />,
-      authRequired: true,
-    },
-    {
-      path: '/user-settings',
-      label: 'Settings',
-      icon: <Settings className="h-5 w-5" />,
-      authRequired: true,
-    },
-  ];
-
   return (
-    <>
-      {/* Desktop Links */}
-      <div className="hidden md:flex items-center space-x-8">
-        <Link
-          to="/"
-          className={`text-base font-medium ${
-            isActive('/') ? 'text-ifind-aqua' : 'text-gray-700'
-          } hover:text-ifind-teal`}
-        >
-          Home
-        </Link>
-        <Link
-          to="/search"
-          className={`text-base font-medium ${
-            isActive('/search') ? 'text-ifind-aqua' : 'text-gray-700'
-          } hover:text-ifind-teal`}
-        >
-          Find Experts
-        </Link>
-        <Link
-          to="/how-it-works"
-          className={`text-base font-medium ${
-            isActive('/how-it-works') ? 'text-ifind-aqua' : 'text-gray-700'
-          } hover:text-ifind-teal`}
-        >
-          How It Works
-        </Link>
-
-        {currentUser ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="relative rounded-full h-10 w-10 p-0"
-              >
-                <Avatar className="h-10 w-10">
-                  <AvatarImage
-                    src={currentUser.profile_picture || undefined}
-                    alt={currentUser.name || 'User'}
-                  />
-                  <AvatarFallback>
-                    {getInitials(currentUser.name)}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                {currentUser.name || 'User Account'}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/user-dashboard" className="cursor-pointer w-full">
-                  Dashboard
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/wallet" className="cursor-pointer w-full">
-                  Wallet
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/user-profile" className="cursor-pointer w-full">
-                  Profile
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/user-settings" className="cursor-pointer w-full">
-                  Settings
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="cursor-pointer"
-              >
-                {isLoggingOut ? 'Logging out...' : 'Logout'}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <div className="flex items-center space-x-4">
-            <Link to="/user-login">
-              <Button variant="ghost" className="text-base">
-                Log in
-              </Button>
-            </Link>
-            <Link to="/user-signup">
-              <Button className="bg-ifind-aqua hover:bg-ifind-teal text-base">
-                Sign up
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* Mobile menu button */}
-      <div className="md:hidden">
-        <Button
-          variant="ghost"
-          className="p-2"
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-        >
-          {isMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
+    <div className="group relative">
+      <Button variant="ghost" className="flex items-center gap-1">
+        {title}
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-4 w-4">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </Button>
+      <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 group-hover:block">
+        <div className="py-1">
+          {title === "Programs" && (
+            <>
+              <Link to="/programs-for-wellness-seekers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wellness Seekers</Link>
+              <Link to="/programs-for-academic-institutes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Academic Institutes</Link>
+              <Link to="/programs-for-business" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Business</Link>
+            </>
           )}
-        </Button>
-      </div>
-
-      {/* Mobile menu */}
-      {isMenuOpen && (
-        <div className="absolute top-full left-0 right-0 bg-white shadow-lg p-4 md:hidden z-50">
-          <div className="flex flex-col space-y-2">
-            {mobileMenuLinks.map((link) => {
-              // Skip auth-required links if no user
-              if (link.authRequired && !currentUser) return null;
-
-              return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setIsMenuOpen(false)}
-                  className={`flex items-center space-x-2 p-2 rounded-md ${
-                    isActive(link.path)
-                      ? 'bg-ifind-aqua/10 text-ifind-aqua'
-                      : 'hover:bg-gray-100'
-                  }`}
-                >
-                  {link.icon}
-                  <span>{link.label}</span>
-                </Link>
-              );
-            })}
-
-            {!currentUser ? (
-              <div className="flex flex-col space-y-2 pt-2">
-                <Link to="/user-login" onClick={() => setIsMenuOpen(false)}>
-                  <Button variant="outline" className="w-full">
-                    Log in
-                  </Button>
-                </Link>
-                <Link to="/user-signup" onClick={() => setIsMenuOpen(false)}>
-                  <Button className="w-full bg-ifind-aqua hover:bg-ifind-teal">
-                    Sign up
-                  </Button>
-                </Link>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="flex items-center space-x-2 justify-center mt-2"
-                onClick={async () => {
-                  setIsMenuOpen(false);
-                  await handleLogout();
-                }}
-                disabled={isLoggingOut}
+          {title === "Services" && (
+            <>
+              <Link to="/services" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium">All Services</Link>
+              <Link to="/services/therapy-sessions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Therapy Sessions</Link>
+              <Link to="/services/guided-meditations" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Guided Meditations</Link>
+              <Link to="/services/mindful-listening" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mindful Listening</Link>
+              <Link to="/services/offline-retreats" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Offline Retreats</Link>
+              <Link to="/services/life-coaching" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Life Coaching</Link>
+            </>
+          )}
+          {title === "Support" && (
+            <>
+              <Link to="/contact" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Contact Us</Link>
+              <Link to="/faqs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">FAQs</Link>
+              <Link to="/blog" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Blog</Link>
+            </>
+          )}
+          {title === "Login" && (
+            <>
+              <Link 
+                to="/user-login" 
+                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${hasExpertProfile ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
+                onClick={(e) => hasExpertProfile && e.preventDefault()}
               >
-                <LogOut className="h-5 w-5" />
-                <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-              </Button>
-            )}
-          </div>
+                User Login
+              </Link>
+              <Link 
+                to="/expert-login" 
+                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${isAuthenticated ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
+                onClick={(e) => isAuthenticated && e.preventDefault()}
+              >
+                Expert Login
+              </Link>
+            </>
+          )}
         </div>
+      </div>
+    </div>
+  );
+};
+
+const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
+  isAuthenticated,
+  currentUser,
+  hasExpertProfile,
+  userLogout,
+  expertLogout,
+  sessionType,
+  isLoggingOut
+}) => {
+  return (
+    <div className="hidden md:flex items-center space-x-1">
+      <Button variant="ghost" asChild>
+        <Link to="/">Home</Link>
+      </Button>
+      <Button variant="ghost" asChild>
+        <Link to="/about">About</Link>
+      </Button>
+      <Button variant="ghost" asChild>
+        <Link to="/experts">Experts</Link>
+      </Button>
+      <NavbarDesktopLinksDropdown title="Programs" />
+      <NavbarDesktopLinksDropdown title="Services" />
+      <NavbarDesktopLinksDropdown title="Support" />
+      
+      {hasExpertProfile ? (
+        <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
+      ) : isAuthenticated ? (
+        <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
+      ) : (
+        <NavbarDesktopLinksDropdown 
+          title="Login" 
+          isAuthenticated={isAuthenticated} 
+          hasExpertProfile={hasExpertProfile} 
+        />
       )}
-    </>
+    </div>
   );
 };
 

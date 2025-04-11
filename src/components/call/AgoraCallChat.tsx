@@ -1,86 +1,122 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Send } from 'lucide-react';
 
-export interface AgoraCallChatProps {
-  userName?: string;
-  expertName?: string;
+interface Message {
+  id: string;
+  sender: string;
+  text: string;
+  timestamp: Date;
 }
 
-const AgoraCallChat: React.FC<AgoraCallChatProps> = ({ userName, expertName }) => {
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState([
-    { sender: 'expert', text: 'Hello! How can I help you today?', time: new Date().toISOString() }
+interface AgoraCallChatProps {
+  visible: boolean;
+  userName: string;
+  expertName: string;
+}
+
+const AgoraCallChat: React.FC<AgoraCallChatProps> = ({
+  visible,
+  userName,
+  expertName
+}) => {
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: '1',
+      sender: expertName,
+      text: 'Hello, how can I help you today?',
+      timestamp: new Date()
+    }
   ]);
+  const [messageText, setMessageText] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const sendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
+  // Auto-scroll to bottom when new messages are added
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
-    // Add user message
-    setMessages(prev => [...prev, {
-      sender: 'user',
-      text: message,
-      time: new Date().toISOString()
-    }]);
+  const handleSendMessage = () => {
+    if (messageText.trim() === '') return;
     
-    setMessage('');
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      sender: userName,
+      text: messageText,
+      timestamp: new Date()
+    };
     
-    // Simulate expert response
+    setMessages(prev => [...prev, newMessage]);
+    setMessageText('');
+    
+    // Simulate a reply after a short delay
     setTimeout(() => {
-      setMessages(prev => [...prev, {
-        sender: 'expert',
-        text: 'Thank you for your message. I\'m reviewing your question.',
-        time: new Date().toISOString()
-      }]);
-    }, 1500);
+      const reply: Message = {
+        id: Date.now().toString(),
+        sender: expertName,
+        text: 'I understand. Let me think about that for a moment.',
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, reply]);
+    }, 3000);
   };
 
+  const formatTime = (date: Date): string => {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  if (!visible) return null;
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="bg-muted/50 p-3 border-b">
-        <h3 className="text-sm font-medium">Chat with {expertName || 'Expert'}</h3>
+    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
+      <div className="border-b p-3">
+        <h3 className="font-medium">Chat with {expertName}</h3>
       </div>
       
-      <div className="flex-1 overflow-auto p-4 space-y-4">
-        {messages.map((msg, idx) => (
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {messages.map(message => (
           <div 
-            key={idx}
-            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            key={message.id} 
+            className={`flex flex-col ${message.sender === userName ? 'items-end' : 'items-start'}`}
           >
             <div 
-              className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                msg.sender === 'user' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-muted'
+              className={`px-3 py-2 rounded-lg max-w-[80%] ${
+                message.sender === userName 
+                  ? 'bg-blue-500 text-white' 
+                  : 'bg-gray-100 text-gray-800'
               }`}
             >
-              <p className="text-sm">{msg.text}</p>
-              <span className="text-xs opacity-70 mt-1 block">
-                {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+              {message.text}
+            </div>
+            <div className="text-xs text-gray-500 mt-1">
+              {message.sender} • {formatTime(message.timestamp)}
             </div>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       
-      <form onSubmit={sendMessage} className="border-t p-3 flex">
-        <input
-          type="text"
+      <div className="border-t p-3 flex gap-2">
+        <Input 
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
           placeholder="Type a message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="flex-1 px-3 py-2 border rounded-l-md focus:outline-none focus:ring-1 focus:ring-primary"
+          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
         />
         <Button 
-          type="submit" 
-          className="rounded-l-none"
-          disabled={!message.trim()}
+          onClick={handleSendMessage}
+          size="icon"
+          className="shrink-0"
+          disabled={messageText.trim() === ''}
         >
           <Send className="h-4 w-4" />
         </Button>
-      </form>
+      </div>
     </div>
   );
 };

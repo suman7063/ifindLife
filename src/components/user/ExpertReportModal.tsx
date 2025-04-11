@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertTriangle } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
-import { NewReport } from '@/types/common';
+import { NewReport } from '@/types/supabase/tables';
 
 interface ExpertReportModalProps {
   expertId: string;
@@ -58,6 +59,7 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
   React.useEffect(() => {
     const checkServiceHistory = async () => {
       try {
+        // Use the expertId as a string directly, since hasTakenServiceFrom expects a string
         const hasService = await hasTakenServiceFrom(expertId);
         setCanReport(hasService);
       } catch (error) {

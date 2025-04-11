@@ -1,93 +1,138 @@
-
 import { useState, useCallback } from 'react';
-import { CallState } from '@/lib/agoraService';
+import { 
+  CallSettings, 
+  CallType,
+  joinCall, 
+  leaveCall, 
+  toggleMute, 
+  toggleVideo
+} from '@/utils/agoraService';
+import { useUserAuth } from '@/hooks/useUserAuth';
 
 export const useCallOperations = (
   expertId: number, 
-  setCallState: (state: React.SetStateAction<CallState>) => void,
-  callState: CallState,
-  startTimers: (initialDuration: number, ratePerMinute: number) => void,
-  stopTimers: () => void,
-  calculateFinalCost: () => number
+  setCallState: Function,
+  callState: any,
+  startTimers: Function,
+  stopTimers: Function,
+  calculateFinalCost: Function
 ) => {
-  const startCall = useCallback(async (type: 'audio' | 'video'): Promise<boolean> => {
+  const { currentUser } = useUserAuth();
+  const [callType, setCallType] = useState<CallType>('video');
+  const [callError, setCallError] = useState<string | null>(null);
+
+  const startCall = useCallback(async (selectedCallType: CallType = 'video') => {
+    setCallError(null);
+    
+    if (!callState.client) {
+      console.error("No Agora client available");
+      setCallError("Call initialization failed: No client available");
+      return false;
+    }
+    
+    const userId = currentUser?.id || `guest-${Date.now()}`;
+    console.log("Starting call with user:", userId, "expertId:", expertId);
+    
     try {
-      // Simulate connecting to a call
-      setCallState(prev => ({ 
-        ...prev, 
-        isConnecting: true,
-        hasError: false
-      }));
+      setCallType(selectedCallType);
       
-      // Simulate a delay for connecting
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const channelName = `call_${userId}_${expertId}`;
+      console.log("Channel name:", channelName);
       
-      // Set connected state
-      setCallState(prev => ({ 
-        ...prev, 
-        isConnecting: false,
-        isConnected: true,
+      const callSettings: CallSettings = {
+        channelName,
+        callType: selectedCallType
+      };
+      
+      console.log("Joining call with settings:", callSettings);
+      
+      const { localAudioTrack, localVideoTrack } = await joinCall(callSettings, callState.client);
+      console.log("Join call success, tracks created:", 
+        "audio:", !!localAudioTrack, 
+        "video:", !!localVideoTrack
+      );
+      
+      setCallState(prev => ({
+        ...prev,
+        localAudioTrack,
+        localVideoTrack,
         isJoined: true,
         isMuted: false,
-        isVideoEnabled: type === 'video'
+        isVideoEnabled: selectedCallType === 'video'
       }));
       
-      // Start timers with 15 minutes initial duration
-      startTimers(15, 1);
+      startTimers();
       
       return true;
     } catch (error) {
-      setCallState(prev => ({
-        ...prev,
-        isConnecting: false,
-        hasError: true,
-        errorMessage: error instanceof Error ? error.message : 'Unknown error'
-      }));
+      console.error('Error joining call:', error);
+      setCallError(`Failed to join call: ${error instanceof Error ? error.message : 'Unknown error'}`);
       return false;
     }
-  }, [setCallState, startTimers]);
+  }, [callState.client, currentUser, expertId, setCallState, startTimers]);
 
-  const endCall = useCallback(async (): Promise<{success: boolean, cost: number}> => {
+  const endCall = useCallback(async () => {
+    const { client, localAudioTrack, localVideoTrack } = callState;
+    
+    if (!client) {
+      console.error("No client available to end call");
+      return { success: false, duration: 0, cost: 0 };
+    }
+    
     try {
-      // Stop timers first
+      console.log("Ending call, cleaning up resources");
+      await leaveCall(client, localAudioTrack, localVideoTrack);
+      
       stopTimers();
       
-      // Reset call state
       setCallState(prev => ({
         ...prev,
-        isConnected: false,
-        isJoined: false
+        localAudioTrack: null,
+        localVideoTrack: null,
+        remoteUsers: [],
+        isJoined: false,
+        isMuted: false,
+        isVideoEnabled: true
       }));
       
       const finalCost = calculateFinalCost();
       
-      return { 
-        success: true, 
-        cost: finalCost 
-      };
+      return { success: true, duration: 0, cost: finalCost };
     } catch (error) {
-      return { 
-        success: false, 
-        cost: 0 
-      };
+      console.error('Error ending call:', error);
+      return { success: false, duration: 0, cost: 0 };
     }
-  }, [setCallState, stopTimers, calculateFinalCost]);
+  }, [callState, setCallState, stopTimers, calculateFinalCost]);
 
   const handleToggleMute = useCallback(() => {
+    const { localAudioTrack, isMuted } = callState;
+    
+    if (!localAudioTrack) return;
+    
+    const newMuteState = toggleMute(localAudioTrack, isMuted);
+    
     setCallState(prev => ({
       ...prev,
-      isMuted: !prev.isMuted
+      isMuted: newMuteState
     }));
-  }, [setCallState]);
+  }, [callState, setCallState]);
 
   const handleToggleVideo = useCallback(() => {
+    const { localVideoTrack, isVideoEnabled } = callState;
+    
+    if (!localVideoTrack) return;
+    
+    const newVideoState = toggleVideo(localVideoTrack, isVideoEnabled);
+    
     setCallState(prev => ({
       ...prev,
-      isVideoEnabled: !prev.isVideoEnabled
+      isVideoEnabled: newVideoState
     }));
-  }, [setCallState]);
+  }, [callState, setCallState]);
 
   return {
+    callType,
+    callError,
     startCall,
     endCall,
     handleToggleMute,

@@ -71,5 +71,3 @@ export const useUserReviews = (
     addReview
   };
 };
-
-export default useUserReviews;

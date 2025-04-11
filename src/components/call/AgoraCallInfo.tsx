@@ -1,65 +1,49 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
-import AgoraCallTypeSelector from './AgoraCallTypeSelector';
-import { ExpertProfile } from '@/types/supabase/expert';
+import { Clock, DollarSign } from 'lucide-react';
 
-export interface AgoraCallInfoProps {
-  expertName?: string;
-  expertPrice?: number;
-  onCallTypeChange: (type: 'audio' | 'video') => void;
-  selectedCallType: 'audio' | 'video';
-  onStartCall: () => Promise<boolean>;
-  isConnecting: boolean;
+interface AgoraCallInfoProps {
+  duration: number;
+  remainingTime: number;
+  cost: number;
+  formatTime: (seconds: number) => string;
+  pricePerMinute: number;
 }
 
 const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
-  expertName,
-  expertPrice,
-  onCallTypeChange,
-  selectedCallType,
-  onStartCall,
-  isConnecting
+  duration,
+  remainingTime,
+  cost,
+  formatTime,
+  pricePerMinute
 }) => {
   return (
-    <div className="flex flex-col items-center justify-center h-full p-6 space-y-8">
-      <div className="text-center">
-        <h2 className="text-xl font-semibold mb-2">
-          Connect with {expertName || 'Expert'}
-        </h2>
-        <p className="text-muted-foreground">
-          {expertPrice !== undefined ? 
-            `₹${expertPrice}/min - Secure and high-quality call` : 
-            'Secure and high-quality call'}
-        </p>
+    <div className="flex flex-col items-center space-y-4 py-2">
+      {/* Call duration */}
+      <div className="flex items-center">
+        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+        <span className="text-lg font-semibold">{formatTime(duration)}</span>
       </div>
       
-      <AgoraCallTypeSelector
-        selectedType={selectedCallType}
-        onSelect={onCallTypeChange}
-      />
-      
-      <div className="w-full max-w-xs">
-        <Button 
-          onClick={onStartCall}
-          disabled={isConnecting}
-          className="w-full h-12 bg-ifind-aqua hover:bg-ifind-teal"
-        >
-          {isConnecting ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current mr-2"></div>
-              Connecting...
-            </>
-          ) : (
-            `Start ${selectedCallType === 'video' ? 'Video' : 'Audio'} Call`
-          )}
-        </Button>
-        
-        <p className="text-xs text-center mt-2 text-muted-foreground">
-          <AlertCircle className="inline h-3 w-3 mr-1" />
-          You can end the call at any time
-        </p>
+      {/* Remaining time */}
+      <div className="flex flex-col items-center">
+        <div className="text-sm text-muted-foreground mb-1">Remaining time:</div>
+        <div className={`text-base font-semibold ${remainingTime < 60 ? 'text-red-500' : ''}`}>
+          {formatTime(remainingTime)}
+        </div>
+      </div>
+
+      {/* Cost information */}
+      <div className="flex flex-col items-center">
+        <div className="text-sm text-muted-foreground">
+          First 15 mins free, then ₹{pricePerMinute}/min
+        </div>
+        {cost > 0 && (
+          <div className="flex items-center mt-1">
+            <DollarSign className="h-4 w-4 mr-1" />
+            <span className="font-semibold">₹{cost.toFixed(2)}</span>
+          </div>
+        )}
       </div>
     </div>
   );

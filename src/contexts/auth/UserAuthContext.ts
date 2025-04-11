@@ -2,7 +2,6 @@
 import React from 'react';
 import { UserProfile } from '@/types/supabase';
 import { Review, Report, NewReview, NewReport } from '@/types/supabase/tables';
-import { User } from '@supabase/supabase-js';
 
 export interface UserAuthContextType {
   currentUser: UserProfile | null;
@@ -14,18 +13,17 @@ export interface UserAuthContextType {
   profileNotFound: boolean;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
-  addToFavorites: (expertId: string | number) => Promise<boolean>;
-  removeFromFavorites: (expertId: string | number) => Promise<boolean>;
+  addToFavorites: (expertId: number) => Promise<boolean>;
+  removeFromFavorites: (expertId: number) => Promise<boolean>;
   rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (review: NewReview | { expertId: string | number, rating: number, comment: string }) => Promise<boolean>;
-  reportExpert: (report: NewReport | { expertId: string | number, reason: string, details: string }) => Promise<boolean>;
+  addReview: (review: NewReview) => Promise<boolean>;
+  reportExpert: (report: NewReport) => Promise<boolean>;
   hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
   getExpertShareLink: (expertId: string | number) => string; 
   getReferralLink: () => string | null;
-  user: User | null;
+  user: any;
   loading: boolean;
   updateProfilePicture: (file: File) => Promise<string | null>;
-  isLoggingOut?: boolean;
 }
 
 export const UserAuthContext = React.createContext<UserAuthContextType>({} as UserAuthContextType);

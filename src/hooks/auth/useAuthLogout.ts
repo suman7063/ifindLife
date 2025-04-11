@@ -1,36 +1,34 @@
 
-import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
 
-export const useAuthLogout = (setLoading: (value: boolean) => void) => {
-  const [error, setError] = useState<string | null>(null);
-
+// Convert this to a function that returns hooks rather than using hooks directly
+export const useAuthLogout = (setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
+  // Move the useState inside the returned function
   const logout = async (): Promise<boolean> => {
     try {
       setLoading(true);
-      setError(null);
       
-      const { error } = await supabase.auth.signOut();
+      console.log("useAuthLogout: Starting logout process...");
+      
+      // Complete sign out from Supabase
+      const { error } = await supabase.auth.signOut({
+        scope: 'global' // This ensures complete signout across all tabs/windows
+      });
       
       if (error) {
-        setError(error.message);
-        toast.error(error.message);
+        console.error("useAuthLogout: Error during signOut:", error);
         return false;
       }
       
-      toast.success('Logged out successfully');
+      console.log("useAuthLogout: Logout completed successfully");
       return true;
-    } catch (error: any) {
-      setError(error.message || 'An error occurred during logout');
-      toast.error(error.message || 'An error occurred during logout');
+    } catch (error) {
+      console.error("useAuthLogout: Unexpected error during logout:", error);
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { logout, error };
+  return { logout, logoutLoading: false };
 };
-
-export default useAuthLogout;

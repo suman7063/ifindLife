@@ -1,48 +1,54 @@
 
-/**
- * Formats a number as a currency string
- */
-export const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2
-  }).format(amount);
-};
+// Utility functions for formatting data
 
 /**
- * Formats a date string to a more readable format
+ * Format a date string to a more readable format
  */
 export const formatDate = (dateString: string): string => {
-  if (!dateString) return '';
+  if (!dateString) return 'N/A';
   
-  try {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    }).format(date);
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return dateString; // Return the original string if parsing fails
-  }
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
 };
 
 /**
- * Formats a phone number to a standard format (XXX) XXX-XXXX
+ * Format a currency value
  */
-export const formatPhoneNumber = (phoneNumber: string): string => {
-  if (!phoneNumber) return '';
+export const formatCurrency = (
+  amount: number | undefined, 
+  currency: string = 'USD'
+): string => {
+  if (amount === undefined) return '$0.00';
   
-  // Remove all non-digit characters
-  const cleaned = phoneNumber.replace(/\D/g, '');
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2
+  });
   
-  // Format as (XXX) XXX-XXXX
-  if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6, 10)}`;
-  }
+  return formatter.format(amount);
+};
+
+/**
+ * Format a time string (HH:MM) to a more readable format
+ */
+export const formatTime = (timeString: string): string => {
+  if (!timeString) return 'N/A';
   
-  // Return original if not 10 digits
-  return phoneNumber;
+  // Check if the timeString is in HH:MM format
+  const match = timeString.match(/^([0-9]{1,2}):([0-9]{2})(?::([0-9]{2}))?$/);
+  if (!match) return timeString;
+  
+  const hours = parseInt(match[1], 10);
+  const minutes = match[2];
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const hour12 = hours % 12 || 12;
+  
+  return `${hour12}:${minutes} ${period}`;
 };

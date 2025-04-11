@@ -1,21 +1,15 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Copy, Check, RefreshCw } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
+import { ReferralSettings, UserProfile } from '@/types/supabase';
 import { toast } from 'sonner';
-
-interface ReferralSettings {
-  referrer_reward: number;
-  referred_reward: number;
-  active: boolean;
-  enabled?: boolean;
-  description?: string;
-}
 
 interface ReferralCardProps {
   settings?: ReferralSettings | null;
-  userProfile: any;
+  userProfile: UserProfile;
 }
 
 const ReferralCard: React.FC<ReferralCardProps> = ({ settings, userProfile }) => {
@@ -24,7 +18,7 @@ const ReferralCard: React.FC<ReferralCardProps> = ({ settings, userProfile }) =>
   const [isGenerating, setIsGenerating] = useState(false);
   
   // Get the referral link using the hook from UserAuthContext
-  const referralLink = userProfile?.referral_code && getReferralLink ? getReferralLink() : null;
+  const referralLink = userProfile?.referral_code ? getReferralLink() : null;
 
   // Format the reward amount with currency symbol
   const formattedAmount = settings?.referrer_reward

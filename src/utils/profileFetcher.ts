@@ -1,143 +1,206 @@
+
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase/userProfile';
-import { User } from '@supabase/supabase-js';
-import { UserSettings } from '@/types/user';
-import { ExpertProfile } from '@/types/expert';
-import { Transaction } from '@/types/transaction';
-import { ReferralInfo, ReferralUI } from '@/types/supabase/referral';
+import { UserProfile } from '@/types/supabase';
+import { User as SupabaseUser } from '@supabase/supabase-js';
+import { convertUserToUserProfile } from '@/utils/profileConverters';
+import { adaptCoursesToUI, adaptReviewsToUI, adaptReportsToUI } from '@/utils/dataAdapters';
+import { fetchUserReferrals } from '@/utils/referralUtils';
+import { Referral } from '@/types/supabase/referral';
 
-export const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
+export const fetchUserProfile = async (
+  user: SupabaseUser
+): Promise<UserProfile | null> => {
+  if (!user || !user.id) {
+    console.log("No user provided to fetchUserProfile");
+    return null;
+  }
+  
   try {
+    console.log("Fetching profile for user:", user.id);
+    
+    // Try to fetch the user profile
     const { data, error } = await supabase
-      .from('profiles')
+      .from('users')
       .select('*')
-      .eq('id', userId)
+      .eq('id', user.id)
       .single();
-
+      
     if (error) {
-      console.error('Error fetching user profile:', error);
-      throw error;
+      console.log("Error fetching user profile, attempting to create one:", error);
+      
+      // Extract relevant metadata for user creation
+      const userMetadata = user.user_metadata || {};
+      
+      // Generate a unique referral code for the user
+      const referralCode = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      
+      // If no profile exists, create one
+      const userData = {
+        id: user.id,
+        name: userMetadata.name || user.email?.split('@')[0] || '',
+        email: user.email || '',
+        phone: userMetadata.phone || '',
+        country: userMetadata.country || '',
+        city: userMetadata.city || '',
+        currency: 'USD',
+        wallet_balance: 0,
+        profile_picture: userMetadata.avatar_url || '',
+        referral_code: referralCode
+      };
+      
+      console.log("Creating new user profile with data:", userData);
+      
+      // Add retry logic for profile creation
+      let retries = 0;
+      const maxRetries = 3;
+      
+      while (retries < maxRetries) {
+        try {
+          const { data: newProfile, error: createError } = await supabase
+            .from('users')
+            .insert([userData])
+            .select()
+            .single();
+            
+          if (createError) {
+            console.error(`Error creating user profile (attempt ${retries + 1}):`, createError);
+            retries++;
+            if (retries === maxRetries) {
+              return null;
+            }
+            // Add a small delay before retrying
+            await new Promise(resolve => setTimeout(resolve, 500));
+          } else {
+            console.log("Created new profile:", newProfile);
+            return convertUserToUserProfile(newProfile);
+          }
+        } catch (innerError) {
+          console.error(`Exception in profile creation (attempt ${retries + 1}):`, innerError);
+          retries++;
+          if (retries === maxRetries) {
+            return null;
+          }
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      return null;
     }
-
-    return data;
+    
+    console.log("Found existing user profile, retrieving full data.");
+    const userProfile = convertUserToUserProfile(data);
+    
+    // Use Promise.allSettled to prevent one failing request from failing everything
+    const results = await Promise.allSettled([
+      // Fetch user favorites
+      supabase.from('user_favorites').select('expert_id').eq('user_id', user.id),
+      // Fetch user courses
+      supabase.from('user_courses').select('*').eq('user_id', user.id),
+      // Fetch user reviews
+      supabase.from('user_reviews').select('*').eq('user_id', user.id),
+      // Fetch user reports
+      supabase.from('user_reports').select('*').eq('user_id', user.id),
+      // Fetch user transactions
+      supabase.from('user_transactions').select('*').eq('user_id', user.id)
+    ]);
+    
+    // Process favorites if successful
+    if (results[0].status === 'fulfilled') {
+      const favorites = results[0].value.data;
+      if (favorites && favorites.length > 0) {
+        const expertIds = favorites.map(fav => fav.expert_id);
+        const { data: expertsData } = await supabase
+          .from('experts')
+          .select('*')
+          .in('id', expertIds as any);
+          
+        userProfile.favorite_experts = expertsData?.map(expert => expert.id) || [];
+      } else {
+        userProfile.favorite_experts = [];
+      }
+    }
+    
+    // Process courses if successful
+    if (results[1].status === 'fulfilled') {
+      userProfile.enrolled_courses = adaptCoursesToUI(results[1].value.data || []);
+    } else {
+      userProfile.enrolled_courses = [];
+    }
+    
+    // Process reviews if successful
+    if (results[2].status === 'fulfilled') {
+      userProfile.reviews = adaptReviewsToUI(results[2].value.data || []);
+    } else {
+      userProfile.reviews = [];
+    }
+    
+    // Process reports if successful
+    if (results[3].status === 'fulfilled') {
+      userProfile.reports = adaptReportsToUI(results[3].value.data || []);
+    } else {
+      userProfile.reports = [];
+    }
+    
+    // Process transactions if successful
+    if (results[4].status === 'fulfilled') {
+      // Convert the transaction types to the expected format
+      const transactions = results[4].value.data?.map((tx: any) => {
+        return {
+          ...tx,
+          // Ensure type is either "credit" or "debit"
+          type: tx.type === "credit" || tx.type === "debit" ? tx.type : "credit"
+        };
+      }) || [];
+      userProfile.transactions = transactions;
+    } else {
+      userProfile.transactions = [];
+    }
+    
+    // Ensure all users have a referral code
+    if (!userProfile.referral_code) {
+      const referralCode = `${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      console.log("User missing referral code, generating new one:", referralCode);
+      
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ referral_code: referralCode })
+        .eq('id', user.id);
+        
+      if (!updateError) {
+        userProfile.referral_code = referralCode;
+      } else {
+        console.error("Error updating user with referral code:", updateError);
+      }
+    }
+    
+    // Fetch user referrals with error handling
+    try {
+      const referralsData = await fetchUserReferrals(user.id);
+      
+      // Convert to the Referral type format
+      userProfile.referrals = formatReferralData(referralsData);
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      userProfile.referrals = [];
+    }
+    
+    console.log("Profile data retrieval complete");
+    return userProfile;
   } catch (error) {
     console.error('Error in fetchUserProfile:', error);
     return null;
   }
 };
 
-export const fetchExpertProfile = async (userId: string): Promise<ExpertProfile | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('expert_accounts')
-      .select('*')
-      .eq('auth_id', userId)
-      .single();
-      
-    if (error) {
-      console.error('Error fetching expert profile:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching expert profile:', error);
-    return null;
-  }
-};
-
-export const fetchUserSettings = async (userId: string): Promise<UserSettings | null> => {
-  try {
-    const { data, error } = await supabase
-      .from('user_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
-      
-    if (error) {
-      console.error('Error fetching user settings:', error);
-      return null;
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching user settings:', error);
-    return null;
-  }
-};
-
-export const fetchTransactions = async (userId: string): Promise<Transaction[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-      
-    if (error) {
-      console.error('Error fetching transactions:', error);
-      return [];
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching transactions:', error);
-    return [];
-  }
-};
-
-export const fetchReferrals = async (userId: string): Promise<ReferralUI[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('referrals')
-      .select(`
-        id,
-        user_id,
-        referral_code,
-        referred_users (
-          id,
-          created_at,
-          user_id,
-          referrer_id,
-          profiles (
-            name,
-            email,
-            avatar_url
-          )
-        )
-      `)
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error fetching referrals:', error);
-      throw error;
-    }
-
-    // Transform data to match ReferralUI interface
-    const referrals: ReferralUI[] = [];
-    
-    data.forEach(ref => {
-      if (ref.referred_users && Array.isArray(ref.referred_users)) {
-        ref.referred_users.forEach((user: any) => {
-          if (user.profiles) {
-            referrals.push({
-              id: user.id,
-              name: user.profiles.name || 'Unknown',
-              email: user.profiles.email || 'Unknown',
-              avatar_url: user.profiles.avatar_url,
-              status: 'completed',
-              date: user.created_at,
-              reward_amount: 100, // Sample value - replace with actual logic
-              reward_status: 'pending'
-            });
-          }
-        });
-      }
-    });
-
-    return referrals;
-  } catch (error) {
-    console.error('Error in fetchReferrals:', error);
-    return [];
-  }
+const formatReferralData = (referrals: any[]): Referral[] => {
+  return referrals.map(r => ({
+    id: r.id,
+    referrer_id: r.referrerId || r.referrer_id,
+    referred_id: r.referredId || r.referred_id,
+    referral_code: r.referralCode || r.referral_code,
+    status: r.status,
+    reward_claimed: r.rewardClaimed || r.reward_claimed,
+    created_at: r.createdAt || r.created_at,
+    completed_at: r.completedAt || r.completed_at
+  }));
 };

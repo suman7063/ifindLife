@@ -1,5 +1,12 @@
 
-import { useUserAuth as useContextUserAuth } from '../contexts/UserAuthContext';
+// Backward compatibility layer for existing components
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuthBackCompat } from './auth/useAuthBackCompat';
 
-// Re-export the hook with proper type definitions
-export const useUserAuth = useContextUserAuth;
+export const useUserAuth = () => {
+  const { userAuth } = useAuthBackCompat();
+  return userAuth;
+};
+
+// Export the new hook directly as well
+export { useAuth } from '@/contexts/auth/AuthContext';

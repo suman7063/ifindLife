@@ -1,78 +1,89 @@
+import { useState, useRef, useCallback } from 'react';
+import { calculateCallCost } from '@/utils/agoraService';
 
-import { useState, useEffect, useCallback } from 'react';
+export const useCallTimer = (expertPrice: number) => {
+  const [duration, setDuration] = useState(0);
+  const [cost, setCost] = useState(0);
+  const [isExtending, setIsExtending] = useState(false);
+  const [remainingTime, setRemainingTime] = useState(15 * 60); // 15 minutes in seconds
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const initialSlot = 15 * 60; // 15 minutes in seconds
+  const initialSlotMinutes = initialSlot / 60; // Convert to minutes for calculation
 
-export interface UseCallTimerReturn {
-  seconds: number;
-  minutes: number;
-  hours: number;
-  resetTimer: () => void;
-  formatTime: () => string;
-  getTotalSeconds: () => number;
-}
+  const startTimers = useCallback(() => {
+    durationTimerRef.current = setInterval(() => {
+      setDuration(prev => {
+        const newDuration = prev + 1;
+        
+        if (newDuration > initialSlot) {
+          // Ensure we're passing all required arguments to calculateCallCost
+          setCost(calculateCallCost(newDuration, expertPrice, initialSlotMinutes));
+        }
+        
+        return newDuration;
+      });
+    }, 1000);
 
-export const useCallTimer = (autoStart: boolean = true): UseCallTimerReturn => {
-  const [seconds, setSeconds] = useState(0);
-  const [minutes, setMinutes] = useState(0);
-  const [hours, setHours] = useState(0);
-  const [isRunning, setIsRunning] = useState(autoStart);
+    timerRef.current = setInterval(() => {
+      setRemainingTime(prev => {
+        if (prev <= 1) {
+          setIsExtending(true);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [expertPrice, initialSlotMinutes]);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (isRunning) {
-      interval = setInterval(() => {
-        setSeconds((prevSeconds) => {
-          if (prevSeconds === 59) {
-            setMinutes((prevMinutes) => {
-              if (prevMinutes === 59) {
-                setHours((prevHours) => prevHours + 1);
-                return 0;
-              }
-              return prevMinutes + 1;
-            });
-            return 0;
-          }
-          return prevSeconds + 1;
-        });
-      }, 1000);
+  const stopTimers = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
     
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning]);
+    if (durationTimerRef.current) {
+      clearInterval(durationTimerRef.current);
+      durationTimerRef.current = null;
+    }
+  }, []);
 
-  const resetTimer = useCallback(() => {
-    setSeconds(0);
-    setMinutes(0);
-    setHours(0);
-    setIsRunning(autoStart);
-  }, [autoStart]);
+  const extendCall = useCallback(() => {
+    setRemainingTime(prev => prev + 15 * 60);
+    setIsExtending(false);
+  }, []);
 
-  const formatTime = useCallback((): string => {
-    const formattedHours = hours.toString().padStart(2, '0');
-    const formattedMinutes = minutes.toString().padStart(2, '0');
-    const formattedSeconds = seconds.toString().padStart(2, '0');
-    
-    if (hours > 0) {
-      return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+  const calculateFinalCost = useCallback((): number => {
+    if (duration <= initialSlot) {
+      return 0;
     }
     
-    return `${formattedMinutes}:${formattedSeconds}`;
-  }, [hours, minutes, seconds]);
+    // Ensure we're passing all required arguments here as well
+    return calculateCallCost(duration, expertPrice, initialSlotMinutes);
+  }, [duration, expertPrice, initialSlot, initialSlotMinutes]);
 
-  const getTotalSeconds = useCallback((): number => {
-    return hours * 3600 + minutes * 60 + seconds;
-  }, [hours, minutes, seconds]);
+  const formatTime = useCallback((seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    
+    return [
+      hours.toString().padStart(2, '0'),
+      minutes.toString().padStart(2, '0'),
+      secs.toString().padStart(2, '0')
+    ].join(':');
+  }, []);
 
   return {
-    seconds,
-    minutes,
-    hours,
-    resetTimer,
+    duration,
+    cost,
+    remainingTime,
+    isExtending,
+    startTimers,
+    stopTimers,
+    extendCall,
+    calculateFinalCost,
     formatTime,
-    getTotalSeconds
+    initialSlotMinutes
   };
 };
-
-export default useCallTimer;

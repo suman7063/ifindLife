@@ -8,12 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { ReferralUI } from '@/types/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ReferralUI } from '@/types/common';
 
 interface ReferralsListProps {
   referrals: ReferralUI[];
-  isLoading?: boolean;
+  isLoading?: boolean; // Added the isLoading prop
 }
 
 const ReferralsList: React.FC<ReferralsListProps> = ({ referrals, isLoading = false }) => {
@@ -40,12 +40,12 @@ const ReferralsList: React.FC<ReferralsListProps> = ({ referrals, isLoading = fa
       <TableBody>
         {referrals.map((referral) => (
           <TableRow key={referral.id}>
-            <TableCell>{referral.referredName || referral.name || 'N/A'}</TableCell>
+            <TableCell>{referral.referredName || 'N/A'}</TableCell>
             <TableCell>{referral.status}</TableCell>
             <TableCell>{referral.rewardClaimed ? 'Yes' : 'No'}</TableCell>
             <TableCell>{
-              referral.created_at || referral.date ? 
-                new Date(referral.created_at || referral.date).toLocaleDateString() : 
+              referral.created_at ? 
+                new Date(referral.created_at).toLocaleDateString() : 
                 'N/A'
             }</TableCell>
           </TableRow>

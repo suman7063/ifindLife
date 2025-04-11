@@ -1,61 +1,56 @@
 
+import { UserTransaction } from './tables';
+
 export interface UserProfile {
   id: string;
   name?: string;
   email?: string;
   phone?: string;
-  country?: string;
   city?: string;
+  country?: string;
   profile_picture?: string;
-  avatar_url?: string | null; // Alternative property name for profile_picture
-  created_at?: string;
-  updated_at?: string;
   wallet_balance?: number;
   currency?: string;
+  created_at?: string;
+  updated_at?: string;
   referral_code?: string;
-  referred_by?: string | null;
-  consultation_count?: number;
-  referral_count?: number;
+  referral_link?: string;
+  referred_by?: string;
   
-  // Extended properties - these may not exist in the database table
-  // but are used for UI display after data joins
+  // Related data
+  transactions?: UserTransaction[];
   reviews?: any[];
   reports?: any[];
-  transactions?: any[];
-  enrolled_courses?: any[];
   favorite_experts?: string[];
+  enrolled_courses?: any[];
   referrals?: any[];
   
-  // Legacy compatibility aliases
-  walletBalance?: number; // Alias for wallet_balance
+  // TypeScript doesn't allow interface methods with implementation in .ts files
+  // So let's define these as optional properties
+  profilePicture?: string;
+  walletBalance?: number;
+  favoriteExperts?: string[];
+  enrolledCourses?: any[];
+  referralCode?: string;
 }
 
-export interface UserSettings {
-  user_id: string;
-  theme_preference?: string;
-  notification_preferences?: any;
-  language_preference?: string;
+// Export aliases for camelCase access
+export function getProfilePicture(profile: UserProfile): string | undefined {
+  return profile.profile_picture;
 }
 
-export interface Transaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  type: string;
-  date: string;
-  description?: string;
-  currency: string;
+export function getWalletBalance(profile: UserProfile): number | undefined {
+  return profile.wallet_balance;
 }
 
-export interface ReferralSettings {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  bonus_amount?: number;
-  currency: string;
-  min_transaction_amount?: number;
-  expires_in_days?: number;
-  active: boolean;
-  enabled?: boolean;
-  description?: string;
+export function getFavoriteExperts(profile: UserProfile): string[] | undefined {
+  return profile.favorite_experts;
+}
+
+export function getEnrolledCourses(profile: UserProfile): any[] | undefined {
+  return profile.enrolled_courses;
+}
+
+export function getReferralCode(profile: UserProfile): string | undefined {
+  return profile.referral_code;
 }

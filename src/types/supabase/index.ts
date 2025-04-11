@@ -1,47 +1,66 @@
 
-import { UserProfile, UserSettings, Transaction } from './userProfile';
-import { ExpertProfile } from '../expert';
+// Main index file re-exporting all types from the specialized files
+export * from './userProfile';
+export * from './userFavorites';
+export * from './referral';
 
-export interface Database {
-  public: {
-    Tables: {
-      profiles: {
-        Row: any;
-        Insert: any;
-        Update: any;
-      };
-      expert_profiles: {
-        Row: any;
-        Insert: any;
-        Update: any;
-      };
-      referral_settings: {
-        Row: any;
-        Insert: any;
-        Update: any;
-      };
-      // Add other tables as needed
-    };
-  };
-}
+// Re-export from tables.ts - use explicit exports to avoid duplicates
+export type {
+  UserTransaction,
+  UserReview,
+  ContactSubmission
+} from './tables';
 
+// Re-export from reviews.ts - but not UserReview (it comes from tables.ts)
+export type {
+  ReviewStats
+} from './reviews';
+
+// Define ReferralSettings interface
 export interface ReferralSettings {
   id: string;
-  bonus_amount: number;
-  currency: string;
-  min_transaction_amount: number;
-  expires_in_days: number;
+  referrer_reward: number;
+  referred_reward: number;
   active: boolean;
+  description?: string;
+  updated_at?: string;
 }
 
+// Additional UI-specific types
+export interface ReferralUI {
+  id: string;
+  referrerId: string;
+  referredId: string;
+  referredName?: string;
+  referralCode: string;
+  status: string;
+  rewardClaimed: boolean;
+  created_at: string; // Ensure consistency with snake_case
+}
+
+// Define Review type for UI purposes
 export interface Review {
   id: string;
-  user_id: string;
-  expert_id: string;
+  expertId: string | number;
   rating: number;
   comment?: string;
-  created_at: string;
-  user_name?: string;
+  date: string;
+  verified?: boolean;
 }
 
-export type { UserProfile, UserSettings, Transaction, ExpertProfile };
+// Define Report type for UI purposes
+export interface Report {
+  id: string;
+  expertId: string | number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+}
+
+export type { 
+  ExpertProfile,
+  ExpertReview,
+  ExpertService,
+  ExpertAvailability
+} from './expert';

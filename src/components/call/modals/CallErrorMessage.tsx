@@ -1,45 +1,29 @@
 
 import React from 'react';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { AlertOctagon } from 'lucide-react';
 
-export interface CallErrorMessageProps {
-  errorMessage: string;
-  onRetry: () => Promise<boolean>;
-  onClose: () => void;
+interface CallErrorMessageProps {
+  errorMessage: string | null;
+  onRetry: () => void;
 }
 
-const CallErrorMessage: React.FC<CallErrorMessageProps> = ({ 
-  errorMessage, 
-  onRetry, 
-  onClose 
-}) => {
+const CallErrorMessage: React.FC<CallErrorMessageProps> = ({ errorMessage, onRetry }) => {
   return (
-    <div className="flex flex-col items-center justify-center h-full p-6 space-y-6">
-      <div className="rounded-full bg-red-100 p-6">
-        <AlertOctagon className="h-12 w-12 text-red-500" />
-      </div>
-      
-      <div className="text-center">
-        <h3 className="text-xl font-semibold mb-2">Connection Error</h3>
-        <p className="text-muted-foreground max-w-md">
-          {errorMessage || 'There was an error establishing the call connection. Please try again.'}
-        </p>
-      </div>
-      
-      <div className="flex space-x-3 pt-4">
-        <Button 
-          variant="outline" 
-          onClick={onClose}
-        >
-          Cancel
-        </Button>
-        <Button 
-          onClick={onRetry}
-        >
-          Try Again
-        </Button>
-      </div>
+    <div className="flex flex-col items-center space-y-4 py-6">
+      <Alert variant="destructive" className="max-w-md">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {errorMessage || 'Failed to connect the call. Please check your camera and microphone permissions.'}
+        </AlertDescription>
+      </Alert>
+      <Button 
+        onClick={onRetry}
+        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+      >
+        Try Again
+      </Button>
     </div>
   );
 };

@@ -1,78 +1,128 @@
 
 import { useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { SessionType } from './types';
 
 export const useAuthLogoutMethods = (
-  userLogoutFn: () => Promise<boolean>, 
-  expertLogoutFn: () => Promise<boolean>,
-  setLoggingOut: (value: boolean) => void
+  sessionType: SessionType, 
+  setIsUserAuthenticated: (value: boolean) => void,
+  setIsExpertAuthenticated: (value: boolean) => void,
+  setSessionType: (value: SessionType) => void,
+  setHasDualSessions: (value: boolean) => void,
+  setIsLoggingOut: (value: boolean) => void
 ) => {
-  // Log out from user account
+  // User logout function
   const userLogout = useCallback(async (): Promise<boolean> => {
+    setIsLoggingOut(true);
+    
     try {
-      setLoggingOut(true);
-      const success = await userLogoutFn();
-      if (!success) {
-        toast.error('User logout failed');
-      }
-      return success;
-    } catch (error) {
-      console.error('[AuthSync] User logout error:', error);
-      toast.error('User logout failed');
-      return false;
-    } finally {
-      setLoggingOut(false);
-    }
-  }, [userLogoutFn, setLoggingOut]);
-
-  // Log out from expert account
-  const expertLogout = useCallback(async (): Promise<boolean> => {
-    try {
-      setLoggingOut(true);
-      const success = await expertLogoutFn();
-      if (!success) {
-        toast.error('Expert logout failed');
-      }
-      return success;
-    } catch (error) {
-      console.error('[AuthSync] Expert logout error:', error);
-      toast.error('Expert logout failed');
-      return false;
-    } finally {
-      setLoggingOut(false);
-    }
-  }, [expertLogoutFn, setLoggingOut]);
-
-  // Log out from all accounts
-  const fullLogout = useCallback(async (): Promise<boolean> => {
-    try {
-      setLoggingOut(true);
-      let userSuccess = true;
-      let expertSuccess = true;
+      console.log('AuthSync: Starting user logout');
+      // Sign out from Supabase using local scope
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
       
-      // Try to logout from both accounts
-      userSuccess = await userLogoutFn().catch(() => false);
-      expertSuccess = await expertLogoutFn().catch(() => false);
-      
-      if (!userSuccess && !expertSuccess) {
-        toast.error('Logout failed');
+      if (error) {
+        console.error('Error during user logout:', error);
+        toast.error('Failed to log out as user: ' + error.message);
         return false;
       }
       
+      setIsUserAuthenticated(false);
+      if (sessionType === 'dual') {
+        setSessionType('expert');
+      } else {
+        setSessionType('none');
+      }
+      setHasDualSessions(false);
+      toast.success('Successfully logged out as user');
+      
       return true;
     } catch (error) {
-      console.error('[AuthSync] Full logout error:', error);
-      toast.error('Logout failed');
+      console.error('Error during user logout:', error);
+      toast.error('An error occurred during logout');
       return false;
     } finally {
-      setLoggingOut(false);
+      setIsLoggingOut(false);
     }
-  }, [userLogoutFn, expertLogoutFn, setLoggingOut]);
+  }, [sessionType, setIsUserAuthenticated, setSessionType, setHasDualSessions, setIsLoggingOut]);
+  
+  // Expert logout function
+  const expertLogout = useCallback(async (): Promise<boolean> => {
+    setIsLoggingOut(true);
+    
+    try {
+      console.log('AuthSync: Starting expert logout');
+      // Sign out from Supabase using local scope
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      
+      if (error) {
+        console.error('Error during expert logout:', error);
+        toast.error('Failed to log out as expert: ' + error.message);
+        return false;
+      }
+      
+      setIsExpertAuthenticated(false);
+      if (sessionType === 'dual') {
+        setSessionType('user');
+      } else {
+        setSessionType('none');
+      }
+      setHasDualSessions(false);
+      toast.success('Successfully logged out as expert');
+      
+      return true;
+    } catch (error) {
+      console.error('Error during expert logout:', error);
+      toast.error('An error occurred during logout');
+      return false;
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [sessionType, setIsExpertAuthenticated, setSessionType, setHasDualSessions, setIsLoggingOut]);
+  
+  // Full logout function (both user and expert)
+  const fullLogout = useCallback(async (): Promise<boolean> => {
+    setIsLoggingOut(true);
+    
+    try {
+      console.log('AuthSync: Starting full logout');
+      
+      // Sign out from Supabase completely
+      const { error } = await supabase.auth.signOut({
+        scope: 'global'
+      });
+      
+      if (error) {
+        console.error('Error during full logout:', error);
+        toast.error('Failed to log out: ' + error.message);
+        return false;
+      }
+      
+      // Clear any local storage related to authentication
+      localStorage.removeItem('expertProfile');
+      
+      // Update state
+      setIsUserAuthenticated(false);
+      setIsExpertAuthenticated(false);
+      setHasDualSessions(false);
+      setSessionType('none');
+      
+      toast.success('Successfully logged out of all accounts');
+      
+      // Redirect to home page
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 500);
+      
+      return true;
+    } catch (error) {
+      console.error('Error during full logout:', error);
+      toast.error('An error occurred during logout');
+      return false;
+    } finally {
+      setIsLoggingOut(false);
+    }
+  }, [setIsUserAuthenticated, setIsExpertAuthenticated, setHasDualSessions, setSessionType, setIsLoggingOut]);
 
-  return {
-    userLogout,
-    expertLogout,
-    fullLogout
-  };
+  return { userLogout, expertLogout, fullLogout };
 };

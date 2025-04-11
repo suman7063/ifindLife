@@ -1,32 +1,103 @@
 
-import { useState } from 'react';
-
-export interface CallState {
-  isConnecting: boolean;
-  isConnected: boolean;
-  hasJoined: boolean;
-  hasError: boolean;
-  isMuted: boolean;
-  isVideoEnabled: boolean;
-  localAudioTrack: any;
-  localVideoTrack: any;
-  remoteAudioTrack: any;
-  remoteVideoTrack: any;
-}
+import { useState, useEffect, useCallback } from 'react';
+import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
+import { CallState, createClient } from '@/utils/agoraService';
 
 export const useCallState = () => {
   const [callState, setCallState] = useState<CallState>({
-    isConnecting: false,
-    isConnected: false,
-    hasJoined: false,
-    hasError: false,
-    isMuted: false,
-    isVideoEnabled: true,
     localAudioTrack: null,
     localVideoTrack: null,
-    remoteAudioTrack: null,
-    remoteVideoTrack: null,
+    remoteUsers: [],
+    client: null,
+    isJoined: false,
+    isMuted: false,
+    isVideoEnabled: true
   });
+  
+  // Define handleUserPublished as a useCallback to maintain consistent function reference
+  const handleUserPublished = useCallback(async (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
+    if (!callState.client) return;
+    
+    console.log("Remote user published:", user.uid, mediaType);
+    await callState.client.subscribe(user, mediaType);
+    console.log("Subscribed to remote user:", user.uid, mediaType);
+    
+    setCallState(prevState => ({
+      ...prevState,
+      remoteUsers: [...prevState.remoteUsers.filter(u => u.uid !== user.uid), user]
+    }));
+  }, [callState.client]);
+
+  // Make sure handleUserUnpublished correctly accepts two arguments as required by Agora SDK
+  const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
+    console.log("Remote user unpublished:", user.uid, mediaType);
+    setCallState(prevState => ({
+      ...prevState,
+      remoteUsers: prevState.remoteUsers.filter(u => u.uid !== user.uid)
+    }));
+  }, []);
+
+  const handleUserLeft = useCallback((user: IAgoraRTCRemoteUser) => {
+    console.log("Remote user left:", user.uid);
+    setCallState(prevState => ({
+      ...prevState,
+      remoteUsers: prevState.remoteUsers.filter(u => u.uid !== user.uid)
+    }));
+  }, []);
+  
+  // Define error handler with proper signature
+  const handleError = useCallback((err: Error) => {
+    console.error("Agora client error:", err);
+  }, []);
+  
+  useEffect(() => {
+    // Initialize client only once
+    let client: IAgoraRTCClient | null = null;
+    
+    // Create client asynchronously to avoid blocking the main thread
+    const initClient = async () => {
+      client = createClient();
+      console.log("Agora client initialized:", client);
+      setCallState(prev => ({ ...prev, client }));
+    };
+    
+    // Initialize in a non-blocking way
+    initClient();
+
+    return () => {
+      // Cleanup will happen in the useEffect below
+    };
+  }, []);
+  
+  // Separate useEffect for event listeners to avoid stale callbacks
+  useEffect(() => {
+    const { client } = callState;
+    if (!client) return;
+    
+    // The event handler for user-published takes two arguments: user and mediaType
+    client.on('user-published', handleUserPublished);
+    
+    // The event handler for user-unpublished also takes two arguments: user and mediaType
+    client.on('user-unpublished', handleUserUnpublished);
+    
+    // The event handler for user-left takes one argument: user
+    client.on('user-left', handleUserLeft);
+    
+    // Add the error event handler
+    client.on('error', handleError);
+    
+    return () => {
+      // Make sure to use the same reference to the handlers when removing them
+      // When using client.off(), we need to pass the same event type and handler function
+      client.off('user-published', handleUserPublished);
+      // For user-unpublished event, we need to specify the event name and the handler function
+      client.off('user-unpublished', handleUserUnpublished);
+      // For user-left event, we need to specify the event name and the handler function
+      client.off('user-left', handleUserLeft);
+      // For error event, we need to specify both the event name and the handler function
+      client.off('error', handleError);
+    };
+  }, [callState.client, handleUserPublished, handleUserUnpublished, handleUserLeft, handleError]);
 
   return {
     callState,
