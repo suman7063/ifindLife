@@ -27,6 +27,12 @@ interface NavbarDesktopLinksProps {
   currentUser?: UserProfile | null;
   onLogout?: () => Promise<boolean>;
   isLoggingOut?: boolean;
+  // Add the missing props
+  isAuthenticated?: boolean;
+  hasExpertProfile?: boolean;
+  sessionType?: 'user' | 'expert' | 'none' | 'dual';
+  userLogout?: () => Promise<boolean>;
+  expertLogout?: () => Promise<boolean>;
 }
 
 const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({

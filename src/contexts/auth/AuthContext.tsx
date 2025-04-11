@@ -1,445 +1,597 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, {
+  createContext,
+  useState,
+  useEffect,
+  useContext,
+  useCallback,
+} from 'react';
+import {
+  Session,
+  User,
+  AuthChangeEvent,
+  SupabaseClient,
+} from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { User, Session } from '@supabase/supabase-js';
-import { UserProfile } from '@/types/supabase/userProfile';
-import { ExpertProfile } from '@/types/supabase/expert';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AuthState, initialAuthState, UserRole } from './types';
-import { useAuthAccount } from './hooks/useAuthAccount';
-import { useProfile } from './hooks/useProfile';
-import { useFavorites } from './hooks/useFavorites';
-import { useWallet } from './hooks/useWallet';
-import { useReferrals } from './hooks/useReferrals';
-import { useExpertInteractions } from './hooks/useExpertInteractions';
-import { UserSettings } from '@/types/user';
-import { useProfileFunctions } from './hooks/useProfileFunctions';
+import {
+  UserProfile,
+  ReferralSettings,
+} from '@/types/supabase/user';
+import { ExpertProfile } from '@/types/supabase/expert';
 
-export interface AuthContextValue {
-  state: AuthState;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+interface AuthContextProps {
+  supabaseClient: SupabaseClient | null;
+  session: Session | null;
+  user: User | null;
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
-  user: User | null;
-  session: Session | null;
-  role: UserRole;
-  
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
+  isLoading: boolean;
+  isExpert: boolean;
+  isLoggedIn: boolean;
+  isExpertLoggedIn: boolean;
+  authState: AuthChangeEvent | null;
+  error: Error | null;
+  referralSettings: ReferralSettings | null;
+  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  hasDualSessions: boolean;
+  login: (email?: string) => Promise<void>;
   logout: () => Promise<boolean>;
-  updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
-  updateExpertProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
-  updatePassword: (password: string) => Promise<boolean>;
-  updateEmail: (email: string) => Promise<boolean>;
-  resetPassword: (email: string) => Promise<boolean>;
-  sendVerificationEmail: () => Promise<boolean>;
-  
-  updateProfilePicture: (file: File) => Promise<string>;
-  updateUserSettings: (settings: Partial<UserSettings>) => Promise<boolean>;
-  addToFavorites: (expertId: string) => Promise<boolean>;
-  removeFromFavorites: (expertId: string) => Promise<boolean>;
-  checkIsFavorite: (expertId: string) => Promise<boolean>;
-  refreshFavoritesCount: () => Promise<number | void>;
-  
-  getReferrals: () => Promise<any[]>;
-  refreshWalletBalance: () => Promise<number>;
-  addFunds: (amount: number) => Promise<boolean>;
-  deductFunds: (amount: number, description: string) => Promise<boolean>;
-  
-  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
-  reviewExpert: (expertId: string, rating: number, comment: string) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
-  getExpertShareLink: (expertId: string) => string;
-  getReferralLink: () => string | null;
+  updateProfile: (updates: UserProfile) => Promise<void>;
+  updateExpertProfile: (updates: ExpertProfile) => Promise<void>;
+  refreshUserProfile: () => Promise<void>;
+  refreshExpertProfile: () => Promise<void>;
+  uploadProfilePicture: (file: File) => Promise<string | null>;
+  uploadExpertProfilePicture: (file: File) => Promise<string | null>;
+  deleteProfilePicture: () => Promise<boolean>;
+  deleteExpertProfilePicture: () => Promise<boolean>;
+  fetchReferralSettings: () => Promise<void>;
+  clearSession: () => void;
 }
 
-const AuthContext = createContext<AuthContextValue>({} as AuthContextValue);
+const AuthContext = createContext<AuthContextProps>({
+  supabaseClient: null,
+  session: null,
+  user: null,
+  userProfile: null,
+  expertProfile: null,
+  isLoading: true,
+  isExpert: false,
+  isLoggedIn: false,
+  isExpertLoggedIn: false,
+  authState: null,
+  error: null,
+  referralSettings: null,
+  sessionType: 'none',
+  hasDualSessions: false,
+  login: async () => {},
+  logout: async () => false,
+  updateProfile: async () => {},
+  updateExpertProfile: async () => {},
+  refreshUserProfile: async () => {},
+  refreshExpertProfile: async () => {},
+  uploadProfilePicture: async () => null,
+  uploadExpertProfilePicture: async () => null,
+  deleteProfilePicture: async () => false,
+  deleteExpertProfilePicture: async () => false,
+  fetchReferralSettings: async () => {},
+  clearSession: () => {},
+});
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>(initialAuthState);
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
 
-  const { 
-    authLoading, 
-    authError, 
-    login: authLogin, 
-    signup: authSignup, 
-    logout: authLogout,
-    updateEmail: authUpdateEmail,
-    updatePassword: authUpdatePassword,
-    resetPassword: authResetPassword,
-    sendVerificationEmail: authSendVerification,
-    checkExpertAccount
-  } = useAuthAccount();
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+  const [supabaseClient] = useState<SupabaseClient>(supabase);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [authState, setAuthState] = useState<AuthChangeEvent | null>(null);
+  const [error, setError] = useState<Error | null>(null);
+	const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
+  const [hasDualSessions, setHasDualSessions] = useState<boolean>(false);
+  const navigate = useNavigate();
 
-  const {
-    updateProfile,
-    updateUserSettings,
-    fetchUserProfile,
-    fetchUserSettings
-  } = useProfile(state.user, (profile) => {
-    setState(prev => ({ ...prev, userProfile: profile }));
-  });
-
-  const {
-    favoritesCount,
-    addToFavorites,
-    removeFromFavorites,
-    checkIsFavorite,
-    refreshFavoritesCount
-  } = useFavorites(state.user);
-
-  const {
-    walletBalance,
-    fetchWalletBalance,
-    refreshWalletBalance,
-    addFunds,
-    deductFunds
-  } = useWallet(state.user);
-
-  const {
-    referrals,
-    getReferrals,
-    getReferralLink
-  } = useReferrals(state.user);
-
-  const {
-    reportExpert,
-    reviewExpert,
-    hasTakenServiceFrom,
-    getExpertShareLink
-  } = useExpertInteractions(state.user);
+  const isExpert = !!expertProfile;
+  const isLoggedIn = !!user;
+  const isExpertLoggedIn = !!expertProfile;
 
   useEffect(() => {
-    const initAuth = async () => {
+    const getInitialSession = async () => {
+      setIsLoading(true);
       try {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log("Auth state changed:", event, "Session:", session ? "exists" : "none");
-            
-            setState(prev => ({ 
-              ...prev, 
-              session,
-              user: session?.user ?? null,
-              isAuthenticated: !!session,
-              isLoading: prev.isLoading
-            }));
-            
-            if (session?.user) {
-              setTimeout(async () => {
-                await fetchUserData(session.user.id);
-              }, 0); 
-            } else {
-              setState(prev => ({ 
-                ...prev,
-                userProfile: null,
-                expertProfile: null,
-                hasProfile: false,
-                role: null,
-                isExpertUser: false,
-                expertId: null
-              }));
-            }
-          }
-        );
+        const {
+          data: { session: initialSession },
+        } = await supabaseClient.auth.getSession();
 
-        const { data } = await supabase.auth.getSession();
-        setState(prev => ({ 
-          ...prev, 
-          session: data.session,
-          user: data.session?.user ?? null,
-          isAuthenticated: !!data.session,
-        }));
-        
-        if (data.session?.user) {
-          await fetchUserData(data.session.user.id);
+        setSession(initialSession);
+        setUser(initialSession?.user || null);
+
+        if (initialSession?.user) {
+          await Promise.all([
+            refreshUserProfile(),
+            refreshExpertProfile(),
+          ]);
+        } else {
+          setUserProfile(null);
+          setExpertProfile(null);
         }
-        
-        setState(prev => ({ ...prev, isLoading: false }));
-        
-        return () => {
-          subscription.unsubscribe();
-        };
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        setState(prev => ({ ...prev, isLoading: false, authError: 'Failed to initialize authentication' }));
+      } catch (err: any) {
+        setError(err);
+        console.error('Error fetching initial session:', err);
+        toast.error(`Unexpected error occurred: ${err.message}`);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    initAuth();
-  }, []);
+    getInitialSession();
 
-  const fetchUserData = async (userId: string) => {
+    const { data: authListener } = supabaseClient.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        console.log('Auth state change:', event);
+        setAuthState(event);
+        setSession(currentSession);
+        setUser(currentSession?.user || null);
+
+        // Clear existing profiles
+        setUserProfile(null);
+        setExpertProfile(null);
+
+        // Fetch profiles if user is authenticated
+        if (currentSession?.user) {
+          await Promise.all([
+            refreshUserProfile(),
+            refreshExpertProfile(),
+          ]);
+        }
+
+        // Determine session type
+        if (currentSession?.user) {
+          const userType = userProfile ? 'user' : expertProfile ? 'expert' : 'none';
+          setSessionType(userType as 'none' | 'user' | 'expert');
+        } else {
+          setSessionType('none');
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabaseClient]);
+
+  useEffect(() => {
+    const checkDualSessions = () => {
+      const userSession = !!userProfile;
+      const expertSession = !!expertProfile;
+      setHasDualSessions(userSession && expertSession);
+
+      if (userSession && expertSession) {
+        setSessionType('dual');
+      } else if (userSession) {
+        setSessionType('user');
+      } else if (expertSession) {
+        setSessionType('expert');
+      } else {
+        setSessionType('none');
+      }
+    };
+
+    checkDualSessions();
+  }, [userProfile, expertProfile]);
+
+  const login = async (email?: string): Promise<void> => {
     try {
-      setState(prev => ({ ...prev, profileLoading: true }));
-      
-      const [userProfile, expertData, settings] = await Promise.all([
-        fetchUserProfile(userId),
-        checkExpertAccount(userId),
-        fetchUserSettings(userId)
-      ]);
-      
-      const { isExpertUser, expertId } = expertData || { isExpertUser: false, expertId: null };
-      
-      setState(prev => ({ 
-        ...prev, 
-        userProfile,
-        hasProfile: !!userProfile,
-        isExpertUser,
-        expertId,
-        role: isExpertUser ? 'expert' : 'user',
-        userSettings: settings,
-        profileError: null
-      }));
-      
-      if (refreshFavoritesCount) {
-        const favCount = await refreshFavoritesCount();
-        setState(prev => ({
-          ...prev,
-          favoritesCount: favCount || 0
-        }));
-      }
+      const { error } = await supabaseClient.auth.signInWithOtp({ email });
 
-      if (fetchWalletBalance) {
-        const walletBal = await fetchWalletBalance(userId);
-        setState(prev => ({
-          ...prev,
-          walletBalance: walletBal
-        }));
-      }
-
-      if (getReferrals) {
-        const referralsList = await getReferrals();
-        setState(prev => ({
-          ...prev,
-          referrals: referralsList
-        }));
-      }
-      
-    } catch (error: any) {
-      console.error('Error fetching user data:', error);
-      setState(prev => ({ 
-        ...prev, 
-        profileError: error.message || 'Failed to load user data'
-      }));
-      toast.error('Failed to load user data');
-    } finally {
-      setState(prev => ({ ...prev, profileLoading: false }));
-    }
-  };
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    setState(prev => ({ ...prev, authLoading: true }));
-    const success = await authLogin(email, password);
-    setState(prev => ({ 
-      ...prev, 
-      authLoading: false,
-      authError: authError
-    }));
-    return success;
-  };
-
-  const signup = async (
-    email: string, 
-    password: string, 
-    userData: Partial<UserProfile>,
-    referralCode?: string
-  ): Promise<boolean> => {
-    setState(prev => ({ ...prev, authLoading: true }));
-    const success = await authSignup(email, password, userData, referralCode);
-    setState(prev => ({ 
-      ...prev, 
-      authLoading: false,
-      authError: authError
-    }));
-    return success;
-  };
-
-  const logout = async (): Promise<boolean> => {
-    setState(prev => ({ ...prev, authLoading: true }));
-    const success = await authLogout();
-    if (success) {
-      setState({
-        ...initialAuthState
-      });
-    } else {
-      setState(prev => ({ ...prev, authLoading: false }));
-    }
-    return success;
-  };
-
-  const updateUserProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
-    setState(prev => ({ ...prev, profileLoading: true }));
-    const success = await updateProfile(data);
-    if (success && state.userProfile) {
-      setState(prev => ({ 
-        ...prev, 
-        userProfile: { ...prev.userProfile!, ...data },
-        profileLoading: false 
-      }));
-    } else {
-      setState(prev => ({ ...prev, profileLoading: false }));
-    }
-    return success;
-  };
-
-  const updateExpertProfile = async (data: Partial<ExpertProfile>): Promise<boolean> => {
-    if (!state.user || !state.expertProfile) {
-      toast.error("No authenticated expert found");
-      return false;
-    }
-    
-    try {
-      setState(prev => ({ ...prev, profileLoading: true }));
-      
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update(data)
-        .eq('auth_id', state.user.id);
-        
       if (error) {
-        console.error("Expert profile update error:", error);
-        toast.error(error.message);
-        return false;
+        console.error('Login error:', error);
+        toast.error(`Login failed: ${error.message}`);
+      } else {
+        toast.success('Check your email for the login link.');
       }
-      
-      setState(prev => ({
-        ...prev,
-        expertProfile: { ...prev.expertProfile!, ...data },
-        profileLoading: false
-      }));
-      
-      toast.success("Expert profile updated successfully");
-      return true;
-    } catch (error: any) {
-      console.error("Expert profile update error:", error);
-      toast.error(error.message || "An error occurred during profile update");
-      setState(prev => ({ ...prev, profileLoading: false }));
-      return false;
+    } catch (err: any) {
+      console.error('Unexpected login error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
     }
   };
 
-  const updateProfilePicture = async (file: File): Promise<string> => {
+  const logout = useCallback(async (): Promise<boolean> => {
     try {
-      if (!state.user) {
-        toast.error("User not authenticated");
-        return "";
+      const { error } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        console.error('Logout error:', error);
+        toast.error(`Logout failed: ${error.message}`);
+        return false;
+      } else {
+        setUserProfile(null);
+        setExpertProfile(null);
+        setSessionType('none');
+        setHasDualSessions(false);
+        navigate('/');
+        toast.success('Logged out successfully.');
+        return true;
       }
-      
-      console.log("Uploading profile picture for user:", state.user.id);
-      
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${state.user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `profile-pictures/${fileName}`;
-      
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
+    } catch (err: any) {
+      console.error('Unexpected logout error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+      return false;
+    }
+  }, [supabaseClient, navigate]);
+
+  const updateProfile = async (updates: UserProfile): Promise<void> => {
+    try {
+      setIsLoading(true);
+      if (!user) throw new Error('User not logged in');
+
+      const { error: updateError } = await supabaseClient
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        toast.error(`Profile update failed: ${updateError.message}`);
+      } else {
+        await refreshUserProfile();
+        toast.success('Profile updated successfully.');
+      }
+    } catch (err: any) {
+      console.error('Unexpected profile update error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateExpertProfile = async (updates: ExpertProfile): Promise<void> => {
+    try {
+      setIsLoading(true);
+      if (!user) throw new Error('Expert not logged in');
+
+      const { error: updateError } = await supabaseClient
+        .from('expert_profiles')
+        .update(updates)
+        .eq('auth_id', user.id);
+
+      if (updateError) {
+        console.error('Expert profile update error:', updateError);
+        toast.error(`Expert profile update failed: ${updateError.message}`);
+      } else {
+        await refreshExpertProfile();
+        toast.success('Expert profile updated successfully.');
+      }
+    } catch (err: any) {
+      console.error('Unexpected expert profile update error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const refreshUserProfile = async (): Promise<void> => {
+    try {
+      if (!user) {
+        console.warn('No user to refresh profile for.');
+        return;
+      }
+  
+      const { data: profileData, error: profileError } = await supabaseClient
+        .from<UserProfile>('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+  
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        toast.error(`Error fetching user profile: ${profileError.message}`);
+      } else if (profileData) {
+        setUserProfile(profileData);
+      } else {
+        console.warn('No user profile found, setting to null.');
+        setUserProfile(null);
+      }
+    } catch (err: any) {
+      console.error('Unexpected error while refreshing user profile:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+    }
+  };
+  
+
+  const refreshExpertProfile = async (): Promise<void> => {
+    try {
+      if (!user) {
+        console.warn('No user to refresh expert profile for.');
+        return;
+      }
+  
+      const { data: expertData, error: expertError } = await supabaseClient
+        .from<ExpertProfile>('expert_profiles')
+        .select('*')
+        .eq('auth_id', user.id)
+        .single();
+  
+      if (expertError) {
+        console.error('Error fetching expert profile:', expertError);
+        toast.error(`Error fetching expert profile: ${expertError.message}`);
+      } else if (expertData) {
+        setExpertProfile(expertData);
+      } else {
+        console.warn('No expert profile found, setting to null.');
+        setExpertProfile(null);
+      }
+    } catch (err: any) {
+      console.error('Unexpected error while refreshing expert profile:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+    }
+  };
+
+  const uploadProfilePicture = async (file: File): Promise<string | null> => {
+    try {
+      setIsLoading(true);
+      if (!user) throw new Error('User not logged in');
+
+      const filePath = `avatars/${user.id}/${file.name}`;
+      const { error: storageError } = await supabaseClient.storage
         .from('avatars')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: false,
         });
-        
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        toast.error("Failed to upload image");
-        return "";
+
+      if (storageError) {
+        console.error('Storage upload error:', storageError);
+        toast.error(`Failed to upload image: ${storageError.message}`);
+        return null;
       }
-      
-      // Get public URL
-      const { data } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
-        
-      const publicUrl = data.publicUrl;
-      
-      // Update user profile with the new profile picture URL
-      const { error: updateError } = await supabase
+
+      const publicURL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/${filePath}`;
+
+      const { error: updateError } = await supabaseClient
         .from('profiles')
-        .update({ profile_picture: publicUrl })
-        .eq('id', state.user.id);
-        
+        .update({ profile_picture: publicURL })
+        .eq('id', user.id);
+
       if (updateError) {
-        console.error("Database update error:", updateError);
-        toast.error("Failed to update profile");
-        return "";
+        console.error('Profile update error:', updateError);
+        toast.error(`Failed to update profile: ${updateError.message}`);
+        return null;
       }
-      
-      setAuthState(prev => ({
-        ...prev,
-        userProfile: { 
-          ...prev.userProfile!,
-          profile_picture: publicUrl,
-          avatar_url: publicUrl 
-        } as UserProfile
-      }));
-      
-      toast.success("Profile picture updated successfully");
-      return publicUrl;
-    } catch (error: any) {
-      console.error("Profile picture update error:", error);
-      toast.error(error.message || "Failed to update profile picture");
-      return "";
+
+      await refreshUserProfile();
+      toast.success('Profile picture updated successfully.');
+      return publicURL;
+    } catch (err: any) {
+      console.error('Unexpected image upload error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+      return null;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const refreshFavoritesCountFixed = async (): Promise<number> => {
-    if (refreshFavoritesCount) {
-      const result = await refreshFavoritesCount();
-      return typeof result === 'number' ? result : 0;
+  const uploadExpertProfilePicture = async (file: File): Promise<string | null> => {
+    try {
+      setIsLoading(true);
+      if (!user) throw new Error('Expert not logged in');
+
+      const filePath = `expert_avatars/${user.id}/${file.name}`;
+      const { error: storageError } = await supabaseClient.storage
+        .from('expert_avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (storageError) {
+        console.error('Storage upload error:', storageError);
+        toast.error(`Failed to upload image: ${storageError.message}`);
+        return null;
+      }
+
+      const publicURL = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/expert_avatars/${filePath}`;
+
+      const updates = {
+        imageUrl: publicURL,
+        avatar_url: publicURL,
+      };
+
+      const { error: updateError } = await supabaseClient
+        .from('expert_profiles')
+        .update(updates)
+        .eq('auth_id', user.id);
+
+      if (updateError) {
+        console.error('Expert profile update error:', updateError);
+        toast.error(`Failed to update expert profile: ${updateError.message}`);
+        return null;
+      }
+
+      await refreshExpertProfile();
+      toast.success('Expert profile picture updated successfully.');
+      return publicURL;
+    } catch (err: any) {
+      console.error('Unexpected image upload error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+      return null;
+    } finally {
+      setIsLoading(false);
     }
-    return 0;
   };
 
-  const contextValue: AuthContextValue = {
-    state,
-    isAuthenticated: state.isAuthenticated,
-    isLoading: state.isLoading,
-    userProfile: state.userProfile,
-    expertProfile: state.expertProfile,
-    user: state.user,
-    session: state.session,
-    role: state.role,
-    
+  const deleteProfilePicture = async (): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      if (!user || !userProfile?.profile_picture) {
+        console.warn('No user or profile picture to delete.');
+        return false;
+      }
+  
+      // Extract the path from the URL
+      const urlParts = userProfile.profile_picture.split('/avatars/');
+      if (urlParts.length < 2) {
+        console.error('Invalid profile picture URL format.');
+        return false;
+      }
+      const filePath = `avatars/${urlParts[1]}`;
+  
+      // Delete the file from storage
+      const { error: storageError } = await supabaseClient.storage
+        .from('avatars')
+        .remove([filePath]);
+  
+      if (storageError) {
+        console.error('Storage delete error:', storageError);
+        toast.error(`Failed to delete image: ${storageError.message}`);
+        return false;
+      }
+  
+      // Update the profile to set profile_picture to null
+      const { error: updateError } = await supabaseClient
+        .from('profiles')
+        .update({ profile_picture: null })
+        .eq('id', user.id);
+  
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        toast.error(`Failed to update profile: ${updateError.message}`);
+        return false;
+      }
+  
+      await refreshUserProfile();
+      toast.success('Profile picture removed successfully.');
+      return true;
+    } catch (err: any) {
+      console.error('Unexpected image deletion error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
+  const deleteExpertProfilePicture = async (): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      if (!user || !expertProfile?.imageUrl) {
+        console.warn('No expert or profile picture to delete.');
+        return false;
+      }
+  
+      // Extract the path from the URL
+      const urlParts = expertProfile.imageUrl.split('/expert_avatars/');
+      if (urlParts.length < 2) {
+        console.error('Invalid expert profile picture URL format.');
+        return false;
+      }
+      const filePath = `expert_avatars/${urlParts[1]}`;
+  
+      // Delete the file from storage
+      const { error: storageError } = await supabaseClient.storage
+        .from('expert_avatars')
+        .remove([filePath]);
+  
+      if (storageError) {
+        console.error('Storage delete error:', storageError);
+        toast.error(`Failed to delete image: ${storageError.message}`);
+        return false;
+      }
+  
+      // Update the profile to set imageUrl and avatar_url to null
+      const { error: updateError } = await supabaseClient
+        .from('expert_profiles')
+        .update({ imageUrl: null, avatar_url: null })
+        .eq('auth_id', user.id);
+  
+      if (updateError) {
+        console.error('Expert profile update error:', updateError);
+        toast.error(`Failed to update expert profile: ${updateError.message}`);
+        return false;
+      }
+  
+      await refreshExpertProfile();
+      toast.success('Expert profile picture removed successfully.');
+      return true;
+    } catch (err: any) {
+      console.error('Unexpected image deletion error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+	const fetchReferralSettings = async (): Promise<void> => {
+    try {
+      const { data, error } = await supabaseClient
+        .from<ReferralSettings>('referral_settings')
+        .select('*')
+        .eq('active', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching referral settings:', error);
+        toast.error(`Failed to fetch referral settings: ${error.message}`);
+      } else if (data) {
+        setReferralSettings(data);
+      } else {
+        console.warn('No active referral settings found.');
+        setReferralSettings(null);
+      }
+    } catch (err: any) {
+      console.error('Unexpected error while fetching referral settings:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+    }
+  };
+
+  const clearSession = () => {
+    setSession(null);
+    setUser(null);
+    setUserProfile(null);
+    setExpertProfile(null);
+    setSessionType('none');
+    setHasDualSessions(false);
+  };
+
+  const value: AuthContextProps = {
+    supabaseClient,
+    session,
+    user,
+    userProfile,
+    expertProfile,
+    isLoading,
+    isExpert,
+    isLoggedIn,
+    isExpertLoggedIn,
+    authState,
+    error,
+		referralSettings,
+    sessionType,
+    hasDualSessions,
     login,
-    signup,
     logout,
-    updateUserProfile,
+    updateProfile,
     updateExpertProfile,
-    updatePassword: (password: string) => authUpdatePassword(password, state.user),
-    updateEmail: (email: string) => authUpdateEmail(email, state.user),
-    resetPassword: authResetPassword,
-    sendVerificationEmail: () => authSendVerification(state.user),
-    
-    updateProfilePicture,
-    updateUserSettings,
-    addToFavorites,
-    removeFromFavorites,
-    checkIsFavorite,
-    refreshFavoritesCount: refreshFavoritesCountFixed,
-    
-    getReferrals,
-    refreshWalletBalance,
-    addFunds,
-    deductFunds,
-    
-    reportExpert,
-    reviewExpert,
-    hasTakenServiceFrom,
-    getExpertShareLink,
-    getReferralLink
+    refreshUserProfile,
+    refreshExpertProfile,
+    uploadProfilePicture,
+    uploadExpertProfilePicture,
+    deleteProfilePicture,
+    deleteExpertProfilePicture,
+		fetchReferralSettings,
+    clearSession,
   };
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
