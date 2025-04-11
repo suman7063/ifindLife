@@ -75,7 +75,7 @@ const ExpertDetail = () => {
   
   // Adapt the expert data for components expecting ExpertProfile type
   const expertProfile = {
-    id: Number(expert.id),
+    id: expertId,
     name: expert.name,
     experience: expert.experience,
     specialties: expert.specialties,
@@ -85,12 +85,13 @@ const ExpertDetail = () => {
     waitTime: expert.waitTime,
     online: expert.online,
     languages: expert.languages,
-    price_per_min: expert.price
+    price_per_min: expert.price,
+    imageUrl: expert.imageUrl
   };
   
   // Adapt data for ExpertDetailTabs
   const expertForTabs = {
-    id: Number(expert.id),
+    id: expertId,
     name: expert.name,
     experience: expert.experience,
     description: expert.description,
@@ -130,7 +131,8 @@ const ExpertDetail = () => {
         expert={{
           id: expertId,
           name: expert.name,
-          price: expert.price
+          price: expert.price,
+          imageUrl: expert.imageUrl
         }}
       />
     </div>

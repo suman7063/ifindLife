@@ -1,4 +1,3 @@
-
 export interface ExpertProfile {
   id: string;
   auth_id?: string;
@@ -20,14 +19,17 @@ export interface ExpertProfile {
   verified?: boolean;
   created_at?: string;
   selected_services?: number[];
+  price_per_min?: number;
+  price?: number;
+  imageUrl?: string;
 }
 
 export interface Expert extends ExpertProfile {
   id: string;
   name: string;
   email: string;
-  pricing?: number; // Added pricing property
-  price_per_min?: number; // Added price_per_min property
+  pricing?: number;
+  price_per_min?: number;
 }
 
 export interface ExtendedExpert extends Expert {

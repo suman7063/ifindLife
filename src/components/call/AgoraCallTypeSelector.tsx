@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Video, Phone } from 'lucide-react';
@@ -8,7 +7,7 @@ interface AgoraCallTypeSelectorProps {
   onSelect: (type: 'audio' | 'video') => void;
 }
 
-const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({ 
+export const AgoraCallTypeSelector: React.FC<AgoraCallTypeSelectorProps> = ({ 
   selectedType, 
   onSelect 
 }) => {

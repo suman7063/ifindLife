@@ -3,6 +3,7 @@ import React, { createContext, useContext } from 'react';
 import { useAuth } from './auth/AuthContext';
 import { UserProfile } from '@/types/supabase/userProfile';
 import { User } from '@supabase/supabase-js';
+import { NewReview, NewReport } from '@/types/common';
 
 // Define the UserAuthContext type
 export interface UserAuthContextType {
@@ -18,13 +19,13 @@ export interface UserAuthContextType {
   updateProfilePicture: (file: File) => Promise<string>;
   addToFavorites: (expertId: string) => Promise<boolean>;
   removeFromFavorites: (expertId: string) => Promise<boolean>;
-  addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  addReview: (review: NewReview) => Promise<boolean>;
   isLoggingOut?: boolean;
   profileNotFound: boolean;
-  reportExpert?: (report: { expertId: string, reason: string, details: string }) => Promise<boolean>;
-  hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
-  rechargeWallet?: (amount: number) => Promise<boolean>;
-  getReferralLink?: () => string | null;
+  reportExpert: (report: NewReport) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
+  rechargeWallet: (amount: number) => Promise<boolean>;
+  getReferralLink: () => string | null;
 }
 
 // Create the context
@@ -34,46 +35,27 @@ const UserAuthContext = createContext<UserAuthContextType | null>(null);
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
 
-  // The issue was here - we need to ensure auth is properly initialized
-  if (!auth) {
-    // Return a loading state instead of trying to destructure undefined
-    return <div>Loading authentication...</div>;
-  }
-
-  // Create value object with all required properties, using optional chaining to avoid null references
+  // Create value object with all required properties
   const userAuthValue: UserAuthContextType = {
     currentUser: auth.userProfile,
     user: auth.user,
-    isAuthenticated: auth.isAuthenticated || false,
-    authLoading: auth.state?.authLoading || false,
-    loading: auth.isLoading || false,
-    login: auth.login || (async () => false),
-    logout: auth.logout || (async () => false),
-    signup: auth.signup || (async () => false),
-    updateProfile: auth.updateUserProfile || (async () => false),
-    updateProfilePicture: async (file: File) => {
-      if (!auth.user) {
-        throw new Error("User not authenticated");
-      }
-      
-      try {
-        // Fallback implementation if auth doesn't provide this function
-        if (typeof auth.updateProfilePicture === 'function') {
-          return auth.updateProfilePicture(file);
-        }
-        
-        console.error("Profile picture update not implemented");
-        return "";
-      } catch (error) {
-        console.error("Error uploading profile picture:", error);
-        throw error;
-      }
+    isAuthenticated: auth.isAuthenticated,
+    authLoading: auth.state?.isLoading || false,
+    loading: auth.isLoading,
+    login: auth.login,
+    logout: auth.logout,
+    signup: auth.signup,
+    updateProfile: auth.updateUserProfile,
+    updateProfilePicture: auth.updateProfilePicture,
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
+    addReview: (review: NewReview) => {
+      return auth.reviewExpert(review.expertId, review.rating, review.comment);
     },
-    addToFavorites: auth.addToFavorites || (async () => false),
-    removeFromFavorites: auth.removeFromFavorites || (async () => false),
-    addReview: auth.reviewExpert || (async () => false),
+    reportExpert: (report: NewReport) => {
+      return auth.reportExpert(report.expertId, report.reason, report.details);
+    },
     profileNotFound: !auth.userProfile && !auth.isLoading,
-    reportExpert: auth.reportExpert,
     hasTakenServiceFrom: auth.hasTakenServiceFrom,
     rechargeWallet: auth.addFunds,
     getReferralLink: auth.getReferralLink,

@@ -8,12 +8,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ReferralUI } from '@/types/supabase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ReferralUI } from '@/types/common';
 
 interface ReferralsListProps {
   referrals: ReferralUI[];
-  isLoading?: boolean; // Added the isLoading prop
+  isLoading?: boolean;
 }
 
 const ReferralsList: React.FC<ReferralsListProps> = ({ referrals, isLoading = false }) => {

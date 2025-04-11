@@ -1,8 +1,8 @@
 
 export interface UserProfile {
   id: string;
-  name: string;
-  email: string;
+  name?: string; // Make name optional to match the other definition
+  email?: string;
   phone?: string;
   country?: string;
   city?: string;
@@ -19,7 +19,7 @@ export interface UserProfile {
   total_sessions?: number;
   last_login?: string;
   currency?: string;
-  referral_link?: string; // Added for compatibility
+  referral_link?: string;
   
   // Extended properties for UI
   favorite_experts?: any[];
@@ -27,4 +27,6 @@ export interface UserProfile {
   reports?: any[];
   reviews?: any[];
   referrals?: any[];
+  consultation_count?: number;
+  referral_count?: number;
 }

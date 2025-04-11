@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { Star } from 'lucide-react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
-import { NewReview } from '@/types/supabase/tables';
+import { NewReview } from '@/types/common';
 
 interface ExpertReviewModalProps {
   isOpen: boolean;

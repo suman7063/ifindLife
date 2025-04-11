@@ -1,9 +1,7 @@
 
-import { User } from '@supabase/supabase-js';
-
 export interface ExpertProfile {
-  id: string | number;
-  auth_id: string;
+  id: string; // Changed from string | number to just string
+  auth_id?: string;
   name: string;
   email: string;
   phone?: string;
@@ -16,7 +14,7 @@ export interface ExpertProfile {
   experience?: string;
   rating?: number;
   total_reviews?: number;
-  price_per_min?: number;
+  price_per_min?: number; // Added this field
   price?: number;
   avatar_url?: string;
   certificate_urls?: string[];
@@ -24,6 +22,7 @@ export interface ExpertProfile {
   status?: 'pending' | 'approved' | 'disapproved';
   created_at?: string;
   updated_at?: string;
+  imageUrl?: string; // Added this field for compatibility
 }
 
 export interface ExpertRegistrationData {

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
@@ -35,6 +34,7 @@ export interface AuthContextValue {
   resetPassword: (email: string) => Promise<boolean>;
   sendVerificationEmail: () => Promise<boolean>;
   
+  updateProfilePicture: (file: File) => Promise<string>;
   updateUserSettings: (settings: Partial<UserSettings>) => Promise<boolean>;
   addToFavorites: (expertId: string) => Promise<boolean>;
   removeFromFavorites: (expertId: string) => Promise<boolean>;
@@ -49,7 +49,7 @@ export interface AuthContextValue {
   reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
   reviewExpert: (expertId: string, rating: number, comment: string) => Promise<boolean>;
   hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
-  getExpertShareLink: (expertId: string | number) => string;
+  getExpertShareLink: (expertId: string) => string;
   getReferralLink: () => string | null;
 }
 
@@ -318,6 +318,78 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateProfilePicture = async (file: File): Promise<string> => {
+    try {
+      if (!state.user) {
+        toast.error("User not authenticated");
+        return "";
+      }
+      
+      console.log("Uploading profile picture for user:", state.user.id);
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${state.user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `profile-pictures/${fileName}`;
+      
+      // Upload file to storage
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+        
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        toast.error("Failed to upload image");
+        return "";
+      }
+      
+      // Get public URL
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+        
+      const publicUrl = data.publicUrl;
+      
+      // Update user profile with the new profile picture URL
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ profile_picture: publicUrl })
+        .eq('id', state.user.id);
+        
+      if (updateError) {
+        console.error("Database update error:", updateError);
+        toast.error("Failed to update profile");
+        return "";
+      }
+      
+      setAuthState(prev => ({
+        ...prev,
+        userProfile: { 
+          ...prev.userProfile!,
+          profile_picture: publicUrl,
+          avatar_url: publicUrl 
+        } as UserProfile
+      }));
+      
+      toast.success("Profile picture updated successfully");
+      return publicUrl;
+    } catch (error: any) {
+      console.error("Profile picture update error:", error);
+      toast.error(error.message || "Failed to update profile picture");
+      return "";
+    }
+  };
+
+  const refreshFavoritesCountFixed = async (): Promise<number> => {
+    if (refreshFavoritesCount) {
+      const result = await refreshFavoritesCount();
+      return typeof result === 'number' ? result : 0;
+    }
+    return 0;
+  };
+
   const contextValue: AuthContextValue = {
     state,
     isAuthenticated: state.isAuthenticated,
@@ -338,11 +410,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPassword: authResetPassword,
     sendVerificationEmail: () => authSendVerification(state.user),
     
+    updateProfilePicture,
     updateUserSettings,
     addToFavorites,
     removeFromFavorites,
     checkIsFavorite,
-    refreshFavoritesCount,
+    refreshFavoritesCount: refreshFavoritesCountFixed,
     
     getReferrals,
     refreshWalletBalance,

@@ -1,24 +1,21 @@
-
 import React from 'react';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 import { 
   Card, 
   CardContent, 
+  CardDescription,
+  CardFooter, 
   CardHeader, 
-  CardTitle,
-  CardDescription
+  CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 
-// Import necessary components here
-
 const UserDashboard = () => {
   const { currentUser, isAuthenticated } = useUserAuth();
   const navigate = useNavigate();
   
-  // If not authenticated, redirect to login
   React.useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -37,6 +34,9 @@ const UserDashboard = () => {
       </div>
     );
   }
+  
+  const consultationCount = currentUser?.consultation_count || 0;
+  const referralCount = currentUser?.referral_count || 0;
   
   return (
     <div className="container py-8">
@@ -79,7 +79,7 @@ const UserDashboard = () => {
                 <CardDescription>Total sessions</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{currentUser.consultation_count || 0}</div>
+                <div className="text-2xl font-bold">{consultationCount}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Lifetime consultations
                 </p>
@@ -92,7 +92,7 @@ const UserDashboard = () => {
                 <CardDescription>Friends referred</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{currentUser.referral_count || 0}</div>
+                <div className="text-2xl font-bold">{referralCount}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Earn rewards when friends sign up!
                 </p>
@@ -106,7 +106,6 @@ const UserDashboard = () => {
               <CardDescription>Your latest consultations and transactions</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Recent activity would be rendered here */}
               <p className="text-muted-foreground">No recent activity to display</p>
             </CardContent>
           </Card>
@@ -119,7 +118,6 @@ const UserDashboard = () => {
               <CardDescription>History of your sessions with experts</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Consultations would be rendered here */}
               <p className="text-muted-foreground">No consultations to display</p>
             </CardContent>
           </Card>
@@ -132,7 +130,6 @@ const UserDashboard = () => {
               <CardDescription>Experts you've added to your favorites</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Favorites would be rendered here */}
               <p className="text-muted-foreground">No favorites to display</p>
             </CardContent>
           </Card>
@@ -145,7 +142,6 @@ const UserDashboard = () => {
               <CardDescription>Manage your referrals and rewards</CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Referrals would be rendered here */}
               <p className="text-muted-foreground">No referrals to display</p>
             </CardContent>
           </Card>

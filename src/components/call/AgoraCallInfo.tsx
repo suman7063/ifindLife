@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ExpertProfile } from '@/types/expert';
-import { AgoraCallTypeSelector } from './AgoraCallTypeSelector';
+import { AlertCircle } from 'lucide-react';
+import AgoraCallTypeSelector from './AgoraCallTypeSelector';
+import { ExpertProfile } from '@/types/supabase/expert';
 
 export interface AgoraCallInfoProps {
-  expert?: ExpertProfile | null;
   expertName?: string;
   expertPrice?: number;
   onCallTypeChange: (type: 'audio' | 'video') => void;
@@ -15,7 +15,6 @@ export interface AgoraCallInfoProps {
 }
 
 const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
-  expert,
   expertName,
   expertPrice,
   onCallTypeChange,
@@ -23,39 +22,45 @@ const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
   onStartCall,
   isConnecting
 }) => {
-  const displayName = expertName || expert?.name || 'Expert';
-  const price = expertPrice || expert?.price_per_min || 0;
-  
   return (
-    <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-8">
+    <div className="flex flex-col items-center justify-center h-full p-6 space-y-8">
       <div className="text-center">
-        <h3 className="text-xl font-medium mb-2">Call with {displayName}</h3>
+        <h2 className="text-xl font-semibold mb-2">
+          Connect with {expertName || 'Expert'}
+        </h2>
         <p className="text-muted-foreground">
-          Select how you would like to connect
+          {expertPrice !== undefined ? 
+            `₹${expertPrice}/min - Secure and high-quality call` : 
+            'Secure and high-quality call'}
         </p>
       </div>
       
-      <AgoraCallTypeSelector 
+      <AgoraCallTypeSelector
         selectedType={selectedCallType}
         onSelect={onCallTypeChange}
       />
       
-      <div className="text-center space-y-2">
-        <p className="text-sm text-muted-foreground">
-          Rate: ₹{price}/minute
-        </p>
-        <p className="text-sm text-muted-foreground">
-          First 15 minutes free
+      <div className="w-full max-w-xs">
+        <Button 
+          onClick={onStartCall}
+          disabled={isConnecting}
+          className="w-full h-12 bg-ifind-aqua hover:bg-ifind-teal"
+        >
+          {isConnecting ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-2 border-current mr-2"></div>
+              Connecting...
+            </>
+          ) : (
+            `Start ${selectedCallType === 'video' ? 'Video' : 'Audio'} Call`
+          )}
+        </Button>
+        
+        <p className="text-xs text-center mt-2 text-muted-foreground">
+          <AlertCircle className="inline h-3 w-3 mr-1" />
+          You can end the call at any time
         </p>
       </div>
-      
-      <Button
-        onClick={() => onStartCall()}
-        disabled={isConnecting}
-        className="w-full bg-ifind-aqua hover:bg-ifind-teal text-white py-2 rounded-md"
-      >
-        {isConnecting ? 'Connecting...' : 'Start Call'}
-      </Button>
     </div>
   );
 };

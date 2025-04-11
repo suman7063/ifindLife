@@ -1,10 +1,8 @@
 
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export interface CallAuthMessageProps {
   expertName: string;
@@ -12,34 +10,32 @@ export interface CallAuthMessageProps {
 }
 
 const CallAuthMessage: React.FC<CallAuthMessageProps> = ({ expertName, onClose }) => {
-  const navigate = useNavigate();
-  const { isAuthenticated, loading } = useUserAuth();
-  
-  // If user is authenticated or still loading, don't show the login message
-  if (isAuthenticated || loading) {
-    return null;
-  }
-  
   return (
-    <div className="flex flex-col items-center space-y-4 py-6">
-      <Alert variant="destructive" className="max-w-md">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          You need to log in or sign up to start a call with {expertName}.
-        </AlertDescription>
-      </Alert>
-      <div className="flex space-x-4">
-        <Button 
-          onClick={() => navigate('/user-login')}
-          className="bg-ifind-aqua hover:bg-ifind-teal"
-        >
-          Log In / Sign Up
-        </Button>
+    <div className="flex flex-col items-center justify-center h-full p-6 space-y-6">
+      <div className="rounded-full bg-amber-100 p-6">
+        <Lock className="h-12 w-12 text-amber-500" />
+      </div>
+      
+      <div className="text-center">
+        <h3 className="text-xl font-semibold mb-2">Authentication Required</h3>
+        <p className="text-muted-foreground max-w-md">
+          You need to be logged in to start a call with {expertName}. Please log in or create an account to continue.
+        </p>
+      </div>
+      
+      <div className="flex space-x-3 pt-4">
         <Button 
           variant="outline" 
           onClick={onClose}
         >
           Cancel
+        </Button>
+        <Button 
+          asChild
+        >
+          <Link to="/login?redirect=expert">
+            Log In / Sign Up
+          </Link>
         </Button>
       </div>
     </div>

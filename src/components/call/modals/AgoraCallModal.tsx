@@ -19,7 +19,7 @@ interface AgoraCallModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   expert?: {
-    id: string | number;
+    id: string;
     name: string;
     imageUrl?: string;
     price?: number;
@@ -45,7 +45,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   const agoraCall = useAgoraCall({
-    expertId: expert?.id?.toString() ?? '',
+    expertId: expert?.id ?? '',
     userId: userId ?? '',
     callType,
     onError: (error) => {
@@ -60,7 +60,9 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
     remainingTime,
     isExtending,
     extendCall,
-    formatTime
+    formatTime,
+    startCall,
+    endCall
   } = agoraCall;
 
   // Start call handler
@@ -79,17 +81,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
     setCallState(prev => ({...prev, isConnecting: true, hasError: false}));
     
     try {
-      // Simulate call connection
-      setTimeout(() => {
-        setCallState(prev => ({
-          ...prev,
-          isConnecting: false,
-          isConnected: true,
-          hasJoined: true
-        }));
-      }, 2000);
-      
-      return true;
+      return await startCall(callType);
     } catch (error) {
       console.error('Failed to start call:', error);
       setCallError('Failed to establish connection');
@@ -104,11 +96,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
 
   // End call handler
   const handleEndCall = () => {
-    setCallState(prev => ({
-      ...prev,
-      isConnected: false,
-      hasJoined: false
-    }));
+    endCall();
     
     // Close modal after slight delay
     setTimeout(() => {
