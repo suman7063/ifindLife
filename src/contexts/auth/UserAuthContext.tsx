@@ -22,6 +22,7 @@ export interface UserAuthContextType {
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   updateProfilePicture?: (file: File) => Promise<string | null>;
+  refreshProfile?: () => Promise<void>;
   
   // Expert interaction methods
   addToFavorites?: (expertId: string) => Promise<boolean>;

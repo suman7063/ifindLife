@@ -1,5 +1,5 @@
 
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/userProfile';
 
 // Function to convert database user to UserProfile
 export const convertUserToUserProfile = (user: any): UserProfile => {
@@ -14,6 +14,7 @@ export const convertUserToUserProfile = (user: any): UserProfile => {
     city: user.city,
     currency: user.currency,
     profile_picture: user.profile_picture,
+    avatar_url: user.avatar_url,
     wallet_balance: user.wallet_balance,
     created_at: user.created_at,
     referral_code: user.referral_code,

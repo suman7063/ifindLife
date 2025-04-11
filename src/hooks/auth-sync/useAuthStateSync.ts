@@ -1,7 +1,9 @@
 
 import { AuthSyncState } from '@/features/auth-sync/types';
 import { UserAuthContextType } from '@/contexts/auth/UserAuthContext';
-import { ExpertAuthHook } from '@/components/expert/hooks/useExpertAuth';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
+
+type ExpertAuthHook = ReturnType<typeof useExpertAuth>;
 
 export const useAuthStateSync = (
   userAuth: UserAuthContextType,
@@ -11,14 +13,14 @@ export const useAuthStateSync = (
 ) => {
   const syncAuthState = async () => {
     try {
-      // Refresh user profile if authenticated
-      if (userAuth.isAuthenticated) {
-        await userAuth.refreshProfile?.();
+      // Refresh user profile if authenticated and refreshProfile exists
+      if (userAuth.isAuthenticated && typeof userAuth.refreshProfile === 'function') {
+        await userAuth.refreshProfile();
       }
       
       // Refresh expert profile if authenticated
-      if (expertAuth.isAuthenticated) {
-        await expertAuth.refreshProfile?.();
+      if (expertAuth.isAuthenticated && typeof expertAuth.refreshProfile === 'function') {
+        await expertAuth.refreshProfile();
       }
       
       // Update state

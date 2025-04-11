@@ -1,10 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { useUserAuth } from '@/contexts/UserAuthContext'; 
+import { useUserAuth } from '@/contexts/auth/UserAuthContext'; 
 import { useExpertAuth } from '@/hooks/expert-auth';
-import { useAuthCheckEffect } from './useAuthCheckEffect';
-import { useAuthLogoutMethods } from './useAuthLogoutMethods';
-import { useAuthStateSync } from './useAuthStateSync';
 import { AuthSyncState, UseAuthSynchronizationReturn, SessionType } from '@/features/auth-sync/types';
 
 export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
@@ -27,17 +24,92 @@ export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
   const expertAuth = useExpertAuth();
   
   // Setup auth check effect
-  useAuthCheckEffect(userAuth, expertAuth, state, setState);
+  useEffect(() => {
+    const checkAuth = async () => {
+      setState(prev => ({
+        ...prev,
+        isUserAuthenticated: userAuth.isAuthenticated,
+        isExpertAuthenticated: expertAuth.isAuthenticated,
+        currentUser: userAuth.currentUser,
+        currentExpert: expertAuth.currentExpert,
+        isAuthInitialized: true
+      }));
+    };
+    
+    checkAuth();
+  }, [userAuth, expertAuth]);
   
   // Setup auth state sync
-  const syncAuthState = useAuthStateSync(userAuth, expertAuth, state, setState);
+  const syncAuthState = async () => {
+    try {
+      // Refresh user profile if authenticated
+      if (userAuth.isAuthenticated && typeof userAuth.refreshProfile === 'function') {
+        await userAuth.refreshProfile();
+      }
+      
+      // Refresh expert profile if authenticated
+      if (expertAuth.isAuthenticated && typeof expertAuth.refreshProfile === 'function') {
+        await expertAuth.refreshProfile();
+      }
+      
+      // Update state
+      setState(prev => ({
+        ...prev,
+        isUserAuthenticated: userAuth.isAuthenticated,
+        isExpertAuthenticated: expertAuth.isAuthenticated,
+        currentUser: userAuth.currentUser,
+        currentExpert: expertAuth.currentExpert,
+        isSynchronizing: false,
+        isAuthInitialized: true,
+        authCheckCompleted: true,
+        hasDualSessions: userAuth.isAuthenticated && expertAuth.isAuthenticated,
+        sessionType: determineSessionType(userAuth.isAuthenticated, expertAuth.isAuthenticated)
+      }));
+      
+      return true;
+    } catch (error) {
+      console.error('Error during auth sync:', error);
+      return false;
+    }
+  };
   
   // Setup auth logout methods
-  const { userLogout, expertLogout, fullLogout } = useAuthLogoutMethods(
-    userAuth, 
-    expertAuth, 
-    setIsLoggingOut
-  );
+  const userLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      const result = await userAuth.logout();
+      setIsLoggingOut(false);
+      return result;
+    } catch (error) {
+      setIsLoggingOut(false);
+      return false;
+    }
+  };
+  
+  const expertLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      const result = await expertAuth.logout();
+      setIsLoggingOut(false);
+      return result;
+    } catch (error) {
+      setIsLoggingOut(false);
+      return false;
+    }
+  };
+  
+  const fullLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await userAuth.logout();
+      await expertAuth.logout();
+      setIsLoggingOut(false);
+      return true;
+    } catch (error) {
+      setIsLoggingOut(false);
+      return false;
+    }
+  };
   
   return {
     ...state,
@@ -51,4 +123,12 @@ export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
     currentUser: state.currentUser || null,
     currentExpert: state.currentExpert || null
   };
+};
+
+// Helper function to determine session type
+const determineSessionType = (isUserAuth: boolean, isExpertAuth: boolean): SessionType => {
+  if (isUserAuth && isExpertAuth) return 'dual';
+  if (isUserAuth) return 'user';
+  if (isExpertAuth) return 'expert';
+  return 'none';
 };

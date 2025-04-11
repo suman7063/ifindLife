@@ -7,11 +7,13 @@ export interface UserProfile {
   country?: string;
   city?: string;
   profile_picture?: string;
+  avatar_url?: string | null; // Alternative property name for profile_picture
   created_at?: string;
   updated_at?: string;
   wallet_balance?: number;
   currency?: string;
   referral_code?: string;
+  referred_by?: string | null;
   consultation_count?: number;
   referral_count?: number;
   
@@ -22,6 +24,7 @@ export interface UserProfile {
   transactions?: any[];
   enrolled_courses?: any[];
   favorite_experts?: string[];
+  referrals?: any[];
   
   // Legacy compatibility aliases
   walletBalance?: number; // Alias for wallet_balance

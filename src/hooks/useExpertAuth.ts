@@ -31,6 +31,13 @@ export const useExpertAuth = () => {
     return false;
   };
   
+  const refreshProfile = async (): Promise<void> => {
+    if (auth && auth.refreshExpertProfile) {
+      await auth.refreshExpertProfile();
+      setCurrentExpert(auth.expertProfile);
+    }
+  };
+  
   return {
     currentExpert,
     isAuthenticated,
@@ -38,7 +45,8 @@ export const useExpertAuth = () => {
     loading: isLoading,
     login,
     logout,
-    register
+    register,
+    refreshProfile
   };
 };
 
