@@ -1,143 +1,127 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { format } from 'date-fns';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { formatCurrency } from '@/lib/utils';
 
-interface BookingFormProps {
+export interface BookingFormProps {
   expertId: string;
-  expertName: string;
-  onClose: () => void;
+  onSuccess?: () => void;
 }
 
-const BookingForm: React.FC<BookingFormProps> = ({ expertId, expertName, onClose }) => {
-  const [date, setDate] = useState<Date>();
-  const [timeSlot, setTimeSlot] = useState<string>('');
-  const [duration, setDuration] = useState<number>(30);
+const BookingForm: React.FC<BookingFormProps> = ({ expertId, onSuccess }) => {
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [duration, setDuration] = useState(30);
+  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { currentUser } = useUserAuth();
-
-  const timeSlots = [
-    '09:00 AM', '10:00 AM', '11:00 AM', 
-    '12:00 PM', '01:00 PM', '02:00 PM', 
-    '03:00 PM', '04:00 PM', '05:00 PM'
-  ];
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!date || !timeSlot) {
-      alert('Please select both date and time');
-      return;
-    }
+    setIsSubmitting(true);
     
     try {
-      setIsSubmitting(true);
-      // Booking API call would go here
-      console.log('Booking submitted:', {
-        expertId,
-        userId: currentUser?.id,
-        date: format(date, 'yyyy-MM-dd'),
-        timeSlot,
-        duration
-      });
+      // Here would be the API call to book the appointment
+      console.log('Booking appointment with expert', { expertId, date, time, duration, notes });
       
-      alert(`Booking scheduled with ${expertName} on ${format(date, 'PPP')} at ${timeSlot}`);
-      onClose();
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      alert('Appointment booked successfully');
+      if (onSuccess) onSuccess();
+      
+      // Reset form
+      setDate('');
+      setTime('');
+      setDuration(30);
+      setNotes('');
     } catch (error) {
-      console.error('Error submitting booking:', error);
-      alert('Failed to schedule booking. Please try again.');
+      console.error('Error booking appointment:', error);
+      alert('Failed to book appointment. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
+  const ratePerMinute = 5; // Example rate, would come from expert data
+  const totalCost = ratePerMinute * duration;
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">Select Date</label>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              className={cn(
-                "w-full justify-start text-left font-normal",
-                !date && "text-muted-foreground"
-              )}
-            >
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              {date ? format(date, 'PPP') : <span>Pick a date</span>}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              initialFocus
-              disabled={(date) => date < new Date()}
-              className="pointer-events-auto"
+    <Card className="p-4">
+      <h3 className="text-lg font-semibold mb-4">Book Appointment</h3>
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              min={new Date().toISOString().split('T')[0]}
             />
-          </PopoverContent>
-        </Popover>
-      </div>
-      
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">Select Time</label>
-        <div className="grid grid-cols-3 gap-2">
-          {timeSlots.map((slot) => (
-            <Button 
-              key={slot}
-              type="button"
-              variant={timeSlot === slot ? "default" : "outline"}
-              className="text-sm"
-              onClick={() => setTimeSlot(slot)}
-            >
-              {slot}
-            </Button>
-          ))}
+          </div>
+          
+          <div>
+            <Label htmlFor="time">Time</Label>
+            <Input
+              id="time"
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+            />
+          </div>
         </div>
-      </div>
-      
-      <div className="space-y-2">
-        <label className="block text-sm font-medium">Duration</label>
-        <div className="flex space-x-2">
-          {[30, 45, 60].map((mins) => (
-            <Button 
-              key={mins}
-              type="button"
-              variant={duration === mins ? "default" : "outline"}
-              className="flex-1"
-              onClick={() => setDuration(mins)}
-            >
-              {mins} min
-            </Button>
-          ))}
+        
+        <div>
+          <Label htmlFor="duration">Duration (minutes)</Label>
+          <select
+            id="duration"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            required
+          >
+            <option value="15">15 minutes</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+          </select>
         </div>
-      </div>
-      
-      <div className="pt-4 flex space-x-2">
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="flex-1"
-          onClick={onClose}
-        >
-          Cancel
+        
+        <div>
+          <Label htmlFor="notes">Notes</Label>
+          <Textarea
+            id="notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Any specific topics or questions you'd like to discuss?"
+            rows={4}
+          />
+        </div>
+        
+        <div className="bg-gray-50 p-3 rounded-md">
+          <div className="flex justify-between items-center">
+            <span>Rate</span>
+            <span>{formatCurrency(ratePerMinute, 'USD')}/minute</span>
+          </div>
+          <div className="flex justify-between items-center font-medium mt-2">
+            <span>Total</span>
+            <span>{formatCurrency(totalCost, 'USD')}</span>
+          </div>
+        </div>
+        
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
+          {isSubmitting ? 'Booking...' : 'Book Appointment'}
         </Button>
-        <Button 
-          type="submit" 
-          className="flex-1"
-          disabled={isSubmitting || !date || !timeSlot}
-        >
-          {isSubmitting ? 'Scheduling...' : 'Schedule'}
-        </Button>
-      </div>
-    </form>
+      </form>
+    </Card>
   );
 };
 

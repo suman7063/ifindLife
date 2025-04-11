@@ -11,7 +11,7 @@ export const useExpertAuth = () => {
   
   useEffect(() => {
     if (auth) {
-      setCurrentExpert(auth.expertProfile as ExpertProfile);
+      setCurrentExpert(auth.expertProfile);
       setIsAuthenticated(auth.isAuthenticated && auth.role === 'expert');
       setIsLoading(auth.isLoading);
     }
@@ -27,6 +27,7 @@ export const useExpertAuth = () => {
   
   const register = async (data: any): Promise<boolean> => {
     // This would normally register an expert
+    console.log("Expert registration data:", data);
     return false;
   };
   

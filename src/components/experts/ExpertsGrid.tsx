@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Expert } from '@/types/expert';
 import { Badge } from '@/components/ui/badge';
@@ -44,8 +45,8 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts, onResetFilters }) =>
         // Extract specialties from specialization or default to empty array
         const specialtiesArray = expert.specialization ? [expert.specialization] : [];
         
-        // Get price from expert.pricing if it exists, otherwise use default
-        const expertPrice = expert.price_per_min || expert.pricing || 0;
+        // Get price from price_per_min as pricing doesn't exist in the type
+        const expertPrice = expert.price_per_min || 0;
         
         // Check online status from verified property
         const isOnline = expert.verified || false;

@@ -35,3 +35,7 @@ export interface ExtendedExpert extends Expert {
   rating?: number;
   price?: number;
 }
+
+export interface ExpertProfile extends Expert {
+  // Additional fields specific to ExpertProfile, if any
+}

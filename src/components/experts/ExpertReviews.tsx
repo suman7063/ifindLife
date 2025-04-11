@@ -1,80 +1,57 @@
 
 import React from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card } from '@/components/ui/card';
 import { Star } from 'lucide-react';
 
-interface Review {
+export interface Review {
   id: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
+  user_id?: string;
+  user_name?: string;
   rating: number;
   comment: string;
   date: string;
-  verified: boolean;
+  verified?: boolean;
 }
 
-interface ExpertReviewsProps {
+export interface ExpertReviewsProps {
   expertId: string;
   reviews: Review[];
-  isLoading?: boolean;
 }
 
-const ExpertReviews: React.FC<ExpertReviewsProps> = ({ expertId, reviews, isLoading = false }) => {
-  if (isLoading) {
-    return <div className="animate-pulse p-4 space-y-4">
-      {[1, 2].map((i) => (
-        <div key={i} className="flex space-x-4">
-          <div className="rounded-full bg-gray-300 h-10 w-10"></div>
-          <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-300 rounded w-1/4"></div>
-            <div className="h-4 bg-gray-300 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-300 rounded w-3/4"></div>
-          </div>
-        </div>
-      ))}
-    </div>;
-  }
-
-  if (reviews.length === 0) {
+const ExpertReviews: React.FC<ExpertReviewsProps> = ({ expertId, reviews = [] }) => {
+  if (!reviews.length) {
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">No reviews yet</p>
-      </div>
+      <Card className="p-6">
+        <p className="text-center text-gray-500">No reviews yet</p>
+      </Card>
     );
   }
-
+  
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {reviews.map((review) => (
-        <div key={review.id} className="border-b border-gray-100 pb-4">
-          <div className="flex justify-between items-start mb-2">
-            <div className="flex items-center">
-              <Avatar className="h-8 w-8 mr-2">
-                <AvatarImage src={review.userAvatar} alt={review.userName} />
-                <AvatarFallback>{review.userName.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium text-sm">{review.userName}</p>
-                <p className="text-xs text-gray-500">
-                  {new Date(review.date).toLocaleDateString()}
-                </p>
+        <Card key={review.id} className="p-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h4 className="font-medium">{review.user_name || 'Anonymous'}</h4>
+              <div className="flex items-center my-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star 
+                    key={i}
+                    className={`h-4 w-4 ${i < review.rating ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
+                  />
+                ))}
               </div>
+              <p className="text-sm text-gray-500">{new Date(review.date).toLocaleDateString()}</p>
             </div>
-            <div className="flex items-center bg-gray-100 px-2 py-1 rounded">
-              <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" />
-              <span className="text-xs font-medium">{review.rating}</span>
-            </div>
-          </div>
-          <p className="text-sm text-gray-700">{review.comment}</p>
-          {review.verified && (
-            <div className="mt-2">
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                Verified Session
+            {review.verified && (
+              <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                Verified
               </span>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+          <p className="mt-3 text-sm">{review.comment}</p>
+        </Card>
       ))}
     </div>
   );

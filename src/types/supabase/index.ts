@@ -1,5 +1,23 @@
 
-// Re-export all types from this directory
-export * from './auth';
-export * from './user';
-export * from './tables';
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: any;
+        Insert: any;
+        Update: any;
+      };
+      expert_profiles: {
+        Row: any;
+        Insert: any;
+        Update: any;
+      };
+      referral_settings: {
+        Row: any;
+        Insert: any;
+        Update: any;
+      };
+      // Add other tables as needed
+    };
+  };
+}

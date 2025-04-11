@@ -53,4 +53,5 @@ export const useExpertAuth = () => {
   };
 };
 
+// Re-export the ExpertProfile type
 export type { ExpertProfile };

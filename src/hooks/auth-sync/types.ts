@@ -12,6 +12,8 @@ export interface AuthSyncState {
   authCheckCompleted: boolean;
   hasDualSessions: boolean;
   sessionType: SessionType;
+  currentUser?: UserProfile | null;
+  currentExpert?: ExpertProfile | null;
 }
 
 export interface AuthSyncMethods {

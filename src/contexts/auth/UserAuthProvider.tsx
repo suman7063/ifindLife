@@ -2,6 +2,7 @@
 import React from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
+import { UserProfile } from '@/types/supabase/userProfile';
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
