@@ -1,153 +1,94 @@
-import React from 'react';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription,
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useNavigate } from 'react-router-dom';
 
-const UserDashboard = () => {
-  const { currentUser, isAuthenticated } = useUserAuth();
+import React, { useEffect } from 'react';
+import { Container } from '@/components/ui/container';
+import { useNavigate } from 'react-router-dom';
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import { toast } from 'sonner';
+import { useAuthSynchronization } from '@/hooks/auth-sync';
+import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
+import DashboardContent from '@/components/user/dashboard/DashboardContent';
+import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
+import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useRechargeDialog } from '@/hooks/useRechargeDialog';
+
+const UserDashboard: React.FC = () => {
+  const { currentUser, isAuthenticated, logout } = useUserAuth();
+  const { isAuthInitialized, isAuthLoading } = useAuthSynchronization();
   const navigate = useNavigate();
   
-  React.useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
+  const { 
+    transactions, 
+    isLoading: transactionsLoading, 
+    refreshTransactions 
+  } = useTransactions(currentUser?.id);
+  
+  const {
+    isRechargeDialogOpen,
+    handleOpenRechargeDialog,
+    handleCloseRechargeDialog,
+    handleRechargeSuccess
+  } = useRechargeDialog(refreshTransactions);
+
+  const handleLogout = async (): Promise<boolean> => {
+    try {
+      const success = await logout();
+      if (success) {
+        toast.success('Successfully logged out');
+        navigate('/');
+        return true;
+      } else {
+        toast.error('Error logging out');
+        return false;
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Error logging out');
+      return false;
     }
-  }, [isAuthenticated, navigate]);
-  
-  if (!currentUser) {
-    return (
-      <div className="container py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Loading...</CardTitle>
-            <CardDescription>Please wait while we load your dashboard</CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    );
+  };
+
+  useEffect(() => {
+    if (!isAuthLoading && isAuthInitialized && !isAuthenticated) {
+      navigate('/user-login');
+    }
+  }, [isAuthenticated, isAuthLoading, isAuthInitialized, navigate]);
+
+  if (isAuthLoading) {
+    return <DashboardLoader />;
   }
-  
-  const consultationCount = currentUser?.consultation_count || 0;
-  const referralCount = currentUser?.referral_count || 0;
-  
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // Add default values for missing properties to prevent errors
+  const enhancedUser = currentUser ? {
+    ...currentUser,
+    consultation_count: currentUser.consultation_count ?? 0,
+    referral_count: currentUser.referral_code ? 1 : 0,
+  } : null;
+
   return (
-    <div className="container py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Welcome, {currentUser.name}</h1>
-        <Button 
-          onClick={() => navigate('/wallet')}
-          className="bg-ifind-aqua hover:bg-ifind-teal"
-        >
-          Recharge Wallet
-        </Button>
-      </div>
+    <Container className="py-8">
+      <DashboardHeader 
+        user={enhancedUser} 
+        onLogout={handleLogout}
+      />
       
-      <Tabs defaultValue="dashboard" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="consultations">My Consultations</TabsTrigger>
-          <TabsTrigger value="favorites">Favorites</TabsTrigger>
-          <TabsTrigger value="referrals">Referrals</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="dashboard" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Wallet Balance</CardTitle>
-                <CardDescription>Your current balance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">₹ {currentUser.wallet_balance || 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Last updated: {new Date().toLocaleDateString()}
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Consultations</CardTitle>
-                <CardDescription>Total sessions</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{consultationCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Lifetime consultations
-                </p>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle>Referrals</CardTitle>
-                <CardDescription>Friends referred</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{referralCount}</div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Earn rewards when friends sign up!
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-              <CardDescription>Your latest consultations and transactions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No recent activity to display</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="consultations">
-          <Card>
-            <CardHeader>
-              <CardTitle>My Consultations</CardTitle>
-              <CardDescription>History of your sessions with experts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No consultations to display</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="favorites">
-          <Card>
-            <CardHeader>
-              <CardTitle>Favorite Experts</CardTitle>
-              <CardDescription>Experts you've added to your favorites</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No favorites to display</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="referrals">
-          <Card>
-            <CardHeader>
-              <CardTitle>Referrals</CardTitle>
-              <CardDescription>Manage your referrals and rewards</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No referrals to display</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+      <DashboardContent
+        user={enhancedUser}
+        transactions={transactions}
+        isLoading={transactionsLoading}
+        onRecharge={handleOpenRechargeDialog}
+      />
+      
+      <RechargeDialog 
+        open={isRechargeDialogOpen}
+        onOpenChange={handleCloseRechargeDialog}
+        onSuccess={handleRechargeSuccess}
+      />
+    </Container>
   );
 };
 

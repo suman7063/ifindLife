@@ -39,3 +39,4 @@ export interface ExtendedExpert extends Expert {
 export interface ExpertProfile extends Expert {
   // Additional fields specific to ExpertProfile, if any
 }
+

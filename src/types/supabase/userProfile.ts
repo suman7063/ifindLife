@@ -12,6 +12,8 @@ export interface UserProfile {
   wallet_balance?: number;
   currency?: string;
   referral_code?: string;
+  consultation_count?: number;
+  referral_count?: number;
 }
 
 export interface UserSettings {

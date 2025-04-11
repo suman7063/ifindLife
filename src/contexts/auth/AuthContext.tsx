@@ -480,8 +480,308 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateProfilePicture = async (file: File): Promise<string> => {
-    const result = await uploadProfilePicture(file);
-    return result || '';
+    try {
+      setIsLoading(true);
+      if (!user) throw new Error('No authenticated user');
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+      
+      // Upload the image to storage
+      const { error: uploadError, data: uploadData } = await supabaseClient
+        .storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+        
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        throw new Error(`Error uploading image: ${uploadError.message}`);
+      }
+      
+      // Get the public URL
+      const { data: urlData } = await supabaseClient
+        .storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+        
+      const publicUrl = urlData.publicUrl;
+      
+      // Update the user profile with the new URL
+      const { error: updateError } = await supabaseClient
+        .from('profiles')
+        .update({ profile_picture: publicUrl })
+        .eq('id', user.id);
+        
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        throw new Error(`Error updating profile: ${updateError.message}`);
+      }
+      
+      await refreshUserProfile();
+      return publicUrl;
+    } catch (err: any) {
+      console.error('Error updating profile picture:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const uploadProfilePicture = async (file: File): Promise<string | null> => {
+    try {
+      setIsLoading(true);
+      if (!user) throw new Error('User not logged in');
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+      
+      // Upload the image to storage
+      const { error: uploadError } = await supabaseClient
+        .storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+        
+      if (uploadError) {
+        console.error('Error uploading image:', uploadError);
+        toast.error(`Failed to upload image: ${uploadError.message}`);
+        return null;
+      }
+      
+      // Get the public URL
+      const { data: urlData } = await supabaseClient
+        .storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+        
+      const publicUrl = urlData.publicUrl;
+      
+      // Update the user profile with the new URL
+      const { error: updateError } = await supabaseClient
+        .from('profiles')
+        .update({ profile_picture: publicUrl })
+        .eq('id', user.id);
+        
+      if (updateError) {
+        console.error('Error updating profile:', updateError);
+        toast.error(`Failed to update profile: ${updateError.message}`);
+        return null;
+      }
+      
+      await refreshUserProfile();
+      toast.success('Profile picture updated successfully');
+      return publicUrl;
+    } catch (err: any) {
+      console.error('Error uploading profile picture:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = async (): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabaseClient.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error:', error);
+        toast.error(`Logout failed: ${error.message}`);
+        return false;
+      }
+      
+      setSession(null);
+      setUser(null);
+      setUserProfile(null);
+      setExpertProfile(null);
+      return true;
+    } catch (err: any) {
+      console.error('Unexpected logout error:', err);
+      toast.error(`Unexpected error occurred: ${err.message}`);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+    try {
+      if (!user) return false;
+      
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+      
+      if (error) return false;
+      await refreshUserProfile();
+      return true;
+    } catch (err) {
+      console.error('Error updating user profile:', err);
+      return false;
+    }
+  };
+
+  const updatePassword = async (password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabaseClient.auth.updateUser({ password });
+      
+      if (error) {
+        console.error('Password update error:', error);
+        toast.error(error.message);
+        return false;
+      }
+      
+      toast.success('Password updated successfully');
+      return true;
+    } catch (error: any) {
+      console.error('Password update error:', error);
+      toast.error(error.message || 'An error occurred during password update');
+      return false;
+    }
+  };
+
+  const addToFavorites = async (expertId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabaseClient
+        .from('user_favorite_experts')
+        .insert({ user_id: user?.id, expert_id: expertId });
+      return !error;
+    } catch (err) {
+      console.error('Error adding to favorites:', err);
+      return false;
+    }
+  };
+
+  const removeFromFavorites = async (expertId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabaseClient
+        .from('user_favorite_experts')
+        .delete()
+        .eq('user_id', user?.id)
+        .eq('expert_id', expertId);
+      return !error;
+    } catch (err) {
+      console.error('Error removing from favorites:', err);
+      return false;
+    }
+  };
+
+  const reviewExpert = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+    try {
+      const { error } = await supabaseClient
+        .from('user_reviews')
+        .insert({ 
+          user_id: user?.id, 
+          expert_id: expertId, 
+          rating,
+          comment,
+          date: new Date().toISOString()
+        });
+      return !error;
+    } catch (err) {
+      console.error('Error adding review:', err);
+      return false;
+    }
+  };
+
+  const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
+    try {
+      const { error } = await supabaseClient
+        .from('expert_reports')
+        .insert({ 
+          user_id: user?.id, 
+          expert_id: expertId, 
+          reason,
+          details,
+          date: new Date().toISOString(),
+          status: 'pending'
+        });
+      return !error;
+    } catch (err) {
+      console.error('Error reporting expert:', err);
+      return false;
+    }
+  };
+
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabaseClient
+        .from('user_expert_services')
+        .select('id')
+        .eq('user_id', user?.id)
+        .eq('expert_id', expertId)
+        .limit(1);
+      
+      return !error && data && data.length > 0;
+    } catch (err) {
+      console.error('Error checking service history:', err);
+      return false;
+    }
+  };
+
+  const getExpertShareLink = (expertId: string | number): string => {
+    return `${window.location.origin}/expert/${expertId}`;
+  };
+
+  const getReferralLink = (): string | null => {
+    if (!userProfile?.referral_code) return null;
+    return `${window.location.origin}/signup?ref=${userProfile.referral_code}`;
+  };
+
+  const addFunds = async (amount: number): Promise<boolean> => {
+    try {
+      // This is a placeholder - in a real app, this would connect to a payment processor
+      const { error } = await supabaseClient
+        .from('user_transactions')
+        .insert({
+          user_id: user?.id,
+          amount,
+          type: 'deposit',
+          date: new Date().toISOString(),
+          description: 'Wallet recharge',
+          currency: userProfile?.currency || 'USD'
+        });
+      
+      if (error) return false;
+      
+      // Update wallet balance
+      if (userProfile) {
+        const { error: updateError } = await supabaseClient
+          .from('profiles')
+          .update({ wallet_balance: (userProfile.wallet_balance || 0) + amount })
+          .eq('id', user?.id);
+          
+        return !updateError;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error adding funds:', err);
+      return false;
+    }
+  };
+
+  const signup = async (email: string, password: string, userData: any, referralCode?: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: userData
+        }
+      });
+      return !error && !!data.user;
+    } catch (err) {
+      return false;
+    }
   };
 
   const value: AuthContextProps = {
@@ -499,31 +799,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     referralSettings,
     sessionType,
     hasDualSessions,
-    login: async (email: string, password: string) => {
-      try {
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        return !error;
-      } catch (err) {
-        return false;
-      }
+    isAuthenticated: !!user,
+    role: expertProfile ? 'expert' : userProfile?.email === 'admin@ifindlife.com' ? 'admin' : userProfile ? 'user' : null,
+    state: {
+      isLoading,
+      userProfile,
+      expertProfile,
+      isAuthenticated: !!user,
+      role: expertProfile ? 'expert' : userProfile?.email === 'admin@ifindlife.com' ? 'admin' : userProfile ? 'user' : null,
     },
+    login,
     logout,
     updateProfile,
-    updateExpertProfile: async (updates: ExpertProfile): Promise<void> => {
-      try {
-        if (!user) throw new Error('User not logged in');
-        const { error } = await supabaseClient
-          .from('expert_accounts')
-          .update(updates)
-          .eq('auth_id', user.id);
-          
-        if (!error) {
-          refreshExpertProfile();
-        }
-      } catch (err) {
-        console.error('Error updating expert profile:', err);
-      }
-    },
+    updateUserProfile,
+    updateExpertProfile,
     refreshUserProfile,
     refreshExpertProfile,
     uploadProfilePicture,
@@ -537,186 +826,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
     },
     deleteProfilePicture,
-    deleteExpertProfilePicture: async () => false,
+    deleteExpertProfilePicture,
     fetchReferralSettings,
-    clearSession: () => {
-      setSession(null);
-      setUser(null);
-      setUserProfile(null);
-      setExpertProfile(null);
-      setSessionType('none');
-      setHasDualSessions(false);
-    },
-    isAuthenticated: !!user,
-    role: expertProfile ? 'expert' : userProfile?.email === 'admin@ifindlife.com' ? 'admin' : userProfile ? 'user' : null,
-    state: {
-      isLoading,
-      userProfile,
-      expertProfile,
-      isAuthenticated: !!user,
-      role: expertProfile ? 'expert' : userProfile?.email === 'admin@ifindlife.com' ? 'admin' : userProfile ? 'user' : null,
-    },
-    updateUserProfile: async (updates: Partial<UserProfile>): Promise<boolean> => {
-      try {
-        if (!user) return false;
-        
-        const { error } = await supabaseClient
-          .from('profiles')
-          .update(updates)
-          .eq('id', user.id);
-        
-        if (error) return false;
-        await refreshUserProfile();
-        return true;
-      } catch (err) {
-        console.error('Error updating user profile:', err);
-        return false;
-      }
-    },
-    updatePassword: async (password: string): Promise<boolean> => {
-      try {
-        const { error } = await supabaseClient.auth.updateUser({ password });
-        
-        if (error) {
-          console.error('Password update error:', error);
-          toast.error(error.message);
-          return false;
-        }
-        
-        toast.success('Password updated successfully');
-        return true;
-      } catch (error: any) {
-        console.error('Password update error:', error);
-        toast.error(error.message || 'An error occurred during password update');
-        return false;
-      }
-    },
-    addToFavorites: async (expertId: string): Promise<boolean> => {
-      try {
-        const { error } = await supabaseClient
-          .from('user_favorite_experts')
-          .insert({ user_id: user?.id, expert_id: expertId });
-        return !error;
-      } catch (err) {
-        console.error('Error adding to favorites:', err);
-        return false;
-      }
-    },
-    removeFromFavorites: async (expertId: string): Promise<boolean> => {
-      try {
-        const { error } = await supabaseClient
-          .from('user_favorite_experts')
-          .delete()
-          .eq('user_id', user?.id)
-          .eq('expert_id', expertId);
-        return !error;
-      } catch (err) {
-        console.error('Error removing from favorites:', err);
-        return false;
-      }
-    },
-    reviewExpert: async (expertId: string, rating: number, comment: string): Promise<boolean> => {
-      try {
-        const { error } = await supabaseClient
-          .from('user_reviews')
-          .insert({ 
-            user_id: user?.id, 
-            expert_id: expertId, 
-            rating,
-            comment,
-            date: new Date().toISOString()
-          });
-        return !error;
-      } catch (err) {
-        console.error('Error adding review:', err);
-        return false;
-      }
-    },
-    reportExpert: async (expertId: string, reason: string, details: string): Promise<boolean> => {
-      try {
-        const { error } = await supabaseClient
-          .from('expert_reports')
-          .insert({ 
-            user_id: user?.id, 
-            expert_id: expertId, 
-            reason,
-            details,
-            date: new Date().toISOString(),
-            status: 'pending'
-          });
-        return !error;
-      } catch (err) {
-        console.error('Error reporting expert:', err);
-        return false;
-      }
-    },
-    hasTakenServiceFrom: async (expertId: string): Promise<boolean> => {
-      try {
-        const { data, error } = await supabaseClient
-          .from('user_expert_services')
-          .select('id')
-          .eq('user_id', user?.id)
-          .eq('expert_id', expertId)
-          .limit(1);
-        
-        return !error && data && data.length > 0;
-      } catch (err) {
-        console.error('Error checking service history:', err);
-        return false;
-      }
-    },
-    getExpertShareLink: (expertId: string | number): string => {
-      return `${window.location.origin}/expert/${expertId}`;
-    },
-    getReferralLink: (): string | null => {
-      if (!userProfile?.referral_code) return null;
-      return `${window.location.origin}/signup?ref=${userProfile.referral_code}`;
-    },
-    addFunds: async (amount: number): Promise<boolean> => {
-      try {
-        // This is a placeholder - in a real app, this would connect to a payment processor
-        const { error } = await supabaseClient
-          .from('user_transactions')
-          .insert({
-            user_id: user?.id,
-            amount,
-            type: 'deposit',
-            date: new Date().toISOString(),
-            description: 'Wallet recharge',
-            currency: userProfile?.currency || 'USD'
-          });
-        
-        if (error) return false;
-        
-        // Update wallet balance
-        if (userProfile) {
-          const { error: updateError } = await supabaseClient
-            .from('profiles')
-            .update({ wallet_balance: (userProfile.wallet_balance || 0) + amount })
-            .eq('id', user?.id);
-            
-          return !updateError;
-        }
-        return false;
-      } catch (err) {
-        console.error('Error adding funds:', err);
-        return false;
-      }
-    },
-    signup: async (email: string, password: string, userData: any, referralCode?: string) => {
-      try {
-        const { data, error } = await supabaseClient.auth.signUp({
-          email,
-          password,
-          options: {
-            data: userData
-          }
-        });
-        return !error && !!data.user;
-      } catch (err) {
-        return false;
-      }
-    }
+    clearSession,
+    updatePassword,
+    addToFavorites,
+    removeFromFavorites,
+    reviewExpert,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink,
+    addFunds,
+    signup
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

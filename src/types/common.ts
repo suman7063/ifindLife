@@ -13,13 +13,11 @@ export interface NewReport {
 
 export interface ReferralUI {
   id: string;
-  referredId?: string;
-  referrerId?: string;
-  referredName?: string;
-  referrerName?: string;
-  referralCode: string;
-  status: string;
-  created_at?: string;
-  completed_at?: string;
-  rewardClaimed: boolean;
+  name: string;
+  email: string;
+  date: string;
+  status: 'pending' | 'completed';
+  reward?: number;
+  currency?: string;
 }
+
