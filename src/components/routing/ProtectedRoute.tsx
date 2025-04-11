@@ -16,35 +16,35 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles = ['user', 'expert', 'admin'], 
   redirectPath = '/login'
 }) => {
-  const { isAuthenticated, role, isLoading } = useAuth();
+  const auth = useAuth();
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     // Once the auth loading is complete, we can finish our check
-    if (!isLoading) {
+    if (!auth.isLoading) {
       setIsChecking(false);
     }
-  }, [isLoading]);
+  }, [auth.isLoading]);
 
   // Show loading screen while checking authentication
-  if (isLoading || isChecking) {
+  if (auth.isLoading || isChecking) {
     return <LoadingScreen />;
   }
 
   // If not authenticated, redirect to login
-  if (!isAuthenticated) {
+  if (!auth.isAuthenticated) {
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   // If authenticated but not in allowed roles, redirect to appropriate page
-  if (role && !allowedRoles.includes(role)) {
+  if (auth.role && !allowedRoles.includes(auth.role)) {
     // Redirect based on role
-    if (role === 'user') {
+    if (auth.role === 'user') {
       return <Navigate to="/user-dashboard" replace />;
-    } else if (role === 'expert') {
+    } else if (auth.role === 'expert') {
       return <Navigate to="/expert-dashboard" replace />;
-    } else if (role === 'admin') {
+    } else if (auth.role === 'admin') {
       return <Navigate to="/admin" replace />;
     }
   }

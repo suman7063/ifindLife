@@ -157,7 +157,7 @@ const ExpertDetail: React.FC = () => {
       </div>
     );
   }
-
+  
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -167,14 +167,14 @@ const ExpertDetail: React.FC = () => {
             <CardHeader>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={expert.avatar_url || undefined} alt={expert.name} />
-                  <AvatarFallback>{expert.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={expert?.avatar_url || undefined} alt={expert?.name || ''} />
+                  <AvatarFallback>{expert?.name?.substring(0, 2).toUpperCase() || 'EX'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
-                      <CardTitle className="text-2xl">{expert.name}</CardTitle>
-                      <CardDescription className="text-lg">{expert.specialization}</CardDescription>
+                      <CardTitle className="text-2xl">{expert?.name}</CardTitle>
+                      <CardDescription className="text-lg">{expert?.specialization}</CardDescription>
                     </div>
                     <Button 
                       variant={isFavorite ? "outline" : "default"}
@@ -186,23 +186,23 @@ const ExpertDetail: React.FC = () => {
                     </Button>
                   </div>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {expert.status === 'approved' && (
+                    {expert?.status === 'approved' && (
                       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                         <CheckCircle className="mr-1 h-3 w-3" /> Verified
                       </Badge>
                     )}
-                    {expert.average_rating && (
+                    {expert?.average_rating && (
                       <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
                         <Star className="mr-1 h-3 w-3 fill-yellow-500 text-yellow-500" /> 
                         {expert.average_rating.toFixed(1)} ({expert.reviews_count || 0} reviews)
                       </Badge>
                     )}
-                    {expert.experience && (
+                    {expert?.experience && (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                         <Award className="mr-1 h-3 w-3" /> {expert.experience} Experience
                       </Badge>
                     )}
-                    {expert.country && (
+                    {expert?.country && (
                       <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
                         <MapPin className="mr-1 h-3 w-3" /> {expert.city ? `${expert.city}, ` : ''}{expert.country}
                       </Badge>
@@ -220,9 +220,9 @@ const ExpertDetail: React.FC = () => {
                 </TabsList>
                 <TabsContent value="about" className="pt-4">
                   <h3 className="text-lg font-semibold mb-2">Bio</h3>
-                  <p className="text-gray-700 whitespace-pre-line">{expert.bio || 'No bio available.'}</p>
+                  <p className="text-gray-700 whitespace-pre-line">{expert?.bio || 'No bio available.'}</p>
                   
-                  {expert.selected_services && expert.selected_services.length > 0 && (
+                  {expert?.selected_services && expert.selected_services.length > 0 && (
                     <>
                       <h3 className="text-lg font-semibold mt-6 mb-2">Services Offered</h3>
                       <div className="flex flex-wrap gap-2">
@@ -251,7 +251,7 @@ const ExpertDetail: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle>Book a Session</CardTitle>
-              <CardDescription>Schedule time with {expert.name}</CardDescription>
+              <CardDescription>Schedule time with {expert?.name}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
@@ -261,7 +261,7 @@ const ExpertDetail: React.FC = () => {
                     <span className="text-sm text-gray-500">Session Rate</span>
                   </div>
                   <span className="font-semibold">
-                    {formatCurrency(expert.price_per_min || 0)} / minute
+                    {formatCurrency(expert?.price_per_min || 0)} / minute
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

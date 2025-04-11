@@ -35,18 +35,33 @@ interface AuthContextProps {
   referralSettings: ReferralSettings | null;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   hasDualSessions: boolean;
-  login: (email?: string) => Promise<void>;
+  isAuthenticated: boolean;
+  role: 'admin' | 'user' | 'expert' | null;
+  state: any;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   updateProfile: (updates: UserProfile) => Promise<void>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updateExpertProfile: (updates: ExpertProfile) => Promise<void>;
   refreshUserProfile: () => Promise<void>;
   refreshExpertProfile: () => Promise<void>;
   uploadProfilePicture: (file: File) => Promise<string | null>;
+  updateProfilePicture: (file: File) => Promise<string>;
   uploadExpertProfilePicture: (file: File) => Promise<string | null>;
   deleteProfilePicture: () => Promise<boolean>;
   deleteExpertProfilePicture: () => Promise<boolean>;
   fetchReferralSettings: () => Promise<void>;
   clearSession: () => void;
+  updatePassword: (password: string) => Promise<boolean>;
+  addToFavorites: (expertId: string) => Promise<boolean>;
+  removeFromFavorites: (expertId: string) => Promise<boolean>;
+  reviewExpert: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  reportExpert: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
+  getExpertShareLink: (expertId: string | number) => string;
+  getReferralLink: () => string | null;
+  addFunds: (amount: number) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextProps>({
@@ -64,18 +79,33 @@ const AuthContext = createContext<AuthContextProps>({
   referralSettings: null,
   sessionType: 'none',
   hasDualSessions: false,
-  login: async () => {},
+  isAuthenticated: false,
+  role: null,
+  state: {},
+  login: async () => false,
+  signup: async () => false,
   logout: async () => false,
   updateProfile: async () => {},
+  updateUserProfile: async () => false,
   updateExpertProfile: async () => {},
   refreshUserProfile: async () => {},
   refreshExpertProfile: async () => {},
   uploadProfilePicture: async () => null,
+  updateProfilePicture: async () => "",
   uploadExpertProfilePicture: async () => null,
   deleteProfilePicture: async () => false,
   deleteExpertProfilePicture: async () => false,
   fetchReferralSettings: async () => {},
   clearSession: () => {},
+  updatePassword: async () => false,
+  addToFavorites: async () => false,
+  removeFromFavorites: async () => false,
+  reviewExpert: async () => false,
+  reportExpert: async () => false,
+  hasTakenServiceFrom: async () => false,
+  getExpertShareLink: () => "",
+  getReferralLink: () => null,
+  addFunds: async () => false,
 });
 
 interface AuthProviderProps {
@@ -91,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authState, setAuthState] = useState<AuthChangeEvent | null>(null);
   const [error, setError] = useState<Error | null>(null);
-	const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
   const [hasDualSessions, setHasDualSessions] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -185,19 +215,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkDualSessions();
   }, [userProfile, expertProfile]);
 
-  const login = async (email?: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const { error } = await supabaseClient.auth.signInWithOtp({ email });
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
       if (error) {
         console.error('Login error:', error);
         toast.error(`Login failed: ${error.message}`);
+        return false;
       } else {
         toast.success('Check your email for the login link.');
+        return true;
       }
     } catch (err: any) {
       console.error('Unexpected login error:', err);
       toast.error(`Unexpected error occurred: ${err.message}`);
+      return false;
     }
   };
 
@@ -528,7 +561,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-	const fetchReferralSettings = async (): Promise<void> => {
+  const fetchReferralSettings = async (): Promise<void> => {
     try {
       const { data, error } = await supabaseClient
         .from<ReferralSettings>('referral_settings')
@@ -572,7 +605,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isExpertLoggedIn,
     authState,
     error,
-		referralSettings,
+    referralSettings,
     sessionType,
     hasDualSessions,
     login,
@@ -585,8 +618,178 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     uploadExpertProfilePicture,
     deleteProfilePicture,
     deleteExpertProfilePicture,
-		fetchReferralSettings,
+    fetchReferralSettings,
     clearSession,
+    isAuthenticated: !!user,
+    role: expertProfile ? 'expert' : userProfile?.email === 'admin@ifindlife.com' ? 'admin' : userProfile ? 'user' : null,
+    state: {
+      isLoading,
+      userProfile,
+      expertProfile,
+      isAuthenticated: !!user,
+      role: expertProfile ? 'expert' : userProfile?.email === 'admin@ifindlife.com' ? 'admin' : userProfile ? 'user' : null,
+    },
+    updateUserProfile: async (updates: Partial<UserProfile>): Promise<boolean> => {
+      try {
+        if (!user) return false;
+        
+        const { error } = await supabaseClient
+          .from('profiles')
+          .update(updates)
+          .eq('id', user.id);
+        
+        if (error) return false;
+        await refreshUserProfile();
+        return true;
+      } catch (err) {
+        console.error('Error updating user profile:', err);
+        return false;
+      }
+    },
+    updatePassword: async (password: string): Promise<boolean> => {
+      try {
+        const { error } = await supabaseClient.auth.updateUser({ password });
+        
+        if (error) {
+          console.error('Password update error:', error);
+          toast.error(error.message);
+          return false;
+        }
+        
+        toast.success('Password updated successfully');
+        return true;
+      } catch (error: any) {
+        console.error('Password update error:', error);
+        toast.error(error.message || 'An error occurred during password update');
+        return false;
+      }
+    },
+    addToFavorites: async (expertId: string): Promise<boolean> => {
+      try {
+        const { error } = await supabaseClient
+          .from('user_favorite_experts')
+          .insert({ user_id: user?.id, expert_id: expertId });
+        return !error;
+      } catch (err) {
+        console.error('Error adding to favorites:', err);
+        return false;
+      }
+    },
+    removeFromFavorites: async (expertId: string): Promise<boolean> => {
+      try {
+        const { error } = await supabaseClient
+          .from('user_favorite_experts')
+          .delete()
+          .eq('user_id', user?.id)
+          .eq('expert_id', expertId);
+        return !error;
+      } catch (err) {
+        console.error('Error removing from favorites:', err);
+        return false;
+      }
+    },
+    reviewExpert: async (expertId: string, rating: number, comment: string): Promise<boolean> => {
+      try {
+        const { error } = await supabaseClient
+          .from('user_reviews')
+          .insert({ 
+            user_id: user?.id, 
+            expert_id: expertId, 
+            rating,
+            comment,
+            date: new Date().toISOString()
+          });
+        return !error;
+      } catch (err) {
+        console.error('Error adding review:', err);
+        return false;
+      }
+    },
+    reportExpert: async (expertId: string, reason: string, details: string): Promise<boolean> => {
+      try {
+        const { error } = await supabaseClient
+          .from('expert_reports')
+          .insert({ 
+            user_id: user?.id, 
+            expert_id: expertId, 
+            reason,
+            details,
+            date: new Date().toISOString(),
+            status: 'pending'
+          });
+        return !error;
+      } catch (err) {
+        console.error('Error reporting expert:', err);
+        return false;
+      }
+    },
+    hasTakenServiceFrom: async (expertId: string): Promise<boolean> => {
+      try {
+        const { data, error } = await supabaseClient
+          .from('user_expert_services')
+          .select('id')
+          .eq('user_id', user?.id)
+          .eq('expert_id', expertId)
+          .limit(1);
+        
+        return !error && data && data.length > 0;
+      } catch (err) {
+        console.error('Error checking service history:', err);
+        return false;
+      }
+    },
+    getExpertShareLink: (expertId: string | number): string => {
+      return `${window.location.origin}/expert/${expertId}`;
+    },
+    getReferralLink: (): string | null => {
+      if (!userProfile?.referral_code) return null;
+      return `${window.location.origin}/signup?ref=${userProfile.referral_code}`;
+    },
+    addFunds: async (amount: number): Promise<boolean> => {
+      try {
+        // This is a placeholder - in a real app, this would connect to a payment processor
+        const { error } = await supabaseClient
+          .from('user_transactions')
+          .insert({
+            user_id: user?.id,
+            amount,
+            type: 'deposit',
+            date: new Date().toISOString(),
+            description: 'Wallet recharge',
+            currency: userProfile?.currency || 'USD'
+          });
+        
+        if (error) return false;
+        
+        // Update wallet balance
+        if (userProfile) {
+          const { error: updateError } = await supabaseClient
+            .from('profiles')
+            .update({ wallet_balance: (userProfile.wallet_balance || 0) + amount })
+            .eq('id', user?.id);
+            
+          return !updateError;
+        }
+        return false;
+      } catch (err) {
+        console.error('Error adding funds:', err);
+        return false;
+      }
+    },
+    signup: async (email: string, password: string, userData: any, referralCode?: string) => {
+      try {
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: userData
+          }
+        });
+        return !error && !!data.user;
+      } catch (err) {
+        return false;
+      }
+    }
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

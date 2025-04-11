@@ -40,25 +40,29 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     currentUser: auth.userProfile,
     user: auth.user,
     isAuthenticated: auth.isAuthenticated,
-    authLoading: auth.state?.isLoading || false,
+    authLoading: auth.isLoading,
     loading: auth.isLoading,
     login: auth.login,
     logout: auth.logout,
-    signup: auth.signup,
-    updateProfile: auth.updateUserProfile,
-    updateProfilePicture: auth.updateProfilePicture,
-    addToFavorites: auth.addToFavorites,
-    removeFromFavorites: auth.removeFromFavorites,
-    addReview: (review: NewReview) => {
-      return auth.reviewExpert(review.expertId, review.rating, review.comment);
+    signup: auth.signup || (async () => false),
+    updateProfile: auth.updateUserProfile || (async () => false),
+    updateProfilePicture: auth.updateProfilePicture || (async () => ""),
+    addToFavorites: auth.addToFavorites || (async () => false),
+    removeFromFavorites: auth.removeFromFavorites || (async () => false),
+    addReview: async (review: NewReview) => {
+      return auth.reviewExpert ? 
+        auth.reviewExpert(review.expertId, review.rating, review.comment) : 
+        false;
     },
-    reportExpert: (report: NewReport) => {
-      return auth.reportExpert(report.expertId, report.reason, report.details);
+    reportExpert: async (report: NewReport) => {
+      return auth.reportExpert ? 
+        auth.reportExpert(report.expertId, report.reason, report.details) : 
+        false;
     },
     profileNotFound: !auth.userProfile && !auth.isLoading,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom,
-    rechargeWallet: auth.addFunds,
-    getReferralLink: auth.getReferralLink,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    rechargeWallet: auth.addFunds || (async () => false),
+    getReferralLink: auth.getReferralLink || (() => null),
   };
 
   return (

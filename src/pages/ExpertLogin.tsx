@@ -9,8 +9,13 @@ const ExpertLogin: React.FC = () => {
   const auth = useAuth();
   
   // Temporary compatibility fix for missing expertLogin and expertSignup
-  const expertLogin = auth.login;
-  const expertSignup = auth.signup;
+  const expertLogin = async (email: string, password: string) => {
+    return await auth.login(email, password);
+  };
+  
+  const expertSignup = async (email: string, password: string, userData: any) => {
+    return auth.signup ? await auth.signup(email, password, userData) : false;
+  };
   
   useEffect(() => {
     // Redirect if user is already authenticated as an expert

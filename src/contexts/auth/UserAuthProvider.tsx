@@ -8,39 +8,36 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Create a compatible context value that matches the UserAuthContextType
   const userAuthValue = {
-    currentUser: auth.state.userProfile,
-    isAuthenticated: auth.state.isAuthenticated && auth.state.role === 'user',
+    currentUser: auth.userProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
-    signup: auth.signup,
+    signup: auth.signup || (async () => false),
     logout: auth.logout,
-    authLoading: auth.state.isLoading,
-    loading: auth.state.isLoading,
-    profileNotFound: !auth.state.userProfile && !auth.state.isAuthenticated && !auth.state.isLoading,
-    updateProfile: auth.updateUserProfile,
-    updatePassword: auth.updatePassword,
-    user: auth.state.user,
-    addToFavorites: (expertId: number) => auth.addToFavorites(expertId.toString()),
-    removeFromFavorites: (expertId: number) => auth.removeFromFavorites(expertId.toString()),
-    rechargeWallet: auth.addFunds,
+    authLoading: auth.isLoading,
+    loading: auth.isLoading,
+    profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
+    updateProfile: auth.updateUserProfile || auth.updateProfile,
+    updatePassword: auth.updatePassword || (async () => false),
+    user: auth.user,
+    addToFavorites: (expertId: string) => auth.addToFavorites ? auth.addToFavorites(expertId) : Promise.resolve(false),
+    removeFromFavorites: (expertId: string) => auth.removeFromFavorites ? auth.removeFromFavorites(expertId) : Promise.resolve(false),
+    rechargeWallet: auth.addFunds || (async () => false),
     addReview: async (review: any) => {
       if (review && typeof review === 'object' && 'expertId' in review && 'rating' in review && 'comment' in review) {
-        return auth.reviewExpert(review.expertId.toString(), review.rating, review.comment);
+        return auth.reviewExpert ? auth.reviewExpert(review.expertId.toString(), review.rating, review.comment) : false;
       }
       return false;
     },
     reportExpert: async (report: any) => {
       if (report && typeof report === 'object' && 'expertId' in report && 'reason' in report && 'details' in report) {
-        return auth.reportExpert(report.expertId.toString(), report.reason, report.details);
+        return auth.reportExpert ? auth.reportExpert(report.expertId.toString(), report.reason, report.details) : false;
       }
       return false;
     },
-    hasTakenServiceFrom: auth.hasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink,
-    getReferralLink: auth.getReferralLink,
-    updateProfilePicture: async (file: File) => {
-      // This is a placeholder - implement actual functionality
-      return null;
-    }
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    getExpertShareLink: auth.getExpertShareLink || (() => ""),
+    getReferralLink: auth.getReferralLink || (() => null),
+    updateProfilePicture: auth.updateProfilePicture || (async () => ""),
   };
 
   return (

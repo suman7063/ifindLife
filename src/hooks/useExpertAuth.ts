@@ -10,12 +10,12 @@ export const useExpertAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    if (auth.state) {
-      setCurrentExpert(auth.state.expertProfile);
-      setIsAuthenticated(auth.state.isAuthenticated && auth.state.role === 'expert');
-      setIsLoading(auth.state.isLoading);
+    if (auth) {
+      setCurrentExpert(auth.expertProfile as unknown as ExpertProfile);
+      setIsAuthenticated(auth.isAuthenticated && auth.role === 'expert');
+      setIsLoading(auth.isLoading);
     }
-  }, [auth.state]);
+  }, [auth]);
   
   const login = async (email: string, password: string): Promise<boolean> => {
     return auth.login(email, password);
@@ -33,7 +33,8 @@ export const useExpertAuth = () => {
   return {
     currentExpert,
     isAuthenticated,
-    isLoading,
+    isLoading: isLoading,
+    loading: isLoading,
     login,
     logout,
     register
