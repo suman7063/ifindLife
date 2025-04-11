@@ -1,34 +1,79 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container } from '@/components/ui/container';
-import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { toast } from 'sonner';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUserAuth } from '@/hooks/useUserAuth';
+import LoadingScreen from '@/components/auth/LoadingScreen';
 import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
-import DashboardContent from '@/components/user/dashboard/DashboardContent';
-import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
+import WalletSection from '@/components/user/dashboard/WalletSection';
+import UserPurchasesSection from '@/components/user/dashboard/UserPurchasesSection';
+import UserStatsSummary from '@/components/user/dashboard/UserStatsSummary';
+import useDashboardState from '@/hooks/user-dashboard/useDashboardState';
+import { UserTransaction } from '@/types/supabase/tables';
+import { supabase } from '@/lib/supabase';
 import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
-import useTransactions from '@/hooks/dashboard/useTransactions';
-import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
 const UserDashboard: React.FC = () => {
-  const { currentUser, isAuthenticated, logout } = useUserAuth();
-  const { isAuthInitialized, isAuthLoading } = useAuthSynchronization();
-  const navigate = useNavigate();
-  
   const { 
-    transactions, 
-    isLoading: transactionsLoading, 
-    refreshTransactions 
-  } = useTransactions(currentUser?.id);
-  
-  const {
+    currentUser, 
+    isAuthenticated, 
+    authLoading, 
+    user,
+    dashboardLoading,
+    loadingTimedOut,
     isRechargeDialogOpen,
+    isProcessingPayment,
+    logout,
     handleOpenRechargeDialog,
     handleCloseRechargeDialog,
-    handleRechargeSuccess
-  } = useRechargeDialog(refreshTransactions);
+    handlePaymentSuccess,
+    handlePaymentCancel,
+    setIsProcessingPayment
+  } = useDashboardState();
+
+  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (currentUser?.id) {
+        try {
+          const { data, error } = await supabase
+            .from('user_transactions')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('date', { ascending: false });
+          
+          if (error) {
+            console.error('Error fetching transactions:', error);
+            return;
+          }
+          
+          const formattedTransactions = (data || []).map(item => ({
+            id: item.id,
+            user_id: item.user_id,
+            amount: item.amount,
+            currency: item.currency || 'USD',
+            type: item.type,
+            transaction_type: item.transaction_type || item.type,
+            description: item.description || '',
+            date: item.date,
+            status: item.status || 'completed',
+            created_at: item.created_at || item.date,
+            payment_id: item.payment_id || `pay_${Date.now()}`,
+            payment_method: item.payment_method || 'wallet'
+          })) as UserTransaction[];
+          
+          setTransactions(formattedTransactions);
+        } catch (error) {
+          console.error('Error in fetchTransactions:', error);
+        }
+      }
+    };
+
+    if (isAuthenticated && currentUser) {
+      fetchTransactions();
+    }
+  }, [isAuthenticated, currentUser]);
 
   const handleLogout = async (): Promise<boolean> => {
     try {
@@ -55,7 +100,7 @@ const UserDashboard: React.FC = () => {
   }, [isAuthenticated, isAuthLoading, isAuthInitialized, navigate]);
 
   if (isAuthLoading) {
-    return <DashboardLoader />;
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
