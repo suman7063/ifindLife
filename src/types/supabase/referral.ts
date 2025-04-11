@@ -23,3 +23,13 @@ export interface ReferralUI {
   createdAt?: string;
   completedAt?: string;
 }
+
+// Add the ReferralSettings interface with the required properties
+export interface ReferralSettings {
+  id?: string;
+  referrer_reward: number;
+  referred_reward: number;
+  active?: boolean;
+  description?: string;
+  updated_at?: string;
+}

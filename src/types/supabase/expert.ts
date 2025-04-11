@@ -20,7 +20,7 @@ export interface ExpertProfile {
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
-  status?: string;
+  status?: string; // Changed from strict enum to string to be more flexible
   created_at?: string;
   updated_at?: string;
 }

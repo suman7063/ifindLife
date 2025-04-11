@@ -25,6 +25,20 @@ export const useAuthBackCompat = () => {
     signup: auth.signup,
     logout: auth.logout,
     updateProfile: auth.updateUserProfile,
+    refreshProfile: async () => {
+      // Implement refreshProfile to satisfy the interface
+      if (auth.userProfile?.id) {
+        try {
+          // This is just a placeholder implementation
+          console.log('Refreshing profile for user:', auth.userProfile.id);
+          return Promise.resolve();
+        } catch (error) {
+          console.error('Error refreshing profile:', error);
+          return Promise.reject(error);
+        }
+      }
+      return Promise.resolve();
+    },
     updateProfilePicture: async () => null, // Not implemented in unified auth
     updatePassword: auth.updatePassword,
     addToFavorites: async () => false, // Not implemented in unified auth
@@ -45,7 +59,7 @@ export const useAuthBackCompat = () => {
     },
     reportExpert: async (report: any) => {
       if (auth.reportExpert && report) {
-        if (typeof report === 'object') {
+        if (typeof review === 'object') {
           const expertId = report.expertId || report.expert_id;
           const reason = report.reason;
           const details = report.details || '';

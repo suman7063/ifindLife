@@ -25,6 +25,7 @@ export interface UserAuthContextType {
   getExpertShareLink?: (expertId: number) => string;
   hasTakenServiceFrom?: (expertId: number) => boolean;
   getReferralLink?: () => string;
+  refreshProfile?: () => Promise<void>;
   user: User | null;
   loading: boolean;
 }
