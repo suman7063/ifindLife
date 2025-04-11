@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/contexts/UserAuthContext';
 
-interface CallAuthMessageProps {
+export interface CallAuthMessageProps {
   expertName: string;
   onClose: () => void;
 }

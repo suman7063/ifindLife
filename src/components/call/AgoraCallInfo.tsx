@@ -1,50 +1,61 @@
 
 import React from 'react';
-import { Clock, DollarSign } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ExpertProfile } from '@/types/expert';
+import { AgoraCallTypeSelector } from './AgoraCallTypeSelector';
 
-interface AgoraCallInfoProps {
-  duration: number;
-  remainingTime: number;
-  cost: number;
-  formatTime: (seconds: number) => string;
-  pricePerMinute: number;
+export interface AgoraCallInfoProps {
+  expert?: ExpertProfile | null;
+  expertName?: string;
+  expertPrice?: number;
+  onCallTypeChange: (type: 'audio' | 'video') => void;
+  selectedCallType: 'audio' | 'video';
+  onStartCall: () => Promise<boolean>;
+  isConnecting: boolean;
 }
 
 const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
-  duration,
-  remainingTime,
-  cost,
-  formatTime,
-  pricePerMinute
+  expert,
+  expertName,
+  expertPrice,
+  onCallTypeChange,
+  selectedCallType,
+  onStartCall,
+  isConnecting
 }) => {
+  const displayName = expertName || expert?.name || 'Expert';
+  const price = expertPrice || expert?.price_per_min || 0;
+  
   return (
-    <div className="flex flex-col items-center space-y-4 py-2">
-      {/* Call duration */}
-      <div className="flex items-center">
-        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-        <span className="text-lg font-semibold">{formatTime(duration)}</span>
+    <div className="flex flex-col items-center justify-center flex-1 p-6 space-y-8">
+      <div className="text-center">
+        <h3 className="text-xl font-medium mb-2">Call with {displayName}</h3>
+        <p className="text-muted-foreground">
+          Select how you would like to connect
+        </p>
       </div>
       
-      {/* Remaining time */}
-      <div className="flex flex-col items-center">
-        <div className="text-sm text-muted-foreground mb-1">Remaining time:</div>
-        <div className={`text-base font-semibold ${remainingTime < 60 ? 'text-red-500' : ''}`}>
-          {formatTime(remainingTime)}
-        </div>
+      <AgoraCallTypeSelector 
+        selectedType={selectedCallType}
+        onSelect={onCallTypeChange}
+      />
+      
+      <div className="text-center space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Rate: ₹{price}/minute
+        </p>
+        <p className="text-sm text-muted-foreground">
+          First 15 minutes free
+        </p>
       </div>
-
-      {/* Cost information */}
-      <div className="flex flex-col items-center">
-        <div className="text-sm text-muted-foreground">
-          First 15 mins free, then ₹{pricePerMinute}/min
-        </div>
-        {cost > 0 && (
-          <div className="flex items-center mt-1">
-            <DollarSign className="h-4 w-4 mr-1" />
-            <span className="font-semibold">₹{cost.toFixed(2)}</span>
-          </div>
-        )}
-      </div>
+      
+      <Button
+        onClick={() => onStartCall()}
+        disabled={isConnecting}
+        className="w-full bg-ifind-aqua hover:bg-ifind-teal text-white py-2 rounded-md"
+      >
+        {isConnecting ? 'Connecting...' : 'Start Call'}
+      </Button>
     </div>
   );
 };

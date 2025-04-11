@@ -20,8 +20,11 @@ const ExpertDetail = () => {
     }
   }, [searchParams]);
   
+  // Fix id typing issue
+  const expertId = id || '';
+  
   const expert = {
-    id: Number(id),
+    id: expertId,
     name: "Acharya Raman",
     experience: 15,
     specialties: ["Vedic", "Palmistry", "Tarot", "Kundli", "Vastu"],
@@ -95,9 +98,9 @@ const ExpertDetail = () => {
       
       <AgoraCallModal 
         isOpen={isCallModalOpen}
-        onClose={() => setIsCallModalOpen(false)}
+        onOpenChange={() => setIsCallModalOpen(false)}
         expert={{
-          id: expert.id,
+          id: expertId,
           name: expert.name,
           imageUrl: expert.imageUrl,
           price: expert.price

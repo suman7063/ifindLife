@@ -18,6 +18,13 @@ export interface ReferralInfo {
   referral_date?: string;
   reward_amount?: number;
   reward_status?: string;
+  referrer_id?: string;
+  reward_claimed?: boolean;
+  user_info?: {
+    name: string;
+    email: string;
+    avatar: string;
+  };
 }
 
 export interface ReferralUI {
