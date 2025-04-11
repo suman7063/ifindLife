@@ -14,6 +14,17 @@ export interface UserProfile {
   referral_code?: string;
   consultation_count?: number;
   referral_count?: number;
+  
+  // Extended properties - these may not exist in the database table
+  // but are used for UI display after data joins
+  reviews?: any[];
+  reports?: any[];
+  transactions?: any[];
+  enrolled_courses?: any[];
+  favorite_experts?: string[];
+  
+  // Legacy compatibility aliases
+  walletBalance?: number; // Alias for wallet_balance
 }
 
 export interface UserSettings {
@@ -31,4 +42,17 @@ export interface Transaction {
   date: string;
   description?: string;
   currency: string;
+}
+
+export interface ReferralSettings {
+  id: string;
+  referrer_reward: number;
+  referred_reward: number;
+  bonus_amount?: number;
+  currency: string;
+  min_transaction_amount?: number;
+  expires_in_days?: number;
+  active: boolean;
+  enabled?: boolean;
+  description?: string;
 }

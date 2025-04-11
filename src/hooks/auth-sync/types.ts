@@ -1,5 +1,5 @@
 
-import { UserProfile } from '@/types/supabase/userProfile';
+import { UserProfile } from '@/types/supabase';
 import { ExpertProfile } from '@/types/expert';
 
 export type SessionType = 'user' | 'expert' | 'dual' | 'none';
@@ -22,21 +22,12 @@ export interface AuthSyncMethods {
   fullLogout: () => Promise<boolean>;
 }
 
-export interface UseAuthSynchronizationReturn {
-  syncAuthState: () => Promise<boolean>;
-  isUserAuthenticated: boolean;
-  isExpertAuthenticated: boolean;
-  isAuthenticated: boolean;
-  isAuthInitialized: boolean;
-  isAuthLoading: boolean;
-  authCheckCompleted: boolean;
-  isSynchronizing: boolean;
-  currentUser: UserProfile | null;
-  currentExpert: ExpertProfile | null;
-  userLogout: () => Promise<boolean>;
-  expertLogout: () => Promise<boolean>;
-  fullLogout: () => Promise<boolean>;
-  hasDualSessions: boolean;
-  sessionType: 'user' | 'expert' | 'none' | 'dual';
-  isLoggingOut: boolean;
-}
+export type UseAuthSynchronizationReturn = AuthSyncState & 
+  AuthSyncMethods & {
+    isAuthenticated: boolean;
+    currentUser: UserProfile | null;
+    currentExpert: ExpertProfile | null;
+    isAuthLoading: boolean;
+    syncAuthState: () => Promise<boolean>;
+    isLoggingOut: boolean;
+  };

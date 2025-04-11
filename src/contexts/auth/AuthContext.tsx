@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   UserProfile,
-  ReferralSettings,
+  ReferralSettings as UserReferralSettings,
 } from '@/types/supabase/userProfile';
 import { ExpertProfile } from '@/types/expert';
 import { Database } from '@/types/supabase';
@@ -33,7 +33,7 @@ interface AuthContextProps {
   isExpertLoggedIn: boolean;
   authState: AuthChangeEvent | null;
   error: Error | null;
-  referralSettings: ReferralSettings | null;
+  referralSettings: UserReferralSettings | null;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   hasDualSessions: boolean;
   isAuthenticated: boolean;
@@ -65,7 +65,6 @@ interface AuthContextProps {
   addFunds: (amount: number) => Promise<boolean>;
 }
 
-// This fixes the from/select type issue
 type Table = keyof Database['public']['Tables'];
 
 const AuthContext = createContext<AuthContextProps>({
@@ -125,7 +124,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [authState, setAuthState] = useState<AuthChangeEvent | null>(null);
   const [error, setError] = useState<Error | null>(null);
-  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const [referralSettings, setReferralSettings] = useState<UserReferralSettings | null>(null);
   const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
   const [hasDualSessions, setHasDualSessions] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -459,7 +458,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.error('Error fetching referral settings:', error);
         toast.error(`Failed to fetch referral settings: ${error.message}`);
       } else if (data) {
-        setReferralSettings(data as ReferralSettings);
+        setReferralSettings(data as UserReferralSettings);
       } else {
         console.warn('No active referral settings found.');
         setReferralSettings(null);

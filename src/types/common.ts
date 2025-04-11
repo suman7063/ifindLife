@@ -19,5 +19,9 @@ export interface ReferralUI {
   status: 'pending' | 'completed';
   reward?: number;
   currency?: string;
+  
+  // Additional fields needed by components
+  referredName?: string;
+  rewardClaimed?: boolean;
+  created_at?: string;
 }
-

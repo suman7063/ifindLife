@@ -5,7 +5,7 @@ import { useExpertAuth } from '@/hooks/expert-auth';
 import { useAuthCheckEffect } from './useAuthCheckEffect';
 import { useAuthLogoutMethods } from './useAuthLogoutMethods';
 import { useAuthStateSync } from './useAuthStateSync';
-import { AuthSyncState, UseAuthSynchronizationReturn, SessionType } from './types';
+import { AuthSyncState, UseAuthSynchronizationReturn, SessionType } from '@/features/auth-sync/types';
 
 export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
   const [state, setState] = useState<AuthSyncState>({
@@ -47,6 +47,8 @@ export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
     userLogout,
     expertLogout,
     fullLogout,
-    isLoggingOut
+    isLoggingOut,
+    currentUser: state.currentUser || null,
+    currentExpert: state.currentExpert || null
   };
 };
