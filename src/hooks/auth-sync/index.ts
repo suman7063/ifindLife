@@ -1,6 +1,7 @@
 
+// Backward compatibility layer for existing components
 import { useState, useEffect, useCallback } from 'react';
-import { useUserAuth } from '@/contexts/auth/UserAuthContext'; 
+import { useUserAuth } from '@/contexts/UserAuthContext'; 
 import { useExpertAuth } from '@/hooks/expert-auth';
 import { AuthSyncState, UseAuthSynchronizationReturn, SessionType } from '@/features/auth-sync/types';
 
@@ -42,13 +43,13 @@ export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
   // Setup auth state sync
   const syncAuthState = async () => {
     try {
-      // Refresh user profile if authenticated
+      // Refresh user profile if authenticated and has refreshProfile method
       if (userAuth.isAuthenticated && typeof userAuth.refreshProfile === 'function') {
         await userAuth.refreshProfile();
       }
       
-      // Refresh expert profile if authenticated
-      if (expertAuth.isAuthenticated && typeof expertAuth.refreshProfile === 'function') {
+      // Handle expertAuth.refreshProfile if it exists
+      if (expertAuth.isAuthenticated && expertAuth.refreshProfile) {
         await expertAuth.refreshProfile();
       }
       

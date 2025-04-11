@@ -36,4 +36,7 @@ export interface ReferralUI {
   date: string;
   reward_amount?: number;
   reward_status?: string;
+  referredName?: string;
+  rewardClaimed?: boolean;
+  created_at?: string;
 }

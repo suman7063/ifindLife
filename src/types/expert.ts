@@ -17,7 +17,7 @@ export interface Expert {
   imageUrl?: string;
   certificate_urls?: string[];
   created_at?: string;
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: string; // Changed from enum to string to allow any status value
   verified?: boolean;
   average_rating?: number;
   reviews_count?: number;
@@ -39,4 +39,3 @@ export interface ExtendedExpert extends Expert {
 export interface ExpertProfile extends Expert {
   // Additional fields specific to ExpertProfile, if any
 }
-

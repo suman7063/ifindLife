@@ -9,8 +9,9 @@ import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
 import DashboardContent from '@/components/user/dashboard/DashboardContent';
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
 import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
-import { useTransactions } from '@/hooks/useTransactions';
-import { useRechargeDialog } from '@/hooks/useRechargeDialog';
+import { useTransactions } from '@/features/transactions';
+import { useRechargeDialog } from '@/features/wallet';
+import { UserTransaction } from '@/types/supabase/transactions';
 
 const UserDashboard: React.FC = () => {
   const { currentUser, isAuthenticated, logout } = useUserAuth();
@@ -69,6 +70,9 @@ const UserDashboard: React.FC = () => {
     referral_count: currentUser.referral_code ? 1 : 0,
   } : null;
 
+  // Explicitly cast transactions to UserTransaction[]
+  const typedTransactions = transactions as unknown as UserTransaction[];
+
   return (
     <Container className="py-8">
       <DashboardHeader 
@@ -78,7 +82,7 @@ const UserDashboard: React.FC = () => {
       
       <DashboardContent
         user={enhancedUser}
-        transactions={transactions}
+        transactions={typedTransactions}
         isLoading={transactionsLoading}
         onRecharge={handleOpenRechargeDialog}
       />

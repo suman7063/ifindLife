@@ -18,7 +18,7 @@ export const useAuthStateSync = (
         await userAuth.refreshProfile();
       }
       
-      // Refresh expert profile if authenticated
+      // Refresh expert profile if authenticated and has refreshProfile method
       if (expertAuth.isAuthenticated && typeof expertAuth.refreshProfile === 'function') {
         await expertAuth.refreshProfile();
       }
