@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import AgoraCallModal from '@/components/AgoraCallModal';
+import AgoraCallModal from '@/components/call/modals/AgoraCallModal';
 import { toast } from 'sonner';
 import ExpertHeader from '@/components/expert/ExpertHeader';
 import ExpertProfile from '@/components/expert/ExpertProfile';
@@ -23,6 +23,7 @@ const ExpertDetail = () => {
   // Fix id typing issue
   const expertId = id || '';
   
+  // Mock expert data
   const expert = {
     id: expertId,
     name: "Acharya Raman",
@@ -72,6 +73,33 @@ const ExpertDetail = () => {
     }
   };
   
+  // Adapt the expert data for components expecting ExpertProfile type
+  const expertProfile = {
+    id: Number(expert.id),
+    name: expert.name,
+    experience: expert.experience,
+    specialties: expert.specialties,
+    rating: expert.rating,
+    consultations: expert.consultations,
+    price: expert.price,
+    waitTime: expert.waitTime,
+    online: expert.online,
+    languages: expert.languages,
+    price_per_min: expert.price
+  };
+  
+  // Adapt data for ExpertDetailTabs
+  const expertForTabs = {
+    id: Number(expert.id),
+    name: expert.name,
+    experience: expert.experience,
+    description: expert.description,
+    education: expert.education,
+    specialties: expert.specialties,
+    rating: expert.rating,
+    reviews: expert.reviews
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -82,13 +110,13 @@ const ExpertDetail = () => {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-1">
               <ExpertProfile 
-                expert={expert} 
+                expert={expertProfile} 
                 onCallClick={handleCallClick} 
               />
             </div>
             
             <div className="md:col-span-2">
-              <ExpertDetailTabs expert={expert} />
+              <ExpertDetailTabs expert={expertForTabs} />
             </div>
           </div>
         </div>
@@ -102,7 +130,6 @@ const ExpertDetail = () => {
         expert={{
           id: expertId,
           name: expert.name,
-          imageUrl: expert.imageUrl,
           price: expert.price
         }}
       />

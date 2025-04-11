@@ -4,99 +4,103 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send } from 'lucide-react';
 
-export interface AgoraCallChatProps {
-  expertId?: string;
-  userId?: string;
+interface AgoraCallChatProps {
   userName?: string;
-  messages?: any[];
+  expertName?: string;
 }
 
 const AgoraCallChat: React.FC<AgoraCallChatProps> = ({
-  expertId,
-  userId,
-  userName
+  userName = "You",
+  expertName = "Expert"
 }) => {
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<{ id: number; text: string; sender: string; timestamp: Date }[]>([
+  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<{
+    id: string;
+    text: string;
+    sender: 'user' | 'expert';
+    timestamp: Date;
+  }[]>([
     {
-      id: 1,
-      text: 'Hello! How can I help you today?',
+      id: "1",
+      text: "Hello, how can I help you today?",
       sender: 'expert',
       timestamp: new Date()
     }
   ]);
-  
-  const handleSend = () => {
+
+  const handleSendMessage = () => {
     if (!message.trim()) return;
     
     // Add user message
-    const newUserMessage = {
-      id: messages.length + 1,
+    const newMessage = {
+      id: Date.now().toString(),
       text: message,
-      sender: 'user',
+      sender: 'user' as const,
       timestamp: new Date()
     };
     
-    setMessages([...messages, newUserMessage]);
-    setMessage('');
+    setMessages(prev => [...prev, newMessage]);
+    setMessage("");
     
-    // Simulate expert response after a short delay
+    // Simulate expert response after a delay
     setTimeout(() => {
       const expertResponse = {
-        id: messages.length + 2,
-        text: 'I received your message. Let me assist you with that.',
-        sender: 'expert',
+        id: (Date.now() + 1).toString(),
+        text: "I'm reviewing your question. One moment please.",
+        sender: 'expert' as const,
         timestamp: new Date()
       };
       
       setMessages(prev => [...prev, expertResponse]);
     }, 2000);
   };
-  
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-3 border-b">
-        <h3 className="font-medium">Chat</h3>
+        <h3 className="font-medium">Chat with {expertName}</h3>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+        {messages.map(msg => (
+          <div 
+            key={msg.id}
+            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div 
-              className={`max-w-[80%] p-3 rounded-lg ${
+              className={`max-w-[75%] rounded-lg p-3 ${
                 msg.sender === 'user' 
-                  ? 'bg-primary text-primary-foreground' 
-                  : 'bg-secondary text-secondary-foreground'
+                  ? 'bg-ifind-aqua text-white' 
+                  : 'bg-gray-100'
               }`}
             >
               <p className="text-sm">{msg.text}</p>
-              <span className="text-xs opacity-70 mt-1 block">
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+              <p className="text-xs opacity-70 mt-1">
+                {msg.timestamp.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </p>
             </div>
           </div>
         ))}
       </div>
       
       <div className="p-3 border-t">
-        <div className="flex items-center gap-2">
+        <form 
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSendMessage();
+          }}
+          className="flex gap-2"
+        >
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type a message..."
+            placeholder="Type your message..."
             className="flex-1"
-            onKeyPress={(e) => {
-              if (e.key === 'Enter') handleSend();
-            }}
           />
-          <Button 
-            size="icon" 
-            onClick={handleSend} 
-            disabled={!message.trim()}
-          >
+          <Button type="submit" size="icon" className="bg-ifind-aqua hover:bg-ifind-teal">
             <Send className="h-4 w-4" />
           </Button>
-        </div>
+        </form>
       </div>
     </div>
   );

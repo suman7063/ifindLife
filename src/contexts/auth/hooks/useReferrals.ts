@@ -1,20 +1,34 @@
 
-import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
 import { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { ReferralInfo } from '@/types/supabase/referral';
+import { toast } from 'sonner';
 
 export const useReferrals = (user: User | null) => {
   const [referrals, setReferrals] = useState<ReferralInfo[]>([]);
-
-  // Fetch user referrals
-  const getReferrals = useCallback(async (): Promise<ReferralInfo[]> => {
+  
+  const getReferrals = async (): Promise<ReferralInfo[]> => {
     if (!user) return [];
     
     try {
+      // Fetch referrals made by the current user
       const { data: referralsData, error } = await supabase
         .from('referrals')
-        .select('*')
+        .select(`
+          id,
+          referrer_id,
+          referred_id,
+          created_at,
+          status,
+          reward_claimed,
+          users:referred_id (
+            id,
+            name,
+            email,
+            avatar_url
+          )
+        `)
         .eq('referrer_id', user.id);
         
       if (error) {
@@ -22,42 +36,22 @@ export const useReferrals = (user: User | null) => {
         return [];
       }
       
-      if (!referralsData || referralsData.length === 0) {
-        setReferrals([]);
-        return [];
-      }
-      
-      // Get the referred user IDs
-      const referredUserIds = referralsData.map(r => r.referred_id);
-      
-      // Fetch user data for the referred users
-      const { data: usersData, error: usersError } = await supabase
-        .from('users')
-        .select('id, name, email, profile_picture')
-        .in('id', referredUserIds);
-        
-      if (usersError) {
-        console.error('Error fetching referred users:', usersError);
-      }
-      
-      // Combine referral data with user data
-      const formattedReferrals = referralsData.map(ref => {
-        const referredUser = usersData?.find(u => u.id === ref.referred_id) || null;
-        
-        return {
-          id: ref.id,
-          referrer_id: ref.referrer_id,
-          referred_id: ref.referred_id,
-          created_at: ref.created_at,
-          status: ref.status,
-          reward_claimed: ref.reward_claimed,
-          user_info: referredUser ? {
-            name: referredUser.name || 'Unknown User',
-            email: referredUser.email || '',
-            avatar: referredUser.profile_picture || ''
-          } : undefined
-        } as ReferralInfo;
-      });
+      // Transform the data to match ReferralInfo structure
+      const formattedReferrals: ReferralInfo[] = referralsData.map((ref: any) => ({
+        id: ref.id,
+        user_id: user.id,
+        referral_code: '', // This would come from user profile/settings
+        referrer_id: ref.referrer_id,
+        referred_id: ref.referred_id,
+        status: ref.status,
+        created_at: ref.created_at,
+        reward_claimed: ref.reward_claimed,
+        user_info: ref.users ? {
+          name: ref.users.name,
+          email: ref.users.email,
+          avatar: ref.users.avatar_url
+        } : undefined
+      }));
       
       setReferrals(formattedReferrals);
       return formattedReferrals;
@@ -65,25 +59,60 @@ export const useReferrals = (user: User | null) => {
       console.error('Error in getReferrals:', error);
       return [];
     }
-  }, [user]);
+  };
   
-  // Generate a referral link for the current user
-  const getReferralLink = useCallback((): string | null => {
+  const getReferralLink = (): string | null => {
     if (!user) return null;
     
-    // Get the current domain
-    const domain = window.location.origin;
+    // Get referral code from profile or generate one
+    const referralCode = `REF${user.id.substring(0, 8)}`;
     
-    // Check if the user profile has a referral code
-    const referralCode = user.user_metadata?.referral_code;
-    if (!referralCode) return null;
+    // Construct the referral link
+    return `${window.location.origin}/signup?ref=${referralCode}`;
+  };
+  
+  const claimReferralReward = async (referralId: string): Promise<boolean> => {
+    if (!user) {
+      toast.error('You must be logged in to claim rewards');
+      return false;
+    }
     
-    return `${domain}/register?ref=${referralCode}`;
-  }, [user]);
+    try {
+      // Update the referral to mark reward as claimed
+      const { error } = await supabase
+        .from('referrals')
+        .update({ reward_claimed: true })
+        .eq('id', referralId)
+        .eq('referrer_id', user.id);
+        
+      if (error) {
+        console.error('Error claiming reward:', error);
+        toast.error('Failed to claim reward');
+        return false;
+      }
+      
+      // Update the local state
+      setReferrals(prev => 
+        prev.map(ref => 
+          ref.id === referralId 
+            ? { ...ref, reward_claimed: true } 
+            : ref
+        )
+      );
+      
+      toast.success('Reward claimed successfully!');
+      return true;
+    } catch (error) {
+      console.error('Error in claimReferralReward:', error);
+      toast.error('Failed to claim reward');
+      return false;
+    }
+  };
   
   return {
     referrals,
     getReferrals,
-    getReferralLink
+    getReferralLink,
+    claimReferralReward
   };
 };

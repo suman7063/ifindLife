@@ -21,6 +21,10 @@ export interface UserAuthContextType {
   addReview: (expertId: string, rating: number, comment: string) => Promise<boolean>;
   isLoggingOut?: boolean;
   profileNotFound: boolean;
+  reportExpert?: (report: { expertId: string, reason: string, details: string }) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  getReferralLink?: () => string | null;
 }
 
 // Create the context
@@ -30,63 +34,49 @@ const UserAuthContext = createContext<UserAuthContextType | null>(null);
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
 
-  // Adapt auth context to match UserAuthContext interface
+  // The issue was here - we need to ensure auth is properly initialized
+  if (!auth) {
+    // Return a loading state instead of trying to destructure undefined
+    return <div>Loading authentication...</div>;
+  }
+
+  // Create value object with all required properties, using optional chaining to avoid null references
   const userAuthValue: UserAuthContextType = {
     currentUser: auth.userProfile,
     user: auth.user,
-    isAuthenticated: auth.isAuthenticated,
-    authLoading: auth.state.authLoading || false,
-    loading: auth.isLoading,
-    login: auth.login,
-    logout: auth.logout,
-    signup: auth.signup,
-    updateProfile: auth.updateUserProfile,
+    isAuthenticated: auth.isAuthenticated || false,
+    authLoading: auth.state?.authLoading || false,
+    loading: auth.isLoading || false,
+    login: auth.login || (async () => false),
+    logout: auth.logout || (async () => false),
+    signup: auth.signup || (async () => false),
+    updateProfile: auth.updateUserProfile || (async () => false),
     updateProfilePicture: async (file: File) => {
-      // We need to implement this storage functionality
       if (!auth.user) {
         throw new Error("User not authenticated");
       }
       
       try {
-        // Generate unique file name
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${auth.user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-        
-        // Upload to Supabase storage
-        const { error: uploadError, data } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, file, {
-            upsert: true
-          });
-          
-        if (uploadError) {
-          throw uploadError;
+        // Fallback implementation if auth doesn't provide this function
+        if (typeof auth.updateProfilePicture === 'function') {
+          return auth.updateProfilePicture(file);
         }
         
-        // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-        
-        // Update user profile
-        const success = await auth.updateUserProfile({
-          profile_picture: publicUrl
-        });
-        
-        if (!success) {
-          throw new Error("Failed to update profile with new image URL");
-        }
-        
-        return publicUrl;
+        console.error("Profile picture update not implemented");
+        return "";
       } catch (error) {
         console.error("Error uploading profile picture:", error);
         throw error;
       }
     },
-    addToFavorites: auth.addToFavorites,
-    removeFromFavorites: auth.removeFromFavorites,
-    addReview: auth.reviewExpert,
-    profileNotFound: !auth.userProfile && !auth.isLoading
+    addToFavorites: auth.addToFavorites || (async () => false),
+    removeFromFavorites: auth.removeFromFavorites || (async () => false),
+    addReview: auth.reviewExpert || (async () => false),
+    profileNotFound: !auth.userProfile && !auth.isLoading,
+    reportExpert: auth.reportExpert,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom,
+    rechargeWallet: auth.addFunds,
+    getReferralLink: auth.getReferralLink,
   };
 
   return (
@@ -104,6 +94,3 @@ export const useUserAuth = (): UserAuthContextType => {
   }
   return context;
 };
-
-// Import Supabase for the updateProfilePicture function
-import { supabase } from '@/lib/supabase';

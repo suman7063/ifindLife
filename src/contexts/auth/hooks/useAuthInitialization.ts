@@ -36,6 +36,7 @@ export const useAuthInitialization = (): [
     }
   }, []);
 
+  // Modified to handle id as string
   const fetchProfile = useCallback(async () => {
     if (profileFetchInProgress) return;
     
@@ -52,7 +53,7 @@ export const useAuthInitialization = (): [
       }
       
       console.log("Fetching user profile for:", user.id);
-      const userProfile = await fetchUserProfile(user);
+      const userProfile = await fetchUserProfile(user.id);
       
       if (userProfile) {
         console.log("User profile fetched successfully:", userProfile.id);

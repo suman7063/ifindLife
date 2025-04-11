@@ -1,8 +1,9 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/supabase/userProfile';
-import { ExpertProfile } from '@/types/expert';
+import { ExpertProfile } from '@/types/supabase/expert';
 import { toast } from 'sonner';
 import { AuthState, initialAuthState, UserRole } from './types';
 import { useAuthAccount } from './hooks/useAuthAccount';
@@ -177,7 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         fetchUserSettings(userId)
       ]);
       
-      const { isExpertUser, expertId } = expertData;
+      const { isExpertUser, expertId } = expertData || { isExpertUser: false, expertId: null };
       
       setState(prev => ({ 
         ...prev, 
@@ -190,16 +191,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         profileError: null
       }));
       
-      const favCount = await refreshFavoritesCount();
-      const walletBal = await fetchWalletBalance(userId);
-      const referralsList = await getReferrals();
-      
-      setState(prev => ({
-        ...prev,
-        favoritesCount: favCount || 0,
-        walletBalance: walletBal,
-        referrals: referralsList
-      }));
+      if (refreshFavoritesCount) {
+        const favCount = await refreshFavoritesCount();
+        setState(prev => ({
+          ...prev,
+          favoritesCount: favCount || 0
+        }));
+      }
+
+      if (fetchWalletBalance) {
+        const walletBal = await fetchWalletBalance(userId);
+        setState(prev => ({
+          ...prev,
+          walletBalance: walletBal
+        }));
+      }
+
+      if (getReferrals) {
+        const referralsList = await getReferrals();
+        setState(prev => ({
+          ...prev,
+          referrals: referralsList
+        }));
+      }
       
     } catch (error: any) {
       console.error('Error fetching user data:', error);
@@ -245,24 +259,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const success = await authLogout();
     if (success) {
       setState({
-        user: null,
-        session: null,
-        userProfile: null,
-        expertProfile: null,
-        isAuthenticated: false,
-        isLoading: false,
-        hasProfile: false,
-        profileLoading: false,
-        authLoading: false,
-        authError: null,
-        profileError: null,
-        role: null,
-        isExpertUser: false,
-        expertId: null,
-        favoritesCount: 0,
-        referrals: [],
-        userSettings: null,
-        walletBalance: 0
+        ...initialAuthState
       });
     } else {
       setState(prev => ({ ...prev, authLoading: false }));

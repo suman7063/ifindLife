@@ -1,55 +1,55 @@
 
 import React from 'react';
-import { DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { ExpertProfile } from '@/types/expert';
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ExpertProfile } from '@/types/supabase/expert';
 
 export interface AgoraCallModalHeaderProps {
-  callStatus?: 'choosing' | 'connecting' | 'connected' | 'ended' | 'error';
   expertName?: string;
-  currency?: string;
-  expertPrice?: number;
-  expert?: ExpertProfile | null;
+  callStatus: 'choosing' | 'connecting' | 'connected' | 'ended' | 'error';
   duration?: string;
   cost?: number;
   remainingTime?: string;
-  onClose?: () => void;
+  currency?: string;
+  expertPrice?: number;
+  onClose: () => void;
 }
 
-const AgoraCallModalHeader: React.FC<AgoraCallModalHeaderProps> = ({ 
-  callStatus = 'choosing', 
-  expertName = '',
-  currency = 'INR',
-  expertPrice = 0,
-  expert,
+const AgoraCallModalHeader: React.FC<AgoraCallModalHeaderProps> = ({
+  expertName,
+  callStatus,
   duration,
   cost,
   remainingTime,
+  currency = "INR",
+  expertPrice,
   onClose
 }) => {
-  // Use expert name from expert object if available
-  const displayName = expert?.name || expertName;
-  
   return (
-    <DialogHeader>
-      <DialogTitle className="text-center">
-        {callStatus === 'choosing' ? 'Choose Call Type' : 
-         callStatus === 'connecting' ? 'Connecting...' : 
-         callStatus === 'connected' ? `Call with ${displayName}` : 
-         callStatus === 'error' ? 'Call Failed' :
-         'Call Ended'}
-      </DialogTitle>
-      <DialogDescription className="text-center">
-        {callStatus === 'choosing' ? 
-          `Connect with ${displayName} via audio or video call` :
-         callStatus === 'connecting' ? 
-          `Connecting to ${displayName}...` : 
-         callStatus === 'connected' ? 
-          `Connected with ${displayName} (${currency} ${expertPrice}/min)${duration ? ` - Duration: ${duration}` : ''}${remainingTime ? ` - Remaining: ${remainingTime}` : ''}` : 
-         callStatus === 'error' ?
-          'There was a problem connecting your call' :
-          `Call with ${displayName} ended`}
-      </DialogDescription>
-    </DialogHeader>
+    <div className="flex justify-between items-center p-4 border-b">
+      <div className="flex items-center space-x-2">
+        <div>
+          <h2 className="font-semibold text-lg">{expertName || 'Expert'}</h2>
+          <div className="text-sm text-muted-foreground">
+            {callStatus === 'choosing' && `Rate: ${currency} ${expertPrice || 0}/min`}
+            {callStatus === 'connecting' && 'Connecting...'}
+            {callStatus === 'connected' && (
+              <div className="flex space-x-4">
+                <span>Duration: {duration || '00:00'}</span>
+                <span>Cost: {currency} {cost || 0}</span>
+                {remainingTime && <span>Remaining: {remainingTime}</span>}
+              </div>
+            )}
+            {callStatus === 'ended' && 'Call ended'}
+            {callStatus === 'error' && 'Connection error'}
+          </div>
+        </div>
+      </div>
+      
+      <Button variant="ghost" size="icon" onClick={onClose}>
+        <X className="h-5 w-5" />
+      </Button>
+    </div>
   );
 };
 

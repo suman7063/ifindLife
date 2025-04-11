@@ -1,9 +1,9 @@
 
-// Expert profile type for Supabase
+import { User } from '@supabase/supabase-js';
 
 export interface ExpertProfile {
-  id: string;
-  auth_id?: string;
+  id: string | number;
+  auth_id: string;
   name: string;
   email: string;
   phone?: string;
@@ -11,45 +11,33 @@ export interface ExpertProfile {
   city?: string;
   state?: string;
   country?: string;
+  bio?: string;
   specialization?: string;
   experience?: string;
-  bio?: string;
+  rating?: number;
+  total_reviews?: number;
+  price_per_min?: number;
+  price?: number;
+  avatar_url?: string;
   certificate_urls?: string[];
-  profile_picture?: string;
   selected_services?: number[];
-  average_rating?: number;
-  reviews_count?: number;
-  verified?: boolean;
-  status?: string;
+  status?: 'pending' | 'approved' | 'disapproved';
   created_at?: string;
   updated_at?: string;
 }
 
-// Export types related to expert reviews
-export interface ExpertReview {
-  id: string;
-  expert_id: string;
-  user_id: string;
-  rating: number;
-  comment?: string;
-  created_at: string;
-}
-
-// Export types related to expert services
-export interface ExpertService {
-  id: number;
-  expert_id: string;
-  service_id: number;
-  price?: number;
-  is_available: boolean;
-}
-
-// Export types for expert availability
-export interface ExpertAvailability {
-  id: string;
-  expert_id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
+export interface ExpertRegistrationData {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string | number;
+  bio?: string;
+  certificate_urls?: string[];
+  selected_services?: (string | number)[];
 }

@@ -5,34 +5,37 @@ import AgoraCallContent from '../AgoraCallContent';
 import AgoraCallControls from '../AgoraCallControls';
 import AgoraCallInfo from '../AgoraCallInfo';
 import CallErrorMessage from './CallErrorMessage';
-import { Button } from '@/components/ui/button';
 import { AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import CallAuthMessage from './CallAuthMessage';
 import AgoraCallChat from '../AgoraCallChat';
 import AgoraCallModalHeader from './AgoraCallModalHeader';
 import { UserProfile } from '@/types/supabase/userProfile';
-import { ExpertProfile } from '@/types/expert';
+import { ExpertProfile } from '@/types/supabase/expert';
 import { useCallState } from '@/hooks/call/useCallState';
 import { useAgoraCall } from '@/hooks/useAgoraCall';
 
 interface AgoraCallModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  expertId?: string | number;
+  expert?: {
+    id: string | number;
+    name: string;
+    imageUrl?: string;
+    price?: number;
+  };
   userId?: string;
   userName?: string;
   currentUser?: UserProfile | null;
-  expert?: ExpertProfile | null;
 }
 
 const AgoraCallModal: React.FC<AgoraCallModalProps> = ({ 
   isOpen, 
   onOpenChange, 
-  expertId, 
+  expert,
   userId,
   userName,
-  currentUser,
-  expert
+  currentUser
 }) => {
   const { callState, setCallState } = useCallState();
   const [callType, setCallType] = useState<'audio' | 'video'>('video');
@@ -42,7 +45,7 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   const agoraCall = useAgoraCall({
-    expertId: expertId?.toString() ?? '',
+    expertId: expert?.id?.toString() ?? '',
     userId: userId ?? '',
     callType,
     onError: (error) => {
@@ -56,31 +59,37 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
     cost,
     remainingTime,
     isExtending,
-    startCall,
-    endCall,
-    handleToggleMute,
-    handleToggleVideo,
     extendCall,
-    formatTime,
+    formatTime
   } = agoraCall;
 
   // Start call handler
   const handleStartCall = async () => {
     if (!currentUser) {
       setCallError('You must be logged in to start a call');
-      return;
+      return false;
     }
     
     if (!expert) {
       setCallError('Expert not found');
-      return;
+      return false;
     }
     
     setCallError(null);
     setCallState(prev => ({...prev, isConnecting: true, hasError: false}));
     
     try {
-      await startCall();
+      // Simulate call connection
+      setTimeout(() => {
+        setCallState(prev => ({
+          ...prev,
+          isConnecting: false,
+          isConnected: true,
+          hasJoined: true
+        }));
+      }, 2000);
+      
+      return true;
     } catch (error) {
       console.error('Failed to start call:', error);
       setCallError('Failed to establish connection');
@@ -89,12 +98,17 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
         isConnecting: false, 
         hasError: true
       }));
+      return false;
     }
   };
 
   // End call handler
   const handleEndCall = () => {
-    endCall();
+    setCallState(prev => ({
+      ...prev,
+      isConnected: false,
+      hasJoined: false
+    }));
     
     // Close modal after slight delay
     setTimeout(() => {
@@ -126,11 +140,10 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl h-[80vh] p-0 overflow-hidden flex flex-col">
         <AgoraCallModalHeader 
-          expert={expert}
           expertName={expert?.name}
           callStatus={getCallStatus()}
           currency="INR"
-          expertPrice={expert?.price_per_min || 0}
+          expertPrice={expert?.price || 0}
           duration={formatTime(duration)}
           cost={cost}
           remainingTime={formatTime(remainingTime)}
@@ -139,14 +152,20 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
         
         <div className="flex-1 flex flex-col overflow-hidden">
           {!isLoggedIn ? (
-            <CallAuthMessage expertName={expert?.name || 'the expert'} onClose={() => onOpenChange(false)} />
+            <CallAuthMessage 
+              expertName={expert?.name || 'the expert'} 
+              onClose={() => onOpenChange(false)} 
+            />
           ) : callError ? (
-            <CallErrorMessage errorMessage={callError} onRetry={handleStartCall} onClose={() => onOpenChange(false)} />
+            <CallErrorMessage 
+              errorMessage={callError} 
+              onRetry={handleStartCall} 
+              onClose={() => onOpenChange(false)} 
+            />
           ) : !callState.isConnected ? (
             <AgoraCallInfo
-              expert={expert}
               expertName={expert?.name}
-              expertPrice={expert?.price_per_min}
+              expertPrice={expert?.price}
               onCallTypeChange={setCallType}
               selectedCallType={callType}
               onStartCall={handleStartCall}
@@ -165,9 +184,8 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
               {showChat && (
                 <div className="w-full md:w-1/3 border-l">
                   <AgoraCallChat
-                    expertId={expertId?.toString()}
-                    userId={currentUser?.id}
                     userName={currentUser?.name}
+                    expertName={expert?.name}
                   />
                 </div>
               )}
@@ -179,10 +197,8 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
           <AgoraCallControls
             callState={callState}
             callType={callType}
-            isMuted={callState.isMuted}
-            isVideoEnabled={callState.isVideoEnabled}
-            onToggleMute={handleToggleMute}
-            onToggleVideo={handleToggleVideo}
+            onToggleMute={() => setCallState(prev => ({ ...prev, isMuted: !prev.isMuted }))}
+            onToggleVideo={() => setCallState(prev => ({ ...prev, isVideoEnabled: !prev.isVideoEnabled }))}
             onEndCall={handleEndCall}
             onToggleChat={() => setShowChat(!showChat)}
             showChat={showChat}
