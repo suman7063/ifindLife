@@ -31,7 +31,7 @@ const AgoraCallChat: React.FC<AgoraCallChatProps> = ({ userName, expertName }) =
     setTimeout(() => {
       setMessages(prev => [...prev, {
         sender: 'expert',
-        text: 'Thank you for your message. I'm reviewing your question.',
+        text: 'Thank you for your message. I\'m reviewing your question.',
         time: new Date().toISOString()
       }]);
     }, 1500);
