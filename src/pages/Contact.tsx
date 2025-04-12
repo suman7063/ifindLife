@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -6,10 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, MapPin } from 'lucide-react';
-
 const Contact = () => {
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
         <section className="py-16 bg-gray-50">
@@ -72,7 +69,7 @@ const Contact = () => {
                       <Phone className="h-6 w-6 text-ifind-aqua mr-4" />
                       <div>
                         <h3 className="font-medium">Call Us</h3>
-                        <p className="text-gray-600">+91 9999999999</p>
+                        <p className="text-gray-600">+91 9355966925</p>
                       </div>
                     </div>
                     <div className="flex">
@@ -113,8 +110,6 @@ const Contact = () => {
         </section>
       </main>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Contact;
