@@ -1,9 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Program } from '@/types/programs';
-import ProgramCard from './ProgramCard';
 import { UserProfile } from '@/types/supabase';
 import ProgramsPagination from './ProgramsPagination';
+import EmptyState from './EmptyState';
+import ProgramGrid from './ProgramGrid';
 
 interface FilteredProgramsGridProps {
   filteredPrograms: Program[];
@@ -44,28 +45,16 @@ const FilteredProgramsGrid: React.FC<FilteredProgramsGridProps> = ({
   };
 
   if (filteredPrograms.length === 0) {
-    return (
-      <div className="col-span-full py-12 text-center text-muted-foreground">
-        {selectedCategory === 'favorites' 
-          ? "You haven't saved any programs to your favorites yet."
-          : "No programs available in this category."}
-      </div>
-    );
+    return <EmptyState selectedCategory={selectedCategory} />;
   }
 
   return (
     <div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {paginatedPrograms.map(program => (
-          <div key={program.id} className="w-full">
-            <ProgramCard 
-              program={program} 
-              currentUser={currentUser}
-              isAuthenticated={isAuthenticated}
-            />
-          </div>
-        ))}
-      </div>
+      <ProgramGrid 
+        programs={paginatedPrograms}
+        currentUser={currentUser}
+        isAuthenticated={isAuthenticated}
+      />
       
       {filteredPrograms.length > programsPerPage && (
         <ProgramsPagination
