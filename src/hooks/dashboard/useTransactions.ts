@@ -27,21 +27,25 @@ const useTransactions = (userId?: string) => {
         throw new Error(error.message);
       }
 
-      const formattedTransactions = (data || []).map(item => ({
-        id: item.id,
-        user_id: item.user_id,
-        amount: item.amount,
-        currency: item.currency || 'USD',
-        type: item.type,
-        description: item.description || '',
-        date: item.date,
-        // Ensure all required fields from UserTransaction interface are present
-        status: item.status || 'completed',
-        created_at: item.created_at || item.date,
-        payment_id: item.payment_id || `pay_${Date.now()}`,
-        payment_method: item.payment_method || 'wallet',
-        transaction_type: item.transaction_type || item.type
-      })) as UserTransaction[];
+      const formattedTransactions = (data || []).map(item => {
+        // Create a base transaction object
+        const transaction: UserTransaction = {
+          id: item.id,
+          user_id: item.user_id,
+          amount: item.amount,
+          currency: item.currency || 'USD',
+          type: item.type,
+          description: item.description || '',
+          date: item.date,
+          status: 'completed', // Default value
+          created_at: item.date, // Use date as created_at if not present
+          payment_id: `pay_${Date.now()}`, // Generate a default payment_id
+          payment_method: 'wallet', // Default payment method
+          transaction_type: item.type // Default to use type as transaction_type
+        };
+        
+        return transaction;
+      });
       
       setTransactions(formattedTransactions);
     } catch (err) {
