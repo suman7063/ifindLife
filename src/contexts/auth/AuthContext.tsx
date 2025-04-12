@@ -7,7 +7,7 @@ import { useExpertInteractions } from './hooks/useExpertInteractions';
 import { AuthContextType, initialAuthState, UserRole } from './types';
 
 // Create the context
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

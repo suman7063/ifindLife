@@ -1,7 +1,7 @@
 
 // Backward compatibility layer for existing components
 import { useContext } from 'react';
-import { AuthContext } from '@/contexts/auth/AuthContext';
+import { AuthContext, AuthContextType } from '@/contexts/auth/AuthContext';
 
 export const useAuthSynchronization = () => {
   const context = useContext(AuthContext);
