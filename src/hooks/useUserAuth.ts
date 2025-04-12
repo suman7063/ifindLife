@@ -1,6 +1,5 @@
 
 // Backward compatibility layer for existing components
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { useAuthBackCompat } from './auth/useAuthBackCompat';
 
 export const useUserAuth = () => {
