@@ -30,13 +30,13 @@ const NavbarDesktopLinksDropdown: React.FC<NavbarDesktopLinksDropdownProps> = ({
 }) => {
   return (
     <div className="group relative">
-      <Button variant="ghost" className="flex items-center gap-1">
+      <Button variant="ghost" className="flex items-center gap-1 peer">
         {title}
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-4 w-4">
           <path d="m6 9 6 6 6-6"/>
         </svg>
       </Button>
-      <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 group-hover:block">
+      <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 group-hover:block peer-hover:block hover:block">
         <div className="py-1">
           {title === "Programs" && (
             <>

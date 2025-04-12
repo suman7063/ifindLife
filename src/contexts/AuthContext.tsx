@@ -44,25 +44,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   // Check for existing admin session on component mount
   useEffect(() => {
-    // Clear any existing sessions to start fresh
-    const adminSession = localStorage.getItem('admin_session');
-    const adminUsername = localStorage.getItem('admin_username');
-    
-    console.log('Checking admin session:', adminSession, 'username:', adminUsername);
-    
-    if (adminSession === 'true' && adminUsername) {
-      // Find the user in adminUsers
-      const foundUser = adminUsers.find(user => user.username === adminUsername);
+    try {
+      // This fix will ensure we're checking local storage properly
+      const adminSession = localStorage.getItem('admin_session');
+      const adminUsername = localStorage.getItem('admin_username');
       
-      if (foundUser) {
-        console.log('Found authenticated user:', foundUser);
-        setIsAuthenticated(true);
-        setCurrentUser(foundUser);
-      } else {
-        console.log('No matching user found, clearing session');
-        localStorage.removeItem('admin_session');
-        localStorage.removeItem('admin_username');
+      console.log('Checking admin session:', adminSession, 'username:', adminUsername);
+      
+      if (adminSession === 'true' && adminUsername) {
+        // Find the user in adminUsers
+        const foundUser = adminUsers.find(user => user.username.toLowerCase() === adminUsername.toLowerCase());
+        
+        if (foundUser) {
+          console.log('Found authenticated user:', foundUser);
+          setIsAuthenticated(true);
+          setCurrentUser(foundUser);
+        } else {
+          console.log('No matching user found, clearing session');
+          localStorage.removeItem('admin_session');
+          localStorage.removeItem('admin_username');
+        }
       }
+    } catch (err) {
+      console.error('Error checking admin session:', err);
     }
   }, []);
 
@@ -70,30 +74,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (username: string, password: string): boolean => {
     console.log('Login attempt for username:', username);
     
-    // Case insensitive username check, but case sensitive password
-    const foundUser = adminUsers.find(user => 
-      user.username.toLowerCase() === username.toLowerCase()
-    );
+    // Hard-coded credentials for admin access
+    const expectedUsername = 'Soultribe';
+    const expectedPassword = 'Freesoul@99';
     
-    const correctPassword = 'Freesoul@99';
+    // Case insensitive username check, but case sensitive password check
+    const usernameMatches = username.toLowerCase() === expectedUsername.toLowerCase();
+    const passwordMatches = password === expectedPassword;
     
-    console.log('Found user in database:', !!foundUser);
-    console.log('Password check:', password === correctPassword);
+    console.log('Username matches:', usernameMatches);
+    console.log('Password matches:', passwordMatches);
     
-    if (foundUser && password === correctPassword) {
+    if (usernameMatches && passwordMatches) {
       console.log('Login successful - setting local storage');
-      localStorage.setItem('admin_session', 'true');
-      localStorage.setItem('admin_username', foundUser.username); // Store with correct case
-      setIsAuthenticated(true);
-      setCurrentUser(foundUser);
-      return true;
+      try {
+        localStorage.setItem('admin_session', 'true');
+        localStorage.setItem('admin_username', expectedUsername); // Always store correct case
+        setIsAuthenticated(true);
+        setCurrentUser({ username: expectedUsername, role: 'superadmin' });
+        return true;
+      } catch (err) {
+        console.error('Error saving to localStorage:', err);
+        // Still allow login even if localStorage fails
+        setIsAuthenticated(true);
+        setCurrentUser({ username: expectedUsername, role: 'superadmin' });
+        return true;
+      }
     }
     return false;
   };
 
   const logout = () => {
-    localStorage.removeItem('admin_session');
-    localStorage.removeItem('admin_username');
+    try {
+      localStorage.removeItem('admin_session');
+      localStorage.removeItem('admin_username');
+    } catch (err) {
+      console.error('Error clearing localStorage:', err);
+    }
     setIsAuthenticated(false);
     setCurrentUser(null);
   };

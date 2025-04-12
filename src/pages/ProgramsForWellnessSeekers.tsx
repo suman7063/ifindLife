@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -10,6 +11,7 @@ import PageHeader from '@/components/common/PageHeader';
 import ProgramFilters from '@/components/programs/ProgramFilters';
 import ProgramCategories from '@/components/programs/ProgramCategories';
 import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
+import CategoryButtons from '@/components/programs/filters/CategoryButtons';
 import { Loader2 } from 'lucide-react';
 
 const ProgramsForWellnessSeekers: React.FC = () => {
@@ -19,6 +21,16 @@ const ProgramsForWellnessSeekers: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortOption, setSortOption] = useState<string>('popularity');
   const { currentUser, isAuthenticated } = useUserAuth();
+
+  // Define all possible category options
+  const allCategoryOptions = [
+    { value: 'all', label: 'All Programs' },
+    { value: 'quick-ease', label: 'QuickEase' },
+    { value: 'resilience-building', label: 'Resilience Building' },
+    { value: 'super-human', label: 'Super Human' },
+    { value: 'issue-based', label: 'Issue-Based' },
+    { value: 'favorites', label: 'My Favorites' }
+  ];
 
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -151,10 +163,17 @@ const ProgramsForWellnessSeekers: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4 text-ifind-purple">
             Personalized Mental Wellness Programs
           </h2>
-          <p className="text-gray-700">
+          <p className="text-gray-700 mb-6">
             Our wellness programs are designed to support individuals on their mental health journey.
             Choose from a variety of evidence-based programs tailored to address specific needs and goals.
           </p>
+          
+          {/* Category buttons for quick filtering */}
+          <CategoryButtons 
+            activeCategory={selectedCategory}
+            setActiveCategory={setSelectedCategory}
+            categoryOptions={allCategoryOptions}
+          />
         </div>
         
         {isLoading ? (
@@ -178,12 +197,6 @@ const ProgramsForWellnessSeekers: React.FC = () => {
               </div>
             ) : (
               <>
-                <ProgramFilters 
-                  activeCategory={selectedCategory}
-                  setActiveCategory={setSelectedCategory}
-                  categoryOptions={categoryOptions}
-                />
-                
                 <div className="mt-8">
                   <FilteredProgramsGrid 
                     filteredPrograms={filteredPrograms}
