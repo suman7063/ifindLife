@@ -2,23 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-
-// Extended interface to include all required properties
-interface UserTransaction {
-  id: string;
-  user_id: string;
-  amount: number;
-  currency: string;
-  type: string;
-  description: string;
-  date: string;
-  // Added missing properties
-  status?: string;
-  created_at?: string;
-  payment_id?: string;
-  payment_method?: string;
-  transaction_type?: string;
-}
+import { UserTransaction } from '@/types/supabase/tables';
 
 const useTransactions = (userId?: string) => {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
@@ -51,7 +35,7 @@ const useTransactions = (userId?: string) => {
         type: item.type,
         description: item.description || '',
         date: item.date,
-        // Add the missing properties with default values if they don't exist
+        // Ensure all required fields from UserTransaction interface are present
         status: item.status || 'completed',
         created_at: item.created_at || item.date,
         payment_id: item.payment_id || `pay_${Date.now()}`,

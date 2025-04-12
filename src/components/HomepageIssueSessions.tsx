@@ -13,14 +13,66 @@ import {
   Users, Sparkles, CircleDot, Star 
 } from 'lucide-react';
 
-// Merge the designCategories from IssueSessions and featured programs
-const IssueSessions: React.FC = () => {
+// Combined sessions component for homepage
+const HomepageIssueSessions: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Featured programs section
+  // Additional issue-based sessions from IssueSessions component
+  const additionalIssueSessions = [
+    {
+      id: "anxiety-depression",
+      icon: "brain",
+      title: "Anxiety & Depression",
+      description: "Get help managing anxiety, depression, and stress from licensed therapists.",
+      href: "/anxiety-depression",
+      color: "bg-blue-100"
+    },
+    {
+      id: "relationship-counseling",
+      icon: "heart",
+      title: "Relationship Counseling",
+      description: "Improve communication and resolve conflicts in all types of relationships.",
+      href: "/relationship-counseling",
+      color: "bg-red-100"
+    },
+    {
+      id: "career-guidance",
+      icon: "lightbulb",
+      title: "Career Guidance",
+      description: "Navigate work stress, career transitions, and professional development.",
+      href: "/career-guidance",
+      color: "bg-yellow-100"
+    },
+    {
+      id: "family-therapy",
+      icon: "users",
+      title: "Family Therapy",
+      description: "Address family dynamics, parenting challenges, and intergenerational issues.",
+      href: "/family-therapy",
+      color: "bg-green-100"
+    },
+    {
+      id: "trauma-recovery",
+      icon: "sparkles",
+      title: "Trauma Recovery",
+      description: "Process and heal from past trauma with specialized therapeutic approaches.",
+      href: "/trauma-recovery",
+      color: "bg-purple-100"
+    },
+    {
+      id: "teen-counseling",
+      icon: "message-circle",
+      title: "Teen Counseling",
+      description: "Support for adolescents facing academic pressure, identity, and social challenges.",
+      href: "/teen-counseling",
+      color: "bg-orange-100"
+    }
+  ];
+  
+  // Featured programs to include in the combined list
   const featuredPrograms = [
     {
       id: "quickease-program",
@@ -76,16 +128,31 @@ const IssueSessions: React.FC = () => {
     fetchSessions();
   }, []);
 
-  // Combine featured programs with regular sessions
-  const combinedSessions = [
-    ...featuredPrograms,
-    ...sessions.filter(session => 
-      // Filter out any sessions that have the same title as a featured program
-      !featuredPrograms.some(program => 
-        program.title.toLowerCase() === session.title.toLowerCase()
-      )
-    ).slice(0, 9 - featuredPrograms.length) // Limit to 9 total items (3 featured + 6 regular)
-  ];
+  // Create a merged list of sessions without duplicates
+  const createMergedSessions = () => {
+    // Start with featured programs
+    const mergedSessions = [...featuredPrograms];
+    
+    // Add issue-based sessions, avoiding duplicates
+    additionalIssueSessions.forEach(issueSession => {
+      if (!mergedSessions.some(session => session.title === issueSession.title)) {
+        mergedSessions.push(issueSession);
+      }
+    });
+    
+    // Add other sessions from defaultSessions/localStorage, avoiding duplicates
+    sessions.forEach(session => {
+      if (!mergedSessions.some(existingSession => 
+        existingSession.title === session.title)) {
+        mergedSessions.push(session);
+      }
+    });
+    
+    // Limit to 12 total sessions to avoid overcrowding
+    return mergedSessions.slice(0, 12);
+  };
+  
+  const combinedSessions = createMergedSessions();
 
   const handleOpenSession = (session: Session) => {
     console.log('Session clicked:', session);
@@ -108,10 +175,10 @@ const IssueSessions: React.FC = () => {
           <p className="text-gray-600">Select a program or issue to connect with a specialist who can assist you</p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {loading ? (
             // Loading state
-            Array(9).fill(0).map((_, index) => (
+            Array(12).fill(0).map((_, index) => (
               <div key={index} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
                 <div className="w-14 h-14 bg-gray-200 rounded-full mx-auto mb-4"></div>
                 <div className="h-5 bg-gray-200 rounded w-3/4 mx-auto mb-3"></div>
@@ -181,4 +248,4 @@ const IssueSessions: React.FC = () => {
   );
 };
 
-export default IssueSessions;
+export default HomepageIssueSessions;
