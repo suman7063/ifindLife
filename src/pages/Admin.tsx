@@ -1,54 +1,43 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import expertData from '@/data/expertData';
-import { convertToExpertFormat } from '@/utils/expertDataUtils';
-import { initialServices, initialHeroSettings, initialTestimonials } from '@/data/initialAdminData';
-import { useSessionTimeout } from '@/hooks/useSessionTimeout';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import AdminHeader from '@/components/admin/AdminHeader';
 import AdminTabs from '@/components/admin/AdminTabs';
-import { ExtendedExpert } from '@/types/expert';
+import { Container } from '@/components/ui/container';
+import { toast } from 'sonner';
 
 const Admin = () => {
-  // State management for each section
-  const [experts, setExperts] = useState<ExtendedExpert[]>(() => convertToExpertFormat(expertData));
-  const [services, setServices] = useState(initialServices);
-  const [heroSettings, setHeroSettings] = useState(initialHeroSettings);
-  const [testimonials, setTestimonials] = useState(initialTestimonials);
-  const [activeTab, setActiveTab] = useState("experts");
-  
-  const { logout } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
-  
-  // Handle logout
+  const [activeTab, setActiveTab] = useState('dashboard');
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/admin-login');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleLogout = () => {
     logout();
+    toast.success('Successfully logged out');
     navigate('/admin-login');
   };
-  
-  // Set up session timeout
-  useSessionTimeout(10 * 60 * 1000, handleLogout);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <AdminHeader handleLogout={handleLogout} />
-      
-      <main className="flex-1 py-8 container mx-auto px-4">
-        <AdminTabs 
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          experts={experts as any} // Type assertion to avoid changing prop types
-          setExperts={setExperts as any} // Type assertion to avoid changing prop types
-          services={services}
-          setServices={setServices}
-          heroSettings={heroSettings}
-          setHeroSettings={setHeroSettings}
-          testimonials={testimonials}
-          setTestimonials={setTestimonials}
-        />
-      </main>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <Container className="flex-1 py-8">
+        <AdminHeader onLogout={handleLogout} />
+        <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      </Container>
+      <Footer />
     </div>
   );
 };

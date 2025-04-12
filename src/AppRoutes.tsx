@@ -1,7 +1,7 @@
 
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/routing/ProtectedRoute';
+import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/auth/LoadingScreen';
 
 // Lazy load pages for better performance
@@ -70,31 +70,31 @@ const AppRoutes: React.FC = () => {
 
         {/* User Protected Routes */}
         <Route path="/user-dashboard" element={
-          <ProtectedRoute allowedRoles={['user', 'admin']}>
+          <ProtectedRoute>
             <UserDashboard />
           </ProtectedRoute>
         } />
         <Route path="/referrals" element={
-          <ProtectedRoute allowedRoles={['user', 'admin']}>
+          <ProtectedRoute>
             <UserReferrals />
           </ProtectedRoute>
         } />
 
         {/* Expert Protected Routes */}
         <Route path="/expert-dashboard/*" element={
-          <ProtectedRoute allowedRoles={['expert']}>
+          <ProtectedRoute>
             <ExpertDashboard />
           </ProtectedRoute>
         } />
 
         {/* Admin Protected Routes */}
         <Route path="/admin/*" element={
-          <ProtectedRoute allowedRoles={['admin']}>
+          <ProtectedRoute>
             <Admin />
           </ProtectedRoute>
         } />
         <Route path="/migrate-data" element={
-          <ProtectedRoute allowedRoles={['admin']}>
+          <ProtectedRoute>
             <MigrateData />
           </ProtectedRoute>
         } />
