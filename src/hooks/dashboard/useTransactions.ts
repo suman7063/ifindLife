@@ -3,75 +3,60 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserTransaction } from '@/types/supabase/tables';
 
-interface UseTransactionsProps {
-  transactions: UserTransaction[];
-  isLoading: boolean;
-  error: Error | null;
-  refreshTransactions: () => Promise<void>;
-}
-
-const useTransactions = (userId?: string): UseTransactionsProps => {
+export const useTransactions = (userId: string) => {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchTransactions = async () => {
-    if (!userId) {
-      setTransactions([]);
-      setIsLoading(false);
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('user_transactions')
-        .select('*')
-        .eq('user_id', userId)
-        .order('date', { ascending: false });
-
-      if (error) throw error;
-
-      // Transform and standardize the transaction data
-      const formattedTransactions = (data || []).map(item => ({
-        id: item.id,
-        user_id: item.user_id,
-        amount: item.amount,
-        currency: item.currency || 'USD',
-        description: item.description || '',
-        date: item.date,
-        type: item.type,
-        status: item.status || 'completed', // Default status if missing
-        created_at: item.created_at || item.date, // Use date as fallback
-        payment_id: item.payment_id || `pay_${Date.now()}`, // Generate fallback ID
-        payment_method: item.payment_method || 'wallet', // Default payment method
-        transaction_type: item.transaction_type || item.type // Keep backwards compatibility
-      })) as UserTransaction[];
-
-      setTransactions(formattedTransactions);
-    } catch (err) {
-      console.error('Error fetching transactions:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch transactions'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Initial fetch
   useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        
+        const { data, error } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        // Map the results to our UserTransaction type
+        const formattedTransactions: UserTransaction[] = data.map((transaction: any) => ({
+          id: transaction.id,
+          user_id: transaction.user_id,
+          amount: transaction.amount,
+          currency: transaction.currency || 'INR',
+          description: transaction.description || '',
+          date: transaction.date || transaction.created_at,
+          type: transaction.type || 'payment',
+          status: transaction.status || 'completed',
+          created_at: transaction.created_at || new Date().toISOString(),
+          payment_id: transaction.payment_id || '',
+          payment_method: transaction.payment_method || 'default',
+          transaction_type: transaction.transaction_type || transaction.type || 'payment'
+        }));
+
+        setTransactions(formattedTransactions);
+      } catch (err: any) {
+        console.error('Error fetching transactions:', err);
+        setError(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchTransactions();
   }, [userId]);
 
-  const refreshTransactions = async () => {
-    await fetchTransactions();
-  };
-
-  return {
-    transactions,
-    isLoading,
-    error,
-    refreshTransactions
-  };
+  return { transactions, isLoading, error };
 };
 
 export default useTransactions;
