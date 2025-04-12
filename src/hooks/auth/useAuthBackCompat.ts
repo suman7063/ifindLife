@@ -59,7 +59,7 @@ export const useAuthBackCompat = () => {
     },
     reportExpert: async (report: any) => {
       if (auth.reportExpert && report) {
-        if (typeof review === 'object') {
+        if (typeof report === 'object') {
           const expertId = report.expertId || report.expert_id;
           const reason = report.reason;
           const details = report.details || '';
