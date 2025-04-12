@@ -8,12 +8,45 @@ import { renderIcon } from '@/components/admin/sessions/sessionIcons';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { defaultSessions } from '@/components/admin/sessions/defaultSessions';
+import { 
+  Brain, Heart, MessageCircle, Lightbulb, 
+  Users, Sparkles, CircleDot, Star 
+} from 'lucide-react';
 
+// Merge the designCategories from IssueSessions and featured programs
 const IssueSessions: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Featured programs section
+  const featuredPrograms = [
+    {
+      id: "quickease-program",
+      icon: "brain",
+      title: "QuickEase Programs",
+      description: "Short-term solutions for immediate stress and anxiety relief",
+      href: "/programs-for-wellness-seekers?category=quick-ease",
+      color: "bg-blue-100"
+    },
+    {
+      id: "resilience-program",
+      icon: "sparkles",
+      title: "Emotional Resilience",
+      description: "Build psychological strength to handle life's challenges",
+      href: "/programs-for-wellness-seekers?category=resilience-building",
+      color: "bg-purple-100"
+    },
+    {
+      id: "superhuman-program",
+      icon: "star",
+      title: "Super Human Life",
+      description: "Achieve your highest potential through mental optimization",
+      href: "/programs-for-wellness-seekers?category=super-human",
+      color: "bg-yellow-100"
+    }
+  ];
 
   useEffect(() => {
     const fetchSessions = () => {
@@ -43,6 +76,17 @@ const IssueSessions: React.FC = () => {
     fetchSessions();
   }, []);
 
+  // Combine featured programs with regular sessions
+  const combinedSessions = [
+    ...featuredPrograms,
+    ...sessions.filter(session => 
+      // Filter out any sessions that have the same title as a featured program
+      !featuredPrograms.some(program => 
+        program.title.toLowerCase() === session.title.toLowerCase()
+      )
+    ).slice(0, 9 - featuredPrograms.length) // Limit to 9 total items (3 featured + 6 regular)
+  ];
+
   const handleOpenSession = (session: Session) => {
     console.log('Session clicked:', session);
     setSelectedSession(session);
@@ -57,43 +101,43 @@ const IssueSessions: React.FC = () => {
   };
 
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-16 bg-ifind-purple/5">
       <div className="container mx-auto px-4">
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-bold mb-2">How Can We Help You Today?</h2>
-          <p className="text-gray-600">Select an issue to connect with a specialist who can assist you</p>
+          <p className="text-gray-600">Select a program or issue to connect with a specialist who can assist you</p>
         </div>
         
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
           {loading ? (
             // Loading state
-            Array(8).fill(0).map((_, index) => (
-              <div key={index} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
-                <div className="w-12 h-12 bg-gray-200 rounded-full mx-auto mb-3"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-full mx-auto"></div>
+            Array(9).fill(0).map((_, index) => (
+              <div key={index} className="bg-white rounded-lg shadow-sm p-6 animate-pulse">
+                <div className="w-14 h-14 bg-gray-200 rounded-full mx-auto mb-4"></div>
+                <div className="h-5 bg-gray-200 rounded w-3/4 mx-auto mb-3"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mx-auto"></div>
               </div>
             ))
           ) : (
-            sessions.slice(0, 8).map((session) => (
+            combinedSessions.map((session) => (
               <div
                 key={session.id}
-                className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow"
-                onClick={(e) => handleCardInteraction(e, session)}
+                className="bg-white rounded-lg shadow-sm p-6 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow"
+                onClick={(e) => handleCardInteraction(e, session as Session)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
-                    handleCardInteraction(e, session);
+                    handleCardInteraction(e, session as Session);
                   }
                 }}
                 role="button"
                 tabIndex={0}
                 aria-label={`View details about ${session.title}`}
               >
-                <div className={`w-12 h-12 ${session.color} rounded-full flex items-center justify-center mb-3`}>
+                <div className={`w-14 h-14 ${session.color} rounded-full flex items-center justify-center mb-4`}>
                   {renderIcon(session.icon)}
                 </div>
-                <h3 className="font-medium mb-1">{session.title}</h3>
-                <p className="text-sm text-gray-500 line-clamp-2">{session.description}</p>
+                <h3 className="font-medium text-lg mb-2">{session.title}</h3>
+                <p className="text-sm text-gray-600">{session.description}</p>
               </div>
             ))
           )}

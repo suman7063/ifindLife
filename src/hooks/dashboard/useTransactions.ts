@@ -1,23 +1,32 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserTransaction } from '@/types/supabase/tables';
+import { toast } from 'sonner';
 
-interface UseTransactionsProps {
-  transactions: UserTransaction[];
-  isLoading: boolean;
-  error: Error | null;
-  refreshTransactions: () => Promise<void>;
+// Extended interface to include all required properties
+interface UserTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  currency: string;
+  type: string;
+  description: string;
+  date: string;
+  // Added missing properties
+  status?: string;
+  created_at?: string;
+  payment_id?: string;
+  payment_method?: string;
+  transaction_type?: string;
 }
 
-const useTransactions = (userId?: string): UseTransactionsProps => {
+const useTransactions = (userId?: string) => {
   const [transactions, setTransactions] = useState<UserTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchTransactions = async () => {
     if (!userId) {
-      setTransactions([]);
       setIsLoading(false);
       return;
     }
@@ -29,48 +38,46 @@ const useTransactions = (userId?: string): UseTransactionsProps => {
         .select('*')
         .eq('user_id', userId)
         .order('date', { ascending: false });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
 
-      if (error) throw error;
-
-      // Transform and standardize the transaction data
       const formattedTransactions = (data || []).map(item => ({
         id: item.id,
         user_id: item.user_id,
         amount: item.amount,
         currency: item.currency || 'USD',
+        type: item.type,
         description: item.description || '',
         date: item.date,
-        type: item.type,
-        status: item.status || 'completed', // Default status if missing
-        created_at: item.created_at || item.date, // Use date as fallback
-        payment_id: item.payment_id || `pay_${Date.now()}`, // Generate fallback ID
-        payment_method: item.payment_method || 'wallet', // Default payment method
-        transaction_type: item.transaction_type || item.type // Keep backwards compatibility
+        // Add the missing properties with default values if they don't exist
+        status: item.status || 'completed',
+        created_at: item.created_at || item.date,
+        payment_id: item.payment_id || `pay_${Date.now()}`,
+        payment_method: item.payment_method || 'wallet',
+        transaction_type: item.transaction_type || item.type
       })) as UserTransaction[];
-
+      
       setTransactions(formattedTransactions);
     } catch (err) {
       console.error('Error fetching transactions:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch transactions'));
+      toast.error('Error loading transaction data');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchTransactions();
   }, [userId]);
-
-  const refreshTransactions = async () => {
-    await fetchTransactions();
-  };
 
   return {
     transactions,
     isLoading,
     error,
-    refreshTransactions
+    refreshTransactions: fetchTransactions
   };
 };
 
