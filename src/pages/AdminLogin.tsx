@@ -40,6 +40,8 @@ const AdminLogin = () => {
     console.log('Attempting login with username:', username);
     setLoginAttempted(true);
     
+    // Always show the default credentials help on first attempt
+    
     if (login(username, password)) {
       console.log('Login successful, redirecting to admin panel');
       toast.success(`Welcome back, ${username}!`);
@@ -47,6 +49,8 @@ const AdminLogin = () => {
     } else {
       console.error('Login failed');
       toast.error('Invalid username or password');
+      // Show the credentials reminder when login fails
+      setLoginAttempted(true);
     }
   };
 
@@ -77,6 +81,7 @@ const AdminLogin = () => {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   className="bg-background"
+                  placeholder="Enter username"
                 />
               </div>
               
@@ -97,6 +102,7 @@ const AdminLogin = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="bg-background"
+                    placeholder="Enter password"
                   />
                   <button
                     type="button"
@@ -121,13 +127,12 @@ const AdminLogin = () => {
                 </Button>
               </div>
               
-              {loginAttempted && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
-                  <p className="text-sm text-amber-700">
-                    <strong>Admin Login Help:</strong> Username is "Soultribe" and password is "Freesoul@99" (case-sensitive)
-                  </p>
-                </div>
-              )}
+              {/* Always display the credentials for easy testing */}
+              <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+                <p className="text-sm text-amber-700">
+                  <strong>Admin Login Help:</strong> Username is "Soultribe" and password is "Freesoul@99" (case-sensitive)
+                </p>
+              </div>
             </form>
           </div>
         </div>

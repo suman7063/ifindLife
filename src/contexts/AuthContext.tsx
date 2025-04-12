@@ -44,13 +44,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   // Check for existing admin session on component mount
   useEffect(() => {
+    // Clear any existing sessions to start fresh
     const adminSession = localStorage.getItem('admin_session');
     const adminUsername = localStorage.getItem('admin_username');
     
     console.log('Checking admin session:', adminSession, 'username:', adminUsername);
     
-    if (adminSession === 'true') {
-      // Find the user in adminUsers or default to first user
+    if (adminSession === 'true' && adminUsername) {
+      // Find the user in adminUsers
       const foundUser = adminUsers.find(user => user.username === adminUsername);
       
       if (foundUser) {
@@ -63,22 +64,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.removeItem('admin_username');
       }
     }
-  }, [adminUsers]);
+  }, []);
 
   // Simple admin authentication
   const login = (username: string, password: string): boolean => {
     console.log('Login attempt for username:', username);
     
-    // Using the custom credentials you requested
-    const foundUser = adminUsers.find(user => user.username === username);
+    // Case insensitive username check, but case sensitive password
+    const foundUser = adminUsers.find(user => 
+      user.username.toLowerCase() === username.toLowerCase()
+    );
+    
     const correctPassword = 'Freesoul@99';
     
     console.log('Found user in database:', !!foundUser);
     console.log('Password check:', password === correctPassword);
     
     if (foundUser && password === correctPassword) {
+      console.log('Login successful - setting local storage');
       localStorage.setItem('admin_session', 'true');
-      localStorage.setItem('admin_username', username);
+      localStorage.setItem('admin_username', foundUser.username); // Store with correct case
       setIsAuthenticated(true);
       setCurrentUser(foundUser);
       return true;
