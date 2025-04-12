@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Program } from '@/types/programs';
+import { Program, ProgramCategory } from '@/types/programs';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { supabase } from '@/lib/supabase';
 import { useUserAuth } from '@/hooks/useUserAuth';
@@ -22,8 +21,8 @@ const ProgramsForWellnessSeekers: React.FC = () => {
   const [sortOption, setSortOption] = useState<string>('popularity');
   const { currentUser, isAuthenticated } = useUserAuth();
 
-  // Define all possible category options
-  const allCategoryOptions = [
+  // Define all possible category options with explicit typing
+  const allCategoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[] = [
     { value: 'all', label: 'All Programs' },
     { value: 'quick-ease', label: 'QuickEase' },
     { value: 'resilience-building', label: 'Resilience Building' },
