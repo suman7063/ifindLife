@@ -5,10 +5,10 @@ import { LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface AdminHeaderProps {
-  handleLogout: () => void;
+  onLogout: () => void;  // Change to match what Admin.tsx is passing
 }
 
-const AdminHeader: React.FC<AdminHeaderProps> = ({ handleLogout }) => {
+const AdminHeader: React.FC<AdminHeaderProps> = ({ onLogout }) => {
   const navigate = useNavigate();
 
   return (
@@ -26,7 +26,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ handleLogout }) => {
           <Button
             variant="ghost"
             className="text-white hover:text-white/80"
-            onClick={handleLogout}
+            onClick={onLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />
             Log Out
