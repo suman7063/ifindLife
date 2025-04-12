@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 interface AdminUser {
   username: string;
@@ -46,21 +47,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const adminSession = localStorage.getItem('admin_session');
     const adminUsername = localStorage.getItem('admin_username');
     
-    if (adminSession) {
-      setIsAuthenticated(true);
-      
+    console.log('Checking admin session:', adminSession, 'username:', adminUsername);
+    
+    if (adminSession === 'true') {
       // Find the user in adminUsers or default to first user
       const foundUser = adminUsers.find(user => user.username === adminUsername);
-      setCurrentUser(foundUser || adminUsers[0]);
+      
+      if (foundUser) {
+        console.log('Found authenticated user:', foundUser);
+        setIsAuthenticated(true);
+        setCurrentUser(foundUser);
+      } else {
+        console.log('No matching user found, clearing session');
+        localStorage.removeItem('admin_session');
+        localStorage.removeItem('admin_username');
+      }
     }
   }, [adminUsers]);
 
   // Simple admin authentication
   const login = (username: string, password: string): boolean => {
+    console.log('Login attempt for username:', username);
+    
     // Using the custom credentials you requested
     const foundUser = adminUsers.find(user => user.username === username);
+    const correctPassword = 'Freesoul@99';
     
-    if (foundUser && password === 'Freesoul@99') {
+    console.log('Found user in database:', !!foundUser);
+    console.log('Password check:', password === correctPassword);
+    
+    if (foundUser && password === correctPassword) {
       localStorage.setItem('admin_session', 'true');
       localStorage.setItem('admin_username', username);
       setIsAuthenticated(true);

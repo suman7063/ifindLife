@@ -14,6 +14,7 @@ const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loginAttempted, setLoginAttempted] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -27,9 +28,17 @@ const AdminLogin = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Reset error state after fields are changed
+  useEffect(() => {
+    if (loginAttempted) {
+      setLoginAttempted(false);
+    }
+  }, [username, password]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Attempting login with username:', username);
+    setLoginAttempted(true);
     
     if (login(username, password)) {
       console.log('Login successful, redirecting to admin panel');
@@ -67,6 +76,7 @@ const AdminLogin = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
+                  className="bg-background"
                 />
               </div>
               
@@ -86,6 +96,7 @@ const AdminLogin = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    className="bg-background"
                   />
                   <button
                     type="button"
@@ -101,12 +112,22 @@ const AdminLogin = () => {
                 </div>
               </div>
               
-              <Button 
-                type="submit" 
-                className="w-full bg-ifind-teal hover:bg-ifind-aqua"
-              >
-                Access Admin Panel
-              </Button>
+              <div className="pt-2">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-ifind-teal hover:bg-ifind-aqua"
+                >
+                  Access Admin Panel
+                </Button>
+              </div>
+              
+              {loginAttempted && (
+                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
+                  <p className="text-sm text-amber-700">
+                    <strong>Admin Login Help:</strong> Username is "Soultribe" and password is "Freesoul@99" (case-sensitive)
+                  </p>
+                </div>
+              )}
             </form>
           </div>
         </div>
