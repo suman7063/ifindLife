@@ -18,7 +18,7 @@ interface AuthContextType {
 }
 
 const defaultAdminUsers: AdminUser[] = [
-  { username: 'admin', role: 'superadmin' }
+  { username: 'Soultribe', role: 'superadmin' }
 ];
 
 const initialAuthContext: AuthContextType = {
@@ -57,11 +57,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Simple admin authentication
   const login = (username: string, password: string): boolean => {
-    // For demo purposes, hardcoded credentials
-    // In a real application, this would validate against a secure backend
+    // Using the custom credentials you requested
     const foundUser = adminUsers.find(user => user.username === username);
     
-    if (foundUser && password === 'admin123') {
+    if (foundUser && password === 'Freesoul@99') {
       localStorage.setItem('admin_session', 'true');
       localStorage.setItem('admin_username', username);
       setIsAuthenticated(true);
