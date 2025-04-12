@@ -11,12 +11,12 @@ export interface UserTransaction {
   created_at: string;
   payment_id: string;
   payment_method: string;
-  transaction_type: string; // Include this field for backwards compatibility
+  transaction_type: string;
 }
 
 export interface UserReview {
   id?: string;
-  expert_id: number; // Changed to number to match the database schema
+  expert_id: number;
   user_id?: string;
   rating: number;
   comment?: string;

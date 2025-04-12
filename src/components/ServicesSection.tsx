@@ -48,7 +48,7 @@ const ServicesSection = () => {
       <div className="container mx-auto px-6 sm:px-12">
         <h2 className="text-3xl font-bold mb-6">IFL Programs for Individuals</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">
-          IFL provides 3 kind of programs in addition to issue/situation based sessions
+          IFL provides 3 kinds of programs in addition to issue/situation based sessions
         </p>
 
         <FeaturedPrograms onProgramClick={handleProgramClick} />
