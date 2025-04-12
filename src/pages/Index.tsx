@@ -2,6 +2,7 @@
 import React, { lazy, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
+import ServicesSection from '@/components/ServicesSection';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
@@ -40,7 +41,10 @@ const Index = () => {
       <main className="flex-1">
         <Hero />
         
-        {/* Combined Session/Issue Section */}
+        {/* Services/Categories Section - Critical for first impression */}
+        <ServicesSection />
+        
+        {/* Issue Sessions Section - Added to ensure it appears on the page */}
         <HomepageIssueSessions />
         
         {/* Programs Section for Organizations - Updated for row alignment of buttons */}

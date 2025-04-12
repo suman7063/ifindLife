@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/contexts/UserAuthContext';
 import { toast } from 'sonner';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
