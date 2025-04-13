@@ -6,6 +6,8 @@ import { Container } from '@/components/ui/container';
 import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -73,15 +75,21 @@ const ExpertLogin: React.FC = () => {
   };
 
   return (
-    <Container className="max-w-md py-12">
-      <ExpertLoginContent
-        activeTab={activeTab}
-        setActiveTab={handleTabChange}
-        onLogin={handleLogin}
-        isLogging={isLoading}
-        loginError={loginError}
-      />
-    </Container>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gray-50 py-12">
+        <Container className="max-w-md">
+          <ExpertLoginContent
+            activeTab={activeTab}
+            setActiveTab={handleTabChange}
+            onLogin={handleLogin}
+            isLogging={isLoading}
+            loginError={loginError}
+          />
+        </Container>
+      </div>
+      <Footer />
+    </>
   );
 };
 

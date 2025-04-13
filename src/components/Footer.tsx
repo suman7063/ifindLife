@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Twitter, Instagram, Youtube, Send, Heart, Award, BrainCircuit } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Youtube, Heart, Award, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import NewsletterSubscription from './newsletter/NewsletterSubscription';
 
 const Footer = () => {
   return (
@@ -109,16 +109,7 @@ const Footer = () => {
             <p className="text-ifind-offwhite/80 mb-4">
               Subscribe to get mental wellness tips and updates.
             </p>
-            <div className="flex space-x-2">
-              <Input 
-                type="email" 
-                placeholder="Your email" 
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-              />
-              <Button size="icon" className="bg-ifind-aqua hover:bg-ifind-aqua/80">
-                <Send size={16} />
-              </Button>
-            </div>
+            <NewsletterSubscription />
           </div>
         </div>
         
