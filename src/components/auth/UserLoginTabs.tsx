@@ -18,13 +18,14 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
-  const { register } = useAuth();
+  const { signup } = useAuth(); // Using signup instead of register
   
   // Mock referral settings for the RegisterTab
   const referralSettings: ReferralSettings | null = {
-    enabled: false,
-    bonus_amount: 0,
-    minimum_withdrawal: 0
+    referrer_reward: 10,
+    referred_reward: 5,
+    active: false,
+    description: "Refer friends and get rewards"
   };
   
   const handleTabChange = (value: string) => {
@@ -72,10 +73,25 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     setRegisterError(null);
     
     try {
-      if (register) {
-        await register(userData);
-        // Registration successful, switch to login tab
-        setActiveTab('login');
+      if (signup) {
+        const success = await signup(
+          userData.email, 
+          userData.password, 
+          {
+            name: userData.name,
+            phone: userData.phone,
+            country: userData.country,
+            city: userData.city
+          }, 
+          userData.referralCode
+        );
+        
+        if (success) {
+          // Registration successful, switch to login tab
+          setActiveTab('login');
+        } else {
+          setRegisterError("Registration failed. Please try again.");
+        }
       } else {
         setRegisterError("Registration function not available");
       }
