@@ -1,8 +1,5 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from '@/types/supabase/expert';
 import { toast } from 'sonner';
 import { AuthState } from '../types';
 
@@ -17,6 +14,7 @@ export const useAuthFunctions = (
     try {
       setAuthState((prev) => ({ ...prev, isLoading: true }));
       
+      console.log("Attempting login with email:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,11 +28,22 @@ export const useAuthFunctions = (
       }
 
       if (!data.user || !data.session) {
+        console.error("Login failed: No user or session returned");
         toast.error("Login failed. Please try again.");
         setAuthState((prev) => ({ ...prev, isLoading: false }));
         return false;
       }
 
+      console.log("Login successful for user:", data.user.id);
+      
+      // Fetch user data immediately after login
+      try {
+        await fetchUserData(data.user.id);
+      } catch (fetchError) {
+        console.error("Error fetching user data after login:", fetchError);
+        // Continue with login even if fetch fails
+      }
+      
       toast.success("Login successful!");
       return true;
     } catch (error: any) {

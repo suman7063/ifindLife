@@ -1,15 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from '@/types/supabase/expert';
 import { AuthState, initialAuthState, UserRole } from '../types';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
   
   useEffect(() => {
+    console.log("Setting up auth state listener");
+    
+    // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log("Auth state changed:", event, session ? "Session exists" : "No session");
@@ -19,14 +19,17 @@ export const useAuthState = () => {
           session,
           user: session?.user || null,
           isAuthenticated: !!session?.user,
-          isLoading: prev.isLoading && event !== 'INITIAL_SESSION',
+          isLoading: event === 'INITIAL_SESSION' ? prev.isLoading : false,
         }));
         
         if (session?.user) {
+          console.log("Auth state changed with user, fetching profile");
+          // Use setTimeout to avoid potential Supabase auth deadlock
           setTimeout(() => {
             fetchUserData(session.user.id);
           }, 0);
         } else {
+          console.log("Auth state changed without user, clearing profiles");
           setAuthState((prev) => ({
             ...prev,
             userProfile: null,
@@ -38,6 +41,7 @@ export const useAuthState = () => {
       }
     );
 
+    // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log("Initial session check:", session ? "Session exists" : "No session");
       
@@ -56,6 +60,9 @@ export const useAuthState = () => {
   
   const fetchUserData = async (userId: string) => {
     try {
+      console.log("Fetching user data for:", userId);
+      
+      // First check if this is a user
       const { data: userProfile, error: userError } = await supabase
         .from('profiles')
         .select('*')
@@ -63,6 +70,7 @@ export const useAuthState = () => {
         .maybeSingle();
         
       if (userProfile) {
+        console.log("Found user profile:", userProfile.id);
         setAuthState((prev) => ({
           ...prev,
           userProfile,
@@ -71,8 +79,11 @@ export const useAuthState = () => {
           isLoading: false,
         }));
         return;
+      } else {
+        console.log("No user profile found, checking for expert");
       }
       
+      // Then check if it's an expert
       const { data: expertProfile, error: expertError } = await supabase
         .from('expert_accounts')
         .select('*')
@@ -80,17 +91,18 @@ export const useAuthState = () => {
         .maybeSingle();
         
       if (expertProfile) {
+        console.log("Found expert profile:", expertProfile.id);
         setAuthState((prev) => ({
           ...prev,
           userProfile: null,
-          expertProfile: expertProfile as ExpertProfile,
+          expertProfile,
           role: 'expert',
           isLoading: false,
         }));
         return;
       }
       
-      console.error("User authenticated but no profile found");
+      console.log("User authenticated but no profile found");
       setAuthState((prev) => ({
         ...prev,
         isLoading: false,

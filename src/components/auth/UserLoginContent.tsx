@@ -29,7 +29,8 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
     userLogout,
     expertLogout,
     fullLogout,
-    hasDualSessions
+    hasDualSessions,
+    currentUser
   } = useAuthSynchronization();
   
   // Check if expert is logged in directly from Supabase
@@ -41,6 +42,8 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
+          console.log("UserLoginContent - Found session:", data.session.user.id);
+          
           // Check if there's a profile in the expert_accounts table
           const { data: expertData, error } = await supabase
             .from('expert_accounts')
@@ -49,14 +52,15 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
             .maybeSingle();
             
           if (expertData && !error) {
+            console.log("UserLoginContent - Found expert profile");
             setExpertProfile(expertData as ExpertProfile);
             // If an expert is logged in, we shouldn't show login tabs
-            console.log('Expert is already logged in, user login not allowed');
             toast.info('You are currently logged in as an expert');
           } else {
             setExpertProfile(null);
           }
         } else {
+          console.log("UserLoginContent - No session found");
           setExpertProfile(null);
         }
       } catch (error) {
@@ -73,10 +77,15 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
   // If user is already authenticated, redirect to dashboard
   useEffect(() => {
     if (isUserAuthenticated && isAuthInitialized && !isAuthLoading) {
-      console.log("User is authenticated, redirecting to dashboard");
+      console.log("UserLoginContent - User is authenticated, redirecting to dashboard", {
+        isUserAuthenticated,
+        isAuthInitialized,
+        isAuthLoading,
+        hasCurrentUser: !!currentUser
+      });
       navigate('/user-dashboard');
     }
-  }, [isUserAuthenticated, isAuthInitialized, isAuthLoading, navigate]);
+  }, [isUserAuthenticated, isAuthInitialized, isAuthLoading, navigate, currentUser]);
   
   const handleExpertLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);

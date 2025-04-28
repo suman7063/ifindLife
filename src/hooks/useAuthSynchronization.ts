@@ -36,9 +36,10 @@ export const useAuthSynchronization = () => {
       isAuthenticated: context.isAuthenticated,
       role: context.role,
       hasUserProfile: !!context.userProfile,
-      hasExpertProfile: !!context.expertProfile
+      hasExpertProfile: !!context.expertProfile,
+      user: context.user?.id
     });
-  }, [context.isAuthenticated, context.role, context.userProfile, context.expertProfile]);
+  }, [context.isAuthenticated, context.role, context.userProfile, context.expertProfile, context.user]);
   
   return {
     isAuthenticated: context.isAuthenticated,
