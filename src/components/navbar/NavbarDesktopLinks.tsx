@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { UserPlus, User, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NavigationMenu, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuLink } from "@/components/ui/navigation-menu";
 import NavbarUserMenu from './NavbarUserMenu';
 import NavbarExpertMenu from './NavbarExpertMenu';
 import { UserProfile } from '@/types/supabase';
@@ -17,75 +18,6 @@ interface NavbarDesktopLinksProps {
   isLoggingOut: boolean;
 }
 
-interface NavbarDesktopLinksDropdownProps {
-  title: string;
-  isAuthenticated?: boolean;
-  hasExpertProfile?: boolean;
-}
-
-const NavbarDesktopLinksDropdown: React.FC<NavbarDesktopLinksDropdownProps> = ({ 
-  title, 
-  isAuthenticated = false,
-  hasExpertProfile = false
-}) => {
-  return (
-    <div className="group relative">
-      <Button variant="ghost" className="flex items-center gap-1 peer">
-        {title}
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-4 w-4">
-          <path d="m6 9 6 6 6-6"/>
-        </svg>
-      </Button>
-      <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 group-hover:block peer-hover:block hover:block">
-        <div className="py-1">
-          {title === "Programs" && (
-            <>
-              <Link to="/programs-for-wellness-seekers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wellness Seekers</Link>
-              <Link to="/programs-for-academic-institutes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Academic Institutes</Link>
-              <Link to="/programs-for-business" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Business</Link>
-            </>
-          )}
-          {title === "Services" && (
-            <>
-              <Link to="/services" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium">All Services</Link>
-              <Link to="/services/therapy-sessions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Therapy Sessions</Link>
-              <Link to="/services/guided-meditations" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Guided Meditations</Link>
-              <Link to="/services/mindful-listening" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mindful Listening</Link>
-              <Link to="/services/offline-retreats" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Offline Retreats</Link>
-              <Link to="/services/life-coaching" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Life Coaching</Link>
-            </>
-          )}
-          {title === "Support" && (
-            <>
-              <Link to="/contact" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Contact Us</Link>
-              <Link to="/faqs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">FAQs</Link>
-              <Link to="/blog" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Blog</Link>
-            </>
-          )}
-          {title === "Login" && (
-            <>
-              <Link 
-                to="/user-login" 
-                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${hasExpertProfile ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
-                onClick={(e) => hasExpertProfile && e.preventDefault()}
-              >
-                User Login
-              </Link>
-              <Link 
-                to="/expert-login" 
-                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${isAuthenticated ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
-                onClick={(e) => isAuthenticated && e.preventDefault()}
-              >
-                Expert Login
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   isAuthenticated,
   currentUser,
@@ -96,30 +28,96 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   isLoggingOut
 }) => {
   return (
-    <div className="hidden md:flex items-center space-x-1">
-      <Button variant="ghost" asChild>
-        <Link to="/">Home</Link>
-      </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/about">About</Link>
-      </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/experts">Experts</Link>
-      </Button>
-      <NavbarDesktopLinksDropdown title="Programs" />
-      <NavbarDesktopLinksDropdown title="Services" />
-      <NavbarDesktopLinksDropdown title="Support" />
-      
+    <div className="hidden md:flex items-center space-x-4">
+      <NavigationMenu>
+        <NavigationMenuList>
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className="bg-transparent hover:bg-transparent">
+              For Individuals
+            </NavigationMenuTrigger>
+            <NavigationMenuContent className="min-w-[320px] p-4">
+              <div className="grid gap-4">
+                <Link to="/services" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">Our Services</div>
+                  <p className="text-sm text-muted-foreground">Browse our therapy and wellness services</p>
+                </Link>
+                <Link to="/mental-health-assessment" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">Mental Health Assessment</div>
+                  <p className="text-sm text-muted-foreground">Take our free mental health assessment</p>
+                </Link>
+                <Link to="/programs-for-wellness-seekers" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">Wellness Programs</div>
+                  <p className="text-sm text-muted-foreground">Explore our wellness programs</p>
+                </Link>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className="bg-transparent hover:bg-transparent">
+              For Organizations
+            </NavigationMenuTrigger>
+            <NavigationMenuContent className="min-w-[320px] p-4">
+              <div className="grid gap-4">
+                <Link to="/programs-for-business" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">For Businesses</div>
+                  <p className="text-sm text-muted-foreground">Corporate wellness solutions</p>
+                </Link>
+                <Link to="/programs-for-academic-institutes" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">For Academic Institutes</div>
+                  <p className="text-sm text-muted-foreground">Support for students and staff</p>
+                </Link>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+
+          <NavigationMenuItem>
+            <NavigationMenuTrigger className="bg-transparent hover:bg-transparent">
+              Resources
+            </NavigationMenuTrigger>
+            <NavigationMenuContent className="min-w-[320px] p-4">
+              <div className="grid gap-4">
+                <Link to="/blog" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">Blog</div>
+                  <p className="text-sm text-muted-foreground">Mental health insights and tips</p>
+                </Link>
+                <Link to="/about" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">About Us</div>
+                  <p className="text-sm text-muted-foreground">Learn about our mission and team</p>
+                </Link>
+                <Link to="/contact" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">Contact</div>
+                  <p className="text-sm text-muted-foreground">Get in touch with us</p>
+                </Link>
+                <Link to="/faqs" className="block p-3 hover:bg-accent rounded-md">
+                  <div className="font-medium mb-1">FAQs</div>
+                  <p className="text-sm text-muted-foreground">Common questions answered</p>
+                </Link>
+              </div>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+
       {hasExpertProfile ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
       ) : isAuthenticated ? (
         <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
       ) : (
-        <NavbarDesktopLinksDropdown 
-          title="Login" 
-          isAuthenticated={isAuthenticated} 
-          hasExpertProfile={hasExpertProfile} 
-        />
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/user-login">
+              <User className="h-4 w-4 mr-2" />
+              Login
+            </Link>
+          </Button>
+          <Button variant="default" size="sm" asChild>
+            <Link to="/user-login?register=true">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Sign Up
+            </Link>
+          </Button>
+        </div>
       )}
     </div>
   );

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
@@ -28,12 +27,10 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
 
-  // Ensure sessionType is one of the allowed values
   const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
     if (type === 'user' || type === 'expert' || type === 'none' || type === 'dual') {
       return type;
     }
-    // Default to 'none' if value is unexpected
     console.warn(`Invalid session type detected: ${type}. Defaulting to 'none'`);
     return 'none';
   };
@@ -52,7 +49,6 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
-  // Handle user logout
   const handleUserLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -79,7 +75,6 @@ const Navbar = () => {
     }
   };
 
-  // Handle expert logout
   const handleExpertLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -106,7 +101,6 @@ const Navbar = () => {
     }
   };
 
-  // Handle full logout (both user and expert)
   const handleFullLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -129,12 +123,10 @@ const Navbar = () => {
     }
   };
 
-  // Updated to have consistent light background across all pages
   const getNavbarBackground = () => {
-    return scrolled ? 'bg-background/90' : 'bg-transparent';
+    return scrolled ? 'bg-background/90 border-b' : 'bg-background/50 backdrop-blur-sm';
   };
 
-  // Safely cast sessionType to the valid union type
   const typedSessionType = getValidSessionType(sessionType);
 
   return (
@@ -157,13 +149,13 @@ const Navbar = () => {
           </AlertDescription>
         </Alert>
       )}
-      <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
-        <div className="container flex h-24 items-center justify-between">
+      <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()}`}>
+        <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center">
             <img 
               src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
               alt="iFindLife" 
-              className="h-14 transform scale-150 origin-left" 
+              className="h-8 transform scale-150 origin-left" 
             />
           </Link>
           
