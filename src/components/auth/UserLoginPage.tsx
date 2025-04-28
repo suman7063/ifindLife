@@ -12,6 +12,7 @@ import { useUserAuth } from '@/contexts/UserAuthContext';
 
 const UserLoginPage = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
   const { 
     isUserAuthenticated, 
     isSynchronizing, 
@@ -35,6 +36,15 @@ const UserLoginPage = () => {
       isExpertAuthenticated
     });
   }, [isUserAuthenticated, isSynchronizing, authCheckCompleted, isAuthenticated, currentUser, loading, redirectAttempted, isExpertAuthenticated]);
+  
+  useEffect(() => {
+    // Set a short timeout to avoid flickering during quick auth checks
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Redirect to dashboard if already authenticated
   useEffect(() => {
@@ -77,14 +87,13 @@ const UserLoginPage = () => {
   ]);
   
   // Show loading screen during initialization
-  if (isSynchronizing || loading) {
+  if (isPageLoading || isSynchronizing || loading) {
     console.log('UserLoginPage: Showing loading screen');
-    return <LoadingScreen />;
+    return <LoadingScreen message="Checking authentication status..." />;
   }
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
       <main className="flex-1 py-16 container">
         <div className="max-w-md mx-auto">
           <Card className="border-ifind-lavender/20 shadow-xl">
@@ -95,7 +104,6 @@ const UserLoginPage = () => {
           </Card>
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

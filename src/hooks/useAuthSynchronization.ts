@@ -1,10 +1,11 @@
 
-// Backward compatibility layer for existing components
-import { useContext } from 'react';
-import { AuthContext, AuthContextType } from '@/contexts/auth/AuthContext';
+import { useContext, useEffect } from 'react';
+import { AuthContext } from '@/contexts/auth/AuthContext';
+import { useUnifiedAuth } from './auth/useUnifiedAuth';
 
 export const useAuthSynchronization = () => {
   const context = useContext(AuthContext);
+  const unifiedAuth = useUnifiedAuth();
   
   if (context === undefined) {
     // Provide fallback values instead of throwing to prevent crashes
@@ -15,17 +16,29 @@ export const useAuthSynchronization = () => {
       isUserAuthenticated: false,
       currentUser: null,
       currentExpert: null,
-      userLogout: async () => false,
-      expertLogout: async () => false,
-      fullLogout: async () => false,
+      userLogout: unifiedAuth.userLogout,
+      expertLogout: unifiedAuth.expertLogout,
+      fullLogout: unifiedAuth.fullLogout,
       hasDualSessions: false,
       isSynchronizing: false,
       authCheckCompleted: true,
       isAuthInitialized: true,
       isAuthLoading: false,
-      sessionType: 'none'
+      sessionType: 'none',
+      isLoggingOut: unifiedAuth.isLoggingOut,
+      setIsLoggingOut: unifiedAuth.setIsLoggingOut
     };
   }
+  
+  // Log authentication state for debugging
+  useEffect(() => {
+    console.log('Auth synchronization - Current state:', {
+      isAuthenticated: context.isAuthenticated,
+      role: context.role,
+      hasUserProfile: !!context.userProfile,
+      hasExpertProfile: !!context.expertProfile
+    });
+  }, [context.isAuthenticated, context.role, context.userProfile, context.expertProfile]);
   
   return {
     isAuthenticated: context.isAuthenticated,
@@ -33,15 +46,17 @@ export const useAuthSynchronization = () => {
     isUserAuthenticated: context.role === 'user' && context.isAuthenticated,
     currentUser: context.userProfile,
     currentExpert: context.expertProfile,
-    userLogout: context.logout,
-    expertLogout: context.logout,
-    fullLogout: context.logout,
+    userLogout: unifiedAuth.userLogout,
+    expertLogout: unifiedAuth.expertLogout,
+    fullLogout: unifiedAuth.fullLogout,
     hasDualSessions: false,
     isSynchronizing: context.isLoading,
     authCheckCompleted: !context.isLoading,
     isAuthInitialized: !context.isLoading,
     isAuthLoading: context.isLoading,
-    sessionType: context.sessionType || 'none'
+    sessionType: context.sessionType || 'none',
+    isLoggingOut: unifiedAuth.isLoggingOut,
+    setIsLoggingOut: unifiedAuth.setIsLoggingOut
   };
 };
 

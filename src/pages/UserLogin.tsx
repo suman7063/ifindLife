@@ -5,7 +5,13 @@ import Footer from '@/components/Footer';
 import UserLoginPage from '@/components/auth/UserLoginPage';
 
 const UserLogin: React.FC = () => {
-  return <UserLoginPage />;
+  return (
+    <>
+      <Navbar />
+      <UserLoginPage />
+      <Footer />
+    </>
+  );
 };
 
 export default UserLogin;

@@ -41,9 +41,9 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({ classNa
         toast.success('Thank you for subscribing to our newsletter!');
         setEmail('');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to subscribe:', error);
-      toast.error('Failed to subscribe. Please try again later.');
+      toast.error(`Failed to subscribe: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -59,14 +59,20 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({ classNa
         className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
         disabled={isSubmitting}
         required
+        aria-label="Email for newsletter"
       />
       <Button 
         type="submit" 
         size="icon" 
         className="bg-ifind-aqua hover:bg-ifind-aqua/80"
         disabled={isSubmitting}
+        aria-label="Subscribe"
       >
-        <Send size={16} />
+        {isSubmitting ? (
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+        ) : (
+          <Send size={16} />
+        )}
       </Button>
     </form>
   );
