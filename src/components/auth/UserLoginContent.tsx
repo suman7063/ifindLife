@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/hooks/expert-auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface UserLoginContentProps {
   children?: React.ReactNode;
@@ -21,16 +22,24 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
   const [isCheckingExpert, setIsCheckingExpert] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
+  // Use the unified auth context
+  const { 
+    login,
+    logout,
+    isAuthenticated,
+    isLoading,
+    role,
+    userProfile
+  } = useAuth();
+  
+  // Get synchronization helpers
   const { 
     isUserAuthenticated,
     isExpertAuthenticated,
-    isAuthInitialized,
-    isAuthLoading,
     userLogout,
     expertLogout,
     fullLogout,
-    hasDualSessions,
-    currentUser
+    hasDualSessions
   } = useAuthSynchronization();
   
   // Check if expert is logged in directly from Supabase
@@ -57,6 +66,7 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
             // If an expert is logged in, we shouldn't show login tabs
             toast.info('You are currently logged in as an expert');
           } else {
+            console.log("UserLoginContent - No expert profile found");
             setExpertProfile(null);
           }
         } else {
@@ -76,16 +86,15 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
   
   // If user is already authenticated, redirect to dashboard
   useEffect(() => {
-    if (isUserAuthenticated && isAuthInitialized && !isAuthLoading) {
+    if (isAuthenticated && role === 'user' && userProfile && !isLoading) {
       console.log("UserLoginContent - User is authenticated, redirecting to dashboard", {
         isUserAuthenticated,
-        isAuthInitialized,
-        isAuthLoading,
-        hasCurrentUser: !!currentUser
+        role,
+        hasUserProfile: !!userProfile
       });
       navigate('/user-dashboard');
     }
-  }, [isUserAuthenticated, isAuthInitialized, isAuthLoading, navigate, currentUser]);
+  }, [isAuthenticated, isLoading, navigate, userProfile, role, isUserAuthenticated]);
   
   const handleExpertLogout = async (): Promise<boolean> => {
     setIsLoggingOut(true);
@@ -125,6 +134,34 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
       return false;
     } finally {
       setIsLoggingOut(false);
+    }
+  };
+  
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+    try {
+      console.log("Attempting user login with:", email);
+      
+      if (!login || typeof login !== 'function') {
+        console.error("Login function is not available:", login);
+        toast.error("Login functionality is not available");
+        return false;
+      }
+      
+      const success = await login(email, password);
+      
+      if (success) {
+        // Login was successful, the redirect should happen automatically
+        // via the useEffect above monitoring isAuthenticated
+        return true;
+      } else {
+        // Login failed
+        toast.error("Login failed. Please check your credentials.");
+        return false;
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("An error occurred during login. Please try again.");
+      return false;
     }
   };
   
@@ -174,7 +211,9 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
       />
     );
   } else {
-    content = children || <UserLoginTabs />;
+    // Pass the handleLogin function to UserLoginTabs if children is not provided
+    const loginTabs = children || <UserLoginTabs onLogin={handleLogin} />;
+    content = loginTabs;
   }
 
   return <>{content}</>;

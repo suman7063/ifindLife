@@ -12,7 +12,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface LoginFormProps {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (email: string, password: string) => Promise<boolean | void>;
   loading: boolean;
   userType?: 'user' | 'expert' | 'admin';
 }
@@ -49,9 +49,13 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLogin, loading, userType = 'use
     setIsSubmitting(true);
     
     try {
-      await onLogin(data.email, data.password);
-      // Note: We're not setting isSubmitting to false here because
-      // the parent component should handle redirecting or showing errors
+      const result = await onLogin(data.email, data.password);
+      
+      // If onLogin returns false explicitly, it means login failed but was handled
+      if (result === false) {
+        setIsSubmitting(false);
+      }
+      // If result is true or undefined, let the parent component handle the state
     } catch (error: any) {
       console.error("Error during login form submission:", error);
       // Set a more user-friendly error message

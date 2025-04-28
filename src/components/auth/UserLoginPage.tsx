@@ -2,40 +2,25 @@
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import UserLoginHeader from '@/components/auth/UserLoginHeader';
 import UserLoginContent from '@/components/auth/UserLoginContent';
 import LoadingScreen from '@/components/auth/LoadingScreen';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 const UserLoginPage = () => {
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
-  const { 
-    isUserAuthenticated, 
-    isSynchronizing, 
-    authCheckCompleted, 
-    isExpertAuthenticated, 
-    isAuthLoading 
-  } = useAuthSynchronization();
-  const { isAuthenticated, currentUser, loading } = useUserAuth();
+  const { isAuthenticated, isLoading, role, userProfile } = useAuth();
   const navigate = useNavigate();
   
   // Debug logging
   useEffect(() => {
     console.log('UserLoginPage - Auth states:', {
-      isUserAuthenticated,
-      isSynchronizing,
-      authCheckCompleted,
       isAuthenticated,
-      hasUserProfile: !!currentUser,
-      loading,
-      redirectAttempted,
-      isExpertAuthenticated
+      isLoading,
+      role,
+      hasUserProfile: !!userProfile
     });
-  }, [isUserAuthenticated, isSynchronizing, authCheckCompleted, isAuthenticated, currentUser, loading, redirectAttempted, isExpertAuthenticated]);
+  }, [isAuthenticated, isLoading, role, userProfile]);
   
   useEffect(() => {
     // Set a short timeout to avoid flickering during quick auth checks
@@ -46,48 +31,22 @@ const UserLoginPage = () => {
     return () => clearTimeout(timer);
   }, []);
   
-  // Redirect to dashboard if already authenticated
+  // Redirect to dashboard if already authenticated as a user
   useEffect(() => {
-    // Only redirect if:
-    // 1. User is authenticated
-    // 2. We have a user profile
-    // 3. Loading states are completed
-    // 4. Auth check is completed
-    // 5. We haven't already attempted a redirect
-    if (isAuthenticated && 
-        currentUser && 
-        !isSynchronizing && 
-        !loading && 
-        authCheckCompleted && 
-        !redirectAttempted) {
+    if (isAuthenticated && role === 'user' && userProfile && !isLoading) {
       console.log('UserLoginPage: User is authenticated, redirecting to dashboard');
-      setRedirectAttempted(true);
       navigate('/user-dashboard', { replace: true });
     }
     
-    // Redirect to expert dashboard if expert is authenticated
-    if (isExpertAuthenticated && 
-        !isSynchronizing && 
-        !loading && 
-        authCheckCompleted && 
-        !redirectAttempted) {
+    // Redirect to expert dashboard if authenticated as an expert
+    if (isAuthenticated && role === 'expert' && !isLoading) {
       console.log('UserLoginPage: Expert is authenticated, redirecting to expert dashboard');
-      setRedirectAttempted(true);
       navigate('/expert-dashboard', { replace: true });
     }
-  }, [
-    isAuthenticated, 
-    currentUser, 
-    isSynchronizing, 
-    loading, 
-    redirectAttempted,
-    authCheckCompleted,
-    isExpertAuthenticated,
-    navigate
-  ]);
+  }, [isAuthenticated, role, userProfile, isLoading, navigate]);
   
   // Show loading screen during initialization
-  if (isPageLoading || isSynchronizing || loading) {
+  if (isPageLoading || isLoading) {
     console.log('UserLoginPage: Showing loading screen');
     return <LoadingScreen message="Checking authentication status..." />;
   }

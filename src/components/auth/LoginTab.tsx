@@ -6,7 +6,7 @@ import SocialLogin from '@/components/auth/SocialLogin';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface LoginTabProps {
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (email: string, password: string) => Promise<boolean>;
   loading: boolean;
   isLoggingIn: boolean;
   loginError: string | null;
