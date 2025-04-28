@@ -27,5 +27,20 @@ export const useAuthBackCompat = () => {
     error: null
   };
   
-  return { userAuth };
+  // Create an expert auth-compatible object from the unified auth system
+  const expertAuth = {
+    currentExpert: authContext?.expertProfile || null,
+    isAuthenticated: authContext?.isAuthenticated && authContext.role === 'expert',
+    loading: authContext?.isLoading || false,
+    authLoading: authContext?.isLoading || false,
+    initialized: !authContext?.isLoading,
+    user: authContext?.user || null,
+    login: authContext?.expertLogin || supabaseAuth.login,
+    logout: authContext?.logout || supabaseAuth.logout,
+    register: authContext?.expertSignup || supabaseAuth.signup,
+    updateProfile: authContext?.updateExpertProfile || (async () => false),
+    error: null
+  };
+  
+  return { userAuth, expertAuth };
 };

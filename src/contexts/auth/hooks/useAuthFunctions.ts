@@ -1,7 +1,9 @@
+
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { AuthState } from '../types';
+import { UserProfile } from '@/types/supabase'; // Adding the missing import
 
 export const useAuthFunctions = (
   authState: AuthState,
