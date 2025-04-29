@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/admin-auth';
+import { useAuth } from '@/contexts/admin-auth'; // Ensure this is the correct import path
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';

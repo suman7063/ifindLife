@@ -55,6 +55,14 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                   <Link to="/expert-login">Expert Login</Link>
                 </NavigationMenuLink>
               </li>
+              <li>
+                <NavigationMenuLink 
+                  asChild
+                  className="block w-full p-2 text-sm rounded-md hover:bg-accent"
+                >
+                  <Link to="/admin-login">Admin Login</Link>
+                </NavigationMenuLink>
+              </li>
             </ul>
           </NavigationMenuContent>
         </NavigationMenuItem>

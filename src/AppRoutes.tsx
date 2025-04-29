@@ -7,6 +7,7 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 
 // Import UserLogin directly instead of lazy loading it to fix the import issue
 import UserLogin from './pages/UserLogin';
+import AdminLogin from './pages/AdminLogin'; // Import AdminLogin directly to ensure it loads correctly
 
 // Lazy load other pages for better performance
 const Index = lazy(() => import('./pages/Index'));
@@ -15,7 +16,6 @@ const ExpertLogin = lazy(() => import('./pages/ExpertLogin'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
-const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const Experts = lazy(() => import('./pages/Experts'));
 const ExpertDetail = lazy(() => import('./pages/ExpertDetail'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -52,7 +52,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
-        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin-login" element={<AdminLogin />} /> {/* Ensure this route is correctly defined */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />

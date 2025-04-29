@@ -1,78 +1,78 @@
 
 import React from 'react';
-import { Accordion } from '@/components/ui/accordion';
-import { Button } from '@/components/ui/button';
-import { SheetClose } from '@/components/ui/sheet';
 import { Link } from 'react-router-dom';
-import { MobileAccordionItem, MobileMenuLink } from '.';
+import { 
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger 
+} from '@/components/ui/accordion';
+import { SheetClose } from '@/components/ui/sheet';
+import MobileAccordionItem from './MobileAccordionItem';
+import MobileMenuLink from './MobileMenuLink';
 
 const MobileMenuSections: React.FC = () => {
-  // Programs section links
-  const programLinks = [
-    { to: "/programs-for-wellness-seekers", label: "Wellness Seekers" },
-    { to: "/programs-for-academic-institutes", label: "Academic Institutes" },
-    { to: "/programs-for-business", label: "Business" }
-  ];
-
-  // Services section links
-  const serviceLinks = [
-    { to: "/services", label: "All Services", className: "py-2 px-4 text-sm hover:bg-accent rounded-md font-medium" },
-    { to: "/services/therapy-sessions", label: "Therapy Sessions" },
-    { to: "/services/guided-meditations", label: "Guided Meditations" },
-    { to: "/services/mindful-listening", label: "Mindful Listening" },
-    { to: "/services/offline-retreats", label: "Offline Retreats" },
-    { to: "/services/life-coaching", label: "Life Coaching" }
-  ];
-
-  // Support section links
-  const supportLinks = [
-    { to: "/contact", label: "Contact Us" },
-    { to: "/faqs", label: "FAQs" },
-    { to: "/blog", label: "Blog" }
-  ];
-
   return (
-    <div className="flex flex-col gap-3 mt-6 flex-1 overflow-y-auto">
-      <SheetClose asChild>
-        <Button variant="ghost" asChild className="justify-start">
-          <Link to="/">Home</Link>
-        </Button>
-      </SheetClose>
-      
-      <SheetClose asChild>
-        <Button variant="ghost" asChild className="justify-start">
-          <Link to="/about">About</Link>
-        </Button>
-      </SheetClose>
-      
-      <SheetClose asChild>
-        <Button variant="ghost" asChild className="justify-start">
-          <Link to="/experts">Experts</Link>
-        </Button>
-      </SheetClose>
-
-      <Accordion type="single" collapsible className="w-full">
-        {/* Programs Accordion */}
-        <MobileAccordionItem 
-          value="programs" 
-          title="Programs" 
-          links={programLinks} 
-        />
-
-        {/* Services Accordion */}
-        <MobileAccordionItem 
-          value="services" 
-          title="Services" 
-          links={serviceLinks} 
-        />
-
-        {/* Support Accordion */}
-        <MobileAccordionItem 
-          value="support" 
-          title="Support" 
-          links={supportLinks} 
-        />
-      </Accordion>
+    <div className="flex-1 overflow-y-auto py-4">
+      <nav className="flex flex-col gap-2">
+        <SheetClose asChild>
+          <MobileMenuLink href="/">Home</MobileMenuLink>
+        </SheetClose>
+        <SheetClose asChild>
+          <MobileMenuLink href="/about">About</MobileMenuLink>
+        </SheetClose>
+        <SheetClose asChild>
+          <MobileMenuLink href="/experts">Experts</MobileMenuLink>
+        </SheetClose>
+        
+        <Accordion type="single" collapsible className="w-full">
+          <MobileAccordionItem value="programs" title="Programs">
+            <SheetClose asChild>
+              <MobileMenuLink href="/programs-for-wellness-seekers">
+                For Wellness Seekers
+              </MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink href="/programs-for-academic-institutes">
+                For Academic Institutes
+              </MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink href="/programs-for-business">
+                For Business
+              </MobileMenuLink>
+            </SheetClose>
+          </MobileAccordionItem>
+          
+          <MobileAccordionItem value="services" title="Services">
+            <SheetClose asChild>
+              <MobileMenuLink href="/services">All Services</MobileMenuLink>
+            </SheetClose>
+            {/* Additional service links can be added here */}
+          </MobileAccordionItem>
+          
+          <MobileAccordionItem value="login" title="Login">
+            <SheetClose asChild>
+              <MobileMenuLink href="/user-login">User Login</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink href="/expert-login">Expert Login</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink href="/admin-login">Admin Login</MobileMenuLink>
+            </SheetClose>
+          </MobileAccordionItem>
+          
+          <MobileAccordionItem value="support" title="Support">
+            <SheetClose asChild>
+              <MobileMenuLink href="/contact">Contact Us</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink href="/faqs">FAQs</MobileMenuLink>
+            </SheetClose>
+          </MobileAccordionItem>
+        </Accordion>
+      </nav>
     </div>
   );
 };
