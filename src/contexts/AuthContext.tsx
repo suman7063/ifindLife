@@ -77,12 +77,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const expectedUsername = 'Soultribe';
     const expectedPassword = 'Freesoul@99';
     
-    // Direct string comparison for both username and password
+    // Normalize the username for case-insensitive comparison
+    const normalizedInputUsername = username.trim().toLowerCase();
+    const normalizedExpectedUsername = expectedUsername.toLowerCase();
+    
     // Username is case-insensitive, password is case-sensitive
-    const usernameMatches = username.trim().toLowerCase() === expectedUsername.toLowerCase();
+    const usernameMatches = normalizedInputUsername === normalizedExpectedUsername;
     const passwordMatches = password === expectedPassword;
     
-    console.log('Username matches:', usernameMatches);
+    console.log('Username matches:', usernameMatches, 'Input:', normalizedInputUsername, 'Expected:', normalizedExpectedUsername);
     console.log('Password matches:', passwordMatches);
     
     if (usernameMatches && passwordMatches) {
@@ -100,8 +103,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setCurrentUser({ username: expectedUsername, role: 'superadmin' });
         return true;
       }
+    } else {
+      // Detailed error logging
+      if (!usernameMatches) {
+        console.error(`Username mismatch. Input: "${username}" (normalized: "${normalizedInputUsername}"), Expected: "${expectedUsername}" (normalized: "${normalizedExpectedUsername}")`);
+      }
+      if (!passwordMatches) {
+        console.error('Password mismatch. Input length:', password.length, 'Expected length:', expectedPassword.length);
+      }
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
