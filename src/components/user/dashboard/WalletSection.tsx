@@ -1,32 +1,33 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { UserTransaction } from '@/types/supabase/tables';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Wallet, Plus, Download, Filter, CreditCard } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import useTransactions from '@/hooks/dashboard/useTransactions';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
+import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
+import RechargeDialog from './RechargeDialog';
 
 interface WalletSectionProps {
   user: UserProfile | null;
 }
 
 const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
-  const [rechargeAmount, setRechargeAmount] = useState(50);
-  const [openRechargeDialog, setOpenRechargeDialog] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('card');
-  const [processingPayment, setProcessingPayment] = useState(false);
-  
   const { transactions, isLoading: loading, refreshTransactions } = useTransactions(user?.id);
+
+  const {
+    isRechargeDialogOpen,
+    isProcessing,
+    handleOpenRechargeDialog,
+    handleCloseRechargeDialog,
+    handleRechargeSuccess
+  } = useRechargeDialog(refreshTransactions);
 
   // Define the columns for the transaction table
   const columns: ColumnDef<UserTransaction>[] = [
@@ -86,25 +87,6 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
     }
   ];
   
-  const handleRecharge = async () => {
-    setProcessingPayment(true);
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Success
-      toast.success(`Successfully added ${user?.currency || '$'}${rechargeAmount} to your wallet`);
-      refreshTransactions(); // Refresh transactions to show the new recharge
-      setOpenRechargeDialog(false);
-    } catch (error) {
-      console.error('Error processing payment:', error);
-      toast.error('Payment processing failed');
-    } finally {
-      setProcessingPayment(false);
-    }
-  };
-
   const handleDownloadReceipt = (transaction: UserTransaction) => {
     // In a real app, this would generate and download a PDF receipt
     toast.success(`Downloading receipt for transaction ${transaction.id}`);
@@ -144,86 +126,10 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
               </div>
             </div>
             
-            <Dialog open={openRechargeDialog} onOpenChange={setOpenRechargeDialog}>
-              <DialogTrigger asChild>
-                <Button className="w-full">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Recharge Wallet
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Recharge Your Wallet</DialogTitle>
-                  <DialogDescription>
-                    Add funds to your wallet to use for consultations and services
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="amount">Amount</Label>
-                    <Input
-                      id="amount"
-                      type="number"
-                      value={rechargeAmount}
-                      onChange={(e) => setRechargeAmount(Number(e.target.value))}
-                      min={10}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="payment-method">Payment Method</Label>
-                    <Select 
-                      defaultValue="card"
-                      value={paymentMethod}
-                      onValueChange={setPaymentMethod}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select payment method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="card">Credit/Debit Card</SelectItem>
-                        <SelectItem value="paypal">PayPal</SelectItem>
-                        <SelectItem value="bank">Bank Transfer</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="pt-2">
-                    <div className="flex items-center gap-2 rounded-md border p-4">
-                      <CreditCard className="h-4 w-4" />
-                      <div className="flex-1 space-y-1">
-                        <p className="text-sm font-medium">Credit Card</p>
-                        <p className="text-xs text-muted-foreground">**** **** **** 4242</p>
-                      </div>
-                      <Select defaultValue="saved">
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="saved">Saved Card</SelectItem>
-                          <SelectItem value="new">New Card</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-                <DialogFooter>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setOpenRechargeDialog(false)}
-                    disabled={processingPayment}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={handleRecharge}
-                    disabled={processingPayment}
-                  >
-                    {processingPayment ? 'Processing...' : 'Proceed to Payment'}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button className="w-full" onClick={handleOpenRechargeDialog}>
+              <Plus className="h-4 w-4 mr-2" />
+              Recharge Wallet
+            </Button>
           </CardContent>
           <CardFooter>
             <div className="text-xs text-muted-foreground">
@@ -292,6 +198,12 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
           )}
         </CardContent>
       </Card>
+      
+      <RechargeDialog
+        open={isRechargeDialogOpen}
+        onOpenChange={handleCloseRechargeDialog}
+        onSuccess={handleRechargeSuccess}
+      />
     </div>
   );
 };
