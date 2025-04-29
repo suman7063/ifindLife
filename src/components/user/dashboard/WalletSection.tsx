@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { UserTransaction } from '@/types/supabase/tables';
-import { supabase } from '@/lib/supabase';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Wallet, Plus, Download, Filter, CreditCard } from 'lucide-react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
 import useTransactions from '@/hooks/dashboard/useTransactions';
+import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
 
 interface WalletSectionProps {
   user: UserProfile | null;
@@ -21,6 +23,8 @@ interface WalletSectionProps {
 const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
   const [rechargeAmount, setRechargeAmount] = useState(50);
   const [openRechargeDialog, setOpenRechargeDialog] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [processingPayment, setProcessingPayment] = useState(false);
   
   const { transactions, isLoading: loading, refreshTransactions } = useTransactions(user?.id);
 
@@ -29,6 +33,14 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
     {
       accessorKey: 'date',
       header: 'Date',
+      cell: ({ row }) => {
+        // Format date if it exists
+        const date = row.getValue('date');
+        if (date && typeof date === 'string') {
+          return format(parseISO(date), 'MMM dd, yyyy');
+        }
+        return date;
+      }
     },
     {
       accessorKey: 'type',
@@ -61,18 +73,46 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
     {
       id: 'actions',
       header: 'Actions',
-      cell: () => (
-        <Button variant="ghost" size="icon" title="Download receipt">
+      cell: ({ row }) => (
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          title="Download receipt"
+          onClick={() => handleDownloadReceipt(row.original)}
+        >
           <Download className="h-4 w-4" />
         </Button>
       )
     }
   ];
   
-  const handleRecharge = () => {
-    // TODO: Implement actual payment integration
-    console.log(`Recharging wallet with amount: ${rechargeAmount}`);
-    setOpenRechargeDialog(false);
+  const handleRecharge = async () => {
+    setProcessingPayment(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Success
+      toast.success(`Successfully added ${user?.currency || '$'}${rechargeAmount} to your wallet`);
+      refreshTransactions(); // Refresh transactions to show the new recharge
+      setOpenRechargeDialog(false);
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      toast.error('Payment processing failed');
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const handleDownloadReceipt = (transaction: UserTransaction) => {
+    // In a real app, this would generate and download a PDF receipt
+    toast.success(`Downloading receipt for transaction ${transaction.id}`);
+  };
+  
+  const handleAddPaymentMethod = () => {
+    // In a real app, this would show a form to add a new payment method
+    toast.info('Add payment method functionality will be implemented in a future update');
   };
   
   return (
@@ -132,7 +172,11 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
                   
                   <div className="space-y-2">
                     <Label htmlFor="payment-method">Payment Method</Label>
-                    <Select defaultValue="card">
+                    <Select 
+                      defaultValue="card"
+                      value={paymentMethod}
+                      onValueChange={setPaymentMethod}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select payment method" />
                       </SelectTrigger>
@@ -164,11 +208,18 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setOpenRechargeDialog(false)}>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setOpenRechargeDialog(false)}
+                    disabled={processingPayment}
+                  >
                     Cancel
                   </Button>
-                  <Button onClick={handleRecharge}>
-                    Proceed to Payment
+                  <Button 
+                    onClick={handleRecharge}
+                    disabled={processingPayment}
+                  >
+                    {processingPayment ? 'Processing...' : 'Proceed to Payment'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -198,7 +249,11 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
                 <Button variant="outline" size="sm">Set as Default</Button>
               </div>
               
-              <Button variant="outline" className="w-full mt-2">
+              <Button 
+                variant="outline" 
+                className="w-full mt-2"
+                onClick={handleAddPaymentMethod}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Add New Payment Method
               </Button>

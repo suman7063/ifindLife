@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { UserProfile } from '@/types/supabase/user';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
@@ -22,7 +22,7 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 flex">
+      <div className="flex-1 flex pt-16"> {/* Added pt-16 to add padding top for navbar */}
         <SidebarProvider defaultOpen>
           <UserDashboardSidebar 
             user={user}

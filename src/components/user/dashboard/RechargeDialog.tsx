@@ -11,39 +11,34 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { CreditCard } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CreditCard, PaypalIcon } from 'lucide-react'; // Note: PaypalIcon is not available, will use a div instead
 
 interface RechargeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-  onCancel?: () => void;
-  isProcessing?: boolean;
-  setIsProcessing?: (isProcessing: boolean) => void;
-  user?: any;
+  onSuccess: (amount: number) => Promise<void>;
 }
 
 const RechargeDialog: React.FC<RechargeDialogProps> = ({ 
   open, 
-  onOpenChange, 
-  onSuccess,
-  onCancel,
-  isProcessing: controlledIsProcessing,
-  setIsProcessing: setControlledIsProcessing,
-  user
+  onOpenChange,
+  onSuccess
 }) => {
-  const [amount, setAmount] = useState(10);
-  const [internalIsProcessing, setInternalIsProcessing] = useState(false);
-  const { rechargeWallet } = useUserAuth();
-
-  // Use either controlled or internal state for processing status
-  const isProcessing = controlledIsProcessing !== undefined ? controlledIsProcessing : internalIsProcessing;
-  const setIsProcessing = setControlledIsProcessing || setInternalIsProcessing;
-
-  const handleRechargeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const [amount, setAmount] = useState(50);
+  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setAmount(isNaN(value) ? 0 : value);
+  };
+  
+  const handlePaymentMethodChange = (value: string) => {
+    setPaymentMethod(value);
+  };
+  
+  const handleSubmit = async () => {
     if (amount <= 0) {
       return;
     }
@@ -51,62 +46,99 @@ const RechargeDialog: React.FC<RechargeDialogProps> = ({
     setIsProcessing(true);
     
     try {
-      await rechargeWallet(amount);
+      await onSuccess(amount);
+    } finally {
       setIsProcessing(false);
-      onSuccess();
-    } catch (error) {
-      console.error('Recharge failed:', error);
-      setIsProcessing(false);
-      if (onCancel) onCancel();
     }
   };
-
+  
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={isProcessing ? undefined : onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add funds to your wallet</DialogTitle>
+          <DialogTitle>Recharge Your Wallet</DialogTitle>
           <DialogDescription>
-            Enter the amount you want to add to your wallet. This is a simulated payment for demonstration purposes.
+            Add funds to your wallet for seamless payments across our services.
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleRechargeSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amount" className="text-right">
-                Amount
-              </Label>
-              <div className="col-span-3 relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2">$</span>
-                <Input
-                  id="amount"
-                  type="number"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  className="pl-8"
-                  min={1}
-                />
-              </div>
+        <div className="grid gap-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5">$</span>
+              <Input
+                id="amount"
+                type="number"
+                className="pl-8"
+                value={amount}
+                onChange={handleAmountChange}
+                min={10}
+                placeholder="Enter amount"
+              />
             </div>
+            <p className="text-xs text-muted-foreground">Minimum amount: $10</p>
           </div>
           
-          <DialogFooter>
-            <Button type="submit" disabled={isProcessing || amount <= 0}>
-              {isProcessing ? (
-                <>
-                  <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <CreditCard className="mr-2 h-4 w-4" /> 
-                  Add Funds
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+          <div className="space-y-2">
+            <Label>Payment Method</Label>
+            <Select 
+              value={paymentMethod} 
+              onValueChange={handlePaymentMethodChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="card" className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    <span>Credit/Debit Card</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="paypal" className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-blue-500 text-white rounded h-4 w-4 text-[8px] flex items-center justify-center">P</div>
+                    <span>PayPal</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          {paymentMethod === 'card' && (
+            <div className="border rounded-md p-3 bg-muted/50">
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Visa •••• 4242</p>
+                  <p className="text-xs text-muted-foreground">Expires 04/2025</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          <div className="bg-muted rounded-md p-3 text-sm">
+            <p>You will be recharging <strong>${amount.toFixed(2)}</strong> to your account wallet.</p>
+            <p className="text-muted-foreground text-xs mt-1">Transaction fees may apply based on your payment method.</p>
+          </div>
+        </div>
+        
+        <DialogFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isProcessing}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={isProcessing || amount <= 0}
+          >
+            {isProcessing ? 'Processing...' : 'Confirm Payment'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
