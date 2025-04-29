@@ -45,21 +45,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Check for existing admin session on component mount
   useEffect(() => {
     try {
+      console.log('AuthProvider: Checking for existing session');
       const adminSession = localStorage.getItem('admin_session');
       const adminUsername = localStorage.getItem('admin_username');
       
-      console.log('Checking admin session:', adminSession, 'username:', adminUsername);
+      console.log('AuthProvider session check:', { adminSession, adminUsername });
       
       if (adminSession === 'true' && adminUsername) {
         // Find the user in adminUsers
         const foundUser = adminUsers.find(user => user.username.toLowerCase() === adminUsername.toLowerCase());
         
         if (foundUser) {
-          console.log('Found authenticated user:', foundUser);
+          console.log('AuthProvider: Found authenticated user:', foundUser);
           setIsAuthenticated(true);
           setCurrentUser(foundUser);
         } else {
-          console.log('No matching user found, clearing session');
+          console.log('AuthProvider: No matching user found, clearing session');
           localStorage.removeItem('admin_session');
           localStorage.removeItem('admin_username');
         }
@@ -69,32 +70,62 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  // Simple admin authentication
+  // Simple admin authentication with enhanced debugging
   const login = (username: string, password: string): boolean => {
-    console.log('Login attempt for username:', username);
+    console.log('----- ADMIN LOGIN ATTEMPT -----');
+    console.log('Login attempt details:');
+    
+    // Debug Log - Raw input values
+    console.log('Raw username input:', username);
+    console.log('Raw password input:', password);
+    console.log('Raw password length:', password ? password.length : 0);
     
     // Fixed credentials for admin access 
     const expectedUsername = 'Soultribe';
     const expectedPassword = 'Freesoul@99';
     
-    // Debug log the received values
-    console.log('Login attempt details:');
-    console.log('- Received username:', JSON.stringify(username));
-    console.log('- Received password length:', password ? password.length : 0);
-    console.log('- Expected username:', JSON.stringify(expectedUsername));
-    console.log('- Expected password length:', expectedPassword.length);
+    // Debug Log - Expected values
+    console.log('Expected username:', expectedUsername);
+    console.log('Expected password:', expectedPassword);
+    console.log('Expected password length:', expectedPassword.length);
     
-    // Normalize the username for case-insensitive comparison
-    const normalizedInputUsername = username ? username.trim().toLowerCase() : '';
-    const normalizedExpectedUsername = expectedUsername.toLowerCase();
+    // Trim and normalize inputs for comparison
+    const normalizedInputUsername = username ? username.trim() : '';
+    const normalizedInputPassword = password ? password : '';
+    
+    // Debug Log - Processed inputs
+    console.log('Normalized input username:', normalizedInputUsername);
+    console.log('Normalized input password length:', normalizedInputPassword.length);
     
     // Username is case-insensitive, password is case-sensitive
-    const usernameMatches = normalizedInputUsername === normalizedExpectedUsername;
-    const passwordMatches = password === expectedPassword;
+    // Note: Converting both to lowercase for username comparison
+    const usernameMatches = normalizedInputUsername.toLowerCase() === expectedUsername.toLowerCase();
+    const passwordMatches = normalizedInputPassword === expectedPassword;
     
+    // Debug Log - Match results
+    console.log('Username comparison (case-insensitive):', 
+      `'${normalizedInputUsername.toLowerCase()}' === '${expectedUsername.toLowerCase()}'`);
     console.log('Username matches:', usernameMatches);
     console.log('Password matches:', passwordMatches);
     
+    // Character-by-character debug for password (first and last char only for security)
+    if (normalizedInputPassword && expectedPassword) {
+      console.log('First char comparison:',
+        normalizedInputPassword[0] === expectedPassword[0],
+        `'${normalizedInputPassword[0]}' vs '${expectedPassword[0]}'`);
+      
+      if (normalizedInputPassword.length > 1 && expectedPassword.length > 1) {
+        console.log('Last char comparison:',
+          normalizedInputPassword[normalizedInputPassword.length - 1] === expectedPassword[expectedPassword.length - 1],
+          `'${normalizedInputPassword[normalizedInputPassword.length - 1]}' vs '${expectedPassword[expectedPassword.length - 1]}'`);
+      }
+    }
+    
+    // Check for whitespace or invisible characters
+    const hasWhitespace = (normalizedInputPassword.match(/\s/g) || []).length > 0;
+    console.log('Password has whitespace:', hasWhitespace);
+    
+    // Final authentication decision
     if (usernameMatches && passwordMatches) {
       console.log('Login successful - setting local storage');
       try {
@@ -102,26 +133,51 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.setItem('admin_username', expectedUsername); // Always store correct case
         setIsAuthenticated(true);
         setCurrentUser({ username: expectedUsername, role: 'superadmin' });
+        console.log('Authentication state updated:', { isAuthenticated: true, currentUser: { username: expectedUsername, role: 'superadmin' }});
         return true;
       } catch (err) {
         console.error('Error saving to localStorage:', err);
         // Still allow login even if localStorage fails
         setIsAuthenticated(true);
         setCurrentUser({ username: expectedUsername, role: 'superadmin' });
+        console.log('Authentication state updated (localStorage failed):', { isAuthenticated: true, currentUser: { username: expectedUsername, role: 'superadmin' }});
         return true;
       }
     } else {
-      // Detailed error logging
+      // Authentication failed
+      console.error('Authentication failed:');
+      console.error('- Username match:', usernameMatches);
+      console.error('- Password match:', passwordMatches);
+      
       if (!usernameMatches) {
-        console.error(`Username mismatch. Input: "${username}" (normalized: "${normalizedInputUsername}"), Expected: "${expectedUsername}" (normalized: "${normalizedExpectedUsername}")`);
+        console.error(`- Username mismatch detected. Got "${normalizedInputUsername}" (normalized to "${normalizedInputUsername.toLowerCase()}"), expected "${expectedUsername}" (normalized to "${expectedUsername.toLowerCase()}")`);
       }
+      
       if (!passwordMatches) {
-        console.error('Password mismatch. Input length:', password ? password.length : 0, 'Expected length:', expectedPassword.length);
-        // Log first character comparison to help debug (without revealing full password)
-        if (password && expectedPassword && password.length > 0 && expectedPassword.length > 0) {
-          console.error('First char matches:', password[0] === expectedPassword[0]);
+        console.error(`- Password mismatch detected. Got length ${normalizedInputPassword.length}, expected length ${expectedPassword.length}`);
+        
+        // Debug only if both have length
+        if (normalizedInputPassword.length > 0 && expectedPassword.length > 0) {
+          // Compare first and last characters only (for security)
+          const firstCharMatch = normalizedInputPassword[0] === expectedPassword[0];
+          const lastCharMatch = normalizedInputPassword[normalizedInputPassword.length - 1] === expectedPassword[expectedPassword.length - 1];
+          console.error(`- First character match: ${firstCharMatch}`);
+          console.error(`- Last character match: ${lastCharMatch}`);
+          
+          if (normalizedInputPassword.length === expectedPassword.length) {
+            let mismatchPositions = [];
+            for (let i = 0; i < expectedPassword.length; i++) {
+              if (normalizedInputPassword[i] !== expectedPassword[i]) {
+                mismatchPositions.push(i);
+              }
+            }
+            console.error(`- Character mismatches at positions: ${mismatchPositions.join(', ')}`);
+          } else {
+            console.error(`- Length mismatch: input=${normalizedInputPassword.length}, expected=${expectedPassword.length}`);
+          }
         }
       }
+      
       return false;
     }
   };

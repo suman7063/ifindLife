@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,21 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('Soultribe'); // Pre-filled for debugging
+  const [password, setPassword] = useState('Freesoul@99'); // Pre-filled for debugging
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  console.log('AdminLogin component rendered, isAuthenticated:', isAuthenticated);
+  // Refs to store input values directly from DOM
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  
+  const renderCount = useRef(0);
+  renderCount.current++;
+
+  console.log(`AdminLogin component rendered (${renderCount.current}), isAuthenticated:`, isAuthenticated);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -40,20 +47,31 @@ const AdminLogin = () => {
     e.preventDefault();
     console.log('Login form submitted');
     
+    // Get values directly from DOM as an additional check
+    const domUsername = usernameRef.current?.value || '';
+    const domPassword = passwordRef.current?.value || '';
+    
+    console.log('React state values:', { username, password: password ? '****' : '' });
+    console.log('DOM values:', { username: domUsername, password: domPassword ? '****' : '' });
+    
+    // Use DOM values if they differ from state (just in case of sync issues)
+    const finalUsername = domUsername || username;
+    const finalPassword = domPassword || password;
+    
     // Input validation
-    if (!username.trim()) {
+    if (!finalUsername.trim()) {
       setLoginError('Username is required');
       return;
     }
     
-    if (!password) {
+    if (!finalPassword) {
       setLoginError('Password is required');
       return;
     }
     
     // Debug log to track exact values
-    console.log('Attempting login with username:', JSON.stringify(username));
-    console.log('Password length:', password.length);
+    console.log('Attempting login with username:', JSON.stringify(finalUsername));
+    console.log('Password length:', finalPassword.length);
     
     // Try to clear any existing sessions first
     try {
@@ -63,18 +81,21 @@ const AdminLogin = () => {
       console.error('Error clearing localStorage:', err);
     }
     
-    const loginSuccess = login(username, password);
-    console.log('Login result:', loginSuccess ? 'success' : 'failed');
-    
-    if (loginSuccess) {
-      console.log('Login successful, redirecting to admin panel');
-      toast.success(`Welcome back, ${username}!`);
-      navigate('/admin');
-    } else {
-      console.error('Login failed');
-      setLoginError('Invalid username or password. Please verify your credentials are correct.');
-      toast.error('Login failed. Please check your credentials and try again.');
-    }
+    // Use a timeout to ensure the UI updates before login attempt
+    setTimeout(() => {
+      const loginSuccess = login(finalUsername, finalPassword);
+      console.log('Login result:', loginSuccess ? 'success' : 'failed');
+      
+      if (loginSuccess) {
+        console.log('Login successful, redirecting to admin panel');
+        toast.success(`Welcome back, ${finalUsername}!`);
+        navigate('/admin');
+      } else {
+        console.error('Login failed');
+        setLoginError('Invalid username or password. Please verify your credentials are correct.');
+        toast.error('Login failed. Please check your credentials and try again.');
+      }
+    }, 10);
   };
 
   return (
@@ -105,12 +126,15 @@ const AdminLogin = () => {
                 </label>
                 <Input
                   id="username"
+                  name="username"
                   type="text"
+                  ref={usernameRef}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
                   className="bg-background"
                   placeholder="Enter username (Soultribe)"
+                  autoComplete="off"
                 />
               </div>
               
@@ -126,12 +150,15 @@ const AdminLogin = () => {
                 <div className="relative">
                   <Input
                     id="password"
+                    name="password"
                     type={showPassword ? "text" : "password"}
+                    ref={passwordRef}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="bg-background"
                     placeholder="Enter password"
+                    autoComplete="off"
                   />
                   <button
                     type="button"
