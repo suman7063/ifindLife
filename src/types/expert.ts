@@ -11,6 +11,7 @@ export interface Expert {
   created_at?: string;
   updated_at?: string;
   average_rating?: number;
+  reviews_count?: number;  // Added this property
   pricing?: {
     price_per_min?: number;
     consultation_fee?: number;

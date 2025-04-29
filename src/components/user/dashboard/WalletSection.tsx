@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { UserTransaction } from '@/types/supabase/tables';
@@ -37,7 +36,23 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
           
         if (error) throw error;
         
-        setTransactions(data || []);
+        if (data) {
+          const formattedTransactions: UserTransaction[] = data.map(transaction => ({
+            id: transaction.id,
+            user_id: transaction.user_id,
+            amount: transaction.amount,
+            currency: transaction.currency || 'USD',
+            description: transaction.description || '',
+            date: transaction.date || transaction.created_at,
+            type: transaction.type || 'payment',
+            status: transaction.status || 'completed',
+            created_at: transaction.created_at || new Date().toISOString(),
+            payment_id: transaction.payment_id || '',
+            payment_method: transaction.payment_method || 'default',
+            transaction_type: transaction.transaction_type || transaction.type || 'payment'
+          }));
+          setTransactions(formattedTransactions);
+        }
       } catch (error) {
         console.error('Error fetching transactions:', error);
       } finally {

@@ -37,11 +37,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <WalletSection 
-              user={user} 
-              transactions={transactions} 
-              onRecharge={onRecharge} 
-            />
+            <WalletSection user={user} />
           )}
         </TabsContent>
         
