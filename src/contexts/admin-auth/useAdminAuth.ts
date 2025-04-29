@@ -140,7 +140,9 @@ export const useAdminAuth = ({
       role: 'admin' // New users are regular admins
     };
     
-    setAdminUsers(prev => [...prev, newUser]);
+    // Fix: Create a new array with the new user added (instead of using a callback)
+    const updatedUsers = [...adminUsers, newUser];
+    setAdminUsers(updatedUsers);
     return true;
   };
   
@@ -152,7 +154,9 @@ export const useAdminAuth = ({
       return false;
     }
     
-    setAdminUsers(prev => prev.filter(user => user.username !== username));
+    // Fix: Create a new filtered array (instead of using a callback)
+    const updatedUsers = adminUsers.filter(user => user.username !== username);
+    setAdminUsers(updatedUsers);
     return true;
   };
 
