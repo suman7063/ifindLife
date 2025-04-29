@@ -3,7 +3,7 @@ import React from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import useTransactions from '@/hooks/dashboard/useTransactions';
 import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
-import RechargeDialog from './RechargeDialog';
+import RechargeDialog from './wallet/RechargeDialog';
 import WalletBalanceCard from './wallet/WalletBalanceCard';
 import PaymentMethodsCard from './wallet/PaymentMethodsCard';
 import TransactionHistoryCard from './wallet/TransactionHistoryCard';
