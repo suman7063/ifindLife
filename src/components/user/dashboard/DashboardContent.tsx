@@ -1,22 +1,18 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import WalletSection from './WalletSection';
 import UserStatsSummary from './UserStatsSummary';
-import { UserTransaction } from '@/types/supabase/transactions';
 import { UserProfile } from '@/types/supabase';
 
 interface DashboardContentProps {
   user: UserProfile | null;
-  transactions: UserTransaction[];
   isLoading: boolean;
   onRecharge: () => void;
 }
 
 const DashboardContent: React.FC<DashboardContentProps> = ({
   user,
-  transactions,
   isLoading,
   onRecharge
 }) => {
@@ -61,8 +57,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   );
 };
 
-export default DashboardContent;
-
 interface EmptyStateSectionProps {
   title: string;
   message: string;
@@ -83,3 +77,5 @@ const EmptyStateSection: React.FC<EmptyStateSectionProps> = ({ title, message, d
     </div>
   );
 };
+
+export default DashboardContent;

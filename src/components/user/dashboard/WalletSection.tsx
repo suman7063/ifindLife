@@ -43,13 +43,13 @@ const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
             amount: transaction.amount,
             currency: transaction.currency || 'USD',
             description: transaction.description || '',
-            date: transaction.date || transaction.created_at,
-            type: transaction.type || 'payment',
-            status: transaction.status || 'completed',
-            created_at: transaction.created_at || new Date().toISOString(),
-            payment_id: transaction.payment_id || '',
-            payment_method: transaction.payment_method || 'default',
-            transaction_type: transaction.transaction_type || transaction.type || 'payment'
+            date: transaction.date,
+            type: transaction.type,
+            status: 'completed',
+            created_at: transaction.date,
+            payment_id: '',
+            payment_method: 'default',
+            transaction_type: transaction.type
           }));
           setTransactions(formattedTransactions);
         }

@@ -19,6 +19,7 @@ const mockExperts: Expert[] = [
   {
     id: '1',
     name: 'Dr. Jane Smith',
+    email: 'jane.smith@example.com', // Added email
     specialization: 'Clinical Psychologist',
     profile_picture: 'https://randomuser.me/api/portraits/women/44.jpg',
     experience: '10 years',
@@ -28,6 +29,7 @@ const mockExperts: Expert[] = [
   {
     id: '2',
     name: 'Dr. Michael Johnson',
+    email: 'michael.johnson@example.com', // Added email
     specialization: 'Relationship Counselor',
     profile_picture: 'https://randomuser.me/api/portraits/men/32.jpg',
     experience: '8 years',
@@ -37,6 +39,7 @@ const mockExperts: Expert[] = [
   {
     id: '3',
     name: 'Dr. Sarah Williams',
+    email: 'sarah.williams@example.com', // Added email
     specialization: 'Career Guidance',
     profile_picture: 'https://randomuser.me/api/portraits/women/68.jpg',
     experience: '12 years',
