@@ -23,16 +23,16 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
   heroSettings, 
   setHeroSettings 
 }) => {
-  // Function to handle video URL changes and ensure autoplay is included
+  // Function to handle video URL changes and ensure autoplay & mute are included
   const handleVideoUrlChange = (url: string) => {
     // Clean the URL to remove existing autoplay parameter if present
     let cleanUrl = url.replace(/([?&])autoplay=1&?/g, '$1').replace(/\?$/, '');
     
-    // Add autoplay parameter
+    // Add autoplay and mute parameters
     if (cleanUrl) {
       cleanUrl = cleanUrl.includes('?') 
-        ? `${cleanUrl}&autoplay=1` 
-        : `${cleanUrl}?autoplay=1`;
+        ? `${cleanUrl}&autoplay=1&mute=1` 
+        : `${cleanUrl}?autoplay=1&mute=1`;
     }
     
     setHeroSettings({...heroSettings, videoUrl: cleanUrl});
@@ -69,7 +69,7 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
           <label className="block text-sm font-medium mb-1">Video URL (YouTube Embed)</label>
           <div className="flex gap-2">
             <Input 
-              value={heroSettings.videoUrl?.replace(/([?&])autoplay=1&?/g, '$1').replace(/\?$/, '') || ''}
+              value={heroSettings.videoUrl?.replace(/([?&])autoplay=1&?/g, '$1').replace(/([?&])mute=1&?/g, '$1').replace(/\?$/, '') || ''}
               onChange={(e) => handleVideoUrlChange(e.target.value)}
               placeholder="e.g., https://www.youtube.com/embed/VIDEO_ID"
             />
@@ -87,7 +87,7 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Note: Use embed URLs (e.g., https://www.youtube.com/embed/VIDEO_ID). The video will autoplay on page load.
+            Note: Use embed URLs (e.g., https://www.youtube.com/embed/VIDEO_ID). Videos will autoplay and be muted by default.
           </p>
         </div>
         <div className="mt-2">
@@ -105,6 +105,7 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
                 title="Preview"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
+                muted
               ></iframe>
             </div>
           </div>

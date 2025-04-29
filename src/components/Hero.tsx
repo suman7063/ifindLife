@@ -56,11 +56,13 @@ const Hero = () => {
     }
   }, []);
 
-  // Enable video autoplay after a delay
+  // Enable video autoplay after a delay, but ensure it's muted
   useEffect(() => {
     const timer = setTimeout(() => {
       if (heroSettings.videoUrl && !isVideoLoaded) {
-        const newVideoUrl = heroSettings.videoUrl.replace('autoplay=0', 'autoplay=1');
+        const newVideoUrl = heroSettings.videoUrl
+          .replace('autoplay=0', 'autoplay=1')
+          .concat('&mute=1'); // Add mute parameter
         setHeroSettings(prev => ({ ...prev, videoUrl: newVideoUrl }));
         setIsVideoLoaded(true);
       }
@@ -202,6 +204,7 @@ const Hero = () => {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     loading="lazy"
+                    muted // Add muted attribute here
                   ></iframe>
                 ) : (
                   <img 
