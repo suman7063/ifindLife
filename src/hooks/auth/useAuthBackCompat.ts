@@ -11,6 +11,7 @@ export const useAuthBackCompat = () => {
   const userAuth = {
     currentUser: authContext.userProfile,
     loading: authContext.isLoading,
+    authLoading: authContext.isLoading, // Add this property for backward compatibility
     isAuthenticated: authContext.isAuthenticated && authContext.role === 'user',
     login: authContext.login,
     logout: authContext.logout,

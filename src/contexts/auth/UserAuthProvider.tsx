@@ -13,7 +13,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout,
-    authLoading: auth.isLoading,
+    authLoading: auth.isLoading, // Add this for consistency
+    loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateUserProfile,
     updatePassword: auth.updatePassword,
@@ -36,7 +37,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     getExpertShareLink: auth.getExpertShareLink || ((expertId: string | number) => ''),
     getReferralLink: auth.getReferralLink || (() => ''),
     user: auth.user,
-    loading: auth.isLoading,
     updateProfilePicture: async () => null
   };
 

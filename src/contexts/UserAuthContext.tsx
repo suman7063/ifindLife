@@ -12,7 +12,8 @@ export interface UserAuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  authLoading: boolean;
+  authLoading: boolean;  // Add this for consistency
+  loading: boolean;
   profileNotFound: boolean;
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture?: (file: File) => Promise<string | null>;
@@ -27,7 +28,6 @@ export interface UserAuthContextType {
   getReferralLink?: () => string;
   refreshProfile?: () => Promise<void>;
   user: User | null;
-  loading: boolean;
 }
 
 // Re-export other needed types

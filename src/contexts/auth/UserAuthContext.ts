@@ -9,7 +9,8 @@ export interface UserAuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  authLoading: boolean;
+  authLoading: boolean; // Add this property for consistency
+  loading: boolean;
   profileNotFound: boolean;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
@@ -22,7 +23,6 @@ export interface UserAuthContextType {
   getExpertShareLink: (expertId: string | number) => string; 
   getReferralLink: () => string | null;
   user: any;
-  loading: boolean;
   updateProfilePicture: (file: File) => Promise<string | null>;
 }
 
