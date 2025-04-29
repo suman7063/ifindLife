@@ -8,7 +8,7 @@ import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
 import DashboardContent from '@/components/user/dashboard/DashboardContent';
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
-import RechargeDialog from '@/components/user/dashboard/RechargeDialog';
+import RechargeDialog from '@/components/user/dashboard/wallet/RechargeDialog';
 import useTransactions from '@/hooks/dashboard/useTransactions';
 import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
