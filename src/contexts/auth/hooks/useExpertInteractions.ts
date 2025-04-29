@@ -53,6 +53,7 @@ export const useExpertInteractions = (userId: string | null) => {
     }
   };
 
+  // Updated to match signature required in AuthContextType
   const addReview = async (expertId: string, rating: number, comment: string): Promise<boolean> => {
     if (!userId) {
       toast.error('You must be logged in to leave a review');
@@ -120,6 +121,7 @@ export const useExpertInteractions = (userId: string | null) => {
     }
   };
 
+  // Update reportExpert to match signature in AuthContextType
   const reportExpert = async (expertId: string, reason: string, details: string): Promise<boolean> => {
     if (!userId) {
       toast.error('You must be logged in to report an expert');

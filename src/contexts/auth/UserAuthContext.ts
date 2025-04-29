@@ -19,7 +19,7 @@ export interface UserAuthContextType {
   rechargeWallet: (amount: number) => Promise<boolean>;
   addReview: (review: NewReview) => Promise<boolean>;
   reportExpert: (report: NewReport) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
   getExpertShareLink: (expertId: string | number) => string; 
   getReferralLink: () => string | null;
   user: any;

@@ -43,12 +43,12 @@ export interface AuthContextType extends AuthState {
   // Role checking
   checkUserRole: () => Promise<UserRole>;
   
-  // Expert interactions
+  // Expert interactions - Update the addReview signature to match implementation
   addToFavorites?: (expertId: number) => Promise<boolean>;
   removeFromFavorites?: (expertId: number) => Promise<boolean>;
   rechargeWallet?: (amount: number) => Promise<boolean>;
-  addReview?: (review: any) => Promise<boolean>;
-  reportExpert?: (report: any) => Promise<boolean>;
+  addReview?: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  reportExpert?: (expertId: string, reason: string, details: string) => Promise<boolean>;
   hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
   getExpertShareLink?: (expertId: string | number) => string; 
   getReferralLink?: () => string | null;

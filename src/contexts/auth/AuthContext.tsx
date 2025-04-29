@@ -50,7 +50,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateExpertProfile,
     resetPassword,
     updatePassword,
-    ...expertInteractions,
+    addReview: expertInteractions.addReview,
+    reportExpert: expertInteractions.reportExpert,
+    hasTakenServiceFrom: expertInteractions.hasTakenServiceFrom,
+    getExpertShareLink: expertInteractions.getExpertShareLink,
+    getReferralLink: expertInteractions.getReferralLink,
     
     // Backward compatibility properties
     currentUser: authState.userProfile,

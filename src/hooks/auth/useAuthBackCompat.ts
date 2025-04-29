@@ -1,5 +1,5 @@
-
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { NewReview, NewReport } from '@/types/supabase/tables';
 
 /**
  * Provides backward compatibility with the old auth hooks
@@ -19,6 +19,39 @@ export const useAuthBackCompat = () => {
     resetPassword: authContext.resetPassword,
     updateProfile: authContext.updateUserProfile,
     updatePassword: authContext.updatePassword,
+    // Adapt addReview to match the expected signature of the old interface
+    addReview: async (review: NewReview): Promise<boolean> => {
+      if (authContext.addReview && review) {
+        return authContext.addReview(
+          review.expertId.toString(),
+          review.rating,
+          review.comment || ''
+        );
+      }
+      return false;
+    },
+    // Adapt reportExpert to match the expected signature of the old interface
+    reportExpert: async (report: NewReport): Promise<boolean> => {
+      if (authContext.reportExpert && report) {
+        return authContext.reportExpert(
+          report.expertId.toString(),
+          report.reason,
+          report.details || ''
+        );
+      }
+      return false;
+    },
+    // Other methods with proper conversion
+    hasTakenServiceFrom: async (expertId: string | number) => {
+      return authContext.hasTakenServiceFrom ? 
+        await authContext.hasTakenServiceFrom(expertId.toString()) : false;
+    },
+    getExpertShareLink: authContext.getExpertShareLink || ((expertId: string | number) => ''),
+    getReferralLink: authContext.getReferralLink || (() => null),
+    addToFavorites: async () => false,
+    removeFromFavorites: async () => false,
+    rechargeWallet: async () => false,
+    updateProfilePicture: async () => null,
   };
   
   // Create a compatible interface for the old expert auth hook
