@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { UserPlus, User, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import NavbarUserMenu from './NavbarUserMenu';
 import NavbarExpertMenu from './NavbarExpertMenu';
@@ -112,7 +110,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       
       {hasExpertProfile ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
-      ) : isAuthenticated ? (
+      ) : isAuthenticated && sessionType === 'user' ? (
         <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
       ) : (
         <NavbarDesktopLinksDropdown 

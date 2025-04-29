@@ -16,8 +16,7 @@ const UserLoginContent: React.FC = () => {
     login,
     isAuthenticated,
     isLoading,
-    role,
-    userProfile
+    role
   } = useAuth();
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -38,6 +37,14 @@ const UserLoginContent: React.FC = () => {
       
       if (success) {
         toast.success("Login successful!");
+        // Redirect to the appropriate dashboard based on role
+        if (role === 'user') {
+          navigate('/user-dashboard');
+        } else if (role === 'expert') {
+          navigate('/expert-dashboard');
+        } else if (role === 'admin') {
+          navigate('/admin');
+        }
         return true;
       } else {
         setLoginError("Login failed. Please check your credentials.");

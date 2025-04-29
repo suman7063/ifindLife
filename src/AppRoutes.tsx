@@ -1,14 +1,15 @@
-
 import React, { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Routes, Route } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
+import { useAuth } from './contexts/auth/AuthContext';
+import ProtectedRoute from './components/routing/ProtectedRoute';
 
 // Import UserLogin directly instead of lazy loading it to fix the import issue
 import UserLogin from './pages/UserLogin';
 
 // Lazy load other pages for better performance
 const Index = lazy(() => import('./pages/Index'));
+const Login = lazy(() => import('./pages/Login'));
 const ExpertLogin = lazy(() => import('./pages/ExpertLogin'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
@@ -37,10 +38,11 @@ const FAQs = lazy(() => import('./pages/FAQs'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // Legacy pages
-const Login = lazy(() => import('./pages/Login'));
 const MigrateData = lazy(() => import('./pages/MigrateData'));
 
 const AppRoutes: React.FC = () => {
+  const { isAuthenticated, role } = useAuth();
+
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
@@ -70,33 +72,33 @@ const AppRoutes: React.FC = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/faqs" element={<FAQs />} />
 
-        {/* User Protected Routes */}
+        {/* User Protected Routes - ensure they require user role */}
         <Route path="/user-dashboard" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['user']}>
             <UserDashboard />
           </ProtectedRoute>
         } />
         <Route path="/referrals" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['user']}>
             <UserReferrals />
           </ProtectedRoute>
         } />
 
-        {/* Expert Protected Routes */}
+        {/* Expert Protected Routes - ensure they require expert role */}
         <Route path="/expert-dashboard/*" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['expert']}>
             <ExpertDashboard />
           </ProtectedRoute>
         } />
 
-        {/* Admin Protected Routes */}
+        {/* Admin Protected Routes - ensure they require admin role */}
         <Route path="/admin/*" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin']}>
             <Admin />
           </ProtectedRoute>
         } />
         <Route path="/migrate-data" element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={['admin']}>
             <MigrateData />
           </ProtectedRoute>
         } />

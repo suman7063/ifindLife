@@ -36,7 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // If authenticated but not in allowed roles, redirect to appropriate page
+  // If authenticated but not in allowed roles, redirect to appropriate dashboard
   if (role && !allowedRoles.includes(role)) {
     // Redirect based on role
     if (role === 'user') {
