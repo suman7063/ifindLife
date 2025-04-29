@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { User, LogOut, CreditCard } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -76,12 +76,6 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
           <Link to="/user-dashboard" className="cursor-pointer" onClick={() => setIsOpen(false)}>
             <User className="mr-2 h-4 w-4" />
             Dashboard
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link to="/referrals" className="cursor-pointer" onClick={() => setIsOpen(false)}>
-            <CreditCard className="mr-2 h-4 w-4" />
-            My Referrals
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

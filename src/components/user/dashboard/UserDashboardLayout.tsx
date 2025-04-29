@@ -22,7 +22,7 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 flex pt-16"> {/* Added pt-16 to add padding top for navbar */}
+      <div className="flex-1 flex mt-24"> {/* Changed pt-16 to mt-24 to provide more space below navbar */}
         <SidebarProvider defaultOpen>
           <UserDashboardSidebar 
             user={user}
