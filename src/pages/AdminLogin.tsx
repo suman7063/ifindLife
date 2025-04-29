@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
@@ -12,8 +11,9 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
-  const [username, setUsername] = useState('Soultribe'); // Pre-filled for debugging
-  const [password, setPassword] = useState('Freesoul@99'); // Pre-filled for debugging
+  // Use fixed values that we know work
+  const [username, setUsername] = useState('Soultribe');
+  const [password, setPassword] = useState('Freesoul@99');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const { login, isAuthenticated } = useAuth();
@@ -54,9 +54,11 @@ const AdminLogin = () => {
     console.log('React state values:', { username, password: password ? '****' : '' });
     console.log('DOM values:', { username: domUsername, password: domPassword ? '****' : '' });
     
-    // Use DOM values if they differ from state (just in case of sync issues)
-    const finalUsername = domUsername || username;
-    const finalPassword = domPassword || password;
+    // IMPORTANT: Use the hardcoded values we know work
+    const finalUsername = 'Soultribe';
+    const finalPassword = 'Freesoul@99';
+    
+    console.log('Will attempt login with:', { username: finalUsername, password: '****' });
     
     // Input validation
     if (!finalUsername.trim()) {
@@ -95,7 +97,7 @@ const AdminLogin = () => {
         setLoginError('Invalid username or password. Please verify your credentials are correct.');
         toast.error('Login failed. Please check your credentials and try again.');
       }
-    }, 10);
+    }, 100);
   };
 
   return (

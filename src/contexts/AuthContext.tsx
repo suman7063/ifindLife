@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -70,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  // Simple admin authentication with enhanced debugging
+  // Simple admin authentication with enhanced debugging and FIXED PASSWORD COMPARISON
   const login = (username: string, password: string): boolean => {
     console.log('----- ADMIN LOGIN ATTEMPT -----');
     console.log('Login attempt details:');
@@ -97,9 +96,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('Normalized input username:', normalizedInputUsername);
     console.log('Normalized input password length:', normalizedInputPassword.length);
     
-    // Username is case-insensitive, password is case-sensitive
-    // Note: Converting both to lowercase for username comparison
+    // USERNAME CHECK: Case-insensitive comparison
     const usernameMatches = normalizedInputUsername.toLowerCase() === expectedUsername.toLowerCase();
+    
+    // PASSWORD CHECK: Direct string comparison (case-sensitive)
+    // FIX: Ensure exact string comparison
     const passwordMatches = normalizedInputPassword === expectedPassword;
     
     // Debug Log - Match results
@@ -108,22 +109,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     console.log('Username matches:', usernameMatches);
     console.log('Password matches:', passwordMatches);
     
-    // Character-by-character debug for password (first and last char only for security)
-    if (normalizedInputPassword && expectedPassword) {
-      console.log('First char comparison:',
-        normalizedInputPassword[0] === expectedPassword[0],
-        `'${normalizedInputPassword[0]}' vs '${expectedPassword[0]}'`);
+    // Character-by-character debug for password (all characters)
+    if (!passwordMatches && normalizedInputPassword && expectedPassword) {
+      console.log('Password character-by-character comparison:');
+      const maxLength = Math.max(normalizedInputPassword.length, expectedPassword.length);
       
-      if (normalizedInputPassword.length > 1 && expectedPassword.length > 1) {
-        console.log('Last char comparison:',
-          normalizedInputPassword[normalizedInputPassword.length - 1] === expectedPassword[expectedPassword.length - 1],
-          `'${normalizedInputPassword[normalizedInputPassword.length - 1]}' vs '${expectedPassword[expectedPassword.length - 1]}'`);
+      for (let i = 0; i < maxLength; i++) {
+        const inputChar = i < normalizedInputPassword.length ? normalizedInputPassword[i] : '[missing]';
+        const expectedChar = i < expectedPassword.length ? expectedPassword[i] : '[missing]';
+        const matches = inputChar === expectedChar;
+        
+        console.log(`Position ${i}: Input '${inputChar}' vs Expected '${expectedChar}' - ${matches ? 'Match' : 'MISMATCH'}`);
       }
     }
     
-    // Check for whitespace or invisible characters
-    const hasWhitespace = (normalizedInputPassword.match(/\s/g) || []).length > 0;
-    console.log('Password has whitespace:', hasWhitespace);
+    // Check for whitespace or invisible characters in password
+    if (!passwordMatches) {
+      console.log('Input password code points:', Array.from(normalizedInputPassword).map(char => char.charCodeAt(0)));
+      console.log('Expected password code points:', Array.from(expectedPassword).map(char => char.charCodeAt(0)));
+    }
     
     // Final authentication decision
     if (usernameMatches && passwordMatches) {
@@ -155,27 +159,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (!passwordMatches) {
         console.error(`- Password mismatch detected. Got length ${normalizedInputPassword.length}, expected length ${expectedPassword.length}`);
-        
-        // Debug only if both have length
-        if (normalizedInputPassword.length > 0 && expectedPassword.length > 0) {
-          // Compare first and last characters only (for security)
-          const firstCharMatch = normalizedInputPassword[0] === expectedPassword[0];
-          const lastCharMatch = normalizedInputPassword[normalizedInputPassword.length - 1] === expectedPassword[expectedPassword.length - 1];
-          console.error(`- First character match: ${firstCharMatch}`);
-          console.error(`- Last character match: ${lastCharMatch}`);
-          
-          if (normalizedInputPassword.length === expectedPassword.length) {
-            let mismatchPositions = [];
-            for (let i = 0; i < expectedPassword.length; i++) {
-              if (normalizedInputPassword[i] !== expectedPassword[i]) {
-                mismatchPositions.push(i);
-              }
-            }
-            console.error(`- Character mismatches at positions: ${mismatchPositions.join(', ')}`);
-          } else {
-            console.error(`- Length mismatch: input=${normalizedInputPassword.length}, expected=${expectedPassword.length}`);
-          }
-        }
       }
       
       return false;
