@@ -49,13 +49,17 @@ export interface AuthContextType extends AuthState {
   removeFromFavorites?: (expertId: number) => Promise<boolean>;
   rechargeWallet?: (amount: number) => Promise<boolean>;
   
-  // Update review function signature to support both formats
-  // This allows both direct parameters and object parameter usage
-  addReview?: ((expertId: string, rating: number, comment: string) => Promise<boolean>) & 
-              ((review: NewReview) => Promise<boolean>);
+  // Define addReview to accept either individual parameters or a review object
+  addReview?: {
+    (expertId: string, rating: number, comment: string): Promise<boolean>;
+    (review: NewReview): Promise<boolean>;
+  };
   
-  reportExpert?: ((expertId: string, reason: string, details: string) => Promise<boolean>) & 
-                 ((report: NewReport) => Promise<boolean>);
+  // Define reportExpert to accept either individual parameters or a report object
+  reportExpert?: {
+    (expertId: string, reason: string, details: string): Promise<boolean>;
+    (report: NewReport): Promise<boolean>;  
+  };
                  
   hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
   getExpertShareLink?: (expertId: string | number) => string; 

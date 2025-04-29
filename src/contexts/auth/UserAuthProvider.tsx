@@ -9,16 +9,16 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Create a compatible addReview function that can handle both calling styles
   const adaptedAddReview = async (reviewOrExpertId: NewReview | string, rating?: number, comment?: string): Promise<boolean> => {
+    if (!auth.addReview) return false;
+    
     // If first parameter is a string, assume it's the old style with separate parameters
     if (typeof reviewOrExpertId === 'string' && rating !== undefined) {
-      return auth.addReview ? await auth.addReview(reviewOrExpertId, rating, comment || '') : false;
+      return auth.addReview(reviewOrExpertId, rating, comment || '');
     }
     
     // If first parameter is an object, handle as a review object
     if (reviewOrExpertId && typeof reviewOrExpertId === 'object' && 'expertId' in reviewOrExpertId && 'rating' in reviewOrExpertId) {
-      const review = reviewOrExpertId as NewReview;
-      return auth.addReview ? 
-        await auth.addReview(review.expertId.toString(), review.rating, review.comment || '') : false;
+      return auth.addReview(reviewOrExpertId);
     }
     
     return false;
@@ -26,16 +26,16 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Create a compatible reportExpert function that can handle both calling styles
   const adaptedReportExpert = async (reportOrExpertId: NewReport | string, reason?: string, details?: string): Promise<boolean> => {
+    if (!auth.reportExpert) return false;
+    
     // If first parameter is a string, assume it's the old style with separate parameters
     if (typeof reportOrExpertId === 'string' && reason !== undefined) {
-      return auth.reportExpert ? await auth.reportExpert(reportOrExpertId, reason, details || '') : false;
+      return auth.reportExpert(reportOrExpertId, reason, details || '');
     }
     
     // If first parameter is an object, handle as a report object
     if (reportOrExpertId && typeof reportOrExpertId === 'object' && 'expertId' in reportOrExpertId && 'reason' in reportOrExpertId) {
-      const report = reportOrExpertId as NewReport;
-      return auth.reportExpert ? 
-        await auth.reportExpert(report.expertId.toString(), report.reason, report.details || '') : false;
+      return auth.reportExpert(reportOrExpertId);
     }
     
     return false;

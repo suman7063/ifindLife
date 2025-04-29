@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { NewReview, NewReport } from '@/types/supabase/tables';
 
@@ -8,27 +7,39 @@ import { NewReview, NewReport } from '@/types/supabase/tables';
 export const useAuthBackCompat = () => {
   const authContext = useAuth();
   
-  // Create an adapter for the addReview function
-  const adaptedAddReview = async (review: NewReview): Promise<boolean> => {
-    if (authContext.addReview && review) {
-      return authContext.addReview(
-        review.expertId.toString(),
-        review.rating,
-        review.comment || ''
-      );
+  // Create an adapter for the addReview function that works in both cases
+  const adaptedAddReview = async (reviewOrExpertId: NewReview | string, rating?: number, comment?: string): Promise<boolean> => {
+    if (!authContext.addReview) return false;
+    
+    // If first arg is a string, use the traditional approach
+    if (typeof reviewOrExpertId === 'string' && rating !== undefined) {
+      return authContext.addReview(reviewOrExpertId, rating, comment || '');
     }
+    
+    // Otherwise, treat first arg as a review object
+    if (typeof reviewOrExpertId === 'object') {
+      const review = reviewOrExpertId as NewReview;
+      return authContext.addReview(review);
+    }
+    
     return false;
   };
   
-  // Create an adapter for the reportExpert function
-  const adaptedReportExpert = async (report: NewReport): Promise<boolean> => {
-    if (authContext.reportExpert && report) {
-      return authContext.reportExpert(
-        report.expertId.toString(),
-        report.reason,
-        report.details || ''
-      );
+  // Create an adapter for the reportExpert function that works in both cases
+  const adaptedReportExpert = async (reportOrExpertId: NewReport | string, reason?: string, details?: string): Promise<boolean> => {
+    if (!authContext.reportExpert) return false;
+    
+    // If first arg is a string, use the traditional approach
+    if (typeof reportOrExpertId === 'string' && reason !== undefined) {
+      return authContext.reportExpert(reportOrExpertId, reason, details || '');
     }
+    
+    // Otherwise, treat first arg as a report object
+    if (typeof reportOrExpertId === 'object') {
+      const report = reportOrExpertId as NewReport;
+      return authContext.reportExpert(report);
+    }
+    
     return false;
   };
   

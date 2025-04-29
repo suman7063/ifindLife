@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 
 export const useExpertInteractions = (userId: string | null) => {
@@ -15,11 +16,20 @@ export const useExpertInteractions = (userId: string | null) => {
     
     setLoading(true);
     try {
+      // Parse expertId to number for database compatibility
+      const expertIdNum = parseInt(expertId, 10);
+      
+      // Check if valid number conversion
+      if (isNaN(expertIdNum)) {
+        console.error('Invalid expert ID format:', expertId);
+        return false;
+      }
+      
       const { error } = await supabase
         .from('user_reviews')
         .insert({
           user_id: userId,
-          expert_id: expertId,
+          expert_id: expertIdNum,
           rating,
           comment,
           date: new Date().toISOString(),
@@ -50,11 +60,20 @@ export const useExpertInteractions = (userId: string | null) => {
     
     setLoading(true);
     try {
+      // Parse expertId to number for database compatibility
+      const expertIdNum = parseInt(expertId, 10);
+      
+      // Check if valid number conversion
+      if (isNaN(expertIdNum)) {
+        console.error('Invalid expert ID format:', expertId);
+        return false;
+      }
+      
       const { error } = await supabase
         .from('user_reports')
         .insert({
           user_id: userId,
-          expert_id: expertId,
+          expert_id: expertIdNum,
           reason,
           details,
           date: new Date().toISOString(),
