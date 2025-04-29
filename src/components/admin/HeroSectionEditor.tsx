@@ -23,16 +23,16 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
   heroSettings, 
   setHeroSettings 
 }) => {
-  // Function to handle video URL changes and ensure autoplay is included
+  // Function to handle video URL changes and ensure autoplay is disabled
   const handleVideoUrlChange = (url: string) => {
     // Clean the URL to remove existing autoplay parameter if present
-    let cleanUrl = url.replace(/([?&])autoplay=1&?/g, '$1').replace(/\?$/, '');
+    let cleanUrl = url.replace(/([?&])autoplay=1/g, '$1autoplay=0').replace(/\?$/, '');
     
-    // Add autoplay parameter
+    // Add autoplay=0 parameter
     if (cleanUrl) {
       cleanUrl = cleanUrl.includes('?') 
-        ? `${cleanUrl}&autoplay=1` 
-        : `${cleanUrl}?autoplay=1`;
+        ? `${cleanUrl}&autoplay=0` 
+        : `${cleanUrl}?autoplay=0`;
     }
     
     setHeroSettings({...heroSettings, videoUrl: cleanUrl});
@@ -69,7 +69,7 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
           <label className="block text-sm font-medium mb-1">Video URL (YouTube Embed)</label>
           <div className="flex gap-2">
             <Input 
-              value={heroSettings.videoUrl?.replace(/([?&])autoplay=1&?/g, '$1').replace(/\?$/, '') || ''}
+              value={heroSettings.videoUrl?.replace(/([?&])autoplay=[01]/g, '').replace(/\?$/, '') || ''}
               onChange={(e) => handleVideoUrlChange(e.target.value)}
               placeholder="e.g., https://www.youtube.com/embed/VIDEO_ID"
             />
@@ -87,7 +87,7 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
             </Button>
           </div>
           <p className="text-xs text-muted-foreground mt-1">
-            Note: Use embed URLs (e.g., https://www.youtube.com/embed/VIDEO_ID). The video will autoplay on page load.
+            Note: Use embed URLs (e.g., https://www.youtube.com/embed/VIDEO_ID). The video will not autoplay to improve user experience.
           </p>
         </div>
         <div className="mt-2">
@@ -103,7 +103,7 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
                 className="w-full h-full rounded-lg"
                 src={heroSettings.videoUrl}
                 title="Preview"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               ></iframe>
             </div>

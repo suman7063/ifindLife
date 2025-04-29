@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import FreeAssessmentCTA from './FreeAssessmentCTA';
@@ -33,13 +32,18 @@ const Hero = () => {
       if (savedContent) {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.heroSettings) {
-          // Don't enable autoplay immediately - wait until user interaction or after page load
+          // Ensure autoplay is disabled
           let videoUrl = parsedContent.heroSettings.videoUrl || heroSettings.videoUrl;
           if (videoUrl) {
-            // Start without autoplay for faster initial load
-            videoUrl = videoUrl.includes('?') 
-              ? videoUrl.split('?')[0] + '?autoplay=0' 
-              : videoUrl + '?autoplay=0';
+            // Remove autoplay parameter if present
+            videoUrl = videoUrl.replace(/([?&])autoplay=1/g, '$1autoplay=0');
+            
+            // If no autoplay parameter exists, add it with value 0
+            if (!videoUrl.includes('autoplay=')) {
+              videoUrl = videoUrl.includes('?') 
+                ? `${videoUrl}&autoplay=0` 
+                : `${videoUrl}?autoplay=0`;
+            }
           }
           
           setHeroSettings({
@@ -56,17 +60,11 @@ const Hero = () => {
     }
   }, []);
 
-  // Enable video autoplay after a delay
+  // Remove the autoplay enabling effect
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (heroSettings.videoUrl && !isVideoLoaded) {
-        const newVideoUrl = heroSettings.videoUrl.replace('autoplay=0', 'autoplay=1');
-        setHeroSettings(prev => ({ ...prev, videoUrl: newVideoUrl }));
-        setIsVideoLoaded(true);
-      }
-    }, 3000); // 3 second delay before loading video with autoplay
-
-    return () => clearTimeout(timer);
+    if (heroSettings.videoUrl && !isVideoLoaded) {
+      setIsVideoLoaded(true);
+    }
   }, [heroSettings.videoUrl, isVideoLoaded]);
 
   // Auto slide rotation with fade effect
@@ -199,7 +197,7 @@ const Hero = () => {
                     src={heroSettings.videoUrl}
                     className="w-full aspect-video rounded-lg shadow-lg"
                     title="Mental Health Video"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
                     loading="lazy"
                   ></iframe>
