@@ -38,9 +38,7 @@ const Login: React.FC = () => {
   return (
     <Container className="max-w-md mx-auto py-12">
       <UserLoginHeader />
-      <UserLoginContent>
-        <UserLoginTabs />
-      </UserLoginContent>
+      <UserLoginContent />
     </Container>
   );
 };

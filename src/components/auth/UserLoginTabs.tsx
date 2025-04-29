@@ -42,7 +42,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     country: string;
     city?: string;
     referralCode?: string;
-  }) => {
+  }): Promise<void> => {
     setIsLoading(true);
     try {
       console.log("Attempting user registration with:", userData.email);
@@ -62,7 +62,6 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
         toast.success('Registration successful! Please check your email for verification.');
         setActiveTab('login');
       }
-      return success;
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || 'Registration failed. Please try again.');
