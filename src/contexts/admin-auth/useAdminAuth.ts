@@ -18,104 +18,61 @@ export const useAdminAuth = ({
   currentUser
 }: AdminAuthProps) => {
 
-  // Simple admin authentication with enhanced debugging and FIXED PASSWORD COMPARISON
+  // Simplified admin authentication with clear credentials and detailed logging
   const login = (username: string, password: string): boolean => {
     console.log('----- ADMIN LOGIN ATTEMPT -----');
-    console.log('Login attempt details:');
     
-    // Debug Log - Raw input values
-    console.log('Raw username input:', username);
-    console.log('Raw password input:', password ? '******' : 'empty');
-    console.log('Raw password length:', password ? password.length : 0);
+    // HARDCODED CREDENTIALS - these must match exactly what's used in AdminLogin.tsx
+    const ADMIN_USERNAME = 'Soultribe';
+    const ADMIN_PASSWORD = 'Freesoul@99';
     
-    // Fixed credentials for admin access 
-    const expectedUsername = 'Soultribe';
-    const expectedPassword = 'Freesoul@99';
+    // Log the input and expected values (masking sensitive data)
+    console.log(`Input username: "${username}"`);
+    console.log(`Expected username: "${ADMIN_USERNAME}"`);
+    console.log(`Input password length: ${password.length}`);
+    console.log(`Expected password length: ${ADMIN_PASSWORD.length}`);
     
-    // Debug Log - Expected values
-    console.log('Expected username:', expectedUsername);
-    console.log('Expected password:', '*'.repeat(expectedPassword.length));
-    console.log('Expected password length:', expectedPassword.length);
+    // Direct comparison without any transformations
+    const usernameMatches = username === ADMIN_USERNAME;
+    const passwordMatches = password === ADMIN_PASSWORD;
     
-    // Trim and normalize inputs for comparison
-    const normalizedInputUsername = username ? username.trim() : '';
-    const normalizedInputPassword = password ? password : '';
+    console.log(`Username exact match: ${usernameMatches}`);
+    console.log(`Password exact match: ${passwordMatches}`);
     
-    // Debug Log - Processed inputs
-    console.log('Normalized input username:', normalizedInputUsername);
-    console.log('Normalized input password length:', normalizedInputPassword.length);
-    
-    // Extra debug log - First and last characters
-    console.log('Expected first 3 chars (masked):', expectedPassword.substring(0, 3));
-    console.log('Input first 3 chars (masked):', normalizedInputPassword.substring(0, 3));
-    console.log('Expected last 3 chars (masked):', expectedPassword.substring(expectedPassword.length - 3));
-    console.log('Input last 3 chars (masked):', normalizedInputPassword.substring(normalizedInputPassword.length - 3));
-    
-    // USERNAME CHECK: Case-insensitive comparison
-    const usernameMatches = normalizedInputUsername.toLowerCase() === expectedUsername.toLowerCase();
-    
-    // PASSWORD CHECK: Direct string comparison (case-sensitive)
-    // FIX: Ensure exact string comparison and log its result
-    const passwordMatches = normalizedInputPassword === expectedPassword;
-    
-    // Debug Log - Match results
-    console.log('Username comparison (case-insensitive):', 
-      `'${normalizedInputUsername.toLowerCase()}' === '${expectedUsername.toLowerCase()}'`);
-    console.log('Username matches:', usernameMatches);
-    console.log('Password comparison result:', passwordMatches);
-    
-    // Character-by-character debug for password
-    if (!passwordMatches && normalizedInputPassword && expectedPassword) {
-      console.log('Password character-by-character comparison:');
-      const maxLength = Math.max(normalizedInputPassword.length, expectedPassword.length);
-      
-      for (let i = 0; i < maxLength; i++) {
-        const inputChar = i < normalizedInputPassword.length ? normalizedInputPassword[i] : '[missing]';
-        const expectedChar = i < expectedPassword.length ? expectedPassword[i] : '[missing]';
-        const matches = inputChar === expectedChar;
-        
-        console.log(`Position ${i}: Input '${inputChar}' vs Expected '${expectedChar}' - ${matches ? 'Match' : 'MISMATCH'}`);
-      }
-    }
-    
-    // Check for whitespace or invisible characters in password
-    if (!passwordMatches) {
-      console.log('Input password code points:', Array.from(normalizedInputPassword).map(char => char.charCodeAt(0)));
-      console.log('Expected password code points:', Array.from(expectedPassword).map(char => char.charCodeAt(0)));
-    }
-    
-    // Final authentication decision - FOCUS ON EXACT STRING COMPARISON
+    // If authentication passes, update state and localStorage
     if (usernameMatches && passwordMatches) {
-      console.log('Login successful - setting local storage');
+      console.log('Authentication successful!');
+      
+      // Set authentication state
+      setIsAuthenticated(true);
+      setCurrentUser({ username: ADMIN_USERNAME, role: 'superadmin' });
+      
+      // Store in localStorage
       try {
         localStorage.setItem('admin_session', 'true');
-        localStorage.setItem('admin_username', expectedUsername); // Always store correct case
-        setIsAuthenticated(true);
-        setCurrentUser({ username: expectedUsername, role: 'superadmin' });
-        console.log('Authentication state updated:', { isAuthenticated: true, currentUser: { username: expectedUsername, role: 'superadmin' }});
-        return true;
+        localStorage.setItem('admin_username', ADMIN_USERNAME);
+        console.log('Session stored in localStorage');
       } catch (err) {
         console.error('Error saving to localStorage:', err);
-        // Still allow login even if localStorage fails
-        setIsAuthenticated(true);
-        setCurrentUser({ username: expectedUsername, role: 'superadmin' });
-        console.log('Authentication state updated (localStorage failed):', { isAuthenticated: true, currentUser: { username: expectedUsername, role: 'superadmin' }});
-        return true;
       }
+      
+      return true;
     } else {
-      // Authentication failed
-      console.error('Authentication failed:');
-      console.error('- Username match:', usernameMatches);
-      console.error('- Password match:', passwordMatches);
-      
+      console.log('Authentication failed!');
       if (!usernameMatches) {
-        console.error(`- Username mismatch detected. Got "${normalizedInputUsername}" (normalized to "${normalizedInputUsername.toLowerCase()}"), expected "${expectedUsername}" (normalized to "${expectedUsername.toLowerCase()}")`);
+        console.log(`Username mismatch. Expected "${ADMIN_USERNAME}", got "${username}"`);
       }
-      
       if (!passwordMatches) {
-        console.error(`- Password mismatch detected. Got length ${normalizedInputPassword.length}, expected length ${expectedPassword.length}`);
+        console.log('Password mismatch');
+        // Character by character comparison for debugging
+        for (let i = 0; i < Math.max(password.length, ADMIN_PASSWORD.length); i++) {
+          const inputChar = i < password.length ? password[i] : '[missing]';
+          const expectedChar = i < ADMIN_PASSWORD.length ? ADMIN_PASSWORD[i] : '[missing]';
+          const matches = inputChar === expectedChar;
+          
+          console.log(`Position ${i}: Input '${inputChar}' vs Expected '${expectedChar}' - ${matches ? 'Match' : 'MISMATCH'}`);
+        }
       }
-      
       return false;
     }
   };
@@ -131,7 +88,7 @@ export const useAdminAuth = ({
     setCurrentUser(null);
   };
   
-  // Admin user management functions
+  // Fix the admin user management functions to use proper typing
   const addAdmin = (username: string, password: string): boolean => {
     if (!currentUser || currentUser.role !== 'superadmin') return false;
     
@@ -140,15 +97,14 @@ export const useAdminAuth = ({
       return false;
     }
     
-    // In a real app, you would securely store the password
+    // Create a new admin user
     const newUser: AdminUser = {
       username,
       role: 'admin' // New users are regular admins
     };
     
-    // Fix: Create a new array with the new user added (instead of using a callback)
-    const updatedUsers = [...adminUsers, newUser];
-    setAdminUsers(updatedUsers);
+    // Create a new array with the new user added
+    setAdminUsers([...adminUsers, newUser]);
     return true;
   };
   
@@ -160,9 +116,8 @@ export const useAdminAuth = ({
       return false;
     }
     
-    // Fix: Create a new filtered array (instead of using a callback)
-    const updatedUsers = adminUsers.filter(user => user.username !== username);
-    setAdminUsers(updatedUsers);
+    // Create a new filtered array
+    setAdminUsers(adminUsers.filter(user => user.username !== username));
     return true;
   };
 

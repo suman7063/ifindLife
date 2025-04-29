@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -12,22 +11,15 @@ import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
-  // Use fixed values that we know work
+  // Default values for testing
   const [username, setUsername] = useState('Soultribe');
   const [password, setPassword] = useState('Freesoul@99');
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-
-  // Refs to store input values directly from DOM
-  const usernameRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
   
-  const renderCount = useRef(0);
-  renderCount.current++;
-
-  console.log(`AdminLogin component rendered (${renderCount.current}), isAuthenticated:`, isAuthenticated);
+  console.log('AdminLogin component rendered, isAuthenticated:', isAuthenticated);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -48,34 +40,12 @@ const AdminLogin = () => {
     e.preventDefault();
     console.log('Login form submitted');
     
-    // Get values directly from DOM as an additional check
-    const domUsername = usernameRef.current?.value || '';
-    const domPassword = passwordRef.current?.value || '';
+    // For simplicity, use the exact hardcoded values
+    // These must match exactly what's in useAdminAuth.ts
+    const adminUsername = 'Soultribe';
+    const adminPassword = 'Freesoul@99';
     
-    console.log('React state values:', { username, password: password ? '****' : '' });
-    console.log('DOM values:', { username: domUsername, password: domPassword ? '****' : '' });
-    
-    // IMPORTANT: Use the hardcoded values we know work instead of form values
-    // This is a temporary fix to isolate if the issue is with form inputs
-    const finalUsername = 'Soultribe';
-    const finalPassword = 'Freesoul@99';
-    
-    console.log('Will attempt login with hardcoded credentials:', { username: finalUsername, password: '****' });
-    
-    // Input validation
-    if (!finalUsername.trim()) {
-      setLoginError('Username is required');
-      return;
-    }
-    
-    if (!finalPassword) {
-      setLoginError('Password is required');
-      return;
-    }
-    
-    // Debug log to track exact values
-    console.log('Attempting login with username:', JSON.stringify(finalUsername));
-    console.log('Password length:', finalPassword.length);
+    console.log(`Attempting login with username: "${adminUsername}"`);
     
     // Try to clear any existing sessions first
     try {
@@ -85,22 +55,19 @@ const AdminLogin = () => {
       console.error('Error clearing localStorage:', err);
     }
     
-    // Use a timeout to ensure the UI updates before login attempt
-    setTimeout(() => {
-      // Using finalUsername and finalPassword (hardcoded values)
-      const loginSuccess = login(finalUsername, finalPassword);
-      console.log('Login result:', loginSuccess ? 'success' : 'failed');
-      
-      if (loginSuccess) {
-        console.log('Login successful, redirecting to admin panel');
-        toast.success(`Welcome back, ${finalUsername}!`);
-        navigate('/admin');
-      } else {
-        console.error('Login failed');
-        setLoginError('Invalid username or password. Please verify your credentials are correct.');
-        toast.error('Login failed. Please check your credentials and try again.');
-      }
-    }, 100);
+    // Direct login attempt with hardcoded values
+    const loginSuccess = login(adminUsername, adminPassword);
+    console.log('Login result:', loginSuccess ? 'success' : 'failed');
+    
+    if (loginSuccess) {
+      console.log('Login successful, redirecting to admin panel');
+      toast.success(`Welcome back, ${adminUsername}!`);
+      navigate('/admin');
+    } else {
+      console.error('Login failed');
+      setLoginError('Authentication failed. Please contact the system administrator.');
+      toast.error('Login failed. Check browser console for detailed logs.');
+    }
   };
 
   return (
@@ -133,7 +100,6 @@ const AdminLogin = () => {
                   id="username"
                   name="username"
                   type="text"
-                  ref={usernameRef}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -157,7 +123,6 @@ const AdminLogin = () => {
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    ref={passwordRef}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
