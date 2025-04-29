@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginTab from './LoginTab';
@@ -22,6 +21,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   
   // Mock referral settings for the RegisterTab
   const referralSettings: ReferralSettings | null = {
+    id: '1', // Added the required id property
     referrer_reward: 10,
     referred_reward: 5,
     active: false,
