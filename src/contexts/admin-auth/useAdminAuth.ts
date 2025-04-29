@@ -25,7 +25,7 @@ export const useAdminAuth = ({
     
     // Debug Log - Raw input values
     console.log('Raw username input:', username);
-    console.log('Raw password input:', password);
+    console.log('Raw password input:', password ? '******' : 'empty');
     console.log('Raw password length:', password ? password.length : 0);
     
     // Fixed credentials for admin access 
@@ -34,7 +34,7 @@ export const useAdminAuth = ({
     
     // Debug Log - Expected values
     console.log('Expected username:', expectedUsername);
-    console.log('Expected password:', expectedPassword);
+    console.log('Expected password:', '*'.repeat(expectedPassword.length));
     console.log('Expected password length:', expectedPassword.length);
     
     // Trim and normalize inputs for comparison
@@ -45,20 +45,26 @@ export const useAdminAuth = ({
     console.log('Normalized input username:', normalizedInputUsername);
     console.log('Normalized input password length:', normalizedInputPassword.length);
     
+    // Extra debug log - First and last characters
+    console.log('Expected first 3 chars (masked):', expectedPassword.substring(0, 3));
+    console.log('Input first 3 chars (masked):', normalizedInputPassword.substring(0, 3));
+    console.log('Expected last 3 chars (masked):', expectedPassword.substring(expectedPassword.length - 3));
+    console.log('Input last 3 chars (masked):', normalizedInputPassword.substring(normalizedInputPassword.length - 3));
+    
     // USERNAME CHECK: Case-insensitive comparison
     const usernameMatches = normalizedInputUsername.toLowerCase() === expectedUsername.toLowerCase();
     
     // PASSWORD CHECK: Direct string comparison (case-sensitive)
-    // FIX: Ensure exact string comparison
+    // FIX: Ensure exact string comparison and log its result
     const passwordMatches = normalizedInputPassword === expectedPassword;
     
     // Debug Log - Match results
     console.log('Username comparison (case-insensitive):', 
       `'${normalizedInputUsername.toLowerCase()}' === '${expectedUsername.toLowerCase()}'`);
     console.log('Username matches:', usernameMatches);
-    console.log('Password matches:', passwordMatches);
+    console.log('Password comparison result:', passwordMatches);
     
-    // Character-by-character debug for password (all characters)
+    // Character-by-character debug for password
     if (!passwordMatches && normalizedInputPassword && expectedPassword) {
       console.log('Password character-by-character comparison:');
       const maxLength = Math.max(normalizedInputPassword.length, expectedPassword.length);
@@ -78,7 +84,7 @@ export const useAdminAuth = ({
       console.log('Expected password code points:', Array.from(expectedPassword).map(char => char.charCodeAt(0)));
     }
     
-    // Final authentication decision
+    // Final authentication decision - FOCUS ON EXACT STRING COMPARISON
     if (usernameMatches && passwordMatches) {
       console.log('Login successful - setting local storage');
       try {

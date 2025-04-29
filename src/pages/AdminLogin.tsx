@@ -55,11 +55,12 @@ const AdminLogin = () => {
     console.log('React state values:', { username, password: password ? '****' : '' });
     console.log('DOM values:', { username: domUsername, password: domPassword ? '****' : '' });
     
-    // IMPORTANT: Use the hardcoded values we know work
+    // IMPORTANT: Use the hardcoded values we know work instead of form values
+    // This is a temporary fix to isolate if the issue is with form inputs
     const finalUsername = 'Soultribe';
     const finalPassword = 'Freesoul@99';
     
-    console.log('Will attempt login with:', { username: finalUsername, password: '****' });
+    console.log('Will attempt login with hardcoded credentials:', { username: finalUsername, password: '****' });
     
     // Input validation
     if (!finalUsername.trim()) {
@@ -86,6 +87,7 @@ const AdminLogin = () => {
     
     // Use a timeout to ensure the UI updates before login attempt
     setTimeout(() => {
+      // Using finalUsername and finalPassword (hardcoded values)
       const loginSuccess = login(finalUsername, finalPassword);
       console.log('Login result:', loginSuccess ? 'success' : 'failed');
       
