@@ -71,7 +71,6 @@ const UserDashboard: React.FC = () => {
       
       <DashboardContent
         user={currentUser}
-        transactions={transactions}
         isLoading={transactionsLoading}
         onRecharge={handleOpenRechargeDialog}
       />

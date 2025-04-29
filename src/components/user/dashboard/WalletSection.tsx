@@ -12,56 +12,17 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable } from '@/components/ui/data-table';
 import { ColumnDef } from '@tanstack/react-table';
+import useTransactions from '@/hooks/dashboard/useTransactions';
 
 interface WalletSectionProps {
   user: UserProfile | null;
 }
 
 const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
-  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
-  const [loading, setLoading] = useState(true);
   const [rechargeAmount, setRechargeAmount] = useState(50);
   const [openRechargeDialog, setOpenRechargeDialog] = useState(false);
   
-  useEffect(() => {
-    const fetchTransactions = async () => {
-      if (!user?.id) return;
-      
-      try {
-        const { data, error } = await supabase
-          .from('user_transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('date', { ascending: false });
-          
-        if (error) throw error;
-        
-        if (data) {
-          const formattedTransactions: UserTransaction[] = data.map(transaction => ({
-            id: transaction.id,
-            user_id: transaction.user_id,
-            amount: transaction.amount,
-            currency: transaction.currency || 'USD',
-            description: transaction.description || '',
-            date: transaction.date,
-            type: transaction.type,
-            status: 'completed',
-            created_at: transaction.date,
-            payment_id: '',
-            payment_method: 'default',
-            transaction_type: transaction.type
-          }));
-          setTransactions(formattedTransactions);
-        }
-      } catch (error) {
-        console.error('Error fetching transactions:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchTransactions();
-  }, [user]);
+  const { transactions, isLoading: loading, refreshTransactions } = useTransactions(user?.id);
 
   // Define the columns for the transaction table
   const columns: ColumnDef<UserTransaction>[] = [
