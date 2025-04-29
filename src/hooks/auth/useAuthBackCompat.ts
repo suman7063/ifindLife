@@ -11,7 +11,7 @@ export const useAuthBackCompat = () => {
   const userAuth = {
     currentUser: authContext.userProfile,
     loading: authContext.isLoading,
-    authLoading: authContext.isLoading, // Add this property for backward compatibility
+    authLoading: authContext.isLoading, // This property is required for backward compatibility
     isAuthenticated: authContext.isAuthenticated && authContext.role === 'user',
     login: authContext.login,
     logout: authContext.logout,
@@ -25,6 +25,7 @@ export const useAuthBackCompat = () => {
   const expertAuth = {
     currentExpert: authContext.expertProfile,
     loading: authContext.isLoading,
+    authLoading: authContext.isLoading, // Add this for backward compatibility as well
     isAuthenticated: authContext.isAuthenticated && authContext.role === 'expert',
     login: authContext.expertLogin,
     logout: authContext.logout,

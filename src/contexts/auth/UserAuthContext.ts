@@ -9,7 +9,7 @@ export interface UserAuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  authLoading: boolean; // Add this property for consistency
+  authLoading: boolean; // Required property for backward compatibility
   loading: boolean;
   profileNotFound: boolean;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;

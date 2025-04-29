@@ -52,10 +52,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updatePassword,
     ...expertInteractions,
     
-    // Add back compatibility properties
+    // Backward compatibility properties
     currentUser: authState.userProfile,
     currentExpert: authState.expertProfile,
-    sessionType
+    sessionType,
+    authLoading: authState.isLoading // Ensure authLoading is included for backward compatibility
   };
 
   return (

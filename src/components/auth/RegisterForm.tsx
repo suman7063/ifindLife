@@ -66,6 +66,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
     setIsSubmitting(true);
     
     try {
+      console.log("Attempting user registration with:", data.email);
       await onRegister({
         name: data.name,
         email: data.email,
