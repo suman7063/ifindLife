@@ -4,9 +4,11 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoadingScreen from './components/auth/LoadingScreen';
 
-// Lazy load pages for better performance
+// Import UserLogin directly instead of lazy loading it to fix the import issue
+import UserLogin from './pages/UserLogin';
+
+// Lazy load other pages for better performance
 const Index = lazy(() => import('./pages/Index'));
-const UserLogin = lazy(() => import('./pages/UserLogin'));
 const ExpertLogin = lazy(() => import('./pages/ExpertLogin'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));

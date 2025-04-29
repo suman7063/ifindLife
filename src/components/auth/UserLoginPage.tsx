@@ -35,13 +35,13 @@ const UserLoginPage = () => {
   useEffect(() => {
     if (isAuthenticated && role === 'user' && userProfile && !isLoading) {
       console.log('UserLoginPage: User is authenticated, redirecting to dashboard');
-      navigate('/user-dashboard', { replace: true });
+      navigate('/user-dashboard');
     }
     
     // Redirect to expert dashboard if authenticated as an expert
     if (isAuthenticated && role === 'expert' && !isLoading) {
       console.log('UserLoginPage: Expert is authenticated, redirecting to expert dashboard');
-      navigate('/expert-dashboard', { replace: true });
+      navigate('/expert-dashboard');
     }
   }, [isAuthenticated, role, userProfile, isLoading, navigate]);
   
