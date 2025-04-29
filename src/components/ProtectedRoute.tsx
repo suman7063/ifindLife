@@ -1,7 +1,8 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -12,9 +13,26 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children, 
   requiredRole 
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    console.log('ProtectedRoute check - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser);
+    
+    if (!isAuthenticated) {
+      console.log('User not authenticated, will redirect');
+      toast.error('Please log in to access this page');
+    }
+  }, [isAuthenticated, currentUser]);
 
   if (!isAuthenticated) {
+    console.log('ProtectedRoute redirecting to admin-login');
+    return <Navigate to="/admin-login" replace />;
+  }
+
+  // If a specific role is required, check it
+  if (requiredRole && currentUser?.role !== requiredRole) {
+    console.log(`Role ${requiredRole} required, but user has ${currentUser?.role}`);
     return <Navigate to="/admin-login" replace />;
   }
 

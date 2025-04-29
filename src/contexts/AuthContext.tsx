@@ -73,19 +73,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (username: string, password: string): boolean => {
     console.log('Login attempt for username:', username);
     
-    // Fixed credentials for admin access
+    // Fixed credentials for admin access 
     const expectedUsername = 'Soultribe';
     const expectedPassword = 'Freesoul@99';
     
+    // Debug log the received values
+    console.log('Login attempt details:');
+    console.log('- Received username:', JSON.stringify(username));
+    console.log('- Received password length:', password ? password.length : 0);
+    console.log('- Expected username:', JSON.stringify(expectedUsername));
+    console.log('- Expected password length:', expectedPassword.length);
+    
     // Normalize the username for case-insensitive comparison
-    const normalizedInputUsername = username.trim().toLowerCase();
+    const normalizedInputUsername = username ? username.trim().toLowerCase() : '';
     const normalizedExpectedUsername = expectedUsername.toLowerCase();
     
     // Username is case-insensitive, password is case-sensitive
     const usernameMatches = normalizedInputUsername === normalizedExpectedUsername;
     const passwordMatches = password === expectedPassword;
     
-    console.log('Username matches:', usernameMatches, 'Input:', normalizedInputUsername, 'Expected:', normalizedExpectedUsername);
+    console.log('Username matches:', usernameMatches);
     console.log('Password matches:', passwordMatches);
     
     if (usernameMatches && passwordMatches) {
@@ -109,7 +116,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error(`Username mismatch. Input: "${username}" (normalized: "${normalizedInputUsername}"), Expected: "${expectedUsername}" (normalized: "${normalizedExpectedUsername}")`);
       }
       if (!passwordMatches) {
-        console.error('Password mismatch. Input length:', password.length, 'Expected length:', expectedPassword.length);
+        console.error('Password mismatch. Input length:', password ? password.length : 0, 'Expected length:', expectedPassword.length);
+        // Log first character comparison to help debug (without revealing full password)
+        if (password && expectedPassword && password.length > 0 && expectedPassword.length > 0) {
+          console.error('First char matches:', password[0] === expectedPassword[0]);
+        }
       }
       return false;
     }

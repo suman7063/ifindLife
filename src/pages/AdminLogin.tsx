@@ -31,19 +31,29 @@ const AdminLogin = () => {
 
   // Reset error state after fields are changed
   useEffect(() => {
-    if (loginError) {
+    if (loginError && (username || password)) {
       setLoginError(null);
     }
-  }, [username, password]);
+  }, [username, password, loginError]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Attempting login with username:', username);
+    console.log('Login form submitted');
     
-    if (!username.trim() || !password) {
-      setLoginError('Username and password are required');
+    // Input validation
+    if (!username.trim()) {
+      setLoginError('Username is required');
       return;
     }
+    
+    if (!password) {
+      setLoginError('Password is required');
+      return;
+    }
+    
+    // Debug log to track exact values
+    console.log('Attempting login with username:', JSON.stringify(username));
+    console.log('Password length:', password.length);
     
     // Try to clear any existing sessions first
     try {
@@ -53,14 +63,17 @@ const AdminLogin = () => {
       console.error('Error clearing localStorage:', err);
     }
     
-    if (login(username, password)) {
+    const loginSuccess = login(username, password);
+    console.log('Login result:', loginSuccess ? 'success' : 'failed');
+    
+    if (loginSuccess) {
       console.log('Login successful, redirecting to admin panel');
       toast.success(`Welcome back, ${username}!`);
       navigate('/admin');
     } else {
       console.error('Login failed');
       setLoginError('Invalid username or password. Please verify your credentials are correct.');
-      toast.error('Invalid username or password. Remember credentials are case-sensitive.');
+      toast.error('Login failed. Please check your credentials and try again.');
     }
   };
 
