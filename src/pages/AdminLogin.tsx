@@ -9,12 +9,13 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AdminLogin = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [loginAttempted, setLoginAttempted] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
@@ -30,15 +31,19 @@ const AdminLogin = () => {
 
   // Reset error state after fields are changed
   useEffect(() => {
-    if (loginAttempted) {
-      setLoginAttempted(false);
+    if (loginError) {
+      setLoginError(null);
     }
   }, [username, password]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Attempting login with username:', username);
-    setLoginAttempted(true);
+    
+    if (!username.trim() || !password) {
+      setLoginError('Username and password are required');
+      return;
+    }
     
     // Try to clear any existing sessions first
     try {
@@ -54,6 +59,7 @@ const AdminLogin = () => {
       navigate('/admin');
     } else {
       console.error('Login failed');
+      setLoginError('Invalid username or password. Please verify your credentials are correct.');
       toast.error('Invalid username or password. Remember credentials are case-sensitive.');
     }
   };
@@ -72,6 +78,12 @@ const AdminLogin = () => {
               <ShieldAlert className="h-12 w-12 text-ifind-teal" />
             </div>
             <h1 className="text-2xl font-bold text-center mb-6">Admin Access</h1>
+            
+            {loginError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{loginError}</AlertDescription>
+              </Alert>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -106,7 +118,7 @@ const AdminLogin = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     className="bg-background"
-                    placeholder="Enter password (Freesoul@99)"
+                    placeholder="Enter password"
                   />
                   <button
                     type="button"

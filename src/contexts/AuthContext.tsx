@@ -45,7 +45,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Check for existing admin session on component mount
   useEffect(() => {
     try {
-      // This fix will ensure we're checking local storage properly
       const adminSession = localStorage.getItem('admin_session');
       const adminUsername = localStorage.getItem('admin_username');
       
@@ -74,12 +73,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const login = (username: string, password: string): boolean => {
     console.log('Login attempt for username:', username);
     
-    // Hard-coded credentials for admin access
+    // Fixed credentials for admin access
     const expectedUsername = 'Soultribe';
     const expectedPassword = 'Freesoul@99';
     
-    // Case insensitive username check, but case sensitive password check
-    const usernameMatches = username.toLowerCase() === expectedUsername.toLowerCase();
+    // Direct string comparison for both username and password
+    // Username is case-insensitive, password is case-sensitive
+    const usernameMatches = username.trim().toLowerCase() === expectedUsername.toLowerCase();
     const passwordMatches = password === expectedPassword;
     
     console.log('Username matches:', usernameMatches);
