@@ -1,12 +1,21 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, User, UserPlus, LogOut, BriefcaseBusiness, BookOpen, HeartPulse, HelpCircle } from "lucide-react";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Menu, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetTrigger,
+  SheetClose
+} from '@/components/ui/sheet';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { UserProfile } from '@/types/supabase';
-import { toast } from 'sonner';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface NavbarMobileMenuProps {
   isAuthenticated: boolean;
@@ -18,216 +27,213 @@ interface NavbarMobileMenuProps {
   isLoggingOut: boolean;
 }
 
-const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({ 
-  isAuthenticated, 
-  currentUser, 
+const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
+  isAuthenticated,
   hasExpertProfile,
   userLogout,
   expertLogout,
   sessionType,
-  isLoggingOut: parentIsLoggingOut
+  isLoggingOut
 }) => {
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const handleUserLogout = async () => {
-    if (isLoggingOut || parentIsLoggingOut) return;
-    
-    setIsLoggingOut(true);
-    setIsOpen(false);
-    
-    try {
-      console.log("NavbarMobileMenu: Initiating user logout...");
-      const success = await userLogout();
-      
-      if (!success) {
-        console.error("NavbarMobileMenu: User logout failed");
-        toast.error('Failed to log out as user. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error during user logout:', error);
-      toast.error('Failed to log out as user. Please try again.');
-    } finally {
-      setIsLoggingOut(false);
+  const handleLogout = async () => {
+    if (hasExpertProfile) {
+      await expertLogout();
+    } else {
+      await userLogout();
     }
+    setOpen(false);
   };
 
-  const handleExpertLogout = async () => {
-    if (isLoggingOut || parentIsLoggingOut) return;
-    
-    setIsLoggingOut(true);
-    setIsOpen(false);
-    
-    try {
-      console.log("NavbarMobileMenu: Initiating expert logout...");
-      const success = await expertLogout();
-      
-      if (!success) {
-        console.error("NavbarMobileMenu: Expert logout failed");
-        toast.error('Failed to log out as expert. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error during expert logout:', error);
-      toast.error('Failed to log out as expert. Please try again.');
-    } finally {
-      setIsLoggingOut(false);
+  // Create dashboard link based on user role
+  const getDashboardLink = () => {
+    if (hasExpertProfile) {
+      return "/expert-dashboard";
+    } else if (isAuthenticated && sessionType === 'user') {
+      return "/user-dashboard";
     }
+    return "/user-login";
   };
 
   return (
     <div className="md:hidden">
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <Menu className="h-5 w-5" />
+          <Button variant="ghost" className="px-2">
+            <Menu className="h-6 w-6" />
+            <span className="sr-only">Toggle menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-full sm:w-64">
-          <SheetHeader className="text-left">
-            <SheetTitle>Menu</SheetTitle>
-            <SheetDescription>
-              Navigate through iFindLife.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="grid gap-4 py-4">
-            <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/" onClick={() => setIsOpen(false)}>Home</Link>
-            </Button>
-            <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/about" onClick={() => setIsOpen(false)}>About</Link>
-            </Button>
-            <Button variant="ghost" className="justify-start" asChild>
-              <Link to="/experts" onClick={() => setIsOpen(false)}>Experts</Link>
-            </Button>
-            
-            <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="programs">
-                <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
-                  Programs
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="flex flex-col space-y-1 ml-4">
-                    <Link to="/programs-for-wellness-seekers" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Wellness Seekers
-                    </Link>
-                    <Link to="/programs-for-academic-institutes" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Academic Institutes
-                    </Link>
-                    <Link to="/programs-for-business" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Business
-                    </Link>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+        <SheetContent side="right" className="w-[300px] sm:w-[350px]">
+          <div className="flex flex-col h-full">
+            <div className="flex items-center justify-between border-b pb-4">
+              <Link to="/" className="flex items-center" onClick={() => setOpen(false)}>
+                <img 
+                  src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
+                  alt="iFindLife" 
+                  className="h-8 transform scale-150 origin-left" 
+                />
+              </Link>
+              <SheetClose asChild>
+                <Button variant="ghost" size="icon">
+                  <X className="h-5 w-5" />
+                  <span className="sr-only">Close menu</span>
+                </Button>
+              </SheetClose>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-6 flex-1 overflow-y-auto">
+              <SheetClose asChild>
+                <Button variant="ghost" asChild className="justify-start">
+                  <Link to="/">Home</Link>
+                </Button>
+              </SheetClose>
               
-              <AccordionItem value="services">
-                <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
-                  Services
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="flex flex-col space-y-1 ml-4">
-                    <Link to="/services" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded font-medium">
-                      All Services
-                    </Link>
-                    <Link to="/services/therapy-sessions" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Therapy Sessions
-                    </Link>
-                    <Link to="/services/guided-meditations" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Guided Meditations
-                    </Link>
-                    <Link to="/services/mindful-listening" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Mindful Listening
-                    </Link>
-                    <Link to="/services/offline-retreats" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Offline Retreats
-                    </Link>
-                    <Link to="/services/life-coaching" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Life Coaching
-                    </Link>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+              <SheetClose asChild>
+                <Button variant="ghost" asChild className="justify-start">
+                  <Link to="/about">About</Link>
+                </Button>
+              </SheetClose>
               
-              <AccordionItem value="support">
-                <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
-                  Support
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="flex flex-col space-y-1 ml-4">
-                    <Link to="/contact" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      Contact Us
-                    </Link>
-                    <Link to="/faqs" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      FAQs
-                    </Link>
-                    <Link to="/blog" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                      <BookOpen className="h-4 w-4 mr-1 inline-block" /> Blog
-                    </Link>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            </Accordion>
-            
-            {hasExpertProfile ? (
-              <>
-                <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/expert-dashboard" onClick={() => setIsOpen(false)}>
-                    <BriefcaseBusiness className="h-4 w-4 mr-1" /> Expert Dashboard
-                  </Link>
+              <SheetClose asChild>
+                <Button variant="ghost" asChild className="justify-start">
+                  <Link to="/experts">Experts</Link>
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start text-red-500" 
-                  onClick={handleExpertLogout}
-                  disabled={isLoggingOut || parentIsLoggingOut}
-                >
-                  <LogOut className="h-4 w-4 mr-1" /> 
-                  {isLoggingOut || parentIsLoggingOut ? 'Logging out...' : 'Logout as Expert'}
-                </Button>
-              </>
-            ) : isAuthenticated ? (
-              <>
-                <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/user-dashboard" onClick={() => setIsOpen(false)}>
-                    <User className="h-4 w-4 mr-1" /> Dashboard
-                  </Link>
-                </Button>
-                <Button variant="ghost" className="justify-start" asChild>
-                  <Link to="/referrals" onClick={() => setIsOpen(false)}>
-                    <User className="h-4 w-4 mr-1" /> My Referrals
-                  </Link>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="justify-start text-red-500" 
-                  onClick={handleUserLogout}
-                  disabled={isLoggingOut || parentIsLoggingOut}
-                >
-                  <LogOut className="h-4 w-4 mr-1" /> 
-                  {isLoggingOut || parentIsLoggingOut ? 'Logging out...' : 'Logout as User'}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Accordion type="single" collapsible className="w-full">
-                  <AccordionItem value="login">
-                    <AccordionTrigger className="py-2 px-3 hover:bg-accent hover:text-accent-foreground hover:no-underline">
-                      Login
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="flex flex-col space-y-1 ml-4">
-                        <Link to="/user-login" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                          <User className="h-4 w-4 mr-1 inline-block" /> User Login
+              </SheetClose>
+
+              {/* Programs Accordion */}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="programs">
+                  <AccordionTrigger className="py-2 px-4 hover:no-underline hover:bg-accent rounded-md">
+                    Programs
+                  </AccordionTrigger>
+                  <AccordionContent className="pl-4">
+                    <div className="flex flex-col gap-1 py-1">
+                      <SheetClose asChild>
+                        <Link to="/programs-for-wellness-seekers" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Wellness Seekers
                         </Link>
-                        <Link to="/expert-login" onClick={() => setIsOpen(false)} className="text-sm py-2 px-3 hover:bg-accent hover:text-accent-foreground rounded">
-                          <BriefcaseBusiness className="h-4 w-4 mr-1 inline-block" /> Expert Login
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/programs-for-academic-institutes" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Academic Institutes
                         </Link>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-              </>
-            )}
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/programs-for-business" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Business
+                        </Link>
+                      </SheetClose>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Services Accordion */}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="services">
+                  <AccordionTrigger className="py-2 px-4 hover:no-underline hover:bg-accent rounded-md">
+                    Services
+                  </AccordionTrigger>
+                  <AccordionContent className="pl-4">
+                    <div className="flex flex-col gap-1 py-1">
+                      <SheetClose asChild>
+                        <Link to="/services" className="py-2 px-4 text-sm hover:bg-accent rounded-md font-medium">
+                          All Services
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/services/therapy-sessions" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Therapy Sessions
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/services/guided-meditations" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Guided Meditations
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/services/mindful-listening" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Mindful Listening
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/services/offline-retreats" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Offline Retreats
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/services/life-coaching" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Life Coaching
+                        </Link>
+                      </SheetClose>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+
+              {/* Support Accordion */}
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="support">
+                  <AccordionTrigger className="py-2 px-4 hover:no-underline hover:bg-accent rounded-md">
+                    Support
+                  </AccordionTrigger>
+                  <AccordionContent className="pl-4">
+                    <div className="flex flex-col gap-1 py-1">
+                      <SheetClose asChild>
+                        <Link to="/contact" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Contact Us
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/faqs" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          FAQs
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/blog" className="py-2 px-4 text-sm hover:bg-accent rounded-md">
+                          Blog
+                        </Link>
+                      </SheetClose>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+
+            <div className="border-t pt-4 mt-auto">
+              {isAuthenticated || hasExpertProfile ? (
+                <div className="flex flex-col gap-2">
+                  <SheetClose asChild>
+                    <Button variant="outline" asChild className="w-full">
+                      <Link to={getDashboardLink()}>Dashboard</Link>
+                    </Button>
+                  </SheetClose>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full" 
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    {isLoggingOut ? 'Logging out...' : 'Log out'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <SheetClose asChild>
+                    <Button variant="outline" asChild className="w-full">
+                      <Link to="/user-login">User Login</Link>
+                    </Button>
+                  </SheetClose>
+                  <SheetClose asChild>
+                    <Button variant="default" asChild className="w-full">
+                      <Link to="/expert-login">Expert Login</Link>
+                    </Button>
+                  </SheetClose>
+                </div>
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>

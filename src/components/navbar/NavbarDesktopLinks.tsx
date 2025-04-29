@@ -1,9 +1,19 @@
-import React from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import NavbarUserMenu from './NavbarUserMenu';
 import NavbarExpertMenu from './NavbarExpertMenu';
 import { UserProfile } from '@/types/supabase';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
+import { cn } from '@/lib/utils';
 
 interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
@@ -14,75 +24,6 @@ interface NavbarDesktopLinksProps {
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   isLoggingOut: boolean;
 }
-
-interface NavbarDesktopLinksDropdownProps {
-  title: string;
-  isAuthenticated?: boolean;
-  hasExpertProfile?: boolean;
-}
-
-const NavbarDesktopLinksDropdown: React.FC<NavbarDesktopLinksDropdownProps> = ({ 
-  title, 
-  isAuthenticated = false,
-  hasExpertProfile = false
-}) => {
-  return (
-    <div className="group relative">
-      <Button variant="ghost" className="flex items-center gap-1 peer">
-        {title}
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-1 h-4 w-4">
-          <path d="m6 9 6 6 6-6"/>
-        </svg>
-      </Button>
-      <div className="absolute left-0 top-full z-50 mt-1 hidden w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 group-hover:block peer-hover:block hover:block">
-        <div className="py-1">
-          {title === "Programs" && (
-            <>
-              <Link to="/programs-for-wellness-seekers" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Wellness Seekers</Link>
-              <Link to="/programs-for-academic-institutes" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Academic Institutes</Link>
-              <Link to="/programs-for-business" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Business</Link>
-            </>
-          )}
-          {title === "Services" && (
-            <>
-              <Link to="/services" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-medium">All Services</Link>
-              <Link to="/services/therapy-sessions" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Therapy Sessions</Link>
-              <Link to="/services/guided-meditations" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Guided Meditations</Link>
-              <Link to="/services/mindful-listening" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Mindful Listening</Link>
-              <Link to="/services/offline-retreats" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Offline Retreats</Link>
-              <Link to="/services/life-coaching" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Life Coaching</Link>
-            </>
-          )}
-          {title === "Support" && (
-            <>
-              <Link to="/contact" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Contact Us</Link>
-              <Link to="/faqs" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">FAQs</Link>
-              <Link to="/blog" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Blog</Link>
-            </>
-          )}
-          {title === "Login" && (
-            <>
-              <Link 
-                to="/user-login" 
-                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${hasExpertProfile ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
-                onClick={(e) => hasExpertProfile && e.preventDefault()}
-              >
-                User Login
-              </Link>
-              <Link 
-                to="/expert-login" 
-                className={`block px-4 py-2 text-sm hover:bg-gray-100 ${isAuthenticated ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700'}`}
-                onClick={(e) => isAuthenticated && e.preventDefault()}
-              >
-                Expert Login
-              </Link>
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   isAuthenticated,
@@ -104,22 +45,221 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       <Button variant="ghost" asChild>
         <Link to="/experts">Experts</Link>
       </Button>
-      <NavbarDesktopLinksDropdown title="Programs" />
-      <NavbarDesktopLinksDropdown title="Services" />
-      <NavbarDesktopLinksDropdown title="Support" />
       
+      <NavigationMenu>
+        <NavigationMenuList>
+          {/* Programs Dropdown */}
+          <NavigationMenuItem>
+            <NavigationMenuTrigger>Programs</NavigationMenuTrigger>
+            <NavigationMenuContent className="min-w-[220px]">
+              <ul className="grid w-full gap-1 p-2">
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/programs-for-wellness-seekers" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Wellness Seekers
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/programs-for-academic-institutes" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Academic Institutes
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/programs-for-business" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Business
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+
+          {/* Services Dropdown */}
+          <NavigationMenuItem>
+            <NavigationMenuTrigger>Services</NavigationMenuTrigger>
+            <NavigationMenuContent className="min-w-[220px]">
+              <ul className="grid w-full gap-1 p-2">
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/services" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium"
+                    >
+                      All Services
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/services/therapy-sessions" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Therapy Sessions
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/services/guided-meditations" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Guided Meditations
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/services/mindful-listening" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Mindful Listening
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/services/offline-retreats" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Offline Retreats
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/services/life-coaching" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Life Coaching
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+
+          {/* Support Dropdown */}
+          <NavigationMenuItem>
+            <NavigationMenuTrigger>Support</NavigationMenuTrigger>
+            <NavigationMenuContent className="min-w-[220px]">
+              <ul className="grid w-full gap-1 p-2">
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/contact" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Contact Us
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/faqs" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      FAQs
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+                <li>
+                  <NavigationMenuLink asChild>
+                    <Link 
+                      to="/blog" 
+                      className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                    >
+                      Blog
+                    </Link>
+                  </NavigationMenuLink>
+                </li>
+              </ul>
+            </NavigationMenuContent>
+          </NavigationMenuItem>
+        </NavigationMenuList>
+      </NavigationMenu>
+      
+      {/* Login or User Menu */}
       {hasExpertProfile ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
       ) : isAuthenticated && sessionType === 'user' ? (
         <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
       ) : (
-        <NavbarDesktopLinksDropdown 
-          title="Login" 
+        <LoginDropdown 
           isAuthenticated={isAuthenticated} 
           hasExpertProfile={hasExpertProfile} 
         />
       )}
     </div>
+  );
+};
+
+// Extracted Login dropdown component
+const LoginDropdown: React.FC<{ 
+  isAuthenticated: boolean; 
+  hasExpertProfile: boolean; 
+}> = ({ 
+  isAuthenticated, 
+  hasExpertProfile 
+}) => {
+  return (
+    <NavigationMenu>
+      <NavigationMenuList>
+        <NavigationMenuItem>
+          <NavigationMenuTrigger>Login</NavigationMenuTrigger>
+          <NavigationMenuContent className="min-w-[220px]">
+            <ul className="grid w-full gap-1 p-2">
+              <li>
+                <NavigationMenuLink 
+                  asChild
+                  className={cn(
+                    "block w-full p-2 text-sm rounded-md",
+                    hasExpertProfile 
+                      ? "text-muted cursor-not-allowed" 
+                      : "hover:bg-accent"
+                  )}
+                  onClick={(e) => hasExpertProfile && e.preventDefault()}
+                >
+                  <Link to="/user-login">User Login</Link>
+                </NavigationMenuLink>
+              </li>
+              <li>
+                <NavigationMenuLink 
+                  asChild
+                  className={cn(
+                    "block w-full p-2 text-sm rounded-md",
+                    isAuthenticated 
+                      ? "text-muted cursor-not-allowed" 
+                      : "hover:bg-accent"
+                  )}
+                  onClick={(e) => isAuthenticated && e.preventDefault()}
+                >
+                  <Link to="/expert-login">Expert Login</Link>
+                </NavigationMenuLink>
+              </li>
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
+      </NavigationMenuList>
+    </NavigationMenu>
   );
 };
 
