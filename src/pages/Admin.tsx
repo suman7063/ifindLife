@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/admin-auth';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AdminHeader from '@/components/admin/AdminHeader';

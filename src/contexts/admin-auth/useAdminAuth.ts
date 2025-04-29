@@ -1,73 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+
 import { toast } from 'sonner';
+import { AdminUser } from './types';
 
-interface AdminUser {
-  username: string;
-  role: 'admin' | 'superadmin';
-}
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
+interface AdminAuthProps {
   adminUsers: AdminUser[];
-  addAdmin: (username: string, password: string) => boolean;
-  removeAdmin: (username: string) => boolean;
-  isSuperAdmin: boolean;
+  setAdminUsers: (users: AdminUser[]) => void;
+  setIsAuthenticated: (value: boolean) => void;
+  setCurrentUser: (user: AdminUser | null) => void;
   currentUser: AdminUser | null;
 }
 
-const defaultAdminUsers: AdminUser[] = [
-  { username: 'Soultribe', role: 'superadmin' }
-];
-
-const initialAuthContext: AuthContextType = {
-  isAuthenticated: false,
-  login: () => false,
-  logout: () => {},
-  adminUsers: defaultAdminUsers,
-  addAdmin: () => false,
-  removeAdmin: () => false,
-  isSuperAdmin: false,
-  currentUser: null
-};
-
-const AuthContext = createContext<AuthContextType>(initialAuthContext);
-
-export const useAuth = () => useContext(AuthContext);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
-  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  
-  // Check for existing admin session on component mount
-  useEffect(() => {
-    try {
-      console.log('AuthProvider: Checking for existing session');
-      const adminSession = localStorage.getItem('admin_session');
-      const adminUsername = localStorage.getItem('admin_username');
-      
-      console.log('AuthProvider session check:', { adminSession, adminUsername });
-      
-      if (adminSession === 'true' && adminUsername) {
-        // Find the user in adminUsers
-        const foundUser = adminUsers.find(user => user.username.toLowerCase() === adminUsername.toLowerCase());
-        
-        if (foundUser) {
-          console.log('AuthProvider: Found authenticated user:', foundUser);
-          setIsAuthenticated(true);
-          setCurrentUser(foundUser);
-        } else {
-          console.log('AuthProvider: No matching user found, clearing session');
-          localStorage.removeItem('admin_session');
-          localStorage.removeItem('admin_username');
-        }
-      }
-    } catch (err) {
-      console.error('Error checking admin session:', err);
-    }
-  }, []);
+export const useAdminAuth = ({
+  adminUsers,
+  setAdminUsers,
+  setIsAuthenticated,
+  setCurrentUser,
+  currentUser
+}: AdminAuthProps) => {
 
   // Simple admin authentication with enhanced debugging and FIXED PASSWORD COMPARISON
   const login = (username: string, password: string): boolean => {
@@ -206,21 +155,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAdminUsers(prev => prev.filter(user => user.username !== username));
     return true;
   };
-  
-  const isSuperAdmin = currentUser?.role === 'superadmin';
 
-  return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated,
-      login,
-      logout,
-      adminUsers,
-      addAdmin,
-      removeAdmin,
-      isSuperAdmin,
-      currentUser
-    }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return {
+    login,
+    logout,
+    addAdmin,
+    removeAdmin
+  };
 };
