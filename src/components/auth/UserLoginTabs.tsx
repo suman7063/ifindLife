@@ -14,7 +14,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   const [activeTab, setActiveTab] = useState('login');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Use the unified auth context for consistency
+  // Use the unified auth context
   const auth = useAuth();
   
   const handleLogin = async (email: string, password: string) => {
@@ -62,6 +62,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
         toast.success('Registration successful! Please check your email for verification.');
         setActiveTab('login');
       }
+      return success;
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || 'Registration failed. Please try again.');

@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import UserLoginPage from '@/components/auth/UserLoginPage';
 
 const UserLogin: React.FC = () => {
+  console.log("Rendering UserLogin page");
   return (
     <>
       <Navbar />
