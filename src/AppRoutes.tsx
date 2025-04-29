@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
@@ -72,15 +73,22 @@ const AppRoutes: React.FC = () => {
         <Route path="/contact" element={<Contact />} />
         <Route path="/faqs" element={<FAQs />} />
 
-        {/* User Protected Routes - ensure they require user role */}
-        <Route path="/user-dashboard" element={
+        {/* User Dashboard Routes */}
+        <Route path="/user-dashboard/*" element={
+          <ProtectedRoute allowedRoles={['user']}>
+            <UserDashboard />
+          </ProtectedRoute>
+        } />
+
+        {/* Legacy User Routes - Redirect to new dashboard */}
+        <Route path="/profile" element={
           <ProtectedRoute allowedRoles={['user']}>
             <UserDashboard />
           </ProtectedRoute>
         } />
         <Route path="/referrals" element={
           <ProtectedRoute allowedRoles={['user']}>
-            <UserReferrals />
+            <UserDashboard />
           </ProtectedRoute>
         } />
 
