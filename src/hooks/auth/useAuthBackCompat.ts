@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { NewReview, NewReport } from '@/types/supabase/tables';
 
@@ -6,6 +7,30 @@ import { NewReview, NewReport } from '@/types/supabase/tables';
  */
 export const useAuthBackCompat = () => {
   const authContext = useAuth();
+  
+  // Create an adapter for the addReview function
+  const adaptedAddReview = async (review: NewReview): Promise<boolean> => {
+    if (authContext.addReview && review) {
+      return authContext.addReview(
+        review.expertId.toString(),
+        review.rating,
+        review.comment || ''
+      );
+    }
+    return false;
+  };
+  
+  // Create an adapter for the reportExpert function
+  const adaptedReportExpert = async (report: NewReport): Promise<boolean> => {
+    if (authContext.reportExpert && report) {
+      return authContext.reportExpert(
+        report.expertId.toString(),
+        report.reason,
+        report.details || ''
+      );
+    }
+    return false;
+  };
   
   // Create a compatible interface for the old user auth hook
   const userAuth = {
@@ -19,29 +44,8 @@ export const useAuthBackCompat = () => {
     resetPassword: authContext.resetPassword,
     updateProfile: authContext.updateUserProfile,
     updatePassword: authContext.updatePassword,
-    // Adapt addReview to match the expected signature of the old interface
-    addReview: async (review: NewReview): Promise<boolean> => {
-      if (authContext.addReview && review) {
-        return authContext.addReview(
-          review.expertId.toString(),
-          review.rating,
-          review.comment || ''
-        );
-      }
-      return false;
-    },
-    // Adapt reportExpert to match the expected signature of the old interface
-    reportExpert: async (report: NewReport): Promise<boolean> => {
-      if (authContext.reportExpert && report) {
-        return authContext.reportExpert(
-          report.expertId.toString(),
-          report.reason,
-          report.details || ''
-        );
-      }
-      return false;
-    },
-    // Other methods with proper conversion
+    addReview: adaptedAddReview,
+    reportExpert: adaptedReportExpert,
     hasTakenServiceFrom: async (expertId: string | number) => {
       return authContext.hasTakenServiceFrom ? 
         await authContext.hasTakenServiceFrom(expertId.toString()) : false;
@@ -52,6 +56,7 @@ export const useAuthBackCompat = () => {
     removeFromFavorites: async () => false,
     rechargeWallet: async () => false,
     updateProfilePicture: async () => null,
+    user: authContext.user,
   };
   
   // Create a compatible interface for the old expert auth hook

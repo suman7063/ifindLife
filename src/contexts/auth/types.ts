@@ -1,6 +1,7 @@
 
 import { Session, User } from '@supabase/supabase-js';
 import { UserProfile, ExpertProfile } from '@/types/supabase';
+import { Review, Report, NewReview, NewReport } from '@/types/supabase/tables';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 
@@ -43,12 +44,19 @@ export interface AuthContextType extends AuthState {
   // Role checking
   checkUserRole: () => Promise<UserRole>;
   
-  // Expert interactions - Update the addReview signature to match implementation
+  // Expert interactions
   addToFavorites?: (expertId: number) => Promise<boolean>;
   removeFromFavorites?: (expertId: number) => Promise<boolean>;
   rechargeWallet?: (amount: number) => Promise<boolean>;
-  addReview?: (expertId: string, rating: number, comment: string) => Promise<boolean>;
-  reportExpert?: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  
+  // Update review function signature to support both formats
+  // This allows both direct parameters and object parameter usage
+  addReview?: ((expertId: string, rating: number, comment: string) => Promise<boolean>) & 
+              ((review: NewReview) => Promise<boolean>);
+  
+  reportExpert?: ((expertId: string, reason: string, details: string) => Promise<boolean>) & 
+                 ((report: NewReport) => Promise<boolean>);
+                 
   hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
   getExpertShareLink?: (expertId: string | number) => string; 
   getReferralLink?: () => string | null;
