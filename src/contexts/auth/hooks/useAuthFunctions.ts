@@ -65,17 +65,24 @@ export const useAuthFunctions = (
     try {
       setAuthState((prev) => ({ ...prev, isLoading: true }));
       
+      console.log("Starting signup with:", { email, userData, hasReferral: !!referralCode });
+      
+      // Prepare metadata for signup
+      const metadata = {
+        name: userData.name,
+        phone: userData.phone,
+        country: userData.country,
+        city: userData.city,
+        referralCode,
+      };
+      
+      console.log("Signup metadata:", metadata);
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            name: userData.name,
-            phone: userData.phone,
-            country: userData.country,
-            city: userData.city,
-            referralCode,
-          },
+          data: metadata,
           emailRedirectTo: `${window.location.origin}/login?verified=true`,
         }
       });
@@ -87,7 +94,16 @@ export const useAuthFunctions = (
         return false;
       }
 
+      if (!data.user) {
+        console.error("Signup failed: No user returned");
+        toast.error("Signup failed. Please try again.");
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      console.log("Signup successful, user created:", data.user.id);
       toast.success("Signup successful! Please check your email for verification.");
+      
       setAuthState((prev) => ({ ...prev, isLoading: false }));
       return true;
     } catch (error: any) {

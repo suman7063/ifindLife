@@ -1,9 +1,11 @@
+
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginTab from './LoginTab';
 import RegisterTab from './RegisterTab';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { ReferralSettings } from '@/types/supabase';
+import { toast } from 'sonner';
 
 interface UserLoginTabsProps {
   onLogin?: (email: string, password: string) => Promise<boolean>;
@@ -17,11 +19,11 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [captchaVerified, setCaptchaVerified] = useState(false);
-  const { signup } = useAuth(); // Using signup instead of register
+  const { signup } = useAuth();
   
   // Mock referral settings for the RegisterTab
   const referralSettings: ReferralSettings | null = {
-    id: '1', // Added the required id property
+    id: '1',
     referrer_reward: 10,
     referred_reward: 5,
     active: false,
@@ -73,27 +75,32 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     setRegisterError(null);
     
     try {
-      if (signup) {
-        const success = await signup(
-          userData.email, 
-          userData.password, 
-          {
-            name: userData.name,
-            phone: userData.phone,
-            country: userData.country,
-            city: userData.city
-          }, 
-          userData.referralCode
-        );
-        
-        if (success) {
-          // Registration successful, switch to login tab
-          setActiveTab('login');
-        } else {
-          setRegisterError("Registration failed. Please try again.");
-        }
+      if (!signup) {
+        setRegisterError("Registration functionality is not available");
+        console.error("Signup function is not available");
+        return;
+      }
+      
+      console.log("Attempting to register user:", userData.email);
+      
+      const success = await signup(
+        userData.email, 
+        userData.password, 
+        {
+          name: userData.name,
+          phone: userData.phone,
+          country: userData.country,
+          city: userData.city || ""
+        }, 
+        userData.referralCode
+      );
+      
+      if (success) {
+        toast.success("Registration successful! Please check your email for verification.");
+        // Registration successful, switch to login tab
+        setActiveTab('login');
       } else {
-        setRegisterError("Registration function not available");
+        setRegisterError("Registration failed. Please try again.");
       }
     } catch (error: any) {
       console.error("Registration error:", error);

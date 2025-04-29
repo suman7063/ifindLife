@@ -1,46 +1,39 @@
 
-import { useContext } from 'react';
-import { AuthContext } from '@/contexts/auth/AuthContext';
-import { useSupabaseAuth } from '../useSupabaseAuth';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 /**
- * Compatibility layer to provide backward compatibility with older components
- * that expect the old auth pattern
+ * Provides backward compatibility with the old auth hooks
  */
 export const useAuthBackCompat = () => {
-  const authContext = useContext(AuthContext);
-  const supabaseAuth = useSupabaseAuth();
+  const authContext = useAuth();
   
-  // Create a user auth-compatible object from the unified auth system
+  // Create a compatible interface for the old user auth hook
   const userAuth = {
-    currentUser: authContext?.userProfile || null,
-    isAuthenticated: authContext?.isAuthenticated && authContext.role === 'user',
-    loading: authContext?.isLoading || false,
-    authLoading: authContext?.isLoading || false,
-    initialized: !authContext?.isLoading,
-    user: authContext?.user || null,
-    login: authContext?.login || supabaseAuth.login,
-    logout: authContext?.logout || supabaseAuth.logout,
-    signup: authContext?.signup || supabaseAuth.signup,
-    resetPassword: authContext?.resetPassword || supabaseAuth.resetPassword,
-    updatePassword: authContext?.updatePassword || supabaseAuth.updatePassword,
-    error: null
+    currentUser: authContext.userProfile,
+    loading: authContext.isLoading,
+    isAuthenticated: authContext.isAuthenticated && authContext.role === 'user',
+    login: authContext.login,
+    logout: authContext.logout,
+    signup: authContext.signup,
+    resetPassword: authContext.resetPassword,
+    updateProfile: authContext.updateUserProfile,
+    updatePassword: authContext.updatePassword,
   };
   
-  // Create an expert auth-compatible object from the unified auth system
+  // Create a compatible interface for the old expert auth hook
   const expertAuth = {
-    currentExpert: authContext?.expertProfile || null,
-    isAuthenticated: authContext?.isAuthenticated && authContext.role === 'expert',
-    loading: authContext?.isLoading || false,
-    authLoading: authContext?.isLoading || false,
-    initialized: !authContext?.isLoading,
-    user: authContext?.user || null,
-    login: authContext?.expertLogin || supabaseAuth.login,
-    logout: authContext?.logout || supabaseAuth.logout,
-    register: authContext?.expertSignup || supabaseAuth.signup,
-    updateProfile: authContext?.updateExpertProfile || (async () => false),
-    error: null
+    currentExpert: authContext.expertProfile,
+    loading: authContext.isLoading,
+    isAuthenticated: authContext.isAuthenticated && authContext.role === 'expert',
+    login: authContext.expertLogin,
+    logout: authContext.logout,
+    signup: authContext.expertSignup,
+    updateProfile: authContext.updateExpertProfile,
+    initialized: !authContext.isLoading,
   };
   
-  return { userAuth, expertAuth };
+  return {
+    userAuth,
+    expertAuth
+  };
 };

@@ -50,7 +50,12 @@ export const useAuthState = () => {
           ...prev,
           isLoading: false,
         }));
+        return;
       }
+      
+      // If session exists, fetch user data
+      console.log("Session exists, fetching user data for:", session.user.id);
+      fetchUserData(session.user.id);
     });
 
     return () => {

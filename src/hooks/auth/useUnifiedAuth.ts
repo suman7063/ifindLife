@@ -1,102 +1,94 @@
 
-import { useState, useCallback } from 'react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { toast } from 'sonner';
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const useUnifiedAuth = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const { logout: supabaseLogout } = useSupabaseAuth();
-  const navigate = useNavigate();
-
-  const userLogout = useCallback(async (): Promise<boolean> => {
-    if (isLoggingOut) return false;
-    
-    setIsLoggingOut(true);
+  
+  /**
+   * Logs out a user account only
+   */
+  const userLogout = async (): Promise<boolean> => {
     try {
-      console.log("Unified Auth: Starting user logout process...");
+      setIsLoggingOut(true);
       
-      const success = await supabaseLogout();
+      const { error } = await supabase.auth.signOut();
       
-      if (success) {
-        toast.success('Successfully logged out');
-        navigate('/');
-        return true;
-      } else {
-        toast.error('Failed to log out. Please try again.');
+      if (error) {
+        console.error("User logout error:", error);
+        toast.error(error.message);
         return false;
       }
-    } catch (error) {
-      console.error('Error during logout:', error);
-      toast.error('Failed to log out. Please try again later.');
+      
+      toast.success("Logged out successfully");
+      return true;
+    } catch (error: any) {
+      console.error("User logout error:", error);
+      toast.error(error.message || "An error occurred during logout");
       return false;
     } finally {
       setIsLoggingOut(false);
     }
-  }, [isLoggingOut, supabaseLogout, navigate]);
-
-  const expertLogout = useCallback(async (): Promise<boolean> => {
-    if (isLoggingOut) return false;
-    
-    setIsLoggingOut(true);
+  };
+  
+  /**
+   * Logs out an expert account only
+   */
+  const expertLogout = async (): Promise<boolean> => {
     try {
-      console.log("Unified Auth: Starting expert logout process...");
+      setIsLoggingOut(true);
       
-      // First check if there's an expert profile
-      const { data: expertData } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .maybeSingle();
+      const { error } = await supabase.auth.signOut();
       
-      const success = await supabaseLogout();
-      
-      if (success) {
-        toast.success('Successfully logged out from expert account');
-        navigate('/');
-        return true;
-      } else {
-        toast.error('Failed to log out. Please try again.');
+      if (error) {
+        console.error("Expert logout error:", error);
+        toast.error(error.message);
         return false;
       }
-    } catch (error) {
-      console.error('Error during expert logout:', error);
-      toast.error('Failed to log out. Please try again later.');
+      
+      toast.success("Logged out successfully");
+      return true;
+    } catch (error: any) {
+      console.error("Expert logout error:", error);
+      toast.error(error.message || "An error occurred during logout");
       return false;
     } finally {
       setIsLoggingOut(false);
     }
-  }, [isLoggingOut, supabaseLogout, navigate]);
-
-  const fullLogout = useCallback(async (): Promise<boolean> => {
-    if (isLoggingOut) return false;
-    
-    setIsLoggingOut(true);
+  };
+  
+  /**
+   * Logs out all accounts (both user and expert)
+   */
+  const fullLogout = async (): Promise<boolean> => {
     try {
-      console.log("Unified Auth: Starting full logout process...");
+      setIsLoggingOut(true);
       
       const { error } = await supabase.auth.signOut({
         scope: 'global'
       });
       
       if (error) {
-        console.error('Error during full logout:', error);
-        toast.error('Failed to log out completely. Please try again.');
+        console.error("Full logout error:", error);
+        toast.error(error.message);
         return false;
       }
       
-      toast.success('Successfully logged out from all accounts');
-      navigate('/');
+      localStorage.removeItem('expertProfile');
+      localStorage.removeItem('userProfile');
+      
+      toast.success("Logged out of all accounts");
       return true;
-    } catch (error) {
-      console.error('Error during full logout:', error);
-      toast.error('Failed to log out. Please try again later.');
+    } catch (error: any) {
+      console.error("Full logout error:", error);
+      toast.error(error.message || "An error occurred during logout");
       return false;
     } finally {
       setIsLoggingOut(false);
     }
-  }, [isLoggingOut, navigate]);
-
+  };
+  
   return {
     userLogout,
     expertLogout,

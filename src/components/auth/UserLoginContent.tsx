@@ -150,11 +150,9 @@ const UserLoginContent: React.FC<UserLoginContentProps> = ({ children }) => {
       const success = await login(email, password);
       
       if (success) {
-        // Login was successful, the redirect should happen automatically
-        // via the useEffect above monitoring isAuthenticated
+        toast.success("Login successful!");
         return true;
       } else {
-        // Login failed
         toast.error("Login failed. Please check your credentials.");
         return false;
       }
