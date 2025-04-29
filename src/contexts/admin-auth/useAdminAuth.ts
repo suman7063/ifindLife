@@ -26,18 +26,38 @@ export const useAdminAuth = ({
     const ADMIN_USERNAME = 'Soultribe';
     const ADMIN_PASSWORD = 'Freesoul@99';
     
-    // Log the input and expected values (masking sensitive data)
+    // Log the input and expected values
     console.log(`Input username: "${username}"`);
     console.log(`Expected username: "${ADMIN_USERNAME}"`);
-    console.log(`Input password length: ${password.length}`);
-    console.log(`Expected password length: ${ADMIN_PASSWORD.length}`);
+    console.log(`Input password: "${password}"`);
+    console.log(`Expected password: "${ADMIN_PASSWORD}"`);
     
-    // Direct comparison without any transformations
+    // Direct comparison using strict equality
     const usernameMatches = username === ADMIN_USERNAME;
     const passwordMatches = password === ADMIN_PASSWORD;
     
     console.log(`Username exact match: ${usernameMatches}`);
     console.log(`Password exact match: ${passwordMatches}`);
+    
+    // Debug character by character
+    if (!passwordMatches) {
+      console.log('Password mismatch - character by character check:');
+      const maxLen = Math.max(password.length, ADMIN_PASSWORD.length);
+      
+      for (let i = 0; i < maxLen; i++) {
+        const inputChar = i < password.length ? password[i] : '[missing]';
+        const expectedChar = i < ADMIN_PASSWORD.length ? ADMIN_PASSWORD[i] : '[missing]';
+        const matches = inputChar === expectedChar;
+        
+        console.log(`Position ${i}: Input '${inputChar}' vs Expected '${expectedChar}' - ${matches ? 'Match' : 'MISMATCH'}`);
+        
+        // Show character codes for deeper debugging
+        if (!matches) {
+          console.log(`  Input char code: ${inputChar !== '[missing]' ? inputChar.charCodeAt(0) : 'N/A'}`);
+          console.log(`  Expected char code: ${expectedChar !== '[missing]' ? expectedChar.charCodeAt(0) : 'N/A'}`);
+        }
+      }
+    }
     
     // If authentication passes, update state and localStorage
     if (usernameMatches && passwordMatches) {
@@ -59,20 +79,6 @@ export const useAdminAuth = ({
       return true;
     } else {
       console.log('Authentication failed!');
-      if (!usernameMatches) {
-        console.log(`Username mismatch. Expected "${ADMIN_USERNAME}", got "${username}"`);
-      }
-      if (!passwordMatches) {
-        console.log('Password mismatch');
-        // Character by character comparison for debugging
-        for (let i = 0; i < Math.max(password.length, ADMIN_PASSWORD.length); i++) {
-          const inputChar = i < password.length ? password[i] : '[missing]';
-          const expectedChar = i < ADMIN_PASSWORD.length ? ADMIN_PASSWORD[i] : '[missing]';
-          const matches = inputChar === expectedChar;
-          
-          console.log(`Position ${i}: Input '${inputChar}' vs Expected '${expectedChar}' - ${matches ? 'Match' : 'MISMATCH'}`);
-        }
-      }
       return false;
     }
   };
