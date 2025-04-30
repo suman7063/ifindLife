@@ -1,19 +1,19 @@
 
 import React from 'react';
 import AppRoutes from './AppRoutes';
-import { ThemeProvider } from '@/components/ui/theme-provider';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/auth/AuthContext';
 import { AuthProvider as AdminAuthProvider } from './contexts/admin-auth';
+import { ThemeProvider } from 'next-themes';
 
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider attribute="class" defaultTheme="light">
         <AuthProvider>
           <AdminAuthProvider>
             <AppRoutes />
