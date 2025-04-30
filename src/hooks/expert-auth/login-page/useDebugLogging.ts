@@ -10,14 +10,16 @@ export const useDebugLogging = (
   userProfile: UserProfile | null,
   redirectAttempted: boolean
 ) => {
-  // Debug logging
+  // Debug logging only in development environment
   useEffect(() => {
-    console.log('ExpertLogin component - Auth states:', {
-      expertLoading: loading,
-      expertAuthInitialized: initialized,
-      hasExpertProfile: !!expert,
-      directlyFetchedUserProfile: !!userProfile,
-      redirectAttempted,
-    });
+    if (import.meta.env.DEV) {
+      console.log('ExpertLogin component - Auth states:', {
+        expertLoading: loading,
+        expertAuthInitialized: initialized,
+        hasExpertProfile: !!expert,
+        directlyFetchedUserProfile: !!userProfile,
+        redirectAttempted,
+      });
+    }
   }, [loading, initialized, expert, userProfile, redirectAttempted]);
 };

@@ -12,7 +12,10 @@ const queryClient = new QueryClient();
 
 function App() {
   useEffect(() => {
-    console.log('App component mounted');
+    // Only log in development environment
+    if (import.meta.env.DEV) {
+      console.log('App component mounted');
+    }
   }, []);
 
   return (

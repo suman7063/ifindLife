@@ -5,7 +5,10 @@ import App from './App.tsx'
 import './index.css'
 import { BrowserRouter } from 'react-router-dom'
 
-console.log('Main.tsx is executing...')
+// Only log in development mode
+if (import.meta.env.DEV) {
+  console.log('Main.tsx is executing...')
+}
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -15,4 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </React.StrictMode>,
 )
 
-console.log('Root component rendered')
+// Only log in development mode
+if (import.meta.env.DEV) {
+  console.log('Root component rendered')
+}

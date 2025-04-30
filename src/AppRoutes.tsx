@@ -11,11 +11,17 @@ import { routes } from './App.routes'; // Import routes from consolidated file
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
 
-console.log('AppRoutes component loading...');
+// Only log in development environment
+if (import.meta.env.DEV) {
+  console.log('AppRoutes component loading...');
+}
 
 // Lazy load other pages for better performance
 const Index = lazy(() => {
-  console.log('Lazy loading Index component');
+  // Only log in development environment
+  if (import.meta.env.DEV) {
+    console.log('Lazy loading Index component');
+  }
   return import('./pages/Index');
 });
 
@@ -23,8 +29,11 @@ const AppRoutes: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
   
   useEffect(() => {
-    console.log('AppRoutes component mounted');
-    console.log('Auth state:', { isAuthenticated, role });
+    // Only log in development environment 
+    if (import.meta.env.DEV) {
+      console.log('AppRoutes component mounted');
+      console.log('Auth state:', { isAuthenticated, role });
+    }
   }, [isAuthenticated, role]);
 
   return (
