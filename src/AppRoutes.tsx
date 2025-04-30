@@ -1,9 +1,10 @@
 import React, { lazy, Suspense, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useRoutes } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
 import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import AdminProtectedRoute from './components/ProtectedRoute';
+import { routes } from './App.routes'; // Import routes from consolidated file
 
 // Import directly to avoid any loading issues
 import UserLogin from './pages/UserLogin';

@@ -1,130 +1,152 @@
 
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/routing/ProtectedRoute';
 
-// Pages
-const Index = lazy(() => import('./pages/Index'));
-const LoginPage = lazy(() => import('./pages/UserLogin'));
-const RegisterPage = lazy(() => import('./pages/UserRegister'));
-const ProgramsPage = lazy(() => import('./pages/Programs'));
-const AcademicProgramsPage = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
-const BusinessProgramsPage = lazy(() => import('./pages/ProgramsForBusiness'));
-const WellnessSeekersProgramsPage = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
-const ExpertsPage = lazy(() => import('./pages/Experts'));
-const ExpertProfilePage = lazy(() => import('./pages/ExpertDetail'));
-const UserProfilePage = lazy(() => import('./pages/UserDashboard'));
-const AdminPage = lazy(() => import('./pages/Admin'));
-const ExpertLoginPage = lazy(() => import('./pages/ExpertLogin'));
-const ExpertRegisterPage = lazy(() => import('./pages/ExpertRegister'));
-const ExpertDashboardPage = lazy(() => import('./pages/ExpertDashboard'));
-const AssessmentPage = lazy(() => import('./pages/MentalHealthAssessment'));
-const EnrolledCoursesPage = lazy(() => import('./pages/UserEnrolledCourses'));
-const NotFoundPage = lazy(() => import('./pages/NotFound'));
-const ServicesPage = lazy(() => import('./pages/Services'));
+// Define route types with optional required role
+export interface AppRoute extends RouteObject {
+  requiredRole?: 'user' | 'admin' | 'expert';
+}
+
+// Pages - pre-import critical pages to avoid dynamic import issues
+const Login = lazy(() => import('./pages/Login'));
+const ExpertLogin = lazy(() => import('./pages/ExpertLogin'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const MentalHealthAssessment = lazy(() => import('./pages/MentalHealthAssessment'));
+const Experts = lazy(() => import('./pages/Experts'));
+const ExpertDetail = lazy(() => import('./pages/ExpertDetail'));
+const ProgramsForWellnessSeekers = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
+const ProgramsForAcademicInstitutes = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
+const ProgramsForBusiness = lazy(() => import('./pages/ProgramsForBusiness'));
+const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const CareerGuidance = lazy(() => import('./pages/CareerGuidance'));
+const Blog = lazy(() => import('./pages/Blog'));
+const BlogPost = lazy(() => import('./pages/BlogPost'));
+const Services = lazy(() => import('./pages/Services'));
 const ServiceDetailPage = lazy(() => import('./pages/service/ServiceDetailPage'));
-const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfServicePage = lazy(() => import('./pages/TermsOfService'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./pages/TermsOfService'));
+const Contact = lazy(() => import('./pages/Contact'));
+const FAQs = lazy(() => import('./pages/FAQs'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
+const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
+const Admin = lazy(() => import('./pages/Admin'));
 
-export const routes: RouteObject[] = [
-  {
-    path: '/',
-    element: <Index />,
-  },
+export const routes: AppRoute[] = [
+  // Main navigation routes 
   {
     path: '/login',
-    element: <LoginPage />,
-  },
-  {
-    path: '/register',
-    element: <RegisterPage />,
-  },
-  {
-    path: '/programs',
-    element: <ProgramsPage />,
-  },
-  {
-    path: '/programs-for-academic-institutes',
-    element: <AcademicProgramsPage />,
-  },
-  {
-    path: '/programs-for-business',
-    element: <BusinessProgramsPage />,
-  },
-  {
-    path: '/programs-for-wellness-seekers',
-    element: <WellnessSeekersProgramsPage />,
-  },
-  {
-    path: '/services',
-    element: <ServicesPage />,
-  },
-  {
-    path: '/services/:serviceId',
-    element: <ServiceDetailPage />,
-  },
-  {
-    path: '/experts',
-    element: <ExpertsPage />,
-  },
-  {
-    path: '/expert-profile/:id',
-    element: <ExpertProfilePage />,
-  },
-  {
-    path: '/profile',
-    element: (
-      <ProtectedRoute>
-        <UserProfilePage />
-      </ProtectedRoute>
-    ),
-  },
-  {
-    path: '/admin',
-    element: (
-      <ProtectedRoute requiredRole="admin">
-        <AdminPage />
-      </ProtectedRoute>
-    ),
+    element: <Login />
   },
   {
     path: '/expert-login',
-    element: <ExpertLoginPage />,
+    element: <ExpertLogin />
   },
   {
-    path: '/expert-register',
-    element: <ExpertRegisterPage />,
+    path: '/forgot-password',
+    element: <ForgotPassword />
+  },
+  {
+    path: '/reset-password',
+    element: <ResetPassword />
+  },
+  {
+    path: '/mental-health-assessment',
+    element: <MentalHealthAssessment />
+  },
+  {
+    path: '/experts',
+    element: <Experts />
+  },
+  {
+    path: '/experts/:id',
+    element: <ExpertDetail />
+  },
+  {
+    path: '/programs-for-wellness-seekers',
+    element: <ProgramsForWellnessSeekers />
+  },
+  {
+    path: '/programs-for-academic-institutes',
+    element: <ProgramsForAcademicInstitutes />
+  },
+  {
+    path: '/programs-for-business',
+    element: <ProgramsForBusiness />
+  },
+  {
+    path: '/program/:id',
+    element: <ProgramDetail />
+  },
+  {
+    path: '/about',
+    element: <AboutUs />
+  },
+  {
+    path: '/career-guidance',
+    element: <CareerGuidance />
+  },
+  {
+    path: '/blog',
+    element: <Blog />
+  },
+  {
+    path: '/blog/:slug',
+    element: <BlogPost />
+  },
+  {
+    path: '/services',
+    element: <Services />
+  },
+  {
+    path: '/services/:serviceId',
+    element: <ServiceDetailPage />
+  },
+  {
+    path: '/privacy',
+    element: <PrivacyPolicy />
+  },
+  {
+    path: '/terms',
+    element: <TermsOfService />
+  },
+  {
+    path: '/contact',
+    element: <Contact />
+  },
+  {
+    path: '/faqs',
+    element: <FAQs />
+  },
+  
+  // Protected routes
+  {
+    path: '/user-dashboard/*',
+    element: (
+      <ProtectedRoute allowedRoles={['user']}>
+        <UserDashboard />
+      </ProtectedRoute>
+    ),
+    requiredRole: 'user'
   },
   {
     path: '/expert-dashboard/*',
     element: (
-      <ProtectedRoute>
-        <ExpertDashboardPage />
+      <ProtectedRoute allowedRoles={['expert']}>
+        <ExpertDashboard />
       </ProtectedRoute>
     ),
+    requiredRole: 'expert'
   },
   {
-    path: '/mental-health-assessment',
-    element: <AssessmentPage />,
-  },
-  {
-    path: '/enrolled-courses',
+    path: '/admin/*',
     element: (
-      <ProtectedRoute>
-        <EnrolledCoursesPage />
+      <ProtectedRoute allowedRoles={['admin']}>
+        <Admin />
       </ProtectedRoute>
     ),
-  },
-  {
-    path: '/privacy',
-    element: <PrivacyPolicyPage />,
-  },
-  {
-    path: '/terms',
-    element: <TermsOfServicePage />,
-  },
-  {
-    path: '*',
-    element: <NotFoundPage />,
-  },
+    requiredRole: 'admin'
+  }
 ];
