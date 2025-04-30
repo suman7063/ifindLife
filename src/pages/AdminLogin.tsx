@@ -1,25 +1,25 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/admin-auth'; // Ensure this is the correct import path
+import { useAuth } from '@/contexts/admin-auth';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 
 const AdminLogin = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
   const navigate = useNavigate();
   
-  console.log('AdminLogin component rendered, isAuthenticated:', isAuthenticated);
+  console.log('AdminLogin component rendered, isAuthenticated:', isAuthenticated, 'currentUser:', currentUser?.username);
 
   // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('User is already authenticated, redirecting to admin panel');
+      console.log('User is already authenticated as', currentUser?.role, 'redirecting to admin panel');
       navigate('/admin');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, currentUser]);
 
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to admin panel');

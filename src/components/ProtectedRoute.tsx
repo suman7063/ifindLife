@@ -22,8 +22,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (!isAuthenticated) {
       console.log('Admin user not authenticated, will redirect');
       toast.error('Please log in to access this page');
+    } else if (requiredRole && currentUser?.role !== requiredRole) {
+      console.log(`Required role: ${requiredRole}, but user has role: ${currentUser?.role}`);
+      toast.error(`You need ${requiredRole} permissions to access this page`);
     }
-  }, [isAuthenticated, currentUser]);
+  }, [isAuthenticated, currentUser, requiredRole]);
 
   if (!isAuthenticated) {
     console.log('Admin ProtectedRoute redirecting to admin-login');
@@ -33,7 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // If a specific role is required, check it
   if (requiredRole && currentUser?.role !== requiredRole) {
     console.log(`Role ${requiredRole} required, but user has ${currentUser?.role}`);
-    return <Navigate to="/admin-login" replace />;
+    return <Navigate to="/admin" replace />;
   }
 
   return <>{children}</>;

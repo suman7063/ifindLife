@@ -22,19 +22,8 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
     
     // Debug logs
     console.log('Login form submitted');
-    console.log('React state values:', {
-      username,
-      password: password ? `${password.length} chars` : 'empty'
-    });
-    
-    // Get values directly from DOM as a double-check
-    const formUsername = (document.getElementById('admin-username') as HTMLInputElement)?.value;
-    const formPassword = (document.getElementById('admin-password') as HTMLInputElement)?.value;
-    
-    console.log('DOM values:', {
-      username: formUsername,
-      password: formPassword ? `${formPassword.length} chars` : 'empty'
-    });
+    console.log('Username:', username);
+    console.log('Password length:', password ? password.length : 0);
     
     try {
       // Attempt login
