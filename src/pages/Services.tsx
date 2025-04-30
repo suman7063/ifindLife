@@ -17,6 +17,20 @@ const Services = () => {
     servicesRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
   
+  // Function to get image positioning based on service ID
+  const getImagePosition = (serviceId: string) => {
+    switch (serviceId) {
+      case 'therapy-sessions':
+        return 'object-position: center 20%;'; // Position to show faces better for therapy sessions
+      case 'guided-meditations':
+        return 'object-position: center 30%;'; // Position to show faces better for guided meditations
+      case 'mindful-listening':
+        return 'object-position: center 25%;'; // Position to show faces better for mindful listening
+      default:
+        return '';
+    }
+  };
+  
   return (
     <>
       <Navbar />
@@ -68,6 +82,13 @@ const Services = () => {
                             src={service.image} 
                             alt={service.title} 
                             className="w-full h-full object-cover object-center" 
+                            style={{ 
+                              ...(getImagePosition(service.id) && { objectPosition: 
+                                service.id === 'therapy-sessions' ? 'center 20%' : 
+                                service.id === 'guided-meditations' ? 'center 30%' : 
+                                service.id === 'mindful-listening' ? 'center 25%' : 'center center'
+                              })
+                            }}
                           />
                         </div>
                       </div>
