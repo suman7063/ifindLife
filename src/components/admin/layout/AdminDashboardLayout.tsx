@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ModeToggle } from '@/components/ModeToggle';
 import { useAuth } from '@/contexts/admin-auth';
+import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { 
   LayoutDashboard, 
   Users, 
@@ -30,7 +31,9 @@ import {
   Shield, 
   LifeBuoy,
   LogOut,
-  Award
+  Award,
+  Menu,
+  X
 } from 'lucide-react';
 
 interface AdminDashboardLayoutProps {
@@ -46,6 +49,13 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const { logout, isSuperAdmin, currentUser } = useAuth();
+  const { isSidebarOpen, toggleSidebar } = useSidebar();
+  
+  // Integrate session timeout
+  useSessionTimeout(1800000, () => { // 30 minutes
+    logout();
+    navigate('/admin-login');
+  });
   
   const handleTabChange = (tab: string) => {
     if (setActiveTab) {
@@ -55,33 +65,40 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   
   const handleLogout = () => {
     logout();
-    toast.success('Successfully logged out');
+    toast.success('Logged out successfully');
     navigate('/admin-login');
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar 
-          activeTab={activeTab} 
-          onTabChange={handleTabChange}
-          onLogout={handleLogout}
-          isSuperAdmin={isSuperAdmin}
-          username={currentUser?.username || 'Admin'}
-        />
-        <SidebarInset className="p-6">
-          <div className="flex items-center mb-6">
-            <SidebarTrigger className="md:hidden mr-2" />
-            <h2 className="text-xl font-semibold">
-              {getTabTitle(activeTab || 'overview')}
-            </h2>
-          </div>
-          <div className="container mx-auto">
-            {children}
-          </div>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
+    <div className="min-h-screen flex w-full bg-background">
+      <AdminSidebar 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+        onLogout={handleLogout}
+        isSuperAdmin={isSuperAdmin}
+        username={currentUser?.username || 'Admin'}
+      />
+      <SidebarInset className="p-6">
+        <div className="flex items-center mb-6">
+          {/* Always visible sidebar toggle button */}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleSidebar} 
+            className="mr-2" 
+            title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
+          >
+            {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+          <h2 className="text-xl font-semibold">
+            {getTabTitle(activeTab || 'overview')}
+          </h2>
+        </div>
+        <div className="container mx-auto">
+          {children}
+        </div>
+      </SidebarInset>
+    </div>
   );
 };
 
@@ -135,7 +152,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               className="h-7 w-7" 
               onClick={toggleSidebar}
             >
-              <LayoutDashboard className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </Button>
           </div>
           <div className="text-xs text-muted-foreground mt-1">
