@@ -1,9 +1,8 @@
 
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
-import ProtectedRoute from './components/routing/ProtectedRoute';
 
-// Define route types with optional required role
+// Define route types that extend the base RouteObject from react-router-dom
 export interface AppRoute extends RouteObject {
   requiredRole?: 'user' | 'admin' | 'expert';
 }
@@ -121,32 +120,20 @@ export const routes: AppRoute[] = [
     element: <FAQs />
   },
   
-  // Protected routes
+  // Protected routes with role requirements
   {
     path: '/user-dashboard/*',
-    element: (
-      <ProtectedRoute allowedRoles={['user']}>
-        <UserDashboard />
-      </ProtectedRoute>
-    ),
+    element: <UserDashboard />,
     requiredRole: 'user'
   },
   {
     path: '/expert-dashboard/*',
-    element: (
-      <ProtectedRoute allowedRoles={['expert']}>
-        <ExpertDashboard />
-      </ProtectedRoute>
-    ),
+    element: <ExpertDashboard />,
     requiredRole: 'expert'
   },
   {
     path: '/admin/*',
-    element: (
-      <ProtectedRoute allowedRoles={['admin']}>
-        <Admin />
-      </ProtectedRoute>
-    ),
+    element: <Admin />,
     requiredRole: 'admin'
   }
 ];
