@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -49,7 +48,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const { logout, isSuperAdmin, currentUser } = useAuth();
-  const { open: isSidebarOpen, toggle: toggleSidebar } = useSidebar();
+  const { open: isSidebarOpen, toggleSidebar } = useSidebar(); // Use correct property name
   
   // Integrate session timeout
   useSessionTimeout(1800000, () => { // 30 minutes
@@ -84,7 +83,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            onClick={toggleSidebar} 
+            onClick={toggleSidebar} // Use correct function name
             className="mr-2" 
             title={isSidebarOpen ? "Hide sidebar" : "Show sidebar"}
           >
@@ -138,7 +137,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   isSuperAdmin,
   username
 }) => {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar } = useSidebar(); // This correctly uses the toggleSidebar function
 
   return (
     <Sidebar>

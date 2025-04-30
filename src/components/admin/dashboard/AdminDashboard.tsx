@@ -10,6 +10,7 @@ import AdminOverview from './AdminOverview';
 import { Expert } from '@/components/admin/experts/types';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { fetchAndConvertExperts } from '../experts/expertConverter';
 
 const AdminDashboard = () => {
   const { isAuthenticated, currentUser } = useAuth();
@@ -74,15 +75,8 @@ const AdminDashboard = () => {
       try {
         // Fetch experts data when on experts tab or when loading initially
         if (activeTab === 'experts' || activeTab === 'overview') {
-          const { data: expertsData, error: expertsError } = await supabase
-            .from('experts')
-            .select('*');
-          
-          if (expertsError) {
-            console.error('Error fetching experts:', expertsError);
-          } else {
-            setExperts(expertsData || []);
-          }
+          const expertsData = await fetchAndConvertExperts();
+          setExperts(expertsData);
         }
         
         // Fetch services when on services tab
