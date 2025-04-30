@@ -34,7 +34,12 @@ const AdminDashboard = () => {
       setActiveTab={setActiveTab}
     >
       {activeTab === 'overview' ? (
-        <AdminOverview />
+        <AdminOverview 
+          expertCount={experts.length}
+          servicesCount={services.length}
+          testimonialsCount={testimonials.length}
+          isLoading={isLoading}
+        />
       ) : activeTab === 'settings' ? (
         <AdminSettings />
       ) : activeTab === 'adminUsers' ? (
