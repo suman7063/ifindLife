@@ -1,9 +1,10 @@
+
 import React, { useRef } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Brain, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
 import { servicesData } from '@/components/services/detail/servicesData';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
