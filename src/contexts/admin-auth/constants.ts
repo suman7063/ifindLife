@@ -1,5 +1,5 @@
 
-import { AdminUser, AuthContextType, defaultPermissions, superAdminPermissions } from "./types";
+import { AdminUser, defaultPermissions, superAdminPermissions } from "./types";
 
 export const defaultAdminUsers: AdminUser[] = [
   {
@@ -16,7 +16,7 @@ export const defaultAdminUsers: AdminUser[] = [
   }
 ];
 
-export const initialAuthContext: AuthContextType = {
+export const initialAuthContext = {
   isAuthenticated: false,
   login: async () => false,
   logout: () => {},
