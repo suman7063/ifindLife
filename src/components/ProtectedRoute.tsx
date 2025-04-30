@@ -28,6 +28,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }, [isAuthenticated, currentUser, requiredRole]);
 
+  // If not authenticated, redirect to admin login page specifically (fixed)
   if (!isAuthenticated) {
     console.log('Admin ProtectedRoute redirecting to admin-login');
     return <Navigate to="/admin-login" replace />;

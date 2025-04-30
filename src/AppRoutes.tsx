@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
 import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
+import AdminProtectedRoute from './components/ProtectedRoute';
 
 // Import directly to avoid any loading issues
 import UserLogin from './pages/UserLogin';
@@ -52,7 +53,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
-        <Route path="/admin-login" element={<AdminLogin />} /> {/* Ensure this route is correctly defined */}
+        <Route path="/admin-login" element={<AdminLogin />} /> {/* Admin login route */}
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
@@ -99,16 +100,16 @@ const AppRoutes: React.FC = () => {
           </ProtectedRoute>
         } />
 
-        {/* Admin Protected Routes - ensure they require admin role */}
+        {/* Admin Protected Routes - use specific admin protection */}
         <Route path="/admin/*" element={
-          <ProtectedRoute allowedRoles={['admin']}>
+          <AdminProtectedRoute>
             <Admin />
-          </ProtectedRoute>
+          </AdminProtectedRoute>
         } />
         <Route path="/migrate-data" element={
-          <ProtectedRoute allowedRoles={['admin']}>
+          <AdminProtectedRoute>
             <MigrateData />
-          </ProtectedRoute>
+          </AdminProtectedRoute>
         } />
 
         {/* Fallback */}

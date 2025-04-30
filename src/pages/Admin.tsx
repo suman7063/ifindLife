@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { Expert } from '@/components/admin/experts/types';
 
 const Admin = () => {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, currentUser } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('dashboard');
   
@@ -22,13 +22,20 @@ const Admin = () => {
   const [testimonials, setTestimonials] = useState<any[]>([]);
 
   useEffect(() => {
+    console.log('Admin page - Authentication state:', { 
+      isAuthenticated, 
+      currentUser 
+    });
+    
+    // If not authenticated, redirect to admin login
     if (!isAuthenticated) {
+      console.log('Not authenticated, redirecting to admin-login');
       navigate('/admin-login');
     }
     
     // Here you would normally fetch data for these different admin sections
     // This is a placeholder for demonstration
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, currentUser]);
 
   const handleLogout = () => {
     logout();
@@ -37,6 +44,7 @@ const Admin = () => {
   };
 
   if (!isAuthenticated) {
+    // Return nothing while redirecting
     return null;
   }
 

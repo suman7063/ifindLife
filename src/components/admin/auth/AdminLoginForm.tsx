@@ -31,9 +31,10 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
       console.log('Login result:', success ? 'success' : 'failed');
       
       if (success) {
-        toast.success('Successfully logged in');
+        toast.success('Successfully logged in as administrator');
         console.log('Login successful, redirecting to admin panel');
-        onLoginSuccess(); // Call the success callback to trigger navigation
+        // Call the onLoginSuccess callback - this triggers navigation to admin panel
+        onLoginSuccess(); 
       } else {
         toast.error('Invalid username or password');
         setIsLoading(false);
