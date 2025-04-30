@@ -24,14 +24,20 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     
     if (!isAuthenticated) {
       console.log('Admin user not authenticated, will redirect');
-      toast.error('Please log in to access this page');
+      toast.error('Please log in to access this page', {
+        duration: 3000
+      });
     } else if (requiredRole && currentUser?.role !== requiredRole) {
       console.log(`Required role: ${requiredRole}, but user has role: ${currentUser?.role}`);
-      toast.error(`You need ${requiredRole} permissions to access this page`);
+      toast.error(`You need ${requiredRole} permissions to access this page`, {
+        duration: 3000
+      });
     } else if (requiredPermission && currentUser?.permissions && 
               !currentUser.permissions[requiredPermission as keyof typeof currentUser.permissions]) {
       console.log(`Required permission: ${requiredPermission}, but user doesn't have it`);
-      toast.error(`You don't have permission to access this page`);
+      toast.error(`You don't have permission to access this page`, {
+        duration: 3000
+      });
     }
   }, [isAuthenticated, currentUser, requiredRole, requiredPermission]);
 

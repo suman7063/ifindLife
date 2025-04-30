@@ -49,7 +49,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const { logout, isSuperAdmin, currentUser } = useAuth();
-  const { isSidebarOpen, toggleSidebar } = useSidebar();
+  const { open: isSidebarOpen, toggle: toggleSidebar } = useSidebar();
   
   // Integrate session timeout
   useSessionTimeout(1800000, () => { // 30 minutes

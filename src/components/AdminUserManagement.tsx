@@ -79,6 +79,21 @@ const AdminUserManagement = () => {
     }));
   };
   
+  // Reset permissions to all false for new admin
+  const resetPermissions = () => {
+    const emptyPermissions = {...defaultPermissions};
+    Object.keys(emptyPermissions).forEach(key => {
+      emptyPermissions[key as keyof AdminPermissions] = false;
+    });
+    return emptyPermissions;
+  };
+  
+  // Open add dialog with reset permissions
+  const handleOpenAddDialog = () => {
+    setPermissions(resetPermissions());
+    setIsAddDialogOpen(true);
+  };
+  
   if (!isSuperAdmin) {
     return (
       <Card>
@@ -100,7 +115,7 @@ const AdminUserManagement = () => {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Admin User Management</CardTitle>
           <Button 
-            onClick={() => setIsAddDialogOpen(true)}
+            onClick={handleOpenAddDialog}
             className="bg-ifind-aqua hover:bg-ifind-teal"
           >
             <UserPlus className="mr-2 h-4 w-4" /> Add Admin
@@ -113,6 +128,7 @@ const AdminUserManagement = () => {
                 <TableRow>
                   <TableHead>Username</TableHead>
                   <TableHead>Role</TableHead>
+                  <TableHead>Permissions</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -121,6 +137,14 @@ const AdminUserManagement = () => {
                   <TableRow key={user.username}>
                     <TableCell>{user.username}</TableCell>
                     <TableCell>{user.role}</TableCell>
+                    <TableCell>
+                      {Object.entries(user.permissions)
+                        .filter(([_, value]) => value)
+                        .map(([key]) => key)
+                        .slice(0, 3)
+                        .join(", ")}
+                      {Object.values(user.permissions).filter(Boolean).length > 3 && "..."}
+                    </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
                         <Button 
@@ -189,6 +213,9 @@ const AdminUserManagement = () => {
             
             <div className="space-y-2">
               <h4 className="font-medium">Permissions</h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                Select the specific access rights for this admin user:
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {permissionItems.map((item) => (
                   <div key={item.id} className="flex items-center space-x-2">
@@ -248,7 +275,7 @@ const AdminUserManagement = () => {
                           checked === true
                         )
                       }
-                      disabled={editingUser === 'admin' && item.id === 'adminUsers'}
+                      disabled={editingUser === 'admin' || editingUser === 'IFLsuperadmin'}
                     />
                     <Label htmlFor={`edit-${item.id}`}>{item.label}</Label>
                   </div>
@@ -266,6 +293,7 @@ const AdminUserManagement = () => {
             <Button 
               className="bg-ifind-aqua hover:bg-ifind-teal" 
               onClick={handleUpdatePermissions}
+              disabled={editingUser === 'admin' || editingUser === 'IFLsuperadmin'}
             >
               Update Permissions
             </Button>

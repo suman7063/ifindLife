@@ -34,18 +34,18 @@ export interface AdminUser {
 }
 
 export const defaultPermissions: AdminPermissions = {
-  experts: true,
-  expertApprovals: true,
-  services: true,
-  herosection: true,
-  testimonials: true,
-  programs: true,
-  sessions: true,
-  referrals: true,
-  blog: true,
-  contact: true,
+  experts: false,
+  expertApprovals: false,
+  services: false,
+  herosection: false,
+  testimonials: false,
+  programs: false,
+  sessions: false,
+  referrals: false,
+  blog: false,
+  contact: false,
   adminUsers: false,
-  settings: true
+  settings: false
 };
 
 export const superAdminPermissions: AdminPermissions = {
