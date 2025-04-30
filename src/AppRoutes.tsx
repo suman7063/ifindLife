@@ -1,5 +1,4 @@
-
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
 import { useAuth } from './contexts/auth/AuthContext';
@@ -10,8 +9,13 @@ import AdminProtectedRoute from './components/ProtectedRoute';
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
 
+console.log('AppRoutes component loading...');
+
 // Lazy load other pages for better performance
-const Index = lazy(() => import('./pages/Index'));
+const Index = lazy(() => {
+  console.log('Lazy loading Index component');
+  return import('./pages/Index');
+});
 const Login = lazy(() => import('./pages/Login'));
 const ExpertLogin = lazy(() => import('./pages/ExpertLogin'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
@@ -37,13 +41,21 @@ const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const Contact = lazy(() => import('./pages/Contact'));
 const FAQs = lazy(() => import('./pages/FAQs'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+const NotFound = lazy(() => {
+  console.log('Loading NotFound component');
+  return import('./pages/NotFound');
+});
 
 // Legacy pages
 const MigrateData = lazy(() => import('./pages/MigrateData'));
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
+  
+  useEffect(() => {
+    console.log('AppRoutes component mounted');
+    console.log('Auth state:', { isAuthenticated, role });
+  }, [isAuthenticated, role]);
 
   return (
     <Suspense fallback={<LoadingScreen />}>

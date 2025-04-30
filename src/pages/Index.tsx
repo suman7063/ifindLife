@@ -1,4 +1,5 @@
-import React, { lazy, Suspense } from 'react';
+
+import React, { useEffect, lazy, Suspense } from 'react';
 import Navbar from '@/components/Navbar';
 import Hero from '@/components/Hero';
 import ServicesSection from '@/components/ServicesSection';
@@ -32,6 +33,27 @@ const SectionLoadingFallback = () => (
 
 const Index = () => {
   console.log('Index component rendering');
+  
+  useEffect(() => {
+    console.log('Index component mounted');
+    // Add a visible element to debug white screen
+    const debugElement = document.createElement('div');
+    debugElement.style.position = 'fixed';
+    debugElement.style.top = '0';
+    debugElement.style.left = '0';
+    debugElement.style.backgroundColor = 'red';
+    debugElement.style.color = 'white';
+    debugElement.style.padding = '10px';
+    debugElement.style.zIndex = '9999';
+    debugElement.textContent = 'Debug: Index component loaded';
+    document.body.appendChild(debugElement);
+    
+    return () => {
+      if (document.body.contains(debugElement)) {
+        document.body.removeChild(debugElement);
+      }
+    };
+  }, []);
   
   return (
     <div className="min-h-screen flex flex-col">
