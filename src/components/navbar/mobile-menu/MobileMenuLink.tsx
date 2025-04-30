@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { SheetClose } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 interface MobileMenuLinkProps {
   to: string;
@@ -11,15 +11,19 @@ interface MobileMenuLinkProps {
 
 const MobileMenuLink: React.FC<MobileMenuLinkProps> = ({ 
   to, 
-  children, 
-  className = "py-2 px-4 text-sm hover:bg-accent rounded-md" 
+  children,
+  className 
 }) => {
   return (
-    <SheetClose asChild>
-      <Link to={to} className={className}>
-        {children}
-      </Link>
-    </SheetClose>
+    <Link 
+      to={to}
+      className={cn(
+        "block w-full p-2 text-sm rounded-md hover:bg-accent",
+        className
+      )}
+    >
+      {children}
+    </Link>
   );
 };
 

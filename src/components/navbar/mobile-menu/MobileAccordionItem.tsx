@@ -1,45 +1,28 @@
 
 import React from 'react';
-import {
-  AccordionItem,
-  AccordionTrigger,
+import { 
   AccordionContent,
+  AccordionItem,
+  AccordionTrigger 
 } from '@/components/ui/accordion';
-import { MobileMenuLink } from '.';
-
-interface MobileMenuLink {
-  to: string;
-  label: string;
-  className?: string;
-}
 
 interface MobileAccordionItemProps {
-  value: string;
   title: string;
-  links: MobileMenuLink[];
+  value: string;
+  children: React.ReactNode;
 }
 
 const MobileAccordionItem: React.FC<MobileAccordionItemProps> = ({ 
-  value, 
-  title, 
-  links 
+  title,
+  value,
+  children 
 }) => {
   return (
     <AccordionItem value={value}>
-      <AccordionTrigger className="py-2 px-4 hover:no-underline hover:bg-accent rounded-md">
-        {title}
-      </AccordionTrigger>
-      <AccordionContent className="pl-4">
-        <div className="flex flex-col gap-1 py-1">
-          {links.map((link, index) => (
-            <MobileMenuLink 
-              key={index} 
-              to={link.to} 
-              className={link.className}
-            >
-              {link.label}
-            </MobileMenuLink>
-          ))}
+      <AccordionTrigger className="py-2 px-4 text-sm">{title}</AccordionTrigger>
+      <AccordionContent>
+        <div className="flex flex-col gap-1 pl-4 pr-2">
+          {children}
         </div>
       </AccordionContent>
     </AccordionItem>

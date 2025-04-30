@@ -1,155 +1,103 @@
 
-import React, { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { EyeOff, Eye } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { toast } from 'sonner';
+import React, { useState } from 'react';
 import { useAuth } from '@/contexts/admin-auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface AdminLoginFormProps {
   onLoginSuccess: () => void;
 }
 
 const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
-  // Default values for testing
-  const [username, setUsername] = useState('Soultribe');
-  const [password, setPassword] = useState('Freesoul@99');
-  const [showPassword, setShowPassword] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
-
-  // Reset error state after fields are changed
-  useEffect(() => {
-    if (loginError && (username || password)) {
-      setLoginError(null);
-    }
-  }, [username, password, loginError]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+    
+    // Debug logs
     console.log('Login form submitted');
-    console.log('React state values:', { username, password: password.length + ' chars' });
+    console.log('React state values:', {
+      username,
+      password: password ? `${password.length} chars` : 'empty'
+    });
     
-    // Get values from DOM for comparison (debugging)
-    const usernameInput = document.getElementById('username') as HTMLInputElement;
-    const passwordInput = document.getElementById('password') as HTMLInputElement;
+    // Get values directly from DOM as a double-check
+    const formUsername = (document.getElementById('admin-username') as HTMLInputElement)?.value;
+    const formPassword = (document.getElementById('admin-password') as HTMLInputElement)?.value;
+    
     console.log('DOM values:', {
-      username: usernameInput?.value,
-      password: passwordInput?.value ? passwordInput.value.length + ' chars' : 'not found'
+      username: formUsername,
+      password: formPassword ? `${formPassword.length} chars` : 'empty'
     });
     
-    // For simplicity, use the exact hardcoded values
-    // These must match exactly what's in useAdminAuth.ts
-    const adminUsername = 'Soultribe';
-    const adminPassword = 'Freesoul@99';
+    // Use hardcoded credentials for testing
+    const ADMIN_USERNAME = 'Soultribe';
+    const ADMIN_PASSWORD = 'Freesoul@99';
     
-    console.log('Will attempt login with hardcoded credentials:', { 
-      username: adminUsername,
-      password: `${adminPassword.length} chars`
+    console.log('Will attempt login with hardcoded credentials:', {
+      username: ADMIN_USERNAME,
+      password: ADMIN_PASSWORD ? `${ADMIN_PASSWORD.length} chars` : 'empty'
     });
     
-    console.log(`Attempting login with username: "${adminUsername}"`);
-    console.log(`Password length: ${adminPassword.length}`);
+    console.log(`Attempting login with username: "${username}"`);
+    console.log(`Password length: ${password.length}`);
     
-    // Try to clear any existing sessions first
     try {
-      localStorage.removeItem('admin_session');
-      localStorage.removeItem('admin_username');
-    } catch (err) {
-      console.error('Error clearing localStorage:', err);
-    }
-    
-    // Direct login attempt with hardcoded values
-    const loginSuccess = login(adminUsername, adminPassword);
-    console.log('Login result:', loginSuccess ? 'success' : 'failed');
-    
-    if (loginSuccess) {
-      console.log('Login successful, redirecting to admin panel');
-      toast.success(`Welcome back, ${adminUsername}!`);
-      onLoginSuccess();
-    } else {
-      console.error('Login failed');
-      setLoginError('Authentication failed. Please contact the system administrator.');
-      toast.error('Login failed. Check browser console for detailed logs.');
+      // Attempt login
+      const success = login(username, password);
+      console.log('Login result:', success ? 'success' : 'failed');
+      
+      if (success) {
+        toast.success('Successfully logged in');
+        console.log('Login successful, redirecting to admin panel');
+        onLoginSuccess(); // Call the success callback to trigger navigation
+      } else {
+        toast.error('Invalid username or password');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('An error occurred during login');
+      setIsLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {loginError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{loginError}</AlertDescription>
-        </Alert>
-      )}
-      
       <div className="space-y-2">
-        <label htmlFor="username" className="text-sm font-medium">
-          Username
-        </label>
+        <Label htmlFor="admin-username">Username</Label>
         <Input
-          id="username"
-          name="username"
-          type="text"
+          id="admin-username"
+          placeholder="Enter your username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          className="bg-background"
-          placeholder="Enter username (Soultribe)"
-          autoComplete="off"
         />
       </div>
-      
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label htmlFor="password" className="text-sm font-medium">
-            Password
-          </label>
-          <Link to="/forgot-password?type=admin" className="text-xs text-ifind-aqua hover:underline">
-            Forgot password?
-          </Link>
-        </div>
-        <div className="relative">
-          <Input
-            id="password"
-            name="password"
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="bg-background"
-            placeholder="Enter password"
-            autoComplete="off"
-          />
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 pr-3 flex items-center"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            )}
-          </button>
-        </div>
+        <Label htmlFor="admin-password">Password</Label>
+        <Input
+          id="admin-password"
+          type="password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
       </div>
-      
-      <div className="pt-2">
-        <Button 
-          type="submit" 
-          className="w-full bg-ifind-teal hover:bg-ifind-aqua"
-        >
-          Access Admin Panel
-        </Button>
-      </div>
-      
-      <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
-        <p className="text-sm text-amber-700">
-          <strong>Admin Login Help:</strong> Username is "Soultribe" and password is "Freesoul@99" (case-sensitive)
-        </p>
-      </div>
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isLoading}
+      >
+        {isLoading ? 'Logging in...' : 'Login'}
+      </Button>
     </form>
   );
 };
