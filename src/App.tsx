@@ -8,21 +8,31 @@ import { AuthProvider } from './contexts/auth/AuthContext';
 import { AuthProvider as AdminAuthProvider } from './contexts/admin-auth';
 import { ThemeProvider } from 'next-themes';
 
-const queryClient = new QueryClient();
+// Create a new QueryClient instance outside of the component to avoid recreating it on renders
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60000, // 1 minute
+      retry: 1
+    }
+  }
+});
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light">
-        <AuthProvider>
-          <AdminAuthProvider>
-            <AppRoutes />
-            <Toaster />
-            <SonnerToaster position="top-right" />
-          </AdminAuthProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="light">
+          <AuthProvider>
+            <AdminAuthProvider>
+              <AppRoutes />
+              <Toaster />
+              <SonnerToaster position="top-right" />
+            </AdminAuthProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
   );
 }
 
