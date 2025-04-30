@@ -51,7 +51,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   
   return (
     <div className="min-h-screen bg-muted/40">
-      <AdminHeader toggleSidebar={toggleSidebar} />
+      <AdminHeader toggleSidebar={toggleSidebar} onLogout={() => {}} />
       
       <div className="flex">
         {/* Sidebar */}
