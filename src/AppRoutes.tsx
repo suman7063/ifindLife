@@ -5,9 +5,9 @@ import LoadingScreen from './components/auth/LoadingScreen';
 import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 
-// Import UserLogin directly instead of lazy loading it to fix the import issue
+// Import directly to avoid any loading issues
 import UserLogin from './pages/UserLogin';
-import AdminLogin from './pages/AdminLogin'; // Import AdminLogin directly to ensure it loads correctly
+import AdminLogin from './pages/AdminLogin';
 
 // Lazy load other pages for better performance
 const Index = lazy(() => import('./pages/Index'));

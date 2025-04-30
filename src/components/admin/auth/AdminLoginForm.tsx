@@ -36,18 +36,6 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
       password: formPassword ? `${formPassword.length} chars` : 'empty'
     });
     
-    // Use hardcoded credentials for testing
-    const ADMIN_USERNAME = 'Soultribe';
-    const ADMIN_PASSWORD = 'Freesoul@99';
-    
-    console.log('Will attempt login with hardcoded credentials:', {
-      username: ADMIN_USERNAME,
-      password: ADMIN_PASSWORD ? `${ADMIN_PASSWORD.length} chars` : 'empty'
-    });
-    
-    console.log(`Attempting login with username: "${username}"`);
-    console.log(`Password length: ${password.length}`);
-    
     try {
       // Attempt login
       const success = login(username, password);

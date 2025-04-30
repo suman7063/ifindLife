@@ -17,16 +17,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('ProtectedRoute check - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser);
+    console.log('Admin ProtectedRoute check - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser);
     
     if (!isAuthenticated) {
-      console.log('User not authenticated, will redirect');
+      console.log('Admin user not authenticated, will redirect');
       toast.error('Please log in to access this page');
     }
   }, [isAuthenticated, currentUser]);
 
   if (!isAuthenticated) {
-    console.log('ProtectedRoute redirecting to admin-login');
+    console.log('Admin ProtectedRoute redirecting to admin-login');
     return <Navigate to="/admin-login" replace />;
   }
 

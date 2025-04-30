@@ -13,7 +13,7 @@ const AdminLogin = () => {
   
   console.log('AdminLogin component rendered, isAuthenticated:', isAuthenticated);
 
-  // Redirect if already logged in or after successful login
+  // Redirect if already logged in
   useEffect(() => {
     if (isAuthenticated) {
       console.log('User is already authenticated, redirecting to admin panel');
