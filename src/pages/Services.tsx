@@ -67,7 +67,7 @@ const Services = () => {
                           <img 
                             src={service.image} 
                             alt={service.title} 
-                            className="w-full h-full object-cover rounded-lg" 
+                            className="w-full h-full object-cover object-center" 
                           />
                         </div>
                       </div>

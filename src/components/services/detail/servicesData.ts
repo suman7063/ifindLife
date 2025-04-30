@@ -71,7 +71,7 @@ export const servicesData = [
     id: "offline-retreats",
     title: "Offline Retreats",
     description: "Immersive wellness experiences in nature to disconnect from technology and reconnect with yourself and others.",
-    image: "/lovable-uploads/7069b4db-6802-4e03-b1f1-bf1f03d2c176.png",
+    image: "/lovable-uploads/6c427c55-7a38-4dad-8c60-cc782cbc5bd7.png", // Replaced with new image
     color: "bg-amber-400",
     gradientColor: "from-amber-300/20 to-white",
     textColor: "text-amber-700",
