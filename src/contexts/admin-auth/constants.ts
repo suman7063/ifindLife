@@ -1,17 +1,29 @@
 
-import { AdminUser } from './types';
+import { AdminUser, AuthContextType, defaultPermissions, superAdminPermissions } from "./types";
 
 export const defaultAdminUsers: AdminUser[] = [
-  { username: 'Soultribe', role: 'superadmin' }
+  {
+    username: 'admin',
+    password: 'adminpass',
+    role: 'superadmin',
+    permissions: superAdminPermissions
+  },
+  {
+    username: 'editor',
+    password: 'editorpass',
+    role: 'admin',
+    permissions: defaultPermissions
+  }
 ];
 
-export const initialAuthContext = {
+export const initialAuthContext: AuthContextType = {
   isAuthenticated: false,
-  login: () => false,
+  login: async () => false,
   logout: () => {},
   adminUsers: defaultAdminUsers,
-  addAdmin: () => false,
-  removeAdmin: () => false,
+  addAdmin: () => {},
+  removeAdmin: () => {},
   isSuperAdmin: false,
-  currentUser: null
+  currentUser: null,
+  updateAdminPermissions: () => {}
 };

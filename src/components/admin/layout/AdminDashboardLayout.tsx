@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   SidebarProvider, 
@@ -11,6 +11,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarInset,
+  SidebarTrigger,
   useSidebar 
 } from "@/components/ui/sidebar";
 import { Button } from '@/components/ui/button';
@@ -29,7 +30,7 @@ import {
   Shield, 
   LifeBuoy,
   LogOut,
-  UserCog
+  Award
 } from 'lucide-react';
 
 interface AdminDashboardLayoutProps {
@@ -69,6 +70,12 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
           username={currentUser?.username || 'Admin'}
         />
         <SidebarInset className="p-6">
+          <div className="flex items-center mb-6">
+            <SidebarTrigger className="md:hidden mr-2" />
+            <h2 className="text-xl font-semibold">
+              {getTabTitle(activeTab || 'overview')}
+            </h2>
+          </div>
           <div className="container mx-auto">
             {children}
           </div>
@@ -76,6 +83,27 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
       </div>
     </SidebarProvider>
   );
+};
+
+// Helper function to get the title based on the active tab
+const getTabTitle = (tab: string): string => {
+  const titles: Record<string, string> = {
+    overview: 'Dashboard Overview',
+    experts: 'Experts Management',
+    expertApprovals: 'Expert Approvals',
+    services: 'Services Management',
+    herosection: 'Hero Section Editor',
+    testimonials: 'Testimonials Management',
+    programs: 'Programs Management',
+    sessions: 'Sessions Management',
+    referrals: 'Referrals Management',
+    blog: 'Blog Management',
+    contact: 'Contact Submissions',
+    adminUsers: 'Admin Users Management',
+    settings: 'Admin Settings'
+  };
+  
+  return titles[tab] || 'Admin Dashboard';
 };
 
 interface AdminSidebarProps {
@@ -120,8 +148,20 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 
+              isActive={activeTab === 'overview'} 
+              onClick={() => onTabChange('overview')}
+              tooltip="Dashboard Overview"
+            >
+              <LayoutDashboard className="h-4 w-4" />
+              <span>Overview</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          <SidebarMenuItem>
+            <SidebarMenuButton 
               isActive={activeTab === 'experts'} 
               onClick={() => onTabChange('experts')}
+              tooltip="Manage Experts"
             >
               <Users className="h-4 w-4" />
               <span>Experts</span>
@@ -132,6 +172,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'expertApprovals'} 
               onClick={() => onTabChange('expertApprovals')}
+              tooltip="Expert Approval Requests"
             >
               <CheckSquare className="h-4 w-4" />
               <span>Expert Approvals</span>
@@ -142,6 +183,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'services'} 
               onClick={() => onTabChange('services')}
+              tooltip="Manage Services"
             >
               <Briefcase className="h-4 w-4" />
               <span>Services</span>
@@ -152,6 +194,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'herosection'} 
               onClick={() => onTabChange('herosection')}
+              tooltip="Edit Hero Section"
             >
               <FileText className="h-4 w-4" />
               <span>Hero Section</span>
@@ -162,6 +205,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'testimonials'} 
               onClick={() => onTabChange('testimonials')}
+              tooltip="Manage Testimonials"
             >
               <MessageSquare className="h-4 w-4" />
               <span>Testimonials</span>
@@ -172,6 +216,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'programs'} 
               onClick={() => onTabChange('programs')}
+              tooltip="Manage Programs"
             >
               <Calendar className="h-4 w-4" />
               <span>Programs</span>
@@ -182,6 +227,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'sessions'} 
               onClick={() => onTabChange('sessions')}
+              tooltip="Manage Sessions"
             >
               <LifeBuoy className="h-4 w-4" />
               <span>Sessions</span>
@@ -192,8 +238,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'referrals'} 
               onClick={() => onTabChange('referrals')}
+              tooltip="Manage Referrals"
             >
-              <Users className="h-4 w-4" />
+              <Award className="h-4 w-4" />
               <span>Referrals</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -202,6 +249,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'blog'} 
               onClick={() => onTabChange('blog')}
+              tooltip="Manage Blog Content"
             >
               <FileText className="h-4 w-4" />
               <span>Blog</span>
@@ -212,6 +260,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'contact'} 
               onClick={() => onTabChange('contact')}
+              tooltip="View Contact Submissions"
             >
               <MessageSquare className="h-4 w-4" />
               <span>Contact Submissions</span>
@@ -223,6 +272,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
               <SidebarMenuButton 
                 isActive={activeTab === 'adminUsers'} 
                 onClick={() => onTabChange('adminUsers')}
+                tooltip="Manage Admin Users"
               >
                 <Shield className="h-4 w-4" />
                 <span>Admin Users</span>
@@ -234,6 +284,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <SidebarMenuButton 
               isActive={activeTab === 'settings'} 
               onClick={() => onTabChange('settings')}
+              tooltip="Admin Settings"
             >
               <Settings className="h-4 w-4" />
               <span>Settings</span>

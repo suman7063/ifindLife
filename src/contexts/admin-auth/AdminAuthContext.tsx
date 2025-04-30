@@ -22,7 +22,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser 
   } = useAdminSession();
   
-  const { login, logout, addAdmin, removeAdmin } = useAdminAuth({
+  const { login, logout, addAdmin, removeAdmin, updateAdminPermissions } = useAdminAuth({
     adminUsers,
     setAdminUsers,
     setIsAuthenticated,
@@ -41,7 +41,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addAdmin,
       removeAdmin,
       isSuperAdmin,
-      currentUser
+      currentUser,
+      updateAdminPermissions
     }}>
       {children}
     </AuthContext.Provider>

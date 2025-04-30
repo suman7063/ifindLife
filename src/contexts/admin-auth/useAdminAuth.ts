@@ -1,12 +1,13 @@
 
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { AdminUser } from './types';
+import { AdminUser, defaultPermissions, AdminPermissions } from './types';
 
-interface AdminAuthProps {
+interface UseAdminAuthProps {
   adminUsers: AdminUser[];
-  setAdminUsers: (users: AdminUser[]) => void;
-  setIsAuthenticated: (value: boolean) => void;
-  setCurrentUser: (user: AdminUser | null) => void;
+  setAdminUsers: React.Dispatch<React.SetStateAction<AdminUser[]>>;
+  setIsAuthenticated: React.Dispatch<React.SetStateAction<boolean>>;
+  setCurrentUser: React.Dispatch<React.SetStateAction<AdminUser | null>>;
   currentUser: AdminUser | null;
 }
 
@@ -16,121 +17,101 @@ export const useAdminAuth = ({
   setIsAuthenticated,
   setCurrentUser,
   currentUser
-}: AdminAuthProps) => {
+}: UseAdminAuthProps) => {
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  // Simplified admin authentication with clear credentials and detailed logging
-  const login = (username: string, password: string): boolean => {
-    console.log('----- ADMIN LOGIN ATTEMPT -----');
+  const login = async (username: string, password: string): Promise<boolean> => {
+    setLoginError(null);
     
-    // HARDCODED CREDENTIALS - these must match exactly what's used in AdminLogin.tsx
-    const ADMIN_USERNAME = 'Soultribe';
-    const ADMIN_PASSWORD = 'Freesoul@99';
-    
-    // Log the input and expected values
-    console.log(`Input username: "${username}"`);
-    console.log(`Expected username: "${ADMIN_USERNAME}"`);
-    console.log(`Input password: "${password}"`);
-    console.log(`Expected password: "${ADMIN_PASSWORD}"`);
-    
-    // Direct comparison using strict equality
-    const usernameMatches = username === ADMIN_USERNAME;
-    const passwordMatches = password === ADMIN_PASSWORD;
-    
-    console.log(`Username exact match: ${usernameMatches}`);
-    console.log(`Password exact match: ${passwordMatches}`);
-    
-    // Debug character by character
-    if (!passwordMatches) {
-      console.log('Password mismatch - character by character check:');
-      const maxLen = Math.max(password.length, ADMIN_PASSWORD.length);
+    try {
+      const foundUser = adminUsers.find(
+        user => user.username.toLowerCase() === username.toLowerCase() && user.password === password
+      );
       
-      for (let i = 0; i < maxLen; i++) {
-        const inputChar = i < password.length ? password[i] : '[missing]';
-        const expectedChar = i < ADMIN_PASSWORD.length ? ADMIN_PASSWORD[i] : '[missing]';
-        const matches = inputChar === expectedChar;
+      if (foundUser) {
+        console.log('Login successful for user:', foundUser);
+        setIsAuthenticated(true);
+        setCurrentUser(foundUser);
         
-        console.log(`Position ${i}: Input '${inputChar}' vs Expected '${expectedChar}' - ${matches ? 'Match' : 'MISMATCH'}`);
-        
-        // Show character codes for deeper debugging
-        if (!matches) {
-          console.log(`  Input char code: ${inputChar !== '[missing]' ? inputChar.charCodeAt(0) : 'N/A'}`);
-          console.log(`  Expected char code: ${expectedChar !== '[missing]' ? expectedChar.charCodeAt(0) : 'N/A'}`);
-        }
-      }
-    }
-    
-    // If authentication passes, update state and localStorage
-    if (usernameMatches && passwordMatches) {
-      console.log('Authentication successful!');
-      
-      // Set authentication state
-      setIsAuthenticated(true);
-      setCurrentUser({ username: ADMIN_USERNAME, role: 'superadmin' });
-      
-      // Store in localStorage
-      try {
+        // Store session info in localStorage
         localStorage.setItem('admin_session', 'true');
-        localStorage.setItem('admin_username', ADMIN_USERNAME);
-        console.log('Session stored in localStorage');
-      } catch (err) {
-        console.error('Error saving to localStorage:', err);
+        localStorage.setItem('admin_username', foundUser.username);
+        
+        return true;
+      } else {
+        console.log('Login failed: Invalid credentials');
+        setLoginError('Invalid username or password');
+        toast.error('Invalid username or password');
+        return false;
       }
-      
-      return true;
-    } else {
-      console.log('Authentication failed!');
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('An error occurred during login');
+      toast.error('An error occurred during login');
       return false;
     }
   };
-
+  
   const logout = () => {
-    try {
-      localStorage.removeItem('admin_session');
-      localStorage.removeItem('admin_username');
-    } catch (err) {
-      console.error('Error clearing localStorage:', err);
-    }
     setIsAuthenticated(false);
     setCurrentUser(null);
+    localStorage.removeItem('admin_session');
+    localStorage.removeItem('admin_username');
   };
   
-  // Fix the admin user management functions to use proper typing
-  const addAdmin = (username: string, password: string): boolean => {
-    if (!currentUser || currentUser.role !== 'superadmin') return false;
-    
-    // Check if username already exists
-    if (adminUsers.some(user => user.username === username)) {
-      return false;
+  const addAdmin = (username: string, password: string, permissions: AdminPermissions = defaultPermissions) => {
+    if (!username || !password) {
+      toast.error('Username and password are required');
+      return;
     }
     
-    // Create a new admin user
+    if (adminUsers.some(user => user.username.toLowerCase() === username.toLowerCase())) {
+      toast.error('Admin user already exists');
+      return;
+    }
+    
     const newUser: AdminUser = {
       username,
-      role: 'admin' // New users are regular admins
+      password,
+      role: 'admin',
+      permissions
     };
     
-    // Create a new array with the new user added
-    setAdminUsers([...adminUsers, newUser]);
-    return true;
+    setAdminUsers(prev => [...prev, newUser]);
+    toast.success(`Admin user '${username}' added successfully`);
   };
   
-  const removeAdmin = (username: string): boolean => {
-    if (!currentUser || currentUser.role !== 'superadmin') return false;
-    
-    // Can't remove superadmin
-    if (adminUsers.find(user => user.username === username)?.role === 'superadmin') {
-      return false;
+  const removeAdmin = (username: string) => {
+    if (username.toLowerCase() === 'admin') {
+      toast.error('Cannot remove the main admin account');
+      return;
     }
     
-    // Create a new filtered array
-    setAdminUsers(adminUsers.filter(user => user.username !== username));
-    return true;
+    setAdminUsers(prev => prev.filter(user => user.username !== username));
+    toast.success(`Admin user '${username}' removed successfully`);
   };
-
+  
+  const updateAdminPermissions = (username: string, permissions: AdminPermissions) => {
+    setAdminUsers(prev => prev.map(user => 
+      user.username === username 
+        ? { ...user, permissions } 
+        : user
+    ));
+    
+    // If we're updating the current user, also update the current user state
+    if (currentUser && currentUser.username === username) {
+      setCurrentUser({ ...currentUser, permissions });
+    }
+    
+    toast.success(`Permissions updated for '${username}'`);
+  };
+  
   return {
     login,
     logout,
+    loginError,
     addAdmin,
-    removeAdmin
+    removeAdmin,
+    updateAdminPermissions
   };
 };

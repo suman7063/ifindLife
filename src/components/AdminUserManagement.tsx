@@ -1,158 +1,277 @@
 
 import React, { useState } from 'react';
-import { UserPlus, Shield, UserX } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAuth } from '@/contexts/admin-auth';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { toast } from 'sonner';
+import { AdminPermissions, defaultPermissions } from '@/contexts/admin-auth/types';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Trash2, UserPlus, Edit } from 'lucide-react';
 
 const AdminUserManagement = () => {
-  const { adminUsers, addAdmin, removeAdmin, isSuperAdmin, currentUser } = useAuth();
+  const { adminUsers, addAdmin, removeAdmin, isSuperAdmin, updateAdminPermissions } = useAuth();
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isOpen, setIsOpen] = useState(false);
-
-  // Only super admins can access this component
-  if (!isSuperAdmin) {
-    return null;
-  }
-
-  const handleAddAdmin = () => {
-    // Validate inputs
-    if (!newUsername.trim()) {
-      alert('Username cannot be empty');
-      return;
-    }
-    if (newPassword.length < 6) {
-      alert('Password must be at least 6 characters long');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      alert('Passwords do not match');
-      return;
-    }
-
-    // Add new admin
-    const success = addAdmin(newUsername, newPassword);
-    if (success) {
-      // Reset form
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<string | null>(null);
+  const [permissions, setPermissions] = useState<AdminPermissions>({...defaultPermissions});
+  
+  const handleAddUser = () => {
+    if (newUsername && newPassword) {
+      addAdmin(newUsername, newPassword, permissions);
       setNewUsername('');
       setNewPassword('');
-      setConfirmPassword('');
-      setIsOpen(false);
+      setPermissions({...defaultPermissions});
+      setIsAddDialogOpen(false);
+    } else {
+      toast.error('Username and password are required');
     }
   };
+  
+  const handleRemoveUser = (username: string) => {
+    if (confirm(`Are you sure you want to remove admin user '${username}'?`)) {
+      removeAdmin(username);
+    }
+  };
+  
+  const openEditDialog = (username: string) => {
+    const user = adminUsers.find(user => user.username === username);
+    if (user) {
+      setEditingUser(username);
+      setPermissions({...user.permissions});
+      setIsEditDialogOpen(true);
+    }
+  };
+  
+  const handleUpdatePermissions = () => {
+    if (editingUser) {
+      updateAdminPermissions(editingUser, permissions);
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+    }
+  };
+  
+  const permissionItems = [
+    { id: 'experts', label: 'Experts Management' },
+    { id: 'expertApprovals', label: 'Expert Approvals' },
+    { id: 'services', label: 'Services Management' },
+    { id: 'herosection', label: 'Hero Section Editor' },
+    { id: 'testimonials', label: 'Testimonials' },
+    { id: 'programs', label: 'Programs' },
+    { id: 'sessions', label: 'Sessions' },
+    { id: 'referrals', label: 'Referrals' },
+    { id: 'blog', label: 'Blog' },
+    { id: 'contact', label: 'Contact Submissions' },
+    { id: 'adminUsers', label: 'Admin Users Management' },
+    { id: 'settings', label: 'Admin Settings' }
+  ];
+  
+  const handlePermissionChange = (permission: keyof AdminPermissions, checked: boolean) => {
+    setPermissions(prev => ({
+      ...prev,
+      [permission]: checked
+    }));
+  };
+  
+  if (!isSuperAdmin) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Admin User Management</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            You do not have permission to manage admin users. Please contact a super administrator.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <Shield className="h-5 w-5 text-ifind-teal" />
-          Admin User Management
-        </h2>
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-ifind-aqua hover:bg-ifind-teal">
-              <UserPlus className="mr-2 h-4 w-4" /> Add Admin
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Admin User</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 mt-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Username</label>
-                <Input 
-                  value={newUsername} 
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Enter username"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Password</label>
-                <Input 
-                  type="password"
-                  value={newPassword} 
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter password"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Confirm Password</label>
-                <Input 
-                  type="password"
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirm password"
-                />
-              </div>
-              <div className="flex justify-end mt-4">
-                <Button 
-                  className="bg-ifind-aqua hover:bg-ifind-teal"
-                  onClick={handleAddAdmin}
-                >
-                  Add Admin
-                </Button>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Admin User Management</CardTitle>
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-ifind-aqua hover:bg-ifind-teal"
+          >
+            <UserPlus className="mr-2 h-4 w-4" /> Add Admin
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {adminUsers.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Username</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {adminUsers.map((user) => (
+                  <TableRow key={user.username}>
+                    <TableCell>{user.username}</TableCell>
+                    <TableCell>{user.role}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => openEditDialog(user.username)}
+                        >
+                          <Edit className="h-4 w-4 mr-1" /> Permissions
+                        </Button>
+                        {user.role !== 'superadmin' && (
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => handleRemoveUser(user.username)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <p>No admin users found.</p>
+          )}
+        </CardContent>
+      </Card>
+      
+      {/* Add Admin Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Admin User</DialogTitle>
+            <DialogDescription>
+              Create a new admin user with specific permissions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="username" className="text-right">
+                Username
+              </Label>
+              <Input
+                id="username"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                Password
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            
+            <Separator className="my-2" />
+            
+            <div className="space-y-2">
+              <h4 className="font-medium">Permissions</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {permissionItems.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`add-${item.id}`}
+                      checked={permissions[item.id as keyof AdminPermissions]}
+                      onCheckedChange={(checked) => 
+                        handlePermissionChange(
+                          item.id as keyof AdminPermissions, 
+                          checked === true
+                        )
+                      }
+                    />
+                    <Label htmlFor={`add-${item.id}`}>{item.label}</Label>
+                  </div>
+                ))}
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="mt-6">
-        <h3 className="text-lg font-medium mb-3">Admin Users</h3>
-        <div className="border rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Username
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {adminUsers.map((user) => (
-                <tr key={user.username}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {user.username}
-                    {currentUser?.username === user.username && (
-                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        You
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.role === 'superadmin' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {user.role !== 'superadmin' && (
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => removeAdmin(user.username)}
-                      >
-                        <UserX className="h-4 w-4 mr-1" /> Remove
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsAddDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-ifind-aqua hover:bg-ifind-teal" 
+              onClick={handleAddUser}
+            >
+              Add Admin
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Permissions Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Admin Permissions</DialogTitle>
+            <DialogDescription>
+              Update permissions for admin user: {editingUser}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {permissionItems.map((item) => (
+                  <div key={item.id} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`edit-${item.id}`}
+                      checked={permissions[item.id as keyof AdminPermissions]}
+                      onCheckedChange={(checked) => 
+                        handlePermissionChange(
+                          item.id as keyof AdminPermissions, 
+                          checked === true
+                        )
+                      }
+                      disabled={editingUser === 'admin' && item.id === 'adminUsers'}
+                    />
+                    <Label htmlFor={`edit-${item.id}`}>{item.label}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              className="bg-ifind-aqua hover:bg-ifind-teal" 
+              onClick={handleUpdatePermissions}
+            >
+              Update Permissions
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
