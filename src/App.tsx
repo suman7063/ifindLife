@@ -20,19 +20,17 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="light">
-          <AuthProvider>
-            <AdminAuthProvider>
-              <AppRoutes />
-              <Toaster />
-              <SonnerToaster position="top-right" />
-            </AdminAuthProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light">
+        <AuthProvider>
+          <AdminAuthProvider>
+            <AppRoutes />
+            <Toaster />
+            <SonnerToaster position="top-right" />
+          </AdminAuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
