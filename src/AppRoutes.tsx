@@ -1,6 +1,6 @@
 
 import React, { lazy, Suspense, useEffect } from 'react';
-import { Routes, Route, useRoutes } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
 import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
@@ -18,8 +18,6 @@ const Index = lazy(() => {
   console.log('Lazy loading Index component');
   return import('./pages/Index');
 });
-// Rather than repeating all the lazy imports that are already in App.routes.tsx,
-// we'll just use the routes array directly
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, role } = useAuth();

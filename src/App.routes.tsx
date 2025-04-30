@@ -1,9 +1,10 @@
 
 import { lazy } from 'react';
-import { RouteObject } from 'react-router-dom';
 
-// Define route types that extend the base RouteObject from react-router-dom
-export interface AppRoute extends RouteObject {
+// Define route types without extending RouteObject from react-router-dom
+export interface AppRoute {
+  path: string;
+  element: JSX.Element;
   requiredRole?: 'user' | 'admin' | 'expert';
 }
 
