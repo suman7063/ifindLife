@@ -6,22 +6,14 @@ import { Toaster as SonnerToaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/auth/AuthContext';
 import { AuthProvider as AdminAuthProvider } from './contexts/admin-auth';
-import { ThemeProvider } from './components/ui/theme-provider';
+import { ThemeProvider } from 'next-themes';
 
-// Create a new QueryClient instance outside of the component to avoid recreating it on renders
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60000, // 1 minute
-      retry: 1
-    }
-  }
-});
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+      <ThemeProvider attribute="class" defaultTheme="light">
         <AuthProvider>
           <AdminAuthProvider>
             <AppRoutes />

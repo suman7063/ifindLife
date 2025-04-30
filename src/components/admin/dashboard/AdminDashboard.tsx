@@ -1,67 +1,71 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/admin-auth';
 import AdminDashboardLayout from '../layout/AdminDashboardLayout';
 import AdminTabs from '../AdminTabs';
-import AdminOverview from './AdminOverview';
+import AdminUserManagement from '@/components/AdminUserManagement';
 import AdminSettings from './AdminSettings';
-import { useAuth } from '@/contexts/admin-auth';
+import AdminOverview from './AdminOverview';
 import { Expert } from '@/components/admin/experts/types';
-import { toast } from 'sonner';
 
 const AdminDashboard = () => {
+  const { isAuthenticated, currentUser } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // States for all content sections
   const [experts, setExperts] = useState<Expert[]>([]);
   const [services, setServices] = useState<any[]>([]);
-  const [heroSettings, setHeroSettings] = useState<any>(null);
+  const [heroSettings, setHeroSettings] = useState<any>({});
   const [testimonials, setTestimonials] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-  
-  const handleLogout = async () => {
-    await logout();
-    navigate('/admin-login');
-  };
-  
+
   useEffect(() => {
-    console.log('Current active tab:', activeTab);
-  }, [activeTab]);
+    // Check authentication state
+    if (!isAuthenticated) {
+      console.log('Not authenticated in AdminDashboard, redirecting to admin-login');
+      navigate('/admin-login');
+    }
+    
+    // Here you would normally fetch data for different admin sections
+    // This is a placeholder - we'll implement actual data fetching in each component
+  }, [isAuthenticated, navigate]);
+
+  // If not authenticated, return null (we're redirecting)
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  // Switch to specific tab based on content section
+  const handleTabContent = () => {
+    switch (activeTab) {
+      case 'adminUsers':
+        return <AdminUserManagement />;
+      case 'settings':
+        return <AdminSettings />;
+      case 'overview':
+        return <AdminOverview />;
+      default:
+        return (
+          <AdminTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            experts={experts}
+            setExperts={setExperts}
+            services={services}
+            setServices={setServices}
+            heroSettings={heroSettings}
+            setHeroSettings={setHeroSettings}
+            testimonials={testimonials}
+            setTestimonials={setTestimonials}
+          />
+        );
+    }
+  };
 
   return (
-    <AdminDashboardLayout 
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-    >
-      {activeTab === 'overview' ? (
-        <AdminOverview 
-          expertCount={experts.length}
-          servicesCount={services.length}
-          testimonialsCount={testimonials.length}
-          isLoading={isLoading}
-        />
-      ) : activeTab === 'settings' ? (
-        <AdminSettings />
-      ) : activeTab === 'adminUsers' ? (
-        <div>
-          <h2 className="text-3xl font-bold mb-6">Admin Users</h2>
-          <p className="text-muted-foreground">Admin user management will be available soon.</p>
-        </div>
-      ) : (
-        <AdminTabs
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          experts={experts}
-          setExperts={setExperts}
-          services={services}
-          setServices={setServices}
-          heroSettings={heroSettings}
-          setHeroSettings={setHeroSettings}
-          testimonials={testimonials}
-          setTestimonials={setTestimonials}
-          isLoading={isLoading}
-        />
-      )}
+    <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      {handleTabContent()}
     </AdminDashboardLayout>
   );
 };

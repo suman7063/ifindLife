@@ -24,7 +24,6 @@ interface AdminTabsProps {
   setHeroSettings: React.Dispatch<React.SetStateAction<any>>;
   testimonials: any[];
   setTestimonials: React.Dispatch<React.SetStateAction<any[]>>;
-  isLoading?: boolean;
 }
 
 const AdminTabs: React.FC<AdminTabsProps> = ({
@@ -37,8 +36,7 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
   heroSettings,
   setHeroSettings,
   testimonials,
-  setTestimonials,
-  isLoading = false
+  setTestimonials
 }) => {
   return (
     <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">

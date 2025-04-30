@@ -41,17 +41,13 @@ export const useAdminAuth = ({
       } else {
         console.log('Login failed: Invalid credentials');
         setLoginError('Invalid username or password');
-        toast.error('Invalid username or password', {
-          description: 'Please check your credentials and try again',
-        });
+        toast.error('Invalid username or password');
         return false;
       }
     } catch (error) {
       console.error('Login error:', error);
       setLoginError('An error occurred during login');
-      toast.error('Login error', {
-        description: 'An error occurred during the login process',
-      });
+      toast.error('An error occurred during login');
       return false;
     }
   };
@@ -61,23 +57,16 @@ export const useAdminAuth = ({
     setCurrentUser(null);
     localStorage.removeItem('admin_session');
     localStorage.removeItem('admin_username');
-    toast.success('Logged out successfully', {
-      description: 'You have been logged out of the admin panel',
-    });
   };
   
   const addAdmin = (username: string, password: string, permissions: AdminPermissions = defaultPermissions) => {
     if (!username || !password) {
-      toast.error('Validation failed', {
-        description: 'Username and password are required',
-      });
+      toast.error('Username and password are required');
       return;
     }
     
     if (adminUsers.some(user => user.username.toLowerCase() === username.toLowerCase())) {
-      toast.error('Admin already exists', {
-        description: `Admin user '${username}' already exists`,
-      });
+      toast.error('Admin user already exists');
       return;
     }
     
@@ -89,23 +78,17 @@ export const useAdminAuth = ({
     };
     
     setAdminUsers(prev => [...prev, newUser]);
-    toast.success('Admin user added', {
-      description: `Admin user '${username}' was added successfully`,
-    });
+    toast.success(`Admin user '${username}' added successfully`);
   };
   
   const removeAdmin = (username: string) => {
-    if (username.toLowerCase() === 'admin' || username.toLowerCase() === 'iflsuperadmin') {
-      toast.error('Cannot remove user', {
-        description: 'Cannot remove protected admin account',
-      });
+    if (username.toLowerCase() === 'admin') {
+      toast.error('Cannot remove the main admin account');
       return;
     }
     
     setAdminUsers(prev => prev.filter(user => user.username !== username));
-    toast.success('Admin user removed', {
-      description: `Admin user '${username}' was removed successfully`,
-    });
+    toast.success(`Admin user '${username}' removed successfully`);
   };
   
   const updateAdminPermissions = (username: string, permissions: AdminPermissions) => {
@@ -120,9 +103,7 @@ export const useAdminAuth = ({
       setCurrentUser({ ...currentUser, permissions });
     }
     
-    toast.success('Permissions updated', {
-      description: `Permissions for '${username}' were updated successfully`,
-    });
+    toast.success(`Permissions updated for '${username}'`);
   };
   
   return {

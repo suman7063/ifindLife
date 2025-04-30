@@ -1,3 +1,4 @@
+
 import React, { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
@@ -52,10 +53,27 @@ const AppRoutes: React.FC = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
-        
-        {/* Admin login route - Explicitly defined before any other admin routes */}
-        <Route path="/admin-login" element={<AdminLogin />} />
-        
+        <Route path="/admin-login" element={<AdminLogin />} /> {/* Admin login route */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
+        <Route path="/experts" element={<Experts />} />
+        <Route path="/experts/:id" element={<ExpertDetail />} />
+        <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
+        <Route path="/programs-for-academic-institutes" element={<ProgramsForAcademicInstitutes />} />
+        <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
+        <Route path="/program/:id" element={<ProgramDetail />} />
+        <Route path="/about" element={<AboutUs />} />
+        <Route path="/career-guidance" element={<CareerGuidance />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/faqs" element={<FAQs />} />
+
         {/* User Dashboard Routes */}
         <Route path="/user-dashboard/*" element={
           <ProtectedRoute allowedRoles={['user']}>
