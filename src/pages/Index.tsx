@@ -32,9 +32,10 @@ const SectionLoadingFallback = () => (
 );
 
 const Index = () => {
-  console.log('Index component rendering');
-  
-  // Remove the debug element and useEffect that was adding it
+  // Only log in development mode
+  if (import.meta.env.DEV) {
+    console.log('Index component rendering');
+  }
   
   return (
     <div className="min-h-screen flex flex-col">
