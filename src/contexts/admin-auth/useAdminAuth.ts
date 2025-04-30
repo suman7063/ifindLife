@@ -20,7 +20,7 @@ export const useAdminAuth = ({
 }: UseAdminAuthProps) => {
   const [loginError, setLoginError] = useState<string | null>(null);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
+  const login = (username: string, password: string): boolean => {
     setLoginError(null);
     
     try {

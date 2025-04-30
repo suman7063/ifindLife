@@ -18,7 +18,7 @@ export const defaultAdminUsers: AdminUser[] = [
 
 export const initialAuthContext = {
   isAuthenticated: false,
-  login: async () => false,
+  login: (username: string, password: string) => false,
   logout: () => {},
   adminUsers: defaultAdminUsers,
   addAdmin: () => {},
