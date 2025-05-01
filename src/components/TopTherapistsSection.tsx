@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
-import ExpertCard from '@/components/ExpertCard';
+import ExpertCard from '@/components/expert-card';
 import { therapistData as defaultTherapistData } from '@/data/homePageData';
 
 // Update the interface to include missing properties and ensure id is string
