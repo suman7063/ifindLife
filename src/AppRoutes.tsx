@@ -43,24 +43,27 @@ const AppRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} /> 
 
-        {/* Map all routes from the consolidated routes array */}
-        {routes.map((route) => {
+        {/* Admin routes need to handle all sub-routes */}
+        <Route path="/admin/*" element={
+          <AdminProtectedRoute>
+            <Admin />
+          </AdminProtectedRoute>
+        } />
+
+        {/* Map all routes from the consolidated routes array except admin */}
+        {routes.filter(route => !route.path.startsWith('/admin')).map((route) => {
           const { element, path, requiredRole } = route;
           
           // Handle protected routes
-          if (requiredRole) {
+          if (requiredRole && requiredRole !== 'admin') {
             return (
               <Route 
                 key={path} 
                 path={path} 
                 element={
-                  requiredRole === 'admin' ? (
-                    <AdminProtectedRoute>{element}</AdminProtectedRoute>
-                  ) : (
-                    <ProtectedRoute allowedRoles={[requiredRole]}>
-                      {element}
-                    </ProtectedRoute>
-                  )
+                  <ProtectedRoute allowedRoles={[requiredRole]}>
+                    {element}
+                  </ProtectedRoute>
                 } 
               />
             );
@@ -76,5 +79,8 @@ const AppRoutes: React.FC = () => {
     </Suspense>
   );
 };
+
+// Import the Admin component here to avoid circular dependencies
+const Admin = lazy(() => import('./pages/Admin'));
 
 export default AppRoutes;

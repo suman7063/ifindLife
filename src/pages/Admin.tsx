@@ -1,11 +1,36 @@
 
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/admin-auth';
-import AdminDashboard from '@/components/admin/dashboard/AdminDashboard';
+import AdminDashboardLayout from '@/components/admin/layout/AdminDashboardLayout';
+import AdminUserManagement from '@/components/AdminUserManagement';
+import AdminSettings from '@/components/admin/dashboard/AdminSettings';
+import AdminOverview from '@/components/admin/dashboard/AdminOverview';
+import AdminTabs from '@/components/admin/AdminTabs';
 
 const Admin = () => {
   const { isAuthenticated, currentUser } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Extract the current tab from the URL path
+  const getCurrentTabFromPath = () => {
+    const path = location.pathname.split('/');
+    return path.length > 2 ? path[2] : 'overview';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getCurrentTabFromPath());
+  
+  // States for all content sections
+  const [experts, setExperts] = useState<any[]>([]);
+  const [services, setServices] = useState<any[]>([]);
+  const [heroSettings, setHeroSettings] = useState<any>({});
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+  
+  // Update active tab when the URL changes
+  useEffect(() => {
+    setActiveTab(getCurrentTabFromPath());
+  }, [location.pathname]);
 
   // If not authenticated, redirect to admin login
   if (!isAuthenticated) {
@@ -36,8 +61,35 @@ const Admin = () => {
     );
   }
 
-  // Render admin dashboard if authenticated
-  return <AdminDashboard />;
+  return (
+    <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      <Routes>
+        <Route path="/" element={<AdminOverview />} />
+        <Route path="/overview" element={<AdminOverview />} />
+        <Route path="/adminUsers" element={<AdminUserManagement />} />
+        <Route path="/settings" element={<AdminSettings />} />
+        
+        {/* Dynamic content tabs */}
+        <Route 
+          path="/:tabName" 
+          element={
+            <AdminTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              experts={experts}
+              setExperts={setExperts}
+              services={services}
+              setServices={setServices}
+              heroSettings={heroSettings}
+              setHeroSettings={setHeroSettings}
+              testimonials={testimonials}
+              setTestimonials={setTestimonials}
+            />
+          } 
+        />
+      </Routes>
+    </AdminDashboardLayout>
+  );
 };
 
 export default Admin;
