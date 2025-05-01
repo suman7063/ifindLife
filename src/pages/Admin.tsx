@@ -16,6 +16,7 @@ import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
 import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
+import { initialHeroSettings } from '@/data/initialAdminData';
 
 const Admin = () => {
   const { isAuthenticated, currentUser } = useAuth();
@@ -72,7 +73,7 @@ const Admin = () => {
         <Route path="/experts" element={<ExpertsEditor experts={[]} setExperts={() => {}} />} />
         <Route path="/expertApprovals" element={<ExpertApprovals />} />
         <Route path="/services" element={<ServicesEditor categories={[]} setCategories={() => {}} />} />
-        <Route path="/herosection" element={<HeroSectionEditor heroSettings={{}} setHeroSettings={() => {}} />} />
+        <Route path="/herosection" element={<HeroSectionEditor heroSettings={initialHeroSettings} setHeroSettings={() => {}} />} />
         <Route path="/testimonials" element={<TestimonialsEditor testimonials={[]} setTestimonials={() => {}} />} />
         <Route path="/programs" element={<ProgramsEditor />} />
         <Route path="/sessions" element={<SessionsEditor />} />
