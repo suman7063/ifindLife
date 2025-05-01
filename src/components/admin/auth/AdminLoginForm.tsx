@@ -22,8 +22,6 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
     
     // Debug logs
     console.log('Login form submitted');
-    console.log('Username:', username);
-    console.log('Password length:', password ? password.length : 0);
     
     try {
       // Attempt login
