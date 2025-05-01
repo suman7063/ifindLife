@@ -117,24 +117,24 @@ export const useAdminContent = (): AdminContent & {
 
   // Helper function to initialize default services
   const initializeDefaultServices = async (parsedContent: any) => {
-    // Default services
+    // Default services - using plain strings instead of JSX
     const defaultServices = [
       {
-        icon: <span className="text-3xl">🧠</span>,
+        icon: "🧠", // Using emoji string instead of JSX
         title: "Mental Health",
         description: "Depression, Anxiety, and other mental health issues",
         href: "/services/mental-health",
         color: "bg-ifind-aqua/10"
       },
       {
-        icon: <span className="text-3xl">💭</span>,
+        icon: "💭", // Using emoji string instead of JSX
         title: "Relationship Issues",
         description: "Dating, Marriage problems, Divorce",
         href: "/services/relationships",
         color: "bg-ifind-purple/10"
       },
       {
-        icon: <span className="text-3xl">✨</span>,
+        icon: "✨", // Using emoji string instead of JSX
         title: "Self-Improvement",
         description: "Confidence, Personal growth, Motivation",
         href: "/services/self-improvement",

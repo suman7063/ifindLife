@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 type CategoryType = {
-  icon: React.ReactNode;
+  icon: string; // Changed from React.ReactNode to string
   title: string;
   description: string;
   href: string;
@@ -41,7 +41,7 @@ const ServicesEditor: React.FC<ServicesEditorProps> = ({ categories, setCategori
           <div key={index} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-10 h-10 ${category.color} rounded-full flex items-center justify-center`}>
-                {category.icon}
+                <span className="text-3xl">{category.icon}</span>
               </div>
               <input
                 className="font-semibold flex-1 border-none focus:outline-none focus:ring-1 focus:ring-ifind-aqua rounded-md px-2"
@@ -92,7 +92,7 @@ const ServicesEditor: React.FC<ServicesEditorProps> = ({ categories, setCategori
 
 const AddCategoryForm = ({ onAdd }) => {
   const [newCategory, setNewCategory] = useState({
-    icon: <span className="text-3xl">🧠</span>,
+    icon: "🧠", // Changed from JSX to string
     title: "",
     description: "",
     href: "/services/new",
@@ -117,8 +117,8 @@ const AddCategoryForm = ({ onAdd }) => {
               key={icon}
               type="button"
               className={`h-10 w-10 rounded-lg flex items-center justify-center text-xl
-                ${newCategory.icon.props.children === icon ? 'bg-ifind-aqua/20 ring-2 ring-ifind-aqua' : 'bg-gray-100'}`}
-              onClick={() => setNewCategory({...newCategory, icon: <span className="text-3xl">{icon}</span>})}
+                ${newCategory.icon === icon ? 'bg-ifind-aqua/20 ring-2 ring-ifind-aqua' : 'bg-gray-100'}`}
+              onClick={() => setNewCategory({...newCategory, icon})}
             >
               {icon}
             </button>

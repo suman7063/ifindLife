@@ -10,7 +10,7 @@ export const initialHeroSettings = {
 
 export const initialExperts = [
   {
-    id: "1", // Updated to string
+    id: "1", 
     name: "Dr. Sarah Johnson",
     experience: 10,
     specialties: ["Depression", "Anxiety", "Therapy"],
@@ -22,7 +22,7 @@ export const initialExperts = [
     online: true
   },
   {
-    id: "2", // Updated to string
+    id: "2",
     name: "Dr. Michael Chen",
     experience: 8,
     specialties: ["Relationships", "Family Therapy"],
@@ -37,21 +37,21 @@ export const initialExperts = [
 
 export const initialServices = [
   {
-    icon: "🧠",
+    icon: "🧠", // Using string instead of JSX
     title: "Mental Health",
     description: "Depression, Anxiety, and other mental health issues",
     href: "/services/mental-health",
     color: "bg-ifind-aqua/10"
   },
   {
-    icon: "💭",
+    icon: "💭", // Using string instead of JSX
     title: "Relationship Issues",
     description: "Dating, Marriage problems, Divorce",
     href: "/services/relationships",
     color: "bg-ifind-purple/10"
   },
   {
-    icon: "✨",
+    icon: "✨", // Using string instead of JSX
     title: "Self-Improvement",
     description: "Confidence, Personal growth, Motivation",
     href: "/services/self-improvement",
