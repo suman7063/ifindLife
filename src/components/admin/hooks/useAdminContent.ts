@@ -67,9 +67,10 @@ export const useAdminContent = (): AdminContent & {
             testimonials: parsedContent.testimonials || []
           });
         }
-      } catch (error) {
-        console.error('Error loading content:', error);
-        setError('Error loading initial content');
+      } catch (err) {
+        console.error('Error loading content:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Error loading initial content';
+        setError(errorMessage);
         toast.error('Error loading content');
       } finally {
         setLoading(false);
@@ -146,10 +147,11 @@ export const useAdminContent = (): AdminContent & {
     
     // Set error if any loading hook has an error
     if (expertsError) setError(expertsError);
-    if (servicesError && !error) setError(servicesError);
-    if (heroError && !error) setError(heroError);
-    if (testimonialsError && !error) setError(testimonialsError);
-  }, [expertsLoading, servicesLoading, expertsError, servicesError, heroError, testimonialsError, error]);
+    else if (servicesError) setError(servicesError);
+    else if (heroError) setError(heroError);
+    else if (testimonialsError) setError(testimonialsError);
+    else setError(null);
+  }, [expertsLoading, servicesLoading, expertsError, servicesError, heroError, testimonialsError]);
 
   // Save content to localStorage whenever it changes
   useEffect(() => {

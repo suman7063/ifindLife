@@ -7,7 +7,7 @@ import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 import ServicesEditor from '@/components/admin/ServicesEditor';
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
-import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
+import TestimonialsEditor from '@/components/admin/testimonials/TestimonialsEditor';
 import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
 import { SessionsEditor } from '@/components/admin/sessions';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
@@ -70,7 +70,6 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
         <HeroSectionEditor 
           heroSettings={heroSettings} 
           setHeroSettings={setHeroSettings} 
-          onRefresh={onRefresh}
         />
       } />
       <Route path="/testimonials" element={

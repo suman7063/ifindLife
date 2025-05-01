@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from 'sonner';
+import { RefreshCw } from "lucide-react";
 import TestimonialFormContent from './TestimonialFormContent';
 import TestimonialCard from './TestimonialCard';
 

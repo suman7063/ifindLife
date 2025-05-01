@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,13 +19,15 @@ type ServicesEditorProps = {
   setCategories: React.Dispatch<React.SetStateAction<ServiceCategory[]>>;
   loading?: boolean;
   error?: string | null;
+  onRefresh?: () => void;
 };
 
 const ServicesEditor: React.FC<ServicesEditorProps> = ({ 
   categories, 
   setCategories, 
   loading = false, 
-  error = null 
+  error = null,
+  onRefresh
 }) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   
@@ -40,11 +41,15 @@ const ServicesEditor: React.FC<ServicesEditorProps> = ({
   
   // Force refresh data
   const forceRefresh = () => {
-    setIsRefreshing(true);
-    // Force reload the page to refresh all data
-    setTimeout(() => {
-      window.location.reload();
-    }, 300);
+    if (onRefresh) {
+      onRefresh();
+    } else {
+      setIsRefreshing(true);
+      // Force reload the page to refresh all data
+      setTimeout(() => {
+        window.location.reload();
+      }, 300);
+    }
   };
   
   if (loading || isRefreshing) {

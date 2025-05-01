@@ -16,18 +16,26 @@ export function useTestimonialsData(
   updateCallback: (testimonials: Testimonial[]) => void = () => {}
 ) {
   const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials);
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize testimonials if empty
   useEffect(() => {
-    if (initialTestimonials.length === 0) {
-      const defaultTestimonials = getDefaultTestimonials();
-      setTestimonials(defaultTestimonials);
-      updateCallback(defaultTestimonials);
+    try {
+      if (initialTestimonials.length === 0) {
+        const defaultTestimonials = getDefaultTestimonials();
+        setTestimonials(defaultTestimonials);
+        updateCallback(defaultTestimonials);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error loading testimonials';
+      setError(errorMessage);
+      console.error('Error initializing testimonials:', err);
     }
   }, [initialTestimonials, updateCallback]);
 
   return {
     testimonials,
-    setTestimonials
+    setTestimonials,
+    error
   };
 }
