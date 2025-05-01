@@ -1,87 +1,104 @@
 
-// This file contains initial data for admin sections
+// Default data for Admin sections
+// Using string icons (emojis) instead of React Elements
 
 export const initialHeroSettings = {
-  title: "You Are Not Alone!",
-  subtitle: "Is there a situation, you need immediate help with?",
-  description: "Connect with our currently online experts through an instant call",
-  videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0"
+  title: "Find Peace Within Yourself",
+  subtitle: "Professional online counseling and therapy services",
+  description: "Connect with licensed therapists online and start your journey to better mental health",
+  ctaText: "Get Started",
+  ctaLink: "/services",
+  image: "/lovable-uploads/1086590e-2848-41ea-a5f9-40b33666bb9d.png"
 };
 
-export const initialExperts = [
+// Services with string icons instead of React components
+export const categoryData = [
   {
-    id: "1", 
-    name: "Dr. Sarah Johnson",
-    experience: 10,
-    specialties: ["Depression", "Anxiety", "Therapy"],
-    rating: 4.9,
-    consultations: 253,
-    price: 35,
-    waitTime: "Available Now",
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop",
-    online: true
-  },
-  {
-    id: "2",
-    name: "Dr. Michael Chen",
-    experience: 8,
-    specialties: ["Relationships", "Family Therapy"],
-    rating: 4.7,
-    consultations: 187,
-    price: 30,
-    waitTime: "Available in 10 minutes",
-    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop",
-    online: true
-  }
-];
-
-export const initialServices = [
-  {
-    icon: "🧠", // Using string instead of JSX
-    title: "Mental Health",
-    description: "Depression, Anxiety, and other mental health issues",
-    href: "/services/mental-health",
+    icon: "🧠",
+    title: "Anxiety & Stress Management",
+    description: "Learn effective techniques to manage anxiety and reduce stress in your daily life.",
+    href: "/services/anxiety",
     color: "bg-ifind-aqua/10"
   },
   {
-    icon: "💭", // Using string instead of JSX
-    title: "Relationship Issues",
-    description: "Dating, Marriage problems, Divorce",
+    icon: "❤️",
+    title: "Relationship Counseling",
+    description: "Improve communication and resolve conflicts in your personal relationships.",
     href: "/services/relationships",
     color: "bg-ifind-purple/10"
   },
   {
-    icon: "✨", // Using string instead of JSX
-    title: "Self-Improvement",
-    description: "Confidence, Personal growth, Motivation",
-    href: "/services/self-improvement",
+    icon: "👨‍👩‍👧‍👦",
+    title: "Family Therapy",
+    description: "Address family conflicts and strengthen bonds through guided sessions.",
+    href: "/services/family",
     color: "bg-ifind-teal/10"
+  },
+  {
+    icon: "↗️",
+    title: "Personal Growth",
+    description: "Discover your potential and develop strategies for self-improvement and resilience.",
+    href: "/services/personal-growth",
+    color: "bg-ifind-charcoal/10"
   }
 ];
 
+// Default testimonials
 export const initialTestimonials = [
   {
-    name: "Sarah Johnson",
+    name: "Rebecca T.",
     location: "New York",
     rating: 5,
-    text: "I've struggled with anxiety for years and finally found the help I needed here.",
+    text: "After months of struggling with anxiety, my sessions have been life-changing. I've learned techniques that help me manage stressful situations effectively.",
     date: "2 weeks ago",
-    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1887&auto=format&fit=crop"
+    imageUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1976&auto=format&fit=crop"
   },
   {
-    name: "Michael Chen",
+    name: "Mark L.",
     location: "Chicago",
     rating: 5,
-    text: "The advice I received completely transformed my relationship with my partner.",
+    text: "The counseling helped my wife and I improve our communication in ways we never thought possible. Our relationship is stronger than ever.",
     date: "1 month ago",
-    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=1887&auto=format&fit=crop"
+    imageUrl: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop"
   },
   {
-    name: "Emma Rodriguez",
+    name: "Samantha J.",
     location: "Los Angeles",
-    rating: 4,
-    text: "After just a few sessions, I've developed much healthier coping mechanisms.",
-    date: "3 months ago",
-    imageUrl: "https://images.unsplash.com/photo-1534751516642-a1af1ef26a56?q=80&w=1889&auto=format&fit=crop"
+    rating: 5,
+    text: "The mindfulness techniques I learned have completely transformed how I handle stress at work. I'm more productive and happier than I've been in years.",
+    date: "3 weeks ago",
+    imageUrl: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop"
+  }
+];
+
+// Default services
+export const initialServices = [
+  {
+    icon: "🧠",
+    title: "Anxiety & Stress Management",
+    description: "Learn effective techniques to manage anxiety and reduce stress in your daily life.",
+    href: "/services/anxiety",
+    color: "bg-ifind-aqua/10"
+  },
+  {
+    icon: "❤️",
+    title: "Relationship Counseling",
+    description: "Improve communication and resolve conflicts in your personal relationships.",
+    href: "/services/relationships",
+    color: "bg-ifind-purple/10"
+  },
+  {
+    icon: "👨‍👩‍👧‍👦",
+    title: "Family Therapy",
+    description: "Address family conflicts and strengthen bonds through guided sessions.",
+    href: "/services/family",
+    color: "bg-ifind-teal/10"
+  },
+  {
+    icon: "↗️",
+    title: "Personal Growth",
+    description: "Discover your potential and develop strategies for self-improvement and resilience.",
+    href: "/services/personal-growth",
+    color: "bg-ifind-charcoal/10"
   }
 ];

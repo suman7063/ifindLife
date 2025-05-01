@@ -1,30 +1,30 @@
-import React from 'react';
-import { Brain, Users, HeartHandshake, ArrowUpRight } from 'lucide-react';
+
+// Using string icons (emojis) instead of React Elements for better type compatibility
 
 export const categoryData = [
   {
-    icon: <Brain className="h-6 w-6" />,
+    icon: "🧠",
     title: "Anxiety & Stress Management",
     description: "Learn effective techniques to manage anxiety and reduce stress in your daily life.",
     href: "/services/anxiety",
     color: "bg-ifind-aqua/10"
   },
   {
-    icon: <HeartHandshake className="h-6 w-6" />,
+    icon: "❤️",
     title: "Relationship Counseling",
     description: "Improve communication and resolve conflicts in your personal relationships.",
     href: "/services/relationships",
     color: "bg-ifind-purple/10"
   },
   {
-    icon: <Users className="h-6 w-6" />,
+    icon: "👨‍👩‍👧‍👦",
     title: "Family Therapy",
     description: "Address family conflicts and strengthen bonds through guided sessions.",
     href: "/services/family",
     color: "bg-ifind-teal/10"
   },
   {
-    icon: <ArrowUpRight className="h-6 w-6" />,
+    icon: "↗️",
     title: "Personal Growth",
     description: "Discover your potential and develop strategies for self-improvement and resilience.",
     href: "/services/personal-growth",

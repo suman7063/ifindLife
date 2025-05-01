@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -12,19 +12,12 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { toast } from 'sonner';
-import { categoryData as defaultCategoryData } from '@/data/homePageData';
-
-type CategoryType = {
-  icon: string; // Changed from React.ReactNode to string
-  title: string;
-  description: string;
-  href: string;
-  color: string;
-};
+import { categoryData as defaultCategoryData } from '@/data/initialAdminData';
+import { ServiceCategory } from '@/components/admin/hooks/useServicesData';
 
 type ServicesEditorProps = {
-  categories: CategoryType[];
-  setCategories: React.Dispatch<React.SetStateAction<CategoryType[]>>;
+  categories: ServiceCategory[];
+  setCategories: React.Dispatch<React.SetStateAction<ServiceCategory[]>>;
   loading?: boolean;
   error?: string | null;
 };
@@ -165,9 +158,9 @@ const ServicesEditor: React.FC<ServicesEditorProps> = ({
   );
 };
 
-const AddCategoryForm = ({ onAdd }) => {
-  const [newCategory, setNewCategory] = useState({
-    icon: "🧠", // Changed from JSX to string
+const AddCategoryForm = ({ onAdd }: { onAdd: (newCategory: ServiceCategory) => void }) => {
+  const [newCategory, setNewCategory] = useState<ServiceCategory>({
+    icon: "🧠", // String icon (emoji) instead of JSX element
     title: "",
     description: "",
     href: "/services/new",
@@ -249,7 +242,7 @@ const AddCategoryForm = ({ onAdd }) => {
             if (newCategory.title && newCategory.description) {
               onAdd(newCategory);
             } else {
-              alert("Please fill in all required fields");
+              toast.error("Please fill in all required fields");
             }
           }}
         >

@@ -1,8 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { categoryData as defaultCategoryData } from '@/data/homePageData';
 import { toast } from 'sonner';
+
+// Import default data without JSX elements
+import { categoryData as defaultServiceData } from '@/data/initialAdminData';
 
 export interface ServiceCategory {
   icon: string;
@@ -45,17 +47,18 @@ export function useServicesData(
         if (error) {
           console.error('Error fetching services:', error);
           // If Supabase fetch fails, use default data
-          setServices(defaultCategoryData);
-          updateCallback(defaultCategoryData);
+          setServices(defaultServiceData);
+          updateCallback(defaultServiceData);
           return;
         }
         
         if (data && data.length > 0) {
           // Map Supabase data to the expected format if needed
           const formattedServices = data.map(service => ({
+            // Use string icons (emoji) instead of React Elements
             icon: service.icon || '🧠', // Default icon if none
             title: service.name,
-            description: service.description,
+            description: service.description || '',
             href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
             color: service.color || 'bg-ifind-aqua/10'
           }));
@@ -64,8 +67,8 @@ export function useServicesData(
           updateCallback(formattedServices);
         } else {
           // If no data in Supabase either, use default data
-          setServices(defaultCategoryData);
-          updateCallback(defaultCategoryData);
+          setServices(defaultServiceData);
+          updateCallback(defaultServiceData);
         }
       } catch (err) {
         console.error('Error loading services data:', err);
@@ -73,8 +76,8 @@ export function useServicesData(
         toast.error('Failed to load services data');
         
         // Fallback to default data on error
-        setServices(defaultCategoryData);
-        updateCallback(defaultCategoryData);
+        setServices(defaultServiceData);
+        updateCallback(defaultServiceData);
       } finally {
         setLoading(false);
       }
