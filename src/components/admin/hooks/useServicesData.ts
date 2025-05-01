@@ -44,46 +44,61 @@ export function useServicesData(
         setLoading(true);
         setError(null);
         
+        console.log('Fetching services data...');
+
         // First check localStorage which is used by the public site
         const savedContent = localStorage.getItem('ifindlife-content');
         if (savedContent) {
-          const parsedContent = JSON.parse(savedContent);
-          if (parsedContent.services && parsedContent.services.length > 0) {
-            setServices(parsedContent.services);
-            updateCallback(parsedContent.services);
-            setLoading(false);
-            return;
+          try {
+            const parsedContent = JSON.parse(savedContent);
+            if (parsedContent.services && parsedContent.services.length > 0) {
+              console.log('Services found in localStorage:', parsedContent.services.length);
+              setServices(parsedContent.services);
+              updateCallback(parsedContent.services);
+              setLoading(false);
+              return;
+            }
+          } catch (parseError) {
+            console.error('Error parsing localStorage content:', parseError);
+            // Continue to fetch from Supabase if localStorage parsing fails
           }
         }
         
         // If no services in localStorage, use default data or try to fetch from Supabase
-        const { data, error } = await supabase.from('services').select('*');
-        
-        if (error) {
-          console.error('Error fetching services:', error);
-          // If Supabase fetch fails, use default data
-          setServices(defaultServiceData);
-          updateCallback(defaultServiceData);
-          return;
-        }
-        
-        if (data && data.length > 0) {
-          // Map Supabase data to the expected format, providing defaults for missing fields
-          const formattedServices = data.map((service: DbService) => ({
-            // Use string icons (emoji) instead of React Elements
-            icon: service.icon || DEFAULT_ICON, // Default icon if none in database
-            title: service.name,
-            description: service.description || '',
-            href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
-            color: service.color || DEFAULT_COLOR // Default color if none in database
-          }));
+        try {
+          console.log('Fetching services from Supabase...');
+          const { data, error } = await supabase.from('services').select('*');
           
-          setServices(formattedServices);
-          updateCallback(formattedServices);
-        } else {
-          // If no data in Supabase either, use default data
-          setServices(defaultServiceData);
-          updateCallback(defaultServiceData);
+          console.log('Supabase response:', { data, error });
+          
+          if (error) {
+            console.error('Error fetching services:', error);
+            throw error;
+          }
+          
+          if (data && data.length > 0) {
+            // Map Supabase data to the expected format, providing defaults for missing fields
+            const formattedServices = data.map((service: DbService) => ({
+              // Use string icons (emoji) instead of React Elements
+              icon: service.icon || DEFAULT_ICON, // Default icon if none in database
+              title: service.name,
+              description: service.description || '',
+              href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
+              color: service.color || DEFAULT_COLOR // Default color if none in database
+            }));
+            
+            console.log('Formatted services:', formattedServices);
+            setServices(formattedServices);
+            updateCallback(formattedServices);
+          } else {
+            console.log('No services found in Supabase, using default data');
+            // If no data in Supabase either, use default data
+            setServices(defaultServiceData);
+            updateCallback(defaultServiceData);
+          }
+        } catch (supabaseError) {
+          console.error('Supabase services fetch error:', supabaseError);
+          throw supabaseError;
         }
       } catch (err) {
         console.error('Error loading services data:', err);

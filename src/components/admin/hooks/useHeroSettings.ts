@@ -14,8 +14,7 @@ export interface HeroSettings {
 
 export function useHeroSettings(
   initialSettings: HeroSettings = {
-    ...initialHeroSettings,
-    videoUrl: '' // Add default videoUrl
+    ...initialHeroSettings
   },
   updateCallback: (settings: HeroSettings) => void = () => {}
 ) {
