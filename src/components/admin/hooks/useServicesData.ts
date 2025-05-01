@@ -14,6 +14,17 @@ export interface ServiceCategory {
   color: string;
 }
 
+// Interface for the database service object
+interface DbService {
+  id: number;
+  name: string;
+  description: string;
+  rate_usd: number;
+  rate_inr: number;
+  icon?: string; // Make optional since it might not exist in the database
+  color?: string; // Make optional since it might not exist in the database
+}
+
 export function useServicesData(
   initialServices: ServiceCategory[] = [], 
   updateCallback: (services: ServiceCategory[]) => void = () => {}
@@ -21,6 +32,10 @@ export function useServicesData(
   const [services, setServices] = useState<ServiceCategory[]>(initialServices);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Define default icon and color for services that don't have them
+  const DEFAULT_ICON = '🧠';
+  const DEFAULT_COLOR = 'bg-ifind-aqua/10';
 
   // Load services data from the same source as public site
   useEffect(() => {
@@ -53,14 +68,14 @@ export function useServicesData(
         }
         
         if (data && data.length > 0) {
-          // Map Supabase data to the expected format if needed
-          const formattedServices = data.map(service => ({
+          // Map Supabase data to the expected format, providing defaults for missing fields
+          const formattedServices = data.map((service: DbService) => ({
             // Use string icons (emoji) instead of React Elements
-            icon: service.icon || '🧠', // Default icon if none
+            icon: service.icon || DEFAULT_ICON, // Default icon if none in database
             title: service.name,
             description: service.description || '',
             href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
-            color: service.color || 'bg-ifind-aqua/10'
+            color: service.color || DEFAULT_COLOR // Default color if none in database
           }));
           
           setServices(formattedServices);

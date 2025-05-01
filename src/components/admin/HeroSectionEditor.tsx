@@ -3,20 +3,11 @@ import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Video } from "lucide-react";
+import { HeroSettings } from './hooks/useHeroSettings';
 
 type HeroSettingsProps = {
-  heroSettings: {
-    title: string;
-    subtitle: string;
-    description: string;
-    videoUrl: string;
-  };
-  setHeroSettings: React.Dispatch<React.SetStateAction<{
-    title: string;
-    subtitle: string;
-    description: string;
-    videoUrl: string;
-  }>>;
+  heroSettings: HeroSettings;
+  setHeroSettings: React.Dispatch<React.SetStateAction<HeroSettings>>;
 };
 
 const HeroSectionEditor: React.FC<HeroSettingsProps> = ({ 
@@ -66,6 +57,20 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
           />
         </div>
         <div>
+          <label className="block text-sm font-medium mb-1">CTA Text</label>
+          <Input 
+            value={heroSettings.ctaText || ''} 
+            onChange={(e) => setHeroSettings({...heroSettings, ctaText: e.target.value})}
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium mb-1">CTA Link</label>
+          <Input 
+            value={heroSettings.ctaLink || ''} 
+            onChange={(e) => setHeroSettings({...heroSettings, ctaLink: e.target.value})}
+          />
+        </div>
+        <div>
           <label className="block text-sm font-medium mb-1">Video URL (YouTube Embed)</label>
           <div className="flex gap-2">
             <Input 
@@ -98,15 +103,17 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
               <span className="text-gradient">{heroSettings.subtitle}</span>
             </h1>
             <p className="text-sm mt-2">{heroSettings.description}</p>
-            <div className="mt-4 bg-black rounded-lg aspect-video w-full max-w-md">
-              <iframe
-                className="w-full h-full rounded-lg"
-                src={heroSettings.videoUrl}
-                title="Preview"
-                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
+            {heroSettings.videoUrl && (
+              <div className="mt-4 bg-black rounded-lg aspect-video w-full max-w-md">
+                <iframe
+                  className="w-full h-full rounded-lg"
+                  src={heroSettings.videoUrl}
+                  title="Preview"
+                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            )}
           </div>
         </div>
       </div>

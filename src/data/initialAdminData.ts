@@ -8,7 +8,8 @@ export const initialHeroSettings = {
   description: "Connect with licensed therapists online and start your journey to better mental health",
   ctaText: "Get Started",
   ctaLink: "/services",
-  image: "/lovable-uploads/1086590e-2848-41ea-a5f9-40b33666bb9d.png"
+  image: "/lovable-uploads/1086590e-2848-41ea-a5f9-40b33666bb9d.png",
+  videoUrl: "" // Added videoUrl field with empty default
 };
 
 // Services with string icons instead of React components

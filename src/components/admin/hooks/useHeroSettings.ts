@@ -7,10 +7,16 @@ export interface HeroSettings {
   subtitle: string;
   description: string;
   videoUrl: string;
+  ctaText?: string;
+  ctaLink?: string;
+  image?: string;
 }
 
 export function useHeroSettings(
-  initialSettings: HeroSettings = initialHeroSettings,
+  initialSettings: HeroSettings = {
+    ...initialHeroSettings,
+    videoUrl: '' // Add default videoUrl
+  },
   updateCallback: (settings: HeroSettings) => void = () => {}
 ) {
   const [heroSettings, setHeroSettings] = useState<HeroSettings>(initialSettings);

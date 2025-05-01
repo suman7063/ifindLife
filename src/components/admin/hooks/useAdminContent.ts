@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Expert } from '@/components/admin/experts/types';
@@ -34,7 +33,10 @@ export const useAdminContent = (): AdminContent & {
   }>({
     experts: [],
     services: [],
-    heroSettings: initialHeroSettings,
+    heroSettings: {
+      ...initialHeroSettings,
+      videoUrl: '' // Ensure videoUrl is present
+    },
     testimonials: []
   });
 
