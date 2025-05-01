@@ -22,8 +22,10 @@ export const useAdminContent = (): AdminContent & {
   setServices: React.Dispatch<React.SetStateAction<ServiceCategory[]>>;
   setHeroSettings: React.Dispatch<React.SetStateAction<HeroSettings>>;
   setTestimonials: React.Dispatch<React.SetStateAction<Testimonial[]>>;
+  error?: string | null;
 } => {
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [initialData, setInitialData] = useState<{
     experts: Expert[];
     services: ServiceCategory[];
@@ -36,11 +38,12 @@ export const useAdminContent = (): AdminContent & {
     testimonials: []
   });
 
-  // Load content from localStorage on initial mount
+  // Load content from localStorage and Supabase on initial mount
   useEffect(() => {
     const loadContent = async () => {
       try {
         setLoading(true);
+        setError(null);
         
         // Try to load content from localStorage
         const parsedContent = loadContentFromLocalStorage();
@@ -55,6 +58,7 @@ export const useAdminContent = (): AdminContent & {
         }
       } catch (error) {
         console.error('Error loading content:', error);
+        setError('Error loading initial content');
         toast.error('Error loading content');
       } finally {
         setLoading(false);
@@ -79,26 +83,51 @@ export const useAdminContent = (): AdminContent & {
   };
 
   // Use the smaller hooks with the update callback
-  const { experts, setExperts } = useExpertsData(
+  const { 
+    experts, 
+    setExperts, 
+    loading: expertsLoading, 
+    error: expertsError 
+  } = useExpertsData(
     initialData.experts, 
     loading,
     (newExperts) => updateContent({ experts: newExperts })
   );
   
-  const { services, setServices } = useServicesData(
+  const { 
+    services, 
+    setServices, 
+    loading: servicesLoading, 
+    error: servicesError 
+  } = useServicesData(
     initialData.services,
     (newServices) => updateContent({ services: newServices })
   );
   
-  const { heroSettings, setHeroSettings } = useHeroSettings(
+  const { 
+    heroSettings, 
+    setHeroSettings 
+  } = useHeroSettings(
     initialData.heroSettings,
     (newSettings) => updateContent({ heroSettings: newSettings })
   );
   
-  const { testimonials, setTestimonials } = useTestimonialsData(
+  const { 
+    testimonials, 
+    setTestimonials 
+  } = useTestimonialsData(
     initialData.testimonials,
     (newTestimonials) => updateContent({ testimonials: newTestimonials })
   );
+
+  // Update overall loading state
+  useEffect(() => {
+    setLoading(expertsLoading || servicesLoading);
+    
+    // Set error if any loading hook has an error
+    if (expertsError) setError(expertsError);
+    if (servicesError && !error) setError(servicesError);
+  }, [expertsLoading, servicesLoading, expertsError, servicesError, error]);
 
   // Save content to localStorage whenever it changes
   useEffect(() => {
@@ -121,6 +150,7 @@ export const useAdminContent = (): AdminContent & {
     setHeroSettings,
     testimonials,
     setTestimonials,
-    loading
+    loading,
+    error
   };
 };

@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile } from '@/hooks/expert-auth/types';
+import { ExpertProfile } from '@/types/supabase/expert';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -33,6 +34,7 @@ import { CheckCircle, XCircle, User, CalendarClock, BriefcaseBusiness } from 'lu
 const ExpertApprovals = () => {
   const [experts, setExperts] = useState<ExpertProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedExpert, setSelectedExpert] = useState<ExpertProfile | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<'approved' | 'disapproved'>('approved');
@@ -43,18 +45,44 @@ const ExpertApprovals = () => {
     const fetchExperts = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        setError(null);
+        
+        // First try the expert_accounts table which is the main table for expert applications
+        let { data, error } = await supabase
           .from('expert_accounts')
           .select('*')
           .order('created_at', { ascending: false });
-          
+        
         if (error) {
-          throw error;
+          console.error('Error fetching from expert_accounts:', error);
+          // If that fails, try the experts table as a fallback
+          const { data: fallbackData, error: fallbackError } = await supabase
+            .from('experts')
+            .select('*')
+            .order('created_at', { ascending: false });
+            
+          if (fallbackError) {
+            throw fallbackError;
+          }
+          
+          // If we got data from the fallback table, use it
+          if (fallbackData && fallbackData.length > 0) {
+            // Convert to expected format
+            data = fallbackData.map(expert => ({
+              ...expert,
+              status: 'pending' // Assume pending since it's in the experts table but not approved yet
+            }));
+          } else {
+            data = [];
+          }
         }
         
-        setExperts(data as ExpertProfile[]);
+        console.log('Expert applications found:', data?.length || 0);
+        setExperts(data as ExpertProfile[] || []);
+        
       } catch (error) {
         console.error('Error fetching experts:', error);
+        setError('Failed to load expert applications');
         toast.error('Failed to load expert applications');
       } finally {
         setLoading(false);
@@ -80,10 +108,23 @@ const ExpertApprovals = () => {
         .update({ status: selectedStatus })
         .eq('id', selectedExpert.id);
         
-      if (error) throw error;
+      if (error) {
+        // If error with expert_accounts table, try updating the experts table
+        const { error: expertUpdateError } = await supabase
+          .from('experts')
+          .update({ status: selectedStatus })
+          .eq('id', selectedExpert.id);
+          
+        if (expertUpdateError) throw expertUpdateError;
+      }
       
-      // Send notification email using Supabase Edge Function
-      await sendStatusUpdateEmail(selectedExpert.email, selectedStatus, feedbackMessage);
+      // Send notification email using Supabase Edge Function (if implemented)
+      try {
+        await sendStatusUpdateEmail(selectedExpert.email, selectedStatus, feedbackMessage);
+      } catch (emailError) {
+        console.error('Error sending email notification:', emailError);
+        // Continue with the process even if email fails
+      }
       
       // Update local state
       setExperts(experts.map(expert => 
@@ -162,9 +203,17 @@ const ExpertApprovals = () => {
         .eq('id', expertIdString);
         
       if (error) {
-        console.error('Error approving expert:', error);
-        toast.error('Failed to approve expert');
-        return;
+        // Try updating the experts table if expert_accounts update fails
+        const { error: expertUpdateError } = await supabase
+          .from('experts')
+          .update({ status: 'approved' })
+          .eq('id', expertIdString);
+          
+        if (expertUpdateError) {
+          console.error('Error approving expert:', expertUpdateError);
+          toast.error('Failed to approve expert');
+          return;
+        }
       }
       
       // Update local state
@@ -184,13 +233,44 @@ const ExpertApprovals = () => {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Expert Applications</h2>
+        <div>
+          <h2 className="text-2xl font-bold">Expert Applications</h2>
+          <p className="text-muted-foreground">
+            {loading ? 'Loading expert applications...' : 
+             error ? 'Error loading applications' :
+             `${experts.length} expert ${experts.length === 1 ? 'application' : 'applications'} found`}
+          </p>
+        </div>
+        
+        <Button onClick={() => {
+          setLoading(true);
+          // Force reload of data
+          setTimeout(() => {
+            window.location.reload();
+          }, 300);
+        }} disabled={loading}>
+          {loading ? 'Loading...' : 'Refresh Data'}
+        </Button>
       </div>
       
       {loading ? (
         <div className="flex justify-center p-8">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ifind-teal"></div>
         </div>
+      ) : error ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-8">
+            <XCircle className="h-12 w-12 text-red-500 mb-4" />
+            <p className="text-red-500 font-medium">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline" 
+              className="mt-4"
+            >
+              Try Again
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-8">
           {pendingExperts.length > 0 && (
@@ -317,6 +397,9 @@ const ExpertApprovals = () => {
               <CardContent className="flex flex-col items-center justify-center p-8">
                 <User className="h-12 w-12 text-gray-300 mb-4" />
                 <p className="text-gray-500">No expert applications found</p>
+                <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+                  Refresh
+                </Button>
               </CardContent>
             </Card>
           )}

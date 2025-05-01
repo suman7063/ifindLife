@@ -1,8 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { toast } from 'sonner';
+import { categoryData as defaultCategoryData } from '@/data/homePageData';
 
 type CategoryType = {
   icon: string; // Changed from React.ReactNode to string
@@ -15,26 +25,91 @@ type CategoryType = {
 type ServicesEditorProps = {
   categories: CategoryType[];
   setCategories: React.Dispatch<React.SetStateAction<CategoryType[]>>;
+  loading?: boolean;
+  error?: string | null;
 };
 
-const ServicesEditor: React.FC<ServicesEditorProps> = ({ categories, setCategories }) => {
+const ServicesEditor: React.FC<ServicesEditorProps> = ({ 
+  categories, 
+  setCategories, 
+  loading = false, 
+  error = null 
+}) => {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  // Reset to default data function
+  const resetToDefault = () => {
+    if (window.confirm('Are you sure you want to reset to default services?')) {
+      setCategories(defaultCategoryData);
+      toast.success('Reset to default services');
+    }
+  };
+  
+  // Force refresh data
+  const forceRefresh = () => {
+    setIsRefreshing(true);
+    // Force reload the page to refresh all data
+    setTimeout(() => {
+      window.location.reload();
+    }, 300);
+  };
+  
+  if (loading || isRefreshing) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex flex-col items-center justify-center p-24">
+          <Loader2 className="h-12 w-12 text-ifind-aqua animate-spin mb-4" />
+          <p className="text-gray-500">Loading services data...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardContent className="flex flex-col items-center justify-center p-24">
+          <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+          <p className="text-red-500 font-medium">{error}</p>
+          <div className="flex gap-4 mt-6">
+            <Button onClick={forceRefresh} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" /> Refresh Data
+            </Button>
+            <Button onClick={resetToDefault}>Reset to Default</Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Edit Services</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline">Add New Service</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Service</DialogTitle>
-            </DialogHeader>
-            <AddCategoryForm 
-              onAdd={(newCategory) => setCategories([...categories, newCategory])} 
-            />
-          </DialogContent>
-        </Dialog>
+        <div>
+          <h2 className="text-xl font-semibold">Edit Services</h2>
+          <p className="text-muted-foreground">
+            {categories.length} services available
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={forceRefresh}>
+            <RefreshCw className="h-4 w-4 mr-2" /> Refresh
+          </Button>
+          <Button variant="outline" onClick={resetToDefault}>Reset</Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Add New Service</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Service</DialogTitle>
+              </DialogHeader>
+              <AddCategoryForm 
+                onAdd={(newCategory) => setCategories([...categories, newCategory])} 
+              />
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map((category, index) => (

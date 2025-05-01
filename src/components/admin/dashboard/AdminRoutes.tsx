@@ -26,6 +26,7 @@ interface AdminRoutesProps {
   setHeroSettings: React.Dispatch<React.SetStateAction<any>>;
   testimonials: any[];
   setTestimonials: React.Dispatch<React.SetStateAction<any[]>>;
+  error?: string | null;
 }
 
 const AdminRoutes: React.FC<AdminRoutesProps> = ({ 
@@ -37,19 +38,30 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
   heroSettings,
   setHeroSettings,
   testimonials,
-  setTestimonials
+  setTestimonials,
+  error
 }) => {
-  if (loading) {
-    return null;
-  }
-
   return (
     <Routes>
       <Route path="/" element={<AdminOverview />} />
       <Route path="/overview" element={<AdminOverview />} />
-      <Route path="/experts" element={<ExpertsEditor experts={experts} setExperts={setExperts} />} />
+      <Route path="/experts" element={
+        <ExpertsEditor 
+          experts={experts} 
+          setExperts={setExperts} 
+          loading={loading} 
+          error={error}
+        />
+      } />
       <Route path="/expertApprovals" element={<ExpertApprovals />} />
-      <Route path="/services" element={<ServicesEditor categories={services} setCategories={setServices} />} />
+      <Route path="/services" element={
+        <ServicesEditor 
+          categories={services} 
+          setCategories={setServices} 
+          loading={loading} 
+          error={error}
+        />
+      } />
       <Route path="/herosection" element={<HeroSectionEditor heroSettings={heroSettings} setHeroSettings={setHeroSettings} />} />
       <Route path="/testimonials" element={<TestimonialsEditor testimonials={testimonials} setTestimonials={setTestimonials} />} />
       <Route path="/programs" element={<ProgramsEditor />} />

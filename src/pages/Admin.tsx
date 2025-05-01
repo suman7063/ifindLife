@@ -8,6 +8,7 @@ import AdminAccessRestricted from '@/components/admin/dashboard/AdminAccessRestr
 import AdminRoutes from '@/components/admin/dashboard/AdminRoutes';
 import { useAdminContent } from '@/components/admin/hooks/useAdminContent';
 import { hasAnyPermission } from '@/components/admin/utils/permissionUtils';
+import { toast } from 'sonner';
 
 const Admin = () => {
   const { isAuthenticated, currentUser } = useAuth();
@@ -32,7 +33,8 @@ const Admin = () => {
     services, setServices,
     heroSettings, setHeroSettings,
     testimonials, setTestimonials,
-    loading 
+    loading,
+    error
   } = useAdminContent();
 
   // If not authenticated, redirect to admin login
@@ -46,6 +48,24 @@ const Admin = () => {
     console.log('Admin.tsx: User has no permissions');
     return <AdminAccessRestricted />;
   }
+  
+  // Debug log data loading status
+  useEffect(() => {
+    if (loading) {
+      console.log('Admin Dashboard: Loading data...');
+    } else {
+      console.log('Admin Dashboard: Data loaded', { 
+        expertsCount: experts?.length || 0,
+        servicesCount: services?.length || 0,
+        error: error || 'none'
+      });
+      
+      // Show toast if there's an error
+      if (error) {
+        toast.error(`Error loading data: ${error}`);
+      }
+    }
+  }, [loading, experts, services, error]);
 
   return (
     <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
@@ -62,6 +82,7 @@ const Admin = () => {
           setHeroSettings={setHeroSettings}
           testimonials={testimonials}
           setTestimonials={setTestimonials}
+          error={error}
         />
       )}
     </AdminDashboardLayout>
