@@ -6,12 +6,21 @@ import AdminDashboardLayout from '@/components/admin/layout/AdminDashboardLayout
 import AdminUserManagement from '@/components/AdminUserManagement';
 import AdminSettings from '@/components/admin/dashboard/AdminSettings';
 import AdminOverview from '@/components/admin/dashboard/AdminOverview';
-import AdminTabs from '@/components/admin/AdminTabs';
+import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
+import ServicesEditor from '@/components/admin/ServicesEditor';
+import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
+import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
+import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
+import { SessionsEditor } from '@/components/admin/sessions';
+import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
+import BlogEditor from '@/components/admin/BlogEditor';
+import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable';
+import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 
 const Admin = () => {
   const { isAuthenticated, currentUser } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Extract the current tab from the URL path
   const getCurrentTabFromPath = () => {
@@ -20,12 +29,6 @@ const Admin = () => {
   };
   
   const [activeTab, setActiveTab] = useState(getCurrentTabFromPath());
-  
-  // States for all content sections
-  const [experts, setExperts] = useState<any[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [heroSettings, setHeroSettings] = useState<any>({});
-  const [testimonials, setTestimonials] = useState<any[]>([]);
   
   // Update active tab when the URL changes
   useEffect(() => {
@@ -66,27 +69,18 @@ const Admin = () => {
       <Routes>
         <Route path="/" element={<AdminOverview />} />
         <Route path="/overview" element={<AdminOverview />} />
+        <Route path="/experts" element={<ExpertsEditor experts={[]} setExperts={() => {}} />} />
+        <Route path="/expertApprovals" element={<ExpertApprovals />} />
+        <Route path="/services" element={<ServicesEditor categories={[]} setCategories={() => {}} />} />
+        <Route path="/herosection" element={<HeroSectionEditor heroSettings={{}} setHeroSettings={() => {}} />} />
+        <Route path="/testimonials" element={<TestimonialsEditor testimonials={[]} setTestimonials={() => {}} />} />
+        <Route path="/programs" element={<ProgramsEditor />} />
+        <Route path="/sessions" element={<SessionsEditor />} />
+        <Route path="/referrals" element={<ReferralSettingsEditor />} />
+        <Route path="/blog" element={<BlogEditor />} />
+        <Route path="/contact" element={<ContactSubmissionsTable />} />
         <Route path="/adminUsers" element={<AdminUserManagement />} />
         <Route path="/settings" element={<AdminSettings />} />
-        
-        {/* Dynamic content tabs */}
-        <Route 
-          path="/:tabName" 
-          element={
-            <AdminTabs
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              experts={experts}
-              setExperts={setExperts}
-              services={services}
-              setServices={setServices}
-              heroSettings={heroSettings}
-              setHeroSettings={setHeroSettings}
-              testimonials={testimonials}
-              setTestimonials={setTestimonials}
-            />
-          } 
-        />
       </Routes>
     </AdminDashboardLayout>
   );

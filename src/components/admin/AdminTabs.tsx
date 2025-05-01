@@ -13,6 +13,8 @@ import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable'
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 import { Expert } from '@/components/admin/experts/types';
 
+// This component is kept for backward compatibility but is no longer used
+// All routes are now directly managed in Admin.tsx
 interface AdminTabsProps {
   activeTab: string;
   setActiveTab: React.Dispatch<React.SetStateAction<string>>;
@@ -38,62 +40,10 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
   testimonials,
   setTestimonials
 }) => {
-  return (
-    <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="mb-8 flex flex-wrap h-auto">
-        <TabsTrigger value="experts">Experts</TabsTrigger>
-        <TabsTrigger value="expertApprovals">Expert Approvals</TabsTrigger>
-        <TabsTrigger value="services">Services</TabsTrigger>
-        <TabsTrigger value="herosection">Hero Section</TabsTrigger>
-        <TabsTrigger value="testimonials">Testimonials</TabsTrigger>
-        <TabsTrigger value="programs">Programs</TabsTrigger>
-        <TabsTrigger value="sessions">Sessions</TabsTrigger>
-        <TabsTrigger value="referrals">Referrals</TabsTrigger>
-        <TabsTrigger value="blog">Blog</TabsTrigger>
-        <TabsTrigger value="contact">Contact Submissions</TabsTrigger>
-      </TabsList>
-      
-      <TabsContent value="experts" className="space-y-4">
-        <ExpertsEditor experts={experts} setExperts={setExperts} />
-      </TabsContent>
-      
-      <TabsContent value="expertApprovals" className="space-y-4">
-        <ExpertApprovals />
-      </TabsContent>
-      
-      <TabsContent value="services" className="space-y-4">
-        <ServicesEditor categories={services} setCategories={setServices} />
-      </TabsContent>
-      
-      <TabsContent value="herosection" className="space-y-4">
-        <HeroSectionEditor heroSettings={heroSettings} setHeroSettings={setHeroSettings} />
-      </TabsContent>
-      
-      <TabsContent value="testimonials" className="space-y-4">
-        <TestimonialsEditor testimonials={testimonials} setTestimonials={setTestimonials} />
-      </TabsContent>
-      
-      <TabsContent value="programs" className="space-y-4">
-        <ProgramsEditor />
-      </TabsContent>
-      
-      <TabsContent value="sessions" className="space-y-4">
-        <SessionsEditor />
-      </TabsContent>
-      
-      <TabsContent value="referrals" className="space-y-4">
-        <ReferralSettingsEditor />
-      </TabsContent>
-      
-      <TabsContent value="blog" className="space-y-4">
-        <BlogEditor />
-      </TabsContent>
-
-      <TabsContent value="contact" className="space-y-4">
-        <ContactSubmissionsTable />
-      </TabsContent>
-    </Tabs>
-  );
+  console.warn('AdminTabs component is deprecated and will be removed in a future update.');
+  
+  // This component is no longer used, routes are managed directly in Admin.tsx
+  return null;
 };
 
 export default AdminTabs;
