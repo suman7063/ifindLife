@@ -11,15 +11,17 @@ export const useAdminTools = () => {
     console.log('useAdminTools hook initialized');
   }
   
-  // Return the ProgramResetTool component
+  // Return the ProgramResetTool component that is only visible in development
   const ProgramResetTool = () => {
     // Only log in development environment
     if (import.meta.env.DEV) {
       console.log('ProgramResetTool component rendered');
     }
     
-    // Only show reset tool in development
-    return import.meta.env.DEV ? <ProgramDataReset /> : null;
+    // Only render in development environment
+    if (!import.meta.env.DEV) return null;
+    
+    return <ProgramDataReset />;
   };
   
   return {

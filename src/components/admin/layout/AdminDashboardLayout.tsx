@@ -30,7 +30,8 @@ import {
   Shield, 
   LifeBuoy,
   LogOut,
-  Award
+  Award,
+  Menu
 } from 'lucide-react';
 
 interface AdminDashboardLayoutProps {
@@ -69,17 +70,21 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
           isSuperAdmin={isSuperAdmin}
           username={currentUser?.username || 'Admin'}
         />
-        <SidebarInset className="p-6">
-          <div className="flex items-center mb-6">
-            <SidebarTrigger className="md:hidden mr-2" />
+        
+        <SidebarInset className="relative">
+          <div className="sticky top-0 z-10 flex items-center h-16 px-6 bg-background border-b">
+            <SidebarTrigger className="mr-4" />
             <h2 className="text-xl font-semibold">
               {getTabTitle(activeTab || 'overview')}
             </h2>
           </div>
-          <div className="container mx-auto">
+          <div className="p-6">
             {children}
           </div>
         </SidebarInset>
+
+        {/* Persistent toggle button that appears when sidebar is collapsed */}
+        <RestoreSidebarButton />
       </div>
     </SidebarProvider>
   );
@@ -104,6 +109,29 @@ const getTabTitle = (tab: string): string => {
   };
   
   return titles[tab] || 'Admin Dashboard';
+};
+
+// This component handles the persistent sidebar restore button
+const RestoreSidebarButton = () => {
+  const { state, toggleSidebar } = useSidebar();
+  
+  if (state === 'expanded') {
+    // Don't show the button when sidebar is already visible
+    return null;
+  }
+  
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      className="fixed top-4 left-4 z-50 rounded-full shadow-md border-slate-200"
+      onClick={toggleSidebar}
+      title="Show sidebar"
+    >
+      <Menu className="h-4 w-4" />
+      <span className="sr-only">Show sidebar</span>
+    </Button>
+  );
 };
 
 interface AdminSidebarProps {
