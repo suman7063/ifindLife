@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/admin-auth';
@@ -74,9 +73,9 @@ const Admin = () => {
           if (expertsError) {
             console.error('Error fetching experts:', expertsError);
           } else if (expertsData && expertsData.length > 0) {
-            // Transform experts data to match our expected format
+            // Transform experts data to match our expected format with string IDs
             const formattedExperts = expertsData.map(expert => ({
-              id: expert.id,
+              id: expert.id.toString(), // Ensure ID is a string
               name: expert.name,
               experience: expert.experience || 0,
               specialties: expert.specialization ? [expert.specialization] : [],
@@ -95,6 +94,7 @@ const Admin = () => {
               state: expert.state || "",
               country: expert.country || ""
             }));
+            
             setExperts(formattedExperts);
             
             // Update localStorage with fetched data

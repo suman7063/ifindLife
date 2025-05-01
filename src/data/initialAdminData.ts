@@ -10,7 +10,7 @@ export const initialHeroSettings = {
 
 export const initialExperts = [
   {
-    id: 1,
+    id: "1", // Updated to string
     name: "Dr. Sarah Johnson",
     experience: 10,
     specialties: ["Depression", "Anxiety", "Therapy"],
@@ -22,7 +22,7 @@ export const initialExperts = [
     online: true
   },
   {
-    id: 2,
+    id: "2", // Updated to string
     name: "Dr. Michael Chen",
     experience: 8,
     specialties: ["Relationships", "Family Therapy"],

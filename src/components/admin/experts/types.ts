@@ -1,6 +1,6 @@
 
 export interface Expert {
-  id: number;
+  id: string; // Changed from number to string
   name: string;
   experience: number;
   specialties: string[];
