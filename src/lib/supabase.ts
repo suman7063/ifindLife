@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -15,9 +16,9 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     flowType: 'implicit',
   },
   global: {
-    fetch: (...args) => {
-      console.log('Supabase fetch request:', args[0]);
-      return fetch(...args).catch(error => {
+    fetch: (url: RequestInfo | URL, init?: RequestInit) => {
+      console.log('Supabase fetch request:', url);
+      return fetch(url, init).catch(error => {
         console.error('Supabase fetch error:', error);
         throw error;
       });
