@@ -12,7 +12,7 @@ interface AddExpertFormProps {
 
 const AddExpertForm: React.FC<AddExpertFormProps> = ({ onAdd }) => {
   const [newExpert, setNewExpert] = useState<Expert>({
-    id: Date.now(),
+    id: Date.now().toString(), // Changed to string to match updated Expert interface
     name: "",
     experience: 5,
     specialties: [""],
