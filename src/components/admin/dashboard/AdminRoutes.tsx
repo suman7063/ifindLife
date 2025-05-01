@@ -27,6 +27,7 @@ interface AdminRoutesProps {
   testimonials: any[];
   setTestimonials: React.Dispatch<React.SetStateAction<any[]>>;
   error?: string | null;
+  onRefresh?: () => void;
 }
 
 const AdminRoutes: React.FC<AdminRoutesProps> = ({ 
@@ -39,18 +40,20 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
   setHeroSettings,
   testimonials,
   setTestimonials,
-  error
+  error,
+  onRefresh
 }) => {
   return (
     <Routes>
-      <Route path="/" element={<AdminOverview />} />
-      <Route path="/overview" element={<AdminOverview />} />
+      <Route path="/" element={<AdminOverview onRefresh={onRefresh} />} />
+      <Route path="/overview" element={<AdminOverview onRefresh={onRefresh} />} />
       <Route path="/experts" element={
         <ExpertsEditor 
           experts={experts} 
           setExperts={setExperts} 
           loading={loading} 
           error={error}
+          onRefresh={onRefresh}
         />
       } />
       <Route path="/expertApprovals" element={<ExpertApprovals />} />
@@ -60,10 +63,23 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
           setCategories={setServices} 
           loading={loading} 
           error={error}
+          onRefresh={onRefresh}
         />
       } />
-      <Route path="/herosection" element={<HeroSectionEditor heroSettings={heroSettings} setHeroSettings={setHeroSettings} />} />
-      <Route path="/testimonials" element={<TestimonialsEditor testimonials={testimonials} setTestimonials={setTestimonials} />} />
+      <Route path="/herosection" element={
+        <HeroSectionEditor 
+          heroSettings={heroSettings} 
+          setHeroSettings={setHeroSettings} 
+          onRefresh={onRefresh}
+        />
+      } />
+      <Route path="/testimonials" element={
+        <TestimonialsEditor 
+          testimonials={testimonials} 
+          setTestimonials={setTestimonials} 
+          onRefresh={onRefresh}
+        />
+      } />
       <Route path="/programs" element={<ProgramsEditor />} />
       <Route path="/sessions" element={<SessionsEditor />} />
       <Route path="/referrals" element={<ReferralSettingsEditor />} />

@@ -18,7 +18,17 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   global: {
     fetch: (url: RequestInfo | URL, init?: RequestInit) => {
       console.log('Supabase fetch request:', url);
-      return fetch(url, init).catch(error => {
+      
+      return fetch(url, init).then(response => {
+        // Add handling for rate limiting and server errors
+        if (response.status === 429) {
+          console.warn('Rate limit exceeded for Supabase request');
+        } else if (response.status >= 500) {
+          console.error('Server error in Supabase response:', response.status);
+        }
+        
+        return response;
+      }).catch(error => {
         console.error('Supabase fetch error:', error);
         throw error;
       });
@@ -31,7 +41,7 @@ export type Tables = Database['public']['Tables'];
 // Define a type-safe version for table access
 type TableNames = keyof Database['public']['Tables'] | string;
 
-// Enhanced from function with better error handling
+// Enhanced from function with better error handling and retry mechanism
 export function from(tableName: TableNames) {
   try {
     // Using type assertion to prevent TypeScript errors while keeping functionality

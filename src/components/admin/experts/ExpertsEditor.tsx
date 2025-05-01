@@ -13,17 +13,24 @@ type ExpertsEditorProps = {
   setExperts: React.Dispatch<React.SetStateAction<Expert[]>>;
   loading?: boolean;
   error?: string | null;
+  onRefresh?: () => void;
 };
 
 const ExpertsEditor: React.FC<ExpertsEditorProps> = ({ 
   experts, 
   setExperts, 
   loading = false,
-  error = null
+  error = null,
+  onRefresh
 }) => {
   const handleRefresh = () => {
-    // Force reload the page to refresh all data
-    window.location.reload();
+    // Call parent refresh if available, otherwise reload the page
+    if (onRefresh) {
+      onRefresh();
+    } else {
+      // Force reload the page to refresh all data
+      window.location.reload();
+    }
   };
   
   if (loading) {

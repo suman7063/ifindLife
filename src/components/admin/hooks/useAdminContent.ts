@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Expert } from '@/components/admin/experts/types';
 import { initialHeroSettings } from '@/data/initialAdminData';
@@ -22,9 +23,11 @@ export const useAdminContent = (): AdminContent & {
   setHeroSettings: React.Dispatch<React.SetStateAction<HeroSettings>>;
   setTestimonials: React.Dispatch<React.SetStateAction<Testimonial[]>>;
   error?: string | null;
+  refreshData: () => void;
 } => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [initialData, setInitialData] = useState<{
     experts: Expert[];
     services: ServiceCategory[];
@@ -35,10 +38,16 @@ export const useAdminContent = (): AdminContent & {
     services: [],
     heroSettings: {
       ...initialHeroSettings,
-      videoUrl: '' // Ensure videoUrl is present
+      videoUrl: initialHeroSettings.videoUrl // Ensure videoUrl is present
     },
     testimonials: []
   });
+
+  // Function to force refresh data
+  const refreshData = useCallback(() => {
+    toast.info("Refreshing data...");
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
 
   // Load content from localStorage and Supabase on initial mount
   useEffect(() => {
@@ -68,12 +77,13 @@ export const useAdminContent = (): AdminContent & {
     };
     
     loadContent();
-  }, []);
+  }, [refreshTrigger]); // Add refreshTrigger to dependencies
 
   // Create update callback for content changes
-  const updateContent = (newContent: Partial<AdminContent>) => {
+  const updateContent = useCallback((newContent: Partial<AdminContent>) => {
     if (loading) return;
     
+    // Create a merged content object
     const content = {
       experts: newContent.experts || experts,
       services: newContent.services || services,
@@ -81,8 +91,14 @@ export const useAdminContent = (): AdminContent & {
       testimonials: newContent.testimonials || testimonials
     };
     
-    saveContentToLocalStorage(content);
-  };
+    // Save to localStorage with error handling
+    try {
+      saveContentToLocalStorage(content);
+    } catch (e) {
+      console.error("Failed to save content to localStorage:", e);
+      toast.error("Failed to save changes locally");
+    }
+  }, [loading]);
 
   // Use the smaller hooks with the update callback
   const { 
@@ -108,7 +124,8 @@ export const useAdminContent = (): AdminContent & {
   
   const { 
     heroSettings, 
-    setHeroSettings 
+    setHeroSettings,
+    error: heroError
   } = useHeroSettings(
     initialData.heroSettings,
     (newSettings) => updateContent({ heroSettings: newSettings })
@@ -116,7 +133,8 @@ export const useAdminContent = (): AdminContent & {
   
   const { 
     testimonials, 
-    setTestimonials 
+    setTestimonials,
+    error: testimonialsError
   } = useTestimonialsData(
     initialData.testimonials,
     (newTestimonials) => updateContent({ testimonials: newTestimonials })
@@ -129,7 +147,9 @@ export const useAdminContent = (): AdminContent & {
     // Set error if any loading hook has an error
     if (expertsError) setError(expertsError);
     if (servicesError && !error) setError(servicesError);
-  }, [expertsLoading, servicesLoading, expertsError, servicesError, error]);
+    if (heroError && !error) setError(heroError);
+    if (testimonialsError && !error) setError(testimonialsError);
+  }, [expertsLoading, servicesLoading, expertsError, servicesError, heroError, testimonialsError, error]);
 
   // Save content to localStorage whenever it changes
   useEffect(() => {
@@ -141,7 +161,7 @@ export const useAdminContent = (): AdminContent & {
       heroSettings,
       testimonials
     });
-  }, [experts, services, heroSettings, testimonials, loading]);
+  }, [experts, services, heroSettings, testimonials, loading, updateContent]);
 
   return {
     experts,
@@ -153,6 +173,7 @@ export const useAdminContent = (): AdminContent & {
     testimonials,
     setTestimonials,
     loading,
-    error
+    error,
+    refreshData
   };
 };

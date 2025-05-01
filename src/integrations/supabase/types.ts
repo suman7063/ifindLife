@@ -995,6 +995,14 @@ export type Database = {
         Args: { program_id: number }
         Returns: undefined
       }
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      is_superadmin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       moderation_action_type: "warning" | "suspension" | "ban" | "no_action"

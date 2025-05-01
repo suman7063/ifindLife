@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Calendar, Users, FileText, ShoppingBag, MessageSquare, ArrowUpRight } from 'lucide-react';
+import { Calendar, Users, FileText, ShoppingBag, MessageSquare, ArrowUpRight, RefreshCw } from 'lucide-react';
 
 // Sample data - in a real application, this would come from an API
 const sampleData = {
@@ -37,7 +36,7 @@ const sampleData = {
   ]
 };
 
-const AdminOverview = () => {
+const AdminOverview = ({ onRefresh }: { onRefresh?: () => void }) => {
   const [stats, setStats] = useState({
     totalUsers: 1587,
     newUsers: 124,
@@ -52,13 +51,27 @@ const AdminOverview = () => {
     // For now, we're using static sample data
   }, []);
 
+  // Handle refresh button click
+  const handleRefresh = () => {
+    if (onRefresh) {
+      onRefresh();
+    } else {
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
-        <p className="text-muted-foreground">
-          Key metrics and insights for your platform.
-        </p>
+      <div className="flex justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard Overview</h1>
+          <p className="text-muted-foreground">
+            Key metrics and insights for your platform.
+          </p>
+        </div>
+        <Button variant="outline" onClick={handleRefresh}>
+          <RefreshCw className="h-4 w-4 mr-2" /> Refresh Data
+        </Button>
       </div>
 
       <Separator />
