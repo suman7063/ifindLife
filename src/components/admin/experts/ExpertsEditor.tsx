@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import ExpertCard from './ExpertCard';
+import ExpertCard from './expert-card';
 import AddExpertForm from './form/AddExpertForm';
 import { Expert } from './types';
 
