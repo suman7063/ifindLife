@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { HeroHeader } from './HeroHeader';
 import { HelpSection } from './HelpSection';
@@ -6,10 +5,10 @@ import { DiscoverSection } from './DiscoverSection';
 
 const Hero = () => {
   const [heroSettings, setHeroSettings] = useState({
-    title: "You Are Not Alone!",
-    subtitle: "Is there a situation, you need immediate help with?",
-    description: "Connect with our currently online experts through an instant call",
-    videoUrl: "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=0" // Disable autoplay initially
+    title: "Take Control of Your Mental Health Journey",
+    subtitle: "Mental Health Journey",
+    description: "We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance and natural energy alignment, avoiding pills. Find your inner peace, and move forward gently. Get answers when you need it the most.",
+    videoUrl: "https://www.youtube.com/embed/0J_Vg-uWY-k?autoplay=0" // Professional mental health video
   });
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -27,13 +26,18 @@ const Hero = () => {
       if (savedContent) {
         const parsedContent = JSON.parse(savedContent);
         if (parsedContent.heroSettings) {
-          // Ensure autoplay is disabled
-          let videoUrl = parsedContent.heroSettings.videoUrl || heroSettings.videoUrl;
-          if (videoUrl) {
-            // Remove autoplay parameter if present
-            videoUrl = videoUrl.replace(/([?&])autoplay=1/g, '$1autoplay=0');
+          // Ensure we're using the correct video and content
+          let videoUrl = "https://www.youtube.com/embed/0J_Vg-uWY-k?autoplay=0"; // Default to professional mental health video
+          
+          // Remove any potential Rick Astley video if it exists
+          const isRickRoll = parsedContent.heroSettings.videoUrl && 
+            (parsedContent.heroSettings.videoUrl.includes("dQw4w9WgXcQ") || 
+             parsedContent.heroSettings.videoUrl.toLowerCase().includes("rick") ||
+             parsedContent.heroSettings.videoUrl.toLowerCase().includes("astley"));
+          
+          if (!isRickRoll && parsedContent.heroSettings.videoUrl) {
+            videoUrl = parsedContent.heroSettings.videoUrl.replace(/([?&])autoplay=1/g, '$1autoplay=0');
             
-            // If no autoplay parameter exists, add it with value 0
             if (!videoUrl.includes('autoplay=')) {
               videoUrl = videoUrl.includes('?') 
                 ? `${videoUrl}&autoplay=0` 
@@ -42,16 +46,22 @@ const Hero = () => {
           }
           
           setHeroSettings({
-            ...parsedContent.heroSettings,
-            title: "You Are Not Alone!", // Override title with the new text
-            subtitle: "Is there a situation, you need immediate help with?", // Update the subtitle
-            description: "Connect with our currently online experts through an instant call", // Add description
+            title: "Take Control of Your Mental Health Journey", // Restore correct title
+            subtitle: "Mental Health Journey", // Restore correct subtitle
+            description: "We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance and natural energy alignment, avoiding pills. Find your inner peace, and move forward gently. Get answers when you need it the most.",
             videoUrl
           });
         }
       }
     } catch (error) {
       console.error('Error loading content from localStorage:', error);
+      // Fallback to correct default content in case of error
+      setHeroSettings({
+        title: "Take Control of Your Mental Health Journey",
+        subtitle: "Mental Health Journey", 
+        description: "We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance and natural energy alignment, avoiding pills. Find your inner peace, and move forward gently. Get answers when you need it the most.",
+        videoUrl: "https://www.youtube.com/embed/0J_Vg-uWY-k?autoplay=0"
+      });
     }
   }, []);
 
@@ -78,12 +88,16 @@ const Hero = () => {
         currentSlide={currentSlide} 
       />
       <HelpSection 
-        subtitle={heroSettings.subtitle} 
-        description={heroSettings.description} 
+        subtitle={"Is there a situation, you need immediate help with?"}
+        description={"Connect with our currently online experts through an instant call"} 
       />
       <DiscoverSection 
         videoUrl={heroSettings.videoUrl} 
-        isVideoLoaded={isVideoLoaded} 
+        isVideoLoaded={isVideoLoaded}
+        title="Take Control of Your Mental Health Journey"
+        description="We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance and natural energy alignment, avoiding pills. Find your inner peace, and move forward gently. Get answers when you need it the most."
+        rating="4.8/5.0"
+        reviews="Based on 2.5k+ Reviews"  
       />
     </div>
   );

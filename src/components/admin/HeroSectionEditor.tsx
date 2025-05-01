@@ -4,6 +4,20 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Video } from "lucide-react";
 import { HeroSettings } from './hooks/useHeroSettings';
+import { toast } from 'sonner';
+
+// Function to check if a video URL is inappropriate
+const isInappropriateVideo = (url: string): boolean => {
+  const inappropriatePatterns = [
+    'dQw4w9WgXcQ', // Rick Astley Never Gonna Give You Up video ID
+    'rick astley',
+    'rickroll',
+    'never gonna give you up'
+  ];
+  
+  const lowercaseUrl = url.toLowerCase();
+  return inappropriatePatterns.some(pattern => lowercaseUrl.includes(pattern.toLowerCase()));
+};
 
 type HeroSettingsProps = {
   heroSettings: HeroSettings;
@@ -16,6 +30,12 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
 }) => {
   // Function to handle video URL changes and ensure autoplay is disabled
   const handleVideoUrlChange = (url: string) => {
+    // Check if URL is inappropriate
+    if (isInappropriateVideo(url)) {
+      toast.error("Inappropriate content detected and blocked");
+      return;
+    }
+    
     // Clean the URL to remove existing autoplay parameter if present
     let cleanUrl = url.replace(/([?&])autoplay=1/g, '$1autoplay=0').replace(/\?$/, '');
     
@@ -83,8 +103,8 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
               type="button"
               className="flex-shrink-0 bg-ifind-offwhite"
               onClick={() => {
-                // Common YouTube video - for testing
-                handleVideoUrlChange("https://www.youtube.com/embed/dQw4w9WgXcQ");
+                // Professional mental health video for testing
+                handleVideoUrlChange("https://www.youtube.com/embed/0J_Vg-uWY-k");
               }}
             >
               <Video className="h-4 w-4 mr-2" />
@@ -103,7 +123,7 @@ const HeroSectionEditor: React.FC<HeroSettingsProps> = ({
               <span className="text-gradient">{heroSettings.subtitle}</span>
             </h1>
             <p className="text-sm mt-2">{heroSettings.description}</p>
-            {heroSettings.videoUrl && (
+            {heroSettings.videoUrl && !isInappropriateVideo(heroSettings.videoUrl) && (
               <div className="mt-4 bg-black rounded-lg aspect-video w-full max-w-md">
                 <iframe
                   className="w-full h-full rounded-lg"
