@@ -1,17 +1,15 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { getDefaultTestimonials } from './utils/dataLoaders';
-
-export interface Testimonial {
-  id?: string;
-  name: string;
-  location: string;
-  rating: number;
-  text: string;
-  date: string;
-  imageUrl: string;
-}
+import { toast } from 'sonner';
+import { Testimonial } from './types';
+import { 
+  fetchTestimonialsFromSupabase,
+  addTestimonialToSupabase,
+  updateTestimonialInSupabase,
+  deleteTestimonialFromSupabase,
+  countTestimonialsInSupabase
+} from './api';
+import { getDefaultTestimonials } from './defaults';
 
 export function useTestimonialsData(
   initialTestimonials: Testimonial[] = [], 
@@ -25,27 +23,10 @@ export function useTestimonialsData(
   const fetchTestimonials = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('testimonials')
-        .select('*')
-        .order('created_at', { ascending: false });
+      setError(null);
+      const formattedTestimonials = await fetchTestimonialsFromSupabase();
       
-      if (error) {
-        throw error;
-      }
-      
-      if (data && data.length > 0) {
-        // Convert from database format to our application format
-        const formattedTestimonials = data.map(item => ({
-          id: item.id,
-          name: item.name,
-          location: item.location,
-          rating: item.rating,
-          text: item.text,
-          date: item.date,
-          imageUrl: item.image_url  // Map from image_url to imageUrl
-        }));
-        
+      if (formattedTestimonials.length > 0) {
         setTestimonials(formattedTestimonials);
         updateCallback(formattedTestimonials);
       } else {
@@ -64,26 +45,10 @@ export function useTestimonialsData(
   const addTestimonial = async (testimonial: Testimonial) => {
     try {
       setLoading(true);
-      
-      const { data, error } = await supabase
-        .from('testimonials')
-        .insert([{
-          name: testimonial.name,
-          location: testimonial.location,
-          rating: testimonial.rating,
-          text: testimonial.text,
-          date: testimonial.date,
-          image_url: testimonial.imageUrl  // Map from imageUrl to image_url
-        }])
-        .select();
-      
-      if (error) {
-        throw error;
-      }
+      await addTestimonialToSupabase(testimonial);
       
       // Refresh testimonials list after adding
       await fetchTestimonials();
-      return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error adding testimonial';
       setError(errorMessage);
@@ -98,22 +63,7 @@ export function useTestimonialsData(
   const updateTestimonial = async (id: string, testimonial: Testimonial) => {
     try {
       setLoading(true);
-      
-      const { error } = await supabase
-        .from('testimonials')
-        .update({
-          name: testimonial.name,
-          location: testimonial.location,
-          rating: testimonial.rating,
-          text: testimonial.text,
-          date: testimonial.date,
-          image_url: testimonial.imageUrl  // Map from imageUrl to image_url
-        })
-        .eq('id', id);
-      
-      if (error) {
-        throw error;
-      }
+      await updateTestimonialInSupabase(id, testimonial);
       
       // Refresh testimonials list after updating
       await fetchTestimonials();
@@ -131,15 +81,7 @@ export function useTestimonialsData(
   const deleteTestimonial = async (id: string) => {
     try {
       setLoading(true);
-      
-      const { error } = await supabase
-        .from('testimonials')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        throw error;
-      }
+      await deleteTestimonialFromSupabase(id);
       
       // Refresh testimonials list after deleting
       await fetchTestimonials();
@@ -153,26 +95,13 @@ export function useTestimonialsData(
     }
   };
 
-  // Initialize testimonials if empty
-  useEffect(() => {
-    if (initialTestimonials.length === 0) {
-      fetchTestimonials();
-    }
-  }, []);
-
   // Seed default testimonials if needed
   const seedDefaultTestimonials = async () => {
     try {
       setLoading(true);
       
       // Check if there are any testimonials in the database
-      const { count, error: countError } = await supabase
-        .from('testimonials')
-        .select('*', { count: 'exact', head: true });
-      
-      if (countError) {
-        throw countError;
-      }
+      const count = await countTestimonialsInSupabase();
       
       // If no testimonials exist, seed with defaults
       if (count === 0) {
@@ -180,29 +109,31 @@ export function useTestimonialsData(
         
         // Insert default testimonials
         for (const testimonial of defaultTestimonials) {
-          await supabase
-            .from('testimonials')
-            .insert([{
-              name: testimonial.name,
-              location: testimonial.location,
-              rating: testimonial.rating,
-              text: testimonial.text,
-              date: testimonial.date,
-              image_url: testimonial.imageUrl  // Map from imageUrl to image_url
-            }]);
+          await addTestimonialToSupabase(testimonial);
         }
         
         // Fetch the newly added testimonials
         await fetchTestimonials();
+        toast.success('Default testimonials added successfully');
+      } else {
+        toast.info('Database already contains testimonials');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error seeding testimonials';
       setError(errorMessage);
       console.error('Error seeding default testimonials:', err);
+      toast.error('Failed to add default testimonials');
     } finally {
       setLoading(false);
     }
   };
+
+  // Initialize testimonials if empty
+  useEffect(() => {
+    if (initialTestimonials.length === 0) {
+      fetchTestimonials();
+    }
+  }, []);
 
   return {
     testimonials,
@@ -215,3 +146,6 @@ export function useTestimonialsData(
     seedDefaultTestimonials
   };
 }
+
+// Re-export the Testimonial type for easy import by consumers
+export type { Testimonial } from './types';

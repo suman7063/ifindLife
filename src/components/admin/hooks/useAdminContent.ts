@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Expert } from '@/components/admin/experts/types';
@@ -6,7 +5,7 @@ import { initialHeroSettings } from '@/data/initialAdminData';
 import { useExpertsData } from './useExpertsData';
 import { useServicesData, ServiceCategory } from './useServicesData';
 import { useHeroSettings, HeroSettings } from './useHeroSettings';
-import { useTestimonialsData, Testimonial } from './useTestimonialsData';
+import { useTestimonialsData, Testimonial } from './testimonials';
 import { loadContentFromLocalStorage, saveContentToLocalStorage } from './utils/dataLoaders';
 
 interface AdminContent {
@@ -99,7 +98,7 @@ export const useAdminContent = (): AdminContent & {
       console.error("Failed to save content to localStorage:", e);
       toast.error("Failed to save changes locally");
     }
-  }, [loading]);
+  }, [loading, experts, services, heroSettings, testimonials]);
 
   // Use the smaller hooks with the update callback
   const { 
