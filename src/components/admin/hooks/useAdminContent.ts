@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Expert } from '@/components/admin/experts/types';
@@ -37,7 +38,7 @@ export const useAdminContent = (): AdminContent & {
     services: [],
     heroSettings: {
       ...initialHeroSettings,
-      videoUrl: initialHeroSettings.videoUrl // Ensure videoUrl is present
+      videoUrl: initialHeroSettings.videoUrl
     },
     testimonials: []
   });
@@ -79,27 +80,6 @@ export const useAdminContent = (): AdminContent & {
     loadContent();
   }, [refreshTrigger]); // Add refreshTrigger to dependencies
 
-  // Create update callback for content changes
-  const updateContent = useCallback((newContent: Partial<AdminContent>) => {
-    if (loading) return;
-    
-    // Create a merged content object
-    const content = {
-      experts: newContent.experts || experts,
-      services: newContent.services || services,
-      heroSettings: newContent.heroSettings || heroSettings,
-      testimonials: newContent.testimonials || testimonials
-    };
-    
-    // Save to localStorage with error handling
-    try {
-      saveContentToLocalStorage(content);
-    } catch (e) {
-      console.error("Failed to save content to localStorage:", e);
-      toast.error("Failed to save changes locally");
-    }
-  }, [loading, experts, services, heroSettings, testimonials]);
-
   // Use the smaller hooks with the update callback
   const { 
     experts, 
@@ -140,6 +120,27 @@ export const useAdminContent = (): AdminContent & {
     testimonials,
     error: testimonialsError
   } = testimonialsHook;
+
+  // Create update callback for content changes
+  const updateContent = useCallback((newContent: Partial<AdminContent>) => {
+    if (loading) return;
+    
+    // Create a merged content object
+    const content = {
+      experts: newContent.experts || experts,
+      services: newContent.services || services,
+      heroSettings: newContent.heroSettings || heroSettings,
+      testimonials: newContent.testimonials || testimonials
+    };
+    
+    // Save to localStorage with error handling
+    try {
+      saveContentToLocalStorage(content);
+    } catch (e) {
+      console.error("Failed to save content to localStorage:", e);
+      toast.error("Failed to save changes locally");
+    }
+  }, [loading, experts, services, heroSettings, testimonials]);
   
   // Create a setTestimonials function that wraps the original one
   const setTestimonials = useCallback((newTestimonials: React.SetStateAction<Testimonial[]>) => {

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-import { Testimonial } from '../hooks/useTestimonialsData';
+import { Testimonial } from '../hooks/testimonials';
 
 interface TestimonialCardProps {
   testimonial: Testimonial;
