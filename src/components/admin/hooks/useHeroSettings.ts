@@ -33,7 +33,7 @@ export function useHeroSettings(
   updateCallback: (settings: HeroSettings) => void = () => {}
 ) {
   const [heroSettings, setHeroSettings] = useState<HeroSettings>(initialSettings);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
 
@@ -97,7 +97,7 @@ export function useHeroSettings(
       setError(null);
     } catch (err) {
       console.error("Error in updateHeroSettings:", err);
-      setError(err as Error);
+      setError(err instanceof Error ? err.message : String(err));
       toast.error("Error updating hero settings");
     }
   };

@@ -265,6 +265,6 @@ export function useExpertsData(
     experts,
     setExperts,
     loading,
-    error
+    error // This is now always a string
   };
 }

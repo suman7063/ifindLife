@@ -125,7 +125,7 @@ export function useServicesData(
         }
       } catch (err: any) {
         console.error('Error loading services data:', err);
-        setError('Failed to load services data');
+        setError(err instanceof Error ? err.message : String(err));
         
         if (fetchAttempts < MAX_FETCH_ATTEMPTS) {
           // Schedule a retry with exponential backoff

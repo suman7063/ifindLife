@@ -158,11 +158,11 @@ export const useAdminContent = (): AdminContent & {
   useEffect(() => {
     setLoading(expertsLoading || servicesLoading);
     
-    // Set error if any loading hook has an error
-    if (expertsError) setError(expertsError);
-    else if (servicesError) setError(servicesError);
-    else if (heroError) setError(heroError);
-    else if (testimonialsError) setError(testimonialsError);
+    // Set error if any loading hook has an error - Convert all errors to strings
+    if (expertsError) setError(expertsError instanceof Error ? expertsError.message : String(expertsError));
+    else if (servicesError) setError(servicesError instanceof Error ? servicesError.message : String(servicesError));
+    else if (heroError) setError(heroError instanceof Error ? heroError.message : String(heroError));
+    else if (testimonialsError) setError(testimonialsError instanceof Error ? testimonialsError.message : String(testimonialsError));
     else setError(null);
   }, [expertsLoading, servicesLoading, expertsError, servicesError, heroError, testimonialsError]);
 
