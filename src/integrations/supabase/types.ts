@@ -669,6 +669,42 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          image_url: string
+          location: string
+          name: string
+          rating: number
+          text: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          image_url: string
+          location: string
+          name: string
+          rating: number
+          text: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          image_url?: string
+          location?: string
+          name?: string
+          rating?: number
+          text?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_courses: {
         Row: {
           completed: boolean | null
@@ -999,8 +1035,12 @@ export type Database = {
         Args: { user_id: string }
         Returns: boolean
       }
+      is_any_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_superadmin: {
-        Args: { user_id: string }
+        Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
       }
     }

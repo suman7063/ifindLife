@@ -1,20 +1,12 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
-
-type TestimonialType = {
-  name: string;
-  location: string;
-  rating: number;
-  text: string;
-  date: string;
-  imageUrl: string;
-};
+import { Testimonial } from '../hooks/useTestimonialsData';
 
 interface TestimonialCardProps {
-  testimonial: TestimonialType;
+  testimonial: Testimonial;
   index: number;
-  onEdit: (testimonial: TestimonialType, index: number) => void;
+  onEdit: (testimonial: Testimonial, index: number) => void;
   onDelete: (index: number) => void;
 }
 

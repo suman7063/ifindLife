@@ -3,30 +3,24 @@ import React, { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
-
-type TestimonialType = {
-  name: string;
-  location: string;
-  rating: number;
-  text: string;
-  date: string;
-  imageUrl: string;
-};
+import { Testimonial } from '../hooks/useTestimonialsData';
 
 interface TestimonialFormContentProps {
-  initialTestimonial: TestimonialType;
-  onSave: (testimonial: TestimonialType) => void;
+  initialTestimonial: Testimonial;
+  onSave: (testimonial: Testimonial) => void;
   onCancel: () => void;
   isEdit?: boolean;
+  isSaving?: boolean;
 }
 
 const TestimonialFormContent: React.FC<TestimonialFormContentProps> = ({ 
   initialTestimonial, 
   onSave, 
   onCancel,
-  isEdit = false
+  isEdit = false,
+  isSaving = false
 }) => {
-  const [testimonial, setTestimonial] = useState<TestimonialType>(initialTestimonial);
+  const [testimonial, setTestimonial] = useState<Testimonial>(initialTestimonial);
 
   const handleSubmit = () => {
     if (!testimonial.name || !testimonial.text) {
@@ -96,14 +90,16 @@ const TestimonialFormContent: React.FC<TestimonialFormContentProps> = ({
         <Button 
           variant="outline"
           onClick={onCancel}
+          disabled={isSaving}
         >
           Cancel
         </Button>
         <Button 
           className="bg-ifind-aqua hover:bg-ifind-teal"
           onClick={handleSubmit}
+          disabled={isSaving}
         >
-          {isEdit ? 'Save Changes' : 'Add Testimonial'}
+          {isSaving ? 'Saving...' : isEdit ? 'Save Changes' : 'Add Testimonial'}
         </Button>
       </div>
     </div>

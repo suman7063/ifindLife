@@ -1,24 +1,72 @@
 
 import React, { useEffect, useState } from 'react';
-import TestimonialCard from '@/components/TestimonialCard';
+import { supabase } from '@/lib/supabase';
 import { testimonialData as defaultTestimonialData } from '@/data/homePageData';
+
+type Testimonial = {
+  id: string;
+  name: string;
+  location: string;
+  rating: number;
+  text: string;
+  date: string;
+  imageUrl: string;
+};
 
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState(defaultTestimonialData);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load content from localStorage on component mount
+  // Load testimonials from Supabase on component mount
   useEffect(() => {
-    try {
-      const savedContent = localStorage.getItem('ifindlife-content');
-      if (savedContent) {
-        const parsedContent = JSON.parse(savedContent);
-        if (parsedContent.testimonials) {
-          setTestimonials(parsedContent.testimonials);
+    const fetchTestimonials = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('testimonials')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          throw error;
         }
+        
+        if (data && data.length > 0) {
+          // Convert from database format to our application format
+          const formattedTestimonials = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            location: item.location,
+            rating: item.rating,
+            text: item.text,
+            date: item.date,
+            imageUrl: item.image_url
+          }));
+          
+          setTestimonials(formattedTestimonials);
+        }
+      } catch (err) {
+        console.error('Error fetching testimonials:', err);
+        setError('Failed to load testimonials');
+        // Fallback to localStorage if Supabase fails
+        try {
+          const savedContent = localStorage.getItem('ifindlife-content');
+          if (savedContent) {
+            const parsedContent = JSON.parse(savedContent);
+            if (parsedContent.testimonials) {
+              setTestimonials(parsedContent.testimonials);
+            }
+          }
+        } catch (localError) {
+          console.error('Error loading content from localStorage:', localError);
+        }
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error loading content from localStorage:', error);
-    }
+    };
+
+    fetchTestimonials();
   }, []);
 
   return (
@@ -54,7 +102,7 @@ const TestimonialsSection = () => {
           </div>
           
           {testimonials.slice(0, 3).map((testimonial, index) => (
-            <div key={index} className="bg-gray-50 p-6 rounded-lg">
+            <div key={testimonial.id || index} className="bg-gray-50 p-6 rounded-lg">
               <div className="flex items-center mb-4">
                 <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
                   <img 
