@@ -132,14 +132,27 @@ export const useAdminContent = (): AdminContent & {
     (newSettings) => updateContent({ heroSettings: newSettings })
   );
   
-  const { 
-    testimonials, 
-    setTestimonials,
-    error: testimonialsError
-  } = useTestimonialsData(
+  const testimonialsHook = useTestimonialsData(
     initialData.testimonials,
     (newTestimonials) => updateContent({ testimonials: newTestimonials })
   );
+  
+  const { 
+    testimonials,
+    error: testimonialsError
+  } = testimonialsHook;
+  
+  // Create a setTestimonials function that wraps the original one
+  const setTestimonials = useCallback((newTestimonials: React.SetStateAction<Testimonial[]>) => {
+    if (typeof newTestimonials === 'function') {
+      // If it's a function, apply it to the current testimonials
+      const updatedTestimonials = newTestimonials(testimonials);
+      testimonialsHook.fetchTestimonials(); // Refresh from the database
+    } else {
+      // If it's a direct value, use it
+      testimonialsHook.fetchTestimonials(); // Refresh from the database
+    }
+  }, [testimonialsHook, testimonials]);
 
   // Update overall loading state
   useEffect(() => {

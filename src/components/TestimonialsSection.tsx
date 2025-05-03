@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { testimonialData as defaultTestimonialData } from '@/data/homePageData';
 
 type Testimonial = {
-  id: string;
+  id?: string;  // Make id optional since some testimonials might not have it
   name: string;
   location: string;
   rating: number;
@@ -14,7 +14,7 @@ type Testimonial = {
 };
 
 const TestimonialsSection = () => {
-  const [testimonials, setTestimonials] = useState(defaultTestimonialData);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(defaultTestimonialData);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

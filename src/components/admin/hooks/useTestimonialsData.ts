@@ -34,19 +34,23 @@ export function useTestimonialsData(
         throw error;
       }
       
-      // Convert from database format to our application format
-      const formattedTestimonials = data.map(item => ({
-        id: item.id,
-        name: item.name,
-        location: item.location,
-        rating: item.rating,
-        text: item.text,
-        date: item.date,
-        imageUrl: item.image_url
-      }));
-      
-      setTestimonials(formattedTestimonials);
-      updateCallback(formattedTestimonials);
+      if (data && data.length > 0) {
+        // Convert from database format to our application format
+        const formattedTestimonials = data.map(item => ({
+          id: item.id,
+          name: item.name,
+          location: item.location,
+          rating: item.rating,
+          text: item.text,
+          date: item.date,
+          imageUrl: item.image_url  // Map from image_url to imageUrl
+        }));
+        
+        setTestimonials(formattedTestimonials);
+        updateCallback(formattedTestimonials);
+      } else {
+        console.log('No testimonials found in the database');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error loading testimonials';
       setError(errorMessage);
@@ -69,7 +73,7 @@ export function useTestimonialsData(
           rating: testimonial.rating,
           text: testimonial.text,
           date: testimonial.date,
-          image_url: testimonial.imageUrl
+          image_url: testimonial.imageUrl  // Map from imageUrl to image_url
         }])
         .select();
       
@@ -79,10 +83,12 @@ export function useTestimonialsData(
       
       // Refresh testimonials list after adding
       await fetchTestimonials();
+      return data;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error adding testimonial';
       setError(errorMessage);
       console.error('Error adding testimonial:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -101,7 +107,7 @@ export function useTestimonialsData(
           rating: testimonial.rating,
           text: testimonial.text,
           date: testimonial.date,
-          image_url: testimonial.imageUrl
+          image_url: testimonial.imageUrl  // Map from imageUrl to image_url
         })
         .eq('id', id);
       
@@ -115,6 +121,7 @@ export function useTestimonialsData(
       const errorMessage = err instanceof Error ? err.message : 'Unknown error updating testimonial';
       setError(errorMessage);
       console.error('Error updating testimonial:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -140,6 +147,7 @@ export function useTestimonialsData(
       const errorMessage = err instanceof Error ? err.message : 'Unknown error deleting testimonial';
       setError(errorMessage);
       console.error('Error deleting testimonial:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -180,7 +188,7 @@ export function useTestimonialsData(
               rating: testimonial.rating,
               text: testimonial.text,
               date: testimonial.date,
-              image_url: testimonial.imageUrl
+              image_url: testimonial.imageUrl  // Map from imageUrl to image_url
             }]);
         }
         
