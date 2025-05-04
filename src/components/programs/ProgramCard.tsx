@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Program } from '@/types/programs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Heart } from 'lucide-react';
-import { UserProfile } from '@/types/supabase';
-import { from } from '@/lib/supabase';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useDialog } from '@/hooks/useDialog';
 import ProgramDetailDialog from './ProgramDetailDialog';
 import { Badge } from '@/components/ui/badge';
+import { UserProfile } from '@/types/supabase/user';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import FavoriteButton from '@/components/favorites/FavoriteButton';
 
 interface ProgramCardProps {
   program: Program;
@@ -22,15 +24,16 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
   currentUser, 
   isAuthenticated 
 }) => {
-  const [isFavorite, setIsFavorite] = useState(program.is_favorite || false);
-  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const navigate = useNavigate();
   const { showDialog, DialogComponent } = useDialog();
+  const { toggleProgramFavorite, isProgramFavorite } = useFavorites();
+  const auth = useAuth();
+  
+  // Use either the program's is_favorite property or check from our favorites context
+  const isFavorite = program.is_favorite || isProgramFavorite(program.id);
 
   const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (isTogglingFavorite) return;
     
     // Store the program to continue user journey after login
     if (!isAuthenticated) {
@@ -43,39 +46,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
       return;
     }
     
-    setIsTogglingFavorite(true);
-    
-    try {
-      if (isFavorite) {
-        // Remove from favorites
-        const { error } = await from('user_favorite_programs')
-          .delete()
-          .eq('user_id', currentUser?.id)
-          .eq('program_id', program.id);
-          
-        if (error) throw error;
-        
-        toast.success('Removed from favorites');
-      } else {
-        // Add to favorites
-        const { error } = await from('user_favorite_programs')
-          .insert({
-            user_id: currentUser?.id,
-            program_id: program.id
-          });
-          
-        if (error) throw error;
-        
-        toast.success('Added to favorites');
-      }
-      
-      setIsFavorite(!isFavorite);
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast.error('Failed to update favorites');
-    } finally {
-      setIsTogglingFavorite(false);
-    }
+    await toggleProgramFavorite(program);
   };
 
   const handleCardClick = () => {
@@ -83,7 +54,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
       <ProgramDetailDialog 
         program={program} 
         currentUser={currentUser}
-        isAuthenticated={isAuthenticated}
+        isAuthenticated={isAuthenticated || auth.isAuthenticated}
       />
     );
   };
@@ -110,19 +81,13 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
           <Badge className="absolute top-3 left-3 bg-ifind-purple" variant="secondary">
             {getCategoryDisplayName(program.category)}
           </Badge>
-          <button 
-            className={`absolute top-3 right-3 p-2 rounded-full ${
-              isFavorite 
-                ? 'bg-red-100 text-red-500' 
-                : 'bg-white/80 text-gray-500 hover:text-red-500 hover:bg-red-50'
-            } transition-colors shadow-md`}
+          
+          <FavoriteButton
+            isFavorite={isFavorite}
             onClick={handleFavoriteToggle}
-            disabled={isTogglingFavorite}
-          >
-            <Heart 
-              className={`h-5 w-5 ${isFavorite ? 'fill-red-500' : ''}`} 
-            />
-          </button>
+            className="absolute top-3 right-3"
+            tooltipText={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          />
         </div>
         <CardHeader className="p-4">
           <div className="flex justify-between items-start">

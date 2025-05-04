@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Program } from '@/types/programs';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/user';
 import { Loader2 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import EnrollmentDialog from './EnrollmentDialog';
@@ -13,10 +13,7 @@ import ProgramMetadata from './dialog/ProgramMetadata';
 import ProgramDescription from './dialog/ProgramDescription';
 import ProgramPriceFooter from './dialog/ProgramPriceFooter';
 import { ScrollArea } from '@/components/ui/scroll-area';
-
-interface FavoriteData {
-  program_id: number;
-}
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 
 interface ProgramDetailDialogProps {
   program: Program;
@@ -31,42 +28,15 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
   isAuthenticated,
   onClose
 }) => {
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { showDialog, DialogComponent } = useDialog();
-
-  useEffect(() => {
-    if (isAuthenticated && currentUser) {
-      checkFavoriteStatus();
-    } else {
-      setLoading(false);
-    }
-  }, [isAuthenticated, currentUser, program.id]);
-
-  const checkFavoriteStatus = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_favorite_programs')
-        .select('*')
-        .eq('user_id', currentUser?.id)
-        .eq('program_id', program.id)
-        .maybeSingle();
-        
-      if (error) throw error;
-      
-      setIsFavorite(!!data);
-    } catch (error) {
-      console.error('Error checking favorite status:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { toggleProgramFavorite, isProgramFavorite } = useFavorites();
+  
+  // Use favorites context to determine if this program is a favorite
+  const isFavorite = program.is_favorite || isProgramFavorite(program.id);
 
   const handleFavoriteToggle = async () => {
-    if (isTogglingFavorite) return;
-    
     // Store program ID for post-login action
     if (!isAuthenticated) {
       sessionStorage.setItem('pendingAction', 'favorite');
@@ -77,41 +47,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
       return;
     }
     
-    setIsTogglingFavorite(true);
-    
-    try {
-      if (isFavorite) {
-        // Remove from favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
-          .delete()
-          .eq('user_id', currentUser?.id)
-          .eq('program_id', program.id);
-          
-        if (error) throw error;
-        
-        toast.success('Removed from favorites');
-      } else {
-        // Add to favorites
-        const { error } = await supabase
-          .from('user_favorite_programs')
-          .insert({
-            user_id: currentUser?.id,
-            program_id: program.id
-          });
-          
-        if (error) throw error;
-        
-        toast.success('Added to favorites');
-      }
-      
-      setIsFavorite(!isFavorite);
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast.error('Failed to update favorites');
-    } finally {
-      setIsTogglingFavorite(false);
-    }
+    await toggleProgramFavorite(program);
   };
 
   const handleEnroll = () => {
@@ -149,7 +85,6 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
         <ProgramImageHeader 
           program={program}
           isFavorite={isFavorite}
-          isTogglingFavorite={isTogglingFavorite}
           onFavoriteToggle={handleFavoriteToggle}
         />
         

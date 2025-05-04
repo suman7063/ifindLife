@@ -1,22 +1,30 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { PhoneIcon, CalendarIcon, Heart } from 'lucide-react';
+import { PhoneIcon, CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ExpertActionProps } from './types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import FavoriteButton from '@/components/favorites/FavoriteButton';
 
 const ExpertActions: React.FC<ExpertActionProps> = ({ 
   id, 
   online, 
-  isFavorite,
+  isFavorite: propIsFavorite,
   onFavoriteToggle,
   onCallNow,
   onBookAppointment
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { isExpertFavorite } = useFavorites();
+  
+  // Use context favorite state if prop is not provided
+  const isFavorite = propIsFavorite !== undefined 
+    ? propIsFavorite 
+    : isExpertFavorite(id);
   
   const handleCallNow = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -118,8 +126,12 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
         onClick={handleFavoriteToggle}
         className="w-full flex items-center justify-center"
       >
-        <Heart 
-          className={`h-4 w-4 mr-1 ${isFavorite ? 'fill-red-500 text-red-500' : ''}`} 
+        <FavoriteButton 
+          isFavorite={isFavorite}
+          onClick={handleFavoriteToggle}
+          size="sm"
+          showText={true}
+          className="mr-2 h-4 w-4"
         />
         {isFavorite ? 'Favorited' : 'Add to Favorites'}
       </Button>

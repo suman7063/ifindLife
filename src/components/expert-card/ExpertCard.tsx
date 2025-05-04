@@ -6,7 +6,7 @@ import ExpertImage from './ExpertImage';
 import ExpertInfo from './ExpertInfo';
 import ExpertActions from './ExpertActions';
 import { ExpertCardProps } from './types';
-import { useUserFavorites } from '@/hooks/user-auth/useUserFavorites';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Expert } from '@/types/expert';
 
@@ -23,13 +23,13 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   isFavorite: propIsFavorite,
 }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, userProfile } = useAuth();
-  const { toggleExpertFavorite, favoriteExperts, loading } = useUserFavorites(userProfile?.id);
+  const { isAuthenticated } = useAuth();
+  const { toggleExpertFavorite, isExpertFavorite } = useFavorites();
   
-  // Determine if expert is favorite based on prop or from the hook
+  // Determine if expert is favorite based on prop or from the context
   const isFavorite = propIsFavorite !== undefined 
     ? propIsFavorite 
-    : favoriteExperts?.some(fav => String(fav.expert_id) === String(id));
+    : isExpertFavorite(id);
   
   const handleViewProfile = () => {
     navigate(`/experts/${id}`);

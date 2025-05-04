@@ -1,49 +1,26 @@
 
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import AppRoutes from './AppRoutes';
 import { AuthProvider } from './contexts/auth/AuthContext';
-import { UserAuthProvider } from './contexts/auth/UserAuthProvider';
-import { Toaster } from "./components/ui/sonner";
-import { ThemeProvider } from './components/theme/theme-provider';
-import { supabase } from './lib/supabase';
+import { Toaster } from './components/ui/toaster';
+import { ThemeProvider } from './components/theme-provider';
+import { FavoritesProvider } from './contexts/favorites';
 
-function App() {
-  const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
-  
-  // Check Supabase connection
+const App = () => {
   useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        // Use a different approach to check connection since "check_connection" table doesn't exist
-        const { data, error } = await supabase.from('users').select('count(*)').limit(1);
-        
-        if (error) {
-          console.error("Supabase connection error:", error);
-          setIsDbConnected(false);
-          return;
-        }
-        
-        console.log("Connected to Supabase!");
-        setIsDbConnected(true);
-      } catch (err) {
-        console.error("Error checking DB connection:", err);
-        setIsDbConnected(false);
-      }
-    };
-    
-    checkConnection();
+    document.body.classList.add('bg-background');
   }, []);
-  
+
   return (
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider defaultTheme="light" storageKey="ifind-theme">
       <AuthProvider>
-        <UserAuthProvider>
+        <FavoritesProvider>
           <AppRoutes />
-          <Toaster position="top-right" closeButton />
-        </UserAuthProvider>
+          <Toaster />
+        </FavoritesProvider>
       </AuthProvider>
     </ThemeProvider>
   );
-}
+};
 
 export default App;

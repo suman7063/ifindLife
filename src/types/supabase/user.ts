@@ -4,6 +4,7 @@
 import { UserTransaction } from './tables';
 import { Referral } from './referral';
 import { Expert } from '../expert';
+import { Program } from '../programs';
 
 export interface UserProfile {
   id: string;
@@ -22,6 +23,7 @@ export interface UserProfile {
   
   // Related data collections
   favorite_experts?: string[];
+  favorite_programs?: number[];
   enrolled_courses?: Course[];
   transactions?: UserTransaction[];
   reviews?: Review[];
