@@ -1,15 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
+import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
 
 const UserLoginContent: React.FC = () => {
   const navigate = useNavigate();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   
   // Use the unified auth context
   const { 
@@ -18,6 +20,20 @@ const UserLoginContent: React.FC = () => {
     isLoading,
     role
   } = useAuth();
+  
+  // Check for pending actions in sessionStorage
+  useEffect(() => {
+    const pendingActionStr = sessionStorage.getItem('pendingAction');
+    if (pendingActionStr) {
+      try {
+        const action = JSON.parse(pendingActionStr);
+        setPendingAction(action);
+      } catch (error) {
+        console.error('Error parsing pending action:', error);
+        sessionStorage.removeItem('pendingAction');
+      }
+    }
+  }, []);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLoggingIn(true);
@@ -37,13 +53,20 @@ const UserLoginContent: React.FC = () => {
       
       if (success) {
         toast.success("Login successful!");
-        // Redirect to the appropriate dashboard based on role
-        if (role === 'user') {
-          navigate('/user-dashboard');
-        } else if (role === 'expert') {
-          navigate('/expert-dashboard');
-        } else if (role === 'admin') {
-          navigate('/admin');
+        
+        // Handle redirect based on pending action or role
+        if (pendingAction) {
+          // Let the auth journey preservation hook handle the redirect
+          return true;
+        } else {
+          // Redirect to the appropriate dashboard based on role
+          if (role === 'user') {
+            navigate('/user-dashboard');
+          } else if (role === 'expert') {
+            navigate('/expert-dashboard');
+          } else if (role === 'admin') {
+            navigate('/admin');
+          }
         }
         return true;
       } else {
@@ -63,6 +86,14 @@ const UserLoginContent: React.FC = () => {
 
   return (
     <div>
+      {pendingAction && (
+        <Alert className="mb-4">
+          <AlertDescription>
+            After login, you'll be returned to continue your {pendingAction.type === 'favorite' ? 'favoriting' : pendingAction.type === 'call' ? 'call' : 'booking'} action.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {loginError && (
         <Alert variant="destructive" className="mb-4">
           <AlertDescription>{loginError}</AlertDescription>

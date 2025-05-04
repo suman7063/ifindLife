@@ -12,10 +12,14 @@ import FavoritesSection from '@/components/user/dashboard/FavoritesSection';
 import ReviewsSection from '@/components/user/dashboard/ReviewsSection';
 import ReferralsSection from '@/components/user/dashboard/ReferralsSection';
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
+import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
 
 const UserDashboard: React.FC = () => {
   const { userProfile, isAuthenticated, isLoading, role, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Initialize the authentication journey preservation hook
+  useAuthJourneyPreservation();
   
   // Handle logout process
   const handleLogout = async (): Promise<boolean> => {

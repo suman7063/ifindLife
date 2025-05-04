@@ -10,6 +10,7 @@ export interface ExpertCardProps {
   waitTime?: string;
   imageUrl: string;
   online?: boolean;
+  isFavorite?: boolean;
 }
 
 export interface ExpertInfoProps {
@@ -30,4 +31,8 @@ export interface ExpertImageProps {
 export interface ExpertActionProps {
   id: string;
   online?: boolean;
+  isFavorite?: boolean;
+  onFavoriteToggle?: (id: string) => void;
+  onCallNow?: (id: string) => void;
+  onBookAppointment?: (id: string) => void;
 }

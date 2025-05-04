@@ -1,133 +1,134 @@
 
-import React, { createContext, useContext } from 'react';
-import { useAuthState } from './hooks/useAuthState';
-import { useAuthFunctions } from './hooks/useAuthFunctions';
-import { useProfileFunctions } from './hooks/useProfileFunctions';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+import { useFetchUserProfile } from './hooks/useFetchUserProfile';
+import { useFetchExpertProfile } from './hooks/useFetchExpertProfile';
+import { useProfileActions } from './hooks/useProfileActions';
 import { useExpertInteractions } from './hooks/useExpertInteractions';
-import { AuthContextType, initialAuthState, UserRole } from './types';
-import { NewReview, NewReport } from '@/types/supabase/tables';
+import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
 
-// Create the context
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export interface AuthContextType {
+  user: any;
+  session: any;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  role: 'user' | 'expert' | 'admin' | null;
+  userProfile: any;
+  expertProfile: any;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData: any) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  updateUserProfile: (updates: any) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
+  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  addReview?: (expertId: string, rating: number, comment: string) => Promise<boolean>;
+  reportExpert?: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
+  getExpertShareLink?: (expertId: string) => string;
+  getReferralLink?: () => string | null;
+  storePendingAction: (actionType: string, itemId: string, path?: string) => void;
+}
 
-// Provider component
+const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { authState, setAuthState, checkUserRole, fetchUserData } = useAuthState();
+  // Use the base auth hook with Supabase
+  const auth = useSupabaseAuth();
+  const { user, session, loading: authLoading } = auth;
   
-  const { 
-    login,
-    signup,
-    expertLogin,
-    expertSignup,
-    logout
-  } = useAuthFunctions(authState, setAuthState, fetchUserData);
+  // Use profile fetching hooks
+  const {
+    userProfile,
+    loading: userLoading,
+    error: userError
+  } = useFetchUserProfile(user?.id, session);
   
   const {
+    expertProfile,
+    loading: expertLoading,
+    error: expertError
+  } = useFetchExpertProfile(user?.id, session);
+  
+  // Use profile action hooks
+  const {
     updateUserProfile,
-    updateExpertProfile,
-    resetPassword,
-    updatePassword
-  } = useProfileFunctions(authState, setAuthState);
-
-  const userId = authState.user?.id || null;
-  const expertInteractions = useExpertInteractions(userId);
-  
-  // Create functions that work with both calling styles
-  const adaptedAddReview: AuthContextType['addReview'] = function(
-    expertIdOrReview: string | NewReview,
-    rating?: number,
-    comment?: string
-  ): Promise<boolean> {
-    if (typeof expertIdOrReview === 'object') {
-      // Handle NewReview object
-      const review = expertIdOrReview;
-      return expertInteractions.addReview(
-        review.expertId.toString(),
-        review.rating,
-        review.comment || ''
-      );
-    } else {
-      // Handle individual parameters
-      return expertInteractions.addReview(
-        expertIdOrReview,
-        rating!,
-        comment || ''
-      );
-    }
-  };
-  
-  const adaptedReportExpert: AuthContextType['reportExpert'] = function(
-    expertIdOrReport: string | NewReport,
-    reason?: string,
-    details?: string
-  ): Promise<boolean> {
-    if (typeof expertIdOrReport === 'object') {
-      // Handle NewReport object
-      const report = expertIdOrReport;
-      return expertInteractions.reportExpert(
-        report.expertId.toString(),
-        report.reason,
-        report.details || ''
-      );
-    } else {
-      // Handle individual parameters
-      return expertInteractions.reportExpert(
-        expertIdOrReport,
-        reason!,
-        details || ''
-      );
-    }
-  };
-
-  // Determine session type
-  let sessionType: 'none' | 'user' | 'expert' | 'dual' = 'none';
-  if (authState.role === 'user') sessionType = 'user';
-  else if (authState.role === 'expert') sessionType = 'expert';
-  // Dual is not currently supported in the unified auth system
-  
-  // Combine all functions and state into context value
-  const contextValue: AuthContextType = {
-    ...authState,
-    login,
-    signup,
-    expertLogin,
-    expertSignup,
-    logout,
-    checkUserRole,
-    updateUserProfile,
-    updateExpertProfile,
-    resetPassword,
     updatePassword,
-    addReview: adaptedAddReview,
-    reportExpert: adaptedReportExpert,
-    hasTakenServiceFrom: expertInteractions.hasTakenServiceFrom,
-    getExpertShareLink: expertInteractions.getExpertShareLink,
-    getReferralLink: expertInteractions.getReferralLink,
-    
-    // Backward compatibility properties
-    currentUser: authState.userProfile,
-    currentExpert: authState.expertProfile,
+    loading: actionsLoading
+  } = useProfileActions(user?.id);
+  
+  // Use expert interaction hooks
+  const {
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink
+  } = useExpertInteractions(user?.id);
+  
+  // Use authentication journey preservation hook
+  const { storePendingAction } = useAuthJourneyPreservation();
+
+  // Determine if the user is authenticated
+  const isAuthenticated = !!session;
+  
+  // Determine the user role
+  let role: 'user' | 'expert' | 'admin' | null = null;
+  if (isAuthenticated) {
+    if (expertProfile) {
+      role = 'expert';
+    } else if (userProfile) {
+      role = 'user';
+    }
+  }
+  
+  // Determine session type
+  const sessionType = !isAuthenticated ? 'none' 
+    : userProfile && expertProfile ? 'dual'
+    : userProfile ? 'user'
+    : expertProfile ? 'expert'
+    : 'none';
+  
+  // Debug output for auth state
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Auth state:', { 
+        isAuthenticated, 
+        role,
+        hasUser: !!user,
+        hasSession: !!session,
+        hasUserProfile: !!userProfile,
+        hasExpertProfile: !!expertProfile,
+        sessionType
+      });
+    }
+  }, [isAuthenticated, role, user, session, userProfile, expertProfile, sessionType]);
+
+  // Create the value object for the context
+  const value: AuthContextType = {
+    ...auth,
+    isAuthenticated,
+    isLoading: authLoading || userLoading || expertLoading || actionsLoading,
+    role,
+    userProfile,
+    expertProfile,
+    updateUserProfile,
+    updatePassword,
     sessionType,
-    authLoading: authState.isLoading // Ensure authLoading is included for backward compatibility
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink,
+    storePendingAction
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook for using the auth context
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);
 
-// Export types for consumers
-export type { UserRole, AuthContextType };
+export default AuthContext;

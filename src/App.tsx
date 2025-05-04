@@ -1,35 +1,50 @@
 
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
-import { Toaster } from '@/components/ui/toaster';
-import { Toaster as SonnerToaster } from 'sonner';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './contexts/auth/AuthContext';
-import { AuthProvider as AdminAuthProvider } from './contexts/admin-auth';
-import { ThemeProvider } from '@/components/ui/theme-provider';
-
-const queryClient = new QueryClient();
+import { UserAuthProvider } from './contexts/auth/UserAuthProvider';
+import { Toaster } from "./components/ui/sonner";
+import { ThemeProvider } from './components/theme/theme-provider';
+import { supabase } from './lib/supabase';
 
 function App() {
+  const [isDbConnected, setIsDbConnected] = useState<boolean | null>(null);
+  
+  // Check Supabase connection
   useEffect(() => {
-    // Only log in development environment
-    if (import.meta.env.DEV) {
-      console.log('App component mounted');
-    }
+    const checkConnection = async () => {
+      try {
+        const { data, error } = await supabase.from('check_connection').select('*');
+        
+        if (error) {
+          console.error("Supabase connection error:", error);
+          setIsDbConnected(false);
+          return;
+        }
+        
+        console.log("Connected to Supabase!");
+        setIsDbConnected(true);
+      } catch (err) {
+        console.error("Error checking DB connection:", err);
+        setIsDbConnected(false);
+      }
+    };
+    
+    checkConnection();
   }, []);
-
+  
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
+    <ThemeProvider defaultTheme="light">
+      <BrowserRouter>
         <AuthProvider>
-          <AdminAuthProvider>
+          <UserAuthProvider>
             <AppRoutes />
-            <Toaster />
-            <SonnerToaster position="top-right" />
-          </AdminAuthProvider>
+            <Toaster position="top-right" closeButton />
+          </UserAuthProvider>
         </AuthProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
