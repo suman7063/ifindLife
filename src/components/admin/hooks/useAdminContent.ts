@@ -159,10 +159,11 @@ export const useAdminContent = (): AdminContent & {
     setLoading(expertsLoading || servicesLoading);
     
     // Set error if any loading hook has an error - Convert all errors to strings
-    if (expertsError) setError(expertsError instanceof Error ? expertsError.message : String(expertsError));
-    else if (servicesError) setError(servicesError instanceof Error ? servicesError.message : String(servicesError));
-    else if (heroError) setError(heroError instanceof Error ? heroError.message : String(heroError));
-    else if (testimonialsError) setError(testimonialsError instanceof Error ? testimonialsError.message : String(testimonialsError));
+    // Use safe type handling to avoid instanceof errors
+    if (expertsError) setError(String(expertsError));
+    else if (servicesError) setError(String(servicesError));
+    else if (heroError) setError(String(heroError));
+    else if (testimonialsError) setError(String(testimonialsError));
     else setError(null);
   }, [expertsLoading, servicesLoading, expertsError, servicesError, heroError, testimonialsError]);
 
