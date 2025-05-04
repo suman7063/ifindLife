@@ -2,8 +2,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { UserProfile, Review, Report, Course, Referral } from '@/types/supabase/user';
+import { UserProfile, Review, Report, Course } from '@/types/supabase/user';
 import { UserTransaction } from '@/types/supabase/tables';
+import { Referral } from '@/types/supabase/referral'; // Import from the correct location
 
 export const useFetchUserProfile = (userId: string | undefined, session: Session | null) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
