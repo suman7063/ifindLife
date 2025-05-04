@@ -27,6 +27,7 @@ export interface AuthContextType {
   getExpertShareLink?: (expertId: string) => string;
   getReferralLink?: () => string | null;
   storePendingAction: (actionType: string, itemId: string, path?: string) => void;
+  resetPassword?: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -34,7 +35,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Use the base auth hook with Supabase
   const auth = useSupabaseAuth();
-  const { user, session, loading: authLoading } = auth;
+  const { user, session, loading: authLoading, signup: originalSignup, resetPassword } = auth;
   
   // Use profile fetching hooks
   const {
@@ -67,6 +68,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Use authentication journey preservation hook
   const { storePendingAction } = useAuthJourneyPreservation();
+
+  // Wrap signup method to match expected signature
+  const signup = async (email: string, password: string, userData: any): Promise<boolean> => {
+    return originalSignup({ email, password, ...userData });
+  };
 
   // Determine if the user is authenticated
   const isAuthenticated = !!session;
@@ -119,7 +125,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     hasTakenServiceFrom,
     getExpertShareLink,
     getReferralLink,
-    storePendingAction
+    storePendingAction,
+    signup,
+    resetPassword
   };
 
   return (

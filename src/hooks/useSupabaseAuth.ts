@@ -8,6 +8,13 @@ import { useAuthLogout } from './auth/useAuthLogout';
 import { useAuthSession } from './auth/useAuthSession';
 import { useAuthPassword } from './auth/useAuthPassword';
 
+// Define the SignupData interface to match how it's used
+export interface SignupData {
+  email: string;
+  password: string;
+  [key: string]: any; // Allow additional user data fields
+}
+
 export const useSupabaseAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);

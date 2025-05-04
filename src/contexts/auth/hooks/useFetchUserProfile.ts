@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
+import { UserProfile } from '@/types/supabase/user';
 
 export const useFetchUserProfile = (userId: string | undefined, session: Session | null) => {
-  const [userProfile, setUserProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -36,17 +37,38 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
           }
 
           if (fallbackData) {
-            profileData = fallbackData;
+            // Convert profiles data to match UserProfile structure
+            profileData = {
+              ...fallbackData,
+              referral_code: '',
+              referral_link: '',
+              referred_by: '',
+              favorite_experts: [],
+              enrolled_courses: [],
+              transactions: [],
+              reviews: [],
+              reports: [],
+              referrals: []
+            };
           }
         }
 
         if (profileData) {
           // Add default empty values for any missing fields
-          const enhancedProfile = {
-            ...profileData,
+          const enhancedProfile: UserProfile = {
+            id: profileData.id,
+            name: profileData.name || '',
+            email: profileData.email || '',
+            phone: profileData.phone || '',
+            country: profileData.country || '',
+            city: profileData.city || '',
+            currency: profileData.currency || 'USD',
+            profile_picture: profileData.profile_picture || '',
+            wallet_balance: profileData.wallet_balance || 0,
+            created_at: profileData.created_at || '',
             referral_code: profileData.referral_code || '',
-            referral_link: profileData.referral_link || '',
             referred_by: profileData.referred_by || '',
+            referral_link: profileData.referral_link || '',
             favorite_experts: profileData.favorite_experts || [],
             enrolled_courses: profileData.enrolled_courses || [],
             transactions: profileData.transactions || [],
