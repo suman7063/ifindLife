@@ -44,31 +44,33 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AdminSidebar 
-          activeTab={activeTab} 
-          onTabChange={handleTabChange}
-          onLogout={handleLogout}
-          isSuperAdmin={isSuperAdmin}
-          username={currentUser?.username || 'Admin'}
-        />
-        
-        <SidebarInset className="relative">
-          <div className="sticky top-0 z-10 flex items-center h-16 px-6 bg-background border-b">
-            <h2 className="text-xl font-semibold">
-              {getTabTitle(activeTab || 'overview')}
-            </h2>
-          </div>
-          <div className="p-6">
-            {children}
-          </div>
-        </SidebarInset>
+    <div className="min-h-screen flex flex-col">
+      <SidebarProvider>
+        <div className="flex-1 flex w-full pt-16"> {/* Added top padding to prevent header overlap */}
+          <AdminSidebar 
+            activeTab={activeTab} 
+            onTabChange={handleTabChange}
+            onLogout={handleLogout}
+            isSuperAdmin={isSuperAdmin}
+            username={currentUser?.username || 'Admin'}
+          />
+          
+          <SidebarInset className="relative">
+            <div className="sticky top-0 z-10 flex items-center h-16 px-6 bg-background border-b">
+              <h2 className="text-xl font-semibold">
+                {getTabTitle(activeTab || 'overview')}
+              </h2>
+            </div>
+            <div className="p-6">
+              {children}
+            </div>
+          </SidebarInset>
 
-        {/* Persistent toggle button that appears when sidebar is collapsed */}
-        <RestoreSidebarButton />
-      </div>
-    </SidebarProvider>
+          {/* Persistent toggle button that appears when sidebar is collapsed */}
+          <RestoreSidebarButton />
+        </div>
+      </SidebarProvider>
+    </div>
   );
 };
 

@@ -17,7 +17,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-1 container py-8">
+      <main className="flex-1 container py-8 pt-28"> {/* Added top padding to prevent header overlap */}
         <h1 className="text-3xl font-bold mb-2">{title}</h1>
         <p className="text-muted-foreground mb-6">
           {description}
