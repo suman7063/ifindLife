@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { UserProfile, Review, Report, Course } from '@/types/supabase/user';
-import { UserTransaction, Referral } from '@/types/supabase/tables';
+import { UserProfile, Review, Report, Course, Referral } from '@/types/supabase/user';
+import { UserTransaction } from '@/types/supabase/tables';
 
 export const useFetchUserProfile = (userId: string | undefined, session: Session | null) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -38,46 +38,51 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
           }
 
           if (fallbackData) {
-            // Convert profiles data to match UserProfile structure with proper type assertions
+            // Convert profiles data to match UserProfile structure using type assertion
             profileData = {
               ...fallbackData,
               referral_code: '',
               referral_link: '',
               referred_by: '',
-              favorite_experts: [] as string[],
-              enrolled_courses: [] as Course[],
-              transactions: [] as UserTransaction[],
-              reviews: [] as Review[],
-              reports: [] as Report[],
-              referrals: [] as Referral[]
-            };
+            } as any;
+            
+            // Then add missing properties
+            (profileData as any).favorite_experts = [];
+            (profileData as any).enrolled_courses = [];
+            (profileData as any).transactions = [];
+            (profileData as any).reviews = [];
+            (profileData as any).reports = [];
+            (profileData as any).referrals = [];
           }
         }
 
         if (profileData) {
-          // Add default empty values for any missing fields with proper type assertions
+          // Use type assertion to bypass TypeScript restrictions
+          const rawProfileData = profileData as any;
+          
+          // Create the enhanced profile with proper typing
           const enhancedProfile: UserProfile = {
-            id: profileData.id,
-            name: profileData.name || '',
-            email: profileData.email || '',
-            phone: profileData.phone || '',
-            country: profileData.country || '',
-            city: profileData.city || '',
-            currency: profileData.currency || 'USD',
-            profile_picture: profileData.profile_picture || '',
-            wallet_balance: profileData.wallet_balance || 0,
-            created_at: profileData.created_at || '',
-            referral_code: profileData.referral_code || '',
-            referred_by: profileData.referred_by || '',
-            referral_link: profileData.referral_link || '',
+            id: rawProfileData.id,
+            name: rawProfileData.name || '',
+            email: rawProfileData.email || '',
+            phone: rawProfileData.phone || '',
+            country: rawProfileData.country || '',
+            city: rawProfileData.city || '',
+            currency: rawProfileData.currency || 'USD',
+            profile_picture: rawProfileData.profile_picture || '',
+            wallet_balance: rawProfileData.wallet_balance || 0,
+            created_at: rawProfileData.created_at || '',
+            referral_code: rawProfileData.referral_code || '',
+            referred_by: rawProfileData.referred_by || '',
+            referral_link: rawProfileData.referral_link || '',
             
-            // Use type assertions for arrays to satisfy TypeScript
-            favorite_experts: (profileData.favorite_experts || []) as string[],
-            enrolled_courses: (profileData.enrolled_courses || []) as Course[],
-            transactions: (profileData.transactions || []) as UserTransaction[],
-            reviews: (profileData.reviews || []) as Review[],
-            reports: (profileData.reports || []) as Report[],
-            referrals: (profileData.referrals || []) as Referral[]
+            // Use type assertions for the array properties
+            favorite_experts: (rawProfileData.favorite_experts || []) as string[],
+            enrolled_courses: (rawProfileData.enrolled_courses || []) as Course[],
+            transactions: (rawProfileData.transactions || []) as UserTransaction[],
+            reviews: (rawProfileData.reviews || []) as Review[],
+            reports: (rawProfileData.reports || []) as Report[],
+            referrals: (rawProfileData.referrals || []) as Referral[]
           };
           
           setUserProfile(enhancedProfile);
