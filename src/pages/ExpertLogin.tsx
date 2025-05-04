@@ -14,14 +14,15 @@ const ExpertLogin: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { expertLogin, expertSignup } = useAuth();
+  const auth = useAuth();
   const { isExpertAuthenticated, isAuthInitialized } = useAuthSynchronization();
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setLoginError(null);
     try {
-      const success = await expertLogin(email, password);
+      // Use standard login since we don't have separate expert login 
+      const success = await auth.login(email, password);
       if (success) {
         toast.success('Successfully logged in!');
         navigate('/expert-dashboard');
@@ -44,7 +45,8 @@ const ExpertLogin: React.FC = () => {
   const handleRegister = async (formData: any): Promise<boolean> => {
     setIsLoading(true);
     try {
-      const success = await expertSignup(formData);
+      // Use standard signup since we don't have separate expert signup
+      const success = await auth.signup(formData.email, formData.password, formData);
       if (success) {
         toast.success('Registration successful! Please check your email to verify your account.');
         return true;

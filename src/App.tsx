@@ -15,7 +15,8 @@ function App() {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const { data, error } = await supabase.from('check_connection').select('*');
+        // Use a different approach to check connection since "check_connection" table doesn't exist
+        const { data, error } = await supabase.from('users').select('count(*)').limit(1);
         
         if (error) {
           console.error("Supabase connection error:", error);

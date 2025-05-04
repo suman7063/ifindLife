@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserProfile } from '@/types/supabase/user';
@@ -82,7 +81,8 @@ const FavoritesSection: React.FC<FavoritesSectionProps> = ({ user }) => {
       image: "/lovable-uploads/43d69b36-0616-44bf-8fd1-2aa35a40a945.png",
       category: "Wellness",
       programType: "wellness",
-      enrollments: 254
+      enrollments: 254,
+      created_at: new Date().toISOString()
     },
     {
       id: 2,
@@ -94,7 +94,8 @@ const FavoritesSection: React.FC<FavoritesSectionProps> = ({ user }) => {
       image: "/lovable-uploads/50267abc-f35e-4528-a0cf-90d80e5e5f84.png",
       category: "Health",
       programType: "wellness",
-      enrollments: 186
+      enrollments: 186,
+      created_at: new Date().toISOString()
     }
   ];
 

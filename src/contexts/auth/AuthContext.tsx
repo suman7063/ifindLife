@@ -21,8 +21,8 @@ export interface AuthContextType {
   updateUserProfile: (updates: any) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
-  addReview?: (expertId: string, rating: number, comment: string) => Promise<boolean>;
-  reportExpert?: (expertId: string, reason: string, details: string) => Promise<boolean>;
+  addReview?: (expertId: string | object, rating?: number, comment?: string) => Promise<boolean>;
+  reportExpert?: (expertId: string | object, reason?: string, details?: string) => Promise<boolean>;
   hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
   getExpertShareLink?: (expertId: string) => string;
   getReferralLink?: () => string | null;

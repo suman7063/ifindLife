@@ -22,19 +22,16 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 flex"> 
+      <div className="flex-1 flex pt-24"> {/* Added top padding to prevent overlap */}
         <SidebarProvider defaultOpen>
-          {/* Apply margin-top to the sidebar to prevent overlap with header */}
-          <div className="mt-24">
-            <UserDashboardSidebar 
-              user={user}
-              onLogout={onLogout}
-              isLoggingOut={isLoggingOut}
-            />
-          </div>
+          <UserDashboardSidebar 
+            user={user}
+            onLogout={onLogout}
+            isLoggingOut={isLoggingOut}
+          />
           
           <SidebarInset>
-            <main className="flex-1 p-6 mt-24">
+            <main className="flex-1 p-6">
               <div className="md:hidden flex items-center mb-4">
                 <SidebarTrigger />
                 <h1 className="text-2xl font-bold ml-2">Dashboard</h1>

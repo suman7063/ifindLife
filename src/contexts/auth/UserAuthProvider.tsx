@@ -17,7 +17,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     
     // If first parameter is an object, handle as a review object
-    if (reviewOrExpertId && typeof reviewOrExpertId === 'object' && 'expertId' in reviewOrExpertId && 'rating' in reviewOrExpertId) {
+    if (reviewOrExpertId && typeof reviewOrExpertId === 'object') {
       return auth.addReview(reviewOrExpertId);
     }
     
@@ -34,7 +34,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     
     // If first parameter is an object, handle as a report object
-    if (reportOrExpertId && typeof reportOrExpertId === 'object' && 'expertId' in reportOrExpertId && 'reason' in reportOrExpertId) {
+    if (reportOrExpertId && typeof reportOrExpertId === 'object') {
       return auth.reportExpert(reportOrExpertId);
     }
     
