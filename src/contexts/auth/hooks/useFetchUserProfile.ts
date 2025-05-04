@@ -40,7 +40,23 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
           }
         }
 
-        setUserProfile(profileData);
+        if (profileData) {
+          // Add default empty values for any missing fields
+          const enhancedProfile = {
+            ...profileData,
+            referral_code: profileData.referral_code || '',
+            referral_link: profileData.referral_link || '',
+            referred_by: profileData.referred_by || '',
+            favorite_experts: profileData.favorite_experts || [],
+            enrolled_courses: profileData.enrolled_courses || [],
+            transactions: profileData.transactions || [],
+            reviews: profileData.reviews || [],
+            reports: profileData.reports || [],
+            referrals: profileData.referrals || []
+          };
+          
+          setUserProfile(enhancedProfile);
+        }
       } catch (err) {
         console.error('Error fetching user profile:', err);
         setError(err instanceof Error ? err : new Error('Unknown error'));

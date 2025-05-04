@@ -4,7 +4,7 @@ import { Container } from '@/components/ui/container';
 import { useNavigate } from 'react-router-dom';
 import { useUserAuth } from '@/hooks/useUserAuth';
 import { toast } from 'sonner';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
 import DashboardContent from '@/components/user/dashboard/DashboardContent';
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
@@ -13,8 +13,8 @@ import useTransactions from '@/hooks/dashboard/useTransactions';
 import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
 const UserDashboard: React.FC = () => {
-  const { currentUser, isAuthenticated, authLoading, logout } = useUserAuth();
-  const { isAuthInitialized, isAuthLoading } = useAuthSynchronization();
+  const { currentUser, isAuthenticated, loading: authLoading, logout } = useUserAuth();
+  const { isLoading: authContextLoading } = useAuth();
   const navigate = useNavigate();
   
   const { 
@@ -49,12 +49,12 @@ const UserDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && isAuthInitialized && !isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate('/user-login');
     }
-  }, [isAuthenticated, authLoading, isAuthInitialized, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
-  if (authLoading) {
+  if (authLoading || authContextLoading) {
     return <DashboardLoader />;
   }
 

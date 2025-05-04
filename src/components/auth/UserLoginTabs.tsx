@@ -54,8 +54,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
           phone: userData.phone,
           country: userData.country,
           city: userData.city
-        },
-        userData.referralCode
+        }
       );
       
       if (success) {

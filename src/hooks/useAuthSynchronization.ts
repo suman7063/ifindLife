@@ -1,15 +1,12 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 
 /**
  * Hook to provide a unified interface for authentication across user and expert roles
  */
 export const useAuthSynchronization = () => {
   const auth = useAuth();
-  const navigate = useNavigate();
   const [initialized, setInitialized] = useState(false);
   
   // Set up derived state
@@ -51,21 +48,9 @@ export const useAuthSynchronization = () => {
     try {
       console.log("useAuthSynchronization: Initiating user logout...");
       const success = await auth.logout();
-      
-      if (success) {
-        // Reset local state
-        setIsUserAuthenticated(false);
-        setCurrentUser(null);
-        
-        toast.success('Successfully logged out');
-        return true;
-      } else {
-        toast.error('Error logging out');
-        return false;
-      }
+      return success;
     } catch (error) {
       console.error('User logout error:', error);
-      toast.error('Error during logout');
       return false;
     }
   };
@@ -75,21 +60,9 @@ export const useAuthSynchronization = () => {
     try {
       console.log("useAuthSynchronization: Initiating expert logout...");
       const success = await auth.logout();
-      
-      if (success) {
-        // Reset local state
-        setIsExpertAuthenticated(false);
-        setCurrentExpert(null);
-        
-        toast.success('Successfully logged out as expert');
-        return true;
-      } else {
-        toast.error('Error logging out as expert');
-        return false;
-      }
+      return success;
     } catch (error) {
       console.error('Expert logout error:', error);
-      toast.error('Error during expert logout');
       return false;
     }
   };
@@ -99,25 +72,9 @@ export const useAuthSynchronization = () => {
     try {
       console.log("useAuthSynchronization: Initiating full logout...");
       const success = await auth.logout();
-      
-      if (success) {
-        // Reset all local state
-        setIsUserAuthenticated(false);
-        setIsExpertAuthenticated(false);
-        setCurrentUser(null);
-        setCurrentExpert(null);
-        setHasDualSessions(false);
-        setSessionType('none');
-        
-        toast.success('Successfully logged out from all accounts');
-        return true;
-      } else {
-        toast.error('Error logging out from accounts');
-        return false;
-      }
+      return success;
     } catch (error) {
       console.error('Full logout error:', error);
-      toast.error('Error during complete logout');
       return false;
     }
   };
@@ -132,6 +89,7 @@ export const useAuthSynchronization = () => {
     isAuthInitialized,
     hasDualSessions,
     sessionType,
+    isLoading: auth.isLoading,
     
     // Auth actions
     userLogout,

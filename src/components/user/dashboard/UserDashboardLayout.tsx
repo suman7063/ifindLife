@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import { UserProfile } from '@/types/supabase/user';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import UserDashboardSidebar from './UserDashboardSidebar';
@@ -11,12 +10,14 @@ interface UserDashboardLayoutProps {
   user: UserProfile | null;
   onLogout: () => Promise<boolean>;
   isLoggingOut: boolean;
+  children: React.ReactNode;
 }
 
 const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
   user,
   onLogout,
-  isLoggingOut
+  isLoggingOut,
+  children
 }) => {
   return (
     <div className="min-h-screen flex flex-col">
@@ -38,7 +39,7 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
               </div>
               
               <Container>
-                <Outlet />
+                {children}
               </Container>
             </main>
           </SidebarInset>

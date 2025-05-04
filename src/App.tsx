@@ -1,6 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
 import { AuthProvider } from './contexts/auth/AuthContext';
 import { UserAuthProvider } from './contexts/auth/UserAuthProvider';
@@ -37,14 +36,12 @@ function App() {
   
   return (
     <ThemeProvider defaultTheme="light">
-      <BrowserRouter>
-        <AuthProvider>
-          <UserAuthProvider>
-            <AppRoutes />
-            <Toaster position="top-right" closeButton />
-          </UserAuthProvider>
-        </AuthProvider>
-      </BrowserRouter>
+      <AuthProvider>
+        <UserAuthProvider>
+          <AppRoutes />
+          <Toaster position="top-right" closeButton />
+        </UserAuthProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
