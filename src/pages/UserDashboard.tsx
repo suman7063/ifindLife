@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet, useLocation, Routes, Route } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, Routes, Route, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import UserDashboardLayout from '@/components/user/dashboard/UserDashboardLayout';
@@ -18,6 +18,7 @@ const UserDashboard: React.FC = () => {
   const { userProfile, isAuthenticated, isLoading, role, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   
   // Add debug logging
   console.log('UserDashboard page rendering with auth state:', { 
@@ -53,6 +54,14 @@ const UserDashboard: React.FC = () => {
       setIsLoggingOut(false);
     }
   };
+
+  // Redirect to referral page if accessing /user-dashboard/referrals
+  useEffect(() => {
+    if (location.pathname === '/user-dashboard/referrals') {
+      console.log('Redirecting to referral page');
+      navigate('/referral');
+    }
+  }, [location.pathname, navigate]);
 
   // Show loading state while authentication is being checked
   if (isLoading) {

@@ -9,7 +9,7 @@ export function useHelpNavigation() {
   
   // Function to handle referral link click
   const handleReferralClick = () => {
-    navigate('/user-referrals');
+    navigate('/referral');
   };
   
   // Function to handle help link click

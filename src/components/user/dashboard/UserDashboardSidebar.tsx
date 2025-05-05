@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -34,11 +34,18 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   className
 }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
   const { handleHelpClick, HelpFormDialog } = useHelpNavigation();
   
   // Add debug logging to see if user data is available
   console.log('UserDashboardSidebar rendering with user:', user?.name);
+
+  // Handle referral link click directly from sidebar
+  const handleReferralClick = () => {
+    console.log('Navigating to referral page');
+    navigate('/referral');
+  };
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -96,13 +103,14 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             Favorites
           </SidebarLink>
           
-          <SidebarLink 
-            to="/user-referrals" 
-            active={currentPath === '/user-referrals' || currentPath === '/user-dashboard/referrals'}
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={handleReferralClick}
           >
             <Users className="mr-2 h-4 w-4" />
             Referrals
-          </SidebarLink>
+          </Button>
           
           <SidebarLink 
             to="/user-dashboard/settings" 
