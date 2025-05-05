@@ -22,7 +22,7 @@ export const useTickets = () => {
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      // Start building the query
+      // Start building the query with direct join to profiles
       let query = supabase
         .from('help_tickets')
         .select(`
@@ -50,31 +50,15 @@ export const useTickets = () => {
           let userName = 'Unknown User';
           let userEmail = 'No Email';
           
-          // Create a type-safe reference to profiles with null check using non-null assertion inside the conditional
-          if (ticket.profiles !== null && 
-              ticket.profiles !== undefined) {
+          // Simplified profile data access with proper null checks
+          if (ticket.profiles) {
+            // TypeScript should now properly understand this isn't null
+            if (ticket.profiles.name) {
+              userName = ticket.profiles.name;
+            }
             
-            // Now create a local variable with a definite non-null type
-            // TypeScript will understand this is safe because of our null check above
-            const profiles = ticket.profiles;
-            
-            // Now we can safely access properties on the non-null profiles object
-            if (typeof profiles === 'object' && 
-                !('error' in profiles)) {
-              
-              // Check for name property and ensure it's a string
-              if ('name' in profiles && 
-                  profiles.name && 
-                  typeof profiles.name === 'string') {
-                userName = profiles.name;
-              }
-              
-              // Check for email property and ensure it's a string
-              if ('email' in profiles && 
-                  profiles.email && 
-                  typeof profiles.email === 'string') {
-                userEmail = profiles.email;
-              }
+            if (ticket.profiles.email) {
+              userEmail = ticket.profiles.email;
             }
           }
           
