@@ -1,28 +1,21 @@
 
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { Sidebar, SidebarMenu, SidebarMenuButton } from '@/components/ui/sidebar';
+import { 
+  User, 
+  Home, 
+  Settings, 
+  CalendarDays, 
+  Heart, 
+  LogOut, 
+  CreditCard, 
+  Bookmark,
+  UserPlus 
+} from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 import { UserProfile } from '@/types/supabase/user';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton
-} from '@/components/ui/sidebar';
-import {
-  Home,
-  User,
-  Wallet,
-  Calendar,
-  Star,
-  MessageSquare,
-  Award,
-  LogOut
-} from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface UserDashboardSidebarProps {
   user: UserProfile | null;
@@ -35,96 +28,82 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   onLogout,
   isLoggingOut
 }) => {
-  const location = useLocation();
-  const currentPath = location.pathname;
-
-  const menuItems = [
-    {
-      title: 'Dashboard',
-      icon: Home,
-      path: '/user-dashboard',
-    },
-    {
-      title: 'Profile',
-      icon: User,
-      path: '/user-dashboard/profile',
-    },
-    {
-      title: 'Wallet',
-      icon: Wallet,
-      path: '/user-dashboard/wallet',
-    },
-    {
-      title: 'Consultations',
-      icon: Calendar,
-      path: '/user-dashboard/consultations',
-    },
-    {
-      title: 'Favorites',
-      icon: Star,
-      path: '/user-dashboard/favorites',
-    },
-    {
-      title: 'Reviews',
-      icon: MessageSquare,
-      path: '/user-dashboard/reviews',
-    },
-    {
-      title: 'Referrals',
-      icon: Award,
-      path: '/user-dashboard/referrals',
-    },
-  ];
-
   return (
-    <Sidebar variant="inset">
-      <SidebarHeader className="py-4">
-        <div className="flex items-center px-2">
-          <Avatar className="h-10 w-10 mr-3">
+    <Sidebar>
+      <div className="px-4 py-6 flex-1">
+        <div className="flex items-center gap-3 mb-8">
+          <Avatar className="h-10 w-10">
             <AvatarImage src={user?.profile_picture || ''} alt={user?.name || 'User'} />
-            <AvatarFallback>
-              {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-            </AvatarFallback>
+            <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
-          <div className="flex flex-col">
-            <span className="font-semibold">{user?.name || 'User'}</span>
-            <span className="text-xs text-muted-foreground">{user?.email}</span>
+          <div className="overflow-hidden">
+            <h2 className="text-lg font-semibold truncate">{user?.name || 'User'}</h2>
+            <p className="text-sm text-muted-foreground truncate">{user?.email || 'Loading...'}</p>
           </div>
         </div>
-      </SidebarHeader>
-      
-      <SidebarContent>
+        
         <SidebarMenu>
-          {menuItems.map((item) => (
-            <SidebarMenuItem key={item.path}>
-              <SidebarMenuButton
-                asChild
-                isActive={currentPath === item.path}
-                tooltip={item.title}
-              >
-                <Link to={item.path}>
-                  <item.icon className="mr-2" />
-                  <span>{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+          <SidebarMenuButton asChild icon={<Home className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard" end={true} className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Dashboard
+            </NavLink>
+          </SidebarMenuButton>
+          
+          <SidebarMenuButton asChild icon={<CalendarDays className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard/appointments" className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Appointments
+            </NavLink>
+          </SidebarMenuButton>
+          
+          <SidebarMenuButton asChild icon={<CreditCard className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard/wallet" className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Wallet
+            </NavLink>
+          </SidebarMenuButton>
+          
+          <SidebarMenuButton asChild icon={<Bookmark className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard/purchases" className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Purchases
+            </NavLink>
+          </SidebarMenuButton>
+          
+          <SidebarMenuButton asChild icon={<Heart className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard/favorites" className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Favorites
+            </NavLink>
+          </SidebarMenuButton>
+
+          <SidebarMenuButton asChild icon={<UserPlus className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard/referrals" className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Referrals
+            </NavLink>
+          </SidebarMenuButton>
+          
+          <SidebarMenuButton asChild icon={<Settings className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard/settings" className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Settings
+            </NavLink>
+          </SidebarMenuButton>
+          
+          <SidebarMenuButton asChild icon={<User className="h-5 w-5" />}>
+            <NavLink to="/user-dashboard/profile" className={({isActive}) => isActive ? 'font-semibold text-primary' : ''}>
+              Profile
+            </NavLink>
+          </SidebarMenuButton>
         </SidebarMenu>
-      </SidebarContent>
+      </div>
       
-      <SidebarFooter>
-        <button
+      <div className="px-4 py-4 border-t">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start gap-2" 
           onClick={onLogout}
           disabled={isLoggingOut}
-          className={cn(
-            "flex w-full items-center gap-2 rounded-md p-2 text-left text-sm",
-            "hover:bg-accent hover:text-accent-foreground transition-colors"
-          )}
         >
-          <LogOut size={18} />
+          <LogOut className="h-5 w-5" />
           <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
-        </button>
-      </SidebarFooter>
+        </Button>
+      </div>
     </Sidebar>
   );
 };

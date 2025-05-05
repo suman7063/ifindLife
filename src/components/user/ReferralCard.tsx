@@ -1,114 +1,106 @@
 
-import { useState } from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Copy, Check, RefreshCw } from 'lucide-react';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import { ReferralSettings, UserProfile } from '@/types/supabase';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Copy, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { UserProfile } from "@/types/supabase/user";
+import { ReferralSettings } from "@/types/supabase/referral";
 
 interface ReferralCardProps {
-  settings?: ReferralSettings | null;
-  userProfile: UserProfile;
+  userProfile: UserProfile | null;
+  settings: ReferralSettings | null;
 }
 
-const ReferralCard: React.FC<ReferralCardProps> = ({ settings, userProfile }) => {
-  const { getReferralLink } = useUserAuth();
+const ReferralCard: React.FC<ReferralCardProps> = ({ userProfile, settings }) => {
   const [copied, setCopied] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   
-  // Get the referral link using the hook from UserAuthContext
-  const referralLink = userProfile?.referral_code ? getReferralLink() : null;
-
-  // Format the reward amount with currency symbol
-  const formattedAmount = settings?.referrer_reward
-    ? new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR', // Using INR as default since settings doesn't have currency
-        minimumFractionDigits: 0,
-      }).format(settings.referrer_reward)
-    : '₹500';
-
-  const copyToClipboard = () => {
-    if (!referralLink) return;
-    
-    navigator.clipboard.writeText(referralLink)
-      .then(() => {
-        setCopied(true);
-        toast.success("Referral link copied to clipboard!");
-        setTimeout(() => setCopied(false), 2000);
-      })
-      .catch(() => {
-        toast.error("Failed to copy. Please try again.");
-      });
+  if (!userProfile) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Loading...</CardTitle>
+          <CardDescription>Your referral information is loading</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="h-12 bg-slate-100 animate-pulse rounded-md"></div>
+          <div className="h-10 bg-slate-100 animate-pulse rounded-md"></div>
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  // Use referral code from user profile, or generate a fallback
+  const referralCode = userProfile.referral_code || 'REF' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  
+  // Generate referral link
+  const referralLink = window.location.origin + `/signup?ref=${referralCode}`;
+  
+  const copyToClipboard = (text: string, type: 'code' | 'link') => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      toast.success(`${type === 'code' ? 'Referral code' : 'Referral link'} copied to clipboard!`);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy to clipboard');
+    });
   };
+  
+  const shareReferral = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Join iFindLife!',
+        text: `Use my referral code ${referralCode} to join iFindLife and get a bonus!`,
+        url: referralLink,
+      }).catch(console.error);
+    } else {
+      copyToClipboard(referralLink, 'link');
+    }
+  };
+  
+  const referrerReward = settings?.referrer_reward || 10;
+  const referredReward = settings?.referred_reward || 5;
 
   return (
-    <Card className="shadow-md">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-xl text-center">Your Referral Link</CardTitle>
+        <CardTitle>Your Referral Code</CardTitle>
+        <CardDescription>
+          Share this code with friends and you'll both earn rewards
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <p className="text-center text-muted-foreground">
-            Share this link with friends and both of you will receive <span className="font-semibold text-ifind-aqua">{formattedAmount}</span> when they sign up!
-          </p>
-          
-          <div className="relative mt-2">
-            <div className="flex items-center">
-              <input
-                type="text"
-                value={referralLink || "Generating link..."}
-                readOnly
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm overflow-hidden text-ellipsis pr-10"
-              />
-              <Button
-                size="sm" 
-                variant="ghost" 
-                className="absolute right-0 h-full px-3 py-2"
-                onClick={copyToClipboard}
-                disabled={!referralLink || copied || isGenerating}
-              >
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-              </Button>
-            </div>
-          </div>
-          
-          {!referralLink && userProfile?.referral_code && (
-            <div className="text-center">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="mt-2" 
-                onClick={() => {
-                  setIsGenerating(true);
-                  // Force a refresh after a short delay
-                  setTimeout(() => {
-                    setIsGenerating(false);
-                  }, 1000);
-                }}
-                disabled={isGenerating}
-              >
-                {isGenerating ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                )}
-                Regenerate Link
-              </Button>
-            </div>
-          )}
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Input 
+            value={referralCode} 
+            readOnly 
+            className="font-mono text-center"
+          />
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={() => copyToClipboard(referralCode, 'code')}
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+        
+        <Button className="w-full" onClick={shareReferral}>
+          <Share2 className="h-4 w-4 mr-2" />
+          Share Invitation
+        </Button>
+        
+        <div className="text-sm text-muted-foreground mt-4 border-t pt-4">
+          <p className="mb-2">How it works:</p>
+          <ul className="list-disc list-inside space-y-1">
+            <li>Share your unique code with friends</li>
+            <li>When they sign up & complete their first session, you get ${referrerReward}</li>
+            <li>They receive ${referredReward} credit to their account</li>
+          </ul>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <div className="text-xs text-center text-muted-foreground px-4">
-          <p>Terms apply. Rewards are credited after your friend's first session.</p>
-        </div>
-      </CardFooter>
     </Card>
   );
 };

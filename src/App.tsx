@@ -4,7 +4,7 @@ import AppRoutes from './AppRoutes';
 import { AuthProvider } from './contexts/auth/AuthContext';
 import { Toaster } from './components/ui/toaster';
 import { ThemeProvider } from './components/theme-provider';
-import { FavoritesProvider } from './contexts/favorites';
+import { FavoritesProvider } from './contexts/favorites/FavoritesContext';
 
 const App = () => {
   useEffect(() => {

@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2 } from 'lucide-react';
 import WalletSection from './WalletSection';
 import UserStatsSummary from './UserStatsSummary';
+import FavoritesList from './FavoritesList';
 import { UserProfile } from '@/types/supabase';
 
 interface DashboardContentProps {
@@ -16,6 +18,8 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   isLoading,
   onRecharge
 }) => {
+  console.log('Rendering DashboardContent with user:', user?.id, 'isLoading:', isLoading);
+
   return (
     <div className="mt-6">
       <UserStatsSummary user={user} />
@@ -33,7 +37,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <WalletSection user={user} />
+            <WalletSection user={user} onRecharge={onRecharge} />
           )}
         </TabsContent>
         
@@ -46,11 +50,13 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         </TabsContent>
         
         <TabsContent value="favorites" className="mt-6">
-          <EmptyStateSection 
-            title="Your Favorites"
-            message="You haven't added any favorites yet."
-            description="Find experts and programs you like and add them to favorites."
-          />
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold">Your Favorite Experts</h2>
+            <FavoritesList type="experts" />
+            
+            <h2 className="text-xl font-bold mt-8">Your Favorite Programs</h2>
+            <FavoritesList type="programs" />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

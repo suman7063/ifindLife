@@ -1,53 +1,81 @@
 
 import React from 'react';
-import { UserProfile } from '@/types/supabase/user';
-import useTransactions from '@/hooks/dashboard/useTransactions';
-import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
-import RechargeDialog from './wallet/RechargeDialog';
-import WalletBalanceCard from './wallet/WalletBalanceCard';
-import PaymentMethodsCard from './wallet/PaymentMethodsCard';
-import TransactionHistoryCard from './wallet/TransactionHistoryCard';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CircleDollarSign } from 'lucide-react';
+import { UserProfile } from '@/types/supabase';
 
 interface WalletSectionProps {
   user: UserProfile | null;
+  onRecharge?: () => void;
 }
 
-const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
-  const { transactions, isLoading: loading, refreshTransactions } = useTransactions(user?.id);
-
-  const {
-    isRechargeDialogOpen,
-    isProcessing,
-    handleOpenRechargeDialog,
-    handleCloseRechargeDialog,
-    handleRechargeSuccess
-  } = useRechargeDialog(refreshTransactions);
+const WalletSection: React.FC<WalletSectionProps> = ({ user, onRecharge }) => {
+  console.log('Rendering WalletSection with user:', user?.id);
   
+  // Ensure we have user data before rendering
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Wallet</CardTitle>
+          <CardDescription>Manage your wallet balance</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center py-8">
+          <p>User profile data is loading...</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const walletBalance = user.wallet_balance || 0;
+  const formattedBalance = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: user.currency || 'USD'
+  }).format(walletBalance);
+
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold mb-2">Wallet & Transactions</h2>
-        <p className="text-muted-foreground">
-          Manage your wallet and view transaction history
-        </p>
-      </div>
+      <h2 className="text-2xl font-bold">Your Wallet</h2>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Wallet Card */}
-        <WalletBalanceCard user={user} onRecharge={handleOpenRechargeDialog} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Current Balance</CardTitle>
+            <CardDescription>Your available funds</CardDescription>
+          </CardHeader>
+          <CardContent className="flex items-center justify-center py-6">
+            <div className="flex flex-col items-center">
+              <div className="bg-primary/10 p-4 rounded-full mb-4">
+                <CircleDollarSign className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-3xl font-bold">{formattedBalance}</h3>
+              <p className="text-muted-foreground mt-2">{user.currency || 'USD'}</p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full" 
+              onClick={onRecharge}
+              disabled={!onRecharge}
+            >
+              Add Funds
+            </Button>
+          </CardFooter>
+        </Card>
         
-        {/* Payment Methods */}
-        <PaymentMethodsCard />
+        <Card>
+          <CardHeader>
+            <CardTitle>Wallet History</CardTitle>
+            <CardDescription>Your recent transactions</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[220px] flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-muted-foreground">No recent transactions</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-      
-      {/* Transaction History */}
-      <TransactionHistoryCard transactions={transactions} loading={loading} />
-      
-      <RechargeDialog
-        open={isRechargeDialogOpen}
-        onOpenChange={handleCloseRechargeDialog}
-        onSuccess={handleRechargeSuccess}
-      />
     </div>
   );
 };
