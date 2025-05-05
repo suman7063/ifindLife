@@ -43,12 +43,22 @@ export const useTickets = () => {
       
       if (error) throw error;
       
-      // Format the data to include user name and email from profiles
-      const formattedData = data.map(ticket => ({
-        ...ticket,
-        user_name: ticket.profiles?.name || 'Unknown User',
-        user_email: ticket.profiles?.email || 'No Email'
-      }));
+      // Format the data to handle potential profile fetch errors
+      const formattedData = data.map(ticket => {
+        // Create a properly formatted ticket object
+        const formattedTicket: HelpTicket = {
+          ...ticket,
+          // Handle the case where profiles might be null or have error
+          user_name: ticket.profiles && typeof ticket.profiles === 'object' && 'name' in ticket.profiles 
+            ? ticket.profiles.name 
+            : 'Unknown User',
+          user_email: ticket.profiles && typeof ticket.profiles === 'object' && 'email' in ticket.profiles 
+            ? ticket.profiles.email 
+            : 'No Email'
+        };
+        
+        return formattedTicket;
+      });
       
       setTickets(formattedData);
     } catch (error) {

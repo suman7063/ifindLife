@@ -63,8 +63,21 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
         />
       } />
       <Route path="expertApprovals" element={<ExpertApprovals />} />
-      <Route path="services" element={<ServicesEditor />} />
-      <Route path="herosection" element={<HeroSectionEditor />} />
+      <Route path="services" element={
+        <ServicesEditor 
+          categories={services}
+          setCategories={setServices}
+          loading={loading}
+          error={error}
+          onRefresh={onRefresh}
+        />
+      } />
+      <Route path="herosection" element={
+        <HeroSectionEditor 
+          heroSettings={heroSettings}
+          setHeroSettings={setHeroSettings}
+        />
+      } />
       <Route path="testimonials" element={
         <TestimonialsEditor 
           testimonials={testimonials} 
