@@ -27,12 +27,18 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
     setTimeout(() => {
       const contentEl = document.querySelector('.dashboard-content');
       console.log('Dashboard content element:', contentEl);
-      console.log('Dashboard content dimensions:', contentEl ? {
-        width: contentEl.clientWidth,
-        height: contentEl.clientHeight,
-        offsetWidth: contentEl.offsetWidth,
-        offsetHeight: contentEl.offsetHeight
-      } : null);
+      if (contentEl) {
+        // Cast to HTMLElement to access offsetWidth and offsetHeight
+        const htmlElement = contentEl as HTMLElement;
+        console.log('Dashboard content dimensions:', {
+          width: htmlElement.clientWidth,
+          height: htmlElement.clientHeight,
+          offsetWidth: htmlElement.offsetWidth,
+          offsetHeight: htmlElement.offsetHeight
+        });
+      } else {
+        console.log('Dashboard content element not found');
+      }
     }, 100);
   }, [user]);
   
