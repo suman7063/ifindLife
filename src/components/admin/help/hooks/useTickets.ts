@@ -57,7 +57,10 @@ export const useTickets = () => {
             : 'No Email'
         };
         
-        return formattedTicket;
+        // Remove the profiles property from the formatted ticket to avoid type conflicts
+        const { profiles, ...ticketWithoutProfiles } = formattedTicket;
+        
+        return ticketWithoutProfiles as HelpTicket;
       });
       
       setTickets(formattedData);

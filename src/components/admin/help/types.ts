@@ -16,5 +16,5 @@ export interface HelpTicket {
   profiles?: {
     name: string;
     email: string;
-  };
+  } | null;
 }
