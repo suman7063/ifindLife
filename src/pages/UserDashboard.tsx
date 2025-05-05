@@ -7,6 +7,12 @@ import UserDashboardLayout from '@/components/user/dashboard/UserDashboardLayout
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
 import DashboardHome from '@/components/user/dashboard/DashboardHome';
 import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
+import UserWallet from '@/components/user/dashboard/sections/UserWallet';
+import UserAppointments from '@/components/user/dashboard/sections/UserAppointments';
+import UserMessages from '@/components/user/dashboard/sections/UserMessages';
+import UserFavorites from '@/components/user/dashboard/sections/UserFavorites';
+import UserSettings from '@/components/user/dashboard/sections/UserSettings';
+import UserReferralsPage from '@/components/user/dashboard/sections/UserReferralsPage';
 
 const UserDashboard: React.FC = () => {
   const { userProfile, isAuthenticated, isLoading, role, logout } = useAuth();
@@ -67,6 +73,12 @@ const UserDashboard: React.FC = () => {
     >
       <Routes>
         <Route index element={<DashboardHome user={userProfile} />} />
+        <Route path="wallet" element={<UserWallet user={userProfile} />} />
+        <Route path="appointments" element={<UserAppointments user={userProfile} />} />
+        <Route path="messages" element={<UserMessages user={userProfile} />} />
+        <Route path="favorites" element={<UserFavorites user={userProfile} />} />
+        <Route path="referrals" element={<UserReferralsPage user={userProfile} />} />
+        <Route path="settings" element={<UserSettings user={userProfile} />} />
         <Route path="*" element={<Navigate to="/user-dashboard" replace />} />
       </Routes>
     </UserDashboardLayout>

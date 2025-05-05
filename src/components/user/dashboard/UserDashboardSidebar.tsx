@@ -23,14 +23,14 @@ interface UserDashboardSidebarProps {
   user: UserProfile | null;
   onLogout?: () => void;
   isLoggingOut?: boolean;
-  className?: string; // Added className prop
+  className?: string;
 }
 
 const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ 
   user,
   onLogout,
   isLoggingOut = false,
-  className // Add support for className prop
+  className
 }) => {
   const location = useLocation();
   const currentPath = location.pathname;
@@ -39,7 +39,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   console.log('UserDashboardSidebar rendering with user:', user?.name);
 
   return (
-    <div className={cn("h-full flex flex-col", className)}> {/* Apply className for custom styling */}
+    <div className={cn("h-full flex flex-col", className)}>
       <div className="p-4">
         <Link to="/user-dashboard" className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
@@ -54,37 +54,58 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
       
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-2">
-          <SidebarLink to="/user-dashboard" active={currentPath === '/user-dashboard'}>
+          <SidebarLink 
+            to="/user-dashboard" 
+            active={currentPath === '/user-dashboard'}
+          >
             <Home className="mr-2 h-4 w-4" />
             Dashboard
           </SidebarLink>
           
-          <SidebarLink to="/user-dashboard/wallet" active={currentPath === '/user-dashboard/wallet'}>
+          <SidebarLink 
+            to="/user-dashboard/wallet" 
+            active={currentPath === '/user-dashboard/wallet'}
+          >
             <Wallet className="mr-2 h-4 w-4" />
             Wallet
           </SidebarLink>
           
-          <SidebarLink to="/user-dashboard/appointments" active={currentPath === '/user-dashboard/appointments'}>
+          <SidebarLink 
+            to="/user-dashboard/appointments" 
+            active={currentPath === '/user-dashboard/appointments'}
+          >
             <CalendarDays className="mr-2 h-4 w-4" />
             Appointments
           </SidebarLink>
           
-          <SidebarLink to="/user-dashboard/messages" active={currentPath === '/user-dashboard/messages'}>
+          <SidebarLink 
+            to="/user-dashboard/messages" 
+            active={currentPath === '/user-dashboard/messages'}
+          >
             <MessageSquare className="mr-2 h-4 w-4" />
             Messages
           </SidebarLink>
           
-          <SidebarLink to="/user-dashboard/favorites" active={currentPath === '/user-dashboard/favorites'}>
+          <SidebarLink 
+            to="/user-dashboard/favorites" 
+            active={currentPath === '/user-dashboard/favorites'}
+          >
             <Heart className="mr-2 h-4 w-4" />
             Favorites
           </SidebarLink>
           
-          <SidebarLink to="/user-dashboard/referrals" active={currentPath === '/user-dashboard/referrals'}>
+          <SidebarLink 
+            to="/user-dashboard/referrals" 
+            active={currentPath === '/user-dashboard/referrals'}
+          >
             <Users className="mr-2 h-4 w-4" />
             Referrals
           </SidebarLink>
           
-          <SidebarLink to="/user-dashboard/settings" active={currentPath === '/user-dashboard/settings'}>
+          <SidebarLink 
+            to="/user-dashboard/settings" 
+            active={currentPath === '/user-dashboard/settings'}
+          >
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </SidebarLink>
