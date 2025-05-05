@@ -43,43 +43,47 @@ export const useTickets = () => {
       
       if (error) throw error;
       
-      // Process data safely to handle potential profile fetch errors
-      const formattedData = data.map(ticket => {
-        // Create a base ticket with known properties
-        const baseTicket: HelpTicket = {
-          id: ticket.id,
-          ticket_id: ticket.ticket_id,
-          user_id: ticket.user_id,
-          category: ticket.category,
-          details: ticket.details,
-          screenshot_url: ticket.screenshot_url,
-          status: ticket.status,
-          created_at: ticket.created_at,
-          updated_at: ticket.updated_at,
-          admin_notes: ticket.admin_notes,
-          resolved_at: ticket.resolved_at,
-          // Initialize user fields with default values
-          user_name: 'Unknown User',
-          user_email: 'No Email'
-        };
-        
-        // Type guard to safely check and extract profile data
-        if (ticket.profiles !== null && 
-            typeof ticket.profiles === 'object' && 
-            ticket.profiles !== undefined) {
+      if (data) {
+        // Process and map the data to the HelpTicket interface
+        const formattedData = data.map(ticket => {
+          // Set default values
+          let userName = 'Unknown User';
+          let userEmail = 'No Email';
           
-          // Now check if it's not an error object
-          if (!('error' in ticket.profiles)) {
-            // Safely access properties with nullish coalescing
-            baseTicket.user_name = ticket.profiles.name || baseTicket.user_name;
-            baseTicket.user_email = ticket.profiles.email || baseTicket.user_email;
+          // Store profiles in a local variable that we can explicitly type check
+          const profiles = ticket.profiles;
+          
+          // Now do the type checking on the local variable
+          if (profiles && 
+              typeof profiles === 'object' && 
+              !('error' in profiles) && 
+              'name' in profiles && 
+              'email' in profiles) {
+            // After this check, TypeScript knows these properties exist
+            userName = profiles.name || userName;
+            userEmail = profiles.email || userEmail;
           }
-        }
+          
+          // Return a ticket without the profiles property
+          return {
+            id: ticket.id,
+            ticket_id: ticket.ticket_id,
+            user_id: ticket.user_id,
+            category: ticket.category,
+            details: ticket.details,
+            screenshot_url: ticket.screenshot_url,
+            status: ticket.status,
+            created_at: ticket.created_at,
+            updated_at: ticket.updated_at,
+            admin_notes: ticket.admin_notes,
+            resolved_at: ticket.resolved_at,
+            user_name: userName,
+            user_email: userEmail
+          } as HelpTicket;
+        });
         
-        return baseTicket;
-      });
-      
-      setTickets(formattedData);
+        setTickets(formattedData);
+      }
     } catch (error) {
       console.error('Error fetching help tickets:', error);
       toast.error('Failed to load help tickets');
