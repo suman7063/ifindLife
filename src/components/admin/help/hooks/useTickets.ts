@@ -62,19 +62,17 @@ export const useTickets = () => {
           user_name: 'Unknown User',
           user_email: 'No Email'
         };
-
-        // Safely check if profiles exists and is an object (not null)
-        if (ticket.profiles && typeof ticket.profiles === 'object') {
-          // First make sure it's not an error object
+        
+        // Type guard to safely check and extract profile data
+        if (ticket.profiles !== null && 
+            typeof ticket.profiles === 'object' && 
+            ticket.profiles !== undefined) {
+          
+          // Now check if it's not an error object
           if (!('error' in ticket.profiles)) {
-            // Now we can safely access properties with optional chaining
-            if (ticket.profiles.name) {
-              baseTicket.user_name = ticket.profiles.name;
-            }
-            
-            if (ticket.profiles.email) {
-              baseTicket.user_email = ticket.profiles.email;
-            }
+            // Safely access properties with nullish coalescing
+            baseTicket.user_name = ticket.profiles.name || baseTicket.user_name;
+            baseTicket.user_email = ticket.profiles.email || baseTicket.user_email;
           }
         }
         
@@ -144,8 +142,8 @@ export const useTickets = () => {
       ticket.ticket_id.toLowerCase().includes(searchLower) ||
       ticket.category.toLowerCase().includes(searchLower) ||
       ticket.details.toLowerCase().includes(searchLower) ||
-      (ticket.user_name?.toLowerCase() || '').includes(searchLower) ||
-      (ticket.user_email?.toLowerCase() || '').includes(searchLower)
+      ticket.user_name.toLowerCase().includes(searchLower) ||
+      ticket.user_email.toLowerCase().includes(searchLower)
     );
   });
 
