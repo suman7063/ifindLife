@@ -11,49 +11,54 @@ import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import useDashboardState from '@/components/expert/hooks/useDashboardState';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { toast } from 'sonner';
+import { useExpertAuth } from '@/hooks/expert-auth';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 
 const ExpertDashboard = () => {
   const { expert, loading: expertStateLoading, users } = useDashboardState();
   const navigate = useNavigate();
-  const { expertProfile, isAuthenticated, isLoading, role } = useAuth();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const { isAuthenticated, currentUser } = useAuthSynchronization();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const { currentExpert: expertAuthProfile, loading: expertAuthLoading } = useExpertAuth();
   
-  // Check authentication and redirect if necessary
+  const loading = expertStateLoading || expertAuthLoading;
+  
+  // Debug logging
   useEffect(() => {
-    const checkAuth = async () => {
-      console.log('ExpertDashboard - Auth states:', {
-        expertStateLoading,
-        isLoading,
-        hasExpertProfile: !!expertProfile,
-        isAuthenticated,
-        role
-      });
-      
-      if (!isLoading) {
-        if (!isAuthenticated) {
-          console.log('Not authenticated, redirecting to expert login');
-          toast.error('Please log in to access the expert dashboard');
-          navigate('/expert-login');
-        } else if (role !== 'expert') {
-          console.log('Not an expert, redirecting to user dashboard');
-          toast.error('You need expert privileges to access this page');
-          navigate('/user-dashboard');
-        }
-        
-        setIsCheckingAuth(false);
-      }
-    };
-    
-    checkAuth();
-  }, [isAuthenticated, isLoading, expertProfile, role, navigate, expertStateLoading]);
+    console.log('ExpertDashboard - Auth states:', {
+      expertStateLoading,
+      expertAuthLoading,
+      hasExpertStateProfiile: !!expert,
+      hasExpertAuthProfile: !!expertAuthProfile,
+      isAuthenticated,
+      hasUserProfile: !!currentUser,
+      redirectAttempted
+    });
+  }, [expert, expertAuthProfile, expertStateLoading, expertAuthLoading, isAuthenticated, currentUser, redirectAttempted]);
   
-  if (isLoading || expertStateLoading || isCheckingAuth) {
+  // If not authenticated as expert but authenticated as user, redirect to user dashboard
+  useEffect(() => {
+    if (!loading && !expertAuthProfile && isAuthenticated && currentUser && !redirectAttempted) {
+      console.log('User authenticated but no expert profile found, redirecting to user dashboard');
+      setRedirectAttempted(true);
+      navigate('/user-dashboard');
+    }
+  }, [expertAuthProfile, loading, isAuthenticated, currentUser, redirectAttempted, navigate]);
+  
+  // If not authenticated at all, redirect to login
+  useEffect(() => {
+    if (!loading && !expertAuthProfile && !isAuthenticated && !currentUser && !redirectAttempted) {
+      console.log('Not authenticated as expert or user, redirecting to expert login');
+      setRedirectAttempted(true);
+      navigate('/expert-login');
+    }
+  }, [expertAuthProfile, loading, isAuthenticated, currentUser, redirectAttempted, navigate]);
+  
+  if (loading) {
     return <DashboardLoader />;
   }
 
-  if (!expertProfile || role !== 'expert') {
+  if (!expertAuthProfile) {
     return <UnauthorizedView />;
   }
 

@@ -7,10 +7,9 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 import AdminProtectedRoute from './components/ProtectedRoute';
 import { routes } from './App.routes'; // Import routes from consolidated file
 
-// Direct imports for critical auth pages to avoid loading issues
+// Import directly to avoid any loading issues
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
-import ExpertLogin from './pages/ExpertLogin';
 
 // Only log in development environment
 if (import.meta.env.DEV) {
@@ -42,7 +41,6 @@ const AppRoutes: React.FC = () => {
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/user-login" element={<UserLogin />} />
-        <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} /> 
 
         {/* Admin routes need to handle all sub-routes */}

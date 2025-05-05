@@ -22,7 +22,7 @@ export const useFetchExpertProfile = (userId: string | undefined, session: Sessi
           .from('expert_accounts')
           .select('*')
           .eq('auth_id', userId)
-          .maybeSingle();
+          .single();
 
         // Handle specific error cases
         if (profileError) {
@@ -30,10 +30,13 @@ export const useFetchExpertProfile = (userId: string | undefined, session: Sessi
             // "No rows returned" is not a critical error, just means the user is not an expert
             console.log('No expert profile found for this user');
             setExpertProfile(null);
+          } else if (profileError.code === '42P17') {
+            // Handle the infinite recursion policy error - this is a server configuration issue
+            console.error('Database policy error in expert_accounts table:', profileError);
+            throw new Error('Server configuration issue with expert accounts');
           } else {
-            // For any other errors, log them but don't throw an exception
             console.error('Error fetching expert profile:', profileError);
-            setError(profileError);
+            throw profileError;
           }
         } else if (profileData) {
           console.log('Expert profile found:', profileData);
