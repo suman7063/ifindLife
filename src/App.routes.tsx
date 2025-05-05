@@ -1,3 +1,4 @@
+
 import { lazy } from 'react';
 
 // Define route types without extending RouteObject from react-router-dom
@@ -9,7 +10,7 @@ export interface AppRoute {
 
 // Pages - pre-import critical pages to avoid dynamic import issues
 const Login = lazy(() => import('./pages/Login'));
-const ExpertLogin = lazy(() => import('./pages/ExpertLogin'));
+// ExpertLogin is now directly imported in AppRoutes.tsx
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const MentalHealthAssessment = lazy(() => import('./pages/MentalHealthAssessment'));
@@ -41,10 +42,7 @@ export const routes: AppRoute[] = [
     path: '/login',
     element: <Login />
   },
-  {
-    path: '/expert-login',
-    element: <ExpertLogin />
-  },
+  // ExpertLogin is removed from here as it's directly imported in AppRoutes.tsx
   {
     path: '/forgot-password',
     element: <ForgotPassword />

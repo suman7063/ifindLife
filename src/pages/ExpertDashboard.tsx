@@ -9,9 +9,17 @@ import EarningsTab from '@/components/expert/dashboard/EarningsTab';
 import SettingsTab from '@/components/expert/dashboard/SettingsTab';
 import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
-import useDashboardState from '@/components/expert/hooks/useDashboardState';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
+
+// Import the hook but make it optional - we'll only use it if needed
+let useDashboardState: any;
+try {
+  useDashboardState = require('@/components/expert/hooks/useDashboardState').default;
+} catch (e) {
+  console.warn('useDashboardState not available, using fallback');
+  useDashboardState = () => ({ expert: null, loading: false, users: [] });
+}
 
 const ExpertDashboard = () => {
   const { expert, loading: expertStateLoading, users } = useDashboardState();
@@ -46,7 +54,10 @@ const ExpertDashboard = () => {
     return <DashboardLoader />;
   }
 
-  if (!expertProfile) {
+  // Use the unified auth context's expertProfile as the source of truth
+  const currentExpert = expertProfile || expert;
+
+  if (!currentExpert) {
     return <UnauthorizedView />;
   }
 

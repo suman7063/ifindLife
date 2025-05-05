@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Container } from '@/components/ui/container';
 import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
@@ -11,16 +11,18 @@ import LoadingScreen from '@/components/auth/LoadingScreen';
 
 const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(
+    searchParams.get('register') === 'true' ? 'register' : 'login'
+  );
   const [isLogging, setIsLogging] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const auth = useAuth();
+  const { isLoading, isAuthenticated, expertProfile, login, logout } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   
   // Check URL parameters for status messages
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const status = params.get('status');
+    const status = searchParams.get('status');
     
     if (status === 'registered') {
       setStatusMessage({
@@ -39,15 +41,15 @@ const ExpertLogin: React.FC = () => {
         message: 'Your account application was not approved. Please check your email for details.'
       });
     }
-  }, []);
+  }, [searchParams]);
   
   // Redirect if already authenticated as expert
   useEffect(() => {
-    if (auth.isAuthenticated && auth.expertProfile) {
+    if (isAuthenticated && expertProfile) {
       console.log('ExpertLogin: User is authenticated as expert, redirecting to dashboard');
       navigate('/expert-dashboard');
     }
-  }, [auth.isAuthenticated, auth.expertProfile, navigate]);
+  }, [isAuthenticated, expertProfile, navigate]);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLogging(true);
@@ -56,13 +58,13 @@ const ExpertLogin: React.FC = () => {
       console.log('ExpertLogin: Attempting login with', email);
       
       // Use the standard auth login
-      const success = await auth.login(email, password);
+      const success = await login(email, password);
       
       if (success) {
         console.log('ExpertLogin: Login successful, checking for expert profile');
         
         // Check if user has an expert profile
-        if (auth.expertProfile) {
+        if (expertProfile) {
           toast.success('Successfully logged in!');
           navigate('/expert-dashboard');
           return true;
@@ -70,7 +72,7 @@ const ExpertLogin: React.FC = () => {
           console.error('ExpertLogin: No expert profile found');
           toast.error('No expert profile found for this account.');
           // Log out since user doesn't have an expert profile
-          await auth.logout();
+          await logout();
           setLoginError('No expert profile found for this account.');
           return false;
         }
@@ -97,7 +99,7 @@ const ExpertLogin: React.FC = () => {
     }
   };
 
-  if (auth.isLoading) {
+  if (isLoading) {
     return <LoadingScreen />;
   }
 

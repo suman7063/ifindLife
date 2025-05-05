@@ -21,11 +21,10 @@ export const useAuthLogin = (
       if (error) {
         console.error("Login error:", error);
         toast.error(error.message);
-        setLoading(false);
         return false;
       }
 
-      if (data.user && data.session) {
+      if (data && data.user && data.session) {
         console.log("Login successful, user:", data.user.email);
         setSession(data.session);
         return true;
@@ -33,13 +32,13 @@ export const useAuthLogin = (
       
       console.log("No user returned from login attempt");
       toast.error("Login failed. Please try again.");
-      setLoading(false);
       return false;
     } catch (error: any) {
       console.error("Unexpected login error:", error);
       handleAuthError(error, 'Login failed');
-      setLoading(false);
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
