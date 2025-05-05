@@ -3,8 +3,9 @@ import React from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, Bell, Shield } from 'lucide-react';
+import { Settings, Bell, Shield, Lock } from 'lucide-react';
 import UserProfileManagement from '../UserProfileManagement';
+import PasswordChangeForm from '../security/PasswordChangeForm';
 
 interface UserSettingsProps {
   user: UserProfile | null;
@@ -37,9 +38,10 @@ const UserSettings: React.FC<UserSettingsProps> = ({ user }) => {
               <Shield className="h-5 w-5" />
               <h3 className="text-lg font-medium">Security Settings</h3>
             </div>
-            <p className="text-muted-foreground text-center py-4">
-              Security settings will be implemented in a future update.
-            </p>
+            
+            <div className="space-y-6">
+              <PasswordChangeForm />
+            </div>
           </Card>
         </TabsContent>
         
