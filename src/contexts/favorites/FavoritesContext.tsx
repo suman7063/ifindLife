@@ -122,11 +122,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return String(expertId);
   };
   
-  const getProgramId = (programId: string | number | Program): number => {
-    if (typeof programId === 'object' && programId !== null) {
-      return Number(programId.id);
+  // Fixed getProgramId function to properly handle Program objects and return a number
+  const getProgramId = (programData: string | number | Program): number => {
+    if (typeof programData === 'object' && programData !== null) {
+      // Make sure we're returning a number when extracting from a Program object
+      return typeof programData.id === 'string' ? parseInt(programData.id, 10) : Number(programData.id);
     }
-    return typeof programId === 'string' ? parseInt(programId, 10) : programId;
+    return typeof programData === 'string' ? parseInt(programData, 10) : Number(programData);
   };
   
   // Toggle expert favorite status
