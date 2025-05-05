@@ -50,24 +50,30 @@ export const useTickets = () => {
           let userName = 'Unknown User';
           let userEmail = 'No Email';
           
-          // Use type narrowing with type guards
-          // This is critical for TypeScript to understand the structure
-          if (ticket.profiles !== null && 
-              ticket.profiles !== undefined &&
-              typeof ticket.profiles === 'object' &&
-              !('error' in ticket.profiles)) {
+          // Type guard for profiles - check for null and undefined first
+          if (ticket.profiles) {
+            // If we reach here, profiles is definitely not null
+            // Now check if it's an object with expected properties
+            const profileData = ticket.profiles;
             
-            // Use non-null assertion operator to tell TypeScript you're certain this is safe
-            // Only use this AFTER the type guard above
-            const profileData = ticket.profiles!;
-            
-            // Now TypeScript knows profileData is not null, but still check properties exist
-            if ('name' in profileData && profileData.name) {
-              userName = profileData.name;
-            }
-            
-            if ('email' in profileData && profileData.email) {
-              userEmail = profileData.email;
+            // Now check if specific properties exist and are strings
+            if (profileData && 
+                typeof profileData === 'object' && 
+                !('error' in profileData)) {
+              
+              // Check for name property and ensure it's a string
+              if ('name' in profileData && 
+                  profileData.name && 
+                  typeof profileData.name === 'string') {
+                userName = profileData.name;
+              }
+              
+              // Check for email property and ensure it's a string
+              if ('email' in profileData && 
+                  profileData.email && 
+                  typeof profileData.email === 'string') {
+                userEmail = profileData.email;
+              }
             }
           }
           
