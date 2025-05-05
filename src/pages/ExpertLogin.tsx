@@ -15,30 +15,68 @@ const ExpertLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const auth = useAuth();
-  const { isExpertAuthenticated, isAuthInitialized } = useAuthSynchronization();
+  const { expertProfile, isExpertAuthenticated, isAuthInitialized } = useAuthSynchronization();
+
+  // Redirect to expert dashboard if already logged in as expert
+  useEffect(() => {
+    if (isAuthInitialized && isExpertAuthenticated) {
+      navigate('/expert-dashboard');
+    }
+  }, [isAuthInitialized, isExpertAuthenticated, navigate]);
+  
+  // Create a wrapper function to handle type conversion
+  const handleTabChange = (tab: string) => {
+    if (tab === 'login' || tab === 'register') {
+      setActiveTab(tab);
+    }
+  };
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
     setLoginError(null);
     try {
-      // Use standard login since we don't have separate expert login 
+      console.log("Attempting expert login with:", email);
+      
+      if (!auth.login || typeof auth.login !== 'function') {
+        console.error("Login function is not available");
+        toast.error("Login functionality is not available");
+        setIsLoading(false);
+        return false;
+      }
+      
       const success = await auth.login(email, password);
+      
       if (success) {
-        toast.success('Successfully logged in!');
-        navigate('/expert-dashboard');
+        // After successful authentication, check if the user is an expert
+        console.log("Login successful, checking if expert profile exists");
+        
+        // Wait a bit for the expert profile to load
+        setTimeout(() => {
+          if (auth.expertProfile) {
+            console.log("Expert profile found, redirecting to expert dashboard");
+            toast.success('Successfully logged in as expert!');
+            navigate('/expert-dashboard');
+          } else if (auth.userProfile) {
+            console.log("No expert profile found, user is not an expert");
+            toast.error('This account is not registered as an expert');
+            // Sign out since this is not an expert account
+            auth.logout();
+          }
+        }, 500);
+        
         return true;
       } else {
-        toast.error('Invalid credentials. Please try again.');
-        setLoginError('Invalid credentials. Please try again.');
+        setLoginError("Invalid credentials. Please try again.");
+        toast.error("Invalid credentials. Please try again.");
+        setIsLoading(false);
         return false;
       }
     } catch (error) {
-      console.error('Login error:', error);
-      toast.error('Failed to login. Please try again.');
-      setLoginError('Failed to login. Please try again.');
-      return false;
-    } finally {
+      console.error("Login error:", error);
+      setLoginError("An error occurred during login. Please try again.");
+      toast.error("An error occurred during login. Please try again.");
       setIsLoading(false);
+      return false;
     }
   };
 
@@ -60,19 +98,6 @@ const ExpertLogin: React.FC = () => {
       return false;
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthInitialized && isExpertAuthenticated) {
-      navigate('/expert-dashboard');
-    }
-  }, [isAuthInitialized, isExpertAuthenticated, navigate]);
-
-  // Create a wrapper function to handle type conversion
-  const handleTabChange = (tab: string) => {
-    if (tab === 'login' || tab === 'register') {
-      setActiveTab(tab);
     }
   };
 

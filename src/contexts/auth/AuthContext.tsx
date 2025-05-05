@@ -100,7 +100,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (expertProfile) {
       role = 'expert';
     } else if (userProfile) {
-      role = 'user';
+      // Check if this is an admin user
+      if (userProfile.email === 'admin@ifindlife.com') {
+        role = 'admin';
+      } else {
+        role = 'user';
+      }
     }
   }
   

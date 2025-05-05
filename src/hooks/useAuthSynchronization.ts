@@ -31,7 +31,7 @@ export const useAuthSynchronization = () => {
     setIsExpertAuthenticated(auth.isAuthenticated && auth.role === 'expert' && !!auth.expertProfile);
     
     // Check for dual sessions
-    setHasDualSessions(auth.userProfile && auth.expertProfile && auth.isAuthenticated);
+    setHasDualSessions(!!auth.userProfile && !!auth.expertProfile && auth.isAuthenticated);
     
     // Initialize session type from auth context
     setSessionType(auth.sessionType);
@@ -90,6 +90,7 @@ export const useAuthSynchronization = () => {
     hasDualSessions,
     sessionType,
     isLoading: auth.isLoading,
+    expertProfile: auth.expertProfile,
     
     // Auth actions
     userLogout,
