@@ -23,7 +23,7 @@ export const useSupabaseAuth = () => {
   // Import functionality from separate hooks
   const { login } = useAuthLogin(setLoading, setSession);
   const { signup } = useAuthSignup(setLoading);
-  const { logout } = useAuthLogout(setLoading);
+  const { logout } = useAuthLogout(); // Fix: Remove the setLoading parameter here
   const { getSession } = useAuthSession(setLoading, setSession);
   const { resetPassword, updatePassword } = useAuthPassword(setLoading);
 
