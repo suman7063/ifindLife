@@ -4,6 +4,8 @@ import { UserProfile } from '@/types/supabase/user';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Calendar, Wallet, MessageSquare } from 'lucide-react';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface DashboardHomeProps {
   user: UserProfile | null;
@@ -11,6 +13,7 @@ interface DashboardHomeProps {
 
 const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
   const { expertFavorites, programFavorites } = useFavorites();
+  const navigate = useNavigate();
   
   // Add debug logging to track component lifecycle and data
   useEffect(() => {
@@ -19,7 +22,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
       username: user?.name,
       expertFavoritesCount: expertFavorites?.length || 0,
       programFavoritesCount: programFavorites?.length || 0,
-      walletBalance: user?.wallet_balance
+      walletBalance: user?.wallet_balance,
+      domElement: document.querySelector('.dashboard-content')
     });
   }, [user, expertFavorites, programFavorites]);
   
@@ -109,7 +113,14 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                You haven't added any experts to your favorites
+                <p>You haven't added any experts to your favorites</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate('/experts')}
+                >
+                  Browse Experts
+                </Button>
               </div>
             )}
           </CardContent>
@@ -132,12 +143,38 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
               </div>
             ) : (
               <div className="text-center py-6 text-muted-foreground">
-                You haven't added any programs to your favorites
+                <p>You haven't added any programs to your favorites</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => navigate('/programs-for-wellness-seekers')}
+                >
+                  Browse Programs
+                </Button>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+      
+      {/* Recommended Programs Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recommended Programs</CardTitle>
+          <CardDescription>Personalized suggestions based on your profile</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-6">
+            <p className="text-muted-foreground">We're preparing personalized recommendations for you.</p>
+            <Button 
+              className="mt-4"
+              onClick={() => navigate('/programs-for-wellness-seekers')}
+            >
+              Browse All Programs
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

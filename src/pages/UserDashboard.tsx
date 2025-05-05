@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet, useLocation, Routes, Route } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import UserDashboardLayout from '@/components/user/dashboard/UserDashboardLayout';
 import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
+import DashboardHome from '@/components/user/dashboard/DashboardHome';
 import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
 
 const UserDashboard: React.FC = () => {
@@ -64,7 +65,10 @@ const UserDashboard: React.FC = () => {
       onLogout={handleLogout}
       isLoggingOut={isLoggingOut}
     >
-      <Outlet />
+      <Routes>
+        <Route index element={<DashboardHome user={userProfile} />} />
+        <Route path="*" element={<Navigate to="/user-dashboard" replace />} />
+      </Routes>
     </UserDashboardLayout>
   );
 };
