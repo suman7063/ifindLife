@@ -50,36 +50,45 @@ export const useTickets = () => {
           let userName = 'Unknown User';
           let userEmail = 'No Email';
           
-          // Store profiles in a local variable that we can explicitly type check
-          const profiles = ticket.profiles;
-          
-          // Now do the type checking on the local variable
-          if (profiles && 
-              typeof profiles === 'object' && 
-              !('error' in profiles) && 
-              'name' in profiles && 
-              'email' in profiles) {
-            // After this check, TypeScript knows these properties exist
-            userName = profiles.name || userName;
-            userEmail = profiles.email || userEmail;
+          // Use type narrowing with type guards
+          // This is critical for TypeScript to understand the structure
+          if (ticket.profiles !== null && 
+              ticket.profiles !== undefined &&
+              typeof ticket.profiles === 'object' &&
+              !('error' in ticket.profiles)) {
+            
+            // Use non-null assertion operator to tell TypeScript you're certain this is safe
+            // Only use this AFTER the type guard above
+            const profileData = ticket.profiles!;
+            
+            // Now TypeScript knows profileData is not null, but still check properties exist
+            if ('name' in profileData && profileData.name) {
+              userName = profileData.name;
+            }
+            
+            if ('email' in profileData && profileData.email) {
+              userEmail = profileData.email;
+            }
           }
           
-          // Return a ticket without the profiles property
-          return {
+          // Create a new object explicitly matching HelpTicket interface
+          const helpTicket: HelpTicket = {
             id: ticket.id,
             ticket_id: ticket.ticket_id,
             user_id: ticket.user_id,
+            user_name: userName,
+            user_email: userEmail,
             category: ticket.category,
             details: ticket.details,
             screenshot_url: ticket.screenshot_url,
             status: ticket.status,
             created_at: ticket.created_at,
             updated_at: ticket.updated_at,
-            admin_notes: ticket.admin_notes,
             resolved_at: ticket.resolved_at,
-            user_name: userName,
-            user_email: userEmail
-          } as HelpTicket;
+            admin_notes: ticket.admin_notes
+          };
+          
+          return helpTicket;
         });
         
         setTickets(formattedData);
