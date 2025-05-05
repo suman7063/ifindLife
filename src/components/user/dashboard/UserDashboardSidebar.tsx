@@ -18,6 +18,7 @@ import {
   LogOut,
   Users 
 } from 'lucide-react';
+import { useHelpNavigation } from '@/components/help/HelpNavigation';
 
 interface UserDashboardSidebarProps {
   user: UserProfile | null;
@@ -34,6 +35,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
 }) => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { handleHelpClick, HelpFormDialog } = useHelpNavigation();
   
   // Add debug logging to see if user data is available
   console.log('UserDashboardSidebar rendering with user:', user?.name);
@@ -95,8 +97,8 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
           </SidebarLink>
           
           <SidebarLink 
-            to="/user-dashboard/referrals" 
-            active={currentPath === '/user-dashboard/referrals'}
+            to="/user-referrals" 
+            active={currentPath === '/user-referrals' || currentPath === '/user-dashboard/referrals'}
           >
             <Users className="mr-2 h-4 w-4" />
             Referrals
@@ -110,10 +112,17 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             Settings
           </SidebarLink>
           
-          <SidebarLink to="/faq" active={currentPath === '/faq'}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start"
+            onClick={handleHelpClick}
+          >
             <HelpCircle className="mr-2 h-4 w-4" />
             Help
-          </SidebarLink>
+          </Button>
+          
+          {/* Render the help form dialog */}
+          <HelpFormDialog />
         </div>
       </ScrollArea>
       

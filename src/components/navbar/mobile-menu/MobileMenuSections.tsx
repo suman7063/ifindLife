@@ -10,14 +10,9 @@ import {
 import { SheetClose } from '@/components/ui/sheet';
 import MobileAccordionItem from './MobileAccordionItem';
 import MobileMenuLink from './MobileMenuLink';
-import { useHelpNavigation } from '../../help/HelpNavigation';
-import { HelpCircle } from 'lucide-react';
 
 // Updated MobileMenuLink component prop type from 'href' to 'to' to match usage
 const MobileMenuSections: React.FC = () => {
-  // Use the help navigation hook
-  const { handleHelpClick, HelpFormDialog } = useHelpNavigation();
-
   return (
     <div className="flex-1 overflow-y-auto py-4">
       <nav className="flex flex-col gap-2">
@@ -76,18 +71,6 @@ const MobileMenuSections: React.FC = () => {
             </SheetClose>
           </MobileAccordionItem>
         </Accordion>
-        
-        {/* Help Link */}
-        <div 
-          className="flex items-center px-4 py-2 hover:bg-accent rounded-md cursor-pointer"
-          onClick={handleHelpClick}
-        >
-          <HelpCircle className="mr-2 h-4 w-4" />
-          <span>Get Help</span>
-        </div>
-        
-        {/* Render the help form dialog */}
-        <HelpFormDialog />
       </nav>
     </div>
   );
