@@ -6,12 +6,27 @@ interface PaymentSummaryProps {
 }
 
 const PaymentSummary: React.FC<PaymentSummaryProps> = ({ amount }) => {
+  // Calculate the processor fee (example: 2%)
+  const processorFee = amount * 0.02;
+  const totalAmount = amount + processorFee;
+  
   return (
-    <div className="bg-muted rounded-md p-3 text-sm">
-      <p>You will be recharging <strong>${amount.toFixed(2)}</strong> to your account wallet.</p>
-      <p className="text-muted-foreground text-xs mt-1">
-        Transaction fees may apply based on your payment method.
-      </p>
+    <div className="space-y-2 border-t pt-4 mt-2">
+      <h3 className="font-medium">Payment Summary</h3>
+      <div className="space-y-1 text-sm">
+        <div className="flex justify-between">
+          <span>Amount:</span>
+          <span>₹{amount.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-muted-foreground">
+          <span>Processing Fee (2%):</span>
+          <span>₹{processorFee.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between font-medium pt-2 border-t">
+          <span>Total:</span>
+          <span>₹{totalAmount.toFixed(2)}</span>
+        </div>
+      </div>
     </div>
   );
 };

@@ -24,7 +24,7 @@ const useRechargeDialog = (refreshTransactions: () => void) => {
       // For now, let's simulate a delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      toast.success(`Successfully added $${amount.toFixed(2)} to your wallet`);
+      toast.success(`Successfully added ₹${amount.toFixed(2)} to your wallet`);
       refreshTransactions();
       setIsRechargeDialogOpen(false);
     } catch (error) {

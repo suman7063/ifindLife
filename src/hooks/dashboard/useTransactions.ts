@@ -17,7 +17,7 @@ export const useTransactions = (userId: string) => {
     try {
       setIsLoading(true);
       
-      // Use 'user_transactions' table instead of 'transactions'
+      // Fetch transactions from Supabase
       const { data, error } = await supabase
         .from('user_transactions')
         .select('*')

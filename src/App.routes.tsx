@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 
 // Define route types without extending RouteObject from react-router-dom
@@ -34,6 +33,7 @@ const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Referral = lazy(() => import('./pages/Referral'));
+const UserWallet = lazy(() => import('./pages/UserWallet'));
 
 export const routes: AppRoute[] = [
   // Main navigation routes 
@@ -141,5 +141,10 @@ export const routes: AppRoute[] = [
     path: '/admin/*',
     element: <Admin />,
     requiredRole: 'admin'
+  },
+  {
+    path: "/user-dashboard/wallet",
+    element: <UserWallet />,
+    requiredRole: "user"
   }
 ];
