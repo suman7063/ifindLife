@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 import { Loader2, Heart } from 'lucide-react';
@@ -20,6 +20,12 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
     toggleProgramFavorite
   } = useFavorites();
   const navigate = useNavigate();
+  
+  // Debug logs
+  useEffect(() => {
+    console.log(`FavoritesList ${type} rendering with:`, 
+      type === 'experts' ? expertFavorites : programFavorites);
+  }, [type, expertFavorites, programFavorites]);
   
   const favorites = type === 'experts' ? expertFavorites : programFavorites;
   const toggleFavorite = type === 'experts' ? toggleExpertFavorite : toggleProgramFavorite;

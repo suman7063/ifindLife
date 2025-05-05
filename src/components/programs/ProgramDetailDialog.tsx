@@ -47,7 +47,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
       return;
     }
     
-    await toggleProgramFavorite(program);
+    await toggleProgramFavorite(program.id);
   };
 
   const handleEnroll = () => {

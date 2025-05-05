@@ -37,11 +37,11 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   
   const handleFavoriteToggle = async (expertId: string) => {
     if (isAuthenticated) {
-      const expert = { 
+      // Create expert object with required data
+      const expertData: Expert = { 
         id: expertId,
         name,
-        // Add other required properties for Expert type
-        email: '',
+        email: '',  // Required by type but not used for favorites
         specialization: specialties.join(', '),
         profile_picture: imageUrl,
         experience: `${experience} years`,
@@ -49,7 +49,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
         reviews_count: 0
       } as Expert;
       
-      await toggleExpertFavorite(expert);
+      await toggleExpertFavorite(expertData);
     }
   };
   

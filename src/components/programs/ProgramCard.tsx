@@ -46,7 +46,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
       return;
     }
     
-    await toggleProgramFavorite(program);
+    await toggleProgramFavorite(program.id);
   };
 
   const handleCardClick = () => {
