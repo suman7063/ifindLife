@@ -1,10 +1,10 @@
 
 import React from 'react';
 import { UserProfile } from '@/types/supabase/user';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Settings, Lock, Bell, Shield } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Settings, Bell, Shield } from 'lucide-react';
+import UserProfileManagement from '../UserProfileManagement';
 
 interface UserSettingsProps {
   user: UserProfile | null;
@@ -14,76 +14,47 @@ const UserSettings: React.FC<UserSettingsProps> = ({ user }) => {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold mb-2">Account Settings</h2>
+        <h2 className="text-3xl font-bold mb-2">Profile Management</h2>
         <p className="text-muted-foreground">
-          Manage your account preferences and security
+          Manage your personal information and account settings
         </p>
       </div>
       
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Security
-          </CardTitle>
-          <CardDescription>
-            Update your password and security settings
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <h3 className="font-medium mb-2">Password</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Change your password to keep your account secure
+      <Tabs defaultValue="personal">
+        <TabsList>
+          <TabsTrigger value="personal">Personal Info</TabsTrigger>
+          <TabsTrigger value="security">Security</TabsTrigger>
+          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="personal">
+          <UserProfileManagement user={user} />
+        </TabsContent>
+        
+        <TabsContent value="security">
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="h-5 w-5" />
+              <h3 className="text-lg font-medium">Security Settings</h3>
+            </div>
+            <p className="text-muted-foreground text-center py-4">
+              Security settings will be implemented in a future update.
             </p>
-            <Button variant="outline">Change Password</Button>
-          </div>
-          
-          <Separator />
-          
-          <div>
-            <h3 className="font-medium mb-2">Two-Factor Authentication</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Add an extra layer of security to your account
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="preferences">
+          <Card className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Bell className="h-5 w-5" />
+              <h3 className="text-lg font-medium">Preferences</h3>
+            </div>
+            <p className="text-muted-foreground text-center py-4">
+              Preference settings will be implemented in a future update.
             </p>
-            <Button variant="outline">Set Up 2FA</Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" />
-            Notifications
-          </CardTitle>
-          <CardDescription>
-            Manage how you receive notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-4">
-            Notification settings coming soon
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="h-5 w-5" />
-            Privacy
-          </CardTitle>
-          <CardDescription>
-            Manage your privacy settings and data
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground text-center py-4">
-            Privacy settings coming soon
-          </p>
-        </CardContent>
-      </Card>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

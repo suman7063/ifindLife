@@ -21,25 +21,33 @@ export const useProfileFunctions = (
       
       setIsUpdating(true);
       
-      const { data, error } = await supabase
-        .from('profiles')
+      // First, try to update the users table
+      let { error } = await supabase
+        .from('users')
         .update(updates)
-        .eq('id', authState.user.id)
-        .select()
-        .single();
-        
+        .eq('id', authState.user.id);
+      
       if (error) {
-        console.error("Profile update error:", error);
-        toast.error(error.message);
-        return false;
+        // If that fails, try to update the profiles table
+        console.log("Falling back to profiles table update:", error.message);
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update(updates)
+          .eq('id', authState.user.id);
+          
+        if (profileError) {
+          console.error("Profile update error:", profileError);
+          toast.error(profileError.message);
+          return false;
+        }
       }
       
+      // Update the local state
       setAuthState((prev) => ({
         ...prev,
         userProfile: { ...prev.userProfile!, ...updates } as UserProfile,
       }));
       
-      toast.success("Profile updated successfully");
       return true;
     } catch (error: any) {
       console.error("Profile update error:", error);
