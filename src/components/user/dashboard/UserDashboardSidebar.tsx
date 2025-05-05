@@ -62,7 +62,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             active={currentPath === '/user-dashboard'}
           >
             <Home className="mr-2 h-4 w-4" />
-            Dashboard
+            Overview
           </SidebarLink>
           
           <SidebarLink 

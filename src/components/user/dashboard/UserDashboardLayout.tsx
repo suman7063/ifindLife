@@ -60,7 +60,7 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
               <main className="p-6 dashboard-content">
                 <div className="md:hidden flex items-center mb-4">
                   <SidebarTrigger />
-                  <h1 className="text-2xl font-bold ml-2">Dashboard</h1>
+                  <h1 className="text-2xl font-bold ml-2">Overview</h1>
                 </div>
                 
                 <Container>
