@@ -19,30 +19,36 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
   isLoggingOut,
   children
 }) => {
+  // Add debug logging
+  console.log('UserDashboardLayout rendering with user:', user?.id);
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <div className="flex-1 flex mt-24"> {/* Added top margin to prevent overlap */}
+      <div className="flex-1 flex w-full mt-24"> {/* Added w-full to ensure proper width */}
         <SidebarProvider defaultOpen>
-          <UserDashboardSidebar 
-            user={user}
-            onLogout={onLogout}
-            isLoggingOut={isLoggingOut}
-          />
-          
-          <SidebarInset>
-            <main className="flex-1 p-6">
-              <div className="md:hidden flex items-center mb-4">
-                <SidebarTrigger />
-                <h1 className="text-2xl font-bold ml-2">Dashboard</h1>
-              </div>
-              
-              <Container>
-                {children}
-              </Container>
-            </main>
-          </SidebarInset>
+          <div className="grid grid-cols-[250px_1fr] w-full"> {/* Grid layout to contain sidebar and content */}
+            <UserDashboardSidebar 
+              user={user}
+              onLogout={onLogout}
+              isLoggingOut={isLoggingOut}
+              className="h-[calc(100vh-6rem)] border-r overflow-y-auto" /* Fixed height and scroll */
+            />
+            
+            <SidebarInset className="overflow-y-auto">
+              <main className="p-6">
+                <div className="md:hidden flex items-center mb-4">
+                  <SidebarTrigger />
+                  <h1 className="text-2xl font-bold ml-2">Dashboard</h1>
+                </div>
+                
+                <Container>
+                  {children}
+                </Container>
+              </main>
+            </SidebarInset>
+          </div>
         </SidebarProvider>
       </div>
     </div>

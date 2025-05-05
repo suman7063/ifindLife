@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
@@ -11,6 +11,15 @@ const UserDashboard: React.FC = () => {
   const { userProfile, isAuthenticated, isLoading, role, logout } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
+  
+  // Add debug logging
+  console.log('UserDashboard page rendering with auth state:', { 
+    isAuthenticated, 
+    hasUserProfile: !!userProfile,
+    isLoading,
+    role,
+    pathname: location.pathname
+  });
   
   // Initialize the authentication journey preservation hook
   useAuthJourneyPreservation();
@@ -45,6 +54,7 @@ const UserDashboard: React.FC = () => {
 
   // Don't render dashboard content if not authenticated or not a user
   if (!isAuthenticated || role !== 'user') {
+    console.log('Not authenticated or not a user, redirecting to login');
     return <Navigate to="/user-login" replace />;
   }
 

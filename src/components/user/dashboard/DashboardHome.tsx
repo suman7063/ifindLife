@@ -1,14 +1,28 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Calendar, Wallet, MessageSquare } from 'lucide-react';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 
 interface DashboardHomeProps {
   user: UserProfile | null;
 }
 
 const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
+  const { expertFavorites, programFavorites } = useFavorites();
+  
+  // Add debug logging to track component lifecycle and data
+  useEffect(() => {
+    console.log('DashboardHome component mounted with:', {
+      hasUser: !!user,
+      username: user?.name,
+      expertFavoritesCount: expertFavorites?.length || 0,
+      programFavoritesCount: programFavorites?.length || 0,
+      walletBalance: user?.wallet_balance
+    });
+  }, [user, expertFavorites, programFavorites]);
+  
   return (
     <div className="space-y-6">
       <div>
@@ -67,9 +81,11 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div>
+            <div className="text-2xl font-bold">
+              {(expertFavorites?.length || 0) + (programFavorites?.length || 0)}
+            </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Actions in last 7 days
+              Total favorites and actions
             </p>
           </CardContent>
         </Card>
@@ -79,26 +95,46 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
         {/* Recent Activity */}
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>Your latest interactions</CardDescription>
+            <CardTitle>Favorite Experts</CardTitle>
+            <CardDescription>Experts you've bookmarked</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-6 text-muted-foreground">
-              No recent activity to display
-            </div>
+            {expertFavorites && expertFavorites.length > 0 ? (
+              <div className="space-y-2">
+                {expertFavorites.slice(0, 3).map((id) => (
+                  <div key={id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <span>Expert ID: {id}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                You haven't added any experts to your favorites
+              </div>
+            )}
           </CardContent>
         </Card>
         
         {/* Upcoming Consultations */}
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>Upcoming Consultations</CardTitle>
-            <CardDescription>Your scheduled sessions</CardDescription>
+            <CardTitle>Favorite Programs</CardTitle>
+            <CardDescription>Programs you've bookmarked</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-6 text-muted-foreground">
-              No upcoming consultations scheduled
-            </div>
+            {programFavorites && programFavorites.length > 0 ? (
+              <div className="space-y-2">
+                {programFavorites.slice(0, 3).map((id) => (
+                  <div key={id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <span>Program ID: {id}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                You haven't added any programs to your favorites
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

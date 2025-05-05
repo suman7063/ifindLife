@@ -23,18 +23,23 @@ interface UserDashboardSidebarProps {
   user: UserProfile | null;
   onLogout?: () => void;
   isLoggingOut?: boolean;
+  className?: string; // Added className prop
 }
 
 const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ 
   user,
   onLogout,
-  isLoggingOut = false
+  isLoggingOut = false,
+  className // Add support for className prop
 }) => {
   const location = useLocation();
   const currentPath = location.pathname;
+  
+  // Add debug logging to see if user data is available
+  console.log('UserDashboardSidebar rendering with user:', user?.name);
 
   return (
-    <div className="border-r h-full flex flex-col">
+    <div className={cn("h-full flex flex-col", className)}> {/* Apply className for custom styling */}
       <div className="p-4">
         <Link to="/user-dashboard" className="flex items-center gap-2">
           <Avatar className="h-8 w-8">
