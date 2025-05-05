@@ -81,7 +81,7 @@ const HelpTicketsManager: React.FC = () => {
         .from('help_tickets')
         .select(`
           *,
-          users:user_id (
+          profiles:user_id (
             name,
             email
           )
@@ -97,11 +97,11 @@ const HelpTicketsManager: React.FC = () => {
       
       if (error) throw error;
       
-      // Format the data to include user name and email
+      // Format the data to include user name and email from profiles
       const formattedData = data.map(ticket => ({
         ...ticket,
-        user_name: ticket.users?.name || 'Unknown User',
-        user_email: ticket.users?.email || 'No Email'
+        user_name: ticket.profiles?.name || 'Unknown User',
+        user_email: ticket.profiles?.email || 'No Email'
       }));
       
       setTickets(formattedData);

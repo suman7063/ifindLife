@@ -51,7 +51,7 @@ const Admin = () => {
     } else {
       toast.error("Maximum retry attempts reached");
     }
-  }, [retryCount, refreshData]);
+  }, [retryCount, refreshData, MAX_RETRIES]);
 
   // Reset retry count when data loads successfully
   useEffect(() => {
@@ -119,12 +119,16 @@ const Admin = () => {
     );
   }
 
+  // Get isSuperAdmin from currentUser
+  const isSuperAdmin = currentUser?.role === 'superadmin';
+
   return (
     <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
       {loading ? (
         <AdminContentLoader retryCount={retryCount} />
       ) : (
-        <AdminRoutes 
+        <AdminRoutes
+          isSuperAdmin={isSuperAdmin}
           loading={loading}
           experts={experts}
           setExperts={setExperts}
