@@ -13,8 +13,4 @@ export interface HelpTicket {
   resolved_at: string | null;
   user_name?: string;
   user_email?: string;
-  profiles?: {
-    name: string;
-    email: string;
-  } | null;
 }

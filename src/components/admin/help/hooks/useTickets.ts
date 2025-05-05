@@ -43,24 +43,40 @@ export const useTickets = () => {
       
       if (error) throw error;
       
-      // Format the data to handle potential profile fetch errors
+      // Process data safely to handle potential profile fetch errors
       const formattedData = data.map(ticket => {
-        // Create a properly formatted ticket object
-        const formattedTicket: HelpTicket = {
-          ...ticket,
-          // Handle the case where profiles might be null or have error
-          user_name: ticket.profiles && typeof ticket.profiles === 'object' && 'name' in ticket.profiles 
-            ? ticket.profiles.name 
-            : 'Unknown User',
-          user_email: ticket.profiles && typeof ticket.profiles === 'object' && 'email' in ticket.profiles 
-            ? ticket.profiles.email 
-            : 'No Email'
+        // Create a base ticket with known properties
+        const baseTicket: HelpTicket = {
+          id: ticket.id,
+          ticket_id: ticket.ticket_id,
+          user_id: ticket.user_id,
+          category: ticket.category,
+          details: ticket.details,
+          screenshot_url: ticket.screenshot_url,
+          status: ticket.status,
+          created_at: ticket.created_at,
+          updated_at: ticket.updated_at,
+          admin_notes: ticket.admin_notes,
+          resolved_at: ticket.resolved_at,
         };
+
+        // Safely extract user name and email if profiles data exists and has the expected shape
+        if (ticket.profiles && 
+            typeof ticket.profiles === 'object' && 
+            !('error' in ticket.profiles) && 
+            ticket.profiles !== null) {
+          // Type guard to ensure profiles has the expected properties
+          if ('name' in ticket.profiles && 'email' in ticket.profiles) {
+            baseTicket.user_name = ticket.profiles.name || 'Unknown User';
+            baseTicket.user_email = ticket.profiles.email || 'No Email';
+          }
+        } else {
+          // Fallback for when profiles data is missing or has an error
+          baseTicket.user_name = 'Unknown User';
+          baseTicket.user_email = 'No Email';
+        }
         
-        // Remove the profiles property from the formatted ticket to avoid type conflicts
-        const { profiles, ...ticketWithoutProfiles } = formattedTicket;
-        
-        return ticketWithoutProfiles as HelpTicket;
+        return baseTicket;
       });
       
       setTickets(formattedData);
@@ -126,8 +142,8 @@ export const useTickets = () => {
       ticket.ticket_id.toLowerCase().includes(searchLower) ||
       ticket.category.toLowerCase().includes(searchLower) ||
       ticket.details.toLowerCase().includes(searchLower) ||
-      ticket.user_name?.toLowerCase().includes(searchLower) ||
-      ticket.user_email?.toLowerCase().includes(searchLower)
+      (ticket.user_name?.toLowerCase() || '').includes(searchLower) ||
+      (ticket.user_email?.toLowerCase() || '').includes(searchLower)
     );
   });
 
