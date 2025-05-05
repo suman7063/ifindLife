@@ -37,6 +37,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const auth = useSupabaseAuth();
   const { user, session, loading: authLoading, signup: originalSignup, resetPassword } = auth;
   
+  console.log('AuthProvider - Base auth state:', { 
+    hasUser: !!user, 
+    hasSession: !!session, 
+    authLoading,
+    userId: user?.id
+  });
+  
   // Use profile fetching hooks
   const {
     userProfile,
@@ -49,6 +56,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loading: expertLoading,
     error: expertError
   } = useFetchExpertProfile(user?.id, session);
+  
+  // Debug any profile loading errors
+  useEffect(() => {
+    if (userError) {
+      console.error('User profile loading error:', userError);
+    }
+    if (expertError) {
+      console.error('Expert profile loading error:', expertError);
+    }
+  }, [userError, expertError]);
   
   // Use profile action hooks
   const {
@@ -96,18 +113,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   
   // Debug output for auth state
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Auth state:', { 
-        isAuthenticated, 
-        role,
-        hasUser: !!user,
-        hasSession: !!session,
-        hasUserProfile: !!userProfile,
-        hasExpertProfile: !!expertProfile,
-        sessionType
-      });
-    }
-  }, [isAuthenticated, role, user, session, userProfile, expertProfile, sessionType]);
+    console.log('Auth state updated:', { 
+      isAuthenticated, 
+      role,
+      hasUser: !!user,
+      hasSession: !!session,
+      hasUserProfile: !!userProfile,
+      hasExpertProfile: !!expertProfile,
+      sessionType,
+      userLoading,
+      expertLoading,
+      authLoading,
+      userProfileData: userProfile ? {
+        id: userProfile.id,
+        name: userProfile.name,
+        hasFavoriteExperts: Array.isArray(userProfile.favorite_experts),
+        favoriteExpertsCount: userProfile.favorite_experts?.length || 0,
+        hasFavoritePrograms: Array.isArray(userProfile.favorite_programs),
+        favoriteProgramsCount: userProfile.favorite_programs?.length || 0
+      } : 'No user profile'
+    });
+  }, [isAuthenticated, role, user, session, userProfile, expertProfile, sessionType, userLoading, expertLoading, authLoading]);
 
   // Create the value object for the context
   const value: AuthContextType = {
