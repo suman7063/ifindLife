@@ -1,29 +1,17 @@
 
 import { toast } from 'sonner';
-import { User as SupabaseUser } from '@supabase/supabase-js';
 
-// Helper function to determine currency based on country
-export const getCurrencyByCountry = (country: string): string => {
-  const DEFAULT_CURRENCY_MAP: Record<string, string> = {
-    'India': 'INR',
-    'United States': 'USD',
-    'United Kingdom': 'GBP',
-    'Canada': 'CAD',
-    'Australia': 'AUD',
-    'Germany': 'EUR',
-    'France': 'EUR',
-    'Japan': 'JPY',
-    'China': 'CNY',
-    'Brazil': 'BRL',
-    // Add more as needed
-  };
+export const handleAuthError = (error: any, defaultMessage: string = 'An error occurred') => {
+  console.error('Auth error:', error);
   
-  return DEFAULT_CURRENCY_MAP[country] || 'USD';
-};
-
-// Error handling helper
-export const handleAuthError = (error: any, defaultMessage: string): void => {
-  const errorMessage = error.message || defaultMessage;
-  toast.error(errorMessage);
-  console.error(error);
+  // Check if the error is a Supabase error with a message
+  if (error && error.message) {
+    toast.error(error.message);
+  } else if (error && error.toString) {
+    // Try to convert the error to a string
+    toast.error(error.toString());
+  } else {
+    // Use the default message as fallback
+    toast.error(defaultMessage);
+  }
 };

@@ -4,10 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Container } from '@/components/ui/container';
 import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import LoadingScreen from '@/components/auth/LoadingScreen';
 
 const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -15,14 +15,24 @@ const ExpertLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const auth = useAuth();
-  const { expertProfile, isExpertAuthenticated, isAuthInitialized } = useAuthSynchronization();
 
+  // Debug logs
+  useEffect(() => {
+    console.log('ExpertLogin - Auth states:', {
+      isAuthenticated: auth.isAuthenticated,
+      isLoading: auth.isLoading,
+      role: auth.role,
+      hasExpertProfile: !!auth.expertProfile
+    });
+  }, [auth.isAuthenticated, auth.isLoading, auth.role, auth.expertProfile]);
+  
   // Redirect to expert dashboard if already logged in as expert
   useEffect(() => {
-    if (isAuthInitialized && isExpertAuthenticated) {
+    if (!auth.isLoading && auth.isAuthenticated && auth.role === 'expert') {
+      console.log('Already logged in as expert, redirecting to dashboard');
       navigate('/expert-dashboard');
     }
-  }, [isAuthInitialized, isExpertAuthenticated, navigate]);
+  }, [auth.isAuthenticated, auth.isLoading, auth.role, navigate]);
   
   // Create a wrapper function to handle type conversion
   const handleTabChange = (tab: string) => {
@@ -37,7 +47,7 @@ const ExpertLogin: React.FC = () => {
     try {
       console.log("Attempting expert login with:", email);
       
-      if (!auth.login || typeof auth.login !== 'function') {
+      if (!auth.login) {
         console.error("Login function is not available");
         toast.error("Login functionality is not available");
         setIsLoading(false);
@@ -47,17 +57,16 @@ const ExpertLogin: React.FC = () => {
       const success = await auth.login(email, password);
       
       if (success) {
-        // After successful authentication, check if the user is an expert
-        console.log("Login successful, checking if expert profile exists");
+        console.log("Login successful, checking for expert profile");
         
-        // Wait a bit for the expert profile to load
+        // Wait a moment for the auth state to update
         setTimeout(() => {
-          if (auth.expertProfile) {
-            console.log("Expert profile found, redirecting to expert dashboard");
+          if (auth.role === 'expert') {
+            console.log("Expert role confirmed, redirecting to expert dashboard");
             toast.success('Successfully logged in as expert!');
             navigate('/expert-dashboard');
-          } else if (auth.userProfile) {
-            console.log("No expert profile found, user is not an expert");
+          } else {
+            console.log("Not an expert account, logging out");
             toast.error('This account is not registered as an expert');
             // Sign out since this is not an expert account
             auth.logout();
@@ -77,29 +86,15 @@ const ExpertLogin: React.FC = () => {
       toast.error("An error occurred during login. Please try again.");
       setIsLoading(false);
       return false;
-    }
-  };
-
-  const handleRegister = async (formData: any): Promise<boolean> => {
-    setIsLoading(true);
-    try {
-      // Use standard signup since we don't have separate expert signup
-      const success = await auth.signup(formData.email, formData.password, formData);
-      if (success) {
-        toast.success('Registration successful! Please check your email to verify your account.');
-        return true;
-      } else {
-        toast.error('Failed to register. Please try again.');
-        return false;
-      }
-    } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Failed to register. Please try again.');
-      return false;
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Show loading screen while checking authentication
+  if (auth.isLoading) {
+    return <LoadingScreen message="Checking authentication status..." />;
+  }
 
   return (
     <>
