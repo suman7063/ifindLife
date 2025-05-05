@@ -1,12 +1,16 @@
 
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-// Convert this to a function that returns hooks rather than using hooks directly
-export const useAuthLogout = (setLoading: React.Dispatch<React.SetStateAction<boolean>>) => {
-  // Move the useState inside the returned function
+export const useAuthLogout = () => {
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const navigate = useNavigate();
+
   const logout = async (): Promise<boolean> => {
     try {
-      setLoading(true);
+      setIsLoggingOut(true);
       
       console.log("useAuthLogout: Starting logout process...");
       
@@ -17,18 +21,30 @@ export const useAuthLogout = (setLoading: React.Dispatch<React.SetStateAction<bo
       
       if (error) {
         console.error("useAuthLogout: Error during signOut:", error);
+        toast.error(`Logout failed: ${error.message}`);
         return false;
       }
       
-      console.log("useAuthLogout: Logout completed successfully");
+      // Show success toast and redirect to home page
+      toast.success('Successfully logged out');
+      console.log("useAuthLogout: Logout completed successfully, redirecting to home");
+      
+      // Redirect to home page
+      setTimeout(() => {
+        navigate('/');
+      }, 500);
+      
       return true;
     } catch (error) {
       console.error("useAuthLogout: Unexpected error during logout:", error);
+      toast.error('An error occurred during logout');
       return false;
     } finally {
-      setLoading(false);
+      setIsLoggingOut(false);
     }
   };
 
-  return { logout, logoutLoading: false };
+  return { logout, isLoggingOut };
 };
+
+export default useAuthLogout;

@@ -41,6 +41,7 @@ const UserDashboard: React.FC = () => {
       
       if (success) {
         toast.success('Successfully logged out');
+        navigate('/');
         return true;
       } else {
         toast.error('Error logging out');

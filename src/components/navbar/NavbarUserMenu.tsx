@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { User, LogOut } from "lucide-react";
 import { 
   DropdownMenu,
@@ -28,6 +28,7 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
 }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   
   const getInitials = (name: string) => {
     return name
@@ -47,7 +48,10 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
     try {
       const success = await onLogout();
       
-      if (!success) {
+      if (success) {
+        toast.success('Successfully logged out');
+        navigate('/');
+      } else {
         console.error("Logout failed");
         toast.error('Failed to log out. Please try again.');
       }

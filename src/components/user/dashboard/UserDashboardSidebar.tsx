@@ -19,10 +19,11 @@ import {
   Users 
 } from 'lucide-react';
 import { useHelpNavigation } from '@/components/help/HelpNavigation';
+import { toast } from 'sonner';
 
 interface UserDashboardSidebarProps {
   user: UserProfile | null;
-  onLogout?: () => void;
+  onLogout?: () => Promise<boolean>;
   isLoggingOut?: boolean;
   className?: string;
 }
@@ -40,6 +41,15 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   
   // Add debug logging to see if user data is available
   console.log('UserDashboardSidebar rendering with user:', user?.name);
+  
+  const handleLogout = async () => {
+    if (onLogout) {
+      const success = await onLogout();
+      if (success) {
+        console.log('Sidebar: Logout successful, redirecting to home');
+      }
+    }
+  };
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
@@ -133,7 +143,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
         <Button 
           variant="ghost" 
           className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-          onClick={onLogout}
+          onClick={handleLogout}
           disabled={isLoggingOut}
         >
           <LogOut className="mr-2 h-4 w-4" />

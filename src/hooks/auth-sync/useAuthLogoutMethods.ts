@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { SessionType } from './types';
+import { useNavigate } from 'react-router-dom';
 
 export const useAuthLogoutMethods = (
   sessionType: SessionType, 
@@ -108,11 +109,6 @@ export const useAuthLogoutMethods = (
       setSessionType('none');
       
       toast.success('Successfully logged out of all accounts');
-      
-      // Redirect to home page
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 500);
       
       return true;
     } catch (error) {

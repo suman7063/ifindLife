@@ -63,6 +63,7 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: User logout successful");
+        toast.success('Successfully logged out');
         navigate('/');
         return true;
       } else {
@@ -90,6 +91,7 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: Expert logout completed");
+        toast.success('Successfully logged out as expert');
         navigate('/');
         return true;
       } else {
@@ -116,6 +118,7 @@ const Navbar = () => {
       const success = await fullLogout();
       
       if (success) {
+        toast.success('Successfully logged out of all accounts');
         navigate('/');
       }
       
