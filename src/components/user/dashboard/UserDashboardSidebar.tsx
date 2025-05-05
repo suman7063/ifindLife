@@ -41,12 +41,6 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   // Add debug logging to see if user data is available
   console.log('UserDashboardSidebar rendering with user:', user?.name);
 
-  // Handle referral link click directly from sidebar
-  const handleReferralClick = () => {
-    console.log('Navigating to referral page');
-    navigate('/referral');
-  };
-
   return (
     <div className={cn("h-full flex flex-col", className)}>
       <div className="p-4">
@@ -103,14 +97,13 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             Favorites
           </SidebarLink>
           
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={handleReferralClick}
+          <SidebarLink 
+            to="/user-dashboard/referrals" 
+            active={currentPath === '/user-dashboard/referrals'}
           >
             <Users className="mr-2 h-4 w-4" />
             Referrals
-          </Button>
+          </SidebarLink>
           
           <SidebarLink 
             to="/user-dashboard/settings" 

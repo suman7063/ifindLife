@@ -55,14 +55,6 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  // Redirect to referral page if accessing /user-dashboard/referrals
-  useEffect(() => {
-    if (location.pathname === '/user-dashboard/referrals') {
-      console.log('Redirecting to referral page');
-      navigate('/referral');
-    }
-  }, [location.pathname, navigate]);
-
   // Show loading state while authentication is being checked
   if (isLoading) {
     return <DashboardLoader />;
