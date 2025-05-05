@@ -28,9 +28,9 @@ const ProfessionalInfoStep = ({
 }: ProfessionalInfoStepProps) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      handleFileUpload(e.target.files[0]);
+      await handleFileUpload(e.target.files[0]);
     }
   };
 

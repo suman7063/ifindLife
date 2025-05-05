@@ -72,8 +72,9 @@ const ExpertRegistrationForm = () => {
     }
   };
   
-  const handleFileUpload = (files: File[]) => {
-    const certificates = [...formData.certificates, ...files];
+  // Updated to match the ProfessionalInfoStep expectation (single file)
+  const handleFileUpload = async (file: File): Promise<void> => {
+    const certificates = [...formData.certificates, file];
     setFormData(prev => ({ ...prev, certificates }));
   };
   
@@ -273,7 +274,23 @@ const ExpertRegistrationForm = () => {
             <ServiceSelectionStep 
               formData={formData}
               services={services}
-              handleCheckboxChange={handleCheckboxChange}
+              handleCheckboxChange={(serviceId: number, checked: boolean) => {
+                // Modify the selectedServices array based on the checkbox state
+                const selectedServices = checked 
+                  ? [...formData.selectedServices, serviceId] 
+                  : formData.selectedServices.filter(id => id !== serviceId);
+                
+                setFormData(prev => ({ ...prev, selectedServices }));
+                
+                // Clear error when field is edited
+                if (errors.selectedServices) {
+                  setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.selectedServices;
+                    return newErrors;
+                  });
+                }
+              }}
               setFormData={setFormData}
               errors={errors}
             />
