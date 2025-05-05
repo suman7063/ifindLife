@@ -380,6 +380,48 @@ export type Database = {
         }
         Relationships: []
       }
+      help_tickets: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          details: string
+          id: string
+          resolved_at: string | null
+          screenshot_url: string | null
+          status: string
+          ticket_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          created_at?: string
+          details: string
+          id?: string
+          resolved_at?: string | null
+          screenshot_url?: string | null
+          status?: string
+          ticket_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          details?: string
+          id?: string
+          resolved_at?: string | null
+          screenshot_url?: string | null
+          status?: string
+          ticket_id?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       moderation_actions: {
         Row: {
           action_type: Database["public"]["Enums"]["moderation_action_type"]

@@ -13,7 +13,8 @@ import {
   LifeBuoy, 
   Award, 
   Shield, 
-  Settings 
+  Settings,
+  HelpCircle
 } from 'lucide-react';
 
 interface SidebarMenuItemsProps {
@@ -82,6 +83,12 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       label: 'Referrals',
       icon: Award,
       tooltip: 'Manage Referrals'
+    },
+    {
+      id: 'help',
+      label: 'Help Tickets',
+      icon: HelpCircle,
+      tooltip: 'Manage Help Tickets'
     },
     {
       id: 'blog',

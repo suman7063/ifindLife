@@ -33,6 +33,7 @@ const FAQs = lazy(() => import('./pages/FAQs'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
+const Referral = lazy(() => import('./pages/Referral'));
 
 export const routes: AppRoute[] = [
   // Main navigation routes 
@@ -119,6 +120,10 @@ export const routes: AppRoute[] = [
   {
     path: '/faqs',
     element: <FAQs />
+  },
+  {
+    path: '/referral',
+    element: <Referral />
   },
   
   // Protected routes with role requirements
