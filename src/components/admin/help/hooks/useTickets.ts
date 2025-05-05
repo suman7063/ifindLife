@@ -60,21 +60,27 @@ export const useTickets = () => {
           resolved_at: ticket.resolved_at,
         };
 
-        // Safely extract user name and email if profiles data exists and has the expected shape
+        // Default values in case profiles data is missing or invalid
+        let userName = 'Unknown User';
+        let userEmail = 'No Email';
+
+        // Safely check if profiles exists and has the expected properties
         if (ticket.profiles && 
             typeof ticket.profiles === 'object' && 
-            !('error' in ticket.profiles) && 
-            ticket.profiles !== null) {
-          // Type guard to ensure profiles has the expected properties
-          if ('name' in ticket.profiles && 'email' in ticket.profiles) {
-            baseTicket.user_name = ticket.profiles.name || 'Unknown User';
-            baseTicket.user_email = ticket.profiles.email || 'No Email';
+            !('error' in ticket.profiles)) {
+          // Only try to access name and email if they exist
+          if (typeof ticket.profiles.name === 'string') {
+            userName = ticket.profiles.name || userName;
           }
-        } else {
-          // Fallback for when profiles data is missing or has an error
-          baseTicket.user_name = 'Unknown User';
-          baseTicket.user_email = 'No Email';
+          
+          if (typeof ticket.profiles.email === 'string') {
+            userEmail = ticket.profiles.email || userEmail;
+          }
         }
+        
+        // Assign the extracted values to the ticket
+        baseTicket.user_name = userName;
+        baseTicket.user_email = userEmail;
         
         return baseTicket;
       });
