@@ -58,29 +58,25 @@ export const useTickets = () => {
           updated_at: ticket.updated_at,
           admin_notes: ticket.admin_notes,
           resolved_at: ticket.resolved_at,
+          // Initialize user fields with default values
+          user_name: 'Unknown User',
+          user_email: 'No Email'
         };
 
-        // Default values in case profiles data is missing or invalid
-        let userName = 'Unknown User';
-        let userEmail = 'No Email';
-
-        // Safely check if profiles exists and has the expected properties
-        if (ticket.profiles && 
-            typeof ticket.profiles === 'object' && 
-            !('error' in ticket.profiles)) {
-          // Only try to access name and email if they exist
-          if (typeof ticket.profiles.name === 'string') {
-            userName = ticket.profiles.name || userName;
-          }
-          
-          if (typeof ticket.profiles.email === 'string') {
-            userEmail = ticket.profiles.email || userEmail;
+        // Safely check if profiles exists and is an object (not null)
+        if (ticket.profiles && typeof ticket.profiles === 'object') {
+          // First make sure it's not an error object
+          if (!('error' in ticket.profiles)) {
+            // Now we can safely access properties with optional chaining
+            if (ticket.profiles.name) {
+              baseTicket.user_name = ticket.profiles.name;
+            }
+            
+            if (ticket.profiles.email) {
+              baseTicket.user_email = ticket.profiles.email;
+            }
           }
         }
-        
-        // Assign the extracted values to the ticket
-        baseTicket.user_name = userName;
-        baseTicket.user_email = userEmail;
         
         return baseTicket;
       });
