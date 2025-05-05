@@ -10,7 +10,7 @@ import {
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown } from './menu';
-import { HelpCircle, Users } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { useHelpNavigation } from '../help/HelpNavigation';
 
 interface NavbarDesktopLinksProps {
@@ -33,7 +33,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   isLoggingOut
 }) => {
   // Use the help navigation hook
-  const { handleReferralClick, handleHelpClick, HelpFormDialog } = useHelpNavigation();
+  const { handleHelpClick, HelpFormDialog } = useHelpNavigation();
 
   return (
     <div className="hidden md:flex items-center space-x-1">
@@ -59,12 +59,6 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
           <SupportMenu />
         </NavigationMenuList>
       </NavigationMenu>
-      
-      {/* Referral Link */}
-      <Button variant="ghost" onClick={handleReferralClick} className="gap-1">
-        <Users className="h-4 w-4" />
-        Refer
-      </Button>
       
       {/* Help Link */}
       <Button variant="ghost" onClick={handleHelpClick} className="gap-1">
