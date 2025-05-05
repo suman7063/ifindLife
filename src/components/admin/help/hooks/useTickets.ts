@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -49,26 +50,31 @@ export const useTickets = () => {
           let userName = 'Unknown User';
           let userEmail = 'No Email';
           
-          // Type guard for profiles - do all checks in one condition to ensure type safety
-          if (ticket.profiles && 
-              typeof ticket.profiles === 'object' && 
-              !('error' in ticket.profiles)) {
+          // Create a type-safe reference to profiles with null check using non-null assertion inside the conditional
+          if (ticket.profiles !== null && 
+              ticket.profiles !== undefined) {
             
-            // Now that we've confirmed profiles exists and is an object,
-            // we can safely check for and use its properties
+            // Now create a local variable with a definite non-null type
+            // TypeScript will understand this is safe because of our null check above
+            const profiles = ticket.profiles;
             
-            // Check for name property and ensure it's a string
-            if ('name' in ticket.profiles && 
-                ticket.profiles.name && 
-                typeof ticket.profiles.name === 'string') {
-              userName = ticket.profiles.name;
-            }
-            
-            // Check for email property and ensure it's a string
-            if ('email' in ticket.profiles && 
-                ticket.profiles.email && 
-                typeof ticket.profiles.email === 'string') {
-              userEmail = ticket.profiles.email;
+            // Now we can safely access properties on the non-null profiles object
+            if (typeof profiles === 'object' && 
+                !('error' in profiles)) {
+              
+              // Check for name property and ensure it's a string
+              if ('name' in profiles && 
+                  profiles.name && 
+                  typeof profiles.name === 'string') {
+                userName = profiles.name;
+              }
+              
+              // Check for email property and ensure it's a string
+              if ('email' in profiles && 
+                  profiles.email && 
+                  typeof profiles.email === 'string') {
+                userEmail = profiles.email;
+              }
             }
           }
           
