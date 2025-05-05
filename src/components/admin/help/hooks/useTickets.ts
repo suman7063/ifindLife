@@ -22,12 +22,12 @@ export const useTickets = () => {
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      // Start building the query with direct join to profiles
+      // Build query with proper profiles join
       let query = supabase
         .from('help_tickets')
         .select(`
           *,
-          profiles:user_id (
+          profiles:user_id(
             name,
             email
           )
@@ -44,15 +44,14 @@ export const useTickets = () => {
       if (error) throw error;
       
       if (data) {
-        // Process and map the data to the HelpTicket interface
+        // Map the data to the HelpTicket interface with safe access
         const formattedData = data.map(ticket => {
           // Set default values
           let userName = 'Unknown User';
           let userEmail = 'No Email';
           
-          // Simplified profile data access with proper null checks
-          if (ticket.profiles) {
-            // TypeScript should now properly understand this isn't null
+          // Safe access to profiles data
+          if (ticket.profiles && typeof ticket.profiles === 'object') {
             if (ticket.profiles.name) {
               userName = ticket.profiles.name;
             }
@@ -62,7 +61,7 @@ export const useTickets = () => {
             }
           }
           
-          // Create a new object explicitly matching HelpTicket interface
+          // Create a new object matching HelpTicket interface
           const helpTicket: HelpTicket = {
             id: ticket.id,
             ticket_id: ticket.ticket_id,
