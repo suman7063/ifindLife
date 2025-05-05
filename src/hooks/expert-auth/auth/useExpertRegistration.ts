@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertRegistrationData } from '../types';
 import { toast } from 'sonner';
+import { handleAuthError } from '@/utils/authUtils';
 
 export const useExpertRegistration = (
   setLoading: (loading: boolean) => void
@@ -13,6 +14,8 @@ export const useExpertRegistration = (
     try {
       setLoading(true);
       setRegistrationError(null);
+      
+      console.log('Starting expert registration process for', data.email);
       
       // Check if there's an active session
       const { data: sessionData } = await supabase.auth.getSession();
@@ -45,7 +48,7 @@ export const useExpertRegistration = (
       if (authError) {
         console.error('Registration auth error:', authError);
         setRegistrationError(authError.message);
-        toast.error(authError.message);
+        handleAuthError(authError, 'Registration failed');
         return false;
       }
       
@@ -82,6 +85,7 @@ export const useExpertRegistration = (
         status: 'pending'
       };
       
+      console.log('Creating expert profile for', data.email);
       const { error: profileError } = await supabase
         .from('expert_accounts')
         .insert([expertData]);
@@ -89,21 +93,24 @@ export const useExpertRegistration = (
       if (profileError) {
         console.error('Registration profile error:', profileError);
         setRegistrationError(profileError.message);
-        toast.error(profileError.message);
+        handleAuthError(profileError, 'Failed to create expert profile');
         
         // Clean up - sign out the created auth account
         await supabase.auth.signOut();
         return false;
       }
       
+      console.log('Expert registration successful for', data.email);
+      
       // Sign out and redirect to login page
       await supabase.auth.signOut();
-      window.location.href = '/expert-login?status=registered';
       
+      // Don't redirect here, return success and let the component handle the redirect
+      toast.success('Registration successful! Please log in with your credentials.');
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error('An error occurred during registration.');
+      handleAuthError(error, 'An unexpected error occurred during registration');
       return false;
     } finally {
       setLoading(false);

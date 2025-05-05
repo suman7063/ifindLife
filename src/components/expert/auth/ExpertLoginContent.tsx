@@ -1,5 +1,7 @@
 
 import React from 'react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 import ExpertLoginHeader from './ExpertLoginHeader';
 import ExpertLoginTabs from './ExpertLoginTabs';
 
@@ -9,6 +11,7 @@ interface ExpertLoginContentProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
   isLogging?: boolean;
   loginError?: string | null;
+  statusMessage?: { type: 'success' | 'error'; message: string } | null;
 }
 
 const ExpertLoginContent: React.FC<ExpertLoginContentProps> = ({
@@ -16,11 +19,25 @@ const ExpertLoginContent: React.FC<ExpertLoginContentProps> = ({
   setActiveTab,
   onLogin,
   isLogging = false,
-  loginError = null
+  loginError = null,
+  statusMessage = null
 }) => {
   return (
     <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
       <ExpertLoginHeader />
+      
+      {statusMessage && (
+        <Alert 
+          variant={statusMessage.type === 'success' ? 'default' : 'destructive'} 
+          className={`mb-4 ${statusMessage.type === 'success' ? 'bg-green-50 border-green-200' : ''}`}
+        >
+          {statusMessage.type === 'success' ? 
+            <CheckCircle className="h-4 w-4 mr-2 text-green-500" /> : 
+            <AlertCircle className="h-4 w-4 mr-2" />
+          }
+          <AlertDescription>{statusMessage.message}</AlertDescription>
+        </Alert>
+      )}
       
       <ExpertLoginTabs
         activeTab={activeTab}
