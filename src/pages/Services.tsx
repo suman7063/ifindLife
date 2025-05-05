@@ -25,7 +25,7 @@ const Services = () => {
       case 'guided-meditations':
         return 'object-position: center 30%;'; // Position to show faces better for guided meditations
       case 'mindful-listening':
-        return 'object-position: center 25%;'; // Position to show faces better for mindful listening
+        return 'object-position: center 25%;'; // Position to show faces better for Heart2Heart listening
       default:
         return '';
     }

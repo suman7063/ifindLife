@@ -51,7 +51,7 @@ const ServicesMenu = () => {
                 to="/services/mindful-listening" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
-                Mindful Listening
+                Heart2Heart Listening Sessions
               </Link>
             </NavigationMenuLink>
           </li>
