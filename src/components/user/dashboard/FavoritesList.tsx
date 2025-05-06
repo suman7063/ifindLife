@@ -27,14 +27,21 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
       type === 'experts' ? expertFavorites : programFavorites);
   }, [type, expertFavorites, programFavorites]);
   
+  // Define favorites correctly with proper typing
   const favorites = type === 'experts' ? expertFavorites : programFavorites;
-  const toggleFavorite = type === 'experts' ? toggleExpertFavorite : toggleProgramFavorite;
+  const toggleFavorite = type === 'experts' 
+    ? (id: string) => toggleExpertFavorite(id)
+    : (id: number) => toggleProgramFavorite(id);
   
   const handleToggle = async (id: string | number) => {
     if (onToggle) {
       await onToggle(id);
     } else {
-      await toggleFavorite(id);
+      if (typeof id === 'string') {
+        await toggleExpertFavorite(id);
+      } else {
+        await toggleProgramFavorite(id);
+      }
     }
   };
   
@@ -78,7 +85,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {favorites.map((id) => (
-          <Card key={id} className="overflow-hidden">
+          <Card key={id.toString()} className="overflow-hidden">
             <CardHeader className="pb-3">
               <CardTitle>{type === 'experts' ? `Expert ID: ${id}` : `Program ID: ${id}`}</CardTitle>
             </CardHeader>
