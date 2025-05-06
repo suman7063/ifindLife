@@ -1,60 +1,53 @@
+
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, BookOpen, BrainCircuit, Globe, Briefcase, GraduationCap, Heart, Building, GraduationCap as Education } from 'lucide-react';
+
 const AboutUs = () => {
-  const teamMembers = [{
-    id: 1,
-    name: "Dev OM",
-    title: "Cofounder and Chief Mentor",
-    bio: "With over 20 years of global experience in emotional and mental wellness coaching, Master Dev Om is a globally recognized mindfulness and meditation coach. He was directly trained by father of mindfulness - Thich Nhat Hanh and the Dalai Lama. He created 'Light Mindfulness Meditation,' authored 9 books, and has trained and certified hundreds of meditation & mindfulness coaches worldwide.",
-    image: "/lovable-uploads/7069b4db-6802-4e03-b1f1-bf1f03d2c176.png",
-    highlights: [{
-      icon: <BrainCircuit className="h-4 w-4" />,
-      text: "Creator of 'Light Mindfulness Meditation'"
-    }, {
-      icon: <BookOpen className="h-4 w-4" />,
-      text: "Author of 9 books on mindfulness"
-    }, {
-      icon: <Award className="h-4 w-4" />,
-      text: "Trained by Thich Nhat Hanh and the Dalai Lama"
-    }]
-  }, {
-    id: 2,
-    name: "Dushyant Kohli",
-    title: "Cofounder and CEO",
-    bio: "Dushyant Kohli is a seasoned entrepreneur and Indian OTT veteran with co-founding experience (Khabri & Beatcast) and over a decade of CXO and growth hacking expertise. He has led B2C and B2B businesses across OTT, Edtech, podcasting, and gaming, and is also a certified Meditation teacher & Mindfulness Coach. He is an MBA from Ecole Des Pont Business School and PMP certification.",
-    image: "/lovable-uploads/e973bbdf-7ff5-43b6-9c67-969efbc55fa4.png",
-    highlights: [{
-      icon: <Briefcase className="h-4 w-4" />,
-      text: "Co-founded Khabri & Beatcast"
-    }, {
-      icon: <Globe className="h-4 w-4" />,
-      text: "Led B2C and B2B businesses across multiple industries"
-    }, {
-      icon: <GraduationCap className="h-4 w-4" />,
-      text: "MBA from Ecole Des Pont Business School"
-    }]
-  }, {
-    id: 3,
-    name: "Dr. Bhavna Khurana",
-    title: "Programme Director at iFindLife (UK)",
-    bio: "Dr. Bhavna Khurana, with over 20 years of global experience, is a PhD scholar in Cardiac Wellness and a pioneer in heart disease reversal through lifestyle change and mindfulness. She is the founder of I AM Fit (Singapore) and Soulversity (UK), offering mind-body wellness solutions. A certified Lifestyle Medicine Practitioner, Mindfulness Coach, and Meditation Teacher, Dr. Bhavna specializes in workplace wellness and mental health support through global Employee Assistance Programs (EAPs).",
-    image: "/lovable-uploads/ceb054b5-2e48-48c4-ae23-1b7f94a00301.png",
-    highlights: [{
-      icon: <Heart className="h-4 w-4" />,
-      text: "PhD in Cardiac Wellness & Founder of I AM Fit"
-    }, {
-      icon: <BrainCircuit className="h-4 w-4" />,
-      text: "Mindfulness Coach & Workplace Wellness Specialist"
-    }, {
-      icon: <Education className="h-4 w-4" />,
-      text: "Certified Lifestyle Medicine & Weight Management Coach"
-    }]
-  }];
-  return <div className="min-h-screen flex flex-col">
+  const teamMembers = [
+    {
+      id: 1,
+      name: "Dev OM",
+      title: "Cofounder and Chief Mentor",
+      bio: "With over 20 years of global experience in emotional and mental wellness coaching, Master Dev Om is a globally recognized mindfulness and meditation coach. He was directly trained by father of mindfulness - Thich Nhat Hanh and the Dalai Lama. He created 'Light Mindfulness Meditation,' authored 9 books, and has trained and certified hundreds of meditation & mindfulness coaches worldwide.",
+      image: "/lovable-uploads/7069b4db-6802-4e03-b1f1-bf1f03d2c176.png",
+      highlights: [
+        { icon: <BrainCircuit className="h-4 w-4" />, text: "Creator of 'Light Mindfulness Meditation'" },
+        { icon: <BookOpen className="h-4 w-4" />, text: "Author of 9 books on mindfulness" },
+        { icon: <Award className="h-4 w-4" />, text: "Trained by Thich Nhat Hanh and the Dalai Lama" }
+      ]
+    },
+    {
+      id: 2,
+      name: "Dushyant Kohli",
+      title: "Cofounder and CEO",
+      bio: "Dushyant Kohli is a seasoned entrepreneur and Indian OTT veteran with co-founding experience (Khabri & Beatcast) and over a decade of CXO and growth hacking expertise. He has led B2C and B2B businesses across OTT, Edtech, podcasting, and gaming, and is also a certified Meditation teacher & Mindfulness Coach. He is an MBA from Ecole Des Pont Business School and PMP certification.",
+      image: "/lovable-uploads/e973bbdf-7ff5-43b6-9c67-969efbc55fa4.png",
+      highlights: [
+        { icon: <Briefcase className="h-4 w-4" />, text: "Co-founded Khabri & Beatcast" },
+        { icon: <Globe className="h-4 w-4" />, text: "Led B2C and B2B businesses across multiple industries" },
+        { icon: <GraduationCap className="h-4 w-4" />, text: "MBA from Ecole Des Pont Business School" }
+      ]
+    },
+    {
+      id: 3,
+      name: "Dr. Bhavna Khurana",
+      title: "Programme Director at iFindLife (UK)",
+      bio: "Dr. Bhavna Khurana, with over 20 years of global experience, is a PhD scholar in Cardiac Wellness and a pioneer in heart disease reversal through lifestyle change and mindfulness. She is the founder of I AM Fit (Singapore) and Soulversity (UK), offering mind-body wellness solutions. A certified Lifestyle Medicine Practitioner, Mindfulness Coach, and Meditation Teacher, Dr. Bhavna specializes in workplace wellness and mental health support through global Employee Assistance Programs (EAPs).",
+      image: "/lovable-uploads/ceb054b5-2e48-48c4-ae23-1b7f94a00301.png",
+      highlights: [
+        { icon: <Heart className="h-4 w-4" />, text: "PhD in Cardiac Wellness & Founder of I AM Fit" },
+        { icon: <BrainCircuit className="h-4 w-4" />, text: "Mindfulness Coach & Workplace Wellness Specialist" },
+        { icon: <Education className="h-4 w-4" />, text: "Certified Lifestyle Medicine & Weight Management Coach" }
+      ]
+    }
+  ];
+
+  return (
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       
       <main className="flex-1">
@@ -111,11 +104,12 @@ const AboutUs = () => {
             <h2 className="text-2xl font-bold mb-10 text-center">Our Leadership Team</h2>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-              {teamMembers.map(member => <Card key={member.id} className="border-none shadow-md overflow-hidden">
+              {teamMembers.map((member) => (
+                <Card key={member.id} className="border-none shadow-md overflow-hidden">
                   <div className="grid grid-cols-1 md:grid-cols-3 h-full">
                     <div className="md:col-span-1 bg-ifind-charcoal flex items-center justify-center p-6">
                       <Avatar className="h-36 w-36 border-4 border-white">
-                        
+                        <AvatarImage src={member.image} alt={member.name} className="object-cover" />
                         <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
                       </Avatar>
                     </div>
@@ -129,15 +123,18 @@ const AboutUs = () => {
                       <CardContent>
                         <p className="text-sm text-gray-600 mb-4">{member.bio}</p>
                         <div className="space-y-2 mt-4">
-                          {member.highlights.map((highlight, index) => <div key={index} className="flex items-start">
+                          {member.highlights.map((highlight, index) => (
+                            <div key={index} className="flex items-start">
                               <div className="mr-2 text-ifind-aqua mt-1">{highlight.icon}</div>
                               <p className="text-sm">{highlight.text}</p>
-                            </div>)}
+                            </div>
+                          ))}
                         </div>
                       </CardContent>
                     </div>
                   </div>
-                </Card>)}
+                </Card>
+              ))}
             </div>
           </div>
         </section>
@@ -174,6 +171,8 @@ const AboutUs = () => {
       </main>
       
       <Footer />
-    </div>;
+    </div>
+  );
 };
+
 export default AboutUs;
