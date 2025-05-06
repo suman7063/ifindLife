@@ -6,6 +6,7 @@ import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import AdminProtectedRoute from './components/ProtectedRoute';
 import { routes } from './App.routes'; // Import routes from consolidated file
+import AboutUs from './pages/AboutUs'; // Direct import for AboutUs to avoid lazy loading issues
 
 // Import critical routes directly to prevent loading issues
 import UserLogin from './pages/UserLogin';
@@ -47,6 +48,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
+        <Route path="/about" element={<AboutUs />} />
 
         {/* Admin routes need to handle all sub-routes */}
         <Route path="/admin/*" element={
@@ -80,7 +82,8 @@ const AppRoutes: React.FC = () => {
           !route.path.startsWith('/admin') && 
           !route.path.startsWith('/expert-dashboard') && 
           !route.path.startsWith('/user-dashboard') && 
-          route.path !== '/expert-login'
+          route.path !== '/expert-login' &&
+          route.path !== '/about' // Skip /about since we're directly defining it
         ).map((route) => {
           const { element, path, requiredRole } = route;
           

@@ -1,3 +1,4 @@
+
 import { lazy } from 'react';
 
 // Define route types without extending RouteObject from react-router-dom
@@ -19,7 +20,8 @@ const ProgramsForWellnessSeekers = lazy(() => import('./pages/ProgramsForWellnes
 const ProgramsForAcademicInstitutes = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
 const ProgramsForBusiness = lazy(() => import('./pages/ProgramsForBusiness'));
 const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
-const AboutUs = lazy(() => import('./pages/AboutUs'));
+// Directly import AboutUs instead of using lazy loading to avoid potential issues
+import AboutUs from './pages/AboutUs';
 const CareerGuidance = lazy(() => import('./pages/CareerGuidance'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
