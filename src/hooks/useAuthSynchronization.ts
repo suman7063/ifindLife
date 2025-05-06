@@ -34,7 +34,7 @@ export const useAuthSynchronization = () => {
     setHasDualSessions(auth.userProfile && auth.expertProfile && auth.isAuthenticated);
     
     // Initialize session type from auth context
-    setSessionType(auth.sessionType);
+    setSessionType(auth.sessionType || 'none');
     
     // Mark auth as initialized once loading is complete
     if (!auth.isLoading) {

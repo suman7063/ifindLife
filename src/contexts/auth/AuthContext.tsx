@@ -1,26 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
 import { ExpertProfile } from '@/hooks/expert-auth/types';
-
-// Define types for the auth context
-type UserRole = 'user' | 'expert' | 'admin' | null;
-
-interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  user: User | null;
-  session: Session | null;
-  userProfile: UserProfile | null;
-  expertProfile: ExpertProfile | null;
-  role: UserRole;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: any) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
-}
+import { AuthContextType, UserRole } from './types';
 
 // Create the context
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,6 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
   const [role, setRole] = useState<UserRole>(null);
+  const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
 
   // Set up auth state listener and handle session
   useEffect(() => {
@@ -57,6 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUserProfile(null);
           setExpertProfile(null);
           setRole(null);
+          setSessionType('none');
         }
       }
     );
@@ -96,22 +81,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserProfile(userProfile);
         setExpertProfile(null);
         setRole(userProfile.email === 'admin@ifindlife.com' ? 'admin' : 'user');
+        setSessionType('user');
         setIsLoading(false);
         return;
       }
       
       // Then check if it's an expert
-      const { data: expertProfile, error: expertError } = await supabase
+      const { data: expertProfileData, error: expertError } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
         .maybeSingle();
         
-      if (expertProfile) {
-        console.log("Found expert profile:", expertProfile.id);
+      if (expertProfileData) {
+        console.log("Found expert profile:", expertProfileData.id);
+        // Ensure the status field is cast properly to match the expected type
+        const typedExpertProfile: ExpertProfile = {
+          ...expertProfileData,
+          status: (expertProfileData.status as 'pending' | 'approved' | 'disapproved') || 'pending'
+        };
+        
         setUserProfile(null);
-        setExpertProfile(expertProfile);
+        setExpertProfile(typedExpertProfile);
         setRole('expert');
+        setSessionType('expert');
         setIsLoading(false);
         return;
       }
@@ -120,6 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(null);
       setExpertProfile(null);
       setRole(null);
+      setSessionType('none');
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -154,6 +148,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Expert login - same as regular login but keeping for API compatibility
+  const expertLogin = async (email: string, password: string): Promise<boolean> => {
+    return login(email, password);
+  };
+
   // Signup function
   const signup = async (email: string, password: string, userData: any): Promise<boolean> => {
     try {
@@ -181,6 +180,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Expert signup - for compatibility
+  const expertSignup = async (registrationData: any): Promise<boolean> => {
+    return signup(registrationData.email, registrationData.password, registrationData);
+  };
+
   // Logout function
   const logout = async (): Promise<boolean> => {
     try {
@@ -199,6 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserProfile(null);
       setExpertProfile(null);
       setRole(null);
+      setSessionType('none');
       
       return true;
     } catch (error) {
@@ -208,41 +213,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Update profile function
+  // Update profile function (generic)
   const updateProfile = async (profileData: Partial<UserProfile>): Promise<boolean> => {
     try {
       if (!user) return false;
       
       if (role === 'user' || role === 'admin') {
-        const { error } = await supabase
-          .from('profiles')
-          .update(profileData)
-          .eq('id', user.id);
-          
-        if (error) {
-          console.error("Profile update error:", error);
-          return false;
-        }
-        
-        // Update local state
-        setUserProfile(prev => prev ? { ...prev, ...profileData } : null);
-        return true;
+        return updateUserProfile(profileData);
       }
       
       if (role === 'expert') {
-        const { error } = await supabase
-          .from('expert_accounts')
-          .update(profileData)
-          .eq('auth_id', user.id);
-          
-        if (error) {
-          console.error("Expert profile update error:", error);
-          return false;
-        }
-        
-        // Update local state
-        setExpertProfile(prev => prev ? { ...prev, ...profileData as any } : null);
-        return true;
+        return updateExpertProfile(profileData as any);
       }
       
       return false;
@@ -252,7 +233,149 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const value = {
+  // Update user profile function
+  const updateUserProfile = async (profileData: Partial<UserProfile>): Promise<boolean> => {
+    try {
+      if (!user) return false;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', user.id);
+        
+      if (error) {
+        console.error("Profile update error:", error);
+        return false;
+      }
+      
+      // Update local state
+      setUserProfile(prev => prev ? { ...prev, ...profileData } : null);
+      return true;
+    } catch (error) {
+      console.error("User profile update error:", error);
+      return false;
+    }
+  };
+
+  // Update expert profile function
+  const updateExpertProfile = async (profileData: Partial<ExpertProfile>): Promise<boolean> => {
+    try {
+      if (!user) return false;
+      
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(profileData)
+        .eq('auth_id', user.id);
+        
+      if (error) {
+        console.error("Expert profile update error:", error);
+        return false;
+      }
+      
+      // Update local state - ensure types are preserved
+      setExpertProfile(prev => {
+        if (!prev) return null;
+        const updated = { ...prev, ...profileData };
+        return {
+          ...updated,
+          status: updated.status as 'pending' | 'approved' | 'disapproved'
+        };
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Expert profile update error:", error);
+      return false;
+    }
+  };
+
+  // Update password function
+  const updatePassword = async (password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) {
+        console.error("Password update error:", error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Unexpected password update error:", error);
+      return false;
+    }
+  };
+
+  // Reset password function
+  const resetPassword = async (email: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      
+      if (error) {
+        console.error("Password reset error:", error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Unexpected password reset error:", error);
+      return false;
+    }
+  };
+
+  // Check user role
+  const checkUserRole = async (): Promise<UserRole> => {
+    if (!user) return null;
+    
+    // Check if user is admin
+    const { data: adminData } = await supabase
+      .from('admin_users')
+      .select('role')
+      .eq('id', user.id)
+      .maybeSingle();
+      
+    if (adminData) return 'admin';
+    
+    // Check if user is an expert
+    const { data: expertData } = await supabase
+      .from('expert_accounts')
+      .select('id')
+      .eq('auth_id', user.id)
+      .maybeSingle();
+      
+    if (expertData) return 'expert';
+    
+    // Check if user is a regular user
+    const { data: userData } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle();
+      
+    if (userData) return 'user';
+    
+    return null;
+  };
+
+  // Placeholder methods for expert interactions
+  const addToFavorites = async (expertId: number): Promise<boolean> => false;
+  const removeFromFavorites = async (expertId: number): Promise<boolean> => false;
+  const rechargeWallet = async (amount: number): Promise<boolean> => false;
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => false;
+  const getExpertShareLink = (expertId: string | number): string => '';
+  const getReferralLink = (): string | null => null;
+
+  // Review functions
+  const addReview = async (reviewOrExpertId: any, rating?: number, comment?: string): Promise<boolean> => {
+    return false;
+  };
+
+  // Report functions
+  const reportExpert = async (reportOrExpertId: any, reason?: string, details?: string): Promise<boolean> => {
+    return false;
+  };
+
+  const value: AuthContextType = {
     isAuthenticated: !!user,
     isLoading,
     user,
@@ -261,9 +384,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     expertProfile,
     role,
     login,
+    expertLogin,
     signup,
+    expertSignup,
     logout,
     updateProfile,
+    updateUserProfile,
+    updateExpertProfile,
+    updatePassword,
+    resetPassword,
+    checkUserRole,
+    addToFavorites,
+    removeFromFavorites,
+    rechargeWallet,
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink,
+    currentUser: userProfile,
+    currentExpert: expertProfile,
+    authLoading: isLoading,
+    sessionType,
+    error: null
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

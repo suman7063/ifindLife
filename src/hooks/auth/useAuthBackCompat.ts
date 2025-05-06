@@ -36,14 +36,14 @@ export const useAuthBackCompat = () => {
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout,
-    updateProfile: auth.updateUserProfile,
+    updateProfile: auth.updateProfile,
     addToFavorites: async (expertId: number) => {
       if (!auth.userProfile) return false;
       
       const currentFavorites = auth.userProfile.favorite_experts || [];
       const updatedFavorites = [...currentFavorites, expertId.toString()];
       
-      return auth.updateUserProfile({ favorite_experts: updatedFavorites });
+      return auth.updateProfile({ favorite_experts: updatedFavorites });
     },
     removeFromFavorites: async (expertId: number) => {
       if (!auth.userProfile) return false;
@@ -53,7 +53,7 @@ export const useAuthBackCompat = () => {
         id => id !== expertId.toString()
       );
       
-      return auth.updateUserProfile({ favorite_experts: updatedFavorites });
+      return auth.updateProfile({ favorite_experts: updatedFavorites });
     }
   };
   
@@ -68,7 +68,7 @@ export const useAuthBackCompat = () => {
     logout: auth.logout,
     updateProfile: (data: any) => {
       if (!auth.expertProfile) return Promise.resolve(false);
-      return auth.updateUserProfile(data);
+      return auth.updateExpertProfile(data);
     }
   };
   

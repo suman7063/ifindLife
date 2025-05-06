@@ -36,10 +36,11 @@ export interface AuthContextType extends AuthState {
   logout: () => Promise<boolean>;
   
   // Profile functions
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateExpertProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
-  resetPassword: (email: string) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
+  resetPassword: (email: string) => Promise<boolean>;
   
   // Role checking
   checkUserRole: () => Promise<UserRole>;
@@ -49,25 +50,26 @@ export interface AuthContextType extends AuthState {
   removeFromFavorites?: (expertId: number) => Promise<boolean>;
   rechargeWallet?: (amount: number) => Promise<boolean>;
   
-  // Define addReview to accept either individual parameters or a review object
+  // Review and report functions
   addReview?: {
     (expertId: string, rating: number, comment: string): Promise<boolean>;
     (review: NewReview): Promise<boolean>;
   };
   
-  // Define reportExpert to accept either individual parameters or a report object
   reportExpert?: {
     (expertId: string, reason: string, details: string): Promise<boolean>;
     (report: NewReport): Promise<boolean>;  
   };
                  
   hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
-  getExpertShareLink?: (expertId: string | number) => string; 
+  getExpertShareLink?: (expertId: string | number) => string;
   getReferralLink?: () => string | null;
+  
+  // Session type
+  sessionType: 'none' | 'user' | 'expert' | 'dual';
   
   // Backward compatibility properties
   currentUser: UserProfile | null;
   currentExpert: ExpertProfile | null;
-  sessionType: 'none' | 'user' | 'expert' | 'dual';
-  authLoading: boolean; // Add this for backward compatibility
+  authLoading: boolean;
 }

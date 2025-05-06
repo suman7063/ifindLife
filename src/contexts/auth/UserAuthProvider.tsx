@@ -53,14 +53,14 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateUserProfile,
     updatePassword: auth.updatePassword,
-    addToFavorites: async () => false, // Not implemented in unified auth
-    removeFromFavorites: async () => false, // Not implemented in unified auth
-    rechargeWallet: async () => false, // Not implemented in unified auth
+    addToFavorites: auth.addToFavorites || (async () => false),
+    removeFromFavorites: auth.removeFromFavorites || (async () => false),
+    rechargeWallet: auth.rechargeWallet || (async () => false),
     addReview: adaptedAddReview,
     reportExpert: adaptedReportExpert,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async (expertId: string | number) => false),
-    getExpertShareLink: auth.getExpertShareLink || ((expertId: string | number) => ''),
-    getReferralLink: auth.getReferralLink || (() => ''),
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
     updateProfilePicture: async () => null
   };

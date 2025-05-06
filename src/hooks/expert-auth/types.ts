@@ -14,6 +14,18 @@ export interface ExpertProfile {
   profilePicture?: string;
   created_at?: string;
   updated_at?: string;
+  // Additional fields from database
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string | number;
+  certificate_urls?: string[];
+  selected_services?: number[];
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
 }
 
 // Expert registration data type
@@ -32,6 +44,11 @@ export interface ExpertRegistrationData {
   country?: string;
   profilePicture?: string;
   certificates?: File[];
+  // Additional fields needed for registration
+  specialization?: string;
+  experience?: string | number;
+  certificate_urls?: string[];
+  selected_services?: number[];
 }
 
 // Time slot type for availability
@@ -42,6 +59,7 @@ export interface ExpertTimeSlot {
   start_time: string;
   end_time: string;
   is_available: boolean;
+  day?: string; // Added this field to fix error
 }
 
 // Profile update data
@@ -97,4 +115,12 @@ export interface ExpertFormData {
   status?: 'pending' | 'approved' | 'disapproved';
   reportedUsers?: any[];
   profilePicture?: string;
+  password?: string;
+  confirmPassword?: string;
+  specialization?: string;
+  experience?: string;
+  certificates?: File[];
+  certificateUrls?: string[];
+  selectedServices?: number[];
+  acceptedTerms?: boolean;
 }
