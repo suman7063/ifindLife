@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -37,8 +38,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (!isAuthenticated) {
     console.log("ProtectedRoute - Not authenticated, redirecting to:", redirectPath);
     
-    // If this is an expert route, redirect to expert login
-    if (allowedRoles.length === 1 && allowedRoles[0] === 'expert') {
+    // If this is a route specifically for experts, redirect to expert login
+    const isExpertOnlyRoute = allowedRoles.length === 1 && allowedRoles[0] === 'expert';
+    if (isExpertOnlyRoute) {
       return <Navigate to="/expert-login" state={{ from: location }} replace />;
     }
     
