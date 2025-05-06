@@ -17,13 +17,18 @@ const ExpertLogin: React.FC = () => {
   );
   const [isLogging, setIsLogging] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { isLoading, isAuthenticated, expertProfile, login } = useAuth();
+  const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   
   // Debug logging
   useEffect(() => {
-    console.log("ExpertLogin component rendering", { isLoading, isAuthenticated, hasExpertProfile: !!expertProfile });
-  }, [isLoading, isAuthenticated, expertProfile]);
+    console.log("ExpertLogin component rendering", { 
+      isLoading, 
+      isAuthenticated, 
+      hasExpertProfile: !!expertProfile,
+      role 
+    });
+  }, [isLoading, isAuthenticated, expertProfile, role]);
   
   // Check URL parameters for status messages
   useEffect(() => {
@@ -50,11 +55,17 @@ const ExpertLogin: React.FC = () => {
   
   // Redirect if already authenticated as expert
   useEffect(() => {
-    if (!isLoading && isAuthenticated && expertProfile) {
-      console.log('ExpertLogin: User is authenticated as expert, redirecting to dashboard');
-      navigate('/expert-dashboard');
+    if (!isLoading && isAuthenticated) {
+      if (role === 'expert' && expertProfile) {
+        console.log('ExpertLogin: User is authenticated as expert, redirecting to dashboard');
+        navigate('/expert-dashboard');
+      } else if (role === 'user') {
+        console.log('ExpertLogin: User is authenticated as regular user, not as expert');
+        toast.error('You are logged in as a user. Please log out first to access expert portal.');
+        navigate('/user-dashboard');
+      }
     }
-  }, [isLoading, isAuthenticated, expertProfile, navigate]);
+  }, [isLoading, isAuthenticated, expertProfile, role, navigate]);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLogging(true);
@@ -67,10 +78,15 @@ const ExpertLogin: React.FC = () => {
       
       if (success) {
         // Check if user has an expert profile after login
-        if (expertProfile) {
-          toast.success('Successfully logged in!');
+        if (role === 'expert' && expertProfile) {
+          toast.success('Successfully logged in as expert!');
           navigate('/expert-dashboard');
           return true;
+        } else if (role === 'user') {
+          console.error('ExpertLogin: User has a user profile, not an expert profile');
+          toast.error('You have a user account, not an expert account.');
+          setLoginError('You have a user account, not an expert account.');
+          return false;
         } else {
           console.error('ExpertLogin: No expert profile found');
           toast.error('No expert profile found for this account.');

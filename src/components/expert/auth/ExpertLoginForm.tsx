@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
@@ -32,6 +32,7 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
   setActiveTab
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
   
   // Initialize form with react-hook-form and zod validation
   const form = useForm<LoginFormValues>({
@@ -45,7 +46,10 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
   const handleSubmit = async (values: LoginFormValues) => {
     if (isLoggingIn) return;
     
-    await onLogin(values.email, values.password);
+    const success = await onLogin(values.email, values.password);
+    if (success) {
+      navigate('/expert-dashboard');
+    }
   };
   
   return (

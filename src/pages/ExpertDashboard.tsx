@@ -17,7 +17,7 @@ const ExpertDashboard = () => {
   const navigate = useNavigate();
   const { isLoading, expertProfile, isAuthenticated, role } = useAuth();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  const [users, setUsers] = useState<any[]>([]); // For user reports
+  const [users, setUsers] = useState<any[]>([]);
   
   // Debug logging
   useEffect(() => {
