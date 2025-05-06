@@ -17,7 +17,7 @@ const ExpertLogin: React.FC = () => {
   );
   const [isLogging, setIsLogging] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { isLoading, isAuthenticated, expertProfile, role } = useAuth();
+  const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
@@ -80,8 +80,7 @@ const ExpertLogin: React.FC = () => {
     try {
       console.log('ExpertLogin: Attempting login with', email);
       
-      // Use the standard auth login
-      const { login } = useAuth();
+      // Use the login function from context
       const success = await login(email, password);
       
       if (success) {
