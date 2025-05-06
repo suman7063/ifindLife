@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from '@/hooks/expert-auth/types';
+import { ExpertProfile } from '@/types/supabase/expert';
 import { AuthContextType, UserRole } from './types';
 
 // Create the context
@@ -223,6 +224,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       if (role === 'expert') {
+        // Cast is needed because these types have some differences
         return updateExpertProfile(profileData as any);
       }
       
@@ -262,6 +264,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) return false;
       
+      // Ensure experience is always a string
+      if (profileData.experience !== undefined && typeof profileData.experience !== 'string') {
+        profileData.experience = String(profileData.experience);
+      }
+      
       const { error } = await supabase
         .from('expert_accounts')
         .update(profileData)
@@ -275,10 +282,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Update local state - ensure types are preserved
       setExpertProfile(prev => {
         if (!prev) return null;
-        const updated = { ...prev, ...profileData };
+        const updated = { 
+          ...prev, 
+          ...profileData
+        };
+        
+        // Ensure status maintains its correct type
+        const status = updated.status as 'pending' | 'approved' | 'disapproved' | undefined;
+        
         return {
           ...updated,
-          status: updated.status as 'pending' | 'approved' | 'disapproved'
+          status: status || 'pending'
         };
       });
       

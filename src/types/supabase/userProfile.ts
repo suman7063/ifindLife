@@ -22,6 +22,7 @@ export interface UserProfile {
   reviews?: any[];
   reports?: any[];
   favorite_experts?: string[];
+  favorite_programs?: number[]; // Add this property
   enrolled_courses?: any[];
   referrals?: any[];
   

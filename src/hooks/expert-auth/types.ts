@@ -1,4 +1,3 @@
-
 // Basic expert profile type
 export interface ExpertProfile {
   id: string;
@@ -20,8 +19,8 @@ export interface ExpertProfile {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string | number;
-  certificate_urls?: string[];
+  experience?: string; // Changed to string to match supabase type
+  certificate_urls?: string[]; // Add this to match supabase
   selected_services?: number[];
   average_rating?: number;
   reviews_count?: number;
@@ -45,10 +44,10 @@ export interface ExpertRegistrationData {
   profilePicture?: string;
   certificates?: File[];
   // Additional fields needed for registration
-  specialization?: string;
-  experience?: string | number;
-  certificate_urls?: string[];
-  selected_services?: number[];
+  specialization?: string; // Add this
+  experience?: string; // Add this as string
+  certificate_urls?: string[]; // Add this
+  selected_services?: number[]; // Add this
 }
 
 // Time slot type for availability
@@ -59,7 +58,7 @@ export interface ExpertTimeSlot {
   start_time: string;
   end_time: string;
   is_available: boolean;
-  day?: string; // Added this field to fix error
+  day?: string; // Keep this property
 }
 
 // Profile update data

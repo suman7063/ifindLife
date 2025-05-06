@@ -11,5 +11,5 @@ export interface UserProfile {
   wallet_balance?: number;
   profile_picture?: string;
   favorite_experts?: string[];
-  favorite_programs?: number[]; // Added to fix the error
+  favorite_programs?: number[]; // Make sure this is included
 }

@@ -12,7 +12,7 @@ export interface ExpertProfile {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string;
+  experience?: string; // Keep as string consistently
   bio?: string;
   certificate_urls?: string[];
   profile_picture?: string;
@@ -20,7 +20,7 @@ export interface ExpertProfile {
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
-  status?: string; // Changed from strict enum to string to be more flexible
+  status?: 'pending' | 'approved' | 'disapproved'; // Use union type instead of string
   created_at?: string;
   updated_at?: string;
 }
@@ -52,4 +52,5 @@ export interface ExpertAvailability {
   start_time: string;
   end_time: string;
   is_available: boolean;
+  day?: string; // Adding day property to fix error
 }
