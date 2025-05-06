@@ -12,52 +12,36 @@ import UserReports from '@/components/expert/UserReports';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
-// Import the hook but make it optional - we'll only use it if needed
-let useDashboardState: any;
-try {
-  useDashboardState = require('@/components/expert/hooks/useDashboardState').default;
-} catch (e) {
-  console.warn('useDashboardState not available, using fallback');
-  useDashboardState = () => ({ expert: null, loading: false, users: [] });
-}
-
 const ExpertDashboard = () => {
-  const { expert, loading: expertStateLoading, users } = useDashboardState();
   const navigate = useNavigate();
   const { isLoading, expertProfile, isAuthenticated } = useAuth();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
-  
-  const loading = expertStateLoading || isLoading;
+  const [users, setUsers] = useState<any[]>([]); // For user reports
   
   // Debug logging
   useEffect(() => {
     console.log('ExpertDashboard - Auth states:', {
-      expertStateLoading,
       authLoading: isLoading,
-      hasExpertStateProfile: !!expert,
       hasExpertAuthProfile: !!expertProfile,
       isAuthenticated,
       redirectAttempted
     });
-  }, [expert, expertProfile, expertStateLoading, isLoading, isAuthenticated, redirectAttempted]);
+  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted]);
   
   // If not authenticated at all, redirect to login
   useEffect(() => {
-    if (!loading && !expertProfile && !isAuthenticated && !redirectAttempted) {
+    if (!isLoading && !expertProfile && !isAuthenticated && !redirectAttempted) {
       console.log('Not authenticated, redirecting to expert login');
       setRedirectAttempted(true);
       navigate('/expert-login');
     }
-  }, [expertProfile, loading, isAuthenticated, redirectAttempted, navigate]);
+  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted, navigate]);
   
-  if (loading) {
+  if (isLoading) {
     return <DashboardLoader />;
   }
 
-  // Use the unified auth context's expertProfile as the source of truth
-  const currentExpert = expertProfile || expert;
-
-  if (!currentExpert) {
+  if (!expertProfile) {
     return <UnauthorizedView />;
   }
 

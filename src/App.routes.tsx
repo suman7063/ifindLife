@@ -42,7 +42,7 @@ export const routes: AppRoute[] = [
     path: '/login',
     element: <Login />
   },
-  // ExpertLogin is removed from here as it's directly imported in AppRoutes.tsx
+  // ExpertLogin is directly imported in AppRoutes.tsx
   {
     path: '/forgot-password',
     element: <ForgotPassword />
