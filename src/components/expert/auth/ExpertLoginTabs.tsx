@@ -20,13 +20,23 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
   loginError
 }) => {
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="grid w-full grid-cols-2 mb-6">
-        <TabsTrigger value="login">Login</TabsTrigger>
-        <TabsTrigger value="register">Register</TabsTrigger>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
+        <TabsTrigger 
+          value="login" 
+          className="py-3 text-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+        >
+          Login
+        </TabsTrigger>
+        <TabsTrigger 
+          value="register" 
+          className="py-3 text-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+        >
+          Register
+        </TabsTrigger>
       </TabsList>
       
-      <TabsContent value="login">
+      <TabsContent value="login" className="mt-6">
         <ExpertLoginForm 
           onLogin={onLogin} 
           isLoggingIn={isLoggingIn} 
@@ -35,7 +45,7 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
         />
       </TabsContent>
       
-      <TabsContent value="register">
+      <TabsContent value="register" className="mt-6">
         <ExpertRegisterForm setActiveTab={setActiveTab} />
       </TabsContent>
     </Tabs>
