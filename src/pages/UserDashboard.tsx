@@ -19,6 +19,7 @@ const UserDashboard: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   // Add debug logging
   console.log('UserDashboard page rendering with auth state:', { 
@@ -26,11 +27,25 @@ const UserDashboard: React.FC = () => {
     hasUserProfile: !!userProfile,
     isLoading,
     role,
-    pathname: location.pathname
+    pathname: location.pathname,
+    redirectAttempted
   });
   
   // Initialize the authentication journey preservation hook
   useAuthJourneyPreservation();
+  
+  // Redirect if authenticated as expert
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && !redirectAttempted) {
+      setRedirectAttempted(true);
+      
+      if (role === 'expert') {
+        console.log('UserDashboard: User is authenticated as expert, redirecting to expert dashboard');
+        toast.info('Redirecting to expert dashboard');
+        navigate('/expert-dashboard');
+      }
+    }
+  }, [isLoading, isAuthenticated, role, navigate, redirectAttempted]);
   
   // Handle logout process
   const handleLogout = async (): Promise<boolean> => {

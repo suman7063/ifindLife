@@ -19,6 +19,7 @@ const ExpertLogin: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   
   // Debug logging
   useEffect(() => {
@@ -55,7 +56,9 @@ const ExpertLogin: React.FC = () => {
   
   // Redirect if already authenticated as expert
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && !redirectAttempted) {
+      setRedirectAttempted(true);
+      
       if (role === 'expert' && expertProfile) {
         console.log('ExpertLogin: User is authenticated as expert, redirecting to dashboard');
         navigate('/expert-dashboard');
@@ -65,7 +68,7 @@ const ExpertLogin: React.FC = () => {
         navigate('/user-dashboard');
       }
     }
-  }, [isLoading, isAuthenticated, expertProfile, role, navigate]);
+  }, [isLoading, isAuthenticated, expertProfile, role, navigate, redirectAttempted]);
   
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLogging(true);

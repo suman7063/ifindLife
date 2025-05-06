@@ -14,12 +14,13 @@ const Login: React.FC = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      if (role === 'user') {
-        navigate('/user-dashboard');
-      } else if (role === 'expert') {
-        navigate('/expert-dashboard');
+      if (role === 'expert') {
+        // Ensure experts go to expert dashboard
+        navigate('/expert-dashboard', { replace: true });
+      } else if (role === 'user') {
+        navigate('/user-dashboard', { replace: true });
       } else if (role === 'admin') {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       }
     }
   }, [isAuthenticated, isLoading, role, navigate]);
