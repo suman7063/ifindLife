@@ -23,7 +23,7 @@ const ExpertLoginContent: React.FC<ExpertLoginContentProps> = ({
   statusMessage = null
 }) => {
   return (
-    <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-xl p-8 border border-gray-100 max-w-md mx-auto">
+    <div className="bg-background/80 backdrop-blur-md rounded-xl shadow-xl p-8 border border-astro-purple/10">
       <ExpertLoginHeader />
       
       {statusMessage && (

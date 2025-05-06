@@ -16,30 +16,34 @@ import { toast } from 'sonner';
 const ExpertDashboard = () => {
   const navigate = useNavigate();
   const { isLoading, expertProfile, isAuthenticated, role } = useAuth();
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   
   // Debug logging
   useEffect(() => {
     console.log('ExpertDashboard - Auth states:', {
       authLoading: isLoading,
-      hasExpertProfile: !!expertProfile,
+      hasExpertAuthProfile: !!expertProfile,
       isAuthenticated,
-      role
+      role,
+      redirectAttempted
     });
-  }, [expertProfile, isLoading, isAuthenticated, role]);
+  }, [expertProfile, isLoading, isAuthenticated, role, redirectAttempted]);
   
   // If not authenticated at all, redirect to login
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !isAuthenticated && !redirectAttempted) {
       console.log('Not authenticated, redirecting to expert login');
+      setRedirectAttempted(true);
       toast.error('Please log in to access the expert dashboard');
       navigate('/expert-login');
       return;
     }
     
     // If authenticated but not as expert, redirect to appropriate dashboard
-    if (!isLoading && isAuthenticated && role !== 'expert') {
+    if (!isLoading && isAuthenticated && role !== 'expert' && !redirectAttempted) {
       console.log('Authenticated but not as expert, redirecting');
+      setRedirectAttempted(true);
       toast.error('You do not have expert privileges');
       if (role === 'user') {
         navigate('/user-dashboard');
@@ -47,7 +51,7 @@ const ExpertDashboard = () => {
         navigate('/');
       }
     }
-  }, [isLoading, isAuthenticated, role, navigate]);
+  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted, navigate, role]);
   
   if (isLoading) {
     return <DashboardLoader />;

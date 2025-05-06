@@ -1,12 +1,9 @@
-
 import React from 'react';
-
+import { Link } from 'react-router-dom';
 const ExpertLoginHeader: React.FC = () => {
-  return (
-    <div className="text-center mb-8">
-      <h1 className="text-4xl font-bold text-ifind-aqua mb-4">For Mental Health Professionals</h1>
-    </div>
-  );
+  return <Link to="/" className="flex items-center justify-center space-x-2 mb-8">
+      
+      <span className="font-bold text-gradient text-xl text-center">For Mental Health Professionals</span>
+    </Link>;
 };
-
 export default ExpertLoginHeader;

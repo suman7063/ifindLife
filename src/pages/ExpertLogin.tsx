@@ -5,13 +5,11 @@ import { toast } from 'sonner';
 import { Container } from '@/components/ui/container';
 import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { supabase } from '@/lib/supabase';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 
 const ExpertLogin: React.FC = () => {
-  console.log("Rendering ExpertLogin page");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
@@ -19,10 +17,20 @@ const ExpertLogin: React.FC = () => {
   );
   const [isLogging, setIsLogging] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { isLoading, isAuthenticated, expertProfile, userProfile, role } = useAuth();
+  const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   
-  // Set status messages based on URL parameters
+  // Debug logging
+  useEffect(() => {
+    console.log("ExpertLogin component rendering", { 
+      isLoading, 
+      isAuthenticated, 
+      hasExpertProfile: !!expertProfile,
+      role 
+    });
+  }, [isLoading, isAuthenticated, expertProfile, role]);
+  
+  // Check URL parameters for status messages
   useEffect(() => {
     const status = searchParams.get('status');
     
@@ -45,121 +53,56 @@ const ExpertLogin: React.FC = () => {
     }
   }, [searchParams]);
   
-  // Redirect if already authenticated
+  // Redirect if already authenticated as expert
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      // If authenticated as expert, redirect to expert dashboard
-      if (role === 'expert') {
+      if (role === 'expert' && expertProfile) {
         console.log('ExpertLogin: User is authenticated as expert, redirecting to dashboard');
         navigate('/expert-dashboard');
-      } 
-      // If authenticated as user, don't auto-redirect - show a message instead
-      else if (role === 'user') {
+      } else if (role === 'user') {
         console.log('ExpertLogin: User is authenticated as regular user, not as expert');
         toast.error('You are logged in as a user. Please log out first to access expert portal.');
+        navigate('/user-dashboard');
       }
     }
-  }, [isLoading, isAuthenticated, expertProfile, userProfile, role, navigate]);
-
+  }, [isLoading, isAuthenticated, expertProfile, role, navigate]);
+  
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLogging(true);
     setLoginError(null);
     try {
       console.log('ExpertLogin: Attempting login with', email);
       
-      // Sign out any existing session first
-      await supabase.auth.signOut();
+      // Use the standard auth login
+      const success = await login(email, password);
       
-      // Authenticate with Supabase
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        console.error('ExpertLogin: Auth error', error);
-        toast.error(error.message);
-        setLoginError(`Authentication failed: ${error.message}`);
+      if (success) {
+        // Check if user has an expert profile after login
+        if (role === 'expert' && expertProfile) {
+          toast.success('Successfully logged in as expert!');
+          navigate('/expert-dashboard');
+          return true;
+        } else if (role === 'user') {
+          console.error('ExpertLogin: User has a user profile, not an expert profile');
+          toast.error('You have a user account, not an expert account.');
+          setLoginError('You have a user account, not an expert account.');
+          return false;
+        } else {
+          console.error('ExpertLogin: No expert profile found');
+          toast.error('No expert profile found for this account.');
+          setLoginError('No expert profile found for this account.');
+          return false;
+        }
+      } else {
+        console.error('ExpertLogin: Login failed');
+        toast.error('Invalid credentials. Please try again.');
+        setLoginError('Invalid credentials. Please try again.');
         return false;
       }
-      
-      if (!data.user || !data.session) {
-        console.error('ExpertLogin: No user or session returned');
-        toast.error('Login failed: No user session created');
-        setLoginError('Login failed: No user session created');
-        return false;
-      }
-      
-      // Check if user has an expert profile
-      const { data: expertData, error: expertError } = await supabase
-        .from('expert_accounts')
-        .select('id, status')
-        .eq('auth_id', data.user.id)
-        .single();
-      
-      console.log('Expert profile check result:', expertData, expertError);
-      
-      if (expertError && expertError.code !== 'PGRST116') {
-        console.error('Error checking expert profile:', expertError);
-        toast.error('Error verifying expert status');
-        
-        // Sign out since there was an error
-        await supabase.auth.signOut();
-        setLoginError('Error verifying expert status');
-        return false;
-      }
-      
-      if (!expertData) {
-        console.error('ExpertLogin: No expert profile found');
-        toast.error('No expert profile found for this account');
-        
-        // Sign out since this is not a valid expert
-        await supabase.auth.signOut();
-        setLoginError('No expert profile found for this account');
-        return false;
-      }
-      
-      // Check expert approval status
-      if (expertData.status === 'pending') {
-        console.error('ExpertLogin: Account is pending approval');
-        toast.error('Your account is pending approval');
-        
-        // Sign out since this expert is not approved yet
-        await supabase.auth.signOut();
-        navigate('/expert-login?status=pending');
-        return false;
-      }
-      
-      if (expertData.status === 'disapproved') {
-        console.error('ExpertLogin: Account is disapproved');
-        toast.error('Your account has been disapproved');
-        
-        // Sign out since this expert is disapproved
-        await supabase.auth.signOut();
-        navigate('/expert-login?status=disapproved');
-        return false;
-      }
-      
-      if (expertData.status !== 'approved') {
-        console.error('ExpertLogin: Unknown account status:', expertData.status);
-        toast.error('Your account has an unknown status. Please contact support.');
-        
-        // Sign out since this expert has an unknown status
-        await supabase.auth.signOut();
-        setLoginError('Your account has an unknown status. Please contact support.');
-        return false;
-      }
-      
-      // Login successful - the AuthContext should handle setting user state through listeners
-      console.log('ExpertLogin: Login successful');
-      toast.success('Login successful!');
-      navigate('/expert-dashboard');
-      return true;
-      
-    } catch (error: any) {
-      console.error('ExpertLogin unexpected error:', error);
-      toast.error('An unexpected error occurred');
-      setLoginError('An unexpected error occurred');
+    } catch (error) {
+      console.error('ExpertLogin error:', error);
+      toast.error('Failed to login. Please try again.');
+      setLoginError('Failed to login. Please try again.');
       return false;
     } finally {
       setIsLogging(false);

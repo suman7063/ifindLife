@@ -11,7 +11,6 @@ import { routes } from './App.routes'; // Import routes from consolidated file
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
 import ExpertLogin from './pages/ExpertLogin'; // Import directly instead of lazy loading
-import ExpertDashboard from './pages/ExpertDashboard'; // Import directly to ensure it's available
 
 // Only log in development environment
 if (import.meta.env.DEV) {
@@ -45,16 +44,6 @@ const AppRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
-        
-        {/* Expert Dashboard route with protection */}
-        <Route 
-          path="/expert-dashboard/*" 
-          element={
-            <ProtectedRoute allowedRoles={['expert']} redirectPath="/expert-login">
-              <ExpertDashboard />
-            </ProtectedRoute>
-          } 
-        />
 
         {/* Admin routes need to handle all sub-routes */}
         <Route path="/admin/*" element={
@@ -63,12 +52,8 @@ const AppRoutes: React.FC = () => {
           </AdminProtectedRoute>
         } />
 
-        {/* Map all routes from the consolidated routes array except admin, expert login and expert dashboard */}
-        {routes.filter(route => 
-          !route.path.startsWith('/admin') && 
-          route.path !== '/expert-login' &&
-          route.path !== '/expert-dashboard'
-        ).map((route) => {
+        {/* Map all routes from the consolidated routes array except admin and expert routes */}
+        {routes.filter(route => !route.path.startsWith('/admin') && route.path !== '/expert-login').map((route) => {
           const { element, path, requiredRole } = route;
           
           // Handle protected routes

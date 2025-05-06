@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExpertLoginForm from './ExpertLoginForm';
-import ExpertRegisterForm from './ExpertRegisterForm';
+import ExpertRegistrationForm from '@/components/expert/ExpertRegistrationForm';
 
 interface ExpertLoginTabsProps {
   activeTab: string;
@@ -19,34 +19,33 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
   isLoggingIn,
   loginError
 }) => {
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+  
   return (
-    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid w-full grid-cols-2 bg-gray-100 p-1 rounded-lg">
-        <TabsTrigger 
-          value="login" 
-          className="py-3 text-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
-        >
-          Login
-        </TabsTrigger>
-        <TabsTrigger 
-          value="register" 
-          className="py-3 text-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
-        >
-          Register
-        </TabsTrigger>
+    <Tabs 
+      value={activeTab} 
+      onValueChange={handleTabChange}
+      className="w-full"
+    >
+      <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsTrigger value="login">Login</TabsTrigger>
+        <TabsTrigger value="register">Join as Expert</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="login" className="mt-6">
+      <TabsContent value="login">
         <ExpertLoginForm 
-          onLogin={onLogin} 
-          isLoggingIn={isLoggingIn} 
-          loginError={loginError} 
-          setActiveTab={setActiveTab} 
+          onLogin={onLogin}
+          isLoggingIn={isLoggingIn}
+          loginError={loginError}
+          setActiveTab={setActiveTab}
         />
       </TabsContent>
       
-      <TabsContent value="register" className="mt-6">
-        <ExpertRegisterForm setActiveTab={setActiveTab} />
+      <TabsContent value="register" className="max-h-[70vh] overflow-y-auto pb-8">
+        <ExpertRegistrationForm />
       </TabsContent>
     </Tabs>
   );
