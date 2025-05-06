@@ -1,5 +1,4 @@
 
-// Update only the parts where favorite_programs is used
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -16,6 +15,12 @@ interface FavoritesContextType {
   removeProgramFromFavorites: (programId: number) => Promise<void>;
   isExpertFavorite: (expertId: string) => boolean;
   isProgramFavorite: (programId: number) => boolean;
+  
+  // Add the missing properties and methods
+  expertFavorites: string[];
+  programFavorites: number[];
+  toggleExpertFavorite: (expertId: string) => Promise<boolean>;
+  toggleProgramFavorite: (programId: number) => Promise<boolean>;
 }
 
 // Create favorites context
@@ -23,7 +28,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 
 // Favorites provider component
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userProfile, isAuthenticated, updateUserProfile } = useAuth();
+  const { userProfile, isAuthenticated, updateProfile } = useAuth();
   const [favoriteExperts, setFavoriteExperts] = useState<string[]>([]);
   const [favoritePrograms, setFavoritePrograms] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,7 +56,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLoading(true);
       const updatedFavorites = [...favoriteExperts, expertId];
       
-      const success = await updateUserProfile({
+      const success = await updateProfile({
         favorite_experts: updatedFavorites
       });
       
@@ -80,7 +85,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLoading(true);
       const updatedFavorites = favoriteExperts.filter(id => id !== expertId);
       
-      const success = await updateUserProfile({
+      const success = await updateProfile({
         favorite_experts: updatedFavorites
       });
       
@@ -109,7 +114,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLoading(true);
       const updatedFavorites = [...favoritePrograms, programId];
       
-      const success = await updateUserProfile({
+      const success = await updateProfile({
         favorite_programs: updatedFavorites
       });
       
@@ -138,7 +143,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsLoading(true);
       const updatedFavorites = favoritePrograms.filter(id => id !== programId);
       
-      const success = await updateUserProfile({
+      const success = await updateProfile({
         favorite_programs: updatedFavorites
       });
       
@@ -156,6 +161,54 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  // Toggle expert favorite status
+  const toggleExpertFavorite = async (expertId: string): Promise<boolean> => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to manage favorites');
+      return false;
+    }
+    
+    try {
+      const isFavorite = favoriteExperts.includes(expertId);
+      
+      if (isFavorite) {
+        await removeExpertFromFavorites(expertId);
+      } else {
+        await addExpertToFavorites(expertId);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error toggling expert favorite:', error);
+      toast.error('Failed to update favorites');
+      return false;
+    }
+  };
+  
+  // Toggle program favorite status
+  const toggleProgramFavorite = async (programId: number): Promise<boolean> => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to manage favorites');
+      return false;
+    }
+    
+    try {
+      const isFavorite = favoritePrograms.includes(programId);
+      
+      if (isFavorite) {
+        await removeProgramFromFavorites(programId);
+      } else {
+        await addProgramToFavorites(programId);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error toggling program favorite:', error);
+      toast.error('Failed to update favorites');
+      return false;
+    }
+  };
+
   // Check if expert is in favorites
   const isExpertFavorite = (expertId: string) => {
     return favoriteExperts.includes(expertId);
@@ -170,11 +223,15 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const value: FavoritesContextType = {
     favoriteExperts,
     favoritePrograms,
+    expertFavorites: favoriteExperts, // Add alias for backward compatibility
+    programFavorites: favoritePrograms, // Add alias for backward compatibility
     isLoading,
     addExpertToFavorites,
     removeExpertFromFavorites,
     addProgramToFavorites,
     removeProgramFromFavorites,
+    toggleExpertFavorite,
+    toggleProgramFavorite,
     isExpertFavorite,
     isProgramFavorite
   };

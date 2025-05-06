@@ -51,7 +51,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     authLoading: auth.isLoading, // Add this for consistency
     loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateUserProfile,
+    updateProfile: auth.updateProfile,
     updatePassword: auth.updatePassword,
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),

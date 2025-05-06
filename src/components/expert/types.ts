@@ -1,3 +1,4 @@
+
 export interface ExpertFormData {
   id?: string | number;
   name: string;
@@ -30,7 +31,7 @@ export interface ExpertRegistrationData {
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string | number;
+  experience?: string; // Change to string to match with hooks/expert-auth/types.ts
   bio?: string;
   certificate_urls?: string[];
   selected_services?: number[];

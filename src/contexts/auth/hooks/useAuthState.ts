@@ -89,14 +89,21 @@ export const useAuthState = () => {
       }
       
       // Then check if it's an expert
-      const { data: expertProfile, error: expertError } = await supabase
+      const { data: expertData, error: expertError } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
         .maybeSingle();
         
-      if (expertProfile) {
-        console.log("Found expert profile:", expertProfile.id);
+      if (expertData) {
+        console.log("Found expert profile:", expertData.id);
+        
+        // Ensure the status is properly typed
+        const expertProfile = {
+          ...expertData,
+          status: (expertData.status || 'pending') as 'pending' | 'approved' | 'disapproved'
+        };
+        
         setAuthState((prev) => ({
           ...prev,
           userProfile: null,
