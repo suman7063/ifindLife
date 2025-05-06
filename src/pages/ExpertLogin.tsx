@@ -105,7 +105,7 @@ const ExpertLogin: React.FC = () => {
         
         return true;
       } else {
-        console.log("No expert profile found for this user");
+        console.error("No expert profile found");
         return false;
       }
     } catch (err) {
@@ -181,13 +181,12 @@ const ExpertLogin: React.FC = () => {
           return true;
         } else {
           // For demo purposes, we'll create a temporary expert profile
-          // In a real app, you'd redirect to registration or show an error
           const created = await createTemporaryExpertProfile(userId);
           
           if (created) {
             toast.success('Created temporary expert profile for demonstration');
             
-            // Reload the page to trigger a re-fetch of user data
+            // Force reload to update auth state with new expert profile
             window.location.href = '/expert-dashboard';
             return true;
           } else {

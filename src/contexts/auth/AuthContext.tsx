@@ -70,7 +70,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Fetching user data for:", userId);
       
-      // IMPORTANT: Check for expert profile FIRST (changed order)
+      // IMPORTANT: Check for expert profile FIRST (prioritize expert role)
       const { data: expertProfileData, error: expertError } = await supabase
         .from('expert_accounts')
         .select('*')
