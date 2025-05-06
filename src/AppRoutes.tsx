@@ -10,7 +10,7 @@ import { routes } from './App.routes'; // Import routes from consolidated file
 // Import directly to avoid any loading issues
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
-import ExpertLogin from './pages/ExpertLogin'; // Import directly
+import ExpertLogin from './pages/ExpertLogin'; // Direct import to prevent loading issues
 
 // Only log in development environment
 if (import.meta.env.DEV) {
@@ -52,7 +52,7 @@ const AppRoutes: React.FC = () => {
           </AdminProtectedRoute>
         } />
 
-        {/* Map all routes from the consolidated routes array except admin and expert-login */}
+        {/* Map all routes from the consolidated routes array except admin and expert routes */}
         {routes.filter(route => !route.path.startsWith('/admin') && route.path !== '/expert-login').map((route) => {
           const { element, path, requiredRole } = route;
           

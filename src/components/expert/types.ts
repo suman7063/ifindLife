@@ -1,15 +1,6 @@
 
-import { Expert } from '@/types/expert';
-
-export interface ServiceType {
-  id: number;
-  name: string;
-  description?: string;
-  rateUSD: number;
-  rateINR: number;
-}
-
 export interface ExpertFormData {
+  id?: string | number;
   name: string;
   email: string;
   phone: string;
@@ -26,24 +17,31 @@ export interface ExpertFormData {
   bio: string;
   selectedServices: number[];
   acceptedTerms: boolean;
-  [key: string]: any; // To allow dynamic property access
+  reportedUsers?: any[];
 }
 
-// Updated to match the hook interface
 export interface ExpertRegistrationData {
   name: string;
   email: string;
+  phone: string;
   password: string;
-  phone?: string;
   address?: string;
   city?: string;
   state?: string;
   country?: string;
   specialization?: string;
-  experience?: string;
+  experience?: string | number;
   bio?: string;
   certificate_urls?: string[];
   selected_services?: number[];
+}
+
+export interface ServiceType {
+  id: number;
+  name: string;
+  description?: string;
+  rate_usd?: number;
+  rate_inr?: number;
 }
 
 export interface ReportUserType {
@@ -54,17 +52,15 @@ export interface ReportUserType {
   details?: string;
   date: string;
   status: string;
-  userName?: string; // Added for backward compatibility
+  userName?: string;
 }
 
 export const formDataToRegistrationData = (formData: ExpertFormData): ExpertRegistrationData => {
-  console.log('Converting form data to registration data:', formData);
-  
   return {
     name: formData.name,
     email: formData.email,
-    password: formData.password,
     phone: formData.phone,
+    password: formData.password,
     address: formData.address,
     city: formData.city,
     state: formData.state,
@@ -72,11 +68,7 @@ export const formDataToRegistrationData = (formData: ExpertFormData): ExpertRegi
     specialization: formData.specialization,
     experience: formData.experience,
     bio: formData.bio,
-    certificate_urls: formData.certificateUrls, // Convert to backend format
-    selected_services: formData.selectedServices // Convert to backend format
+    certificate_urls: formData.certificateUrls,
+    selected_services: formData.selectedServices
   };
-};
-
-export type ExpertProps = {
-  expert: Expert;
 };

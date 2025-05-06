@@ -1,8 +1,7 @@
 
-import { User } from '@supabase/supabase-js';
-
 export interface ExpertProfile {
   id: string;
+  auth_id?: string;
   name: string;
   email: string;
   phone?: string;
@@ -21,14 +20,14 @@ export interface ExpertProfile {
   verified?: boolean;
   status?: string;
   created_at?: string;
-  auth_id?: string;
+  updated_at?: string;
 }
 
 export interface ExpertRegistrationData {
   name: string;
   email: string;
+  phone: string;
   password: string;
-  phone?: string;
   address?: string;
   city?: string;
   state?: string;
@@ -37,44 +36,19 @@ export interface ExpertRegistrationData {
   experience?: string | number;
   bio?: string;
   certificate_urls?: string[];
-  selected_services?: (string | number)[];
+  selected_services?: number[];
 }
 
-export interface UseExpertAuthReturn {
-  currentExpert: ExpertProfile | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  isLoading: boolean; // Alias for loading
-  error?: string | null;
-  initialized?: boolean;
-  authInitialized: boolean; // Alias for initialized
-  user?: User | null;
-  
-  // Auth methods
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  register: (data: ExpertRegistrationData) => Promise<boolean>;
-  
-  // Profile methods
-  updateProfile?: (updates: Partial<ExpertProfile>) => Promise<boolean>;
-  updateAvailability?: (availabilityData: any) => Promise<boolean>;
-  updateServices?: (serviceIds: number[]) => Promise<boolean>;
-  
-  // User check methods
-  hasUserAccount?: () => Promise<boolean>;
+export interface ExpertTimeSlot {
+  id?: string;
+  expert_id?: string;
+  day_of_week?: number;
+  day?: number;
+  start_time: string;
+  end_time: string;
+  is_booked?: boolean;
 }
 
-// Add ExpertAuthState type
-export interface ExpertAuthState {
-  currentExpert: ExpertProfile | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  error: string | null;
-  initialized: boolean;
-  user: User | null;
-}
-
-// Add ProfileUpdateData type
 export interface ProfileUpdateData {
   name?: string;
   phone?: string;
@@ -86,28 +60,4 @@ export interface ProfileUpdateData {
   experience?: string;
   bio?: string;
   profile_picture?: string;
-}
-
-// Update ExpertTimeSlot type to include day field
-export interface ExpertTimeSlot {
-  id?: string;
-  availability_id?: string;
-  day_of_week?: number;
-  specific_date?: string;
-  start_time: string;
-  end_time: string;
-  is_booked?: boolean;
-  day?: number; // Added day field that was being used
-}
-
-// Add ReportUserType
-export interface ReportUserType {
-  id?: string;
-  user_id: string;
-  expert_id: string; // Changed to string
-  reason: string;
-  details: string;
-  date?: string;
-  status?: string;
-  userName?: string;
 }

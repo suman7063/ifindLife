@@ -40,7 +40,8 @@ export const useExpertRegistration = (
             experience: data.experience,
             bio: data.bio,
             certificate_urls: data.certificate_urls || [],
-            selected_services: data.selected_services
+            selected_services: data.selected_services,
+            user_type: 'expert' // Mark this as an expert account
           }
         }
       });
@@ -52,11 +53,13 @@ export const useExpertRegistration = (
         return false;
       }
       
-      if (!authData.session) {
-        setRegistrationError('Registration failed. No session created.');
-        toast.error('Registration failed. No session created.');
+      if (!authData.session || !authData.user) {
+        setRegistrationError('Registration failed. No session or user created.');
+        toast.error('Registration failed. No session or user created.');
         return false;
       }
+      
+      console.log('Auth account created with ID:', authData.user.id);
       
       // Format data for expert profile
       const selectedServices = Array.isArray(data.selected_services) 
@@ -69,7 +72,7 @@ export const useExpertRegistration = (
 
       // Create expert profile
       const expertData = {
-        auth_id: authData.session.user.id,
+        auth_id: authData.user.id,
         name: data.name,
         email: data.email,
         phone: data.phone || '',
@@ -102,14 +105,14 @@ export const useExpertRegistration = (
       
       console.log('Expert registration successful for', data.email);
       
-      // Sign out and redirect to login page
+      // Sign out and let the component handle the redirect
       await supabase.auth.signOut();
       
-      // Don't redirect here, return success and let the component handle the redirect
       toast.success('Registration successful! Please log in with your credentials.');
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
+      setRegistrationError(error.message || 'An unexpected error occurred during registration');
       handleAuthError(error, 'An unexpected error occurred during registration');
       return false;
     } finally {

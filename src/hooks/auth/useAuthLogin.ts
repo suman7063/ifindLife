@@ -8,11 +8,21 @@ export const useAuthLogin = (
   setLoading: (value: boolean) => void,
   setSession: (session: Session | null) => void
 ) => {
+  /**
+   * Handle user login with email and password
+   */
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
       console.log("Attempting login with email:", email);
       
+      // Check if there's already a session
+      const { data: existingSession } = await supabase.auth.getSession();
+      if (existingSession.session) {
+        console.log("Found existing session");
+      }
+      
+      // Sign in with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -26,6 +36,7 @@ export const useAuthLogin = (
 
       if (data && data.user && data.session) {
         console.log("Login successful, user:", data.user.email);
+        // Store the session
         setSession(data.session);
         return true;
       }

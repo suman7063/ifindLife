@@ -4,38 +4,56 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormItem, FormMessage } from '@/components/ui/form';
 import { Button } from "@/components/ui/button";
-import { X, Upload } from 'lucide-react';
+import { Progress } from "@/components/ui/progress";
+import { X, Upload, Check, AlertCircle } from 'lucide-react';
 import { ExpertFormData } from './types';
 
 interface ProfessionalInfoStepProps {
   formData: ExpertFormData;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleFileUpload: (file: File) => Promise<void>;
   handleRemoveCertificate: (index: number) => void;
+  isUploading?: boolean;
+  uploadProgress?: number;
   nextStep: () => void;
   prevStep: () => void;
   errors: Record<string, string>;
+  touched?: Record<string, boolean>;
 }
 
 const ProfessionalInfoStep = ({
   formData,
   handleChange,
+  handleBlur,
   handleFileUpload,
   handleRemoveCertificate,
+  isUploading = false,
+  uploadProgress = 0,
   nextStep,
   prevStep,
-  errors
+  errors,
+  touched = {}
 }: ProfessionalInfoStepProps) => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       await handleFileUpload(e.target.files[0]);
+      
+      // Reset the input so the same file can be selected again if needed
+      e.target.value = '';
     }
   };
 
   const triggerFileInput = () => {
-    fileInputRef.current?.click();
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const isFieldInvalid = (fieldName: string): boolean => {
+    return touched[fieldName] === true && !!errors[fieldName];
   };
 
   return (
@@ -53,9 +71,14 @@ const ProfessionalInfoStep = ({
             type="text"
             value={formData.specialization}
             onChange={handleChange}
-            className={errors.specialization ? "border-destructive" : ""}
+            onBlur={handleBlur}
+            className={isFieldInvalid('specialization') ? "border-destructive" : ""}
+            aria-invalid={isFieldInvalid('specialization')}
+            aria-describedby={isFieldInvalid('specialization') ? "specialization-error" : undefined}
           />
-          {errors.specialization && <FormMessage>{errors.specialization}</FormMessage>}
+          {isFieldInvalid('specialization') && (
+            <FormMessage id="specialization-error">{errors.specialization}</FormMessage>
+          )}
         </FormItem>
         
         <FormItem className="space-y-2">
@@ -68,9 +91,14 @@ const ProfessionalInfoStep = ({
             type="text"
             value={formData.experience}
             onChange={handleChange}
-            className={errors.experience ? "border-destructive" : ""}
+            onBlur={handleBlur}
+            className={isFieldInvalid('experience') ? "border-destructive" : ""}
+            aria-invalid={isFieldInvalid('experience')}
+            aria-describedby={isFieldInvalid('experience') ? "experience-error" : undefined}
           />
-          {errors.experience && <FormMessage>{errors.experience}</FormMessage>}
+          {isFieldInvalid('experience') && (
+            <FormMessage id="experience-error">{errors.experience}</FormMessage>
+          )}
         </FormItem>
         
         <FormItem className="space-y-2">
@@ -83,9 +111,14 @@ const ProfessionalInfoStep = ({
             rows={4}
             value={formData.bio}
             onChange={handleChange}
-            className={errors.bio ? "border-destructive" : ""}
+            onBlur={handleBlur}
+            className={isFieldInvalid('bio') ? "border-destructive" : ""}
+            aria-invalid={isFieldInvalid('bio')}
+            aria-describedby={isFieldInvalid('bio') ? "bio-error" : undefined}
           />
-          {errors.bio && <FormMessage>{errors.bio}</FormMessage>}
+          {isFieldInvalid('bio') && (
+            <FormMessage id="bio-error">{errors.bio}</FormMessage>
+          )}
         </FormItem>
         
         <FormItem className="space-y-2">
@@ -102,6 +135,7 @@ const ProfessionalInfoStep = ({
             onChange={onFileChange}
             accept=".pdf,.png,.jpg,.jpeg"
             className="hidden"
+            disabled={isUploading}
           />
           
           {/* Custom styled upload button */}
@@ -110,17 +144,33 @@ const ProfessionalInfoStep = ({
             variant="outline" 
             onClick={triggerFileInput}
             className="w-full flex items-center justify-center gap-2"
+            disabled={isUploading}
           >
             <Upload className="h-4 w-4" />
-            Browse for Certificate
+            {isUploading ? 'Uploading...' : 'Browse for Certificate'}
           </Button>
           
+          {/* Upload progress */}
+          {isUploading && (
+            <div className="mt-2 space-y-1">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>Uploading...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <Progress value={uploadProgress} className="h-1" />
+            </div>
+          )}
+          
+          {/* Display uploaded certificates */}
           {formData.certificateUrls && formData.certificateUrls.length > 0 && (
             <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
-              <p className="text-sm text-gray-500">Uploaded Certificates:</p>
+              <p className="text-sm text-gray-500 flex items-center">
+                <Check className="h-4 w-4 mr-1 text-green-500" />
+                Uploaded Certificates:
+              </p>
               <div className="space-y-2">
                 {formData.certificateUrls.map((url, index) => (
-                  <div key={index} className="flex items-center space-x-2 bg-muted/50 p-2 rounded">
+                  <div key={index} className="flex items-center space-x-2 bg-muted/50 p-2 rounded border border-green-100">
                     <a 
                       href={url} 
                       target="_blank" 
@@ -132,7 +182,8 @@ const ProfessionalInfoStep = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveCertificate(index)}
-                      className="text-red-500 hover:text-red-700"
+                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
+                      title="Remove certificate"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -141,25 +192,31 @@ const ProfessionalInfoStep = ({
               </div>
             </div>
           )}
+          
+          <div className="text-xs text-gray-500 mt-1 flex items-center">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Accepted formats: PDF, JPG, PNG (max 5MB)
+          </div>
         </FormItem>
       </div>
       
       {/* Fixed positioning for navigation buttons to ensure they're always visible */}
       <div className="flex justify-between pt-10 pb-4 mt-8">
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={prevStep}
-          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          className="px-4 py-2"
         >
           Previous
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
           onClick={nextStep}
-          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-ifind-aqua hover:bg-ifind-teal transition-colors"
+          className="px-4 py-2"
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );

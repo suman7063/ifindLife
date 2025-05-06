@@ -1,68 +1,74 @@
 
-import { ServiceType } from '../types';
 import { supabase } from '@/lib/supabase';
+import { ServiceType } from '../types';
 
-// Simulated data for local development as a fallback
-const mockServices: ServiceType[] = [
-  {
-    id: 1,
-    name: 'Therapy Session',
-    description: 'One-on-one therapy session focused on mental wellness',
-    rateUSD: 50,
-    rateINR: 3500
-  },
-  {
-    id: 2,
-    name: 'Consultation',
-    description: 'Initial consultation to assess needs and create a treatment plan',
-    rateUSD: 35,
-    rateINR: 2500
-  },
-  {
-    id: 3,
-    name: 'Group Session',
-    description: 'Guided group therapy sessions for shared experiences',
-    rateUSD: 25,
-    rateINR: 1800
-  }
-];
-
-export const fetchServices = async (): Promise<ServiceType[]> => {
+/**
+ * Fetch all services from the services table
+ */
+export async function fetchServices(): Promise<ServiceType[]> {
   try {
-    console.log('Fetching services from Supabase...');
-    
-    // First try to fetch from services table
-    const { data: servicesData, error: servicesError } = await supabase
+    const { data, error } = await supabase
       .from('services')
-      .select('id, name, description, rate_usd, rate_inr');
+      .select('*')
+      .order('id', { ascending: true });
     
-    if (servicesError) {
-      console.error('Error fetching services from Supabase:', servicesError);
-      
-      // Fallback to mock data
-      console.log('No services found, using mock data');
-      return mockServices;
+    if (error) {
+      console.error('Error fetching services:', error);
+      throw error;
     }
     
-    if (servicesData && servicesData.length > 0) {
-      console.log('Services found in Supabase:', servicesData.length);
-      
-      // Safe type conversion and mapping
-      return servicesData.map(service => ({
-        id: service.id,
-        name: service.name || 'Service',
-        description: service.description || '',
-        rateUSD: service.rate_usd || 0,
-        rateINR: service.rate_inr || 0
-      }));
-    }
-    
-    // If no data from Supabase, use mock data
-    console.log('No services found in Supabase, using mock data');
-    return mockServices;
+    return data as ServiceType[];
   } catch (error) {
-    console.error('Exception fetching services:', error);
-    console.log('Falling back to mock data due to exception');
-    return mockServices; // Fallback to mock data in case of error
+    console.error('Failed to fetch services:', error);
+    throw error;
   }
-};
+}
+
+/**
+ * Fetch services by IDs
+ */
+export async function fetchServicesByIds(serviceIds: number[]): Promise<ServiceType[]> {
+  if (!serviceIds || serviceIds.length === 0) {
+    return [];
+  }
+  
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .in('id', serviceIds);
+    
+    if (error) {
+      console.error('Error fetching services by ids:', error);
+      throw error;
+    }
+    
+    return data as ServiceType[];
+  } catch (error) {
+    console.error('Failed to fetch services by ids:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch a service by ID
+ */
+export async function fetchServiceById(serviceId: number): Promise<ServiceType | null> {
+  try {
+    const { data, error } = await supabase
+      .from('services')
+      .select('*')
+      .eq('id', serviceId)
+      .maybeSingle();
+    
+    if (error) {
+      console.error('Error fetching service by id:', error);
+      throw error;
+    }
+    
+    return data as ServiceType;
+  } catch (error) {
+    console.error('Failed to fetch service by id:', error);
+    throw error;
+  }
+}

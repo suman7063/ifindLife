@@ -10,7 +10,7 @@ export interface AppRoute {
 
 // Pages - pre-import critical pages to avoid dynamic import issues
 const Login = lazy(() => import('./pages/Login'));
-// ExpertLogin is now directly imported in AppRoutes.tsx
+// ExpertLogin is directly imported in AppRoutes.tsx
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const MentalHealthAssessment = lazy(() => import('./pages/MentalHealthAssessment'));
