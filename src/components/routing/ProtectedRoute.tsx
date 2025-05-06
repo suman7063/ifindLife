@@ -37,7 +37,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (!isAuthenticated) {
     console.log("ProtectedRoute - Not authenticated, redirecting to:", redirectPath);
     
-    // If specifically for expert routes, redirect to expert login
+    // If this is an expert route, redirect to expert login
     if (allowedRoles.length === 1 && allowedRoles[0] === 'expert') {
       return <Navigate to="/expert-login" state={{ from: location }} replace />;
     }
@@ -47,7 +47,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return <Navigate to="/admin-login" state={{ from: location }} replace />;
     }
     
-    // Otherwise use the default redirect path (usually user login)
+    // Otherwise use the default redirect path
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
@@ -57,11 +57,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     
     // Redirect based on role
     if (role === 'user') {
-      return <Navigate to="/user-dashboard" replace />;
+      return <Navigate to="/user-dashboard" state={{ from: location }} replace />;
     } else if (role === 'expert') {
-      return <Navigate to="/expert-dashboard" replace />;
+      return <Navigate to="/expert-dashboard" state={{ from: location }} replace />;
     } else if (role === 'admin') {
-      return <Navigate to="/admin" replace />;
+      return <Navigate to="/admin" state={{ from: location }} replace />;
     }
   }
 

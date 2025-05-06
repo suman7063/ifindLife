@@ -19,6 +19,7 @@ const ExpertDashboard = () => {
   const { isLoading, expertProfile, userProfile, isAuthenticated, role } = useAuth();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
+  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   
   // Debug logging
   useEffect(() => {
@@ -57,55 +58,84 @@ const ExpertDashboard = () => {
   
   // Check if expert profile exists for current user, if not, create a temporary one for demo
   const ensureExpertProfile = async () => {
+    if (isCreatingProfile) return; // Prevent multiple simultaneous attempts
+    
     try {
+      setIsCreatingProfile(true);
       // Get current session to get user ID
       const { data: session } = await supabase.auth.getSession();
       if (!session.session || !session.session.user) {
+        setIsCreatingProfile(false);
         return;
       }
       
       const userId = session.session.user.id;
       
       // Check if user already has an expert profile
-      const { data: existingProfile, error } = await supabase
-        .from('expert_accounts')
-        .select('id')
-        .eq('auth_id', userId)
-        .maybeSingle();
-      
-      if (error || !existingProfile) {
-        console.log("No expert profile found, creating temporary one");
-        
-        // Create temporary expert profile
-        await supabase
+      try {
+        const { data: existingProfile, error } = await supabase
           .from('expert_accounts')
-          .insert([
-            { 
-              auth_id: userId,
-              name: 'Demo Expert',
-              email: session.session.user.email,
-              status: 'approved',
-              specialties: ['Psychology', 'Therapy'],
-              experience: '5 years' 
-            }
-          ]);
+          .select('id')
+          .eq('auth_id', userId)
+          .maybeSingle();
+        
+        if (error) {
+          if (error.code === '42P17') {
+            console.error("Database policy error when checking expert profile:", error);
+            toast.error('Database policy error. Please contact support.');
+            setIsCreatingProfile(false);
+            return;
+          }
+          console.error("Error checking for expert profile:", error);
+        }
+        
+        if (!existingProfile) {
+          console.log("No expert profile found, creating temporary one");
           
-        // Reload the page to get updated profile
-        window.location.reload();
+          // Create temporary expert profile with only required fields
+          const { error: insertError } = await supabase
+            .from('expert_accounts')
+            .insert([
+              { 
+                auth_id: userId,
+                name: 'Demo Expert',
+                email: session.session.user.email || 'demo@expert.com',
+                status: 'approved',
+                experience: '5 years'
+              }
+            ]);
+            
+          if (insertError) {
+            console.error("Error creating expert profile:", insertError);
+            toast.error('Could not create expert profile: ' + insertError.message);
+            setIsCreatingProfile(false);
+            return;
+          }
+            
+          toast.success('Created temporary expert profile for demonstration');
+          // Reload the page to get updated profile
+          window.location.reload();
+        }
+      } catch (error) {
+        console.error('Error ensuring expert profile:', error);
+        toast.error('Error checking expert profile status');
+      } finally {
+        setIsCreatingProfile(false);
       }
     } catch (error) {
       console.error('Error ensuring expert profile:', error);
+      setIsCreatingProfile(false);
     }
   };
   
   // Run once to ensure expert profile exists
   useEffect(() => {
-    if (isAuthenticated && !expertProfile && !isLoading) {
+    if (isAuthenticated && !expertProfile && !isLoading && !isCreatingProfile) {
       ensureExpertProfile();
     }
-  }, [expertProfile, isAuthenticated, isLoading]);
+  }, [expertProfile, isAuthenticated, isLoading, isCreatingProfile]);
   
-  if (isLoading) {
+  if (isLoading || isCreatingProfile) {
     return <DashboardLoader />;
   }
 

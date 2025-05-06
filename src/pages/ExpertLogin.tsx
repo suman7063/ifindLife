@@ -75,37 +75,50 @@ const ExpertLogin: React.FC = () => {
     try {
       console.log("Checking for expert profile for user ID:", userId);
       
-      // First check if user already has an expert profile
-      const { data: existingProfile, error } = await supabase
-        .from('expert_accounts')
-        .select('id, status')
-        .eq('auth_id', userId)
-        .maybeSingle();
-      
-      if (error) {
-        console.error("Error checking for expert profile:", error);
-        return false;
-      }
-      
-      // If we found an existing expert profile
-      if (existingProfile) {
-        console.log("Found existing expert profile:", existingProfile);
+      try {
+        // Try to get expert profile, handling potential server errors
+        const { data: existingProfile, error } = await supabase
+          .from('expert_accounts')
+          .select('id, status')
+          .eq('auth_id', userId)
+          .maybeSingle();
         
-        // If the expert profile is not approved, show appropriate message
-        if (existingProfile.status !== 'approved') {
-          if (existingProfile.status === 'pending') {
-            toast.info('Your expert account is pending approval. You will be notified once approved.');
-            navigate('/expert-login?status=pending');
-          } else {
-            toast.error('Your expert account application was not approved.');
-            navigate('/expert-login?status=disapproved');
+        if (error) {
+          if (error.code === '42P17') {
+            console.error("Database policy error:", error);
+            // This is a server configuration issue, not a "no data found" issue
+            toast.error('Server configuration error. Please try again later.');
+            return false;
           }
+          
+          console.error("Error checking for expert profile:", error);
           return false;
         }
         
-        return true;
-      } else {
-        console.error("No expert profile found");
+        // If we found an existing expert profile
+        if (existingProfile) {
+          console.log("Found existing expert profile:", existingProfile);
+          
+          // If the expert profile is not approved, show appropriate message
+          if (existingProfile.status !== 'approved') {
+            if (existingProfile.status === 'pending') {
+              toast.info('Your expert account is pending approval. You will be notified once approved.');
+              navigate('/expert-login?status=pending');
+            } else {
+              toast.error('Your expert account application was not approved.');
+              navigate('/expert-login?status=disapproved');
+            }
+            return false;
+          }
+          
+          return true;
+        } else {
+          console.error("No expert profile found");
+          return false;
+        }
+      } catch (fetchError) {
+        console.error("Error in fetch operation:", fetchError);
+        toast.error('Error checking expert status. Please try again later.');
         return false;
       }
     } catch (err) {
@@ -119,6 +132,7 @@ const ExpertLogin: React.FC = () => {
     try {
       console.log("Creating temporary expert profile for demo purposes");
       
+      // Modified to match actual database schema
       const { data, error } = await supabase
         .from('expert_accounts')
         .insert([
@@ -127,7 +141,7 @@ const ExpertLogin: React.FC = () => {
             name: 'Demo Expert',
             email: 'demo@expert.com',
             status: 'approved',
-            specialties: ['Psychology', 'Therapy'],
+            // No more "specialties" which caused the 400 error
             experience: '5 years' 
           }
         ])
@@ -135,6 +149,7 @@ const ExpertLogin: React.FC = () => {
       
       if (error) {
         console.error("Error creating expert profile:", error);
+        toast.error('Could not create temporary expert profile: ' + error.message);
         return false;
       }
       
@@ -186,8 +201,10 @@ const ExpertLogin: React.FC = () => {
           if (created) {
             toast.success('Created temporary expert profile for demonstration');
             
-            // Force reload to update auth state with new expert profile
-            window.location.href = '/expert-dashboard';
+            // Force full page reload to ensure proper state initialization
+            setTimeout(() => {
+              window.location.href = '/expert-dashboard';
+            }, 1000);
             return true;
           } else {
             console.error('ExpertLogin: No expert profile found and could not create one');

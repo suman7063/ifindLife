@@ -70,30 +70,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log("Fetching user data for:", userId);
       
-      // IMPORTANT: Check for expert profile FIRST (prioritize expert role)
-      const { data: expertProfileData, error: expertError } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', userId)
-        .maybeSingle();
+      // Try to get expert profile first, but handle server errors gracefully
+      try {
+        const { data: expertProfileData, error: expertError } = await supabase
+          .from('expert_accounts')
+          .select('*')
+          .eq('auth_id', userId)
+          .maybeSingle();
 
-      // For debugging
-      console.log("Expert profile check result:", expertProfileData, expertError);
-        
-      if (expertProfileData) {
-        console.log("Found expert profile:", expertProfileData.id);
-        // Ensure the status field is cast properly to match the expected type
-        const typedExpertProfile: ExpertProfile = {
-          ...expertProfileData,
-          status: (expertProfileData.status as 'pending' | 'approved' | 'disapproved') || 'pending'
-        };
-        
-        setExpertProfile(typedExpertProfile);
-        setUserProfile(null);
-        setRole('expert');
-        setSessionType('expert');
-        setIsLoading(false);
-        return;
+        // For debugging
+        console.log("Expert profile check result:", expertProfileData, expertError);
+          
+        // Handle specific error cases (like database policy issues)
+        if (expertError) {
+          if (expertError.code === '42P17') {
+            console.error("Database policy error:", expertError);
+            // Continue to check for user profile, this is a server issue
+          } else {
+            console.error("Error fetching expert profile:", expertError);
+          }
+        }
+        else if (expertProfileData) {
+          console.log("Found expert profile:", expertProfileData.id);
+          // Ensure the status field is cast properly to match the expected type
+          const typedExpertProfile: ExpertProfile = {
+            ...expertProfileData,
+            status: (expertProfileData.status as 'pending' | 'approved' | 'disapproved') || 'pending'
+          };
+          
+          setExpertProfile(typedExpertProfile);
+          setUserProfile(null);
+          setRole('expert');
+          setSessionType('expert');
+          setIsLoading(false);
+          return;
+        }
+      } catch (expertCheckError) {
+        console.error("Exception fetching expert profile:", expertCheckError);
+        // Continue to check for user profile
       }
       
       // Then check if this is a regular user
