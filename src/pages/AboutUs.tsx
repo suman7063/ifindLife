@@ -37,7 +37,7 @@ const AboutUs = () => {
       name: "Dr. Bhavna Khurana",
       title: "Programme Director at iFindLife (UK)",
       bio: "Dr. Bhavna Khurana, with over 20 years of global experience, is a PhD scholar in Cardiac Wellness and a pioneer in heart disease reversal through lifestyle change and mindfulness. She is the founder of I AM Fit (Singapore) and Soulversity (UK), offering mind-body wellness solutions. A certified Lifestyle Medicine Practitioner, Mindfulness Coach, and Meditation Teacher, Dr. Bhavna specializes in workplace wellness and mental health support through global Employee Assistance Programs (EAPs).",
-      image: "/lovable-uploads/ceb054b5-2e48-48c4-ae23-1b7f94a00301.png",
+      image: "/lovable-uploads/1b420877-7be1-4010-b806-5850cb719642.png",
       highlights: [
         { icon: <Heart className="h-4 w-4" />, text: "PhD in Cardiac Wellness & Founder of I AM Fit" },
         { icon: <BrainCircuit className="h-4 w-4" />, text: "Mindfulness Coach & Workplace Wellness Specialist" },
