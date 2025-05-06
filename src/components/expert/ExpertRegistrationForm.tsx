@@ -11,6 +11,8 @@ import PersonalInfoStep from './PersonalInfoStep';
 import AddressInfoStep from './AddressInfoStep';
 import ProfessionalInfoStep from './ProfessionalInfoStep';
 import { supabase } from '@/lib/supabase';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle } from 'lucide-react';
 
 // Define form schema with validation but without selectedServices field
 const expertFormSchema = z.object({
@@ -47,6 +49,7 @@ type ExpertFormValues = z.infer<typeof expertFormSchema>;
 const ExpertRegistrationForm = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
   
   const form = useForm<ExpertFormValues>({
     resolver: zodResolver(expertFormSchema),
@@ -71,6 +74,7 @@ const ExpertRegistrationForm = () => {
   const handleSubmit = async (values: ExpertFormValues) => {
     try {
       setIsSubmitting(true);
+      setRegistrationError(null);
       
       console.log('Form submitted with values:', values);
       
@@ -85,7 +89,20 @@ const ExpertRegistrationForm = () => {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        // Show the specific error message
+        if (error.message.includes('User already registered')) {
+          setRegistrationError('This email address is already registered. Please use the login tab instead.');
+        } else {
+          setRegistrationError(error.message || 'Registration failed');
+        }
+        return;
+      }
+      
+      if (!data.user?.id) {
+        setRegistrationError('Registration failed. No user ID created.');
+        return;
+      }
       
       // Convert experience to string since the database expects a string
       const expertExperience = String(values.experience);
@@ -94,7 +111,7 @@ const ExpertRegistrationForm = () => {
       const { error: profileError } = await supabase
         .from('expert_accounts')
         .insert({
-          auth_id: data.user?.id,
+          auth_id: data.user.id,
           name: values.name,
           email: values.email,
           phone: values.phone,
@@ -110,20 +127,27 @@ const ExpertRegistrationForm = () => {
           status: 'pending',
         });
         
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        setRegistrationError(profileError.message || 'Failed to create expert profile.');
+        return;
+      }
       
       toast.success('Registration successful! Your account is pending approval.');
+      
+      // Sign out after registration
+      await supabase.auth.signOut();
       window.location.href = '/expert-login?status=registered';
       
     } catch (error: any) {
       console.error('Registration error:', error);
-      toast.error(error.message || 'Registration failed. Please try again.');
+      setRegistrationError(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  // Removed the service step, only using 3 steps now
+  // Using only 3 steps now
   const steps = [
     { title: "Personal Info", component: <PersonalInfoStep /> },
     { title: "Address", component: <AddressInfoStep /> },
@@ -157,6 +181,13 @@ const ExpertRegistrationForm = () => {
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        {registrationError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertDescription>{registrationError}</AlertDescription>
+          </Alert>
+        )}
+        
         <Tabs value={String(activeStep)} className="w-full">
           {steps.map((step, index) => (
             <TabsContent key={index} value={String(index)}>

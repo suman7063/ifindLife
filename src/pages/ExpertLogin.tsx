@@ -113,6 +113,9 @@ const ExpertLogin: React.FC = () => {
   const handleTabChange = (tab: string) => {
     if (tab === 'login' || tab === 'register') {
       setActiveTab(tab);
+      // Clear error messages when switching tabs
+      setLoginError(null);
+      setStatusMessage(null);
     }
   };
 
