@@ -1,93 +1,100 @@
 
+// Basic expert profile type
 export interface ExpertProfile {
   id: string;
-  auth_id?: string;
+  auth_id: string;
   name: string;
   email: string;
   phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;
   bio?: string;
-  certificate_urls?: string[];
-  profile_picture?: string;
-  selected_services?: number[];
-  average_rating?: number;
-  reviews_count?: number;
-  verified?: boolean;
-  status?: string;
+  specialties?: string[];
+  experience_years?: number;
+  hourly_rate?: number;
+  status: 'pending' | 'approved' | 'disapproved';
+  profilePicture?: string;
   created_at?: string;
   updated_at?: string;
 }
 
+// Expert registration data type
 export interface ExpertRegistrationData {
   name: string;
   email: string;
-  phone: string;
+  phone?: string;
   password: string;
+  bio?: string;
+  specialties?: string[];
+  experience_years?: number;
+  hourly_rate?: number;
   address?: string;
   city?: string;
   state?: string;
   country?: string;
-  specialization?: string;
-  experience?: string | number;
-  bio?: string;
-  certificate_urls?: string[];
-  selected_services?: number[];
+  profilePicture?: string;
+  certificates?: File[];
 }
 
+// Time slot type for availability
 export interface ExpertTimeSlot {
   id?: string;
   expert_id?: string;
-  day_of_week?: number;
-  day?: number;
+  day_of_week: string;
   start_time: string;
   end_time: string;
-  is_booked?: boolean;
+  is_available: boolean;
 }
 
+// Profile update data
 export interface ProfileUpdateData {
   name?: string;
   phone?: string;
+  bio?: string;
+  specialties?: string[];
+  experience_years?: number;
+  hourly_rate?: number;
   address?: string;
   city?: string;
   state?: string;
   country?: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  profile_picture?: string;
+  profilePicture?: string;
 }
 
-// Add the missing ExpertAuthState export
+// Expert auth state
 export interface ExpertAuthState {
-  currentExpert: ExpertProfile | null;
-  user: User | null;
-  loading: boolean;
-  error: string | null;
   initialized: boolean;
-  isAuthenticated: boolean;
+  loading: boolean;
+  currentExpert: ExpertProfile | null;
+  error: string | null;
 }
 
-// Add the missing UseExpertAuthReturn export
+// Return type for useExpertAuth hook
 export interface UseExpertAuthReturn {
-  currentExpert: ExpertProfile | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  isLoading: boolean;
-  error: string | null;
   initialized: boolean;
-  authInitialized: boolean;
-  user: User | null;
+  loading: boolean;
+  currentExpert: ExpertProfile | null;
   login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  register: (data: ExpertRegistrationData) => Promise<boolean>;
-  updateProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
+  logout: () => Promise<void>;
   hasUserAccount: () => Promise<boolean>;
+  register: (data: ExpertRegistrationData) => Promise<boolean>;
+  updateProfile: (data: ProfileUpdateData) => Promise<boolean>;
+  error: string | null;
 }
 
-// Import User type from Supabase for proper typing
-import { User } from '@supabase/supabase-js';
+// Expert form data for legacy components
+export interface ExpertFormData {
+  id?: string | number;
+  name: string;
+  email: string;
+  phone?: string;
+  bio?: string;
+  specialties?: string[];
+  experience_years?: number;
+  hourly_rate?: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  status?: 'pending' | 'approved' | 'disapproved';
+  reportedUsers?: any[];
+  profilePicture?: string;
+}

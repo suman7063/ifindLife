@@ -17,7 +17,7 @@ const ExpertLogin: React.FC = () => {
   );
   const [isLogging, setIsLogging] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { isLoading, isAuthenticated, expertProfile, login, logout } = useAuth();
+  const { isLoading, isAuthenticated, expertProfile, login } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   
   // Debug logging
@@ -66,9 +66,7 @@ const ExpertLogin: React.FC = () => {
       const success = await login(email, password);
       
       if (success) {
-        console.log('ExpertLogin: Login successful, checking for expert profile');
-        
-        // Check if user has an expert profile
+        // Check if user has an expert profile after login
         if (expertProfile) {
           toast.success('Successfully logged in!');
           navigate('/expert-dashboard');
@@ -76,8 +74,6 @@ const ExpertLogin: React.FC = () => {
         } else {
           console.error('ExpertLogin: No expert profile found');
           toast.error('No expert profile found for this account.');
-          // Log out since user doesn't have an expert profile
-          await logout();
           setLoginError('No expert profile found for this account.');
           return false;
         }

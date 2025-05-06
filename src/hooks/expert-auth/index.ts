@@ -13,6 +13,7 @@ export type {
   ExpertRegistrationData, 
   ExpertTimeSlot, 
   ProfileUpdateData,
-  ExpertAuthState,  // Add the previously missing type
-  UseExpertAuthReturn // Add the previously missing type
+  ExpertAuthState,
+  UseExpertAuthReturn,
+  ExpertFormData
 } from './types';
