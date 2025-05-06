@@ -1,132 +1,82 @@
 
 import React from 'react';
+import { useFormContext } from "react-hook-form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { FormItem, FormMessage } from '@/components/ui/form';
-import { ExpertFormData } from './types';
 
-interface AddressInfoStepProps {
-  formData: ExpertFormData;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
-  nextStep: () => void;
-  prevStep: () => void;
-  errors: Record<string, string>;
-  touched?: Record<string, boolean>;
-}
-
-const AddressInfoStep = ({
-  formData,
-  handleChange,
-  handleBlur,
-  nextStep,
-  prevStep,
-  errors,
-  touched = {}
-}: AddressInfoStepProps) => {
-  const isFieldInvalid = (fieldName: string): boolean => {
-    return touched[fieldName] === true && !!errors[fieldName];
-  };
+const AddressInfoStep = () => {
+  const form = useFormContext();
+  
+  if (!form) {
+    console.error("AddressInfoStep must be used within a FormProvider");
+    return null;
+  }
   
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold mb-2">Address Information</h2>
-      
-      <FormItem className="space-y-2">
-        <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-          Street Address <span className="text-destructive">*</span>
-        </label>
-        <Input
-          id="address"
-          name="address"
-          type="text"
-          value={formData.address}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={isFieldInvalid('address') ? "border-destructive" : ""}
-          aria-invalid={isFieldInvalid('address')}
-          aria-describedby={isFieldInvalid('address') ? "address-error" : undefined}
-        />
-        {isFieldInvalid('address') && (
-          <FormMessage id="address-error">{errors.address}</FormMessage>
+      <FormField
+        control={form.control}
+        name="address"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Street Address</FormLabel>
+            <FormControl>
+              <Input placeholder="123 Main St" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
         )}
-      </FormItem>
+      />
       
-      <FormItem className="space-y-2">
-        <label htmlFor="city" className="block text-sm font-medium text-gray-700">
-          City <span className="text-destructive">*</span>
-        </label>
-        <Input
-          id="city"
+      <div className="grid grid-cols-2 gap-4">
+        <FormField
+          control={form.control}
           name="city"
-          type="text"
-          value={formData.city}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={isFieldInvalid('city') ? "border-destructive" : ""}
-          aria-invalid={isFieldInvalid('city')}
-          aria-describedby={isFieldInvalid('city') ? "city-error" : undefined}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>City</FormLabel>
+              <FormControl>
+                <Input placeholder="New York" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {isFieldInvalid('city') && (
-          <FormMessage id="city-error">{errors.city}</FormMessage>
-        )}
-      </FormItem>
-      
-      <FormItem className="space-y-2">
-        <label htmlFor="state" className="block text-sm font-medium text-gray-700">
-          State/Province <span className="text-destructive">*</span>
-        </label>
-        <Input
-          id="state"
+        
+        <FormField
+          control={form.control}
           name="state"
-          type="text"
-          value={formData.state}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={isFieldInvalid('state') ? "border-destructive" : ""}
-          aria-invalid={isFieldInvalid('state')}
-          aria-describedby={isFieldInvalid('state') ? "state-error" : undefined}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>State/Province</FormLabel>
+              <FormControl>
+                <Input placeholder="NY" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        {isFieldInvalid('state') && (
-          <FormMessage id="state-error">{errors.state}</FormMessage>
-        )}
-      </FormItem>
-      
-      <FormItem className="space-y-2">
-        <label htmlFor="country" className="block text-sm font-medium text-gray-700">
-          Country <span className="text-destructive">*</span>
-        </label>
-        <Input
-          id="country"
-          name="country"
-          type="text"
-          value={formData.country}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          className={isFieldInvalid('country') ? "border-destructive" : ""}
-          aria-invalid={isFieldInvalid('country')}
-          aria-describedby={isFieldInvalid('country') ? "country-error" : undefined}
-        />
-        {isFieldInvalid('country') && (
-          <FormMessage id="country-error">{errors.country}</FormMessage>
-        )}
-      </FormItem>
-      
-      <div className="flex justify-between pt-10 pb-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={prevStep}
-        >
-          Previous
-        </Button>
-        <Button
-          type="button"
-          onClick={nextStep}
-        >
-          Next
-        </Button>
       </div>
+      
+      <FormField
+        control={form.control}
+        name="country"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Country</FormLabel>
+            <FormControl>
+              <Input placeholder="United States" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
     </div>
   );
 };

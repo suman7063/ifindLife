@@ -1,222 +1,213 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useFormContext } from "react-hook-form";
+import {
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  FormDescription,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FormItem, FormMessage } from '@/components/ui/form';
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { X, Upload, Check, AlertCircle } from 'lucide-react';
-import { ExpertFormData } from './types';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, EyeOff } from 'lucide-react';
 
-interface ProfessionalInfoStepProps {
-  formData: ExpertFormData;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  handleFileUpload: (file: File) => Promise<void>;
-  handleRemoveCertificate: (index: number) => void;
-  isUploading?: boolean;
-  uploadProgress?: number;
-  nextStep: () => void;
-  prevStep: () => void;
-  errors: Record<string, string>;
-  touched?: Record<string, boolean>;
-}
+const specialtiesList = [
+  "Anxiety",
+  "Depression",
+  "Stress Management",
+  "Relationship Issues",
+  "Trauma",
+  "Self-esteem",
+  "Career Counseling",
+  "Grief",
+  "Life Transitions",
+  "ADHD",
+];
 
-const ProfessionalInfoStep = ({
-  formData,
-  handleChange,
-  handleBlur,
-  handleFileUpload,
-  handleRemoveCertificate,
-  isUploading = false,
-  uploadProgress = 0,
-  nextStep,
-  prevStep,
-  errors,
-  touched = {}
-}: ProfessionalInfoStepProps) => {
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      await handleFileUpload(e.target.files[0]);
-      
-      // Reset the input so the same file can be selected again if needed
-      e.target.value = '';
-    }
-  };
-
-  const triggerFileInput = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  const isFieldInvalid = (fieldName: string): boolean => {
-    return touched[fieldName] === true && !!errors[fieldName];
-  };
-
+const ProfessionalInfoStep = () => {
+  const [showPassword, setShowPassword] = useState(false);
+  const form = useFormContext();
+  
+  if (!form) {
+    console.error("ProfessionalInfoStep must be used within a FormProvider");
+    return null;
+  }
+  
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold mb-2">Professional Information</h2>
+      <FormField
+        control={form.control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Professional Title</FormLabel>
+            <FormControl>
+              <Input placeholder="Licensed Therapist" {...field} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       
-      <div className="space-y-4">
-        <FormItem className="space-y-2">
-          <label htmlFor="specialization" className="block text-sm font-medium text-gray-700">
-            Specialization <span className="text-destructive">*</span>
-          </label>
-          <Input
-            id="specialization"
-            name="specialization"
-            type="text"
-            value={formData.specialization}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={isFieldInvalid('specialization') ? "border-destructive" : ""}
-            aria-invalid={isFieldInvalid('specialization')}
-            aria-describedby={isFieldInvalid('specialization') ? "specialization-error" : undefined}
-          />
-          {isFieldInvalid('specialization') && (
-            <FormMessage id="specialization-error">{errors.specialization}</FormMessage>
-          )}
-        </FormItem>
-        
-        <FormItem className="space-y-2">
-          <label htmlFor="experience" className="block text-sm font-medium text-gray-700">
-            Years of Experience <span className="text-destructive">*</span>
-          </label>
-          <Input
-            id="experience"
-            name="experience"
-            type="text"
-            value={formData.experience}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={isFieldInvalid('experience') ? "border-destructive" : ""}
-            aria-invalid={isFieldInvalid('experience')}
-            aria-describedby={isFieldInvalid('experience') ? "experience-error" : undefined}
-          />
-          {isFieldInvalid('experience') && (
-            <FormMessage id="experience-error">{errors.experience}</FormMessage>
-          )}
-        </FormItem>
-        
-        <FormItem className="space-y-2">
-          <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
-            Bio / About Yourself <span className="text-destructive">*</span>
-          </label>
-          <Textarea
-            id="bio"
-            name="bio"
-            rows={4}
-            value={formData.bio}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            className={isFieldInvalid('bio') ? "border-destructive" : ""}
-            aria-invalid={isFieldInvalid('bio')}
-            aria-describedby={isFieldInvalid('bio') ? "bio-error" : undefined}
-          />
-          {isFieldInvalid('bio') && (
-            <FormMessage id="bio-error">{errors.bio}</FormMessage>
-          )}
-        </FormItem>
-        
-        <FormItem className="space-y-2">
-          <label className="block text-sm font-medium text-gray-700">
-            Certificates / Qualifications
-          </label>
-          
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            id="certificate"
-            name="certificate"
-            type="file"
-            onChange={onFileChange}
-            accept=".pdf,.png,.jpg,.jpeg"
-            className="hidden"
-            disabled={isUploading}
-          />
-          
-          {/* Custom styled upload button */}
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={triggerFileInput}
-            className="w-full flex items-center justify-center gap-2"
-            disabled={isUploading}
-          >
-            <Upload className="h-4 w-4" />
-            {isUploading ? 'Uploading...' : 'Browse for Certificate'}
-          </Button>
-          
-          {/* Upload progress */}
-          {isUploading && (
-            <div className="mt-2 space-y-1">
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <span>Uploading...</span>
-                <span>{uploadProgress}%</span>
-              </div>
-              <Progress value={uploadProgress} className="h-1" />
-            </div>
-          )}
-          
-          {/* Display uploaded certificates */}
-          {formData.certificateUrls && formData.certificateUrls.length > 0 && (
-            <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
-              <p className="text-sm text-gray-500 flex items-center">
-                <Check className="h-4 w-4 mr-1 text-green-500" />
-                Uploaded Certificates:
-              </p>
-              <div className="space-y-2">
-                {formData.certificateUrls.map((url, index) => (
-                  <div key={index} className="flex items-center space-x-2 bg-muted/50 p-2 rounded border border-green-100">
-                    <a 
-                      href={url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800 underline truncate flex-1"
-                    >
-                      {formData.certificates?.[index]?.name || `Certificate ${index + 1}`}
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveCertificate(index)}
-                      className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50"
-                      title="Remove certificate"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          
-          <div className="text-xs text-gray-500 mt-1 flex items-center">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            Accepted formats: PDF, JPG, PNG (max 5MB)
-          </div>
-        </FormItem>
-      </div>
+      <FormField
+        control={form.control}
+        name="experience"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Years of Experience</FormLabel>
+            <FormControl>
+              <Input 
+                type="number" 
+                min="0" 
+                {...field} 
+                onChange={e => field.onChange(parseInt(e.target.value))} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       
-      {/* Fixed positioning for navigation buttons to ensure they're always visible */}
-      <div className="flex justify-between pt-10 pb-4 mt-8">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={prevStep}
-          className="px-4 py-2"
-        >
-          Previous
-        </Button>
-        <Button
-          type="button"
-          onClick={nextStep}
-          className="px-4 py-2"
-        >
-          Next
-        </Button>
+      <FormField
+        control={form.control}
+        name="specialties"
+        render={() => (
+          <FormItem>
+            <div className="mb-4">
+              <FormLabel className="text-base">Specialties</FormLabel>
+              <FormDescription>Select all that apply.</FormDescription>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {specialtiesList.map((specialty) => (
+                <FormField
+                  key={specialty}
+                  control={form.control}
+                  name="specialties"
+                  render={({ field }) => {
+                    return (
+                      <FormItem
+                        key={specialty}
+                        className="flex flex-row items-start space-x-3 space-y-0"
+                      >
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value?.includes(specialty)}
+                            onCheckedChange={(checked) => {
+                              return checked
+                                ? field.onChange([...field.value, specialty])
+                                : field.onChange(
+                                    field.value?.filter(
+                                      (value) => value !== specialty
+                                    )
+                                  );
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal">
+                          {specialty}
+                        </FormLabel>
+                      </FormItem>
+                    );
+                  }}
+                />
+              ))}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <FormField
+        control={form.control}
+        name="bio"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Professional Bio</FormLabel>
+            <FormControl>
+              <Textarea 
+                placeholder="Tell us about your professional background and approach..." 
+                className="min-h-[150px]"
+                {...field} 
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      
+      <div className="border-t pt-4 mt-6">
+        <h3 className="text-lg font-medium mb-4">Account Security</h3>
+        
+        <div className="space-y-4">
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <div className="relative">
+                  <FormControl>
+                    <Input 
+                      type={showPassword ? "text" : "password"}
+                      {...field} 
+                    />
+                  </FormControl>
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2.5"
+                    onClick={() => setShowPassword(s => !s)}
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password</FormLabel>
+                <FormControl>
+                  <Input 
+                    type={showPassword ? "text" : "password"}
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        
+        <div className="mt-4">
+          <FormField
+            control={form.control}
+            name="termsAccepted"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    I accept the Terms of Service and Privacy Policy
+                  </FormLabel>
+                  <FormMessage />
+                </div>
+              </FormItem>
+            )}
+          />
+        </div>
       </div>
     </div>
   );

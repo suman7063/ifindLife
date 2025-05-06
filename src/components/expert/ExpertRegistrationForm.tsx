@@ -1,415 +1,208 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, FormProvider } from "react-hook-form";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from 'sonner';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import FormStepContainer from './FormStepContainer';
 import PersonalInfoStep from './PersonalInfoStep';
 import AddressInfoStep from './AddressInfoStep';
 import ProfessionalInfoStep from './ProfessionalInfoStep';
 import ServiceSelectionStep from './ServiceSelectionStep';
-import { useExpertRegistration } from '@/hooks/expert-auth/auth/useExpertRegistration';
-import { fetchServices } from './services/expertServicesService';
-import { ServiceType } from './types';
+import { supabase } from '@/lib/supabase';
 
-const ExpertRegistrationForm: React.FC = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const { register, registrationError } = useExpertRegistration(setLoading);
+// Define form schema with validation
+const expertFormSchema = z.object({
+  // Personal Info
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email"),
+  phone: z.string().min(6, "Phone number is required"),
   
-  const [step, setStep] = useState(1);
-  const [services, setServices] = useState<ServiceType[]>([]);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string | null>(null);
-  const [fieldTouched, setFieldTouched] = useState<Record<string, boolean>>({});
+  // Address Info
+  address: z.string().min(1, "Address is required"),
+  city: z.string().min(1, "City is required"),
+  state: z.string().min(1, "State/Province is required"),
+  country: z.string().min(1, "Country is required"),
   
-  const initialFormData = {
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    address: '',
-    city: '',
-    state: '',
-    country: '',
-    specialization: '',
-    experience: '',
-    certificates: [],
-    certificateUrls: [],
-    bio: '',
-    selectedServices: [],
-    acceptedTerms: false
-  };
+  // Professional Info
+  title: z.string().min(1, "Professional title is required"),
+  experience: z.number().min(0, "Please specify years of experience"),
+  specialties: z.array(z.string()).min(1, "Select at least one specialty"),
+  bio: z.string().min(50, "Bio should be at least 50 characters"),
   
-  const [formData, setFormData] = useState(initialFormData);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  // Services
+  selectedServices: z.array(z.number()).min(1, "Select at least one service"),
   
-  // Load services on mount
+  // Account
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string(),
+  termsAccepted: z.boolean().refine(value => value === true, {
+    message: "You must accept the terms and conditions",
+  }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type ExpertFormValues = z.infer<typeof expertFormSchema>;
+
+const ExpertRegistrationForm = () => {
+  const [activeStep, setActiveStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [services, setServices] = useState([]);
+  
+  const form = useForm<ExpertFormValues>({
+    resolver: zodResolver(expertFormSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      state: "",
+      country: "",
+      title: "",
+      experience: 0,
+      specialties: [],
+      bio: "",
+      selectedServices: [],
+      password: "",
+      confirmPassword: "",
+      termsAccepted: false,
+    },
+  });
+  
+  // Load services for selection
   useEffect(() => {
     const loadServices = async () => {
       try {
-        console.log('Fetching expert services...');
-        const servicesData = await fetchServices();
-        console.log('Services fetched successfully:', servicesData);
-        setServices(servicesData);
+        const { data, error } = await supabase
+          .from('services')
+          .select('*')
+          .order('id', { ascending: true });
+          
+        if (error) throw error;
+        
+        setServices(data || []);
       } catch (error) {
         console.error('Error loading services:', error);
-        toast.error('Failed to load services');
-        
-        // Fallback to default services if fetch fails
-        setServices([
-          { id: 1, name: 'Therapy' },
-          { id: 2, name: 'Counseling' },
-          { id: 3, name: 'Consultation' }
-        ]);
+        toast.error('Could not load services. Please try again later.');
       }
     };
     
     loadServices();
   }, []);
   
-  // Form handling functions
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setFieldTouched(prev => ({ ...prev, [name]: true }));
-    
-    // Validate field on change if it's been touched
-    if (fieldTouched[name]) {
-      const error = validateField(name, value);
-      setErrors(prev => ({
-        ...prev,
-        [name]: error
-      }));
-    }
-  };
-  
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFieldTouched(prev => ({ ...prev, [name]: true }));
-    
-    // Validate field on blur
-    const error = validateField(name, value);
-    setErrors(prev => ({
-      ...prev,
-      [name]: error
-    }));
-  };
-  
-  const handleCheckboxChange = (name: string, checked: boolean) => {
-    setFormData(prev => ({ ...prev, [name]: checked }));
-    setFieldTouched(prev => ({ ...prev, [name]: true }));
-    
-    // Validate field if it's been touched
-    if (fieldTouched[name]) {
-      const error = validateField(name, checked);
-      setErrors(prev => ({
-        ...prev,
-        [name]: error
-      }));
-    }
-  };
-  
-  const handleServiceSelection = (serviceId: number, checked: boolean) => {
-    const selectedServices = checked
-      ? [...formData.selectedServices, serviceId]
-      : formData.selectedServices.filter(id => id !== serviceId);
-    
-    setFormData(prev => ({ ...prev, selectedServices }));
-    setFieldTouched(prev => ({ ...prev, selectedServices: true }));
-    
-    // Validate services selection
-    if (fieldTouched.selectedServices) {
-      const error = validateField('selectedServices', selectedServices);
-      setErrors(prev => ({
-        ...prev,
-        selectedServices: error
-      }));
-    }
-  };
-  
-  // Updated to match the ProfessionalInfoStep expectation (single file)
-  const handleFileUpload = async (file: File): Promise<void> => {
-    if (!file) return;
-    
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size exceeds 5MB limit');
-      return;
-    }
-    
-    // Check file type
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
-    if (!['pdf', 'jpg', 'jpeg', 'png'].includes(fileExt || '')) {
-      toast.error('Invalid file type. Only PDF, JPG, JPEG, PNG are allowed');
-      return;
-    }
-    
-    setIsUploading(true);
-    
+  const handleSubmit = async (values: ExpertFormValues) => {
     try {
-      // Simulate upload progress
-      const interval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 100) {
-            clearInterval(interval);
-            return 100;
-          }
-          return prev + 10;
+      setIsSubmitting(true);
+      
+      // Example submission logic
+      console.log('Form submitted with values:', values);
+      
+      // Register the expert
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            user_type: 'expert',
+          },
+        },
+      });
+      
+      if (error) throw error;
+      
+      // Create expert profile
+      const { error: profileError } = await supabase
+        .from('experts')
+        .insert({
+          id: data.user?.id,
+          name: values.name,
+          email: values.email,
+          phone: values.phone,
+          address: values.address,
+          city: values.city,
+          state: values.state,
+          country: values.country,
+          title: values.title,
+          experience: values.experience,
+          specialties: values.specialties,
+          bio: values.bio,
+          services: values.selectedServices,
+          status: 'pending',
         });
-      }, 200);
-      
-      // In a real implementation, upload the file to storage
-      // For now, just add to the certificates array
-      const certificates = [...formData.certificates, file];
-      const certificateUrls = [...formData.certificateUrls, URL.createObjectURL(file)];
-      
-      setTimeout(() => {
-        clearInterval(interval);
-        setUploadProgress(100);
         
-        setFormData(prev => ({
-          ...prev,
-          certificates,
-          certificateUrls
-        }));
-        
-        toast.success('Certificate uploaded successfully');
-        setIsUploading(false);
-        setUploadProgress(0);
-      }, 2000);
-    } catch (error) {
-      console.error('File upload error:', error);
-      toast.error('Failed to upload certificate');
-      setIsUploading(false);
-      setUploadProgress(0);
+      if (profileError) throw profileError;
+      
+      toast.success('Registration successful! Your account is pending approval.');
+      window.location.href = '/expert-login?status=registered';
+      
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Registration failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
-  const handleRemoveCertificate = (index: number) => {
-    const certificates = [...formData.certificates];
-    const certificateUrls = [...formData.certificateUrls];
-    
-    certificates.splice(index, 1);
-    certificateUrls.splice(index, 1);
-    
-    setFormData(prev => ({ ...prev, certificates, certificateUrls }));
-  };
-
-  const validateField = (name: string, value: any): string => {
-    switch(name) {
-      case 'name':
-        return !value ? 'Name is required' : '';
-      case 'email':
-        return !value ? 'Email is required' : 
-               !/\S+@\S+\.\S+/.test(value) ? 'Email is invalid' : '';
-      case 'phone':
-        return !value ? 'Phone number is required' : 
-               !/^\+?[0-9\s-]{8,}$/.test(value) ? 'Phone number is invalid' : '';
-      case 'password':
-        return !value ? 'Password is required' : 
-               value.length < 6 ? 'Password must be at least 6 characters' : '';
-      case 'confirmPassword':
-        return !value ? 'Please confirm your password' : 
-               value !== formData.password ? 'Passwords do not match' : '';
-      case 'address':
-        return !value && step >= 2 ? 'Address is required' : '';
-      case 'city':
-        return !value && step >= 2 ? 'City is required' : '';
-      case 'state':
-        return !value && step >= 2 ? 'State is required' : '';
-      case 'country':
-        return !value && step >= 2 ? 'Country is required' : '';
-      case 'specialization':
-        return !value && step >= 3 ? 'Specialization is required' : '';
-      case 'experience':
-        return !value && step >= 3 ? 'Experience information is required' : '';
-      case 'bio':
-        return !value && step >= 3 ? 'Bio is required' : '';
-      case 'selectedServices':
-        return (!value || (Array.isArray(value) && value.length === 0)) && step === 4 ? 'Please select at least one service' : '';
-      case 'acceptedTerms':
-        return (!value) && step === 4 ? 'You must accept the terms and conditions' : '';
-      default:
-        return '';
-    }
-  };
-
-  const validateCurrentStep = () => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-    
-    if (step === 1) {
-      ['name', 'email', 'phone', 'password', 'confirmPassword'].forEach(field => {
-        const fieldValue = formData[field as keyof typeof formData];
-        const error = validateField(field, fieldValue);
-        if (error) {
-          newErrors[field] = error;
-          isValid = false;
-        }
-        setFieldTouched(prev => ({ ...prev, [field]: true }));
-      });
-    } else if (step === 2) {
-      ['address', 'city', 'state', 'country'].forEach(field => {
-        const fieldValue = formData[field as keyof typeof formData];
-        const error = validateField(field, fieldValue);
-        if (error) {
-          newErrors[field] = error;
-          isValid = false;
-        }
-        setFieldTouched(prev => ({ ...prev, [field]: true }));
-      });
-    } else if (step === 3) {
-      ['specialization', 'experience', 'bio'].forEach(field => {
-        const fieldValue = formData[field as keyof typeof formData];
-        const error = validateField(field, fieldValue);
-        if (error) {
-          newErrors[field] = error;
-          isValid = false;
-        }
-        setFieldTouched(prev => ({ ...prev, [field]: true }));
-      });
-    } else if (step === 4) {
-      const servicesError = validateField('selectedServices', formData.selectedServices);
-      if (servicesError) {
-        newErrors.selectedServices = servicesError;
-        isValid = false;
-        setFieldTouched(prev => ({ ...prev, selectedServices: true }));
-      }
-      
-      const termsError = validateField('acceptedTerms', formData.acceptedTerms);
-      if (termsError) {
-        newErrors.acceptedTerms = termsError;
-        isValid = false;
-        setFieldTouched(prev => ({ ...prev, acceptedTerms: true }));
-      }
-    }
-    
-    setErrors(prev => ({ ...prev, ...newErrors }));
-    return isValid;
-  };
-
-  const onSubmitForm = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (loading) return;
-    
-    if (!validateCurrentStep()) {
-      toast.error('Please correct the errors before submitting');
-      return;
-    }
-    
-    try {
-      setFormError(null);
-      
-      // Transform formData to registration data
-      const registrationData = {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        specialization: formData.specialization,
-        experience: formData.experience,
-        bio: formData.bio,
-        certificate_urls: formData.certificateUrls,
-        selected_services: formData.selectedServices
-      };
-      
-      console.log('Submitting expert registration with data:', registrationData);
-      const success = await register(registrationData);
-      
-      if (success) {
-        toast.success('Registration successful! Please log in with your credentials.');
-        // Navigate to login tab with status=registered in query param
-        navigate('/expert-login?status=registered');
-      }
-    } catch (error: any) {
-      setFormError(error.message || 'An unexpected error occurred');
-      toast.error(error.message || 'Registration failed. Please try again.');
-    }
-  };
-
+  const steps = [
+    { title: "Personal Info", component: <PersonalInfoStep /> },
+    { title: "Address", component: <AddressInfoStep /> },
+    { title: "Professional Info", component: <ProfessionalInfoStep /> },
+    { title: "Services", component: <ServiceSelectionStep services={services} /> },
+  ];
+  
   const nextStep = () => {
-    if (!validateCurrentStep()) {
-      toast.error('Please correct the errors before proceeding');
-      return;
-    }
-    setStep(step + 1);
+    const fields = [
+      // Step 1 fields
+      ["name", "email", "phone"],
+      // Step 2 fields
+      ["address", "city", "state", "country"],
+      // Step 3 fields
+      ["title", "experience", "specialties", "bio", "password", "confirmPassword", "termsAccepted"],
+      // Step 4 fields
+      ["selectedServices"],
+    ];
+    
+    const currentFields = fields[activeStep];
+    const output = form.trigger(currentFields as any);
+    
+    output.then((valid) => {
+      if (valid) {
+        setActiveStep(prev => Math.min(prev + 1, steps.length - 1));
+      }
+    });
   };
-
+  
   const prevStep = () => {
-    setStep(step - 1);
+    setActiveStep(prev => Math.max(prev - 1, 0));
   };
-
+  
   return (
-    <form onSubmit={onSubmitForm} className="space-y-6">
-      {(formError || registrationError) && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4 mr-2" />
-          <AlertDescription>{formError || registrationError}</AlertDescription>
-        </Alert>
-      )}
-      
-      {step === 1 && (
-        <PersonalInfoStep 
-          formData={formData} 
-          handleChange={handleChange} 
-          handleBlur={handleBlur}
-          nextStep={nextStep}
-          errors={errors}
-          touched={fieldTouched}
-        />
-      )}
-      
-      {step === 2 && (
-        <AddressInfoStep 
-          formData={formData} 
-          handleChange={handleChange} 
-          handleBlur={handleBlur}
-          nextStep={nextStep} 
-          prevStep={prevStep}
-          errors={errors}
-          touched={fieldTouched}
-        />
-      )}
-      
-      {step === 3 && (
-        <ProfessionalInfoStep 
-          formData={formData} 
-          handleChange={handleChange} 
-          handleBlur={handleBlur}
-          handleFileUpload={handleFileUpload}
-          handleRemoveCertificate={handleRemoveCertificate}
-          isUploading={isUploading}
-          uploadProgress={uploadProgress}
-          nextStep={nextStep} 
-          prevStep={prevStep}
-          errors={errors}
-          touched={fieldTouched}
-        />
-      )}
-      
-      {step === 4 && (
-        <ServiceSelectionStep 
-          formData={formData}
-          services={services}
-          handleCheckboxChange={handleServiceSelection}
-          setFormData={setFormData}
-          errors={errors}
-          touched={fieldTouched}
-          handleAcceptTerms={(checked: boolean) => handleCheckboxChange('acceptedTerms', checked)}
-          isSubmitting={loading}
-          onSubmit={onSubmitForm}
-          prevStep={prevStep}
-        />
-      )}
-    </form>
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <Tabs value={String(activeStep)} className="w-full">
+          {steps.map((step, index) => (
+            <TabsContent key={index} value={String(index)}>
+              <FormStepContainer 
+                title={step.title} 
+                currentStep={index + 1} 
+                totalSteps={steps.length} 
+                onNext={index < steps.length - 1 ? nextStep : undefined}
+                onPrevious={index > 0 ? prevStep : undefined}
+                onSubmit={index === steps.length - 1}
+                isSubmitting={isSubmitting}
+              >
+                {step.component}
+              </FormStepContainer>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </form>
+    </FormProvider>
   );
 };
 
