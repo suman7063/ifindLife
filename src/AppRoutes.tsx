@@ -1,6 +1,6 @@
 
 import React, { lazy, Suspense, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
 import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
@@ -39,6 +39,19 @@ const AppRoutes: React.FC = () => {
 
   return (
     <Suspense fallback={<LoadingScreen />}>
+      {/* Testing Links */}
+      <div className="fixed top-20 right-4 z-50 bg-white p-4 rounded shadow-md border">
+        <h4 className="font-bold mb-2">Test Links</h4>
+        <div className="space-y-1">
+          <Link to="/expert-dashboard" className="block text-ifind-teal hover:underline">
+            Expert Dashboard
+          </Link>
+          <Link to="/expert-login" className="block text-ifind-teal hover:underline">
+            Expert Login
+          </Link>
+        </div>
+      </div>
+      
       <Routes>
         <Route path="/" element={<Index />} />
         <Route path="/user-login" element={<UserLogin />} />
