@@ -24,8 +24,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     // Once the auth loading is complete, we can finish our check
     if (!isLoading) {
       setIsChecking(false);
+      
+      // Log authentication details for debugging
+      console.log('ProtectedRoute check:', { 
+        isAuthenticated, 
+        role, 
+        allowedRoles,
+        currentPath: location.pathname
+      });
     }
-  }, [isLoading]);
+  }, [isLoading, isAuthenticated, role, allowedRoles, location.pathname]);
 
   // Show loading screen while checking authentication
   if (isLoading || isChecking) {
@@ -34,17 +42,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to:', redirectPath);
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
   // If authenticated but not in allowed roles, redirect to appropriate dashboard
   if (role && !allowedRoles.includes(role)) {
+    console.log(`User role ${role} not in allowed roles ${allowedRoles.join(', ')}`);
+    
     // Redirect based on role
     if (role === 'user') {
+      console.log('Redirecting to user dashboard');
       return <Navigate to="/user-dashboard" replace />;
     } else if (role === 'expert') {
+      console.log('Redirecting to expert dashboard');
       return <Navigate to="/expert-dashboard" replace />;
     } else if (role === 'admin') {
+      console.log('Redirecting to admin dashboard');
       return <Navigate to="/admin" replace />;
     }
   }

@@ -52,6 +52,9 @@ const AppRoutes: React.FC = () => {
           <Link to="/expert-login" className="block text-ifind-teal hover:underline">
             Expert Login
           </Link>
+          <Link to="/user-dashboard" className="block text-ifind-teal hover:underline">
+            User Dashboard
+          </Link>
         </div>
       </div>
       
@@ -68,7 +71,7 @@ const AppRoutes: React.FC = () => {
           </AdminProtectedRoute>
         } />
         
-        {/* New Expert Dashboard with proper protection */}
+        {/* New Expert Dashboard with proper protection - Make this work with all sub-routes */}
         <Route 
           path="/expert-dashboard/*" 
           element={
@@ -78,8 +81,23 @@ const AppRoutes: React.FC = () => {
           } 
         />
 
-        {/* Map all routes from the consolidated routes array except admin and expert routes */}
-        {routes.filter(route => !route.path.startsWith('/admin') && !route.path.startsWith('/expert-dashboard') && route.path !== '/expert-login').map((route) => {
+        {/* User Dashboard with proper protection */}
+        <Route 
+          path="/user-dashboard/*" 
+          element={
+            <ProtectedRoute allowedRoles={['user']}>
+              <UserDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Map all routes from the consolidated routes array except admin, expert and user dashboard routes */}
+        {routes.filter(route => 
+          !route.path.startsWith('/admin') && 
+          !route.path.startsWith('/expert-dashboard') && 
+          !route.path.startsWith('/user-dashboard') && 
+          route.path !== '/expert-login'
+        ).map((route) => {
           const { element, path, requiredRole } = route;
           
           // Handle protected routes
@@ -110,5 +128,6 @@ const AppRoutes: React.FC = () => {
 
 // Import the Admin component here to avoid circular dependencies
 const Admin = lazy(() => import('./pages/Admin'));
+const UserDashboard = lazy(() => import('./pages/UserDashboard'));
 
 export default AppRoutes;

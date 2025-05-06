@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Navigate, Outlet, useLocation, Routes, Route, useNavigate } from 'react-router-dom';
+import { Navigate, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import UserDashboardLayout from '@/components/user/dashboard/UserDashboardLayout';
@@ -27,32 +27,27 @@ const UserDashboard: React.FC = () => {
   }, []);
   
   // Add debug logging
-  console.log('UserDashboard page rendering with auth state:', { 
-    isAuthenticated, 
-    hasUserProfile: !!userProfile,
-    isLoading,
-    role,
-    pathname: location.pathname,
-    redirectAttempted
-  });
+  useEffect(() => {
+    console.log('UserDashboard page rendering with auth state:', { 
+      isAuthenticated, 
+      hasUserProfile: !!userProfile,
+      isLoading,
+      role,
+      pathname: location.pathname,
+      redirectAttempted
+    });
+    
+    // If user is an expert, redirect them to expert dashboard
+    if (!isLoading && isAuthenticated && role === 'expert' && !redirectAttempted) {
+      console.log('UserDashboard: Detected expert role, should redirect to expert dashboard');
+      setRedirectAttempted(true);
+      toast.info('Redirecting to Expert Dashboard');
+      navigate('/expert-dashboard', { replace: true });
+    }
+  }, [isLoading, isAuthenticated, userProfile, role, location.pathname, redirectAttempted, navigate]);
   
   // Initialize the authentication journey preservation hook
   useAuthJourneyPreservation();
-  
-  // Redirect if authenticated as expert
-  useEffect(() => {
-    if (!isLoading && isAuthenticated && !redirectAttempted) {
-      setRedirectAttempted(true);
-      
-      if (role === 'expert') {
-        console.log('UserDashboard: User is authenticated as expert, redirecting to expert dashboard');
-        toast.info('Redirecting to expert dashboard');
-        // Use replace: true to prevent going back
-        navigate('/expert-dashboard', { replace: true });
-        return;
-      }
-    }
-  }, [isLoading, isAuthenticated, role, navigate, redirectAttempted]);
   
   // Handle logout process
   const handleLogout = async (): Promise<boolean> => {
@@ -83,16 +78,22 @@ const UserDashboard: React.FC = () => {
     return <DashboardLoader />;
   }
 
-  // Don't render dashboard content if not authenticated or not a user
+  // Don't render dashboard content if not authenticated
   if (!isAuthenticated) {
     console.log('Not authenticated, redirecting to login');
     return <Navigate to="/user-login" replace />;
   }
   
-  // If authenticated as expert, don't show user dashboard
+  // If authenticated as expert, redirect to expert dashboard
   if (role === 'expert') {
     console.log('Authenticated as expert, redirecting to expert dashboard');
     return <Navigate to="/expert-dashboard" replace />;
+  }
+
+  // If not authenticated as a user, don't render dashboard
+  if (role !== 'user') {
+    console.log('Not authenticated as user, redirecting to login');
+    return <Navigate to="/user-login" replace />;
   }
 
   return (
