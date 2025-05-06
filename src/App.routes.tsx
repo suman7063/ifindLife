@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 
 // Define route types without extending RouteObject from react-router-dom
@@ -42,7 +41,7 @@ export const routes: AppRoute[] = [
     path: '/login',
     element: <Login />
   },
-  // ExpertLogin is directly imported in AppRoutes.tsx
+  // ExpertLogin is directly imported in AppRoutes.tsx, not included here to avoid circular dependencies
   {
     path: '/forgot-password',
     element: <ForgotPassword />

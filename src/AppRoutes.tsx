@@ -7,10 +7,10 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 import AdminProtectedRoute from './components/ProtectedRoute';
 import { routes } from './App.routes'; // Import routes from consolidated file
 
-// Import directly to avoid any loading issues
+// Import critical routes directly to prevent loading issues
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
-import ExpertLogin from './pages/ExpertLogin'; // Direct import to prevent loading issues
+import ExpertLogin from './pages/ExpertLogin'; // Import directly instead of lazy loading
 
 // Only log in development environment
 if (import.meta.env.DEV) {

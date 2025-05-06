@@ -21,7 +21,9 @@ const ExpertLogin: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   
   // Debug logging
-  console.log("ExpertLogin component rendering", { isLoading, isAuthenticated, hasExpertProfile: !!expertProfile });
+  useEffect(() => {
+    console.log("ExpertLogin component rendering", { isLoading, isAuthenticated, hasExpertProfile: !!expertProfile });
+  }, [isLoading, isAuthenticated, expertProfile]);
   
   // Check URL parameters for status messages
   useEffect(() => {

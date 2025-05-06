@@ -16,10 +16,11 @@ export const useAuthLogin = (
       setLoading(true);
       console.log("Attempting login with email:", email);
       
-      // Check if there's already a session
+      // Clean up any existing sessions before logging in
       const { data: existingSession } = await supabase.auth.getSession();
       if (existingSession.session) {
-        console.log("Found existing session");
+        console.log("Found existing session, cleaning up before login");
+        await supabase.auth.signOut({ scope: 'local' });
       }
       
       // Sign in with email and password

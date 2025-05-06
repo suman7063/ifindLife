@@ -11,10 +11,11 @@ import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { toast } from 'sonner';
 
 const ExpertDashboard = () => {
   const navigate = useNavigate();
-  const { isLoading, expertProfile, isAuthenticated } = useAuth();
+  const { isLoading, expertProfile, isAuthenticated, role } = useAuth();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [users, setUsers] = useState<any[]>([]); // For user reports
   
@@ -24,18 +25,33 @@ const ExpertDashboard = () => {
       authLoading: isLoading,
       hasExpertAuthProfile: !!expertProfile,
       isAuthenticated,
+      role,
       redirectAttempted
     });
-  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted]);
+  }, [expertProfile, isLoading, isAuthenticated, role, redirectAttempted]);
   
   // If not authenticated at all, redirect to login
   useEffect(() => {
-    if (!isLoading && !expertProfile && !isAuthenticated && !redirectAttempted) {
+    if (!isLoading && !isAuthenticated && !redirectAttempted) {
       console.log('Not authenticated, redirecting to expert login');
       setRedirectAttempted(true);
+      toast.error('Please log in to access the expert dashboard');
       navigate('/expert-login');
+      return;
     }
-  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted, navigate]);
+    
+    // If authenticated but not as expert, redirect to appropriate dashboard
+    if (!isLoading && isAuthenticated && role !== 'expert' && !redirectAttempted) {
+      console.log('Authenticated but not as expert, redirecting');
+      setRedirectAttempted(true);
+      toast.error('You do not have expert privileges');
+      if (role === 'user') {
+        navigate('/user-dashboard');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted, navigate, role]);
   
   if (isLoading) {
     return <DashboardLoader />;
