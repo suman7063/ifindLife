@@ -8,4 +8,11 @@ export { useExpertProfile } from './useExpertProfile';
 export { useExpertAuthentication } from './useExpertAuthentication';
 export { useFetchExpertProfile } from './auth/useFetchExpertProfile';
 export { useUserAccountCheck } from './auth/useUserAccountCheck';
-export type { ExpertProfile, ExpertAuthState, ExpertRegistrationData, UseExpertAuthReturn } from './types';
+export type { 
+  ExpertProfile, 
+  ExpertRegistrationData, 
+  ExpertTimeSlot, 
+  ProfileUpdateData,
+  ExpertAuthState,  // Add the previously missing type
+  UseExpertAuthReturn // Add the previously missing type
+} from './types';

@@ -1,4 +1,3 @@
-
 export interface ExpertFormData {
   id?: string | number;
   name: string;
@@ -18,6 +17,7 @@ export interface ExpertFormData {
   selectedServices: number[];
   acceptedTerms: boolean;
   reportedUsers?: any[];
+  profilePicture?: string; // Add the missing profilePicture property
 }
 
 export interface ExpertRegistrationData {

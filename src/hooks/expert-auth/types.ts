@@ -61,3 +61,33 @@ export interface ProfileUpdateData {
   bio?: string;
   profile_picture?: string;
 }
+
+// Add the missing ExpertAuthState export
+export interface ExpertAuthState {
+  currentExpert: ExpertProfile | null;
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  initialized: boolean;
+  isAuthenticated: boolean;
+}
+
+// Add the missing UseExpertAuthReturn export
+export interface UseExpertAuthReturn {
+  currentExpert: ExpertProfile | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  isLoading: boolean;
+  error: string | null;
+  initialized: boolean;
+  authInitialized: boolean;
+  user: User | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  register: (data: ExpertRegistrationData) => Promise<boolean>;
+  updateProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
+  hasUserAccount: () => Promise<boolean>;
+}
+
+// Import User type from Supabase for proper typing
+import { User } from '@supabase/supabase-js';
