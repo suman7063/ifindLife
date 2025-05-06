@@ -56,7 +56,8 @@ export const useExpertFavorites = (
       if (error) throw error;
       
       if (setFavoriteExperts) {
-        setFavoriteExperts(prev => prev.filter(item => {
+        // Fix the type issue here - explicitly cast to the expected type
+        setFavoriteExperts(favoriteExperts.filter(item => {
           const itemExpertId = parseInt(String(item.expert_id), 10);
           return itemExpertId !== expertIdInt;
         }));

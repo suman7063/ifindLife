@@ -1,10 +1,11 @@
 
-import { FavoriteProgram, FavoriteExpert, UserFavoritesHookReturn } from './types/favorites';
+import { UserFavoritesHookReturn } from './types/favorites';
 import { useFavoritesFetcher } from './favorites/useFavoritesFetcher';
 import { useProgramFavorites } from './favorites/useProgramFavorites';
 import { useExpertFavorites } from './favorites/useExpertFavorites';
 
-export { FavoriteProgram, FavoriteExpert };
+// Re-export types with 'export type'
+export type { FavoriteProgram, FavoriteExpert } from './types/favorites';
 
 export const useUserFavorites = (userId?: string): UserFavoritesHookReturn => {
   // Use the fetcher hook to get favorites data
