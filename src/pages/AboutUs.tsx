@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, BookOpen, BrainCircuit, Globe, Briefcase, GraduationCap, Heart, Building, Certificate } from 'lucide-react';
+import { Award, BookOpen, BrainCircuit, Globe, Briefcase, GraduationCap, Heart, Building, GraduationCap as Education } from 'lucide-react';
 
 const AboutUs = () => {
   const teamMembers = [
@@ -41,7 +41,7 @@ const AboutUs = () => {
       highlights: [
         { icon: <Heart className="h-4 w-4" />, text: "PhD in Cardiac Wellness & Founder of I AM Fit" },
         { icon: <BrainCircuit className="h-4 w-4" />, text: "Mindfulness Coach & Workplace Wellness Specialist" },
-        { icon: <Certificate className="h-4 w-4" />, text: "Certified Lifestyle Medicine & Weight Management Coach" }
+        { icon: <Education className="h-4 w-4" />, text: "Certified Lifestyle Medicine & Weight Management Coach" }
       ]
     }
   ];
