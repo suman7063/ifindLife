@@ -115,11 +115,14 @@ const ExpertRegistrationForm = () => {
       
       if (error) throw error;
       
+      // Convert experience to string since the database expects a string
+      const expertExperience = String(values.experience);
+      
       // Create expert profile
       const { error: profileError } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .insert({
-          id: data.user?.id,
+          auth_id: data.user?.id,
           name: values.name,
           email: values.email,
           phone: values.phone,
@@ -128,10 +131,10 @@ const ExpertRegistrationForm = () => {
           state: values.state,
           country: values.country,
           title: values.title,
-          experience: values.experience,
+          experience: expertExperience, // Convert experience to string as required by the database
           specialties: values.specialties,
           bio: values.bio,
-          services: values.selectedServices,
+          selected_services: values.selectedServices,
           status: 'pending',
         });
         
