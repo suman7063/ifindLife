@@ -27,7 +27,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (!isLoading) {
       setIsChecking(false);
     }
-  }, [isLoading]);
+  }, [isLoading, isAuthenticated, role]);
 
   // Show loading screen while checking authentication
   if (isLoading || isChecking) {

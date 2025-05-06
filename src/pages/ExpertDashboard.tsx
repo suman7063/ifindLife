@@ -11,27 +11,24 @@ import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 const ExpertDashboard = () => {
   const navigate = useNavigate();
-  const { isLoading, expertProfile, userProfile, isAuthenticated, role } = useAuth();
+  const { isLoading, expertProfile, isAuthenticated, role } = useAuth();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
-  const [isCreatingProfile, setIsCreatingProfile] = useState(false);
   
   // Debug logging
   useEffect(() => {
     console.log('ExpertDashboard - Auth states:', {
       authLoading: isLoading,
-      hasExpertAuthProfile: !!expertProfile,
-      hasUserProfile: !!userProfile,
+      hasExpertProfile: !!expertProfile,
       isAuthenticated,
       role,
       redirectAttempted
     });
-  }, [expertProfile, userProfile, isLoading, isAuthenticated, role, redirectAttempted]);
+  }, [expertProfile, isLoading, isAuthenticated, role, redirectAttempted]);
   
   // If not authenticated at all, redirect to login
   useEffect(() => {
@@ -40,7 +37,6 @@ const ExpertDashboard = () => {
       setRedirectAttempted(true);
       toast.error('Please log in to access the expert dashboard');
       navigate('/expert-login');
-      return;
     }
     
     // If authenticated but not as expert, redirect to appropriate dashboard
@@ -54,9 +50,9 @@ const ExpertDashboard = () => {
         navigate('/');
       }
     }
-  }, [expertProfile, userProfile, isLoading, isAuthenticated, redirectAttempted, navigate, role]);
+  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted, navigate, role]);
   
-  if (isLoading || isCreatingProfile) {
+  if (isLoading) {
     return <DashboardLoader />;
   }
 

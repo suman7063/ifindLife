@@ -72,56 +72,25 @@ const ExpertLogin: React.FC = () => {
     }
   }, [isLoading, isAuthenticated, expertProfile, userProfile, role, navigate]);
   
-  // Create a temporary expert profile for demonstration purposes
-  const createTemporaryExpertProfile = async (userId: string): Promise<boolean> => {
+  // Function to check if the expert profile exists
+  const checkExpertProfile = async (userId: string): Promise<boolean> => {
     try {
-      console.log("Creating temporary expert profile for demo purposes");
-      
-      // First check if profile already exists to avoid duplicate creation
-      try {
-        const { data: existingProfile, error: checkError } = await supabase
-          .from('expert_accounts')
-          .select('id')
-          .eq('auth_id', userId)
-          .maybeSingle();
-        
-        if (checkError) {
-          console.error("Error checking for existing profile:", checkError);
-          // Continue to attempt creation anyway
-        } else if (existingProfile) {
-          console.log("Expert profile already exists, no need to create");
-          return true;
-        }
-      } catch (checkErr) {
-        console.error("Error checking for existing profile:", checkErr);
-        // Continue to attempt creation anyway
-      }
-      
-      // Create expert profile with minimum required fields
+      console.log("Checking for expert profile for user ID:", userId);
       const { data, error } = await supabase
         .from('expert_accounts')
-        .insert([
-          { 
-            auth_id: userId,
-            name: 'Demo Expert',
-            email: 'demo@expert.com', // This will be overwritten by the user's email in a real app
-            status: 'approved',
-            experience: '5+ years'
-          }
-        ])
-        .select();
+        .select('id, status')
+        .eq('auth_id', userId)
+        .maybeSingle();
       
       if (error) {
-        console.error("Error creating expert profile:", error);
-        toast.error('Could not create expert profile: ' + error.message);
+        console.error("Error checking for expert profile:", error);
         return false;
       }
       
-      console.log("Created expert profile:", data);
-      toast.success('Created temporary expert profile for demonstration');
-      return true;
-    } catch (err) {
-      console.error("Error in createTemporaryExpertProfile:", err);
+      console.log("Expert profile check result:", data, error);
+      return !!data && data.status === 'approved';
+    } catch (error) {
+      console.error("Error checking for expert profile:", error);
       return false;
     }
   };
@@ -149,20 +118,20 @@ const ExpertLogin: React.FC = () => {
         
         const userId = newSession.session.user.id;
         
-        // For demo purposes, create an expert profile if none exists
-        const created = await createTemporaryExpertProfile(userId);
+        // Check if user has an expert profile
+        const hasExpertProfile = await checkExpertProfile(userId);
         
-        if (created) {
+        if (hasExpertProfile) {
           toast.success('Successfully logged in!');
           
           // Force full page reload to ensure proper state initialization
           window.location.href = '/expert-dashboard';
           return true;
         } else {
-          console.error('ExpertLogin: No expert profile found and could not create one');
-          toast.error('Could not set up expert profile. Please contact support.');
+          console.error('ExpertLogin: No approved expert profile found');
+          toast.error('You do not have an approved expert profile. If you believe this is an error, please contact support.');
           await supabase.auth.signOut();
-          setLoginError('Expert profile setup failed.');
+          setLoginError('No approved expert profile found.');
           return false;
         }
       } else {
