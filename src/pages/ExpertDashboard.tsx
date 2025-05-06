@@ -11,11 +11,12 @@ import ExpertProfileEdit from '@/components/expert/ExpertProfileEdit';
 import UserReports from '@/components/expert/UserReports';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 const ExpertDashboard = () => {
   const navigate = useNavigate();
-  const { isLoading, expertProfile, isAuthenticated, role } = useAuth();
+  const { isLoading, expertProfile, userProfile, isAuthenticated, role } = useAuth();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   
@@ -24,11 +25,12 @@ const ExpertDashboard = () => {
     console.log('ExpertDashboard - Auth states:', {
       authLoading: isLoading,
       hasExpertAuthProfile: !!expertProfile,
+      hasUserProfile: !!userProfile,
       isAuthenticated,
       role,
       redirectAttempted
     });
-  }, [expertProfile, isLoading, isAuthenticated, role, redirectAttempted]);
+  }, [expertProfile, userProfile, isLoading, isAuthenticated, role, redirectAttempted]);
   
   // If not authenticated at all, redirect to login
   useEffect(() => {
@@ -51,7 +53,57 @@ const ExpertDashboard = () => {
         navigate('/');
       }
     }
-  }, [expertProfile, isLoading, isAuthenticated, redirectAttempted, navigate, role]);
+  }, [expertProfile, userProfile, isLoading, isAuthenticated, redirectAttempted, navigate, role]);
+  
+  // Check if expert profile exists for current user, if not, create a temporary one for demo
+  const ensureExpertProfile = async () => {
+    try {
+      // Get current session to get user ID
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session || !session.session.user) {
+        return;
+      }
+      
+      const userId = session.session.user.id;
+      
+      // Check if user already has an expert profile
+      const { data: existingProfile, error } = await supabase
+        .from('expert_accounts')
+        .select('id')
+        .eq('auth_id', userId)
+        .maybeSingle();
+      
+      if (error || !existingProfile) {
+        console.log("No expert profile found, creating temporary one");
+        
+        // Create temporary expert profile
+        await supabase
+          .from('expert_accounts')
+          .insert([
+            { 
+              auth_id: userId,
+              name: 'Demo Expert',
+              email: session.session.user.email,
+              status: 'approved',
+              specialties: ['Psychology', 'Therapy'],
+              experience: '5 years' 
+            }
+          ]);
+          
+        // Reload the page to get updated profile
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error('Error ensuring expert profile:', error);
+    }
+  };
+  
+  // Run once to ensure expert profile exists
+  useEffect(() => {
+    if (isAuthenticated && !expertProfile && !isLoading) {
+      ensureExpertProfile();
+    }
+  }, [expertProfile, isAuthenticated, isLoading]);
   
   if (isLoading) {
     return <DashboardLoader />;
