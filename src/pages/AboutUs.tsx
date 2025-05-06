@@ -109,7 +109,11 @@ const AboutUs = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 h-full">
                     <div className="md:col-span-1 bg-ifind-charcoal flex items-center justify-center p-6">
                       <Avatar className="h-36 w-36 border-4 border-white">
-                        <AvatarImage src={member.image} alt={member.name} className="object-cover" />
+                        <AvatarImage 
+                          src={member.image} 
+                          alt={member.name} 
+                          className={`object-cover ${member.id === 3 ? 'object-top' : ''}`} 
+                        />
                         <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
                       </Avatar>
                     </div>
