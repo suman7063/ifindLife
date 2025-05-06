@@ -1,4 +1,6 @@
 
-import { FavoritesProvider, useFavorites } from './FavoritesContext';
+import { FavoritesProvider } from './FavoritesProvider';
+import { useFavorites } from './FavoritesContext';
+import { FavoritesContextType } from './types';
 
-export { FavoritesProvider, useFavorites };
+export { FavoritesProvider, useFavorites, FavoritesContextType };
