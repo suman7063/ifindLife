@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import ExpertRegistrationForm from '@/components/expert/ExpertRegistrationForm';
 
 const ExpertRegister: React.FC = () => {
   return (
@@ -25,6 +26,7 @@ const ExpertRegister: React.FC = () => {
               <p className="text-center text-gray-600 mb-6">
                 Complete the form below to register as an expert.
               </p>
+              <ExpertRegistrationForm />
             </CardContent>
           </Card>
         </div>

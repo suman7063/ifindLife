@@ -10,10 +10,9 @@ import FormStepContainer from './FormStepContainer';
 import PersonalInfoStep from './PersonalInfoStep';
 import AddressInfoStep from './AddressInfoStep';
 import ProfessionalInfoStep from './ProfessionalInfoStep';
-import ServiceSelectionStep from './ServiceSelectionStep';
 import { supabase } from '@/lib/supabase';
 
-// Define form schema with validation
+// Define form schema with validation but without selectedServices field
 const expertFormSchema = z.object({
   // Personal Info
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -32,9 +31,6 @@ const expertFormSchema = z.object({
   specialties: z.array(z.string()).min(1, "Select at least one specialty"),
   bio: z.string().min(50, "Bio should be at least 50 characters"),
   
-  // Services
-  selectedServices: z.array(z.number()).min(1, "Select at least one service"),
-  
   // Account
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
@@ -51,7 +47,6 @@ type ExpertFormValues = z.infer<typeof expertFormSchema>;
 const ExpertRegistrationForm = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [services, setServices] = useState([]);
   
   const form = useForm<ExpertFormValues>({
     resolver: zodResolver(expertFormSchema),
@@ -67,39 +62,16 @@ const ExpertRegistrationForm = () => {
       experience: 0,
       specialties: [],
       bio: "",
-      selectedServices: [],
       password: "",
       confirmPassword: "",
       termsAccepted: false,
     },
   });
   
-  // Load services for selection
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('services')
-          .select('*')
-          .order('id', { ascending: true });
-          
-        if (error) throw error;
-        
-        setServices(data || []);
-      } catch (error) {
-        console.error('Error loading services:', error);
-        toast.error('Could not load services. Please try again later.');
-      }
-    };
-    
-    loadServices();
-  }, []);
-  
   const handleSubmit = async (values: ExpertFormValues) => {
     try {
       setIsSubmitting(true);
       
-      // Example submission logic
       console.log('Form submitted with values:', values);
       
       // Register the expert
@@ -118,7 +90,7 @@ const ExpertRegistrationForm = () => {
       // Convert experience to string since the database expects a string
       const expertExperience = String(values.experience);
       
-      // Create expert profile
+      // Create expert profile with empty services array
       const { error: profileError } = await supabase
         .from('expert_accounts')
         .insert({
@@ -131,10 +103,10 @@ const ExpertRegistrationForm = () => {
           state: values.state,
           country: values.country,
           title: values.title,
-          experience: expertExperience, // Convert experience to string as required by the database
+          experience: expertExperience,
           specialties: values.specialties,
           bio: values.bio,
-          selected_services: values.selectedServices,
+          selected_services: [], // Empty array for services
           status: 'pending',
         });
         
@@ -151,11 +123,11 @@ const ExpertRegistrationForm = () => {
     }
   };
   
+  // Removed the service step, only using 3 steps now
   const steps = [
     { title: "Personal Info", component: <PersonalInfoStep /> },
     { title: "Address", component: <AddressInfoStep /> },
     { title: "Professional Info", component: <ProfessionalInfoStep /> },
-    { title: "Services", component: <ServiceSelectionStep services={services} /> },
   ];
   
   const nextStep = () => {
@@ -164,10 +136,8 @@ const ExpertRegistrationForm = () => {
       ["name", "email", "phone"],
       // Step 2 fields
       ["address", "city", "state", "country"],
-      // Step 3 fields
+      // Step 3 fields - now includes the terms and password since it's the final step
       ["title", "experience", "specialties", "bio", "password", "confirmPassword", "termsAccepted"],
-      // Step 4 fields
-      ["selectedServices"],
     ];
     
     const currentFields = fields[activeStep];
