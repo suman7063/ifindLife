@@ -2,11 +2,11 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-const DashboardLoader = () => {
+const DashboardLoader: React.FC = () => {
   return (
-    <div className="min-h-[50vh] flex items-center justify-center flex-col">
-      <Loader2 className="h-10 w-10 text-ifind-aqua animate-spin mb-4" />
-      <p className="text-muted-foreground">Loading expert dashboard...</p>
+    <div className="h-screen flex flex-col items-center justify-center bg-gray-50">
+      <Loader2 className="h-12 w-12 animate-spin text-ifind-aqua" />
+      <p className="mt-4 text-muted-foreground">Loading expert dashboard...</p>
     </div>
   );
 };

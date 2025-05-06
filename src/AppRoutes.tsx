@@ -45,11 +45,16 @@ const AppRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
-        <Route path="/expert-dashboard" element={
-          <ProtectedRoute allowedRoles={['expert']} redirectPath="/expert-login">
-            <ExpertDashboard />
-          </ProtectedRoute>
-        } />
+        
+        {/* Expert Dashboard route with protection */}
+        <Route 
+          path="/expert-dashboard/*" 
+          element={
+            <ProtectedRoute allowedRoles={['expert']} redirectPath="/expert-login">
+              <ExpertDashboard />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Admin routes need to handle all sub-routes */}
         <Route path="/admin/*" element={
