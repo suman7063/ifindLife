@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Award, BookOpen, BrainCircuit, Globe, Briefcase, GraduationCap } from 'lucide-react';
+import { Award, BookOpen, BrainCircuit, Globe, Briefcase, GraduationCap, Heart, Building, Certificate } from 'lucide-react';
 
 const AboutUs = () => {
   const teamMembers = [
@@ -30,6 +30,18 @@ const AboutUs = () => {
         { icon: <Briefcase className="h-4 w-4" />, text: "Co-founded Khabri & Beatcast" },
         { icon: <Globe className="h-4 w-4" />, text: "Led B2C and B2B businesses across multiple industries" },
         { icon: <GraduationCap className="h-4 w-4" />, text: "MBA from Ecole Des Pont Business School" }
+      ]
+    },
+    {
+      id: 3,
+      name: "Dr. Bhavna Khurana",
+      title: "Programme Director at iFindLife (UK)",
+      bio: "Dr. Bhavna Khurana, with over 20 years of global experience, is a PhD scholar in Cardiac Wellness and a pioneer in heart disease reversal through lifestyle change and mindfulness. She is the founder of I AM Fit (Singapore) and Soulversity (UK), offering mind-body wellness solutions. A certified Lifestyle Medicine Practitioner, Mindfulness Coach, and Meditation Teacher, Dr. Bhavna specializes in workplace wellness and mental health support through global Employee Assistance Programs (EAPs).",
+      image: "/lovable-uploads/ceb054b5-2e48-48c4-ae23-1b7f94a00301.png",
+      highlights: [
+        { icon: <Heart className="h-4 w-4" />, text: "PhD in Cardiac Wellness & Founder of I AM Fit" },
+        { icon: <BrainCircuit className="h-4 w-4" />, text: "Mindfulness Coach & Workplace Wellness Specialist" },
+        { icon: <Certificate className="h-4 w-4" />, text: "Certified Lifestyle Medicine & Weight Management Coach" }
       ]
     }
   ];
