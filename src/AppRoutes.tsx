@@ -10,7 +10,7 @@ import { routes } from './App.routes'; // Import routes from consolidated file
 // Import critical routes directly to prevent loading issues
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
-import ExpertLogin from './pages/ExpertLogin'; // Import directly instead of lazy loading
+import ExpertLogin from './pages/ExpertLogin';
 
 // Only log in development environment
 if (import.meta.env.DEV) {
@@ -25,6 +25,9 @@ const Index = lazy(() => {
   }
   return import('./pages/Index');
 });
+
+// Import the new expert dashboard
+const NewExpertDashboard = lazy(() => import('./pages/NewExpertDashboard'));
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, role } = useAuth();
@@ -64,9 +67,19 @@ const AppRoutes: React.FC = () => {
             <Admin />
           </AdminProtectedRoute>
         } />
+        
+        {/* New Expert Dashboard with proper protection */}
+        <Route 
+          path="/expert-dashboard/*" 
+          element={
+            <ProtectedRoute allowedRoles={['expert']}>
+              <NewExpertDashboard />
+            </ProtectedRoute>
+          } 
+        />
 
         {/* Map all routes from the consolidated routes array except admin and expert routes */}
-        {routes.filter(route => !route.path.startsWith('/admin') && route.path !== '/expert-login').map((route) => {
+        {routes.filter(route => !route.path.startsWith('/admin') && !route.path.startsWith('/expert-dashboard') && route.path !== '/expert-login').map((route) => {
           const { element, path, requiredRole } = route;
           
           // Handle protected routes

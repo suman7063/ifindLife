@@ -49,6 +49,7 @@ const UserDashboard: React.FC = () => {
         toast.info('Redirecting to expert dashboard');
         // Use replace: true to prevent going back
         navigate('/expert-dashboard', { replace: true });
+        return;
       }
     }
   }, [isLoading, isAuthenticated, role, navigate, redirectAttempted]);
@@ -83,9 +84,15 @@ const UserDashboard: React.FC = () => {
   }
 
   // Don't render dashboard content if not authenticated or not a user
-  if (!isAuthenticated || role !== 'user') {
-    console.log('Not authenticated or not a user, redirecting to login');
+  if (!isAuthenticated) {
+    console.log('Not authenticated, redirecting to login');
     return <Navigate to="/user-login" replace />;
+  }
+  
+  // If authenticated as expert, don't show user dashboard
+  if (role === 'expert') {
+    console.log('Authenticated as expert, redirecting to expert dashboard');
+    return <Navigate to="/expert-dashboard" replace />;
   }
 
   return (
