@@ -29,6 +29,9 @@ const ExpertLogin: React.FC = () => {
       hasExpertProfile: !!expertProfile,
       role 
     });
+    
+    // Clear any cached redirects
+    localStorage.removeItem('redirectAfterLogin');
   }, [isLoading, isAuthenticated, expertProfile, role]);
   
   // Check URL parameters for status messages
@@ -61,7 +64,8 @@ const ExpertLogin: React.FC = () => {
       
       if (role === 'expert' && expertProfile) {
         console.log('ExpertLogin: User is authenticated as expert, redirecting to dashboard');
-        navigate('/expert-dashboard');
+        // Use replace: true to prevent going back to login
+        navigate('/expert-dashboard', { replace: true });
       } else if (role === 'user') {
         console.log('ExpertLogin: User is authenticated as regular user, not as expert');
         toast.error('You are logged in as a user. Please log out first to access expert portal.');
@@ -83,7 +87,8 @@ const ExpertLogin: React.FC = () => {
         // Check if user has an expert profile after login
         if (role === 'expert' && expertProfile) {
           toast.success('Successfully logged in as expert!');
-          navigate('/expert-dashboard');
+          // Use replace: true to prevent going back to login
+          navigate('/expert-dashboard', { replace: true });
           return true;
         } else if (role === 'user') {
           console.error('ExpertLogin: User has a user profile, not an expert profile');

@@ -15,12 +15,15 @@ import { toast } from 'sonner';
 
 const ExpertDashboard = () => {
   const navigate = useNavigate();
-  const { isLoading, expertProfile, isAuthenticated, role } = useAuth();
+  const { isLoading, expertProfile, isAuthenticated, role, logout } = useAuth();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   
-  // Debug logging
+  // Clear any cached redirects
   useEffect(() => {
+    // Clear local storage redirect data that might be causing issues
+    localStorage.removeItem('redirectAfterLogin');
+    
     console.log('ExpertDashboard - Auth states:', {
       authLoading: isLoading,
       hasExpertAuthProfile: !!expertProfile,

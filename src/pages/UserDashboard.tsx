@@ -21,6 +21,11 @@ const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
+  // Clear any cached redirects
+  useEffect(() => {
+    localStorage.removeItem('redirectAfterLogin');
+  }, []);
+  
   // Add debug logging
   console.log('UserDashboard page rendering with auth state:', { 
     isAuthenticated, 
@@ -42,7 +47,8 @@ const UserDashboard: React.FC = () => {
       if (role === 'expert') {
         console.log('UserDashboard: User is authenticated as expert, redirecting to expert dashboard');
         toast.info('Redirecting to expert dashboard');
-        navigate('/expert-dashboard');
+        // Use replace: true to prevent going back
+        navigate('/expert-dashboard', { replace: true });
       }
     }
   }, [isLoading, isAuthenticated, role, navigate, redirectAttempted]);
