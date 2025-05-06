@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExpertLoginForm from './ExpertLoginForm';
-import ExpertRegistrationForm from '@/components/expert/ExpertRegistrationForm';
+import ExpertRegisterForm from './ExpertRegisterForm';
 
 interface ExpertLoginTabsProps {
   activeTab: string;
@@ -19,33 +19,24 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
   isLoggingIn,
   loginError
 }) => {
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-  
   return (
-    <Tabs 
-      value={activeTab} 
-      onValueChange={handleTabChange}
-      className="w-full"
-    >
+    <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="grid w-full grid-cols-2 mb-6">
         <TabsTrigger value="login">Login</TabsTrigger>
-        <TabsTrigger value="register">Join as Expert</TabsTrigger>
+        <TabsTrigger value="register">Register</TabsTrigger>
       </TabsList>
       
       <TabsContent value="login">
         <ExpertLoginForm 
-          onLogin={onLogin}
-          isLoggingIn={isLoggingIn}
-          loginError={loginError}
-          setActiveTab={setActiveTab}
+          onLogin={onLogin} 
+          isLoggingIn={isLoggingIn} 
+          loginError={loginError} 
+          setActiveTab={setActiveTab} 
         />
       </TabsContent>
       
-      <TabsContent value="register" className="max-h-[70vh] overflow-y-auto pb-8">
-        <ExpertRegistrationForm />
+      <TabsContent value="register">
+        <ExpertRegisterForm setActiveTab={setActiveTab} />
       </TabsContent>
     </Tabs>
   );

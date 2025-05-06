@@ -1,80 +1,45 @@
 
-import { useContext } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
 
-interface ExpertAuth {
-  currentExpert: any;
-  isAuthenticated: boolean;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, expertData: any) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  updateProfile: (data: any) => Promise<boolean>;
-}
-
-interface UserAuth {
-  currentUser: any;
-  isAuthenticated: boolean;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: any) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  updateProfile: (data: any) => Promise<boolean>;
-  addToFavorites: (expertId: number) => Promise<boolean>;
-  removeFromFavorites: (expertId: number) => Promise<boolean>;
-}
-
+/**
+ * A hook that provides compatibility with both older user and expert auth hooks
+ */
 export const useAuthBackCompat = () => {
   const auth = useAuth();
-  const userContext = useContext(UserAuthContext);
   
-  const userAuth: UserAuth = {
+  // Extract user-specific auth functionality
+  const userAuth = {
     currentUser: auth.userProfile,
-    isAuthenticated: !!auth.userProfile && auth.isAuthenticated,
-    loading: auth.isLoading,
+    user: auth.user,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
+    isLoading: auth.isLoading,
     login: auth.login,
+    logout: auth.logout,
     signup: auth.signup,
-    logout: auth.logout,
-    updateProfile: auth.updateProfile,
-    addToFavorites: async (expertId: number) => {
-      if (!auth.userProfile) return false;
-      
-      const currentFavorites = auth.userProfile.favorite_experts || [];
-      const updatedFavorites = [...currentFavorites, expertId.toString()];
-      
-      return auth.updateProfile({ favorite_experts: updatedFavorites });
-    },
-    removeFromFavorites: async (expertId: number) => {
-      if (!auth.userProfile) return false;
-      
-      const currentFavorites = auth.userProfile.favorite_experts || [];
-      const updatedFavorites = currentFavorites.filter(
-        id => id !== expertId.toString()
-      );
-      
-      return auth.updateProfile({ favorite_experts: updatedFavorites });
-    }
-  };
-  
-  const expertAuth: ExpertAuth = {
-    currentExpert: auth.expertProfile,
-    isAuthenticated: !!auth.expertProfile && auth.isAuthenticated,
+    updateProfile: auth.updateUserProfile,
+    updatePassword: auth.updatePassword,
+    resetPassword: auth.resetPassword,
     loading: auth.isLoading,
-    login: (email: string, password: string) => auth.login(email, password),
-    signup: (email: string, password: string, expertData: any) => {
-      return auth.signup(email, password, expertData);
-    },
-    logout: auth.logout,
-    updateProfile: (data: any) => {
-      if (!auth.expertProfile) return Promise.resolve(false);
-      return auth.updateExpertProfile(data);
-    }
+    authLoading: auth.isLoading,
+    role: auth.role
   };
   
-  return {
-    userAuth,
-    expertAuth,
-    auth
+  // Extract expert-specific auth functionality
+  const expertAuth = {
+    currentExpert: auth.expertProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+    isLoading: auth.isLoading,
+    login: auth.expertLogin,
+    logout: auth.logout,
+    register: auth.expertSignup,
+    updateProfile: auth.updateExpertProfile,
+    loading: auth.isLoading,
+    authLoading: auth.isLoading,
+    role: auth.role,
+    user: auth.user,
+    initialized: !auth.isLoading,
+    authInitialized: !auth.isLoading
   };
+  
+  return { userAuth, expertAuth, auth };
 };

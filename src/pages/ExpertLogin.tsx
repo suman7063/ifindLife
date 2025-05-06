@@ -10,6 +10,7 @@ import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 
 const ExpertLogin: React.FC = () => {
+  console.log("Rendering ExpertLogin page");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(
