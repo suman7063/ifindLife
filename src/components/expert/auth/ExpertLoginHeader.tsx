@@ -1,9 +1,15 @@
+
 import React from 'react';
-import { Link } from 'react-router-dom';
+
 const ExpertLoginHeader: React.FC = () => {
-  return <Link to="/" className="flex items-center justify-center space-x-2 mb-8">
-      
-      <span className="font-bold text-gradient text-xl text-center">For Mental Health Professionals</span>
-    </Link>;
+  return (
+    <div className="text-center mb-6">
+      <h1 className="text-2xl font-bold text-ifind-dark mb-2">For Mental Health Professionals</h1>
+      <p className="text-gray-600">
+        Access your expert dashboard to manage appointments and sessions
+      </p>
+    </div>
+  );
 };
+
 export default ExpertLoginHeader;
