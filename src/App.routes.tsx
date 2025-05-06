@@ -1,3 +1,4 @@
+
 import { lazy } from 'react';
 
 // Define route types without extending RouteObject from react-router-dom
@@ -30,7 +31,7 @@ const TermsOfService = lazy(() => import('./pages/TermsOfService'));
 const Contact = lazy(() => import('./pages/Contact'));
 const FAQs = lazy(() => import('./pages/FAQs'));
 const UserDashboard = lazy(() => import('./pages/UserDashboard'));
-const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
+// ExpertDashboard is directly imported in AppRoutes.tsx
 const Admin = lazy(() => import('./pages/Admin'));
 const Referral = lazy(() => import('./pages/Referral'));
 const UserWallet = lazy(() => import('./pages/UserWallet'));
@@ -129,11 +130,7 @@ export const routes: AppRoute[] = [
     element: <UserDashboard />,
     requiredRole: 'user'
   },
-  {
-    path: '/expert-dashboard/*',
-    element: <ExpertDashboard />,
-    requiredRole: 'expert'
-  },
+  // ExpertDashboard is directly imported in AppRoutes.tsx, not included here to avoid circular dependencies
   {
     path: '/admin/*',
     element: <Admin />,

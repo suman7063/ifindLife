@@ -10,7 +10,7 @@ import { routes } from './App.routes'; // Import routes from consolidated file
 // Import critical routes directly to prevent loading issues
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
-import ExpertLogin from './pages/ExpertLogin';
+import ExpertLogin from './pages/ExpertLogin'; // Import directly instead of lazy loading
 import ExpertDashboard from './pages/ExpertDashboard'; // Import directly to ensure it's available
 
 // Only log in development environment
