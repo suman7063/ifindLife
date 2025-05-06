@@ -17,6 +17,7 @@ const ExpertRegister: React.FC = () => {
   const handleSubmit = async (formData: any) => {
     try {
       setIsSubmitting(true);
+      console.log("Processing expert registration for:", formData.email);
       
       // First, check if there's an active session
       const { data: sessionData } = await supabase.auth.getSession();

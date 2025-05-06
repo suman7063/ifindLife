@@ -34,7 +34,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <LoadingScreen />;
   }
 
-  // If not authenticated, redirect to appropriate login page based on required role
+  // If not authenticated, redirect to appropriate login page
   if (!isAuthenticated) {
     console.log("ProtectedRoute - Not authenticated, redirecting to:", redirectPath);
     
