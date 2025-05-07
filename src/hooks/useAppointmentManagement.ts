@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -46,13 +45,12 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         appointment_date: apt.appointment_date,
         start_time: apt.start_time || '00:00',
         end_time: apt.end_time || '00:00',
-        status: apt.status,
+        status: apt.status as Appointment['status'],
         google_calendar_event_id: apt.google_calendar_event_id,
         user_calendar_event_id: apt.user_calendar_event_id,
         notes: apt.notes,
         expert_name: apt.expert_name,
-        // Ensure user_name is included with a fallback
-        user_name: apt.user_name || 'User',
+        // Don't include user_name if not present in the database schema
         time_slot_id: apt.time_slot_id
       })) as Appointment[];
       

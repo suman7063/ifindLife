@@ -30,7 +30,6 @@ export interface Appointment {
   user_calendar_event_id?: string;
   notes?: string;
   expert_name?: string;
-  user_name?: string;
   time_slot_id?: string;
 }
 
@@ -42,4 +41,13 @@ export interface Message {
   read: boolean;
   created_at: string;
   updated_at?: string;
+}
+
+export interface Conversation {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
 }

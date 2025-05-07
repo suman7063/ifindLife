@@ -1,9 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
 import { Message } from '@/types/appointments';
+import { UserProfile } from '@/types/supabase';
 
 interface Conversation {
   userId: string;
@@ -15,218 +15,260 @@ interface Conversation {
 }
 
 export const useMessaging = (currentUser: UserProfile | null) => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);
-  const [conversationsLoading, setConversationsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
-  const [activeConversation, setActiveConversation] = useState<string | null>(null);
+  const [conversationsLoading, setConversationsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  // Fetch all conversations for the current user
-  const fetchConversations = async () => {
+  /**
+   * Fetch all conversations for the current user
+   */
+  const fetchConversations = useCallback(async () => {
     if (!currentUser) return [];
     
-    setConversationsLoading(true);
     try {
-      // Check if messages table exists
-      const { error: tableCheckError } = await supabase
-        .from('messages')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
-        
-      if (tableCheckError) {
-        console.error('Error accessing messages table:', tableCheckError);
-        toast.error('Messaging system not ready yet');
-        return [];
-      }
+      setConversationsLoading(true);
+      setError(null);
       
-      // Get all messages where the current user is either the sender or receiver
-      const { data: messagesData, error: messagesError } = await supabase
+      // First get all messages where the user is either sender or receiver
+      const { data: messageData, error: messageError } = await supabase
         .from('messages')
-        .select('*, sender:profiles!sender_id(name, profile_picture), receiver:profiles!receiver_id(name, profile_picture)')
+        .select('*')
         .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
         .order('created_at', { ascending: false });
       
-      if (messagesError) throw messagesError;
-      
-      // Group by conversation (unique users)
-      const conversationMap = new Map<string, Conversation>();
-      
-      if (messagesData) {
-        messagesData.forEach((message: any) => {
-          const otherUserId = message.sender_id === currentUser.id ? message.receiver_id : message.sender_id;
-          const otherUser = message.sender_id === currentUser.id ? message.receiver : message.sender;
-          
-          if (!conversationMap.has(otherUserId)) {
-            conversationMap.set(otherUserId, {
-              userId: otherUserId,
-              userName: otherUser?.name || 'User',
-              userAvatar: otherUser?.profile_picture,
-              lastMessage: message.content,
-              lastMessageTime: message.created_at,
-              unreadCount: message.receiver_id === currentUser.id && !message.read ? 1 : 0
-            });
-          } else if (new Date(message.created_at) > new Date(conversationMap.get(otherUserId)!.lastMessageTime)) {
-            // Update last message if this one is newer
-            const conversation = conversationMap.get(otherUserId)!;
-            conversation.lastMessage = message.content;
-            conversation.lastMessageTime = message.created_at;
-            if (message.receiver_id === currentUser.id && !message.read) {
-              conversation.unreadCount += 1;
-            }
-          } else if (message.receiver_id === currentUser.id && !message.read) {
-            // Count other unread messages
-            const conversation = conversationMap.get(otherUserId)!;
-            conversation.unreadCount += 1;
-          }
-        });
+      if (messageError) {
+        console.error('Error fetching messages:', messageError);
+        toast.error('Failed to load conversations');
+        setError(messageError.message);
+        return [];
       }
       
-      // Convert map to array and sort by last message time
-      const sortedConversations = Array.from(conversationMap.values())
-        .sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
+      if (!messageData || messageData.length === 0) {
+        setConversations([]);
+        return [];
+      }
       
-      setConversations(sortedConversations);
-      return sortedConversations;
-    } catch (err: any) {
-      console.error('Error fetching conversations:', err);
-      toast.error('Failed to load conversations');
+      // Extract unique user IDs from messages (excluding the current user)
+      const userIds = new Set<string>();
+      messageData.forEach(msg => {
+        if (msg.sender_id === currentUser.id) {
+          userIds.add(msg.receiver_id);
+        } else {
+          userIds.add(msg.sender_id);
+        }
+      });
+      
+      // Get user details for all conversation partners
+      const userIdsArray = Array.from(userIds);
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, name, profile_picture')
+        .in('id', userIdsArray);
+      
+      if (userError) {
+        console.error('Error fetching user details:', userError);
+        setError(userError.message);
+      }
+      
+      // Create a map of user IDs to user details for easier access
+      const userMap = new Map();
+      (userData || []).forEach(user => {
+        userMap.set(user.id, user);
+      });
+      
+      // Group messages by conversation partner
+      const conversationMap = new Map<string, Message[]>();
+      messageData.forEach(msg => {
+        const partnerId = msg.sender_id === currentUser.id ? msg.receiver_id : msg.sender_id;
+        if (!conversationMap.has(partnerId)) {
+          conversationMap.set(partnerId, []);
+        }
+        conversationMap.get(partnerId)?.push(msg as Message);
+      });
+      
+      // Create conversation objects
+      const conversationsArray: Conversation[] = [];
+      conversationMap.forEach((messages, userId) => {
+        // Sort messages by created_at in descending order
+        messages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        
+        const lastMessage = messages[0];
+        const unreadCount = messages.filter(msg => msg.sender_id !== currentUser.id && !msg.read).length;
+        const user = userMap.get(userId);
+        
+        conversationsArray.push({
+          userId,
+          userName: user?.name || 'Unknown User',
+          userAvatar: user?.profile_picture,
+          lastMessage: lastMessage.content,
+          lastMessageTime: lastMessage.created_at,
+          unreadCount
+        });
+      });
+      
+      // Sort conversations by last message time
+      conversationsArray.sort((a, b) => 
+        new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
+      );
+      
+      setConversations(conversationsArray);
+      return conversationsArray;
+    } catch (error: any) {
+      console.error('Error in fetchConversations:', error);
+      setError(error.message);
       return [];
     } finally {
       setConversationsLoading(false);
     }
-  };
+  }, [currentUser]);
   
-  // Fetch messages for a specific conversation
-  const fetchMessages = async (userId: string) => {
-    if (!currentUser || !userId) return [];
+  /**
+   * Fetch messages for a specific conversation
+   */
+  const fetchMessages = useCallback(async (partnerId: string) => {
+    if (!currentUser) return [];
     
-    setMessagesLoading(true);
     try {
-      // Check if messages table exists
-      const { error: tableCheckError } = await supabase
+      setMessagesLoading(true);
+      setError(null);
+      
+      const { data: messages, error: messagesError } = await supabase
         .from('messages')
-        .select('id')
-        .limit(1)
-        .maybeSingle();
-        
-      if (tableCheckError) {
-        console.error('Error accessing messages table:', tableCheckError);
-        toast.error('Messaging system not ready yet');
+        .select('*')
+        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${currentUser.id})`)
+        .order('created_at', { ascending: true });
+      
+      if (messagesError) {
+        console.error('Error fetching messages:', messagesError);
+        toast.error('Failed to load messages');
+        setError(messagesError.message);
         return [];
       }
       
-      // Get all messages between the current user and the selected user
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`)
-        .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      
-      const typedMessages = (data || []) as Message[];
-      setMessages(typedMessages);
-      setActiveConversation(userId);
-      
-      // Mark messages as read
-      const unreadMessages = typedMessages.filter(msg => 
-        msg.receiver_id === currentUser.id && !msg.read
-      );
+      // Mark received messages as read
+      const unreadMessages = messages?.filter(msg => 
+        msg.sender_id === partnerId && 
+        msg.receiver_id === currentUser.id && 
+        !msg.read
+      ) || [];
       
       if (unreadMessages.length > 0) {
-        await Promise.all(
-          unreadMessages.map(msg => 
-            supabase
-              .from('messages')
-              .update({ read: true })
-              .eq('id', msg.id)
-          )
-        );
+        const unreadIds = unreadMessages.map(msg => msg.id);
+        const { error: updateError } = await supabase
+          .from('messages')
+          .update({ read: true })
+          .in('id', unreadIds);
+        
+        if (updateError) {
+          console.error('Error marking messages as read:', updateError);
+        }
       }
       
-      return typedMessages;
-    } catch (err: any) {
-      console.error('Error fetching messages:', err);
-      toast.error('Failed to load messages');
+      setMessages(messages as Message[] || []);
+      return messages as Message[] || [];
+    } catch (error: any) {
+      console.error('Error in fetchMessages:', error);
+      setError(error.message);
       return [];
     } finally {
       setMessagesLoading(false);
     }
-  };
+  }, [currentUser]);
   
-  // Send a message
-  const sendMessage = async (receiverId: string, content: string) => {
-    if (!currentUser || !receiverId || !content.trim()) return null;
+  /**
+   * Send a new message
+   */
+  const sendMessage = useCallback(async (receiverId: string, content: string) => {
+    if (!currentUser) return null;
     
-    setLoading(true);
     try {
+      setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('messages')
         .insert({
           sender_id: currentUser.id,
           receiver_id: receiverId,
-          content: content.trim(),
+          content,
           read: false
         })
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending message:', error);
+        toast.error('Failed to send message');
+        setError(error.message);
+        return null;
+      }
       
-      // Update local state
+      // Update local messages state
       setMessages(prev => [...prev, data as Message]);
       
-      return data;
-    } catch (err: any) {
-      console.error('Error sending message:', err);
-      toast.error('Failed to send message');
+      return data as Message;
+    } catch (error: any) {
+      console.error('Error in sendMessage:', error);
+      setError(error.message);
       return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser]);
   
-  // Subscribe to real-time updates
-  useEffect(() => {
-    if (!currentUser) return;
+  /**
+   * Mark all messages in a conversation as read
+   */
+  const markConversationAsRead = useCallback(async (partnerId: string) => {
+    if (!currentUser) return false;
     
-    // Set up real-time subscription for new messages
-    const subscription = supabase
-      .channel('messages-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'messages',
-        filter: `receiver_id=eq.${currentUser.id}`
-      }, () => {
-        // Refresh conversations when a new message arrives
-        fetchConversations();
-        
-        // If we have an active conversation, also refresh messages
-        if (activeConversation) {
-          fetchMessages(activeConversation);
-        }
-      })
-      .subscribe();
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [currentUser, activeConversation]);
+    try {
+      setLoading(true);
+      
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('sender_id', partnerId)
+        .eq('receiver_id', currentUser.id)
+        .eq('read', false);
+      
+      if (error) {
+        console.error('Error marking conversation as read:', error);
+        return false;
+      }
+      
+      // Update local messages state
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.sender_id === partnerId && msg.receiver_id === currentUser.id
+            ? { ...msg, read: true }
+            : msg
+        )
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('Error in markConversationAsRead:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUser]);
   
   return {
-    conversations,
     messages,
+    conversations,
     loading,
-    conversationsLoading,
     messagesLoading,
-    activeConversation,
-    fetchConversations,
+    conversationsLoading,
+    error,
     fetchMessages,
+    fetchConversations,
     sendMessage,
-    setActiveConversation
+    markConversationAsRead
   };
 };
 
