@@ -57,7 +57,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link to="/services/mindful-listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Mindful Listening
+                  Heart2Heart Listening
                 </Link>
               </li>
               <li>
