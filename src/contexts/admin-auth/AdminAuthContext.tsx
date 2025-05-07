@@ -14,7 +14,8 @@ const AdminAuthContext = createContext<AuthContextType>({
   isSuperAdmin: false,
   currentUser: null,
   updateAdminPermissions: () => {},
-  isLoading: true
+  isLoading: true,
+  updateAdminUser: () => {},
 });
 
 // Initial admin users are now only fetched from constants to avoid duplication
@@ -62,7 +63,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const login = (username: string, password: string): boolean => {
     console.log('Attempting login with:', { username });
-    console.log('Available admin users:', adminUsers);
     
     // Find matching admin user (case-insensitive for username)
     const foundUser = adminUsers.find(
@@ -72,9 +72,19 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     console.log('Found user:', foundUser ? 'Yes' : 'No');
 
     if (foundUser) {
+      // Update user with login timestamp
+      const updatedUser = {
+        ...foundUser,
+        lastLogin: new Date().toISOString()
+      };
+
       // Store user info in localStorage
-      localStorage.setItem('admin-user', JSON.stringify(foundUser));
-      setCurrentUser(foundUser);
+      localStorage.setItem('admin-user', JSON.stringify(updatedUser));
+      
+      // Update the user in the admin users list
+      updateAdminUser(foundUser.username, { lastLogin: updatedUser.lastLogin });
+      
+      setCurrentUser(updatedUser);
       setIsAuthenticated(true);
       return true;
     }
@@ -93,7 +103,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       username,
       password,
       role: 'admin',
-      permissions
+      permissions,
+      createdAt: new Date().toISOString()
     };
     
     const updatedUsers = [...adminUsers, newUser];
@@ -126,6 +137,25 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
+  const updateAdminUser = (username: string, userData: Partial<AdminUser>) => {
+    const updatedUsers = adminUsers.map(user => {
+      if (user.username === username) {
+        return { ...user, ...userData };
+      }
+      return user;
+    });
+    
+    setAdminUsers(updatedUsers);
+    localStorage.setItem('admin-users', JSON.stringify(updatedUsers));
+    
+    // If the updated user is the current user, update the current user state and localStorage
+    if (currentUser && currentUser.username === username) {
+      const updatedUser = { ...currentUser, ...userData };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('admin-user', JSON.stringify(updatedUser));
+    }
+  };
+
   // Check if current user is a super admin
   const isSuperAdmin = currentUser?.role === 'superadmin';
 
@@ -141,7 +171,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         isSuperAdmin,
         currentUser,
         updateAdminPermissions,
-        isLoading
+        isLoading,
+        updateAdminUser
       }}
     >
       {children}

@@ -16,7 +16,9 @@ import {
   Bookmark,
   AtSign,
   Mail,
-  UserCog
+  UserCog,
+  LineChart,
+  FilePieChart
 } from 'lucide-react';
 import { hasPermission } from '@/components/admin/utils/permissionUtils';
 
@@ -46,6 +48,25 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
         isActive={activeTab === 'overview'}
         onClick={() => onTabChange('overview')}
       />
+
+      {/* Analytics section */}
+      {checkPermission('analytics') && (
+        <AdminSidebarMenuItem
+          icon={LineChart}
+          label="Analytics"
+          isActive={activeTab === 'analytics'}
+          onClick={() => onTabChange('analytics')}
+        />
+      )}
+
+      {checkPermission('reports') && (
+        <AdminSidebarMenuItem
+          icon={FilePieChart}
+          label="Reports"
+          isActive={activeTab === 'reports'}
+          onClick={() => onTabChange('reports')}
+        />
+      )}
 
       {/* Expert related menus */}
       {checkPermission('experts') && (
@@ -140,6 +161,16 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
           label="Contact Submissions"
           isActive={activeTab === 'contact'}
           onClick={() => onTabChange('contact')}
+        />
+      )}
+
+      {/* User Management */}
+      {checkPermission('users') && (
+        <AdminSidebarMenuItem
+          icon={Users}
+          label="Users"
+          isActive={activeTab === 'users'}
+          onClick={() => onTabChange('users')}
         />
       )}
 

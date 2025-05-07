@@ -8,12 +8,15 @@ import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import AdminSettings from './AdminSettings';
-import { ProgramsEditor } from '@/components/admin/ProgramsEditor';
+import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
 import { SessionsEditor } from '@/components/admin/sessions/SessionsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
 import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
 import AdminUsersManager from '@/components/admin/users/AdminUsersManager';
+import AdminAnalytics from '@/components/admin/analytics/AdminAnalytics';
+import AdminReports from '@/components/admin/reports/AdminReports';
+import AdminUsersList from '@/components/admin/users/AdminUsersList';
 
 interface AdminRoutesProps {
   isSuperAdmin: boolean;
@@ -52,6 +55,10 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
     switch (currentTab) {
       case 'overview':
         return <AdminDashboard />;
+      case 'analytics':
+        return <AdminAnalytics />;
+      case 'reports':
+        return <AdminReports />;
       case 'experts':
         return <ExpertsEditor experts={experts} setExperts={setExperts} />;
       case 'expertApprovals':
@@ -74,6 +81,8 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
         return <ReferralSettingsEditor />;
       case 'adminUsers':
         return <AdminUsersManager />;
+      case 'users':
+        return <AdminUsersList />;
       case 'settings':
         return <AdminSettings />;
       default:

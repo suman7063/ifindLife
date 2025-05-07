@@ -15,6 +15,9 @@ export const defaultPermissions: AdminPermissions = {
   referrals: false,
   contact: true,
   settings: false,
+  analytics: true,
+  reports: false,
+  users: false
 };
 
 export const superAdminPermissions: AdminPermissions = {
@@ -29,6 +32,9 @@ export const superAdminPermissions: AdminPermissions = {
   referrals: true,
   contact: true,
   settings: true,
+  analytics: true,
+  reports: true,
+  users: true
 };
 
 export type AdminRole = 'superadmin' | 'admin';
@@ -38,6 +44,8 @@ export interface AdminUser {
   password: string;
   role: AdminRole;
   permissions: AdminPermissions;
+  lastLogin?: string;
+  createdAt?: string;
 }
 
 export interface AuthContextType {
@@ -51,4 +59,5 @@ export interface AuthContextType {
   currentUser: AdminUser | null;
   updateAdminPermissions: (username: string, permissions: AdminPermissions) => void;
   isLoading: boolean;
+  updateAdminUser: (username: string, userData: Partial<AdminUser>) => void;
 }
