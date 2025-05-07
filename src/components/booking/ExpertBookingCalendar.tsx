@@ -10,6 +10,9 @@ import { toast } from 'sonner';
 import CalendarDatePicker from './CalendarDatePicker';
 import AvailableTimeSlotsSection from './AvailableTimeSlotsSection';
 import AppointmentNotes from './AppointmentNotes';
+import BookingConfirmation from './BookingConfirmation';
+import { isValidBookingTime } from '@/utils/bookingValidation';
+import { Loader2 } from 'lucide-react';
 
 interface ExpertBookingCalendarProps {
   expertId: string;
@@ -23,7 +26,7 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
   onBookingComplete 
 }) => {
   const { currentUser } = useUserAuth();
-  const { availabilities, fetchAvailabilities, bookAppointment, loading } = useAppointments(currentUser, expertId);
+  const { availabilities, fetchAvailabilities, bookAppointment, loading, error } = useAppointments(currentUser, expertId);
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
@@ -33,25 +36,34 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
   } | null>(null);
   const [existingAppointments, setExistingAppointments] = useState<any[]>([]);
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookedAppointmentId, setBookedAppointmentId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
   
-  // Fetch expert availability when component mounts
+  // Fetch expert availability when component mounts or refreshKey changes
   useEffect(() => {
     if (expertId) {
       fetchAvailabilities(expertId);
     }
-  }, [expertId]);
+  }, [expertId, refreshKey]);
   
-  // Fetch existing appointments for the expert
+  // Fetch existing appointments for the expert with a refresh mechanism
   useEffect(() => {
     const fetchExistingAppointments = async () => {
       try {
         const { data, error } = await supabase
           .from('appointments')
-          .select('appointment_date, start_time, end_time')
+          .select('id, appointment_date, start_time, end_time, time_slot_id')
           .eq('expert_id', expertId)
           .in('status', ['pending', 'confirmed']);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching existing appointments:', error);
+          toast.error('Failed to load appointment data');
+          return;
+        }
+        
         setExistingAppointments(data || []);
       } catch (error) {
         console.error('Error fetching existing appointments:', error);
@@ -61,7 +73,12 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
     if (expertId) {
       fetchExistingAppointments();
     }
-  }, [expertId]);
+    
+    // Set up a polling mechanism to refresh appointments every 30 seconds
+    const pollingInterval = setInterval(fetchExistingAppointments, 30000);
+    
+    return () => clearInterval(pollingInterval);
+  }, [expertId, refreshKey]);
   
   const handleBookAppointment = async () => {
     if (!currentUser || !selectedDate || !selectedTimeSlot) {
@@ -69,26 +86,98 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
       return;
     }
     
-    const appointment = await bookAppointment(
-      expertId,
-      currentUser.id,
-      format(selectedDate, 'yyyy-MM-dd'),
-      selectedTimeSlot.startTime,
-      selectedTimeSlot.endTime,
-      selectedTimeSlot.timeSlotId,
-      notes
-    );
+    // Additional validation before booking
+    if (!isValidBookingTime(selectedDate, selectedTimeSlot.startTime)) {
+      toast.error('Cannot book appointments in the past');
+      return;
+    }
     
-    if (appointment) {
-      setSelectedDate(undefined);
-      setSelectedTimeSlot(null);
-      setNotes('');
+    try {
+      setIsSubmitting(true);
       
-      if (onBookingComplete) {
-        onBookingComplete();
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+      
+      // One final real-time check to ensure the slot is still available
+      if (selectedTimeSlot.timeSlotId) {
+        const { data, error } = await supabase
+          .from('expert_time_slots')
+          .select('is_booked')
+          .eq('id', selectedTimeSlot.timeSlotId)
+          .single();
+          
+        if (error) {
+          toast.error('Error checking time slot availability');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (data.is_booked) {
+          toast.error('This time slot has just been booked by someone else. Please select another slot.');
+          // Refresh the available slots
+          setRefreshKey(prev => prev + 1);
+          setSelectedTimeSlot(null);
+          setIsSubmitting(false);
+          return;
+        }
       }
+      
+      const appointmentId = await bookAppointment(
+        expertId,
+        currentUser.id,
+        formattedDate,
+        selectedTimeSlot.startTime,
+        selectedTimeSlot.endTime,
+        selectedTimeSlot.timeSlotId,
+        notes
+      );
+      
+      if (appointmentId) {
+        setBookedAppointmentId(appointmentId);
+        setBookingSuccess(true);
+        
+        // Refresh the available slots
+        setRefreshKey(prev => prev + 1);
+      } else {
+        toast.error('Failed to book appointment. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error in booking process:', err);
+      toast.error('An unexpected error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
+  
+  const handleCloseConfirmation = () => {
+    setBookingSuccess(false);
+    setSelectedDate(undefined);
+    setSelectedTimeSlot(null);
+    setNotes('');
+    
+    if (onBookingComplete) {
+      onBookingComplete();
+    }
+  };
+  
+  const handleViewAppointments = () => {
+    // Navigate to appointments page
+    window.location.href = '/user/appointments';
+  };
+  
+  // If booking was successful, show confirmation
+  if (bookingSuccess && selectedDate && selectedTimeSlot && bookedAppointmentId) {
+    return (
+      <BookingConfirmation
+        appointmentId={bookedAppointmentId}
+        expertName={expertName}
+        date={selectedDate}
+        startTime={selectedTimeSlot.startTime}
+        endTime={selectedTimeSlot.endTime}
+        onClose={handleCloseConfirmation}
+        onViewAppointments={handleViewAppointments}
+      />
+    );
+  }
   
   return (
     <Card className="w-full max-w-3xl mx-auto">
@@ -102,7 +191,10 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
       <CardContent className="space-y-6">
         <CalendarDatePicker 
           selectedDate={selectedDate}
-          setSelectedDate={setSelectedDate}
+          setSelectedDate={(date) => {
+            setSelectedDate(date);
+            setSelectedTimeSlot(null);
+          }}
           availabilities={availabilities}
           existingAppointments={existingAppointments}
         />
@@ -128,10 +220,15 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
       <CardFooter>
         <Button 
           className="w-full" 
-          disabled={!selectedDate || !selectedTimeSlot || loading}
+          disabled={!selectedDate || !selectedTimeSlot || isSubmitting}
           onClick={handleBookAppointment}
         >
-          {loading ? 'Booking...' : 'Book Appointment'}
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Booking...
+            </>
+          ) : 'Book Appointment'}
         </Button>
       </CardFooter>
     </Card>
