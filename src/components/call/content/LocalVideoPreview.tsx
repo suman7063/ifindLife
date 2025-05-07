@@ -15,24 +15,29 @@ const LocalVideoPreview: React.FC<LocalVideoPreviewProps> = ({
   isJoined
 }) => {
   const localVideoRef = useRef<HTMLDivElement>(null);
-  
-  // Play local video
+
+  // Play local video track when available and enabled
   useEffect(() => {
     const { localVideoTrack, isVideoEnabled } = callState;
     
     if (localVideoTrack && localVideoRef.current && isVideoEnabled) {
+      console.log("Playing local video track");
       localVideoTrack.play(localVideoRef.current);
     }
     
     return () => {
       if (localVideoTrack) {
+        console.log("Stopping local video track");
         localVideoTrack.stop();
       }
     };
   }, [callState.localVideoTrack, callState.isVideoEnabled]);
-  
-  if (!isJoined) return null;
-  
+
+  // Don't render if not joined the call yet
+  if (!isJoined) {
+    return null;
+  }
+
   return (
     <div className="absolute bottom-2 right-2 w-24 h-32 bg-slate-700 rounded overflow-hidden border-2 border-white/20">
       {callState.localVideoTrack && callState.isVideoEnabled ? (

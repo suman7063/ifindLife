@@ -1,51 +1,43 @@
 
 import React from 'react';
-import { Clock, DollarSign } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { InfoIcon, Clock } from 'lucide-react';
 
 interface AgoraCallInfoProps {
+  callStatus: 'choosing' | 'connecting' | 'connected' | 'ended' | 'error';
   duration: number;
-  remainingTime: number;
-  cost: number;
   formatTime: (seconds: number) => string;
-  pricePerMinute: number;
+  expertName: string;
+  expertPrice: number;
 }
 
 const AgoraCallInfo: React.FC<AgoraCallInfoProps> = ({
+  callStatus,
   duration,
-  remainingTime,
-  cost,
   formatTime,
-  pricePerMinute
+  expertName,
+  expertPrice
 }) => {
+  if (callStatus !== 'connected') {
+    return null;
+  }
+  
   return (
-    <div className="flex flex-col items-center space-y-4 py-2">
-      {/* Call duration */}
-      <div className="flex items-center">
-        <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-        <span className="text-lg font-semibold">{formatTime(duration)}</span>
-      </div>
-      
-      {/* Remaining time */}
-      <div className="flex flex-col items-center">
-        <div className="text-sm text-muted-foreground mb-1">Remaining time:</div>
-        <div className={`text-base font-semibold ${remainingTime < 60 ? 'text-red-500' : ''}`}>
-          {formatTime(remainingTime)}
+    <Card className="border border-muted bg-muted/30">
+      <CardContent className="p-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <InfoIcon className="h-4 w-4 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Connected with <span className="font-medium">{expertName}</span>
+          </p>
         </div>
-      </div>
-
-      {/* Cost information */}
-      <div className="flex flex-col items-center">
-        <div className="text-sm text-muted-foreground">
-          First 15 mins free, then ₹{pricePerMinute}/min
+        
+        <div className="flex items-center gap-2">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <p className="text-sm font-medium">{formatTime(duration)}</p>
         </div>
-        {cost > 0 && (
-          <div className="flex items-center mt-1">
-            <DollarSign className="h-4 w-4 mr-1" />
-            <span className="font-semibold">₹{cost.toFixed(2)}</span>
-          </div>
-        )}
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

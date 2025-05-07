@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { Lock } from 'lucide-react';
 
 interface CallAuthMessageProps {
   expertName: string;
@@ -13,36 +12,43 @@ interface CallAuthMessageProps {
 
 const CallAuthMessage: React.FC<CallAuthMessageProps> = ({ expertName, onClose }) => {
   const navigate = useNavigate();
-  const { isAuthenticated, loading } = useUserAuth();
-  
-  // If user is authenticated or still loading, don't show the login message
-  if (isAuthenticated || loading) {
-    return null;
-  }
-  
+
+  const handleLogin = () => {
+    // Store the current URL to redirect back after login
+    localStorage.setItem('redirectAfterLogin', window.location.pathname + '?call=true');
+    navigate('/user-login');
+  };
+
   return (
-    <div className="flex flex-col items-center space-y-4 py-6">
-      <Alert variant="destructive" className="max-w-md">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          You need to log in or sign up to start a call with {expertName}.
-        </AlertDescription>
-      </Alert>
-      <div className="flex space-x-4">
-        <Button 
-          onClick={() => navigate('/user-login')}
-          className="bg-ifind-aqua hover:bg-ifind-teal"
-        >
-          Log In / Sign Up
-        </Button>
-        <Button 
-          variant="outline" 
-          onClick={onClose}
-        >
+    <Card className="border-0 shadow-none">
+      <CardHeader className="text-center">
+        <div className="flex justify-center mb-4">
+          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+            <Lock className="h-8 w-8 text-amber-600 dark:text-amber-400" />
+          </div>
+        </div>
+        <CardTitle className="text-xl">Login Required</CardTitle>
+        <CardDescription>
+          You need to login to start a call with {expertName}
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent className="text-center pb-2">
+        <p className="text-sm text-muted-foreground">
+          To ensure a secure and personalized experience, please login to your account before starting a call. 
+          This helps us provide you with the best service.
+        </p>
+      </CardContent>
+      
+      <CardFooter className="flex flex-col sm:flex-row gap-3 justify-center">
+        <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-      </div>
-    </div>
+        <Button onClick={handleLogin}>
+          Login to Continue
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 
