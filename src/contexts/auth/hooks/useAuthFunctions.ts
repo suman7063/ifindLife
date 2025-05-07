@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { AuthState } from '../types';
-import { UserProfile } from '@/types/supabase';
+import { AuthState, UserProfile, ExpertProfile } from '../types';
 
 export const useAuthFunctions = (
   authState: AuthState,
@@ -15,7 +13,7 @@ export const useAuthFunctions = (
   // Standard user login function
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      setAuthState((prev) => ({ ...prev, isLoading: true }));
+      setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
       
       console.log("Attempting login with email:", email);
       
@@ -35,14 +33,14 @@ export const useAuthFunctions = (
       if (error) {
         console.error("Login error:", error);
         toast.error(error.message);
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
         return false;
       }
 
       if (!data.user || !data.session) {
         console.error("Login failed: No user or session returned");
         toast.error("Login failed. Please try again.");
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: "Login failed" }));
         return false;
       }
 
@@ -61,7 +59,7 @@ export const useAuthFunctions = (
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "An error occurred during login");
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
       return false;
     }
   };
@@ -126,7 +124,7 @@ export const useAuthFunctions = (
 
   const expertLogin = async (email: string, password: string): Promise<boolean> => {
     try {
-      setAuthState((prev) => ({ ...prev, isLoading: true }));
+      setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
       
       console.log("Expert login: Attempting with email:", email);
       
@@ -146,20 +144,20 @@ export const useAuthFunctions = (
       if (error) {
         console.error("Expert login error:", error);
         toast.error(error.message);
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
         return false;
       }
 
       if (!data.user || !data.session) {
         console.error("Expert login failed: No user or session returned");
         toast.error("Login failed. Please try again.");
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: "Login failed" }));
         return false;
       }
       
       console.log("Expert login: Authentication successful, checking for expert profile");
       
-      const { data: expertProfile, error: expertError } = await supabase
+      const { data: expertData, error: expertError } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', data.user.id)
@@ -168,11 +166,11 @@ export const useAuthFunctions = (
       if (expertError && expertError.code !== 'PGRST116') {
         console.error("Expert login: Error checking expert profile:", expertError);
         toast.error("Error checking expert profile");
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: expertError.message }));
         return false;
       }
       
-      if (!expertProfile) {
+      if (!expertData) {
         console.error("Expert login: No expert profile found");
         toast.error("No expert account found for this user");
         
@@ -182,20 +180,24 @@ export const useAuthFunctions = (
           isLoading: false,
           session: null,
           user: null,
-          isAuthenticated: false
+          isAuthenticated: false,
+          error: "No expert profile found"
         }));
         return false;
       }
       
-      if (expertProfile.status !== 'approved') {
-        console.error(`Expert login: Status is ${expertProfile.status}`);
+      // Type safety for expert status
+      const status = expertData.status as 'pending' | 'approved' | 'disapproved';
+      
+      if (status !== 'approved') {
+        console.error(`Expert login: Status is ${status}`);
         
         await supabase.auth.signOut();
         
-        if (expertProfile.status === 'pending') {
+        if (status === 'pending') {
           toast.info('Your account is pending approval. You will be notified once approved.');
         } else {
-          toast.error(`Your account has been ${expertProfile.status}. Please contact support.`);
+          toast.error(`Your account has been ${status}. Please contact support.`);
         }
         
         setAuthState((prev) => ({ 
@@ -203,12 +205,19 @@ export const useAuthFunctions = (
           isLoading: false,
           session: null,
           user: null,
-          isAuthenticated: false
+          isAuthenticated: false,
+          error: `Account ${status}`
         }));
         return false;
       }
 
       console.log("Expert login: Expert profile found and approved");
+      
+      // Type safety: ensure the status is properly typed
+      const expertProfile: ExpertProfile = {
+        ...expertData,
+        status
+      };
       
       // Set the expert profile and role
       setAuthState(prev => ({
@@ -218,7 +227,8 @@ export const useAuthFunctions = (
         expertProfile,
         role: 'expert',
         isAuthenticated: true,
-        isLoading: false
+        isLoading: false,
+        error: null
       }));
       
       toast.success("Expert login successful!");
@@ -226,7 +236,7 @@ export const useAuthFunctions = (
     } catch (error: any) {
       console.error("Expert login error:", error);
       toast.error(error.message || "An error occurred during login");
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
       return false;
     }
   };
@@ -328,14 +338,14 @@ export const useAuthFunctions = (
 
   const logout = async (): Promise<boolean> => {
     try {
-      setAuthState((prev) => ({ ...prev, isLoading: true }));
+      setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
       
       const { error } = await supabase.auth.signOut({ scope: 'global' });
       
       if (error) {
         console.error("Logout error:", error);
         toast.error(error.message);
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
         return false;
       }
       
@@ -348,6 +358,7 @@ export const useAuthFunctions = (
         role: null,
         isAuthenticated: false,
         isLoading: false,
+        error: null
       }));
       
       toast.success("Logout successful!");
@@ -355,7 +366,7 @@ export const useAuthFunctions = (
     } catch (error: any) {
       console.error("Logout error:", error);
       toast.error(error.message || "An error occurred during logout");
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
       return false;
     }
   };

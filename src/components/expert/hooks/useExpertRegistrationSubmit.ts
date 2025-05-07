@@ -32,6 +32,7 @@ export const useExpertRegistrationSubmit = () => {
       if (existingUserData) {
         console.error('Expert Registration: This email is already registered as a user');
         setRegistrationError('This email is already registered as a user. Please use a different email address.');
+        setIsSubmitting(false);
         return false;
       }
       
@@ -45,10 +46,11 @@ export const useExpertRegistrationSubmit = () => {
       if (existingExpertData) {
         console.error('Expert Registration: This email is already registered as an expert');
         setRegistrationError('This email is already registered. Please use the login tab instead.');
+        setIsSubmitting(false);
         return false;
       }
       
-      // Register the expert
+      // Register the expert with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -68,11 +70,13 @@ export const useExpertRegistrationSubmit = () => {
         } else {
           setRegistrationError(error.message || 'Registration failed');
         }
+        setIsSubmitting(false);
         return false;
       }
       
       if (!data.user?.id) {
         setRegistrationError('Registration failed. No user ID created.');
+        setIsSubmitting(false);
         return false;
       }
       
@@ -81,7 +85,7 @@ export const useExpertRegistrationSubmit = () => {
       // Convert experience to string since the database expects a string
       const expertExperience = String(values.experience);
       
-      // Create expert profile
+      // CRITICAL: Create expert profile ONLY, not a regular profile
       const { error: profileError } = await supabase
         .from('expert_accounts')
         .insert({
@@ -113,6 +117,7 @@ export const useExpertRegistrationSubmit = () => {
           console.error('Expert Registration: Error cleaning up auth user:', cleanupError);
         }
         
+        setIsSubmitting(false);
         return false;
       }
       
@@ -123,13 +128,13 @@ export const useExpertRegistrationSubmit = () => {
       await supabase.auth.signOut();
       window.location.href = '/expert-login?status=registered';
       
+      setIsSubmitting(false);
       return true;
     } catch (error: any) {
       console.error('Expert Registration: Error:', error);
       setRegistrationError(error.message || 'Registration failed. Please try again.');
-      return false;
-    } finally {
       setIsSubmitting(false);
+      return false;
     }
   };
 

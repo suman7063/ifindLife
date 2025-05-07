@@ -9,16 +9,19 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Create a compatible addReview function that can handle both calling styles
   const adaptedAddReview = async (reviewOrExpertId: NewReview | string, rating?: number, comment?: string): Promise<boolean> => {
-    if (!auth.addReview) return false;
-    
     // If first parameter is a string, assume it's the old style with separate parameters
     if (typeof reviewOrExpertId === 'string' && rating !== undefined) {
-      return auth.addReview(reviewOrExpertId, rating, comment || '');
+      return auth.addReview({
+        expert_id: parseInt(reviewOrExpertId),
+        rating,
+        comment: comment || '',
+        date: new Date().toISOString(),
+      });
     }
     
     // If first parameter is an object, handle as a review object
     if (reviewOrExpertId && typeof reviewOrExpertId === 'object') {
-      return auth.addReview(reviewOrExpertId);
+      return auth.addReview(reviewOrExpertId as NewReview);
     }
     
     return false;
@@ -26,16 +29,20 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Create a compatible reportExpert function that can handle both calling styles
   const adaptedReportExpert = async (reportOrExpertId: NewReport | string, reason?: string, details?: string): Promise<boolean> => {
-    if (!auth.reportExpert) return false;
-    
     // If first parameter is a string, assume it's the old style with separate parameters
     if (typeof reportOrExpertId === 'string' && reason !== undefined) {
-      return auth.reportExpert(reportOrExpertId, reason, details || '');
+      return auth.reportExpert({
+        expert_id: parseInt(reportOrExpertId),
+        reason,
+        details: details || '',
+        date: new Date().toISOString(),
+        status: 'pending'
+      });
     }
     
     // If first parameter is an object, handle as a report object
     if (reportOrExpertId && typeof reportOrExpertId === 'object') {
-      return auth.reportExpert(reportOrExpertId);
+      return auth.reportExpert(reportOrExpertId as NewReport);
     }
     
     return false;
@@ -51,7 +58,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     authLoading: auth.isLoading, // Add this for consistency
     loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile,
+    updateProfile: auth.updateUserProfile,
     updatePassword: auth.updatePassword,
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),

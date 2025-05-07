@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -5,22 +6,8 @@ import { useFetchUserProfile } from './hooks/useFetchUserProfile';
 import { useFetchExpertProfile } from './hooks/useFetchExpertProfile';
 import { useAuthFunctions } from './hooks/useAuthFunctions';
 import { toast } from 'sonner';
-import { AuthState, UserProfile } from './types';
-
-interface AuthContextProps {
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  user: User | null;
-  session: Session | null;
-  userProfile: UserProfile | null;
-  expertProfile: any | null;
-  role: 'user' | 'expert' | 'admin' | null;
-  login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  expertSignup: (data: any) => Promise<boolean>;
-  expertLogin: (email: string, password: string) => Promise<boolean>;
-}
+import { AuthState, UserProfile, ExpertProfile, AuthContextProps, initialAuthState } from './types';
+import { NewReview, NewReport } from '@/types/supabase/tables';
 
 export const AuthContext = createContext<AuthContextProps | undefined>(undefined);
 
@@ -29,15 +16,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>({
-    session: null,
-    user: null,
-    userProfile: null,
-    expertProfile: null,
-    role: null,
-    isAuthenticated: false,
-    isLoading: true,
-  });
+  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
   
   console.log('Setting up auth state listener');
   
@@ -116,11 +95,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Check for expert profile
       if (expertData && !expertError) {
         console.log('Found expert profile:', expertData);
+        
+        // Type safety: ensure the status is properly typed
+        const expertProfile: ExpertProfile = {
+          ...expertData,
+          status: expertData.status as 'pending' | 'approved' | 'disapproved'
+        };
+        
         setAuthState((prev) => ({
           ...prev,
-          expertProfile: expertData,
+          expertProfile: expertProfile,
           role: 'expert',
           isLoading: false,
+          error: null,
         }));
         return;
       }
@@ -136,9 +123,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('Found user profile:', userId);
         setAuthState((prev) => ({
           ...prev,
-          userProfile: userData,
+          userProfile: userData as UserProfile,
           role: 'user',
           isLoading: false,
+          error: null,
         }));
         return;
       }
@@ -156,6 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           ...prev,
           role: 'admin',
           isLoading: false,
+          error: null,
         }));
         return;
       }
@@ -168,6 +157,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         expertProfile: null,
         role: null,
         isLoading: false,
+        error: null,
       }));
       
     } catch (error) {
@@ -178,6 +168,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         expertProfile: null,
         role: null,
         isLoading: false,
+        error: "Failed to fetch user data",
       }));
     }
   };
@@ -192,7 +183,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Enhanced login function that allows role override
   const login = async (email: string, password: string, roleOverride?: string): Promise<boolean> => {
     try {
-      setAuthState((prev) => ({ ...prev, isLoading: true }));
+      setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
       
       console.log("Attempting login with email:", email, roleOverride ? `(role override: ${roleOverride})` : '');
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -203,14 +194,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (error) {
         console.error("Login error:", error);
         toast.error(error.message);
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
         return false;
       }
 
       if (!data.user || !data.session) {
         console.error("Login failed: No user or session returned");
         toast.error("Login failed. Please try again.");
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ ...prev, isLoading: false, error: "Login failed" }));
         return false;
       }
 
@@ -218,13 +209,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       if (roleOverride === 'expert') {
         // For experts, check expert profile immediately
-        const { data: expertProfile, error: expertError } = await supabase
+        const { data: expertData, error: expertError } = await supabase
           .from('expert_accounts')
           .select('*')
           .eq('auth_id', data.user.id)
           .maybeSingle();
           
-        if (!expertProfile || expertError) {
+        if (!expertData || expertError) {
           console.error("Expert profile not found for user:", data.user.id);
           toast.error("No expert profile found for this account");
           await supabase.auth.signOut();
@@ -233,10 +224,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             session: null,
             user: null,
             isAuthenticated: false,
-            isLoading: false
+            isLoading: false,
+            error: "No expert profile found"
           }));
           return false;
         }
+        
+        // Type safety: ensure the status is properly typed
+        const expertProfile: ExpertProfile = {
+          ...expertData,
+          status: expertData.status as 'pending' | 'approved' | 'disapproved'
+        };
         
         // Set the expert profile and role
         setAuthState(prev => ({
@@ -246,7 +244,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           expertProfile,
           role: 'expert',
           isAuthenticated: true,
-          isLoading: false
+          isLoading: false,
+          error: null
         }));
         
         toast.success("Expert login successful!");
@@ -266,10 +265,252 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error: any) {
       console.error("Login error:", error);
       toast.error(error.message || "An error occurred during login");
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
       return false;
     }
   };
+
+  // Implement missing profile methods
+  const updateUserProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+    try {
+      if (!authState.user?.id) return false;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update(data)
+        .eq('id', authState.user.id);
+        
+      if (error) throw error;
+      
+      // Update state with new profile data
+      setAuthState(prev => ({
+        ...prev,
+        userProfile: { ...prev.userProfile, ...data } as UserProfile
+      }));
+      
+      toast.success("Profile updated successfully");
+      return true;
+    } catch (error: any) {
+      console.error("Error updating profile:", error);
+      toast.error(error.message || "Failed to update profile");
+      return false;
+    }
+  };
+  
+  const updateExpertProfile = async (data: Partial<ExpertProfile>): Promise<boolean> => {
+    try {
+      if (!authState.user?.id || !authState.expertProfile) return false;
+      
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(data)
+        .eq('auth_id', authState.user.id);
+        
+      if (error) throw error;
+      
+      // Update state with new profile data
+      setAuthState(prev => ({
+        ...prev,
+        expertProfile: { 
+          ...prev.expertProfile as ExpertProfile, 
+          ...data,
+          status: (data.status || prev.expertProfile?.status) as 'pending' | 'approved' | 'disapproved' 
+        }
+      }));
+      
+      toast.success("Expert profile updated successfully");
+      return true;
+    } catch (error: any) {
+      console.error("Error updating expert profile:", error);
+      toast.error(error.message || "Failed to update expert profile");
+      return false;
+    }
+  };
+  
+  // Generic update profile that redirects to the appropriate function
+  const updateProfile = async (data: any): Promise<boolean> => {
+    if (authState.role === 'expert') {
+      return updateExpertProfile(data as Partial<ExpertProfile>);
+    } else {
+      return updateUserProfile(data as Partial<UserProfile>);
+    }
+  };
+  
+  // Password update method
+  const updatePassword = async (password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password
+      });
+      
+      if (error) throw error;
+      toast.success("Password updated successfully");
+      return true;
+    } catch (error: any) {
+      console.error("Error updating password:", error);
+      toast.error(error.message || "Failed to update password");
+      return false;
+    }
+  };
+  
+  // Expert interaction methods
+  const addToFavorites = async (expertId: number): Promise<boolean> => {
+    try {
+      if (!authState.user?.id) return false;
+      
+      const { error } = await supabase
+        .from('user_favorites')
+        .insert({
+          user_id: authState.user.id,
+          expert_id: expertId
+        });
+        
+      if (error) throw error;
+      toast.success("Added to favorites");
+      return true;
+    } catch (error: any) {
+      console.error("Error adding to favorites:", error);
+      toast.error(error.message || "Failed to add to favorites");
+      return false;
+    }
+  };
+  
+  const removeFromFavorites = async (expertId: number): Promise<boolean> => {
+    try {
+      if (!authState.user?.id) return false;
+      
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .match({ 
+          user_id: authState.user.id,
+          expert_id: expertId
+        });
+        
+      if (error) throw error;
+      toast.success("Removed from favorites");
+      return true;
+    } catch (error: any) {
+      console.error("Error removing from favorites:", error);
+      toast.error(error.message || "Failed to remove from favorites");
+      return false;
+    }
+  };
+  
+  const rechargeWallet = async (amount: number): Promise<boolean> => {
+    try {
+      if (!authState.user?.id) return false;
+      
+      // Update wallet balance
+      const { error } = await supabase.rpc('recharge_wallet', {
+        user_id_param: authState.user.id,
+        amount_param: amount
+      });
+      
+      if (error) throw error;
+      
+      // Update local state
+      setAuthState(prev => ({
+        ...prev,
+        userProfile: {
+          ...prev.userProfile as UserProfile,
+          wallet_balance: (prev.userProfile?.wallet_balance || 0) + amount
+        }
+      }));
+      
+      toast.success(`Successfully added ${amount} to wallet`);
+      return true;
+    } catch (error: any) {
+      console.error("Error recharging wallet:", error);
+      toast.error(error.message || "Failed to recharge wallet");
+      return false;
+    }
+  };
+  
+  // Review and report methods
+  const addReview = async (review: NewReview): Promise<boolean> => {
+    try {
+      if (!authState.user?.id) return false;
+      
+      const { error } = await supabase
+        .from('user_reviews')
+        .insert({
+          ...review,
+          user_id: authState.user.id
+        });
+        
+      if (error) throw error;
+      toast.success("Review added successfully");
+      return true;
+    } catch (error: any) {
+      console.error("Error adding review:", error);
+      toast.error(error.message || "Failed to add review");
+      return false;
+    }
+  };
+  
+  const reportExpert = async (report: NewReport): Promise<boolean> => {
+    try {
+      if (!authState.user?.id) return false;
+      
+      const { error } = await supabase
+        .from('user_reports')
+        .insert({
+          ...report,
+          user_id: authState.user.id,
+          date: new Date().toISOString(),
+          status: 'pending'
+        });
+        
+      if (error) throw error;
+      toast.success("Report submitted successfully");
+      return true;
+    } catch (error: any) {
+      console.error("Error submitting report:", error);
+      toast.error(error.message || "Failed to submit report");
+      return false;
+    }
+  };
+  
+  const hasTakenServiceFrom = async (expertId: string | number): Promise<boolean> => {
+    try {
+      if (!authState.user?.id) return false;
+      
+      const { data, error } = await supabase
+        .from('user_expert_services')
+        .select('id')
+        .match({ 
+          user_id: authState.user.id,
+          expert_id: expertId,
+          status: 'completed'
+        })
+        .limit(1);
+        
+      if (error) throw error;
+      return data && data.length > 0;
+    } catch (error) {
+      console.error("Error checking service history:", error);
+      return false;
+    }
+  };
+  
+  const getExpertShareLink = (expertId: string | number): string => {
+    return `${window.location.origin}/experts/${expertId}`;
+  };
+  
+  const getReferralLink = (): string | null => {
+    if (!authState.userProfile?.referral_code) return null;
+    return `${window.location.origin}/signup?ref=${authState.userProfile.referral_code}`;
+  };
+  
+  // Determine session type
+  const sessionType = authState.userProfile && authState.expertProfile 
+    ? 'dual'
+    : authState.userProfile 
+      ? 'user' 
+      : authState.expertProfile 
+        ? 'expert'
+        : 'none';
 
   return (
     <AuthContext.Provider
@@ -285,7 +526,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         signup,
         logout,
         expertLogin,
-        expertSignup
+        expertSignup,
+        updateProfile,
+        updateUserProfile,
+        updateExpertProfile,
+        updatePassword,
+        addToFavorites,
+        removeFromFavorites,
+        rechargeWallet,
+        addReview,
+        reportExpert,
+        hasTakenServiceFrom,
+        getExpertShareLink,
+        getReferralLink,
+        sessionType
       }}
     >
       {children}

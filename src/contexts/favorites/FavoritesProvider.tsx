@@ -1,220 +1,111 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import React, { useContext, useState, createContext, useEffect } from 'react';
 import { toast } from 'sonner';
-import { FavoritesContext } from './FavoritesContext';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth/AuthContext';
+
+// Implement the provider logic here
+export const FavoritesContext = createContext<any>(null);
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { userProfile, isAuthenticated, updateProfile } = useAuth();
-  const [favoriteExperts, setFavoriteExperts] = useState<string[]>([]);
-  const [favoritePrograms, setFavoritePrograms] = useState<number[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { isAuthenticated, user, userProfile, updateUserProfile } = useAuth();
 
-  // Load favorites on auth change
+  // Load favorites when user is authenticated
   useEffect(() => {
-    if (isAuthenticated && userProfile) {
-      setFavoriteExperts(userProfile.favorite_experts || []);
-      setFavoritePrograms(userProfile.favorite_programs || []);
+    if (isAuthenticated && user) {
+      loadFavorites();
     } else {
-      setFavoriteExperts([]);
-      setFavoritePrograms([]);
+      setFavorites([]);
+      setLoading(false);
     }
-    setIsLoading(false);
-  }, [isAuthenticated, userProfile]);
+  }, [isAuthenticated, user]);
 
-  // Add expert to favorites
-  const addExpertToFavorites = async (expertId: string) => {
-    if (!isAuthenticated || !userProfile) {
-      toast.error('Please log in to add favorites');
-      return;
-    }
-
+  const loadFavorites = async () => {
     try {
-      setIsLoading(true);
-      const updatedFavorites = [...favoriteExperts, expertId];
+      setLoading(true);
+      if (!user) return;
       
-      const success = await updateProfile({
-        favorite_experts: updatedFavorites
-      });
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select('expert_id')
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
       
-      if (success) {
-        setFavoriteExperts(updatedFavorites);
-        toast.success('Expert added to favorites');
-      } else {
-        toast.error('Failed to add to favorites');
-      }
+      setFavorites(data.map(item => item.expert_id));
     } catch (error) {
-      console.error('Error adding expert to favorites:', error);
-      toast.error('Failed to update favorites');
+      console.error('Error loading favorites:', error);
+      toast.error('Failed to load favorites');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  // Remove expert from favorites
-  const removeExpertFromFavorites = async (expertId: string) => {
-    if (!isAuthenticated || !userProfile) {
-      toast.error('Please log in to manage favorites');
-      return;
-    }
-
+  const addFavorite = async (expertId: number) => {
     try {
-      setIsLoading(true);
-      const updatedFavorites = favoriteExperts.filter(id => id !== expertId);
-      
-      const success = await updateProfile({
-        favorite_experts: updatedFavorites
-      });
-      
-      if (success) {
-        setFavoriteExperts(updatedFavorites);
-        toast.success('Expert removed from favorites');
-      } else {
-        toast.error('Failed to update favorites');
-      }
-    } catch (error) {
-      console.error('Error removing expert from favorites:', error);
-      toast.error('Failed to update favorites');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Add program to favorites
-  const addProgramToFavorites = async (programId: number) => {
-    if (!isAuthenticated || !userProfile) {
-      toast.error('Please log in to add favorites');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const updatedFavorites = [...favoritePrograms, programId];
-      
-      const success = await updateProfile({
-        favorite_programs: updatedFavorites
-      });
-      
-      if (success) {
-        setFavoritePrograms(updatedFavorites);
-        toast.success('Program added to favorites');
-      } else {
-        toast.error('Failed to add to favorites');
-      }
-    } catch (error) {
-      console.error('Error adding program to favorites:', error);
-      toast.error('Failed to update favorites');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Remove program from favorites
-  const removeProgramFromFavorites = async (programId: number) => {
-    if (!isAuthenticated || !userProfile) {
-      toast.error('Please log in to manage favorites');
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const updatedFavorites = favoritePrograms.filter(id => id !== programId);
-      
-      const success = await updateProfile({
-        favorite_programs: updatedFavorites
-      });
-      
-      if (success) {
-        setFavoritePrograms(updatedFavorites);
-        toast.success('Program removed from favorites');
-      } else {
-        toast.error('Failed to update favorites');
-      }
-    } catch (error) {
-      console.error('Error removing program from favorites:', error);
-      toast.error('Failed to update favorites');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Toggle expert favorite status
-  const toggleExpertFavorite = async (expertId: string): Promise<boolean> => {
-    if (!isAuthenticated) {
-      toast.error('Please log in to manage favorites');
-      return false;
-    }
-    
-    try {
-      const isFavorite = favoriteExperts.includes(expertId);
-      
-      if (isFavorite) {
-        await removeExpertFromFavorites(expertId);
-      } else {
-        await addExpertToFavorites(expertId);
+      if (!user) {
+        toast.error('You must be logged in to add favorites');
+        return false;
       }
       
+      const { error } = await supabase
+        .from('user_favorites')
+        .insert({
+          user_id: user.id,
+          expert_id: expertId
+        });
+        
+      if (error) throw error;
+      
+      setFavorites(prev => [...prev, expertId]);
+      toast.success('Added to favorites');
       return true;
     } catch (error) {
-      console.error('Error toggling expert favorite:', error);
-      toast.error('Failed to update favorites');
+      console.error('Error adding favorite:', error);
+      toast.error('Failed to add favorite');
       return false;
     }
   };
-  
-  // Toggle program favorite status
-  const toggleProgramFavorite = async (programId: number): Promise<boolean> => {
-    if (!isAuthenticated) {
-      toast.error('Please log in to manage favorites');
-      return false;
-    }
-    
+
+  const removeFavorite = async (expertId: number) => {
     try {
-      const isFavorite = favoritePrograms.includes(programId);
-      
-      if (isFavorite) {
-        await removeProgramFromFavorites(programId);
-      } else {
-        await addProgramToFavorites(programId);
+      if (!user) {
+        toast.error('You must be logged in to remove favorites');
+        return false;
       }
       
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('expert_id', expertId);
+        
+      if (error) throw error;
+      
+      setFavorites(prev => prev.filter(id => id !== expertId));
+      toast.success('Removed from favorites');
       return true;
     } catch (error) {
-      console.error('Error toggling program favorite:', error);
-      toast.error('Failed to update favorites');
+      console.error('Error removing favorite:', error);
+      toast.error('Failed to remove favorite');
       return false;
     }
   };
 
-  // Check if expert is in favorites
-  const isExpertFavorite = (expertId: string) => {
-    return favoriteExperts.includes(expertId);
-  };
-
-  // Check if program is in favorites
-  const isProgramFavorite = (programId: number) => {
-    return favoritePrograms.includes(programId);
-  };
-
-  // Create context value
-  const value = {
-    favoriteExperts,
-    favoritePrograms,
-    expertFavorites: favoriteExperts, // Add alias for backward compatibility
-    programFavorites: favoritePrograms, // Add alias for backward compatibility
-    isLoading,
-    addExpertToFavorites,
-    removeExpertFromFavorites,
-    addProgramToFavorites,
-    removeProgramFromFavorites,
-    toggleExpertFavorite,
-    toggleProgramFavorite,
-    isExpertFavorite,
-    isProgramFavorite
+  const isFavorite = (expertId: number) => {
+    return favorites.includes(expertId);
   };
 
   return (
-    <FavoritesContext.Provider value={value}>
+    <FavoritesContext.Provider value={{
+      favorites,
+      loading,
+      addFavorite,
+      removeFavorite,
+      isFavorite
+    }}>
       {children}
     </FavoritesContext.Provider>
   );

@@ -1,80 +1,88 @@
 
-import { useContext } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
+import { useState, useEffect } from 'react';
 
-interface ExpertAuth {
-  currentExpert: any;
-  isAuthenticated: boolean;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, expertData: any) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  updateProfile: (data: any) => Promise<boolean>;
-}
-
-interface UserAuth {
-  currentUser: any;
-  isAuthenticated: boolean;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: any) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  updateProfile: (data: any) => Promise<boolean>;
-  addToFavorites: (expertId: number) => Promise<boolean>;
-  removeFromFavorites: (expertId: number) => Promise<boolean>;
-}
-
+/**
+ * This hook provides backward compatibility for code that was written before
+ * the auth system was consolidated into a single AuthContext.
+ */
 export const useAuthBackCompat = () => {
   const auth = useAuth();
-  const userContext = useContext(UserAuthContext);
+  const [loading, setLoading] = useState(true);
   
-  const userAuth: UserAuth = {
+  // Initialize on component mount
+  useEffect(() => {
+    if (!auth.isLoading) {
+      setLoading(false);
+    }
+  }, [auth.isLoading]);
+  
+  // Compatibility function for userAuth
+  const userAuth = {
     currentUser: auth.userProfile,
-    isAuthenticated: !!auth.userProfile && auth.isAuthenticated,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     loading: auth.isLoading,
-    login: auth.login,
-    signup: auth.signup,
+    authLoading: auth.isLoading,
+    profileNotFound: !auth.userProfile && !auth.isLoading && auth.isAuthenticated,
+    user: auth.user,
+    
+    // Auth methods
+    login: (email: string, password: string) => auth.login(email, password, 'user'),
     logout: auth.logout,
-    updateProfile: auth.updateProfile,
-    addToFavorites: async (expertId: number) => {
-      if (!auth.userProfile) return false;
-      
-      const currentFavorites = auth.userProfile.favorite_experts || [];
-      const updatedFavorites = [...currentFavorites, expertId.toString()];
-      
-      return auth.updateProfile({ favorite_experts: updatedFavorites });
+    signup: auth.signup,
+    
+    // Profile methods
+    updateProfile: auth.updateUserProfile,
+    updatePassword: auth.updatePassword,
+    
+    // Expert interactions
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
+    rechargeWallet: auth.rechargeWallet,
+    addReview: auth.addReview,
+    reportExpert: auth.reportExpert,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom,
+    getExpertShareLink: auth.getExpertShareLink,
+    getReferralLink: auth.getReferralLink,
+    updateProfilePicture: async (file: File) => {
+      // Implement file upload functionality if needed
+      return null; 
     },
-    removeFromFavorites: async (expertId: number) => {
-      if (!auth.userProfile) return false;
-      
-      const currentFavorites = auth.userProfile.favorite_experts || [];
-      const updatedFavorites = currentFavorites.filter(
-        id => id !== expertId.toString()
-      );
-      
-      return auth.updateProfile({ favorite_experts: updatedFavorites });
+    refreshProfile: async () => {
+      // This would trigger a refresh of the user profile
+      if (auth.user?.id) {
+        // This would be implemented properly in the auth context
+      }
     }
   };
   
-  const expertAuth: ExpertAuth = {
+  // Compatibility function for expertAuth
+  const expertAuth = {
     currentExpert: auth.expertProfile,
-    isAuthenticated: !!auth.expertProfile && auth.isAuthenticated,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
     loading: auth.isLoading,
-    login: (email: string, password: string) => auth.login(email, password),
-    signup: (email: string, password: string, expertData: any) => {
-      return auth.signup(email, password, expertData);
-    },
+    initialized: !auth.isLoading,
+    error: auth.isLoading ? null : (auth.expertProfile ? null : 'No expert profile found'),
+    user: auth.user,
+    
+    // Auth methods
+    login: (email: string, password: string) => auth.login(email, password, 'expert'),
     logout: auth.logout,
-    updateProfile: (data: any) => {
-      if (!auth.expertProfile) return Promise.resolve(false);
-      return auth.updateExpertProfile(data);
+    register: auth.expertSignup,
+    
+    // Profile methods
+    updateProfile: auth.updateExpertProfile,
+    
+    // Expert specific methods
+    hasUserAccount: async () => {
+      // Check if the current user also has a user profile
+      return !!auth.userProfile && auth.isAuthenticated;
     }
   };
   
   return {
     userAuth,
     expertAuth,
-    auth
+    loading
   };
 };

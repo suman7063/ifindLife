@@ -17,7 +17,7 @@ export const useAuthSynchronization = () => {
   const [currentExpert, setCurrentExpert] = useState<any>(null);
   const [isAuthInitialized, setIsAuthInitialized] = useState(false);
   const [hasDualSessions, setHasDualSessions] = useState(false);
-  const [sessionType, setSessionType] = useState<'user' | 'expert' | 'dual' | 'none'>('none');
+  const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
   
   // Initialize all state based on auth context
   useEffect(() => {
@@ -34,7 +34,7 @@ export const useAuthSynchronization = () => {
     setHasDualSessions(!!auth.userProfile && !!auth.expertProfile && auth.isAuthenticated);
     
     // Initialize session type from auth context
-    setSessionType(auth.sessionType);
+    setSessionType(auth.sessionType || 'none');
     
     // Mark auth as initialized once loading is complete
     if (!auth.isLoading) {

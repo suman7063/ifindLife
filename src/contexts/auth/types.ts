@@ -1,9 +1,47 @@
 
 import { Session, User } from '@supabase/supabase-js';
-import { UserProfile, ExpertProfile } from '@/types/supabase';
 import { Review, Report, NewReview, NewReport } from '@/types/supabase/tables';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
+
+// Add UserProfile interface
+export interface UserProfile {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  wallet_balance?: number;
+  currency?: string;
+  profile_picture?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Add ExpertProfile interface with strongly typed status
+export interface ExpertProfile {
+  id?: string;
+  auth_id?: string;
+  name: string;
+  email: string;
+  phone?: string;
+  bio?: string;
+  specialization?: string;
+  experience?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  certificate_urls?: string[];
+  profile_picture?: string;
+  selected_services?: number[];
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
+  created_at?: string;
+  status: 'pending' | 'approved' | 'disapproved';
+}
 
 export interface AuthState {
   session: Session | null;
@@ -27,49 +65,40 @@ export const initialAuthState: AuthState = {
   role: null
 };
 
-export interface AuthContextType extends AuthState {
-  // Auth functions
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
-  expertLogin: (email: string, password: string) => Promise<boolean>;
-  expertSignup: (registrationData: any) => Promise<boolean>;
-  logout: () => Promise<boolean>;
+export interface AuthContextProps {
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  user: User | null;
+  session: Session | null;
+  userProfile: UserProfile | null;
+  expertProfile: ExpertProfile | null;
+  role: UserRole;
   
-  // Profile functions
+  // Authentication methods
+  login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  expertSignup: (data: any) => Promise<boolean>;
+  expertLogin: (email: string, password: string) => Promise<boolean>;
+  
+  // Profile methods
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateExpertProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
-  resetPassword: (email: string) => Promise<boolean>;
-  
-  // Role checking
-  checkUserRole: () => Promise<UserRole>;
   
   // Expert interactions
-  addToFavorites?: (expertId: number) => Promise<boolean>;
-  removeFromFavorites?: (expertId: number) => Promise<boolean>;
-  rechargeWallet?: (amount: number) => Promise<boolean>;
+  addToFavorites: (expertId: number) => Promise<boolean>;
+  removeFromFavorites: (expertId: number) => Promise<boolean>;
+  rechargeWallet: (amount: number) => Promise<boolean>;
   
-  // Review and report functions
-  addReview?: {
-    (expertId: string, rating: number, comment: string): Promise<boolean>;
-    (review: NewReview): Promise<boolean>;
-  };
-  
-  reportExpert?: {
-    (expertId: string, reason: string, details: string): Promise<boolean>;
-    (report: NewReport): Promise<boolean>;  
-  };
-                 
-  hasTakenServiceFrom?: (expertId: string) => Promise<boolean>;
-  getExpertShareLink?: (expertId: string | number) => string;
-  getReferralLink?: () => string | null;
+  // Review and reporting
+  addReview: (review: NewReview) => Promise<boolean>;
+  reportExpert: (report: NewReport) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink: (expertId: string | number) => string;
+  getReferralLink: () => string | null;
   
   // Session type
   sessionType: 'none' | 'user' | 'expert' | 'dual';
-  
-  // Backward compatibility properties
-  currentUser: UserProfile | null;
-  currentExpert: ExpertProfile | null;
-  authLoading: boolean;
 }
