@@ -204,6 +204,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               return true;
             } else {
               console.error("Expert profile not found:", expertError);
+              
+              // Check if this is a database error (500/recursion) rather than simply not found
+              if (expertError && expertError.message && 
+                 (expertError.message.includes('recursion') || expertError.code === '500')) {
+                console.error("Database permission error:", expertError.message);
+                setError(`Database error: ${expertError.message}`);
+                // We'll still try to check if this is a regular user
+                const { data: userData } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('id', data.user.id)
+                  .single();
+                  
+                if (userData) {
+                  // This is a regular user trying to log in as an expert
+                  console.log("User profile found during expert login attempt:", userData);
+                  setRole('user');
+                  setUserProfile(userData);
+                  setExpertProfile(null);
+                  setSessionType('user');
+                  setIsLoading(false);
+                  return false;
+                }
+              }
+              
               setError(expertError?.message || "Failed to fetch expert profile");
               setIsLoading(false);
               
@@ -301,7 +326,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Implement other missing functions
+  // Implement other missing functions with proper return types
   const signup = async (email: string, password: string, userData: any, referralCode?: string) => {
     console.log("Signup called with:", email, userData, referralCode ? `Referral: ${referralCode}` : "");
     // Placeholder implementation

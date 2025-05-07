@@ -20,6 +20,7 @@ const ExpertLogin: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const [dbErrorRetries, setDbErrorRetries] = useState(0);
   
   // Get auth context
   const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
@@ -31,9 +32,10 @@ const ExpertLogin: React.FC = () => {
       isAuthenticated, 
       hasExpertProfile: !!expertProfile,
       role,
-      redirectAttempted
+      redirectAttempted,
+      dbErrorRetries
     });
-  }, [isLoading, isAuthenticated, expertProfile, role, redirectAttempted]);
+  }, [isLoading, isAuthenticated, expertProfile, role, redirectAttempted, dbErrorRetries]);
   
   // Clear any cached redirects
   useEffect(() => {
@@ -59,6 +61,11 @@ const ExpertLogin: React.FC = () => {
       setStatusMessage({
         type: 'error',
         message: 'Your account application was not approved. Please check your email for details.'
+      });
+    } else if (status === 'dberror') {
+      setStatusMessage({
+        type: 'error',
+        message: 'Database error occurred. Please try again or contact support.'
       });
     }
   }, [searchParams]);
@@ -95,7 +102,7 @@ const ExpertLogin: React.FC = () => {
         await supabase.auth.signOut({ scope: 'local' });
       }
       
-      // CRITICAL FIX: Use the login function with 'expert' role override explicitly
+      // CRITICAL FIX: Check if login function is available
       if (!login) {
         console.error('Login function is not available');
         toast.error('Login functionality is not available');
@@ -114,8 +121,28 @@ const ExpertLogin: React.FC = () => {
           navigate('/expert-dashboard', { replace: true });
           return true;
         } else {
-          console.error('ExpertLogin: Login failed');
-          setLoginError('Login failed. Please check your credentials or contact support.');
+          // Handle database error as a special case
+          const isDatabaseError = dbErrorRetries < 3;
+          
+          if (isDatabaseError) {
+            console.warn(`ExpertLogin: Database error detected, retry attempt ${dbErrorRetries + 1}`);
+            setDbErrorRetries(prev => prev + 1);
+            
+            // Show more informative error for database issues
+            toast.error('Database connection issue detected. Please try again in a moment.');
+            setLoginError('A temporary database issue occurred. Please try again.');
+            
+            // For user experience, we'll reload the page after a brief delay when we detect DB issues
+            if (dbErrorRetries >= 2) {
+              toast.info('Refreshing application to resolve connection issues...');
+              setTimeout(() => {
+                window.location.href = '/expert-login?status=dberror';
+              }, 2000);
+            }
+          } else {
+            console.error('ExpertLogin: Login failed');
+            setLoginError('Login failed. Please check your credentials or contact support.');
+          }
           setIsLogging(false);
           return false;
         }
