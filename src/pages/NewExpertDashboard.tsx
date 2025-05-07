@@ -7,6 +7,7 @@ import ProfilePage from '@/components/expert-dashboard/pages/ProfilePage';
 import PlaceholderPage from '@/components/expert-dashboard/pages/PlaceholderPage';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
+import MessagingTab from '@/components/expert/dashboard/MessagingTab';
 
 const NewExpertDashboard: React.FC = () => {
   const { expertProfile, isAuthenticated, role, isLoading } = useAuth();
@@ -42,6 +43,9 @@ const NewExpertDashboard: React.FC = () => {
         {/* Phase 1 Pages */}
         <Route path="profile" element={<ProfilePage />} />
         
+        {/* Messaging Route - Now Implemented */}
+        <Route path="messages" element={<MessagingTab />} />
+        
         {/* Placeholders for Future Phases */}
         <Route 
           path="schedule" 
@@ -50,16 +54,6 @@ const NewExpertDashboard: React.FC = () => {
               title="Schedule Management" 
               description="Manage your availability and appointments" 
               phase={4}
-            />
-          } 
-        />
-        <Route 
-          path="messages" 
-          element={
-            <PlaceholderPage 
-              title="Messages" 
-              description="Communicate with clients and administrators" 
-              phase={6}
             />
           } 
         />

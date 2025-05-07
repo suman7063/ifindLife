@@ -1,37 +1,40 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 interface SidebarNavItemProps {
-  name: string;
-  path: string;
-  icon: LucideIcon;
-  isActive: boolean;
-  collapsed: boolean;
+  to: string;
+  icon: React.ReactNode;
+  label: string;
+  badge?: number;
 }
 
-const SidebarNavItem: React.FC<SidebarNavItemProps> = ({ 
-  name, 
-  path, 
-  icon: Icon,
-  isActive,
-  collapsed
+const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
+  to,
+  icon,
+  label,
+  badge
 }) => {
   return (
-    <Link 
-      to={path} 
-      className={cn(
-        'flex items-center px-4 py-3 my-1 mx-2 rounded-md transition-colors',
-        isActive 
-          ? 'bg-ifind-teal/10 text-ifind-teal' 
-          : 'text-gray-600 hover:bg-gray-100'
-      )}
+    <NavLink
+      to={to}
+      className={({ isActive }) => `
+        flex items-center gap-2 px-3 py-2 rounded-md text-sm
+        ${isActive 
+          ? 'bg-primary text-primary-foreground font-medium' 
+          : 'text-muted-foreground hover:bg-accent/50'
+        }
+        transition-colors
+      `}
     >
-      <Icon size={20} className={cn('min-w-5', collapsed ? 'mx-auto' : 'mr-3')} />
-      {!collapsed && <span>{name}</span>}
-    </Link>
+      <span className="w-5 h-5">{icon}</span>
+      <span>{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-white">
+          {badge > 9 ? '9+' : badge}
+        </span>
+      )}
+    </NavLink>
   );
 };
 

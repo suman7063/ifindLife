@@ -1,111 +1,78 @@
 
-import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  User, 
-  Calendar, 
-  MessagesSquare, 
-  FileText, 
-  Settings, 
-  DollarSign, 
-  ChevronLeft, 
-  ChevronRight 
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import SidebarNavItem from './SidebarNavItem';
+import React, { useEffect, useState } from 'react';
 import ExpertProfileSummary from './ExpertProfileSummary';
+import SidebarNavItem from './SidebarNavItem';
+import { Button } from '@/components/ui/button';
+import { 
+  LayoutDashboard,
+  User,
+  Calendar,
+  Users,
+  BarChart,
+  Settings,
+  MessageSquare,
+  LogOut
+} from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { useMessaging } from '@/hooks/useMessaging';
 
-interface ExpertSidebarProps {
-  expert: any;
-}
-
-const ExpertSidebar: React.FC<ExpertSidebarProps> = ({ expert }) => {
-  const [collapsed, setCollapsed] = useState(false);
+const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  
-  const navigationItems = [
-    {
-      name: 'Dashboard',
-      path: '/expert-dashboard',
-      icon: LayoutDashboard
-    },
-    {
-      name: 'Profile',
-      path: '/expert-dashboard/profile',
-      icon: User
-    },
-    {
-      name: 'Schedule',
-      path: '/expert-dashboard/schedule',
-      icon: Calendar
-    },
-    {
-      name: 'Messages',
-      path: '/expert-dashboard/messages',
-      icon: MessagesSquare
-    },
-    {
-      name: 'Documents',
-      path: '/expert-dashboard/documents',
-      icon: FileText
-    },
-    {
-      name: 'Earnings',
-      path: '/expert-dashboard/earnings',
-      icon: DollarSign
-    },
-    {
-      name: 'Settings',
-      path: '/expert-dashboard/settings',
-      icon: Settings
-    }
-  ];
+  const { logout, expertProfile, currentUser } = useAuth();
+  const { conversations, fetchConversations } = useMessaging(currentUser);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const toggleSidebar = () => {
-    setCollapsed(!collapsed);
+  // Calculate unread message count
+  useEffect(() => {
+    if (currentUser) {
+      fetchConversations();
+    }
+  }, [currentUser, fetchConversations]);
+
+  useEffect(() => {
+    // Calculate total unread messages
+    const totalUnread = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
+    setUnreadCount(totalUnread);
+  }, [conversations]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/expert-login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   return (
-    <aside 
-      className={cn(
-        'bg-white border-r border-gray-200 transition-all duration-300 flex flex-col',
-        collapsed ? 'w-20' : 'w-64'
-      )}
-    >
-      {/* Sidebar Header */}
-      <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-        <div className={cn('overflow-hidden transition-all', collapsed ? 'w-0' : 'w-full')}>
-          <h2 className="font-bold text-xl text-ifind-teal">iFind<span className="text-ifind-lavender">Life</span></h2>
-        </div>
-        <button onClick={toggleSidebar} className="p-1 rounded-md hover:bg-gray-100">
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-        </button>
+    <div className="w-64 border-r h-screen flex flex-col bg-background">
+      <div className="p-4">
+        <ExpertProfileSummary />
       </div>
-      
-      {/* Expert Profile Summary */}
-      <ExpertProfileSummary expert={expert} collapsed={collapsed} />
-      
-      {/* Navigation */}
-      <nav className="flex-1 py-4">
-        {navigationItems.map((item) => (
-          <SidebarNavItem
-            key={item.path}
-            name={item.name}
-            path={item.path}
-            icon={item.icon}
-            isActive={location.pathname === item.path}
-            collapsed={collapsed}
-          />
-        ))}
+
+      <nav className="flex-1 p-2 space-y-1">
+        <SidebarNavItem to="/expert-dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" />
+        <SidebarNavItem to="/expert-dashboard/profile" icon={<User size={18} />} label="Profile" />
+        <SidebarNavItem to="/expert-dashboard/schedule" icon={<Calendar size={18} />} label="Schedule" />
+        <SidebarNavItem to="/expert-dashboard/clients" icon={<Users size={18} />} label="Clients" />
+        <SidebarNavItem 
+          to="/expert-dashboard/messages" 
+          icon={<MessageSquare size={18} />} 
+          label="Messages"
+          badge={unreadCount}
+        />
+        <SidebarNavItem to="/expert-dashboard/analytics" icon={<BarChart size={18} />} label="Analytics" />
+        <SidebarNavItem to="/expert-dashboard/settings" icon={<Settings size={18} />} label="Settings" />
       </nav>
-      
-      {/* Sidebar Footer */}
-      <div className="p-4 border-t border-gray-200 text-xs text-gray-500 text-center">
-        {!collapsed && <p>© {new Date().getFullYear()} iFind Life</p>}
+
+      <div className="p-4 border-t">
+        <Button variant="outline" className="w-full" onClick={handleLogout}>
+          <LogOut className="w-4 h-4 mr-2" />
+          <span>Log out</span>
+        </Button>
       </div>
-    </aside>
+    </div>
   );
 };
 

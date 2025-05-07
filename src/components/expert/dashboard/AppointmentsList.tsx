@@ -1,203 +1,240 @@
 
-import React from 'react';
-import { useUserAuth } from '@/hooks/user-auth';
-import { useAppointments } from '@/hooks/useAppointments';
-import { Appointment } from '@/types/appointments';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useUserAuth } from '@/hooks/user-auth';
+import { Appointment } from '@/types/appointments';
+import useAppointments from '@/hooks/useAppointments';
 import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { format, parseISO } from 'date-fns';
-import { AlertCircle, Calendar, CheckCircle, Clock, XCircle } from 'lucide-react';
+  Calendar,
+  Clock,
+  MessageCircle,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
+import { format } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  confirmed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-red-100 text-red-800',
-  completed: 'bg-blue-100 text-blue-800'
-};
-
-const AppointmentsList = () => {
+const AppointmentsList: React.FC = () => {
   const { currentUser } = useUserAuth();
-  const { appointments, loading, fetchAppointments, updateAppointmentStatus } = useAppointments(currentUser);
-  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = React.useState(false);
-  
-  const handleStatusChange = async (appointmentId: string, status: Appointment['status']) => {
-    await updateAppointmentStatus(appointmentId, status);
-  };
-  
-  const connectToGoogleCalendar = () => {
-    toast.info('Google Calendar integration will be implemented in a future update');
-    setIsGoogleCalendarConnected(true);
-  };
-  
-  const sendReminderManually = (appointment: Appointment) => {
-    toast.info('Reminder has been sent to the user');
-  };
-  
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Upcoming Appointments</h2>
-        
-        {!isGoogleCalendarConnected && (
-          <Button variant="outline" onClick={connectToGoogleCalendar}>
-            <Calendar className="h-4 w-4 mr-2" />
-            Connect Google Calendar
-          </Button>
-        )}
-      </div>
+  const { 
+    appointments, 
+    fetchAppointments, 
+    updateAppointmentStatus,
+    sendMessageToClient
+  } = useAppointments(currentUser);
+  const [loading, setLoading] = useState(true);
+  const [messageText, setMessageText] = useState('');
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+
+  useEffect(() => {
+    if (currentUser) {
+      const loadAppointments = async () => {
+        setLoading(true);
+        await fetchAppointments();
+        setLoading(false);
+      };
       
+      loadAppointments();
+    }
+  }, [currentUser, fetchAppointments]);
+
+  const handleStatusUpdate = async (appointmentId: string, status: 'confirmed' | 'cancelled' | 'completed') => {
+    try {
+      await updateAppointmentStatus(appointmentId, status);
+      toast.success(`Appointment ${status} successfully`);
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      toast.error('Failed to update appointment status');
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!selectedAppointment || !messageText.trim()) return;
+    
+    try {
+      const sent = await sendMessageToClient(selectedAppointment.user_id, messageText);
+      if (sent) {
+        setMessageText('');
+        setSelectedAppointment(null);
+        toast.success('Message sent successfully');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error('Failed to send message');
+    }
+  };
+
+  // Get initials from a name for avatar
+  const getInitials = (name: string = 'Client') => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+
+  if (loading) {
+    return (
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader>
           <CardTitle>Appointments</CardTitle>
         </CardHeader>
-        
-        <CardContent>
-          {loading ? (
-            <p className="text-center py-6">Loading appointments...</p>
-          ) : appointments.length === 0 ? (
-            <div className="text-center py-6">
-              <p className="text-muted-foreground">No appointments found</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>User</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appointments.map((appointment) => (
-                  <TableRow key={appointment.id}>
-                    <TableCell>
-                      {format(parseISO(appointment.appointment_date), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      {appointment.start_time} - {appointment.end_time}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[appointment.status] || ''}>
-                        {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {appointment.user_name || 'User'}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        {appointment.status === 'pending' && (
-                          <>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    size="icon" 
-                                    variant="ghost"
-                                    className="h-8 w-8"
-                                    onClick={() => handleStatusChange(appointment.id, 'confirmed')}
-                                  >
-                                    <CheckCircle className="h-4 w-4 text-green-500" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Confirm</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    size="icon" 
-                                    variant="ghost"
-                                    className="h-8 w-8"
-                                    onClick={() => handleStatusChange(appointment.id, 'cancelled')}
-                                  >
-                                    <XCircle className="h-4 w-4 text-red-500" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Cancel</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </>
-                        )}
-                        
-                        {appointment.status === 'confirmed' && (
-                          <>
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    size="icon" 
-                                    variant="ghost"
-                                    className="h-8 w-8"
-                                    onClick={() => handleStatusChange(appointment.id, 'completed')}
-                                  >
-                                    <CheckCircle className="h-4 w-4 text-blue-500" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Mark as Completed</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                            
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Button 
-                                    size="icon" 
-                                    variant="ghost"
-                                    className="h-8 w-8"
-                                    onClick={() => sendReminderManually(appointment)}
-                                  >
-                                    <AlertCircle className="h-4 w-4 text-yellow-500" />
-                                  </Button>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Send Reminder</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          </>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+        <CardContent className="text-center py-10">
+          Loading appointments...
         </CardContent>
       </Card>
-    </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Appointments</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {appointments.length === 0 ? (
+          <div className="text-center py-10 text-muted-foreground">
+            No appointments found
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {appointments.map((appointment) => (
+              <Card key={appointment.id} className="overflow-hidden">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarFallback>{getInitials("Client")}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h4 className="font-medium">Client</h4>
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3 mr-1" />
+                          {appointment.appointment_date}
+                          <Clock className="h-3 w-3 ml-2 mr-1" />
+                          {appointment.start_time} - {appointment.end_time}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        className={
+                          appointment.status === 'confirmed' ? 'bg-green-500' :
+                          appointment.status === 'completed' ? 'bg-blue-500' :
+                          appointment.status === 'cancelled' ? 'bg-red-500' :
+                          'bg-yellow-500'
+                        }
+                      >
+                        {appointment.status}
+                      </Badge>
+                      
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => setSelectedAppointment(appointment)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Send Message to Client</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4 py-4">
+                            <div>
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Appointment: {appointment.appointment_date} at {appointment.start_time}
+                              </p>
+                              <Textarea
+                                placeholder="Type your message here..."
+                                value={messageText}
+                                onChange={(e) => setMessageText(e.target.value)}
+                                className="min-h-[100px]"
+                              />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button type="button" variant="outline" onClick={() => {
+                              setMessageText('');
+                              setSelectedAppointment(null);
+                            }}>
+                              Cancel
+                            </Button>
+                            <Button type="button" onClick={handleSendMessage}>
+                              Send Message
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {appointment.status === 'pending' && (
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(appointment.id, 'confirmed')}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              <span>Confirm</span>
+                            </DropdownMenuItem>
+                          )}
+                          {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(appointment.id, 'cancelled')}>
+                              <XCircle className="mr-2 h-4 w-4" />
+                              <span>Cancel</span>
+                            </DropdownMenuItem>
+                          )}
+                          {appointment.status === 'confirmed' && (
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(appointment.id, 'completed')}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              <span>Mark as Completed</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </div>
+                  
+                  {appointment.notes && (
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      <p className="font-medium">Notes:</p>
+                      <p>{appointment.notes}</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
