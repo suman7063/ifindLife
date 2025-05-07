@@ -28,12 +28,13 @@ const ExpertLogin: React.FC = () => {
       isLoading, 
       isAuthenticated, 
       hasExpertProfile: !!expertProfile,
-      role 
+      role,
+      redirectAttempted
     });
     
     // Clear any cached redirects
     localStorage.removeItem('redirectAfterLogin');
-  }, [isLoading, isAuthenticated, expertProfile, role]);
+  }, [isLoading, isAuthenticated, expertProfile, role, redirectAttempted]);
   
   // Check URL parameters for status messages
   useEffect(() => {
@@ -62,6 +63,8 @@ const ExpertLogin: React.FC = () => {
   useEffect(() => {
     if (!isLoading && isAuthenticated && !redirectAttempted) {
       setRedirectAttempted(true);
+      
+      console.log('ExpertLogin: Authentication status check', { role, hasExpertProfile: !!expertProfile });
       
       if (role === 'expert' && expertProfile) {
         console.log('ExpertLogin: User is authenticated as expert, redirecting to expert dashboard');

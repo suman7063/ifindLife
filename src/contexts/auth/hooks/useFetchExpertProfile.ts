@@ -22,7 +22,7 @@ export const useFetchExpertProfile = (userId: string | undefined, session: Sessi
           .from('expert_accounts')
           .select('*')
           .eq('auth_id', userId)
-          .single();
+          .maybeSingle();
 
         // Handle specific error cases
         if (profileError) {
@@ -40,7 +40,12 @@ export const useFetchExpertProfile = (userId: string | undefined, session: Sessi
           }
         } else if (profileData) {
           console.log('Expert profile found:', profileData);
-          setExpertProfile(profileData);
+          // Ensure the status field is properly typed
+          const expertProfileWithStatus = {
+            ...profileData,
+            status: profileData.status as 'pending' | 'approved' | 'disapproved'
+          };
+          setExpertProfile(expertProfileWithStatus);
         }
       } catch (err) {
         console.error('Error in fetchExpertProfile:', err);

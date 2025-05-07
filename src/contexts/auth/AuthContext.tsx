@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -85,7 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setAuthState((prev) => ({ ...prev, isLoading: true }));
       console.log('Fetching user data for ID:', userId);
       
-      // Attempt to fetch expert profile first
+      // Attempt to fetch expert profile first - this is critical for the expert login flow
       const { data: expertData, error: expertError } = await supabase
         .from('expert_accounts')
         .select('*')
@@ -110,6 +109,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           error: null,
         }));
         return;
+      } else {
+        console.log('No expert profile found or error:', expertError);
       }
       
       // If not expert, check for regular user profile
@@ -120,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         .maybeSingle();
         
       if (userData && !userError) {
-        console.log('Found user profile:', userId);
+        console.log('Found user profile:', userData);
         setAuthState((prev) => ({
           ...prev,
           userProfile: userData as UserProfile,
@@ -129,6 +130,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           error: null,
         }));
         return;
+      } else {
+        console.log('No user profile found or error:', userError);
       }
       
       // If no profile found, check for admin role
@@ -227,6 +230,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             isLoading: false,
             error: "No expert profile found"
           }));
+          return false;
+        }
+        
+        // Check if expert is approved
+        if (expertData.status !== 'approved') {
+          console.error(`Expert login failed: Status is ${expertData.status}`);
+          await supabase.auth.signOut();
+          
+          if (expertData.status === 'pending') {
+            toast.info("Your account is pending approval");
+            window.location.href = '/expert-login?status=pending';
+          } else if (expertData.status === 'disapproved') {
+            toast.error("Your account has been disapproved");
+            window.location.href = '/expert-login?status=disapproved';
+          }
+          
           return false;
         }
         
