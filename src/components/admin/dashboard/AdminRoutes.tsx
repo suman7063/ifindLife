@@ -1,106 +1,87 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import DashboardOverview from './sections/DashboardOverview';
-import AdminUsersManager from '../users/AdminUsersManager';
-import ServicesEditor from '../ServicesEditor';
-import ExpertsEditor from '../experts';
-import ExpertApprovals from '../experts/ExpertApprovals';
-import HeroSectionEditor from '../HeroSectionEditor';
-import TestimonialsEditor from '../testimonials/TestimonialsEditor';
-import ContactSubmissionsTable from '../ContactSubmissionsTable';
-import { SessionsEditor } from '../sessions';
-import ProgramsEditor from '../programs/ProgramsEditor';
-import ReferralSettingsEditor from '../ReferralSettingsEditor';
-import BlogEditor from '../BlogEditor';
-import SettingsEditor from '../SettingsEditor';
-import HelpTicketsManager from '../help/HelpTicketsManager';
-import { Expert } from '../experts/types';
-import { ServiceCategory } from '../hooks/useServicesData';
-import { HeroSettings } from '../hooks/useHeroSettings';
-import { Testimonial } from '../hooks/testimonials/types';
+import { useLocation } from 'react-router-dom';
+import AdminDashboard from './AdminDashboard';
+import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
+import ServicesEditor from '@/components/admin/ServicesEditor';
+import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
+import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
+import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
+import AdminSettings from './AdminSettings';
+import { ProgramsEditor } from '@/components/admin/ProgramsEditor';
+import { SessionsEditor } from '@/components/admin/sessions/SessionsEditor';
+import BlogEditor from '@/components/admin/BlogEditor';
+import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable';
+import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
+import AdminUsersManager from '@/components/admin/users/AdminUsersManager';
 
 interface AdminRoutesProps {
   isSuperAdmin: boolean;
-  loading?: boolean;
-  experts?: Expert[];
-  setExperts?: React.Dispatch<React.SetStateAction<Expert[]>>;
-  services?: ServiceCategory[];
-  setServices?: React.Dispatch<React.SetStateAction<ServiceCategory[]>>;
-  heroSettings?: HeroSettings;
-  setHeroSettings?: React.Dispatch<React.SetStateAction<HeroSettings>>;
-  testimonials?: Testimonial[];
-  setTestimonials?: React.Dispatch<React.SetStateAction<Testimonial[]>>;
-  error?: string | null;
-  onRefresh?: () => void;
+  loading: boolean;
+  experts: any[];
+  setExperts: React.Dispatch<React.SetStateAction<any[]>>;
+  services: any[];
+  setServices: React.Dispatch<React.SetStateAction<any[]>>;
+  heroSettings: any;
+  setHeroSettings: React.Dispatch<React.SetStateAction<any>>;
+  testimonials: any[];
+  setTestimonials: React.Dispatch<React.SetStateAction<any[]>>;
+  error: string | null;
+  onRefresh: () => void;
 }
 
 const AdminRoutes: React.FC<AdminRoutesProps> = ({ 
   isSuperAdmin,
   loading,
-  experts = [],
-  setExperts = () => {},
-  services = [],
-  setServices = () => {},
-  heroSettings = {} as HeroSettings,
-  setHeroSettings = () => {},
-  testimonials = [],
-  setTestimonials = () => {},
-  error = null,
-  onRefresh = () => {}
+  experts,
+  setExperts,
+  services,
+  setServices,
+  heroSettings,
+  setHeroSettings,
+  testimonials,
+  setTestimonials,
+  error,
+  onRefresh
 }) => {
-  return (
-    <Routes>
-      <Route index element={<Navigate to="overview" replace />} />
-      <Route path="overview" element={<DashboardOverview />} />
-      <Route path="experts" element={
-        <ExpertsEditor 
-          experts={experts} 
-          setExperts={setExperts} 
-          loading={loading} 
-          error={error} 
-          onRefresh={onRefresh}
-        />
-      } />
-      <Route path="expertApprovals" element={<ExpertApprovals />} />
-      <Route path="services" element={
-        <ServicesEditor 
-          categories={services}
-          setCategories={setServices}
-          loading={loading}
-          error={error}
-          onRefresh={onRefresh}
-        />
-      } />
-      <Route path="herosection" element={
-        <HeroSectionEditor 
-          heroSettings={heroSettings}
-          setHeroSettings={setHeroSettings}
-        />
-      } />
-      <Route path="testimonials" element={
-        <TestimonialsEditor 
-          testimonials={testimonials} 
-          setTestimonials={setTestimonials}
-        />
-      } />
-      <Route path="programs" element={<ProgramsEditor />} />
-      <Route path="sessions" element={<SessionsEditor />} />
-      <Route path="blog" element={<BlogEditor />} />
-      <Route path="referrals" element={<ReferralSettingsEditor />} />
-      <Route path="contact" element={<ContactSubmissionsTable />} />
-      <Route path="help" element={<HelpTicketsManager />} />
-      <Route path="settings" element={<SettingsEditor />} />
-      
-      {/* Super Admin Only Routes */}
-      {isSuperAdmin ? (
-        <Route path="adminUsers" element={<AdminUsersManager />} />
-      ) : null}
-      
-      {/* Fallback route for any unmatched paths */}
-      <Route path="*" element={<Navigate to="overview" replace />} />
-    </Routes>
-  );
+  const location = useLocation();
+  const path = location.pathname.split('/');
+  const currentTab = path.length > 2 ? path[2] : 'overview';
+  
+  const renderContent = () => {
+    switch (currentTab) {
+      case 'overview':
+        return <AdminDashboard />;
+      case 'experts':
+        return <ExpertsEditor experts={experts} setExperts={setExperts} />;
+      case 'expertApprovals':
+        return <ExpertApprovals />;
+      case 'services':
+        return <ServicesEditor services={services} setServices={setServices} />;
+      case 'herosection':
+        return <HeroSectionEditor heroSettings={heroSettings} setHeroSettings={setHeroSettings} />;
+      case 'testimonials':
+        return <TestimonialsEditor testimonials={testimonials} setTestimonials={setTestimonials} />;
+      case 'programs':
+        return <ProgramsEditor />;
+      case 'sessions':
+        return <SessionsEditor />;
+      case 'blog':
+        return <BlogEditor />;
+      case 'contact':
+        return <ContactSubmissionsTable />;
+      case 'referrals':
+        return <ReferralSettingsEditor />;
+      case 'adminUsers':
+        return <AdminUsersManager />;
+      case 'settings':
+        return <AdminSettings />;
+      default:
+        return <AdminDashboard />;
+    }
+  };
+
+  return renderContent();
 };
 
 export default AdminRoutes;

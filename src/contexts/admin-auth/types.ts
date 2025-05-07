@@ -1,52 +1,20 @@
 
-export interface AuthContextType {
-  isAuthenticated: boolean;
-  isLoading: boolean; // Added missing property
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
-  adminUsers: AdminUser[];
-  addAdmin: (username: string, password: string, permissions: AdminPermissions) => void;
-  removeAdmin: (username: string) => void;
-  isSuperAdmin: boolean;
-  currentUser: AdminUser | null;
-  updateAdminPermissions: (username: string, permissions: AdminPermissions) => void;
-}
-
 export interface AdminPermissions {
-  experts: boolean;
-  expertApprovals: boolean;
-  services: boolean;
-  herosection: boolean;
-  testimonials: boolean;
-  programs: boolean;
-  sessions: boolean;
-  referrals: boolean;
-  blog: boolean;
-  contact: boolean;
-  adminUsers: boolean;
-  settings: boolean;
-}
-
-export interface AdminUser {
-  username: string;
-  password: string;
-  role: string;
-  permissions: AdminPermissions;
+  [key: string]: boolean;
 }
 
 export const defaultPermissions: AdminPermissions = {
   experts: true,
-  expertApprovals: true,
+  expertApprovals: false,
   services: true,
   herosection: true,
   testimonials: true,
+  blog: true,
   programs: true,
   sessions: true,
-  referrals: true,
-  blog: true,
+  referrals: false,
   contact: true,
-  adminUsers: false,
-  settings: true
+  settings: false,
 };
 
 export const superAdminPermissions: AdminPermissions = {
@@ -55,11 +23,32 @@ export const superAdminPermissions: AdminPermissions = {
   services: true,
   herosection: true,
   testimonials: true,
+  blog: true,
   programs: true,
   sessions: true,
   referrals: true,
-  blog: true,
   contact: true,
-  adminUsers: true,
-  settings: true
+  settings: true,
 };
+
+export type AdminRole = 'superadmin' | 'admin';
+
+export interface AdminUser {
+  username: string;
+  password: string;
+  role: AdminRole;
+  permissions: AdminPermissions;
+}
+
+export interface AuthContextType {
+  isAuthenticated: boolean;
+  login: (username: string, password: string) => boolean;
+  logout: () => void;
+  adminUsers: AdminUser[];
+  addAdmin: (username: string, password: string, permissions?: AdminPermissions) => void;
+  removeAdmin: (username: string) => void;
+  isSuperAdmin: boolean;
+  currentUser: AdminUser | null;
+  updateAdminPermissions: (username: string, permissions: AdminPermissions) => void;
+  isLoading: boolean;
+}

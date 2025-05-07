@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LucideIcon } from 'lucide-react';
 
 interface AdminSidebarMenuItemProps {
   label: string;
