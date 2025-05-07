@@ -14,7 +14,8 @@ const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ callState, call
   
   // Handle remote video display
   useEffect(() => {
-    const { remoteUsers, remoteVideoTrack } = callState;
+    // Using the remote video track from the first remote user if available
+    const remoteVideoTrack = callState.remoteUsers[0]?.videoTrack;
     
     if (remoteVideoTrack && remoteVideoRef.current && callStatus === 'connected') {
       console.log("Playing remote video track");
@@ -27,7 +28,7 @@ const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ callState, call
         remoteVideoTrack.stop();
       }
     };
-  }, [callState.remoteVideoTrack, callStatus]);
+  }, [callState.remoteUsers, callStatus]);
   
   // Choose what to display based on call status
   const renderVideoContent = () => {
@@ -44,7 +45,7 @@ const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ callState, call
         );
         
       case 'connected':
-        return callState.remoteVideoTrack ? (
+        return callState.remoteUsers[0]?.videoTrack ? (
           <div ref={remoteVideoRef} className="w-full h-full" />
         ) : (
           <div className="flex flex-col items-center justify-center text-white">
