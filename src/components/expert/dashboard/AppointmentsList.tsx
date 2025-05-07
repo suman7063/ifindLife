@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useUserAuth } from '@/hooks/user-auth';
-import { useAppointments, Appointment } from '@/hooks/useAppointments';
+import { useAppointments } from '@/hooks/useAppointments';
+import { Appointment } from '@/types/appointments';
 import { 
   Card, 
   CardContent, 
@@ -38,7 +39,7 @@ const statusColors = {
 const AppointmentsList = () => {
   const { currentUser } = useUserAuth();
   const { appointments, loading, fetchAppointments, updateAppointmentStatus } = useAppointments(currentUser);
-  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = useState(false);
+  const [isGoogleCalendarConnected, setIsGoogleCalendarConnected] = React.useState(false);
   
   const handleStatusChange = async (appointmentId: string, status: Appointment['status']) => {
     await updateAppointmentStatus(appointmentId, status);

@@ -3,10 +3,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
+import { Message } from '@/types/appointments';
 
 export const useMessaging = (currentUser: UserProfile | null) => {
   const [conversations, setConversations] = useState<any[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
@@ -18,6 +19,18 @@ export const useMessaging = (currentUser: UserProfile | null) => {
     
     setConversationsLoading(true);
     try {
+      // Check if messages table exists
+      const { error: tableCheckError } = await supabase
+        .from('messages')
+        .select('id')
+        .limit(1);
+        
+      if (tableCheckError) {
+        console.error('Error accessing messages table:', tableCheckError);
+        toast.error('Messaging system not ready yet');
+        return [];
+      }
+      
       // Get all messages where the expert is either the sender or receiver
       const { data: messages, error: messagesError } = await supabase
         .from('messages')
@@ -78,6 +91,18 @@ export const useMessaging = (currentUser: UserProfile | null) => {
     
     setMessagesLoading(true);
     try {
+      // Check if messages table exists
+      const { error: tableCheckError } = await supabase
+        .from('messages')
+        .select('id')
+        .limit(1);
+        
+      if (tableCheckError) {
+        console.error('Error accessing messages table:', tableCheckError);
+        toast.error('Messaging system not ready yet');
+        return [];
+      }
+      
       // Get all messages between the expert and the selected user
       const { data, error } = await supabase
         .from('messages')
@@ -87,17 +112,18 @@ export const useMessaging = (currentUser: UserProfile | null) => {
       
       if (error) throw error;
       
-      setMessages(data || []);
+      const typedMessages = (data || []) as Message[];
+      setMessages(typedMessages);
       setActiveConversation(userId);
       
       // Mark messages as read
-      const unreadMessages = data?.filter((msg: any) => 
+      const unreadMessages = typedMessages.filter(msg => 
         msg.receiver_id === currentUser.id && !msg.read
       );
       
-      if (unreadMessages?.length) {
+      if (unreadMessages.length > 0) {
         await Promise.all(
-          unreadMessages.map((msg: any) => 
+          unreadMessages.map(msg => 
             supabase
               .from('messages')
               .update({ read: true })
@@ -106,7 +132,7 @@ export const useMessaging = (currentUser: UserProfile | null) => {
         );
       }
       
-      return data;
+      return typedMessages;
     } catch (err: any) {
       console.error('Error fetching messages:', err);
       toast.error('Failed to load messages');
@@ -136,7 +162,7 @@ export const useMessaging = (currentUser: UserProfile | null) => {
       if (error) throw error;
       
       // Update local state
-      setMessages(prev => [...prev, data]);
+      setMessages(prev => [...prev, data as Message]);
       
       return data;
     } catch (err: any) {

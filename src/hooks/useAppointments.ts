@@ -4,59 +4,39 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 import { useAvailabilityManagement } from './useAvailabilityManagement';
+import { useAppointmentManagement } from './useAppointmentManagement';
+import { Appointment, TimeSlot } from '@/types/appointments';
 
-export const useAppointments = (currentUser: UserProfile | null) => {
-  const [appointments, setAppointments] = useState<any[]>([]);
+export { type Appointment, type TimeSlot };
+
+export const useAppointments = (currentUser: UserProfile | null, expertId?: string) => {
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const { fetchAvailabilities, availabilities, createAvailability, deleteAvailability } = useAvailabilityManagement(currentUser);
+  const { 
+    fetchAppointments: fetchAppointmentsOriginal, 
+    bookAppointment, 
+    updateAppointmentStatus 
+  } = useAppointmentManagement(currentUser, expertId);
   
   const fetchAppointments = async () => {
     if (!currentUser) return [];
     
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .eq('expert_id', currentUser.id)
-        .order('appointment_date', { ascending: false });
+      const data = await fetchAppointmentsOriginal(
+        expertId ? undefined : currentUser.id,
+        expertId || (currentUser?.role === 'expert' ? currentUser.id : undefined)
+      );
       
-      if (error) throw error;
-      
-      setAppointments(data || []);
+      setAppointments(data);
       return data;
     } catch (error: any) {
       console.error('Error fetching appointments:', error.message);
       toast.error('Failed to load appointments');
       return [];
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  const updateAppointmentStatus = async (appointmentId: string, status: string) => {
-    setLoading(true);
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ status })
-        .eq('id', appointmentId);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setAppointments(prevAppointments => 
-        prevAppointments.map(apt => 
-          apt.id === appointmentId ? { ...apt, status } : apt
-        )
-      );
-      
-      toast.success(`Appointment ${status}`);
-      return true;
-    } catch (error: any) {
-      console.error(`Error updating appointment status:`, error.message);
-      toast.error('Failed to update appointment status');
-      return false;
     } finally {
       setLoading(false);
     }
@@ -139,7 +119,9 @@ export const useAppointments = (currentUser: UserProfile | null) => {
   return {
     appointments,
     loading,
+    error,
     fetchAppointments,
+    bookAppointment,
     updateAppointmentStatus,
     sendMessageToClient,
     fetchClients,

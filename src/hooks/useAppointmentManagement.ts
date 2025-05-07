@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import type { Appointment } from '@/types/appointments';
+import type { Appointment, TimeSlot } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
 import { handleDatabaseError, retryOperation } from '@/utils/errorHandling';
 
@@ -51,6 +51,7 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         user_calendar_event_id: apt.user_calendar_event_id,
         notes: apt.notes,
         expert_name: apt.expert_name,
+        user_name: apt.user_name,
         time_slot_id: apt.time_slot_id
       })) as Appointment[];
       
@@ -226,3 +227,4 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
     updateAppointmentStatus
   };
 };
+

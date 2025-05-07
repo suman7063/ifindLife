@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { TimeSlot } from '@/hooks/useAppointments';
+import { TimeSlot } from '@/types/appointments';
 
 interface TimeSlotPickerProps {
   timeSlots: TimeSlot[];

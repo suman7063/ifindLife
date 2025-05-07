@@ -33,3 +33,13 @@ export interface Appointment {
   user_name?: string;
   time_slot_id?: string;
 }
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+}
+

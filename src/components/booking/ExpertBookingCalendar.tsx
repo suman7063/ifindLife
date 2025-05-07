@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useUserAuth } from '@/hooks/user-auth';
-import { useAppointments } from '@/hooks/useAppointments';
-import { format, parseISO, isWithinInterval } from 'date-fns';
-import { supabase } from '@/lib/supabase';
+import { useAppointmentManagement } from '@/hooks/useAppointmentManagement';
+import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
+import { format, isWithinInterval } from 'date-fns';
 import { toast } from 'sonner';
 import CalendarDatePicker from './CalendarDatePicker';
 import AvailableTimeSlotsSection from './AvailableTimeSlotsSection';
@@ -26,7 +25,8 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
   onBookingComplete 
 }) => {
   const { currentUser } = useUserAuth();
-  const { availabilities, fetchAvailabilities, bookAppointment, loading, error } = useAppointments(currentUser, expertId);
+  const { availabilities, fetchAvailabilities } = useAvailabilityManagement(currentUser);
+  const { bookAppointment, loading, error } = useAppointmentManagement(currentUser);
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
@@ -46,7 +46,7 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
     if (expertId) {
       fetchAvailabilities(expertId);
     }
-  }, [expertId, refreshKey]);
+  }, [expertId, refreshKey, fetchAvailabilities]);
   
   // Fetch existing appointments for the expert with a refresh mechanism
   useEffect(() => {

@@ -1,91 +1,85 @@
-
-import React, { useState, useEffect } from 'react';
-import ExpertDashboardAnalytics from './Analytics/ExpertDashboardAnalytics';
+import React, { useEffect, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUserAuth } from '@/hooks/user-auth';
 import { useAppointments } from '@/hooks/useAppointments';
-import { Loader2 } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Appointment } from '@/types/appointments';
+import ExpertDashboardAnalytics from './Analytics/ExpertDashboardAnalytics';
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-const AnalyticsTab: React.FC = () => {
+const AnalyticsTab = () => {
   const { currentUser } = useUserAuth();
-  const { fetchAppointments, loading } = useAppointments(currentUser);
-  const [appointments, setAppointments] = useState([]);
-  const [earnings, setEarnings] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [dataLoading, setDataLoading] = useState(true);
-  
+  const { appointments, fetchAppointments, loading } = useAppointments(currentUser);
+  const [stats, setStats] = useState({
+    totalAppointments: 0,
+    pendingAppointments: 0,
+    confirmedAppointments: 0,
+    cancelledAppointments: 0,
+    completedAppointments: 0,
+    uniqueClients: 0
+  });
+
   useEffect(() => {
-    const loadData = async () => {
-      if (!currentUser) return;
-      
-      setDataLoading(true);
-      try {
-        // Fetch appointments
-        const appointmentsData = await fetchAppointments();
-        setAppointments(appointmentsData || []);
-        
-        // Extract unique clients from appointments
-        const uniqueClients = Array.from(
-          new Set(appointmentsData?.map((apt: any) => apt.user_id))
-        ).map(userId => {
-          const appointment = appointmentsData.find((apt: any) => apt.user_id === userId);
-          return {
-            id: userId,
-            name: appointment?.user_name || 'Client'
-          };
-        });
-        
-        setClients(uniqueClients);
-        
-        // Calculate earnings from appointments
-        // In a real app, you would fetch this from a dedicated earnings endpoint
-        const calculatedEarnings = appointmentsData
-          .filter((apt: any) => apt.status === 'completed')
-          .map((apt: any) => ({
-            id: apt.id,
-            service: apt.service_name || 'Consultation',
-            amount: 50, // Placeholder amount
-            date: apt.appointment_date,
-            user: apt.user_name || 'Client'
-          }));
-        
-        setEarnings(calculatedEarnings);
-      } catch (error) {
-        console.error('Error loading analytics data:', error);
-      } finally {
-        setDataLoading(false);
-      }
+    const loadAppointments = async () => {
+      await fetchAppointments();
     };
-    
-    loadData();
+
+    if (currentUser) {
+      loadAppointments();
+    }
   }, [currentUser, fetchAppointments]);
-  
-  if (loading || dataLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-  
+
+  useEffect(() => {
+    if (appointments) {
+      const uniqueClientIds = new Set(appointments.map(apt => apt.user_id));
+      
+      setStats({
+        totalAppointments: appointments.length,
+        pendingAppointments: appointments.filter(apt => apt.status === 'pending').length,
+        confirmedAppointments: appointments.filter(apt => apt.status === 'confirmed').length,
+        cancelledAppointments: appointments.filter(apt => apt.status === 'cancelled').length,
+        completedAppointments: appointments.filter(apt => apt.status === 'completed').length,
+        uniqueClients: uniqueClientIds.size
+      });
+    }
+  }, [appointments]);
+
   return (
-    <div>
-      {appointments.length > 0 ? (
-        <ExpertDashboardAnalytics 
-          appointments={appointments} 
-          earnings={earnings} 
-          clients={clients} 
-        />
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <h3 className="text-xl font-medium mb-2">No Data Available Yet</h3>
-            <p className="text-muted-foreground">
-              Complete appointments to see analytics about your practice.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Key Metrics</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <ExpertDashboardAnalytics label="Total Appointments" value={stats.totalAppointments} />
+            <ExpertDashboardAnalytics label="Pending Appointments" value={stats.pendingAppointments} />
+            <ExpertDashboardAnalytics label="Confirmed Appointments" value={stats.confirmedAppointments} />
+            <ExpertDashboardAnalytics label="Cancelled Appointments" value={stats.cancelledAppointments} />
+            <ExpertDashboardAnalytics label="Completed Appointments" value={stats.completedAppointments} />
+             <ExpertDashboardAnalytics label="Unique Clients" value={stats.uniqueClients} />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Appointment Trends</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <p>Loading appointment trends...</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={appointments} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                <XAxis dataKey="appointment_date" />
+                <YAxis />
+                <Tooltip />
+                <Line type="monotone" dataKey="status" stroke="#8884d8" />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };

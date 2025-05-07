@@ -5,17 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Send } from 'lucide-react';
 import { useUserAuth } from '@/hooks/user-auth';
-import { supabase } from '@/lib/supabase';
+import { useMessaging } from '@/hooks/useMessaging';
 import { format } from 'date-fns';
-
-interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  content: string;
-  read: boolean;
-  created_at: string;
-}
+import { Message } from '@/types/appointments';
 
 interface ConversationViewProps {
   userId: string;
@@ -24,93 +16,26 @@ interface ConversationViewProps {
 
 const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName }) => {
   const { currentUser } = useUserAuth();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { 
+    messages, 
+    fetchMessages, 
+    sendMessage, 
+    messagesLoading: loading,
+    loading: sending
+  } = useMessaging(currentUser);
   const [newMessage, setNewMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch messages
   useEffect(() => {
-    const fetchMessages = async () => {
+    const loadMessages = async () => {
       if (!currentUser || !userId) return;
-      
-      setLoading(true);
-      try {
-        // Get all messages between the expert and the selected user
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .or(`and(sender_id.eq.${currentUser.id},receiver_id.eq.${userId}),and(sender_id.eq.${userId},receiver_id.eq.${currentUser.id})`)
-          .order('created_at', { ascending: true });
-        
-        if (error) throw error;
-        
-        setMessages(data || []);
-        
-        // Mark messages as read
-        const unreadMessages = data?.filter(msg => 
-          msg.receiver_id === currentUser.id && !msg.read
-        );
-        
-        if (unreadMessages?.length) {
-          await Promise.all(
-            unreadMessages.map(msg => 
-              supabase
-                .from('messages')
-                .update({ read: true })
-                .eq('id', msg.id)
-            )
-          );
-        }
-        
-        // Get user profile
-        const { data: profileData } = await supabase
-          .from('users')
-          .select('name, profile_picture')
-          .eq('id', userId)
-          .single();
-          
-        if (profileData) {
-          setUserProfile(profileData);
-        }
-        
-      } catch (err) {
-        console.error('Error fetching messages:', err);
-      } finally {
-        setLoading(false);
-      }
+      await fetchMessages(userId);
     };
     
-    fetchMessages();
-    
-    // Set up real-time subscription
-    const subscription = supabase
-      .channel(`messages-${userId}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages',
-        filter: `or(and(sender_id=eq.${currentUser?.id},receiver_id=eq.${userId}),and(sender_id=eq.${userId},receiver_id=eq.${currentUser?.id}))`
-      }, payload => {
-        // Add new message to the list
-        setMessages(currentMessages => [...currentMessages, payload.new as Message]);
-        
-        // Mark as read if it's sent to us
-        if (payload.new.receiver_id === currentUser?.id) {
-          supabase
-            .from('messages')
-            .update({ read: true })
-            .eq('id', payload.new.id);
-        }
-      })
-      .subscribe();
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [currentUser, userId]);
+    loadMessages();
+  }, [currentUser, userId, fetchMessages]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -122,25 +47,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName })
     
     if (!newMessage.trim() || !currentUser || !userId) return;
     
-    setSending(true);
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: currentUser.id,
-          receiver_id: userId,
-          content: newMessage.trim(),
-          read: false
-        });
-      
-      if (error) throw error;
-      
-      setNewMessage('');
-    } catch (err) {
-      console.error('Error sending message:', err);
-    } finally {
-      setSending(false);
-    }
+    await sendMessage(userId, newMessage.trim());
+    setNewMessage('');
   };
 
   const formatMessageTime = (timestamp: string) => {

@@ -2,7 +2,7 @@
 import React from 'react';
 import TimeSlotPicker from './TimeSlotPicker';
 import { getAvailableTimeSlots } from '@/utils/bookingValidation';
-import { TimeSlot } from '@/hooks/useAppointments';
+import { TimeSlot } from '@/types/appointments';
 import { AlertCircle } from 'lucide-react';
 
 interface AvailableTimeSlotsSectionProps {
