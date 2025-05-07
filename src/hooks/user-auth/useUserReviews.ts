@@ -47,7 +47,7 @@ export const useUserReviews = (
       // Optimistically update the local state
       const adaptedReview: Review = {
         id: newId,
-        expertId: reviewData.expertId,
+        expert_id: reviewData.expertId, // Using expert_id to match database schema
         rating: reviewData.rating,
         comment: reviewData.comment,
         date: new Date().toISOString(),

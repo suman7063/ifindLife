@@ -37,7 +37,7 @@ export interface ContactSubmission {
 // Full Report type from DB
 export type Report = {
   id: string;
-  expert_id: string | number;
+  expert_id: string | number; // Using expert_id to match database schema
   reason: string;
   details?: string;
   date: string;
@@ -46,7 +46,7 @@ export type Report = {
 
 // Input type for inserting a new report
 export type NewReport = {
-  expertId: string | number;
+  expertId: string | number; // Keep as expertId for frontend consistency
   reason: string;
   details?: string;
 };
@@ -54,7 +54,7 @@ export type NewReport = {
 // Full Review type
 export type Review = {
   id: string;
-  expert_id: string | number;
+  expert_id: string | number; // Using expert_id to match database schema
   rating: number;
   comment?: string;
   date: string;
@@ -63,7 +63,7 @@ export type Review = {
 
 // Input type for inserting a new review
 export type NewReview = {
-  expertId: string | number;
+  expertId: string | number; // Keep as expertId for frontend consistency
   rating: number;
   comment?: string;
 };

@@ -2,8 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from '@/types/supabase/expert';
-import { AuthState } from '../types';
+import { AuthState, ExpertProfile } from '../types';
 import { toast } from 'sonner';
 
 export const useProfileFunctions = (
@@ -80,9 +79,16 @@ export const useProfileFunctions = (
         return false;
       }
       
+      // Ensure we maintain the required status field when updating state
+      const updatedExpertProfile: ExpertProfile = {
+        ...authState.expertProfile,
+        ...updates,
+        status: (updates.status || authState.expertProfile.status) as 'pending' | 'approved' | 'disapproved'
+      };
+      
       setAuthState((prev) => ({
         ...prev,
-        expertProfile: { ...prev.expertProfile!, ...updates } as ExpertProfile,
+        expertProfile: updatedExpertProfile,
       }));
       
       toast.success("Expert profile updated successfully");

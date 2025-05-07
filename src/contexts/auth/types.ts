@@ -22,7 +22,7 @@ export interface UserProfile {
   referred_by?: string;
 }
 
-// Updated ExpertProfile with consistent status field
+// Updated ExpertProfile with required status field to match other definitions
 export interface ExpertProfile {
   id?: string;
   auth_id?: string;
@@ -43,7 +43,7 @@ export interface ExpertProfile {
   reviews_count?: number;
   verified?: boolean;
   created_at?: string;
-  status: 'pending' | 'approved' | 'disapproved';
+  status: 'pending' | 'approved' | 'disapproved'; // Made required to match other definitions
 }
 
 export interface AuthState {
