@@ -15,7 +15,7 @@ interface UserProfileSectionProps {
 }
 
 const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
-  const { updateUserProfile, updatePassword } = useAuth();
+  const auth = useAuth();
   
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -47,7 +47,13 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
     setIsUpdating(true);
     
     try {
-      const success = await updateUserProfile({
+      // Check if updateUserProfile exists in the auth context
+      if (!auth.updateUserProfile) {
+        toast.error("Profile update functionality is not available");
+        return;
+      }
+      
+      const success = await auth.updateUserProfile({
         ...profileData
       });
       
@@ -80,7 +86,13 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
     setIsChangingPassword(true);
     
     try {
-      const success = await updatePassword(passwordData.newPassword);
+      // Check if updatePassword exists in the auth context
+      if (!auth.updatePassword) {
+        toast.error("Password update functionality is not available");
+        return;
+      }
+      
+      const success = await auth.updatePassword(passwordData.newPassword);
       
       if (success) {
         toast.success("Password updated successfully");

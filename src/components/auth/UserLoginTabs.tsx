@@ -46,6 +46,11 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     setIsLoading(true);
     try {
       console.log("Attempting user registration with:", userData.email);
+      if (!auth.signup) {
+        toast.error('Registration feature is not available');
+        return;
+      }
+      
       const success = await auth.signup(
         userData.email, 
         userData.password, 

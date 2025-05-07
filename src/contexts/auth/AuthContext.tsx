@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
@@ -10,9 +11,21 @@ type AuthContextProps = {
   expertProfile: any;
   userProfile: any;
   error: string | null;
+  sessionType?: 'none' | 'user' | 'expert' | 'dual';
   login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => Promise<boolean>; // Changed return type
   expertSignup?: (data: any) => Promise<boolean>;
+  signup?: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
+  updateUserProfile?: (data: any) => Promise<boolean>;
+  updatePassword?: (password: string) => Promise<boolean>;
+  addToFavorites?: (expertId: number) => Promise<boolean>;
+  removeFromFavorites?: (expertId: number) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  addReview?: (review: any) => Promise<boolean>;
+  reportExpert?: (report: any) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink?: (expertId: string | number) => string;
+  getReferralLink?: () => string | null;
 };
 
 // Create the context with a default value
@@ -25,7 +38,7 @@ const AuthContext = createContext<AuthContextProps>({
   userProfile: null,
   error: null,
   login: async () => false,
-  logout: async () => {},
+  logout: async () => false,
 });
 
 // Custom hook to use the auth context
@@ -39,22 +52,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userProfile, setUserProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
 
   // Function to check and set role based on user profiles
   const checkAndSetRole = async (userId: string) => {
     try {
       // Fetch expert profile
       const { data: expertData, error: expertError } = await supabase
-        .from('expert_profiles')
+        .from('expert_accounts') // Changed from expert_profiles to match the actual table name
         .select('*')
-        .eq('user_id', userId)
+        .eq('auth_id', userId) // Changed from user_id to auth_id based on schema
         .single();
 
       // Fetch user profile
       const { data: userData, error: userError } = await supabase
-        .from('user_profiles')
+        .from('profiles') // Changed from user_profiles to match the actual table name
         .select('*')
-        .eq('user_id', userId)
+        .eq('id', userId)
         .single();
 
       if (expertError && !expertData) {
@@ -70,14 +84,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRole('expert');
         setExpertProfile(expertData);
         setUserProfile(null);
+        setSessionType(userData ? 'dual' : 'expert');
       } else if (userData) {
         setRole('user');
         setUserProfile(userData);
         setExpertProfile(null);
+        setSessionType('user');
       } else {
         setRole(null);
         setExpertProfile(null);
         setUserProfile(null);
+        setSessionType('none');
         console.warn("No profiles found for this user.");
       }
     } catch (error: any) {
@@ -100,6 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRole(null);
           setExpertProfile(null);
           setUserProfile(null);
+          setSessionType('none');
           setIsLoading(false);
         }
       } else if (event === 'SIGNED_OUT') {
@@ -107,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setRole(null);
         setExpertProfile(null);
         setUserProfile(null);
+        setSessionType('none');
         setIsLoading(false);
       }
     });
@@ -138,9 +157,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRole(roleOverride as 'user' | 'expert' | 'admin');
           if (roleOverride === 'expert') {
             const { data: expertData, error: expertError } = await supabase
-              .from('expert_profiles')
+              .from('expert_accounts') // Changed from expert_profiles to match the actual table
               .select('*')
-              .eq('user_id', data.user.id)
+              .eq('auth_id', data.user.id) // Changed from user_id to auth_id
               .single();
             if (expertData) {
               setExpertProfile(expertData);
@@ -153,9 +172,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           } else if (roleOverride === 'user') {
             const { data: userData, error: userError } = await supabase
-              .from('user_profiles')
+              .from('profiles') // Changed from user_profiles to match the actual table
               .select('*')
-              .eq('user_id', data.user.id)
+              .eq('id', data.user.id)
               .single();
             if (userData) {
               setUserProfile(userData);
@@ -189,20 +208,80 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error("Logout error:", error);
         setError(error.message);
+        return false; // Return false on failure
       } else {
         setUser(null);
         setRole(null);
         setExpertProfile(null);
         setUserProfile(null);
+        setSessionType('none');
       }
       setIsLoading(false);
       setError(null);
+      return true; // Return true on success
     } catch (error: any) {
       console.error("Logout error:", error);
       setError(error?.message || "An error occurred during logout");
+      return false; // Return false on exception
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Mock implementations for other required methods
+  const signup = async (email: string, password: string, userData: any, referralCode?: string) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const updateUserProfile = async (data: any) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const updatePassword = async (password: string) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const addToFavorites = async (expertId: number) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const removeFromFavorites = async (expertId: number) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const rechargeWallet = async (amount: number) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const addReview = async (review: any) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const reportExpert = async (report: any) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const hasTakenServiceFrom = async (expertId: string | number) => {
+    // Implementation placeholder
+    return true;
+  };
+
+  const getExpertShareLink = (expertId: string | number) => {
+    // Implementation placeholder
+    return '';
+  };
+
+  const getReferralLink = () => {
+    // Implementation placeholder
+    return null;
   };
 
   // Provider value
@@ -214,8 +293,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     expertProfile,
     userProfile,
     error,
+    sessionType,
     login,
     logout,
+    signup,
+    updateUserProfile,
+    updatePassword,
+    addToFavorites,
+    removeFromFavorites,
+    rechargeWallet,
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

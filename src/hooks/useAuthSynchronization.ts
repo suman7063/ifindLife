@@ -47,8 +47,7 @@ export const useAuthSynchronization = () => {
   const userLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating user logout...");
-      const success = await auth.logout();
-      return success;
+      return await auth.logout();
     } catch (error) {
       console.error('User logout error:', error);
       return false;
@@ -59,8 +58,7 @@ export const useAuthSynchronization = () => {
   const expertLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating expert logout...");
-      const success = await auth.logout();
-      return success;
+      return await auth.logout();
     } catch (error) {
       console.error('Expert logout error:', error);
       return false;
@@ -71,8 +69,7 @@ export const useAuthSynchronization = () => {
   const fullLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating full logout...");
-      const success = await auth.logout();
-      return success;
+      return await auth.logout();
     } catch (error) {
       console.error('Full logout error:', error);
       return false;

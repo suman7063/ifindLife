@@ -76,32 +76,31 @@ export interface AuthContextProps {
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
   role: UserRole;
+  error: string | null; // Added missing error property
+  sessionType?: 'none' | 'user' | 'expert' | 'dual'; // Added missing sessionType property
   
   // Authentication methods
   login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  expertSignup: (data: any) => Promise<boolean>;
-  expertLogin: (email: string, password: string) => Promise<boolean>;
+  signup?: (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<boolean>; // Changed return type from void to boolean
+  expertSignup?: (data: any) => Promise<boolean>;
+  expertLogin?: (email: string, password: string) => Promise<boolean>;
   
   // Profile methods
-  updateProfile: (data: Partial<UserProfile> | Partial<ExpertProfile>) => Promise<boolean>;
-  updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
-  updateExpertProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
-  updatePassword: (password: string) => Promise<boolean>;
+  updateProfile?: (data: Partial<UserProfile> | Partial<ExpertProfile>) => Promise<boolean>;
+  updateUserProfile?: (data: Partial<UserProfile>) => Promise<boolean>;
+  updateExpertProfile?: (data: Partial<ExpertProfile>) => Promise<boolean>;
+  updatePassword?: (password: string) => Promise<boolean>;
   
   // Expert interactions
-  addToFavorites: (expertId: number) => Promise<boolean>;
-  removeFromFavorites: (expertId: number) => Promise<boolean>;
-  rechargeWallet: (amount: number) => Promise<boolean>;
+  addToFavorites?: (expertId: number) => Promise<boolean>;
+  removeFromFavorites?: (expertId: number) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
   
   // Review and reporting
-  addReview: (review: NewReview) => Promise<boolean>;
-  reportExpert: (report: NewReport) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
-  getExpertShareLink: (expertId: string | number) => string;
-  getReferralLink: () => string | null;
-  
-  // Session type
-  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  addReview?: (review: NewReview) => Promise<boolean>;
+  reportExpert?: (report: NewReport) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink?: (expertId: string | number) => string;
+  getReferralLink?: () => string | null;
 }

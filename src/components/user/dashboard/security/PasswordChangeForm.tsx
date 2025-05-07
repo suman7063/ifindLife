@@ -10,7 +10,7 @@ import { Lock, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const PasswordChangeForm: React.FC = () => {
-  const { updatePassword } = useAuth();
+  const auth = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [passwordData, setPasswordData] = useState({
     newPassword: '',
@@ -47,10 +47,16 @@ const PasswordChangeForm: React.FC = () => {
       return;
     }
     
+    // Check if updatePassword exists in the auth context
+    if (!auth.updatePassword) {
+      toast.error("Password update functionality is not available");
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
-      const success = await updatePassword(passwordData.newPassword);
+      const success = await auth.updatePassword(passwordData.newPassword);
       
       if (success) {
         toast.success("Password updated successfully.");

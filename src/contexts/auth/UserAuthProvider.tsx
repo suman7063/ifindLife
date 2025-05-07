@@ -11,15 +11,15 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const adaptedAddReview = async (reviewOrExpertId: NewReview | string, rating?: number, comment?: string): Promise<boolean> => {
     // If first parameter is a string, assume it's the old style with separate parameters
     if (typeof reviewOrExpertId === 'string' && rating !== undefined) {
-      return auth.addReview({
+      return auth.addReview ? auth.addReview({
         expertId: parseInt(reviewOrExpertId),
         rating,
         comment: comment || '',
-      });
+      }) : Promise.resolve(false);
     }
     
     // If first parameter is an object, handle as a review object
-    if (reviewOrExpertId && typeof reviewOrExpertId === 'object') {
+    if (reviewOrExpertId && typeof reviewOrExpertId === 'object' && auth.addReview) {
       return auth.addReview(reviewOrExpertId as NewReview);
     }
     
@@ -29,7 +29,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Create a compatible reportExpert function that can handle both calling styles
   const adaptedReportExpert = async (reportOrExpertId: NewReport | string, reason?: string, details?: string): Promise<boolean> => {
     // If first parameter is a string, assume it's the old style with separate parameters
-    if (typeof reportOrExpertId === 'string' && reason !== undefined) {
+    if (typeof reportOrExpertId === 'string' && reason !== undefined && auth.reportExpert) {
       return auth.reportExpert({
         expertId: parseInt(reportOrExpertId),
         reason,
@@ -38,7 +38,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
     
     // If first parameter is an object, handle as a report object
-    if (reportOrExpertId && typeof reportOrExpertId === 'object') {
+    if (reportOrExpertId && typeof reportOrExpertId === 'object' && auth.reportExpert) {
       return auth.reportExpert(reportOrExpertId as NewReport);
     }
     
@@ -50,13 +50,13 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     currentUser: auth.userProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
-    signup: auth.signup,
+    signup: auth.signup || (async () => false),
     logout: auth.logout,
     authLoading: auth.isLoading, // Add this for consistency
     loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateUserProfile,
-    updatePassword: auth.updatePassword,
+    updateProfile: auth.updateUserProfile || (async () => false),
+    updatePassword: auth.updatePassword || (async () => false),
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),
     rechargeWallet: auth.rechargeWallet || (async () => false),

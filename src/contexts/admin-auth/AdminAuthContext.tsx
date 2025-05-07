@@ -5,7 +5,6 @@ import { AdminUser, AdminPermissions, AuthContextType, defaultPermissions, super
 // Create context with default values
 const AdminAuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
-  isLoading: true,
   login: () => false,
   logout: () => {},
   adminUsers: [],
@@ -14,6 +13,7 @@ const AdminAuthContext = createContext<AuthContextType>({
   isSuperAdmin: false,
   currentUser: null,
   updateAdminPermissions: () => {},
+  isLoading: true // Added missing property
 });
 
 // Initial admin users
@@ -136,17 +136,16 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   return (
     <AdminAuthContext.Provider
       value={{
-        user,
         currentUser: user,
         isAuthenticated: !!user,
-        isLoading,
+        isLoading, // Added missing property
         login,
         logout,
         adminUsers,
         addAdmin,
         removeAdmin,
         isSuperAdmin,
-        updateAdminPermissions,
+        updateAdminPermissions
       }}
     >
       {children}

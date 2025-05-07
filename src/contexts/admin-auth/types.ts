@@ -1,6 +1,7 @@
 
 export interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean; // Added missing property
   login: (username: string, password: string) => boolean;
   logout: () => void;
   adminUsers: AdminUser[];
