@@ -4,7 +4,7 @@ import { Review, Report, NewReview, NewReport } from '@/types/supabase/tables';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 
-// Add UserProfile interface
+// Updated UserProfile interface with referral_code
 export interface UserProfile {
   id: string;
   name?: string;
@@ -17,9 +17,12 @@ export interface UserProfile {
   profile_picture?: string;
   created_at?: string;
   updated_at?: string;
+  referral_code?: string;
+  referral_link?: string;
+  referred_by?: string;
 }
 
-// Add ExpertProfile interface with strongly typed status
+// Updated ExpertProfile with consistent status field
 export interface ExpertProfile {
   id?: string;
   auth_id?: string;
@@ -82,7 +85,7 @@ export interface AuthContextProps {
   expertLogin: (email: string, password: string) => Promise<boolean>;
   
   // Profile methods
-  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updateProfile: (data: Partial<UserProfile> | Partial<ExpertProfile>) => Promise<boolean>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateExpertProfile: (data: Partial<ExpertProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;

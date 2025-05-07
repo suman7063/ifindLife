@@ -1,3 +1,4 @@
+
 export interface UserTransaction {
   id: string;
   user_id: string;
@@ -36,7 +37,7 @@ export interface ContactSubmission {
 // Full Report type from DB
 export type Report = {
   id: string;
-  expertId: string | number;
+  expert_id: string | number;
   reason: string;
   details?: string;
   date: string;
@@ -44,12 +45,16 @@ export type Report = {
 };
 
 // Input type for inserting a new report
-export type NewReport = Omit<Report, 'id' | 'date' | 'status'>;
+export type NewReport = {
+  expertId: string | number;
+  reason: string;
+  details?: string;
+};
 
 // Full Review type
 export type Review = {
   id: string;
-  expertId: string | number;
+  expert_id: string | number;
   rating: number;
   comment?: string;
   date: string;
@@ -57,4 +62,8 @@ export type Review = {
 };
 
 // Input type for inserting a new review
-export type NewReview = Omit<Review, 'id' | 'date'>;
+export type NewReview = {
+  expertId: string | number;
+  rating: number;
+  comment?: string;
+};

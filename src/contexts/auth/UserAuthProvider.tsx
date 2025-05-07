@@ -12,10 +12,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // If first parameter is a string, assume it's the old style with separate parameters
     if (typeof reviewOrExpertId === 'string' && rating !== undefined) {
       return auth.addReview({
-        expert_id: parseInt(reviewOrExpertId),
+        expertId: parseInt(reviewOrExpertId),
         rating,
         comment: comment || '',
-        date: new Date().toISOString(),
       });
     }
     
@@ -32,11 +31,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // If first parameter is a string, assume it's the old style with separate parameters
     if (typeof reportOrExpertId === 'string' && reason !== undefined) {
       return auth.reportExpert({
-        expert_id: parseInt(reportOrExpertId),
+        expertId: parseInt(reportOrExpertId),
         reason,
         details: details || '',
-        date: new Date().toISOString(),
-        status: 'pending'
       });
     }
     

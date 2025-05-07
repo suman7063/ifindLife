@@ -401,11 +401,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       if (!authState.user?.id) return false;
       
-      // Update wallet balance
-      const { error } = await supabase.rpc('recharge_wallet', {
-        user_id_param: authState.user.id,
-        amount_param: amount
-      });
+      // Instead of using RPC, directly update the profiles table
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          wallet_balance: (authState.userProfile?.wallet_balance || 0) + amount 
+        })
+        .eq('id', authState.user.id);
       
       if (error) throw error;
       
@@ -432,11 +434,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       if (!authState.user?.id) return false;
       
+      // Convert review to match database schema
       const { error } = await supabase
         .from('user_reviews')
         .insert({
-          ...review,
-          user_id: authState.user.id
+          user_id: authState.user.id,
+          expert_id: typeof review.expertId === 'string' 
+            ? parseInt(review.expertId) 
+            : review.expertId,
+          rating: review.rating,
+          comment: review.comment,
+          date: new Date().toISOString(),
+          verified: false
         });
         
       if (error) throw error;
@@ -453,11 +462,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       if (!authState.user?.id) return false;
       
+      // Convert report to match database schema
       const { error } = await supabase
         .from('user_reports')
         .insert({
-          ...report,
           user_id: authState.user.id,
+          expert_id: typeof report.expertId === 'string' 
+            ? parseInt(report.expertId) 
+            : report.expertId,
+          reason: report.reason,
+          details: report.details,
           date: new Date().toISOString(),
           status: 'pending'
         });

@@ -1,6 +1,7 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useState, useEffect } from 'react';
+import { NewReview, NewReport } from '@/types/supabase/tables';
 
 /**
  * This hook provides backward compatibility for code that was written before
@@ -39,15 +40,39 @@ export const useAuthBackCompat = () => {
     addToFavorites: auth.addToFavorites,
     removeFromFavorites: auth.removeFromFavorites,
     rechargeWallet: auth.rechargeWallet,
-    addReview: auth.addReview,
-    reportExpert: auth.reportExpert,
+    
+    // Review and report methods with proper field mapping
+    addReview: async (reviewOrExpertId: NewReview | string | number, rating?: number, comment?: string) => {
+      if (typeof reviewOrExpertId === 'string' || typeof reviewOrExpertId === 'number') {
+        return auth.addReview({
+          expertId: reviewOrExpertId,
+          rating: rating || 0,
+          comment: comment || '',
+        });
+      }
+      return auth.addReview(reviewOrExpertId as NewReview);
+    },
+    
+    reportExpert: async (reportOrExpertId: NewReport | string | number, reason?: string, details?: string) => {
+      if (typeof reportOrExpertId === 'string' || typeof reportOrExpertId === 'number') {
+        return auth.reportExpert({
+          expertId: reportOrExpertId,
+          reason: reason || '',
+          details: details || '',
+        });
+      }
+      return auth.reportExpert(reportOrExpertId as NewReport);
+    },
+    
     hasTakenServiceFrom: auth.hasTakenServiceFrom,
     getExpertShareLink: auth.getExpertShareLink,
     getReferralLink: auth.getReferralLink,
+    
     updateProfilePicture: async (file: File) => {
       // Implement file upload functionality if needed
       return null; 
     },
+    
     refreshProfile: async () => {
       // This would trigger a refresh of the user profile
       if (auth.user?.id) {
