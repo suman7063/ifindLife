@@ -18,9 +18,11 @@ const ExpertLogin: React.FC = () => {
   );
   const [isLogging, setIsLogging] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
+  
+  // Get auth context
+  const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
   
   // Debug logging
   useEffect(() => {
@@ -31,10 +33,12 @@ const ExpertLogin: React.FC = () => {
       role,
       redirectAttempted
     });
-    
-    // Clear any cached redirects
-    localStorage.removeItem('redirectAfterLogin');
   }, [isLoading, isAuthenticated, expertProfile, role, redirectAttempted]);
+  
+  // Clear any cached redirects
+  useEffect(() => {
+    localStorage.removeItem('redirectAfterLogin');
+  }, []);
   
   // Check URL parameters for status messages
   useEffect(() => {
@@ -91,7 +95,15 @@ const ExpertLogin: React.FC = () => {
         await supabase.auth.signOut({ scope: 'local' });
       }
       
-      // CRITICAL FIX: Use the login function from context with 'expert' role override
+      // CRITICAL FIX: Use the login function with 'expert' role override explicitly
+      if (!login) {
+        console.error('Login function is not available');
+        toast.error('Login functionality is not available');
+        setLoginError('Login functionality is not available');
+        setIsLogging(false);
+        return false;
+      }
+      
       const success = await login(email, password, 'expert');
       
       if (success) {
@@ -100,17 +112,17 @@ const ExpertLogin: React.FC = () => {
         navigate('/expert-dashboard', { replace: true });
         return true;
       } else {
-        // The error will be handled by the login function
         console.error('ExpertLogin: Login failed');
+        setLoginError('Login failed. Please check your credentials.');
+        setIsLogging(false);
         return false;
       }
     } catch (error: any) {
       console.error('ExpertLogin error:', error);
       toast.error('Failed to login. Please try again.');
       setLoginError('Failed to login. Please try again.');
-      return false;
-    } finally {
       setIsLogging(false);
+      return false;
     }
   };
 

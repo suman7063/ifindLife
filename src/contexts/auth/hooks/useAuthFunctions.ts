@@ -10,12 +10,14 @@ export const useAuthFunctions = (
 ) => {
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Standard user login function
-  const login = async (email: string, password: string): Promise<boolean> => {
+  /**
+   * Unified login function with role-based handling
+   */
+  const login = async (email: string, password: string, roleOverride?: string): Promise<boolean> => {
     try {
       setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
       
-      console.log("Attempting login with email:", email);
+      console.log(`Attempting login with email: ${email}${roleOverride ? ` (role override: ${roleOverride})` : ''}`);
       
       // Check for existing session and sign out if necessary
       const { data: existingSession } = await supabase.auth.getSession();
@@ -46,12 +48,88 @@ export const useAuthFunctions = (
 
       console.log("Login successful for user:", data.user.id);
       
-      // Fetch user data immediately after login
-      try {
-        await fetchUserData(data.user.id);
-      } catch (fetchError) {
-        console.error("Error fetching user data after login:", fetchError);
-        // Continue with login even if fetch fails
+      // Handle role-specific logic
+      if (roleOverride === 'expert') {
+        // For expert login, check if the user has an expert profile
+        const { data: expertData, error: expertError } = await supabase
+          .from('expert_accounts')
+          .select('*')
+          .eq('auth_id', data.user.id)
+          .maybeSingle();
+          
+        if (expertError) {
+          console.error("Error checking expert profile:", expertError);
+          toast.error("Error checking expert profile");
+          setAuthState((prev) => ({ ...prev, isLoading: false, error: expertError.message }));
+          return false;
+        }
+        
+        if (!expertData) {
+          console.error("No expert profile found for this user");
+          toast.error("No expert account found for this user");
+          
+          await supabase.auth.signOut();
+          setAuthState((prev) => ({ 
+            ...prev, 
+            isLoading: false,
+            session: null,
+            user: null,
+            isAuthenticated: false,
+            error: "No expert profile found"
+          }));
+          return false;
+        }
+        
+        // Check expert approval status
+        const status = expertData.status as 'pending' | 'approved' | 'disapproved';
+        
+        if (status !== 'approved') {
+          console.error(`Expert login: Status is ${status}`);
+          
+          await supabase.auth.signOut();
+          
+          if (status === 'pending') {
+            toast.info('Your account is pending approval. You will be notified once approved.');
+          } else {
+            toast.error(`Your account has been ${status}. Please contact support.`);
+          }
+          
+          setAuthState((prev) => ({ 
+            ...prev, 
+            isLoading: false,
+            session: null,
+            user: null,
+            isAuthenticated: false,
+            error: `Account ${status}`
+          }));
+          return false;
+        }
+        
+        // Type safety: ensure the status is properly typed
+        const expertProfile: ExpertProfile = {
+          ...expertData,
+          status
+        };
+        
+        // Set the expert profile and role
+        setAuthState(prev => ({
+          ...prev,
+          session: data.session,
+          user: data.user,
+          expertProfile,
+          role: 'expert',
+          isAuthenticated: true,
+          isLoading: false,
+          error: null
+        }));
+      } else {
+        // Regular user login flow
+        try {
+          await fetchUserData(data.user.id);
+        } catch (fetchError) {
+          console.error("Error fetching user data after login:", fetchError);
+          // Continue with login even if fetch fails
+        }
       }
       
       toast.success("Login successful!");

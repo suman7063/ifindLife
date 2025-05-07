@@ -1,50 +1,99 @@
 
-import React, { createContext, useContext } from 'react';
-import { useAdminSession } from './useAdminSession';
-import { useAdminAuth } from './useAdminAuth';
-import { AuthContextType } from './types';
-import { initialAuthContext } from './constants';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
-// Create the context with the initial value
-const AuthContext = createContext<AuthContextType>(initialAuthContext);
+interface AdminUser {
+  username: string;
+  role: 'admin' | 'editor';
+}
 
-// Custom hook to use the auth context
-export const useAuth = () => useContext(AuthContext);
+interface AdminAuthContextType {
+  user: AdminUser | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  login: (username: string, password: string) => boolean;
+  logout: () => void;
+}
 
-// Provider component that wraps the app and makes auth object available to any child component
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { 
-    isAuthenticated, 
-    setIsAuthenticated, 
-    adminUsers, 
-    setAdminUsers, 
-    currentUser, 
-    setCurrentUser 
-  } = useAdminSession();
-  
-  const { login, logout, addAdmin, removeAdmin, updateAdminPermissions } = useAdminAuth({
-    adminUsers,
-    setAdminUsers,
-    setIsAuthenticated,
-    setCurrentUser,
-    currentUser
-  });
-  
-  const isSuperAdmin = currentUser?.role === 'superadmin';
+// Create context with default values
+const AdminAuthContext = createContext<AdminAuthContextType>({
+  user: null,
+  isAuthenticated: false,
+  isLoading: true,
+  login: () => false,
+  logout: () => {},
+});
+
+// Admin credentials (in a real app, these would be stored securely in a database)
+const adminUsers = [
+  { username: 'admin', password: 'admin123', role: 'admin' as const },
+  { username: 'editor', password: 'editor123', role: 'editor' as const },
+];
+
+export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check for existing login on component mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('admin-user');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing stored admin user:', error);
+        localStorage.removeItem('admin-user');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = (username: string, password: string): boolean => {
+    // Find matching admin user
+    const foundUser = adminUsers.find(
+      (u) => u.username === username && u.password === password
+    );
+
+    if (foundUser) {
+      const userInfo = {
+        username: foundUser.username,
+        role: foundUser.role,
+      };
+      
+      // Store user info in localStorage
+      localStorage.setItem('admin-user', JSON.stringify(userInfo));
+      setUser(userInfo);
+      return true;
+    }
+    
+    return false;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('admin-user');
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      isAuthenticated,
-      login,
-      logout,
-      adminUsers,
-      addAdmin,
-      removeAdmin,
-      isSuperAdmin,
-      currentUser,
-      updateAdminPermissions
-    }}>
+    <AdminAuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        login,
+        logout,
+      }}
+    >
       {children}
-    </AuthContext.Provider>
+    </AdminAuthContext.Provider>
   );
+};
+
+// Custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AdminAuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AdminAuthProvider');
+  }
+  return context;
 };

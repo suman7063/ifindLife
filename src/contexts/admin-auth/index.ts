@@ -1,2 +1,2 @@
 
-export { AuthProvider, useAuth } from './AdminAuthContext';
+export { AdminAuthProvider, useAuth } from './AdminAuthContext';

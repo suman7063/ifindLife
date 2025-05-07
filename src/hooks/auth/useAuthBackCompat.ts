@@ -1,113 +1,77 @@
 
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth as useUnifiedAuth } from '@/contexts/auth/AuthContext';
 import { useState, useEffect } from 'react';
-import { NewReview, NewReport } from '@/types/supabase/tables';
+import { toast } from 'sonner';
 
 /**
- * This hook provides backward compatibility for code that was written before
- * the auth system was consolidated into a single AuthContext.
+ * Hook that provides backward compatibility for old auth hooks
+ * Maps unified auth context to the separate old expert/user auth contexts
  */
 export const useAuthBackCompat = () => {
-  const auth = useAuth();
-  const [loading, setLoading] = useState(true);
+  const unifiedAuth = useUnifiedAuth();
   
-  // Initialize on component mount
-  useEffect(() => {
-    if (!auth.isLoading) {
-      setLoading(false);
-    }
-  }, [auth.isLoading]);
-  
-  // Compatibility function for userAuth
-  const userAuth = {
-    currentUser: auth.userProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    loading: auth.isLoading,
-    authLoading: auth.isLoading,
-    profileNotFound: !auth.userProfile && !auth.isLoading && auth.isAuthenticated,
-    user: auth.user,
-    
-    // Auth methods
-    login: (email: string, password: string) => auth.login(email, password, 'user'),
-    logout: auth.logout,
-    signup: auth.signup,
-    
-    // Profile methods
-    updateProfile: auth.updateUserProfile,
-    updatePassword: auth.updatePassword,
-    
-    // Expert interactions
-    addToFavorites: auth.addToFavorites,
-    removeFromFavorites: auth.removeFromFavorites,
-    rechargeWallet: auth.rechargeWallet,
-    
-    // Review and report methods with proper field mapping
-    addReview: async (reviewOrExpertId: NewReview | string | number, rating?: number, comment?: string) => {
-      if (typeof reviewOrExpertId === 'string' || typeof reviewOrExpertId === 'number') {
-        return auth.addReview({
-          expertId: reviewOrExpertId,
-          rating: rating || 0,
-          comment: comment || '',
-        });
-      }
-      return auth.addReview(reviewOrExpertId as NewReview);
-    },
-    
-    reportExpert: async (reportOrExpertId: NewReport | string | number, reason?: string, details?: string) => {
-      if (typeof reportOrExpertId === 'string' || typeof reportOrExpertId === 'number') {
-        return auth.reportExpert({
-          expertId: reportOrExpertId,
-          reason: reason || '',
-          details: details || '',
-        });
-      }
-      return auth.reportExpert(reportOrExpertId as NewReport);
-    },
-    
-    hasTakenServiceFrom: auth.hasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink,
-    getReferralLink: auth.getReferralLink,
-    
-    updateProfilePicture: async (file: File) => {
-      // Implement file upload functionality if needed
-      return null; 
-    },
-    
-    refreshProfile: async () => {
-      // This would trigger a refresh of the user profile
-      if (auth.user?.id) {
-        // This would be implemented properly in the auth context
-      }
-    }
-  };
-  
-  // Compatibility function for expertAuth
+  // Create a compatible expert auth implementation
   const expertAuth = {
-    currentExpert: auth.expertProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    loading: auth.isLoading,
-    initialized: !auth.isLoading,
-    error: auth.isLoading ? null : (auth.expertProfile ? null : 'No expert profile found'),
-    user: auth.user,
-    
-    // Auth methods
-    login: (email: string, password: string) => auth.login(email, password, 'expert'),
-    logout: auth.logout,
-    register: auth.expertSignup,
-    
-    // Profile methods
-    updateProfile: auth.updateExpertProfile,
-    
-    // Expert specific methods
+    currentExpert: unifiedAuth.expertProfile,
+    isAuthenticated: unifiedAuth.isAuthenticated && unifiedAuth.role === 'expert',
+    loading: unifiedAuth.isLoading,
+    isLoading: unifiedAuth.isLoading,
+    error: unifiedAuth.error,
+    initialized: true,
+    authInitialized: true,
+    user: unifiedAuth.user,
+    login: async (email: string, password: string) => {
+      try {
+        return await unifiedAuth.login(email, password, 'expert');
+      } catch (error) {
+        console.error('Expert login error:', error);
+        toast.error('An error occurred during expert login');
+        return false;
+      }
+    },
+    logout: unifiedAuth.logout,
+    register: async (data: any) => {
+      if (unifiedAuth.expertSignup) {
+        return await unifiedAuth.expertSignup(data);
+      }
+      console.error('Expert signup not implemented');
+      return false;
+    },
+    updateProfile: async () => {
+      console.error('Update profile not yet implemented in compatibility layer');
+      return false;
+    },
     hasUserAccount: async () => {
-      // Check if the current user also has a user profile
-      return !!auth.userProfile && auth.isAuthenticated;
+      console.error('hasUserAccount not yet implemented in compatibility layer');
+      return false;
     }
   };
   
-  return {
-    userAuth,
-    expertAuth,
-    loading
+  // Create a compatible user auth implementation
+  const userAuth = {
+    currentUser: unifiedAuth.userProfile,
+    isAuthenticated: unifiedAuth.isAuthenticated && unifiedAuth.role === 'user',
+    loading: unifiedAuth.isLoading,
+    isLoading: unifiedAuth.isLoading,
+    error: unifiedAuth.error,
+    initialized: true,
+    authInitialized: true,
+    user: unifiedAuth.user,
+    login: async (email: string, password: string) => {
+      try {
+        return await unifiedAuth.login(email, password, 'user');
+      } catch (error) {
+        console.error('User login error:', error);
+        toast.error('An error occurred during user login');
+        return false;
+      }
+    },
+    logout: unifiedAuth.logout,
+    register: async (data: any) => {
+      console.error('User register not yet implemented in compatibility layer');
+      return false;
+    }
   };
+  
+  return { expertAuth, userAuth };
 };
