@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +7,7 @@ import { useAppointmentManagement } from '@/hooks/useAppointmentManagement';
 import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
 import { format, isWithinInterval } from 'date-fns';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';  // Add this import
 import CalendarDatePicker from './CalendarDatePicker';
 import AvailableTimeSlotsSection from './AvailableTimeSlotsSection';
 import AppointmentNotes from './AppointmentNotes';

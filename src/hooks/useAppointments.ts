@@ -26,9 +26,18 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     
     setLoading(true);
     try {
+      // Determine if the user is an expert by checking if they have an entry in the expert_accounts table
+      const { data: expertData } = await supabase
+        .from('expert_accounts')
+        .select('id')
+        .eq('auth_id', currentUser.id)
+        .single();
+
+      const isExpert = !!expertData;
+      
       const data = await fetchAppointmentsOriginal(
         expertId ? undefined : currentUser.id,
-        expertId || (currentUser?.role === 'expert' ? currentUser.id : undefined)
+        expertId || (isExpert ? currentUser.id : undefined)
       );
       
       setAppointments(data);
@@ -46,6 +55,19 @@ export const useAppointments = (currentUser: UserProfile | null, expertId?: stri
     if (!currentUser) return false;
     
     try {
+      // First check if the messages table exists
+      const { error: tableCheckError } = await supabase
+        .from('messages')
+        .select('id')
+        .limit(1)
+        .maybeSingle();
+        
+      if (tableCheckError) {
+        console.error('Error accessing messages table:', tableCheckError);
+        toast.error('Messaging system is not ready yet');
+        return false;
+      }
+      
       const { error } = await supabase
         .from('messages')
         .insert({

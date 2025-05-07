@@ -41,5 +41,5 @@ export interface Message {
   content: string;
   read: boolean;
   created_at: string;
+  updated_at?: string;
 }
-

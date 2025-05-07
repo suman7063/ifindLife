@@ -5,8 +5,17 @@ import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 import { Message } from '@/types/appointments';
 
+interface Conversation {
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  lastMessage: string;
+  lastMessageTime: string;
+  unreadCount: number;
+}
+
 export const useMessaging = (currentUser: UserProfile | null) => {
-  const [conversations, setConversations] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(false);
@@ -23,7 +32,8 @@ export const useMessaging = (currentUser: UserProfile | null) => {
       const { error: tableCheckError } = await supabase
         .from('messages')
         .select('id')
-        .limit(1);
+        .limit(1)
+        .maybeSingle();
         
       if (tableCheckError) {
         console.error('Error accessing messages table:', tableCheckError);
@@ -31,48 +41,51 @@ export const useMessaging = (currentUser: UserProfile | null) => {
         return [];
       }
       
-      // Get all messages where the expert is either the sender or receiver
-      const { data: messages, error: messagesError } = await supabase
+      // Get all messages where the current user is either the sender or receiver
+      const { data: messagesData, error: messagesError } = await supabase
         .from('messages')
-        .select('*, sender:sender_id(name, profile_picture), receiver:receiver_id(name, profile_picture)')
+        .select('*, sender:profiles!sender_id(name, profile_picture), receiver:profiles!receiver_id(name, profile_picture)')
         .or(`sender_id.eq.${currentUser.id},receiver_id.eq.${currentUser.id}`)
         .order('created_at', { ascending: false });
       
       if (messagesError) throw messagesError;
       
       // Group by conversation (unique users)
-      const conversationMap = new Map();
+      const conversationMap = new Map<string, Conversation>();
       
-      messages?.forEach((message: any) => {
-        const otherUserId = message.sender_id === currentUser.id ? message.receiver_id : message.sender_id;
-        const otherUser = message.sender_id === currentUser.id ? message.receiver : message.sender;
-        
-        if (!conversationMap.has(otherUserId)) {
-          conversationMap.set(otherUserId, {
-            userId: otherUserId,
-            userName: otherUser?.name || 'User',
-            userAvatar: otherUser?.profile_picture,
-            lastMessage: message.content,
-            lastMessageTime: message.created_at,
-            unreadCount: message.receiver_id === currentUser.id && !message.read ? 1 : 0
-          });
-        } else if (new Date(message.created_at) > new Date(conversationMap.get(otherUserId).lastMessageTime)) {
-          // Update last message if this one is newer
-          const conversation = conversationMap.get(otherUserId);
-          conversation.lastMessage = message.content;
-          conversation.lastMessageTime = message.created_at;
-          if (message.receiver_id === currentUser.id && !message.read) {
+      if (messagesData) {
+        messagesData.forEach((message: any) => {
+          const otherUserId = message.sender_id === currentUser.id ? message.receiver_id : message.sender_id;
+          const otherUser = message.sender_id === currentUser.id ? message.receiver : message.sender;
+          
+          if (!conversationMap.has(otherUserId)) {
+            conversationMap.set(otherUserId, {
+              userId: otherUserId,
+              userName: otherUser?.name || 'User',
+              userAvatar: otherUser?.profile_picture,
+              lastMessage: message.content,
+              lastMessageTime: message.created_at,
+              unreadCount: message.receiver_id === currentUser.id && !message.read ? 1 : 0
+            });
+          } else if (new Date(message.created_at) > new Date(conversationMap.get(otherUserId)!.lastMessageTime)) {
+            // Update last message if this one is newer
+            const conversation = conversationMap.get(otherUserId)!;
+            conversation.lastMessage = message.content;
+            conversation.lastMessageTime = message.created_at;
+            if (message.receiver_id === currentUser.id && !message.read) {
+              conversation.unreadCount += 1;
+            }
+          } else if (message.receiver_id === currentUser.id && !message.read) {
+            // Count other unread messages
+            const conversation = conversationMap.get(otherUserId)!;
             conversation.unreadCount += 1;
           }
-        } else if (message.receiver_id === currentUser.id && !message.read) {
-          // Count other unread messages
-          conversationMap.get(otherUserId).unreadCount += 1;
-        }
-      });
+        });
+      }
       
       // Convert map to array and sort by last message time
       const sortedConversations = Array.from(conversationMap.values())
-        .sort((a: any, b: any) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
+        .sort((a, b) => new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime());
       
       setConversations(sortedConversations);
       return sortedConversations;
@@ -95,7 +108,8 @@ export const useMessaging = (currentUser: UserProfile | null) => {
       const { error: tableCheckError } = await supabase
         .from('messages')
         .select('id')
-        .limit(1);
+        .limit(1)
+        .maybeSingle();
         
       if (tableCheckError) {
         console.error('Error accessing messages table:', tableCheckError);
@@ -103,7 +117,7 @@ export const useMessaging = (currentUser: UserProfile | null) => {
         return [];
       }
       
-      // Get all messages between the expert and the selected user
+      // Get all messages between the current user and the selected user
       const { data, error } = await supabase
         .from('messages')
         .select('*')

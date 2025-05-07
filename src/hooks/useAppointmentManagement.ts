@@ -51,7 +51,8 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         user_calendar_event_id: apt.user_calendar_event_id,
         notes: apt.notes,
         expert_name: apt.expert_name,
-        user_name: apt.user_name,
+        // Ensure user_name is included with a fallback
+        user_name: apt.user_name || 'User',
         time_slot_id: apt.time_slot_id
       })) as Appointment[];
       
@@ -227,4 +228,3 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
     updateAppointmentStatus
   };
 };
-
