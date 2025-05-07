@@ -13,7 +13,7 @@ type AuthContextProps = {
   error: string | null;
   sessionType?: 'none' | 'user' | 'expert' | 'dual';
   login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>; // Changed return type
+  logout: () => Promise<boolean>;
   expertSignup?: (data: any) => Promise<boolean>;
   signup?: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   updateUserProfile?: (data: any) => Promise<boolean>;
@@ -57,45 +57,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to check and set role based on user profiles
   const checkAndSetRole = async (userId: string) => {
     try {
+      console.log(`Checking roles for user ID: ${userId}`);
+      
       // Fetch expert profile
       const { data: expertData, error: expertError } = await supabase
-        .from('expert_accounts') // Changed from expert_profiles to match the actual table name
+        .from('expert_accounts') // Correct table name
         .select('*')
-        .eq('auth_id', userId) // Changed from user_id to auth_id based on schema
+        .eq('auth_id', userId) // Correct field name
         .single();
 
       // Fetch user profile
       const { data: userData, error: userError } = await supabase
-        .from('profiles') // Changed from user_profiles to match the actual table name
+        .from('profiles') // Correct table name
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (expertError && !expertData) {
-        console.warn("No expert profile found:", expertError);
-      }
-
-      if (userError && !userData) {
-        console.warn("No user profile found:", userError);
-      }
+      console.log("Expert profile check:", expertData ? "Found" : "Not found", expertError?.message || "No error");
+      console.log("User profile check:", userData ? "Found" : "Not found", userError?.message || "No error");
 
       // Determine role based on profile existence
       if (expertData) {
+        console.log("Setting role to EXPERT");
         setRole('expert');
         setExpertProfile(expertData);
-        setUserProfile(null);
+        setUserProfile(userData || null);
         setSessionType(userData ? 'dual' : 'expert');
       } else if (userData) {
+        console.log("Setting role to USER");
         setRole('user');
         setUserProfile(userData);
         setExpertProfile(null);
         setSessionType('user');
       } else {
+        console.log("No profiles found, setting role to NULL");
         setRole(null);
         setExpertProfile(null);
         setUserProfile(null);
         setSessionType('none');
-        console.warn("No profiles found for this user.");
       }
     } catch (error: any) {
       console.error("Error fetching profiles:", error);
@@ -108,11 +107,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Initial authentication check
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`Auth state changed: ${event}`, session ? "Session exists" : "No session");
+      
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
         if (session?.user) {
+          console.log("Setting user from session");
           setUser(session.user);
           checkAndSetRole(session.user.id);
         } else {
+          console.log("No user in session, clearing state");
           setUser(null);
           setRole(null);
           setExpertProfile(null);
@@ -121,6 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsLoading(false);
         }
       } else if (event === 'SIGNED_OUT') {
+        console.log("User signed out, clearing state");
         setUser(null);
         setRole(null);
         setExpertProfile(null);
@@ -140,62 +144,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string, roleOverride?: string) => {
     try {
       setIsLoading(true);
+      console.log(`Attempting login with email: ${email}`, roleOverride ? `(role override: ${roleOverride})` : "");
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
+        email,
+        password,
       });
 
       if (error) {
         console.error("Login error:", error);
         setError(error.message);
+        setIsLoading(false);
         return false;
       }
 
       if (data?.user?.id) {
         setUser(data.user);
-        if (roleOverride) {
-          setRole(roleOverride as 'user' | 'expert' | 'admin');
-          if (roleOverride === 'expert') {
-            const { data: expertData, error: expertError } = await supabase
-              .from('expert_accounts') // Changed from expert_profiles to match the actual table
-              .select('*')
-              .eq('auth_id', data.user.id) // Changed from user_id to auth_id
-              .single();
-            if (expertData) {
-              setExpertProfile(expertData);
-              setUserProfile(null);
-            } else {
-              console.error("Error fetching expert profile:", expertError);
-              setError(expertError?.message || "Failed to fetch expert profile");
-              setIsLoading(false);
-              return false;
-            }
-          } else if (roleOverride === 'user') {
-            const { data: userData, error: userError } = await supabase
-              .from('profiles') // Changed from user_profiles to match the actual table
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-            if (userData) {
-              setUserProfile(userData);
-              setExpertProfile(null);
-            } else {
-              console.error("Error fetching user profile:", userError);
-              setError(userError?.message || "Failed to fetch user profile");
-              setIsLoading(false);
-              return false;
-            }
+        
+        if (roleOverride === 'expert') {
+          console.log("Expert role override specified, checking for expert profile");
+          
+          const { data: expertData, error: expertError } = await supabase
+            .from('expert_accounts') // Correct table name
+            .select('*')
+            .eq('auth_id', data.user.id) // Correct field name
+            .single();
+            
+          if (expertData) {
+            console.log("Expert profile found:", expertData.name);
+            setRole('expert');
+            setExpertProfile(expertData);
+            setUserProfile(null);
+            setSessionType('expert');
+          } else {
+            console.error("Expert profile not found:", expertError);
+            setError(expertError?.message || "Failed to fetch expert profile");
+            setIsLoading(false);
+            
+            // Sign out since this isn't a valid expert
+            await supabase.auth.signOut();
+            return false;
+          }
+        } else if (roleOverride === 'user') {
+          console.log("User role override specified, checking for user profile");
+          
+          const { data: userData, error: userError } = await supabase
+            .from('profiles') // Correct table name
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+            
+          if (userData) {
+            console.log("User profile found:", userData.name || userData.email);
+            setRole('user');
+            setUserProfile(userData);
+            setExpertProfile(null);
+            setSessionType('user');
+          } else {
+            console.error("User profile not found:", userError);
+            setError(userError?.message || "Failed to fetch user profile");
+            setIsLoading(false);
+            return false;
           }
         } else {
+          console.log("No role override specified, checking both profiles");
           await checkAndSetRole(data.user.id);
         }
       }
+      
       setIsLoading(false);
       setError(null);
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
       setError(error?.message || "An unexpected error occurred during login");
+      setIsLoading(false);
       return false;
     }
   };
@@ -204,83 +227,98 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     try {
       setIsLoading(true);
+      console.log("Logging out user");
+      
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error("Logout error:", error);
         setError(error.message);
-        return false; // Return false on failure
+        setIsLoading(false);
+        return false;
       } else {
+        console.log("Logout successful, clearing state");
         setUser(null);
         setRole(null);
         setExpertProfile(null);
         setUserProfile(null);
         setSessionType('none');
       }
+      
       setIsLoading(false);
       setError(null);
-      return true; // Return true on success
+      return true;
     } catch (error: any) {
       console.error("Logout error:", error);
       setError(error?.message || "An error occurred during logout");
-      return false; // Return false on exception
-    } finally {
       setIsLoading(false);
+      return false;
     }
   };
 
-  // Mock implementations for other required methods
+  // Implement other missing functions
   const signup = async (email: string, password: string, userData: any, referralCode?: string) => {
-    // Implementation placeholder
+    console.log("Signup called with:", email, userData, referralCode ? `Referral: ${referralCode}` : "");
+    // Placeholder implementation
     return true;
   };
 
   const updateUserProfile = async (data: any) => {
-    // Implementation placeholder
+    console.log("Update user profile called with:", data);
+    // Placeholder implementation
     return true;
   };
 
   const updatePassword = async (password: string) => {
-    // Implementation placeholder
+    console.log("Update password called");
+    // Placeholder implementation
     return true;
   };
 
   const addToFavorites = async (expertId: number) => {
-    // Implementation placeholder
+    console.log(`Add to favorites: ${expertId}`);
+    // Placeholder implementation
     return true;
   };
 
   const removeFromFavorites = async (expertId: number) => {
-    // Implementation placeholder
+    console.log(`Remove from favorites: ${expertId}`);
+    // Placeholder implementation
     return true;
   };
 
   const rechargeWallet = async (amount: number) => {
-    // Implementation placeholder
+    console.log(`Recharge wallet: ${amount}`);
+    // Placeholder implementation
     return true;
   };
 
   const addReview = async (review: any) => {
-    // Implementation placeholder
+    console.log("Add review:", review);
+    // Placeholder implementation
     return true;
   };
 
   const reportExpert = async (report: any) => {
-    // Implementation placeholder
+    console.log("Report expert:", report);
+    // Placeholder implementation
     return true;
   };
 
   const hasTakenServiceFrom = async (expertId: string | number) => {
-    // Implementation placeholder
+    console.log(`Check if taken service from expert ${expertId}`);
+    // Placeholder implementation
     return true;
   };
 
   const getExpertShareLink = (expertId: string | number) => {
-    // Implementation placeholder
+    console.log(`Get expert share link: ${expertId}`);
+    // Placeholder implementation
     return '';
   };
 
   const getReferralLink = () => {
-    // Implementation placeholder
+    console.log("Get referral link");
+    // Placeholder implementation
     return null;
   };
 

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { toast } from 'sonner';
 
 /**
  * Hook to provide a unified interface for authentication across user and expert roles
@@ -47,9 +48,11 @@ export const useAuthSynchronization = () => {
   const userLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating user logout...");
-      return await auth.logout();
+      const success = await auth.logout();
+      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('User logout error:', error);
+      toast.error('Error logging out');
       return false;
     }
   };
@@ -58,9 +61,11 @@ export const useAuthSynchronization = () => {
   const expertLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating expert logout...");
-      return await auth.logout();
+      const success = await auth.logout();
+      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('Expert logout error:', error);
+      toast.error('Error logging out');
       return false;
     }
   };
@@ -69,9 +74,11 @@ export const useAuthSynchronization = () => {
   const fullLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating full logout...");
-      return await auth.logout();
+      const success = await auth.logout();
+      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('Full logout error:', error);
+      toast.error('Error logging out');
       return false;
     }
   };

@@ -104,6 +104,7 @@ const ExpertLogin: React.FC = () => {
         return false;
       }
       
+      // Pass 'expert' as the roleOverride parameter to ensure proper role checking
       const success = await login(email, password, 'expert');
       
       if (success) {
@@ -113,7 +114,7 @@ const ExpertLogin: React.FC = () => {
         return true;
       } else {
         console.error('ExpertLogin: Login failed');
-        setLoginError('Login failed. Please check your credentials.');
+        setLoginError('Login failed. Please check your credentials or contact support.');
         setIsLogging(false);
         return false;
       }
