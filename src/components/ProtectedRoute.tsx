@@ -11,6 +11,9 @@ type ProtectedRouteProps = {
   requiredPermission?: string;
 };
 
+/**
+ * A component that protects routes by checking user authentication and permissions
+ */
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   requiredRole,

@@ -4,6 +4,7 @@ import { AdminPermissions } from '@/contexts/admin-auth/types';
 interface AdminUser {
   role?: string;
   permissions?: AdminPermissions | Record<string, boolean>;
+  username?: string;
 }
 
 /**
@@ -76,3 +77,38 @@ export const getUserPermissions = (user: AdminUser | null): string[] => {
     .filter(([_, value]) => value === true)
     .map(([key, _]) => key);
 };
+
+/**
+ * Check if current user can manage another admin user
+ * @param currentUser Current admin user
+ * @param targetUser Target admin user to manage
+ * @returns boolean indicating if currentUser can manage targetUser
+ */
+export const canManageUser = (currentUser: AdminUser | null, targetUser: AdminUser): boolean => {
+  // Only super admins can manage other users
+  if (!isSuperAdmin(currentUser)) {
+    return false;
+  }
+  
+  // Super admins can manage all users except other super admins
+  if (targetUser.role === 'superadmin') {
+    return false; // Cannot manage another super admin
+  }
+  
+  return true;
+};
+
+/**
+ * Format permission name to a more readable format
+ * @param permission Permission name in camelCase
+ * @returns Formatted permission name
+ */
+export const formatPermissionName = (permission: string): string => {
+  // Convert camelCase to words with spaces and capitalize first letter
+  const formatted = permission
+    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
+    .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
+  
+  return formatted;
+};
+
