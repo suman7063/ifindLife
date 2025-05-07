@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import type { Availability, TimeSlot } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
+import { handleDatabaseError, retryOperation } from '@/utils/errorHandling';
 
 export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
@@ -14,14 +15,20 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
   const fetchAvailabilities = async (expertId: string) => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Fetch availabilities 
-      const { data: availabilityData, error: availabilityError } = await supabase
-        .from('expert_availabilities')
-        .select('*')
-        .eq('expert_id', expertId);
+      // Fetch availabilities with retry
+      const { data: availabilityData, error: availabilityError } = await retryOperation(() => 
+        supabase
+          .from('expert_availabilities')
+          .select('*')
+          .eq('expert_id', expertId)
+      );
       
-      if (availabilityError) throw availabilityError;
+      if (availabilityError) {
+        handleDatabaseError(availabilityError, 'Failed to load expert availabilities');
+        throw availabilityError;
+      }
       
       if (!availabilityData || availabilityData.length === 0) {
         setAvailabilities([]);
@@ -31,22 +38,38 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
       // For each availability, fetch time slots
       const availabilitiesWithSlots = await Promise.all(
         availabilityData.map(async (availability) => {
-          const { data: timeSlots, error: timeSlotsError } = await supabase
-            .from('expert_time_slots')
-            .select('*')
-            .eq('availability_id', availability.id);
-          
-          if (timeSlotsError) throw timeSlotsError;
-          
-          // Return properly shaped data
-          return {
-            id: availability.id,
-            expert_id: availability.expert_id,
-            start_date: availability.start_date,
-            end_date: availability.end_date,
-            availability_type: availability.availability_type,
-            time_slots: timeSlots || []
-          } as Availability;
+          try {
+            const { data: timeSlots, error: timeSlotsError } = await supabase
+              .from('expert_time_slots')
+              .select('*')
+              .eq('availability_id', availability.id);
+            
+            if (timeSlotsError) {
+              handleDatabaseError(timeSlotsError, 'Failed to load time slots');
+              throw timeSlotsError;
+            }
+            
+            // Return properly shaped data
+            return {
+              id: availability.id,
+              expert_id: availability.expert_id,
+              start_date: availability.start_date,
+              end_date: availability.end_date,
+              availability_type: availability.availability_type,
+              time_slots: timeSlots || []
+            } as Availability;
+          } catch (error) {
+            console.error(`Error fetching time slots for availability ${availability.id}:`, error);
+            // Return availability without time slots in case of error
+            return {
+              id: availability.id,
+              expert_id: availability.expert_id,
+              start_date: availability.start_date,
+              end_date: availability.end_date,
+              availability_type: availability.availability_type,
+              time_slots: []
+            } as Availability;
+          }
         })
       );
       
@@ -55,7 +78,6 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     } catch (error: any) {
       console.error('Error fetching availabilities:', error);
       setError(error.message);
-      toast.error('Failed to load expert availabilities');
       return [];
     } finally {
       setLoading(false);
@@ -72,6 +94,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
   ) => {
     try {
       setLoading(true);
+      setError(null);
       
       // Insert availability 
       const { data: newAvailability, error: availabilityError } = await supabase
@@ -85,7 +108,10 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
         .select()
         .single();
       
-      if (availabilityError) throw availabilityError;
+      if (availabilityError) {
+        handleDatabaseError(availabilityError, 'Failed to create availability');
+        throw availabilityError;
+      }
       
       if (!newAvailability) {
         throw new Error('Failed to create availability');
@@ -103,7 +129,10 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
             specific_date: slot.specific_date
           });
         
-        if (slotError) throw slotError;
+        if (slotError) {
+          handleDatabaseError(slotError, 'Failed to create time slot');
+          throw slotError;
+        }
       }
       
       // Fetch updated availabilities
@@ -114,7 +143,6 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     } catch (error: any) {
       console.error('Error creating availability:', error);
       setError(error.message);
-      toast.error('Failed to create availability');
       return null;
     } finally {
       setLoading(false);
@@ -125,6 +153,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
   const deleteAvailability = async (availabilityId: string) => {
     try {
       setLoading(true);
+      setError(null);
       
       // Delete the availability 
       const { error } = await supabase
@@ -132,7 +161,10 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
         .delete()
         .eq('id', availabilityId);
       
-      if (error) throw error;
+      if (error) {
+        handleDatabaseError(error, 'Failed to delete availability');
+        throw error;
+      }
       
       // Update the state by filtering out the deleted availability
       setAvailabilities(prev => prev.filter(a => a.id !== availabilityId));
@@ -142,7 +174,6 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
     } catch (error: any) {
       console.error('Error deleting availability:', error);
       setError(error.message);
-      toast.error('Failed to delete availability');
       return false;
     } finally {
       setLoading(false);

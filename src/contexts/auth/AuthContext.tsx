@@ -53,11 +53,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
+  const [lastFetchError, setLastFetchError] = useState<string | null>(null);
 
   // Function to check and set role based on user profiles
   const checkAndSetRole = async (userId: string) => {
     try {
       console.log(`Checking roles for user ID: ${userId}`);
+      setLastFetchError(null);
       
       // Fetch expert profile with error handling
       let expertData = null;
@@ -72,9 +74,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         expertData = response.data;
         expertError = response.error;
+        
+        if (expertError) {
+          // Check if this is a recursion error
+          if (expertError.message && expertError.message.includes('recursion')) {
+            console.error("Database recursion error detected in expert profile fetch:", expertError.message);
+            setLastFetchError("Database recursion error in expert_accounts. Please contact support.");
+          }
+        }
       } catch (err: any) {
         console.error("Error fetching expert profile:", err);
         expertError = { message: err.message || "Failed to fetch expert profile" };
+        setLastFetchError(`Error fetching expert profile: ${err.message}`);
       }
 
       // Fetch user profile with error handling
@@ -90,9 +101,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         userData = response.data;
         userError = response.error;
+        
+        if (userError) {
+          // Check if this is a recursion error
+          if (userError.message && userError.message.includes('recursion')) {
+            console.error("Database recursion error detected in user profile fetch:", userError.message);
+            setLastFetchError("Database recursion error in profiles. Please contact support.");
+          }
+        }
       } catch (err: any) {
         console.error("Error fetching user profile:", err);
         userError = { message: err.message || "Failed to fetch user profile" };
+        if (!lastFetchError) {
+          setLastFetchError(`Error fetching user profile: ${err.message}`);
+        }
       }
 
       console.log("Expert profile check:", expertData ? "Found" : "Not found", expertError?.message || "No error");
@@ -121,6 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Error fetching profiles:", error);
       setError(error?.message || "Error fetching user profiles");
+      setLastFetchError(`Global error fetching profiles: ${error?.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -166,6 +189,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, password: string, roleOverride?: string) => {
     try {
       setIsLoading(true);
+      setError(null);
+      setLastFetchError(null);
+      
       console.log(`Attempting login with email: ${email}`, roleOverride ? `(role override: ${roleOverride})` : "");
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -197,7 +223,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               console.log("Expert profile found:", expertData.name);
               setRole('expert');
               setExpertProfile(expertData);
-              setUserProfile(null);
+              setUserProfile(null); // We only want the expert profile when logging in as expert
               setSessionType('expert');
               setError(null);
               setIsLoading(false);
@@ -210,6 +236,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                  (expertError.message.includes('recursion') || expertError.code === '500')) {
                 console.error("Database permission error:", expertError.message);
                 setError(`Database error: ${expertError.message}`);
+                setLastFetchError(`Database permission error: ${expertError.message}`);
+                
                 // We'll still try to check if this is a regular user
                 const { data: userData } = await supabase
                   .from('profiles')
@@ -239,6 +267,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           } catch (err: any) {
             console.error("Error fetching expert profile:", err);
             setError(err?.message || "Error fetching expert profile");
+            setLastFetchError(`Error fetching expert profile: ${err?.message}`);
             setIsLoading(false);
             
             // Sign out on error
@@ -267,12 +296,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             } else {
               console.error("User profile not found:", userError);
               setError(userError?.message || "Failed to fetch user profile");
+              setLastFetchError(`Failed to fetch user profile: ${userError?.message}`);
               setIsLoading(false);
               return false;
             }
           } catch (err: any) {
             console.error("Error fetching user profile:", err);
             setError(err?.message || "Error fetching user profile");
+            setLastFetchError(`Error fetching user profile: ${err?.message}`);
             setIsLoading(false);
             return false;
           }
@@ -289,6 +320,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Login error:", error);
       setError(error?.message || "An unexpected error occurred during login");
+      setLastFetchError(`Login error: ${error?.message}`);
       setIsLoading(false);
       return false;
     }
@@ -304,6 +336,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error("Logout error:", error);
         setError(error.message);
+        setLastFetchError(`Logout error: ${error.message}`);
         setIsLoading(false);
         return false;
       } else {
@@ -321,6 +354,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error: any) {
       console.error("Logout error:", error);
       setError(error?.message || "An error occurred during logout");
+      setLastFetchError(`Logout error: ${error?.message}`);
       setIsLoading(false);
       return false;
     }

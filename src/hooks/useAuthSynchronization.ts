@@ -49,7 +49,12 @@ export const useAuthSynchronization = () => {
     try {
       console.log("useAuthSynchronization: Initiating user logout...");
       const success = await auth.logout();
-      return success; // This will be boolean since we fixed auth.logout() to return boolean
+      if (success) {
+        console.log("useAuthSynchronization: User logout successful");
+      } else {
+        console.warn("useAuthSynchronization: User logout returned false");
+      }
+      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('User logout error:', error);
       toast.error('Error logging out');
@@ -62,7 +67,12 @@ export const useAuthSynchronization = () => {
     try {
       console.log("useAuthSynchronization: Initiating expert logout...");
       const success = await auth.logout();
-      return success; // This will be boolean since we fixed auth.logout() to return boolean
+      if (success) {
+        console.log("useAuthSynchronization: Expert logout successful");
+      } else {
+        console.warn("useAuthSynchronization: Expert logout returned false");
+      }
+      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('Expert logout error:', error);
       toast.error('Error logging out');
@@ -75,7 +85,12 @@ export const useAuthSynchronization = () => {
     try {
       console.log("useAuthSynchronization: Initiating full logout...");
       const success = await auth.logout();
-      return success; // This will be boolean since we fixed auth.logout() to return boolean
+      if (success) {
+        console.log("useAuthSynchronization: Full logout successful");
+      } else {
+        console.warn("useAuthSynchronization: Full logout returned false");
+      }
+      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('Full logout error:', error);
       toast.error('Error logging out');

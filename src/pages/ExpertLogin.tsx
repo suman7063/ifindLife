@@ -9,6 +9,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { supabase } from '@/lib/supabase';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -21,9 +24,10 @@ const ExpertLogin: React.FC = () => {
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [dbErrorRetries, setDbErrorRetries] = useState(0);
+  const [systemError, setSystemError] = useState<string | null>(null);
   
   // Get auth context
-  const { isLoading, isAuthenticated, expertProfile, role, login } = useAuth();
+  const { isLoading, isAuthenticated, expertProfile, userProfile, role, login } = useAuth();
   
   // Debug logging
   useEffect(() => {
@@ -31,11 +35,12 @@ const ExpertLogin: React.FC = () => {
       isLoading, 
       isAuthenticated, 
       hasExpertProfile: !!expertProfile,
+      hasUserProfile: !!userProfile,
       role,
       redirectAttempted,
       dbErrorRetries
     });
-  }, [isLoading, isAuthenticated, expertProfile, role, redirectAttempted, dbErrorRetries]);
+  }, [isLoading, isAuthenticated, expertProfile, userProfile, role, redirectAttempted, dbErrorRetries]);
   
   // Clear any cached redirects
   useEffect(() => {
@@ -89,9 +94,15 @@ const ExpertLogin: React.FC = () => {
     }
   }, [isLoading, isAuthenticated, expertProfile, role, navigate, redirectAttempted]);
   
+  const handleSystemErrorRefresh = () => {
+    window.location.reload();
+  };
+  
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLogging(true);
     setLoginError(null);
+    setSystemError(null);
+    
     try {
       console.log('ExpertLogin: Attempting login with', email);
       
@@ -148,10 +159,11 @@ const ExpertLogin: React.FC = () => {
         }
       } catch (error: any) {
         // Handle specific database errors
-        if (error.message && error.message.includes('recursion')) {
+        if (error.message && (error.message.includes('recursion') || error.message.includes('500'))) {
           console.error('Database permission error:', error.message);
-          toast.error('Database permission error. Please contact support.');
-          setLoginError('Database permission error. Please contact the administrator.');
+          setSystemError('We are experiencing a database issue. Please try again later or contact support.');
+          toast.error('Database error. Our team has been notified.');
+          setLoginError(null); // Clear regular login error
         } else {
           console.error('ExpertLogin error:', error);
           toast.error('Failed to login. Please try again.');
@@ -176,11 +188,41 @@ const ExpertLogin: React.FC = () => {
       // Clear error messages when switching tabs
       setLoginError(null);
       setStatusMessage(null);
+      setSystemError(null);
     }
   };
 
   if (isLoading) {
     return <LoadingScreen />;
+  }
+  
+  // Display system error with refresh option
+  if (systemError) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 py-12">
+          <Container className="max-w-md">
+            <div className="bg-white p-6 rounded-lg shadow-md">
+              <h2 className="text-xl font-semibold text-red-600 mb-4">System Error</h2>
+              <p className="mb-6">{systemError}</p>
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>
+                  There appears to be a database issue. Our team has been notified.
+                </AlertDescription>
+              </Alert>
+              <Button 
+                onClick={handleSystemErrorRefresh}
+                className="w-full flex items-center justify-center"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" /> Refresh Page
+              </Button>
+            </div>
+          </Container>
+        </div>
+        <Footer />
+      </>
+    );
   }
 
   return (

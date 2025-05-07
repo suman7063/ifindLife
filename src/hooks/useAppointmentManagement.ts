@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import type { Appointment } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
+import { handleDatabaseError, retryOperation } from '@/utils/errorHandling';
 
 export const useAppointmentManagement = (currentUser: UserProfile | null, expertId?: string) => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -14,6 +15,7 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
   const fetchAppointments = async (userId?: string, expId?: string) => {
     try {
       setLoading(true);
+      setError(null);
       
       let query = supabase.from('appointments').select('*');
       
@@ -25,10 +27,15 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         query = query.eq('expert_id', expId);
       }
       
-      const { data, error: appointmentsError } = await query
-        .in('status', ['pending', 'confirmed', 'cancelled', 'completed']);
+      // Use retry operation for fetching
+      const { data, error: appointmentsError } = await retryOperation(() => 
+        query.in('status', ['pending', 'confirmed', 'cancelled', 'completed'])
+      );
       
-      if (appointmentsError) throw appointmentsError;
+      if (appointmentsError) {
+        handleDatabaseError(appointmentsError, 'Failed to load appointments');
+        throw appointmentsError;
+      }
       
       // Map to the correct shape for our interface
       const formattedAppointments = (data || []).map(apt => ({
@@ -51,7 +58,6 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
     } catch (error: any) {
       console.error('Error fetching appointments:', error);
       setError(error.message);
-      toast.error('Failed to load appointments');
       return [];
     } finally {
       setLoading(false);
@@ -70,6 +76,7 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
   ) => {
     try {
       setLoading(true);
+      setError(null);
       
       // First check if time slot is available
       if (timeSlotId) {
@@ -79,7 +86,10 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
           .eq('id', timeSlotId)
           .eq('is_booked', false);
         
-        if (checkError) throw checkError;
+        if (checkError) {
+          handleDatabaseError(checkError, 'Error checking time slot availability');
+          throw checkError;
+        }
         
         if (!slots || slots.length === 0) {
           toast.error('This time slot is no longer available');
@@ -89,12 +99,15 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
       
       // Fetch expert name
       const { data: expertData, error: expertError } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .select('name')
         .eq('id', expertId)
         .single();
       
-      if (expertError) throw expertError;
+      if (expertError) {
+        handleDatabaseError(expertError, 'Error fetching expert information');
+        throw expertError;
+      }
       
       if (!expertData || !expertData.name) {
         toast.error('Expert information not found');
@@ -119,7 +132,10 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         .select()
         .single();
       
-      if (appointmentError) throw appointmentError;
+      if (appointmentError) {
+        handleDatabaseError(appointmentError, 'Failed to book appointment');
+        throw appointmentError;
+      }
       
       // Mark time slot as booked if provided
       if (timeSlotId) {
@@ -128,7 +144,11 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
           .update({ is_booked: true })
           .eq('id', timeSlotId);
         
-        if (updateError) throw updateError;
+        if (updateError) {
+          handleDatabaseError(updateError, 'Failed to update time slot status');
+          // Continue anyway since the appointment is created
+          console.error('Failed to update time slot status:', updateError);
+        }
       }
       
       // Refresh appointments
@@ -139,7 +159,6 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
     } catch (error: any) {
       console.error('Error booking appointment:', error);
       setError(error.message);
-      toast.error('Failed to book appointment');
       return null;
     } finally {
       setLoading(false);
@@ -150,6 +169,7 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
   const updateAppointmentStatus = async (appointmentId: string, status: Appointment['status']) => {
     try {
       setLoading(true);
+      setError(null);
       
       const { data, error } = await supabase
         .from('appointments')
@@ -158,7 +178,10 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        handleDatabaseError(error, 'Failed to update appointment status');
+        throw error;
+      }
       
       // Update state with the new status
       setAppointments(prev => 
@@ -172,7 +195,6 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
     } catch (error: any) {
       console.error('Error updating appointment:', error);
       setError(error.message);
-      toast.error('Failed to update appointment');
       return null;
     } finally {
       setLoading(false);
