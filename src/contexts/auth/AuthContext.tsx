@@ -1,589 +1,224 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useFetchUserProfile } from './hooks/useFetchUserProfile';
-import { useFetchExpertProfile } from './hooks/useFetchExpertProfile';
-import { useAuthFunctions } from './hooks/useAuthFunctions';
-import { toast } from 'sonner';
-import { AuthState, UserProfile, ExpertProfile, AuthContextProps, initialAuthState } from './types';
-import { NewReview, NewReport } from '@/types/supabase/tables';
 
-export const AuthContext = createContext<AuthContextProps | undefined>(undefined);
+// Define the context type
+type AuthContextProps = {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  user: any;
+  role: 'user' | 'expert' | 'admin' | null;
+  expertProfile: any;
+  userProfile: any;
+  error: string | null;
+  login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  expertSignup?: (data: any) => Promise<boolean>;
+};
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+// Create the context with a default value
+const AuthContext = createContext<AuthContextProps>({
+  isAuthenticated: false,
+  isLoading: true,
+  user: null,
+  role: null,
+  expertProfile: null,
+  userProfile: null,
+  error: null,
+  login: async () => false,
+  logout: async () => {},
+});
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
-  
-  console.log('Setting up auth state listener');
-  
-  // Set up auth listener on component mount
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session ? "Session exists" : "No session");
-        
-        // Update the session and user state
-        setAuthState((prev) => ({
-          ...prev,
-          session: session,
-          user: session?.user || null,
-          isAuthenticated: !!session,
-        }));
-        
-        // Clear profiles if no session/user
-        if (!session || !session.user) {
-          console.log('Auth state changed without user, clearing profiles');
-          setAuthState((prev) => ({
-            ...prev, 
-            userProfile: null, 
-            expertProfile: null, 
-            role: null,
-            isLoading: false,
-          }));
-          return;
-        }
-        
-        // Otherwise fetch profile data
-        await fetchUserData(session.user.id);
+// Custom hook to use the auth context
+export const useAuth = () => useContext(AuthContext);
+
+// The context provider component
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<'user' | 'expert' | 'admin' | null>(null);
+  const [expertProfile, setExpertProfile] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Function to check and set role based on user profiles
+  const checkAndSetRole = async (userId: string) => {
+    try {
+      // Fetch expert profile
+      const { data: expertData, error: expertError } = await supabase
+        .from('expert_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      // Fetch user profile
+      const { data: userData, error: userError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (expertError && !expertData) {
+        console.warn("No expert profile found:", expertError);
       }
-    );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session ? "Session exists" : "No session");
-      
-      // Update the session and user state
-      setAuthState((prev) => ({
-        ...prev,
-        session: session,
-        user: session?.user || null,
-        isAuthenticated: !!session,
-      }));
-      
-      // Fetch user data if there's a session
-      if (session && session.user) {
-        fetchUserData(session.user.id);
+      if (userError && !userData) {
+        console.warn("No user profile found:", userError);
+      }
+
+      // Determine role based on profile existence
+      if (expertData) {
+        setRole('expert');
+        setExpertProfile(expertData);
+        setUserProfile(null);
+      } else if (userData) {
+        setRole('user');
+        setUserProfile(userData);
+        setExpertProfile(null);
       } else {
-        // No session, set loading to false
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setRole(null);
+        setExpertProfile(null);
+        setUserProfile(null);
+        console.warn("No profiles found for this user.");
+      }
+    } catch (error: any) {
+      console.error("Error fetching profiles:", error);
+      setError(error?.message || "Error fetching user profiles");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial authentication check
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        if (session?.user) {
+          setUser(session.user);
+          checkAndSetRole(session.user.id);
+        } else {
+          setUser(null);
+          setRole(null);
+          setExpertProfile(null);
+          setUserProfile(null);
+          setIsLoading(false);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setRole(null);
+        setExpertProfile(null);
+        setUserProfile(null);
+        setIsLoading(false);
       }
     });
 
+    // Unsubscribe from the auth state change listener when the component unmounts
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
-  
-  // Function to fetch user data after login
-  const fetchUserData = async (userId: string) => {
+
+  // Login function
+  const login = async (email: string, password: string, roleOverride?: string) => {
     try {
-      setAuthState((prev) => ({ ...prev, isLoading: true }));
-      console.log('Fetching user data for ID:', userId);
-      
-      // Attempt to fetch expert profile first - this is critical for the expert login flow
-      const { data: expertData, error: expertError } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', userId)
-        .maybeSingle();
-        
-      // Check for expert profile
-      if (expertData && !expertError) {
-        console.log('Found expert profile:', expertData);
-        
-        // Type safety: ensure the status is properly typed
-        const expertProfile: ExpertProfile = {
-          ...expertData,
-          status: expertData.status as 'pending' | 'approved' | 'disapproved'
-        };
-        
-        setAuthState((prev) => ({
-          ...prev,
-          expertProfile: expertProfile,
-          role: 'expert',
-          isLoading: false,
-          error: null,
-        }));
-        return;
-      } else {
-        console.log('No expert profile found or error:', expertError);
-      }
-      
-      // If not expert, check for regular user profile
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (userData && !userError) {
-        console.log('Found user profile:', userData);
-        setAuthState((prev) => ({
-          ...prev,
-          userProfile: userData as UserProfile,
-          role: 'user',
-          isLoading: false,
-          error: null,
-        }));
-        return;
-      } else {
-        console.log('No user profile found or error:', userError);
-      }
-      
-      // If no profile found, check for admin role
-      const { data: adminData, error: adminError } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (adminData && !adminError) {
-        console.log('Found admin user:', adminData);
-        setAuthState((prev) => ({
-          ...prev,
-          role: 'admin',
-          isLoading: false,
-          error: null,
-        }));
-        return;
-      }
-      
-      // If no profile found at all
-      console.log('No profile found for user:', userId);
-      setAuthState((prev) => ({
-        ...prev,
-        userProfile: null,
-        expertProfile: null,
-        role: null,
-        isLoading: false,
-        error: null,
-      }));
-      
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      setAuthState((prev) => ({
-        ...prev,
-        userProfile: null,
-        expertProfile: null,
-        role: null,
-        isLoading: false,
-        error: "Failed to fetch user data",
-      }));
-    }
-  };
-  
-  // Import auth functions with the fetchUserData function
-  const { login: baseLogin, signup, logout, expertLogin, expertSignup } = useAuthFunctions(
-    authState,
-    setAuthState,
-    fetchUserData
-  );
-  
-  // Enhanced login function that allows role override
-  const login = async (email: string, password: string, roleOverride?: string): Promise<boolean> => {
-    try {
-      setAuthState((prev) => ({ ...prev, isLoading: true, error: null }));
-      
-      console.log("Attempting login with email:", email, roleOverride ? `(role override: ${roleOverride})` : '');
+      setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: email,
+        password: password,
       });
 
       if (error) {
         console.error("Login error:", error);
-        toast.error(error.message);
-        setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
+        setError(error.message);
         return false;
       }
 
-      if (!data.user || !data.session) {
-        console.error("Login failed: No user or session returned");
-        toast.error("Login failed. Please try again.");
-        setAuthState((prev) => ({ ...prev, isLoading: false, error: "Login failed" }));
-        return false;
-      }
-
-      console.log("Login successful for user:", data.user.id);
-      
-      if (roleOverride === 'expert') {
-        // For experts, check expert profile immediately
-        const { data: expertData, error: expertError } = await supabase
-          .from('expert_accounts')
-          .select('*')
-          .eq('auth_id', data.user.id)
-          .maybeSingle();
-          
-        if (!expertData || expertError) {
-          console.error("Expert profile not found for user:", data.user.id);
-          toast.error("No expert profile found for this account");
-          await supabase.auth.signOut();
-          setAuthState(prev => ({
-            ...prev,
-            session: null,
-            user: null,
-            isAuthenticated: false,
-            isLoading: false,
-            error: "No expert profile found"
-          }));
-          return false;
-        }
-        
-        // Check if expert is approved
-        if (expertData.status !== 'approved') {
-          console.error(`Expert login failed: Status is ${expertData.status}`);
-          await supabase.auth.signOut();
-          
-          if (expertData.status === 'pending') {
-            toast.info("Your account is pending approval");
-            window.location.href = '/expert-login?status=pending';
-          } else if (expertData.status === 'disapproved') {
-            toast.error("Your account has been disapproved");
-            window.location.href = '/expert-login?status=disapproved';
+      if (data?.user?.id) {
+        setUser(data.user);
+        if (roleOverride) {
+          setRole(roleOverride as 'user' | 'expert' | 'admin');
+          if (roleOverride === 'expert') {
+            const { data: expertData, error: expertError } = await supabase
+              .from('expert_profiles')
+              .select('*')
+              .eq('user_id', data.user.id)
+              .single();
+            if (expertData) {
+              setExpertProfile(expertData);
+              setUserProfile(null);
+            } else {
+              console.error("Error fetching expert profile:", expertError);
+              setError(expertError?.message || "Failed to fetch expert profile");
+              setIsLoading(false);
+              return false;
+            }
+          } else if (roleOverride === 'user') {
+            const { data: userData, error: userError } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .eq('user_id', data.user.id)
+              .single();
+            if (userData) {
+              setUserProfile(userData);
+              setExpertProfile(null);
+            } else {
+              console.error("Error fetching user profile:", userError);
+              setError(userError?.message || "Failed to fetch user profile");
+              setIsLoading(false);
+              return false;
+            }
           }
-          
-          return false;
+        } else {
+          await checkAndSetRole(data.user.id);
         }
-        
-        // Type safety: ensure the status is properly typed
-        const expertProfile: ExpertProfile = {
-          ...expertData,
-          status: expertData.status as 'pending' | 'approved' | 'disapproved'
-        };
-        
-        // Set the expert profile and role
-        setAuthState(prev => ({
-          ...prev,
-          session: data.session,
-          user: data.user,
-          expertProfile,
-          role: 'expert',
-          isAuthenticated: true,
-          isLoading: false,
-          error: null
-        }));
-        
-        toast.success("Expert login successful!");
-        return true;
       }
-      
-      // For regular login, fetch all data
-      try {
-        await fetchUserData(data.user.id);
-      } catch (fetchError) {
-        console.error("Error fetching user data after login:", fetchError);
-        // Continue with login even if fetch fails
-      }
-      
-      toast.success("Login successful!");
+      setIsLoading(false);
+      setError(null);
       return true;
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || "An error occurred during login");
-      setAuthState((prev) => ({ ...prev, isLoading: false, error: error.message }));
+      setError(error?.message || "An unexpected error occurred during login");
       return false;
     }
   };
 
-  // Implement missing profile methods
-  const updateUserProfile = async (data: Partial<UserProfile>): Promise<boolean> => {
+  // Logout function
+  const logout = async () => {
     try {
-      if (!authState.user?.id) return false;
-      
-      const { error } = await supabase
-        .from('profiles')
-        .update(data)
-        .eq('id', authState.user.id);
-        
-      if (error) throw error;
-      
-      // Update state with new profile data
-      setAuthState(prev => ({
-        ...prev,
-        userProfile: { ...prev.userProfile, ...data } as UserProfile
-      }));
-      
-      toast.success("Profile updated successfully");
-      return true;
+      setIsLoading(true);
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout error:", error);
+        setError(error.message);
+      } else {
+        setUser(null);
+        setRole(null);
+        setExpertProfile(null);
+        setUserProfile(null);
+      }
+      setIsLoading(false);
+      setError(null);
     } catch (error: any) {
-      console.error("Error updating profile:", error);
-      toast.error(error.message || "Failed to update profile");
-      return false;
+      console.error("Logout error:", error);
+      setError(error?.message || "An error occurred during logout");
+    } finally {
+      setIsLoading(false);
     }
   };
-  
-  const updateExpertProfile = async (data: Partial<ExpertProfile>): Promise<boolean> => {
-    try {
-      if (!authState.user?.id || !authState.expertProfile) return false;
-      
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update(data)
-        .eq('auth_id', authState.user.id);
-        
-      if (error) throw error;
-      
-      // Update state with new profile data
-      setAuthState(prev => ({
-        ...prev,
-        expertProfile: { 
-          ...prev.expertProfile as ExpertProfile, 
-          ...data,
-          status: (data.status || prev.expertProfile?.status) as 'pending' | 'approved' | 'disapproved' 
-        }
-      }));
-      
-      toast.success("Expert profile updated successfully");
-      return true;
-    } catch (error: any) {
-      console.error("Error updating expert profile:", error);
-      toast.error(error.message || "Failed to update expert profile");
-      return false;
-    }
-  };
-  
-  // Generic update profile that redirects to the appropriate function
-  const updateProfile = async (data: any): Promise<boolean> => {
-    if (authState.role === 'expert') {
-      return updateExpertProfile(data as Partial<ExpertProfile>);
-    } else {
-      return updateUserProfile(data as Partial<UserProfile>);
-    }
-  };
-  
-  // Password update method
-  const updatePassword = async (password: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password
-      });
-      
-      if (error) throw error;
-      toast.success("Password updated successfully");
-      return true;
-    } catch (error: any) {
-      console.error("Error updating password:", error);
-      toast.error(error.message || "Failed to update password");
-      return false;
-    }
-  };
-  
-  // Expert interaction methods
-  const addToFavorites = async (expertId: number): Promise<boolean> => {
-    try {
-      if (!authState.user?.id) return false;
-      
-      const { error } = await supabase
-        .from('user_favorites')
-        .insert({
-          user_id: authState.user.id,
-          expert_id: expertId
-        });
-        
-      if (error) throw error;
-      toast.success("Added to favorites");
-      return true;
-    } catch (error: any) {
-      console.error("Error adding to favorites:", error);
-      toast.error(error.message || "Failed to add to favorites");
-      return false;
-    }
-  };
-  
-  const removeFromFavorites = async (expertId: number): Promise<boolean> => {
-    try {
-      if (!authState.user?.id) return false;
-      
-      const { error } = await supabase
-        .from('user_favorites')
-        .delete()
-        .match({ 
-          user_id: authState.user.id,
-          expert_id: expertId
-        });
-        
-      if (error) throw error;
-      toast.success("Removed from favorites");
-      return true;
-    } catch (error: any) {
-      console.error("Error removing from favorites:", error);
-      toast.error(error.message || "Failed to remove from favorites");
-      return false;
-    }
-  };
-  
-  const rechargeWallet = async (amount: number): Promise<boolean> => {
-    try {
-      if (!authState.user?.id) return false;
-      
-      // Instead of using RPC, directly update the profiles table
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          wallet_balance: (authState.userProfile?.wallet_balance || 0) + amount 
-        })
-        .eq('id', authState.user.id);
-      
-      if (error) throw error;
-      
-      // Update local state
-      setAuthState(prev => ({
-        ...prev,
-        userProfile: {
-          ...prev.userProfile as UserProfile,
-          wallet_balance: (prev.userProfile?.wallet_balance || 0) + amount
-        }
-      }));
-      
-      toast.success(`Successfully added ${amount} to wallet`);
-      return true;
-    } catch (error: any) {
-      console.error("Error recharging wallet:", error);
-      toast.error(error.message || "Failed to recharge wallet");
-      return false;
-    }
-  };
-  
-  // Review and report methods
-  const addReview = async (review: NewReview): Promise<boolean> => {
-    try {
-      if (!authState.user?.id) return false;
-      
-      // Convert review to match database schema
-      const { error } = await supabase
-        .from('user_reviews')
-        .insert({
-          user_id: authState.user.id,
-          expert_id: typeof review.expertId === 'string' 
-            ? parseInt(review.expertId) 
-            : review.expertId,
-          rating: review.rating,
-          comment: review.comment,
-          date: new Date().toISOString(),
-          verified: false
-        });
-        
-      if (error) throw error;
-      toast.success("Review added successfully");
-      return true;
-    } catch (error: any) {
-      console.error("Error adding review:", error);
-      toast.error(error.message || "Failed to add review");
-      return false;
-    }
-  };
-  
-  const reportExpert = async (report: NewReport): Promise<boolean> => {
-    try {
-      if (!authState.user?.id) return false;
-      
-      // Convert report to match database schema
-      const { error } = await supabase
-        .from('user_reports')
-        .insert({
-          user_id: authState.user.id,
-          expert_id: typeof report.expertId === 'string' 
-            ? parseInt(report.expertId) 
-            : report.expertId,
-          reason: report.reason,
-          details: report.details,
-          date: new Date().toISOString(),
-          status: 'pending'
-        });
-        
-      if (error) throw error;
-      toast.success("Report submitted successfully");
-      return true;
-    } catch (error: any) {
-      console.error("Error submitting report:", error);
-      toast.error(error.message || "Failed to submit report");
-      return false;
-    }
-  };
-  
-  const hasTakenServiceFrom = async (expertId: string | number): Promise<boolean> => {
-    try {
-      if (!authState.user?.id) return false;
-      
-      const { data, error } = await supabase
-        .from('user_expert_services')
-        .select('id')
-        .match({ 
-          user_id: authState.user.id,
-          expert_id: expertId,
-          status: 'completed'
-        })
-        .limit(1);
-        
-      if (error) throw error;
-      return data && data.length > 0;
-    } catch (error) {
-      console.error("Error checking service history:", error);
-      return false;
-    }
-  };
-  
-  const getExpertShareLink = (expertId: string | number): string => {
-    return `${window.location.origin}/experts/${expertId}`;
-  };
-  
-  const getReferralLink = (): string | null => {
-    if (!authState.userProfile?.referral_code) return null;
-    return `${window.location.origin}/signup?ref=${authState.userProfile.referral_code}`;
-  };
-  
-  // Determine session type
-  const sessionType = authState.userProfile && authState.expertProfile 
-    ? 'dual'
-    : authState.userProfile 
-      ? 'user' 
-      : authState.expertProfile 
-        ? 'expert'
-        : 'none';
 
-  return (
-    <AuthContext.Provider
-      value={{
-        isLoading: authState.isLoading,
-        isAuthenticated: authState.isAuthenticated,
-        user: authState.user,
-        session: authState.session,
-        userProfile: authState.userProfile,
-        expertProfile: authState.expertProfile,
-        role: authState.role,
-        login,
-        signup,
-        logout,
-        expertLogin,
-        expertSignup,
-        updateProfile,
-        updateUserProfile,
-        updateExpertProfile,
-        updatePassword,
-        addToFavorites,
-        removeFromFavorites,
-        rechargeWallet,
-        addReview,
-        reportExpert,
-        hasTakenServiceFrom,
-        getExpertShareLink,
-        getReferralLink,
-        sessionType
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  // Provider value
+  const value: AuthContextProps = {
+    isAuthenticated: !!user,
+    isLoading,
+    user,
+    role,
+    expertProfile,
+    userProfile,
+    error,
+    login,
+    logout,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export default AuthContext;
