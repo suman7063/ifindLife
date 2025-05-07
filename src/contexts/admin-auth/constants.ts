@@ -31,5 +31,6 @@ export const initialAuthContext = {
   removeAdmin: () => {},
   isSuperAdmin: false,
   currentUser: null,
-  updateAdminPermissions: () => {}
+  updateAdminPermissions: () => {},
+  isLoading: true
 };

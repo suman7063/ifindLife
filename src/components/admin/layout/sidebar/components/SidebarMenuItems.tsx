@@ -41,7 +41,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
   return (
     <div className="space-y-1">
       <SidebarMenuItem
-        icon={<LayoutDashboard className="h-5 w-5" />}
+        icon={<LayoutDashboard size={20} />}
         text="Overview"
         isActive={activeTab === 'overview'}
         onClick={() => onTabChange('overview')}
@@ -50,7 +50,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Expert related menus */}
       {checkPermission('experts') && (
         <SidebarMenuItem
-          icon={<Users className="h-5 w-5" />}
+          icon={<Users size={20} />}
           text="Experts"
           isActive={activeTab === 'experts'}
           onClick={() => onTabChange('experts')}
@@ -59,7 +59,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       
       {checkPermission('expertApprovals') && (
         <SidebarMenuItem
-          icon={<UserCheck className="h-5 w-5" />}
+          icon={<UserCheck size={20} />}
           text="Expert Approvals"
           isActive={activeTab === 'expertApprovals'}
           onClick={() => onTabChange('expertApprovals')}
@@ -69,7 +69,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Service related menus */}
       {checkPermission('services') && (
         <SidebarMenuItem
-          icon={<FileText className="h-5 w-5" />}
+          icon={<FileText size={20} />}
           text="Services"
           isActive={activeTab === 'services'}
           onClick={() => onTabChange('services')}
@@ -79,7 +79,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Content related menus */}
       {checkPermission('herosection') && (
         <SidebarMenuItem
-          icon={<PanelLeft className="h-5 w-5" />}
+          icon={<PanelLeft size={20} />}
           text="Hero Section"
           isActive={activeTab === 'herosection'}
           onClick={() => onTabChange('herosection')}
@@ -88,7 +88,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       
       {checkPermission('testimonials') && (
         <SidebarMenuItem
-          icon={<Star className="h-5 w-5" />}
+          icon={<Star size={20} />}
           text="Testimonials"
           isActive={activeTab === 'testimonials'}
           onClick={() => onTabChange('testimonials')}
@@ -98,7 +98,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Programs and sessions menus */}
       {checkPermission('programs') && (
         <SidebarMenuItem
-          icon={<BookOpen className="h-5 w-5" />}
+          icon={<BookOpen size={20} />}
           text="Programs"
           isActive={activeTab === 'programs'}
           onClick={() => onTabChange('programs')}
@@ -107,7 +107,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       
       {checkPermission('sessions') && (
         <SidebarMenuItem
-          icon={<Bookmark className="h-5 w-5" />}
+          icon={<Bookmark size={20} />}
           text="Sessions"
           isActive={activeTab === 'sessions'}
           onClick={() => onTabChange('sessions')}
@@ -117,7 +117,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Analytics and reporting */}
       {checkPermission('referrals') && (
         <SidebarMenuItem
-          icon={<AtSign className="h-5 w-5" />}
+          icon={<AtSign size={20} />}
           text="Referrals"
           isActive={activeTab === 'referrals'}
           onClick={() => onTabChange('referrals')}
@@ -126,7 +126,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       
       {checkPermission('blog') && (
         <SidebarMenuItem
-          icon={<MessageSquare className="h-5 w-5" />}
+          icon={<MessageSquare size={20} />}
           text="Blog"
           isActive={activeTab === 'blog'}
           onClick={() => onTabChange('blog')}
@@ -136,7 +136,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Communication */}
       {checkPermission('contact') && (
         <SidebarMenuItem
-          icon={<Mail className="h-5 w-5" />}
+          icon={<Mail size={20} />}
           text="Contact Submissions"
           isActive={activeTab === 'contact'}
           onClick={() => onTabChange('contact')}
@@ -146,7 +146,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Admin only menus */}
       {isSuperAdmin && (
         <SidebarMenuItem
-          icon={<UserCog className="h-5 w-5" />}
+          icon={<UserCog size={20} />}
           text="Admin Users"
           isActive={activeTab === 'adminUsers'}
           onClick={() => onTabChange('adminUsers')}
@@ -156,7 +156,7 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       {/* Settings menu - usually accessible to all admins */}
       {checkPermission('settings') && (
         <SidebarMenuItem
-          icon={<Settings className="h-5 w-5" />}
+          icon={<Settings size={20} />}
           text="Settings"
           isActive={activeTab === 'settings'}
           onClick={() => onTabChange('settings')}

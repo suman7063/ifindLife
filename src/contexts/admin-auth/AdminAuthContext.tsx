@@ -1,6 +1,7 @@
 
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { AdminUser, AdminPermissions, AuthContextType, defaultPermissions, superAdminPermissions } from './types';
+import { defaultAdminUsers } from './constants';
 
 // Create context with default values
 const AdminAuthContext = createContext<AuthContextType>({
@@ -13,33 +14,19 @@ const AdminAuthContext = createContext<AuthContextType>({
   isSuperAdmin: false,
   currentUser: null,
   updateAdminPermissions: () => {},
-  isLoading: true // Added missing property
+  isLoading: true
 });
 
-// Initial admin users
-const initialAdminUsers: AdminUser[] = [
-  { 
-    username: 'admin', 
-    password: 'admin123', 
-    role: 'superadmin',
-    permissions: superAdminPermissions 
-  },
-  { 
-    username: 'editor', 
-    password: 'editor123', 
-    role: 'editor',
-    permissions: defaultPermissions 
-  },
-];
-
+// Initial admin users are now only fetched from constants to avoid duplication
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AdminUser | null>(null);
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check for existing login on component mount
   useEffect(() => {
-    // Load admin users from localStorage or use defaults
+    // Initialize admin users from localStorage or use defaults
     const storedAdminUsers = localStorage.getItem('admin-users');
     if (storedAdminUsers) {
       try {
@@ -48,20 +35,22 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       } catch (error) {
         console.error('Error parsing stored admin users:', error);
         localStorage.removeItem('admin-users');
-        setAdminUsers(initialAdminUsers);
+        setAdminUsers(defaultAdminUsers);
+        // Save default admin users to localStorage
+        localStorage.setItem('admin-users', JSON.stringify(defaultAdminUsers));
       }
     } else {
-      setAdminUsers(initialAdminUsers);
-      // Save initial admin users
-      localStorage.setItem('admin-users', JSON.stringify(initialAdminUsers));
+      // Save default admin users to localStorage
+      localStorage.setItem('admin-users', JSON.stringify(defaultAdminUsers));
     }
 
-    // Check for existing login
+    // Check for existing login session
     const storedUser = localStorage.getItem('admin-user');
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
+        setCurrentUser(parsedUser);
+        setIsAuthenticated(true);
       } catch (error) {
         console.error('Error parsing stored admin user:', error);
         localStorage.removeItem('admin-user');
@@ -72,15 +61,21 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, []);
 
   const login = (username: string, password: string): boolean => {
-    // Find matching admin user
+    console.log('Attempting login with:', { username });
+    console.log('Available admin users:', adminUsers);
+    
+    // Find matching admin user (case-insensitive for username)
     const foundUser = adminUsers.find(
-      (u) => u.username === username && u.password === password
+      (u) => u.username.toLowerCase() === username.toLowerCase() && u.password === password
     );
+
+    console.log('Found user:', foundUser ? 'Yes' : 'No');
 
     if (foundUser) {
       // Store user info in localStorage
       localStorage.setItem('admin-user', JSON.stringify(foundUser));
-      setUser(foundUser);
+      setCurrentUser(foundUser);
+      setIsAuthenticated(true);
       return true;
     }
     
@@ -89,10 +84,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const logout = () => {
     localStorage.removeItem('admin-user');
-    setUser(null);
+    setCurrentUser(null);
+    setIsAuthenticated(false);
   };
 
-  const addAdmin = (username: string, password: string, permissions: AdminPermissions) => {
+  const addAdmin = (username: string, password: string, permissions: AdminPermissions = defaultPermissions) => {
     const newUser: AdminUser = {
       username,
       password,
@@ -123,29 +119,29 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     localStorage.setItem('admin-users', JSON.stringify(updatedUsers));
     
     // If the updated user is the current user, update the current user state and localStorage
-    if (user && user.username === username) {
-      const updatedUser = { ...user, permissions };
-      setUser(updatedUser);
+    if (currentUser && currentUser.username === username) {
+      const updatedUser = { ...currentUser, permissions };
+      setCurrentUser(updatedUser);
       localStorage.setItem('admin-user', JSON.stringify(updatedUser));
     }
   };
 
   // Check if current user is a super admin
-  const isSuperAdmin = user?.role === 'superadmin';
+  const isSuperAdmin = currentUser?.role === 'superadmin';
 
   return (
     <AdminAuthContext.Provider
       value={{
-        currentUser: user,
-        isAuthenticated: !!user,
-        isLoading, // Added missing property
+        isAuthenticated,
         login,
         logout,
         adminUsers,
         addAdmin,
         removeAdmin,
         isSuperAdmin,
-        updateAdminPermissions
+        currentUser,
+        updateAdminPermissions,
+        isLoading
       }}
     >
       {children}
