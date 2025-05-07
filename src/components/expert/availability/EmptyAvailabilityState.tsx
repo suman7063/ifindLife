@@ -1,23 +1,26 @@
 
 import React from 'react';
-import { CalendarX } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const EmptyAvailabilityState: React.FC = () => {
   const navigate = useNavigate();
   
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center border-2 border-dashed rounded-md">
-      <CalendarX className="h-12 w-12 text-muted-foreground mb-4" />
-      <h3 className="text-lg font-medium mb-2">No Availability Set</h3>
-      <p className="text-muted-foreground mb-6 max-w-md">
-        You haven't set your availability yet. Set your available time periods so clients can book appointments with you.
-      </p>
-      <Button onClick={() => navigate('/expert-dashboard/set-availability')}>
-        Set Your Availability
-      </Button>
-    </div>
+    <Card>
+      <CardContent className="py-12 flex flex-col items-center text-center">
+        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+        <h3 className="text-xl font-medium mb-2">No Availability Set</h3>
+        <p className="text-muted-foreground max-w-md mb-6">
+          You haven't set any availability periods yet. Define when you're available for appointments to start receiving bookings.
+        </p>
+        <Button onClick={() => navigate('/expert-dashboard')}>
+          Set Your Availability
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 
