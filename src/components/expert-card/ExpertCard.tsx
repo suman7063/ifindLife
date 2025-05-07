@@ -6,7 +6,7 @@ import ExpertImage from './ExpertImage';
 import ExpertInfo from './ExpertInfo';
 import ExpertActions from './ExpertActions';
 import { ExpertCardProps } from './types';
-import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { useSafeFavorites } from '@/contexts/favorites/FavoritesContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Expert } from '@/types/expert';
 
@@ -24,21 +24,21 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { toggleExpertFavorite, isExpertFavorite } = useFavorites();
+  const favoritesContext = useSafeFavorites();
   
-  // Determine if expert is favorite based on prop or from the context
+  // Determine if expert is favorite based on prop or from the context (if available)
   const isFavorite = propIsFavorite !== undefined 
     ? propIsFavorite 
-    : isExpertFavorite(id);
+    : (favoritesContext?.isExpertFavorite?.(id) || false);
   
   const handleViewProfile = () => {
     navigate(`/experts/${id}`);
   };
   
   const handleFavoriteToggle = async (expertId: string) => {
-    if (isAuthenticated) {
+    if (isAuthenticated && favoritesContext?.toggleExpertFavorite) {
       // Pass only the expert ID to toggleExpertFavorite, not the entire expert object
-      await toggleExpertFavorite(expertId);
+      await favoritesContext.toggleExpertFavorite(expertId);
     }
   };
   

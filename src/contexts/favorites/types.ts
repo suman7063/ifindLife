@@ -1,19 +1,13 @@
 
 export interface FavoritesContextType {
-  // Original properties
-  favoriteExperts: string[];
-  favoritePrograms: number[];
-  isLoading: boolean;
-  addExpertToFavorites: (expertId: string) => Promise<void>;
-  removeExpertFromFavorites: (expertId: string) => Promise<void>;
-  addProgramToFavorites: (programId: number) => Promise<void>;
-  removeProgramFromFavorites: (programId: number) => Promise<void>;
-  isExpertFavorite: (expertId: string) => boolean;
-  isProgramFavorite: (programId: number) => boolean;
-  
-  // Added properties for backward compatibility
-  expertFavorites: string[];
+  favorites: number[];
+  loading: boolean;
+  addFavorite: (expertId: number) => Promise<boolean>;
+  removeFavorite: (expertId: number) => Promise<boolean>;
+  isExpertFavorite: (expertId: number) => boolean;
+  toggleExpertFavorite: (expertId: number) => Promise<boolean>;
+  expertFavorites: number[];
   programFavorites: number[];
-  toggleExpertFavorite: (expertId: string) => Promise<boolean>;
+  isProgramFavorite: (programId: number) => boolean;
   toggleProgramFavorite: (programId: number) => Promise<boolean>;
 }

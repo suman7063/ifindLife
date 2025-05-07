@@ -1,16 +1,15 @@
 
-import React, { useContext, useState, createContext, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth/AuthContext';
-
-// Implement the provider logic here
-export const FavoritesContext = createContext<any>(null);
+import { FavoritesContext } from './FavoritesContext';
+import { FavoritesContextType } from './types';
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated, user, userProfile, updateUserProfile } = useAuth();
+  const { isAuthenticated, user, userProfile } = useAuth();
 
   // Load favorites when user is authenticated
   useEffect(() => {
@@ -94,18 +93,38 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const isFavorite = (expertId: number) => {
+  const isExpertFavorite = (expertId: number) => {
     return favorites.includes(expertId);
+  };
+  
+  const toggleExpertFavorite = async (expertId: number) => {
+    if (isExpertFavorite(expertId)) {
+      return await removeFavorite(expertId);
+    } else {
+      return await addFavorite(expertId);
+    }
+  };
+  
+  // For program favorites (stub implementation for now)
+  const programFavorites: number[] = [];
+  const isProgramFavorite = (programId: number) => false;
+  const toggleProgramFavorite = async (programId: number) => false;
+
+  const contextValue: FavoritesContextType = {
+    favorites,
+    loading,
+    addFavorite,
+    removeFavorite,
+    isExpertFavorite,
+    toggleExpertFavorite,
+    expertFavorites: favorites,
+    programFavorites,
+    isProgramFavorite,
+    toggleProgramFavorite
   };
 
   return (
-    <FavoritesContext.Provider value={{
-      favorites,
-      loading,
-      addFavorite,
-      removeFavorite,
-      isFavorite
-    }}>
+    <FavoritesContext.Provider value={contextValue}>
       {children}
     </FavoritesContext.Provider>
   );

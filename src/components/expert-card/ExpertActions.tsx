@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { ExpertActionProps } from './types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
-import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { useSafeFavorites } from '@/contexts/favorites/FavoritesContext';
 import FavoriteButton from '@/components/favorites/FavoriteButton';
 
 const ExpertActions: React.FC<ExpertActionProps> = ({ 
@@ -19,12 +19,12 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { isExpertFavorite } = useFavorites();
+  const favoritesContext = useSafeFavorites();
   
-  // Use context favorite state if prop is not provided
+  // Use context favorite state if prop is not provided and context is available
   const isFavorite = propIsFavorite !== undefined 
     ? propIsFavorite 
-    : isExpertFavorite(id);
+    : (favoritesContext?.isExpertFavorite?.(id) || false);
   
   const handleCallNow = (e: React.MouseEvent) => {
     e.stopPropagation();
