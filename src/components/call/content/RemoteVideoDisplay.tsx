@@ -1,8 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
-import { IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
+import React, { useEffect, useRef } from 'react';
 import { CallState } from '@/utils/agoraService';
-import { UserIcon, Loader2 } from 'lucide-react';
+import { UserIcon } from 'lucide-react';
 
 interface RemoteVideoDisplayProps {
   callState: CallState;
@@ -10,117 +9,85 @@ interface RemoteVideoDisplayProps {
   expertName: string;
 }
 
-const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ 
-  callState, 
-  callStatus,
-  expertName
-}) => {
-  const [videoContainers, setVideoContainers] = useState<Map<string, HTMLDivElement>>(new Map());
+const RemoteVideoDisplay: React.FC<RemoteVideoDisplayProps> = ({ callState, callStatus, expertName }) => {
+  const remoteVideoRef = useRef<HTMLDivElement>(null);
   
-  // Effect to play remote videos whenever remote users or video containers change
+  // Handle remote video display
   useEffect(() => {
-    callState.remoteUsers.forEach(user => {
-      if (user.videoTrack) {
-        const containerId = user.uid.toString();
-        const container = videoContainers.get(containerId);
-        
-        if (container) {
-          console.log("Playing remote video for user:", containerId);
-          user.videoTrack.play(container);
-        }
-      }
-    });
+    const { remoteUsers, remoteVideoTrack } = callState;
+    
+    if (remoteVideoTrack && remoteVideoRef.current && callStatus === 'connected') {
+      console.log("Playing remote video track");
+      remoteVideoTrack.play(remoteVideoRef.current);
+    }
     
     return () => {
-      callState.remoteUsers.forEach(user => {
-        if (user.videoTrack) {
-          console.log("Stopping remote video for user:", user.uid.toString());
-          user.videoTrack.stop();
-        }
-      });
-    };
-  }, [callState.remoteUsers, videoContainers]);
-
-  // Register a container reference
-  const setContainerRef = (id: string, element: HTMLDivElement | null) => {
-    setVideoContainers(prev => {
-      const newMap = new Map(prev);
-      
-      if (element) {
-        newMap.set(id, element);
-      } else {
-        newMap.delete(id);
+      if (remoteVideoTrack) {
+        console.log("Stopping remote video track");
+        remoteVideoTrack.stop();
       }
-      
-      return newMap;
-    });
-  };
-
-  // Render status message for different call states
-  const renderStatusMessage = () => {
-    if (callStatus === 'connecting') {
-      return (
-        <div className="flex flex-col items-center">
-          <Loader2 className="h-12 w-12 text-white/70 animate-spin mb-2" />
-          <span className="text-white text-center">Connecting to {expertName}...</span>
-          <span className="text-white/60 text-sm mt-1 text-center">Please grant camera and microphone permissions if prompted</span>
-        </div>
-      );
-    } else if (callStatus === 'ended') {
-      return (
-        <div className="flex flex-col items-center">
-          <UserIcon className="h-16 w-16 text-white/50 mb-2" />
-          <span className="text-white text-center">Call ended</span>
-          <span className="text-white/60 text-sm mt-1 text-center">Thank you for using our service</span>
-        </div>
-      );
-    } else if (callStatus === 'error') {
-      return (
-        <div className="flex flex-col items-center">
-          <UserIcon className="h-16 w-16 text-white/50 mb-2" />
-          <span className="text-white text-center">Call error</span>
-          <span className="text-white/60 text-sm mt-1 text-center">Please try again</span>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex flex-col items-center">
-          <UserIcon className="h-20 w-20 text-white/50" />
-          <span className="text-white mt-2">Waiting for {expertName}...</span>
-        </div>
-      );
+    };
+  }, [callState.remoteVideoTrack, callStatus]);
+  
+  // Choose what to display based on call status
+  const renderVideoContent = () => {
+    switch (callStatus) {
+      case 'connecting':
+        return (
+          <div className="flex flex-col items-center justify-center text-white">
+            <div className="w-16 h-16 mb-4 rounded-full bg-cyan-500/20 flex items-center justify-center">
+              <UserIcon className="h-8 w-8 text-cyan-300" />
+            </div>
+            <p className="text-lg font-medium">Connecting to {expertName}...</p>
+            <p className="text-sm text-gray-300 mt-2">Please wait while we establish the connection</p>
+          </div>
+        );
+        
+      case 'connected':
+        return callState.remoteVideoTrack ? (
+          <div ref={remoteVideoRef} className="w-full h-full" />
+        ) : (
+          <div className="flex flex-col items-center justify-center text-white">
+            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <UserIcon className="h-8 w-8 text-emerald-300" />
+            </div>
+            <p className="text-lg font-medium mt-2">{expertName}</p>
+            <p className="text-sm text-gray-300 mt-1">Audio only mode</p>
+          </div>
+        );
+        
+      case 'ended':
+        return (
+          <div className="flex flex-col items-center justify-center text-white">
+            <p className="text-lg font-medium">Call Ended</p>
+            <p className="text-sm text-gray-300 mt-2">Thank you for using our service</p>
+          </div>
+        );
+        
+      case 'error':
+        return (
+          <div className="flex flex-col items-center justify-center text-white">
+            <p className="text-lg font-medium text-red-400">Connection Error</p>
+            <p className="text-sm text-gray-300 mt-2">Unable to connect to {expertName}</p>
+          </div>
+        );
+        
+      default:
+        return (
+          <div className="flex flex-col items-center justify-center text-white">
+            <div className="w-16 h-16 mb-4 rounded-full bg-slate-500/20 flex items-center justify-center">
+              <UserIcon className="h-8 w-8 text-slate-300" />
+            </div>
+            <p className="text-lg font-medium">Ready to connect with {expertName}</p>
+            <p className="text-sm text-gray-300 mt-2">Select call type to begin</p>
+          </div>
+        );
     }
   };
-
+  
   return (
-    <div className="relative w-full h-full min-h-[300px] bg-slate-900 rounded-lg overflow-hidden">
-      {/* Remote videos (expert) */}
-      {callState.remoteUsers.length > 0 ? (
-        callState.remoteUsers.map(user => (
-          <div key={user.uid} className="w-full h-full">
-            {user.videoTrack ? (
-              <div 
-                ref={(element) => setContainerRef(user.uid.toString(), element)}
-                className="w-full h-full"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                <div className="flex flex-col items-center">
-                  <UserIcon className="h-20 w-20 text-white/50" />
-                  <span className="text-white mt-2">{expertName}</span>
-                </div>
-              </div>
-            )}
-            <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 text-xs rounded">
-              {expertName}
-            </div>
-          </div>
-        ))
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-slate-800">
-          {renderStatusMessage()}
-        </div>
-      )}
+    <div className="w-full h-full min-h-[240px] bg-slate-800 rounded-lg overflow-hidden relative">
+      {renderVideoContent()}
     </div>
   );
 };

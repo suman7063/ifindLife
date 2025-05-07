@@ -1,55 +1,61 @@
 
 import React from 'react';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface TimeInputProps {
   label: string;
   value: string;
   onChange: (value: string) => void;
+  className?: string;
 }
 
-export const TimeInput: React.FC<TimeInputProps> = ({ label, value, onChange }) => {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  const minutes = ['00', '15', '30', '45'];
+const TimeInput: React.FC<TimeInputProps> = ({ label, value, onChange, className }) => {
+  // Generate hour options from 00 to 23
+  const hourOptions = Array.from({ length: 24 }, (_, i) => 
+    i < 10 ? `0${i}` : `${i}`
+  );
   
-  const selectedHour = parseInt(value.split(':')[0]);
-  const selectedMinute = value.split(':')[1];
+  // Generate minute options in 15-minute increments
+  const minuteOptions = ['00', '15', '30', '45'];
   
-  const handleHourChange = (hour: string) => {
-    onChange(`${hour.padStart(2, '0')}:${selectedMinute}`);
+  const [hour, minute] = value.split(':');
+  
+  const handleHourChange = (newHour: string) => {
+    onChange(`${newHour}:${minute}`);
   };
   
-  const handleMinuteChange = (minute: string) => {
-    onChange(`${selectedHour.toString().padStart(2, '0')}:${minute}`);
+  const handleMinuteChange = (newMinute: string) => {
+    onChange(`${hour}:${newMinute}`);
   };
   
   return (
-    <div className="space-y-1">
-      <label className="text-xs font-medium">{label}</label>
-      <div className="flex items-center gap-1">
-        <Select value={selectedHour.toString()} onValueChange={handleHourChange}>
+    <div className={className}>
+      <Label className="text-xs font-medium mb-1">{label}</Label>
+      <div className="flex items-center gap-2">
+        <Select value={hour} onValueChange={handleHourChange}>
           <SelectTrigger className="w-[70px]">
             <SelectValue placeholder="Hour" />
           </SelectTrigger>
           <SelectContent>
-            {hours.map((hour) => (
-              <SelectItem key={hour} value={hour.toString()}>
-                {hour.toString().padStart(2, '0')}
+            {hourOptions.map((h) => (
+              <SelectItem key={`hour-${h}`} value={h}>
+                {h}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
         
-        <span>:</span>
+        <span className="text-muted-foreground">:</span>
         
-        <Select value={selectedMinute} onValueChange={handleMinuteChange}>
+        <Select value={minute} onValueChange={handleMinuteChange}>
           <SelectTrigger className="w-[70px]">
             <SelectValue placeholder="Min" />
           </SelectTrigger>
           <SelectContent>
-            {minutes.map((minute) => (
-              <SelectItem key={minute} value={minute}>
-                {minute}
+            {minuteOptions.map((m) => (
+              <SelectItem key={`min-${m}`} value={m}>
+                {m}
               </SelectItem>
             ))}
           </SelectContent>
@@ -58,3 +64,5 @@ export const TimeInput: React.FC<TimeInputProps> = ({ label, value, onChange }) 
     </div>
   );
 };
+
+export default TimeInput;
