@@ -84,7 +84,7 @@ const Hero = () => {
         videoUrl={heroSettings.videoUrl} 
         isVideoLoaded={isVideoLoaded}
         title="Take Control of Your"
-        description="We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance and natural energy alignment, avoiding pills. Find your inner peace, and move forward gently. Get answers when you need it the most."
+        description="We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance, root cause healing and energy alignment, naturally. Find your inner peace, and move forward gently. Get answers when you need it the most."
         rating="4.8/5.0"
         reviews="Based on 2.5k+ Reviews"  
       />
