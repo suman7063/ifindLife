@@ -26,19 +26,24 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   const { isAuthenticated } = useAuth();
   const favoritesContext = useSafeFavorites();
   
+  // Parse id to number if it's a string
+  const expertId = typeof id === 'string' ? parseInt(id, 10) : id;
+  
   // Determine if expert is favorite based on prop or from the context (if available)
   const isFavorite = propIsFavorite !== undefined 
     ? propIsFavorite 
-    : (favoritesContext?.isExpertFavorite?.(id) || false);
+    : (favoritesContext?.isExpertFavorite?.(expertId) || false);
   
   const handleViewProfile = () => {
     navigate(`/experts/${id}`);
   };
   
-  const handleFavoriteToggle = async (expertId: string) => {
+  const handleFavoriteToggle = async (expertId: string | number) => {
+    // Convert to number if it's a string
+    const numericExpertId = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
+    
     if (isAuthenticated && favoritesContext?.toggleExpertFavorite) {
-      // Pass only the expert ID to toggleExpertFavorite, not the entire expert object
-      await favoritesContext.toggleExpertFavorite(expertId);
+      await favoritesContext.toggleExpertFavorite(numericExpertId);
     }
   };
   

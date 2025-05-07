@@ -1,7 +1,7 @@
 
 export interface FavoritesContextType {
   favorites: number[];
-  loading: boolean;
+  loading: boolean; // This will replace isLoading for consistency
   addFavorite: (expertId: number) => Promise<boolean>;
   removeFavorite: (expertId: number) => Promise<boolean>;
   isExpertFavorite: (expertId: number) => boolean;

@@ -15,7 +15,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
   const { 
     expertFavorites, 
     programFavorites, 
-    isLoading,
+    loading, // Use loading instead of isLoading for consistency
     toggleExpertFavorite,
     toggleProgramFavorite
   } = useFavorites();
@@ -29,18 +29,18 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
   
   // Define favorites correctly with proper typing
   const favorites = type === 'experts' ? expertFavorites : programFavorites;
-  const toggleFavorite = type === 'experts' 
-    ? (id: string) => toggleExpertFavorite(id)
-    : (id: number) => toggleProgramFavorite(id);
   
   const handleToggle = async (id: string | number) => {
     if (onToggle) {
       await onToggle(id);
     } else {
-      if (typeof id === 'string') {
-        await toggleExpertFavorite(id);
+      // Convert string IDs to numbers if needed
+      const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+      
+      if (type === 'experts') {
+        await toggleExpertFavorite(numericId);
       } else {
-        await toggleProgramFavorite(id);
+        await toggleProgramFavorite(numericId);
       }
     }
   };
@@ -53,7 +53,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

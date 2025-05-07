@@ -21,10 +21,13 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
   const { isAuthenticated } = useAuth();
   const favoritesContext = useSafeFavorites();
   
+  // Parse id to number if it's a string
+  const expertId = typeof id === 'string' ? parseInt(id, 10) : id;
+  
   // Use context favorite state if prop is not provided and context is available
   const isFavorite = propIsFavorite !== undefined 
     ? propIsFavorite 
-    : (favoritesContext?.isExpertFavorite?.(id) || false);
+    : (favoritesContext?.isExpertFavorite?.(expertId) || false);
   
   const handleCallNow = (e: React.MouseEvent) => {
     e.stopPropagation();
