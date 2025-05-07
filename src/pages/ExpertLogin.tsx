@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/auth/LoadingScreen';
+import { supabase } from '@/lib/supabase';
 
 const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -80,33 +81,120 @@ const ExpertLogin: React.FC = () => {
     try {
       console.log('ExpertLogin: Attempting login with', email);
       
-      // Use the login function from context
-      const success = await login(email, password);
+      // First check for existing session and sign out if necessary
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (sessionData.session) {
+        console.log('ExpertLogin: Found existing session, signing out first');
+        await supabase.auth.signOut({ scope: 'local' });
+      }
       
-      if (success) {
-        // Check if user has an expert profile after login
-        if (role === 'expert' && expertProfile) {
-          toast.success('Successfully logged in as expert!');
-          // Use replace: true to prevent going back to login
-          navigate('/expert-dashboard', { replace: true });
-          return true;
-        } else if (role === 'user') {
-          console.error('ExpertLogin: User has a user profile, not an expert profile');
-          toast.error('You have a user account, not an expert account.');
-          setLoginError('You have a user account, not an expert account.');
-          return false;
-        } else {
-          console.error('ExpertLogin: No expert profile found');
-          toast.error('No expert profile found for this account.');
-          setLoginError('No expert profile found for this account.');
-          return false;
-        }
-      } else {
-        console.error('ExpertLogin: Login failed');
-        toast.error('Invalid credentials. Please try again.');
-        setLoginError('Invalid credentials. Please try again.');
+      // Authenticate with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (authError) {
+        console.error('ExpertLogin: Authentication error:', authError);
+        toast.error(authError.message || 'Invalid credentials');
+        setLoginError(authError.message || 'Invalid credentials');
         return false;
       }
+      
+      if (!authData.user) {
+        console.error('ExpertLogin: No user data returned');
+        toast.error('Authentication failed. Please try again.');
+        setLoginError('Authentication failed. Please try again.');
+        return false;
+      }
+      
+      console.log('ExpertLogin: Authenticated successfully, user ID:', authData.user.id);
+      
+      // CRITICAL FIX: Check for expert profile FIRST
+      const { data: expertProfile, error: expertError } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .eq('auth_id', authData.user.id)
+        .maybeSingle();
+      
+      console.log('ExpertLogin: Expert profile check result:', {
+        found: !!expertProfile,
+        error: expertError?.message
+      });
+      
+      if (expertError && expertError.code !== 'PGRST116') {
+        // Handle error other than "no rows returned"
+        console.error('ExpertLogin: Error checking expert profile:', expertError);
+        toast.error('Error checking expert profile. Please try again.');
+        setLoginError('Error checking expert profile. Please try again.');
+        return false;
+      }
+      
+      // If expert profile found, proceed with expert login
+      if (expertProfile) {
+        // Check if expert is approved
+        if (expertProfile.status !== 'approved') {
+          console.log(`ExpertLogin: Expert account status is ${expertProfile.status}`);
+          
+          // Sign out since the expert is not approved
+          await supabase.auth.signOut();
+          
+          if (expertProfile.status === 'pending') {
+            toast.info('Your account is pending approval. You will be notified once approved.');
+            window.location.href = '/expert-login?status=pending';
+          } else if (expertProfile.status === 'disapproved') {
+            toast.error('Your account application has been disapproved. Please check your email for details.');
+            window.location.href = '/expert-login?status=disapproved';
+          } else {
+            toast.error(`Your account has an unknown status: ${expertProfile.status}`);
+          }
+          
+          return false;
+        }
+        
+        console.log('ExpertLogin: Expert profile found and approved, using unified auth context');
+        
+        // Use the login function from context - this should handle setting the role and expert profile
+        const success = await login(email, password, 'expert');
+        
+        if (success) {
+          toast.success('Successfully logged in as expert!');
+          navigate('/expert-dashboard', { replace: true });
+          return true;
+        } else {
+          console.error('ExpertLogin: Login failed after authentication');
+          toast.error('Login failed. Please try again.');
+          setLoginError('Login failed. Please try again.');
+          return false;
+        }
+      }
+      
+      // If no expert profile found, check if there's a user profile
+      console.log('ExpertLogin: No expert profile found, checking for regular user profile');
+      
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .maybeSingle();
+      
+      if (userProfile) {
+        console.log('ExpertLogin: Found user profile:', authData.user.id);
+        
+        // Sign out first since this is not an expert account
+        await supabase.auth.signOut();
+        
+        toast.error('You have a user account, not an expert account. Please register as an expert.');
+        setLoginError('You have a user account, not an expert account. Please register as an expert.');
+        return false;
+      }
+      
+      // If neither expert nor user profile found, suggest registration
+      console.log('ExpertLogin: No profiles found for this user');
+      await supabase.auth.signOut();
+      toast.error('No profiles found. Please register first.');
+      setLoginError('No profiles found. Please register first.');
+      return false;
     } catch (error) {
       console.error('ExpertLogin error:', error);
       toast.error('Failed to login. Please try again.');

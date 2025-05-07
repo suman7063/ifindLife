@@ -12,11 +12,21 @@ export const useAuthFunctions = (
 ) => {
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Standard user login function
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setAuthState((prev) => ({ ...prev, isLoading: true }));
       
       console.log("Attempting login with email:", email);
+      
+      // Check for existing session and sign out if necessary
+      const { data: existingSession } = await supabase.auth.getSession();
+      if (existingSession.session) {
+        console.log("Found existing session, cleaning up before login");
+        await supabase.auth.signOut({ scope: 'local' });
+      }
+      
+      // Authenticate with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -118,26 +128,16 @@ export const useAuthFunctions = (
     try {
       setAuthState((prev) => ({ ...prev, isLoading: true }));
       
-      const { data: sessionData } = await supabase.auth.getSession();
+      console.log("Expert login: Attempting with email:", email);
       
-      if (sessionData.session) {
-        const { data: expertData } = await supabase
-          .from('expert_accounts')
-          .select('*')
-          .eq('auth_id', sessionData.session.user.id)
-          .maybeSingle();
-          
-        if (expertData) {
-          toast.info("You are already logged in as an expert");
-          setAuthState((prev) => ({ ...prev, isLoading: false }));
-          return true;
-        }
-        
-        toast.error("Please log out from your current session before logging in as an expert");
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
-        return false;
+      // Check for existing session and sign out if necessary
+      const { data: existingSession } = await supabase.auth.getSession();
+      if (existingSession.session) {
+        console.log("Expert login: Found existing session, cleaning up before login");
+        await supabase.auth.signOut({ scope: 'local' });
       }
       
+      // Authenticate with Supabase
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -151,11 +151,13 @@ export const useAuthFunctions = (
       }
 
       if (!data.user || !data.session) {
-        console.error("Expert login error: No user or session returned");
+        console.error("Expert login failed: No user or session returned");
         toast.error("Login failed. Please try again.");
         setAuthState((prev) => ({ ...prev, isLoading: false }));
         return false;
       }
+      
+      console.log("Expert login: Authentication successful, checking for expert profile");
       
       const { data: expertProfile, error: expertError } = await supabase
         .from('expert_accounts')
@@ -163,17 +165,30 @@ export const useAuthFunctions = (
         .eq('auth_id', data.user.id)
         .maybeSingle();
         
-      if (expertError || !expertProfile) {
-        console.error("Expert login error:", expertError || "No expert profile found");
-        toast.error("No expert account found for this user");
-        
-        await supabase.auth.signOut();
+      if (expertError && expertError.code !== 'PGRST116') {
+        console.error("Expert login: Error checking expert profile:", expertError);
+        toast.error("Error checking expert profile");
         setAuthState((prev) => ({ ...prev, isLoading: false }));
         return false;
       }
       
+      if (!expertProfile) {
+        console.error("Expert login: No expert profile found");
+        toast.error("No expert account found for this user");
+        
+        await supabase.auth.signOut();
+        setAuthState((prev) => ({ 
+          ...prev, 
+          isLoading: false,
+          session: null,
+          user: null,
+          isAuthenticated: false
+        }));
+        return false;
+      }
+      
       if (expertProfile.status !== 'approved') {
-        console.error(`Expert login error: Status is ${expertProfile.status}`);
+        console.error(`Expert login: Status is ${expertProfile.status}`);
         
         await supabase.auth.signOut();
         
@@ -183,10 +198,29 @@ export const useAuthFunctions = (
           toast.error(`Your account has been ${expertProfile.status}. Please contact support.`);
         }
         
-        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        setAuthState((prev) => ({ 
+          ...prev, 
+          isLoading: false,
+          session: null,
+          user: null,
+          isAuthenticated: false
+        }));
         return false;
       }
 
+      console.log("Expert login: Expert profile found and approved");
+      
+      // Set the expert profile and role
+      setAuthState(prev => ({
+        ...prev,
+        session: data.session,
+        user: data.user,
+        expertProfile,
+        role: 'expert',
+        isAuthenticated: true,
+        isLoading: false
+      }));
+      
       toast.success("Expert login successful!");
       return true;
     } catch (error: any) {
@@ -201,12 +235,92 @@ export const useAuthFunctions = (
     try {
       setAuthState((prev) => ({ ...prev, isLoading: true }));
       
-      toast.info("Expert registration functionality will be implemented according to existing flow");
-      setAuthState((prev) => ({ ...prev, isLoading: false }));
+      console.log("Expert signup: Starting with data:", registrationData.email);
+      
+      // Validate email format
+      if (!/^\S+@\S+\.\S+$/.test(registrationData.email)) {
+        toast.error("Please enter a valid email address");
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      // Check if email already exists
+      const { data: existingUser, error: emailCheckError } = await supabase
+        .from('expert_accounts')
+        .select('email')
+        .eq('email', registrationData.email)
+        .maybeSingle();
+        
+      if (existingUser) {
+        toast.error("This email is already registered as an expert");
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      // Create auth account
+      const { data, error } = await supabase.auth.signUp({
+        email: registrationData.email,
+        password: registrationData.password,
+        options: {
+          data: {
+            user_type: 'expert',
+            name: registrationData.name,
+          },
+        }
+      });
+      
+      if (error) {
+        console.error("Expert signup: Auth error:", error);
+        toast.error(error.message);
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      if (!data.user) {
+        console.error("Expert signup: No user returned");
+        toast.error("Registration failed. Please try again.");
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      console.log("Expert signup: Auth account created, creating expert profile");
+      
+      // Create expert profile entry
+      const { error: profileError } = await supabase
+        .from('expert_accounts')
+        .insert({
+          auth_id: data.user.id,
+          name: registrationData.name,
+          email: registrationData.email,
+          status: 'pending',
+          // Add other fields as needed
+        });
+        
+      if (profileError) {
+        console.error("Expert signup: Error creating profile:", profileError);
+        toast.error("Error creating expert profile");
+        setAuthState((prev) => ({ ...prev, isLoading: false }));
+        return false;
+      }
+      
+      console.log("Expert signup: Expert registration successful");
+      toast.success("Expert registration successful! Your account is pending approval.");
+      
+      // Sign out
+      await supabase.auth.signOut();
+      
+      setAuthState((prev) => ({
+        ...prev,
+        isLoading: false,
+        session: null,
+        user: null,
+        isAuthenticated: false
+      }));
+      
       return true;
     } catch (error: any) {
       console.error("Expert signup error:", error);
-      toast.error(error.message || "An error occurred during signup");
+      toast.error(error.message || "An error occurred during registration");
       setAuthState((prev) => ({ ...prev, isLoading: false }));
       return false;
     }
