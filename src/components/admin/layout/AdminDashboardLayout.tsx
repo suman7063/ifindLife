@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/admin-auth';
 import AdminSidebar from './sidebar/AdminSidebar';
 import RestoreSidebarButton from './sidebar/RestoreSidebarButton';
 import { getTabTitle } from './utils/tabUtils';
+import { AdminPermissions } from '@/contexts/admin-auth/types';
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode;
@@ -53,7 +54,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             onLogout={handleLogout}
             isSuperAdmin={isSuperAdmin}
             username={currentUser?.username || 'Admin'}
-            userPermissions={currentUser?.permissions}
+            userPermissions={currentUser?.permissions as Record<string, boolean>}
           />
           
           <SidebarInset className="relative">

@@ -8,12 +8,15 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface ExpertHeaderProps {
-  expert: any;
+  expert?: any; // Made expert optional to fix the build error
 }
 
 const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert }) => {
-  const { logout } = useAuth();
+  const { logout, expertProfile } = useAuth();
   const navigate = useNavigate();
+  
+  // Use expertProfile if expert is not provided
+  const displayExpert = expert || expertProfile;
   
   const handleLogout = async () => {
     try {
@@ -34,7 +37,7 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert }) => {
     <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
       <div>
         <h1 className="text-2xl font-semibold text-ifind-teal">Expert Dashboard</h1>
-        <p className="text-sm text-gray-500">Welcome back, {expert?.name || 'Expert'}</p>
+        <p className="text-sm text-gray-500">Welcome back, {displayExpert?.name || 'Expert'}</p>
       </div>
       
       <div className="flex items-center gap-4">
@@ -52,9 +55,9 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert }) => {
         
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={expert?.avatar_url} alt={expert?.name} />
+            <AvatarImage src={displayExpert?.avatar_url} alt={displayExpert?.name} />
             <AvatarFallback className="bg-ifind-teal text-white">
-              {expert?.name?.charAt(0) || 'E'}
+              {displayExpert?.name?.charAt(0) || 'E'}
             </AvatarFallback>
           </Avatar>
           

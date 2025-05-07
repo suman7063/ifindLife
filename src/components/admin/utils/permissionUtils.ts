@@ -1,10 +1,17 @@
 
+import { AdminPermissions } from '@/contexts/admin-auth/types';
+
+interface AdminUser {
+  role?: string;
+  permissions?: AdminPermissions | Record<string, boolean>;
+}
+
 /**
  * Check if user has any permissions
  * @param user Admin user object
  * @returns boolean indicating if the user has any permissions
  */
-export const hasAnyPermission = (user: any): boolean => {
+export const hasAnyPermission = (user: AdminUser | null): boolean => {
   if (!user || !user.permissions) {
     return false;
   }
@@ -17,7 +24,7 @@ export const hasAnyPermission = (user: any): boolean => {
  * @param permission Permission to check
  * @returns boolean indicating if the user has the specified permission
  */
-export const hasPermission = (user: any, permission: string): boolean => {
+export const hasPermission = (user: AdminUser | null, permission: string): boolean => {
   if (!user || !user.permissions) {
     return false;
   }
@@ -27,5 +34,6 @@ export const hasPermission = (user: any, permission: string): boolean => {
     return true;
   }
   
-  return !!user.permissions[permission];
+  // Check if the permission exists in the user's permissions object
+  return !!user.permissions[permission as keyof typeof user.permissions];
 };

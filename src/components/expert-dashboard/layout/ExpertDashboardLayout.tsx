@@ -50,7 +50,7 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <ExpertHeader />
+        <ExpertHeader expert={expertProfile} />
         <div className="flex-1 p-8 overflow-auto">
           {children}
         </div>
