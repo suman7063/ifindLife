@@ -8,7 +8,7 @@ interface HeroSlideProps {
 
 export const HeroHeader: React.FC<HeroSlideProps> = ({ images, currentSlide }) => {
   return (
-    <div className="relative w-full h-[600px] overflow-hidden">
+    <div className="relative w-full h-[450px] overflow-hidden">
       {images.map((image, index) => (
         <div 
           key={index}
@@ -26,9 +26,9 @@ export const HeroHeader: React.FC<HeroSlideProps> = ({ images, currentSlide }) =
               top: 0,
               left: 0,
               width: '100%',
-              height: '600px',
+              height: '450px',
               objectFit: 'cover',
-              objectPosition: 'center 30%',
+              objectPosition: 'center 20%',
               borderRadius: '0px'
             }}
             loading={index === 0 ? "eager" : "lazy"}
@@ -47,8 +47,8 @@ export const HeroHeader: React.FC<HeroSlideProps> = ({ images, currentSlide }) =
           className="text-white font-bold"
           style={{
             fontFamily: 'Roboto, sans-serif',
-            fontSize: '96px',
-            lineHeight: '115px',
+            fontSize: '86px',
+            lineHeight: '100px',
             fontWeight: 700,
             color: '#FFFFFF',
             maxWidth: '540px'
