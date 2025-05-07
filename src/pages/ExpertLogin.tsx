@@ -104,17 +104,32 @@ const ExpertLogin: React.FC = () => {
         return false;
       }
       
-      // Pass 'expert' as the roleOverride parameter to ensure proper role checking
-      const success = await login(email, password, 'expert');
-      
-      if (success) {
-        console.log('ExpertLogin: Login successful');
-        toast.success('Successfully logged in as expert!');
-        navigate('/expert-dashboard', { replace: true });
-        return true;
-      } else {
-        console.error('ExpertLogin: Login failed');
-        setLoginError('Login failed. Please check your credentials or contact support.');
+      try {
+        // Pass 'expert' as the roleOverride parameter to ensure proper role checking
+        const success = await login(email, password, 'expert');
+        
+        if (success) {
+          console.log('ExpertLogin: Login successful');
+          toast.success('Successfully logged in as expert!');
+          navigate('/expert-dashboard', { replace: true });
+          return true;
+        } else {
+          console.error('ExpertLogin: Login failed');
+          setLoginError('Login failed. Please check your credentials or contact support.');
+          setIsLogging(false);
+          return false;
+        }
+      } catch (error: any) {
+        // Handle specific database errors
+        if (error.message && error.message.includes('recursion')) {
+          console.error('Database permission error:', error.message);
+          toast.error('Database permission error. Please contact support.');
+          setLoginError('Database permission error. Please contact the administrator.');
+        } else {
+          console.error('ExpertLogin error:', error);
+          toast.error('Failed to login. Please try again.');
+          setLoginError('Failed to login. Please try again.');
+        }
         setIsLogging(false);
         return false;
       }

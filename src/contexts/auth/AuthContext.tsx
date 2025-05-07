@@ -59,19 +59,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`Checking roles for user ID: ${userId}`);
       
-      // Fetch expert profile
-      const { data: expertData, error: expertError } = await supabase
-        .from('expert_accounts') // Correct table name
-        .select('*')
-        .eq('auth_id', userId) // Correct field name
-        .single();
+      // Fetch expert profile with error handling
+      let expertData = null;
+      let expertError = null;
+      
+      try {
+        const response = await supabase
+          .from('expert_accounts') // Correct table name
+          .select('*')
+          .eq('auth_id', userId) // Correct field name
+          .single();
+        
+        expertData = response.data;
+        expertError = response.error;
+      } catch (err: any) {
+        console.error("Error fetching expert profile:", err);
+        expertError = { message: err.message || "Failed to fetch expert profile" };
+      }
 
-      // Fetch user profile
-      const { data: userData, error: userError } = await supabase
-        .from('profiles') // Correct table name
-        .select('*')
-        .eq('id', userId)
-        .single();
+      // Fetch user profile with error handling
+      let userData = null;
+      let userError = null;
+      
+      try {
+        const response = await supabase
+          .from('profiles') // Correct table name
+          .select('*')
+          .eq('id', userId)
+          .single();
+        
+        userData = response.data;
+        userError = response.error;
+      } catch (err: any) {
+        console.error("Error fetching user profile:", err);
+        userError = { message: err.message || "Failed to fetch user profile" };
+      }
 
       console.log("Expert profile check:", expertData ? "Found" : "Not found", expertError?.message || "No error");
       console.log("User profile check:", userData ? "Found" : "Not found", userError?.message || "No error");
@@ -164,57 +186,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (roleOverride === 'expert') {
           console.log("Expert role override specified, checking for expert profile");
           
-          const { data: expertData, error: expertError } = await supabase
-            .from('expert_accounts') // Correct table name
-            .select('*')
-            .eq('auth_id', data.user.id) // Correct field name
-            .single();
-            
-          if (expertData) {
-            console.log("Expert profile found:", expertData.name);
-            setRole('expert');
-            setExpertProfile(expertData);
-            setUserProfile(null);
-            setSessionType('expert');
-          } else {
-            console.error("Expert profile not found:", expertError);
-            setError(expertError?.message || "Failed to fetch expert profile");
+          try {
+            const { data: expertData, error: expertError } = await supabase
+              .from('expert_accounts') // Correct table name
+              .select('*')
+              .eq('auth_id', data.user.id) // Correct field name
+              .single();
+              
+            if (expertData) {
+              console.log("Expert profile found:", expertData.name);
+              setRole('expert');
+              setExpertProfile(expertData);
+              setUserProfile(null);
+              setSessionType('expert');
+              setError(null);
+              setIsLoading(false);
+              return true;
+            } else {
+              console.error("Expert profile not found:", expertError);
+              setError(expertError?.message || "Failed to fetch expert profile");
+              setIsLoading(false);
+              
+              // Sign out since this isn't a valid expert
+              await supabase.auth.signOut();
+              return false;
+            }
+          } catch (err: any) {
+            console.error("Error fetching expert profile:", err);
+            setError(err?.message || "Error fetching expert profile");
             setIsLoading(false);
             
-            // Sign out since this isn't a valid expert
+            // Sign out on error
             await supabase.auth.signOut();
             return false;
           }
         } else if (roleOverride === 'user') {
           console.log("User role override specified, checking for user profile");
           
-          const { data: userData, error: userError } = await supabase
-            .from('profiles') // Correct table name
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-            
-          if (userData) {
-            console.log("User profile found:", userData.name || userData.email);
-            setRole('user');
-            setUserProfile(userData);
-            setExpertProfile(null);
-            setSessionType('user');
-          } else {
-            console.error("User profile not found:", userError);
-            setError(userError?.message || "Failed to fetch user profile");
+          try {
+            const { data: userData, error: userError } = await supabase
+              .from('profiles') // Correct table name
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+              
+            if (userData) {
+              console.log("User profile found:", userData.name || userData.email);
+              setRole('user');
+              setUserProfile(userData);
+              setExpertProfile(null);
+              setSessionType('user');
+              setError(null);
+              setIsLoading(false);
+              return true;
+            } else {
+              console.error("User profile not found:", userError);
+              setError(userError?.message || "Failed to fetch user profile");
+              setIsLoading(false);
+              return false;
+            }
+          } catch (err: any) {
+            console.error("Error fetching user profile:", err);
+            setError(err?.message || "Error fetching user profile");
             setIsLoading(false);
             return false;
           }
         } else {
           console.log("No role override specified, checking both profiles");
           await checkAndSetRole(data.user.id);
+          setError(null);
+          return true;
         }
       }
       
       setIsLoading(false);
-      setError(null);
-      return true;
+      return false;
     } catch (error: any) {
       console.error("Login error:", error);
       setError(error?.message || "An unexpected error occurred during login");
