@@ -21,92 +21,107 @@ interface SidebarMenuItemsProps {
   activeTab?: string;
   onTabChange: (tab: string) => void;
   isSuperAdmin: boolean;
+  userPermissions?: Record<string, boolean>;
 }
 
 const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
   activeTab,
   onTabChange,
-  isSuperAdmin
+  isSuperAdmin,
+  userPermissions = {}
 }) => {
-  // Define menu items with their properties
+  // Define menu items with their properties and permission requirements
   const menuItems = [
     {
       id: 'overview',
       label: 'Overview',
       icon: LayoutDashboard,
-      tooltip: 'Dashboard Overview'
+      tooltip: 'Dashboard Overview',
+      permission: null // Always visible
     },
     {
       id: 'experts',
       label: 'Experts',
       icon: Users,
-      tooltip: 'Manage Experts'
+      tooltip: 'Manage Experts',
+      permission: 'experts'
     },
     {
       id: 'expertApprovals',
       label: 'Expert Approvals',
       icon: CheckSquare,
-      tooltip: 'Expert Approval Requests'
+      tooltip: 'Expert Approval Requests',
+      permission: 'expertApprovals'
     },
     {
       id: 'services',
       label: 'Services',
       icon: Briefcase,
-      tooltip: 'Manage Services'
+      tooltip: 'Manage Services',
+      permission: 'services'
     },
     {
       id: 'herosection',
       label: 'Hero Section',
       icon: FileText,
-      tooltip: 'Edit Hero Section'
+      tooltip: 'Edit Hero Section',
+      permission: 'herosection'
     },
     {
       id: 'testimonials',
       label: 'Testimonials',
       icon: MessageSquare,
-      tooltip: 'Manage Testimonials'
+      tooltip: 'Manage Testimonials',
+      permission: 'testimonials'
     },
     {
       id: 'programs',
       label: 'Programs',
       icon: Calendar,
-      tooltip: 'Manage Programs'
+      tooltip: 'Manage Programs',
+      permission: 'programs'
     },
     {
       id: 'sessions',
       label: 'Sessions',
       icon: LifeBuoy,
-      tooltip: 'Manage Sessions'
+      tooltip: 'Manage Sessions',
+      permission: 'sessions'
     },
     {
       id: 'referrals',
       label: 'Referrals',
       icon: Award,
-      tooltip: 'Manage Referrals'
+      tooltip: 'Manage Referrals',
+      permission: 'referrals'
     },
     {
       id: 'help',
       label: 'Help Tickets',
       icon: HelpCircle,
-      tooltip: 'Manage Help Tickets'
+      tooltip: 'Manage Help Tickets',
+      permission: 'contact'
     },
     {
       id: 'blog',
       label: 'Blog',
       icon: FileText,
-      tooltip: 'Manage Blog Content'
+      tooltip: 'Manage Blog Content',
+      permission: 'blog'
     },
     {
       id: 'contact',
       label: 'Contact Submissions',
       icon: MessageSquare,
-      tooltip: 'View Contact Submissions'
+      tooltip: 'View Contact Submissions',
+      permission: 'contact'
     },
     {
       id: 'settings',
       label: 'Settings',
       icon: Settings,
-      tooltip: 'Admin Settings'
+      tooltip: 'Admin Settings',
+      permission: 'settings'
     }
   ];
 
@@ -115,12 +130,20 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
     id: 'adminUsers',
     label: 'Admin Users',
     icon: Shield,
-    tooltip: 'Manage Admin Users'
+    tooltip: 'Manage Admin Users',
+    permission: 'adminUsers'
   };
+
+  // Filter menu items based on permissions
+  const visibleMenuItems = menuItems.filter(item => 
+    item.permission === null || 
+    userPermissions[item.permission as keyof typeof userPermissions] || 
+    isSuperAdmin
+  );
 
   return (
     <SidebarMenu>
-      {menuItems.map(item => (
+      {visibleMenuItems.map(item => (
         <AdminSidebarMenuItem
           key={item.id}
           label={item.label}

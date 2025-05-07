@@ -31,33 +31,34 @@ const Index = lazy(() => {
 const NewExpertDashboard = lazy(() => import('./pages/NewExpertDashboard'));
 
 const AppRoutes: React.FC = () => {
-  const { isAuthenticated, role } = useAuth();
+  const { isAuthenticated, role, isLoading } = useAuth();
   
   useEffect(() => {
     // Only log in development environment 
     if (import.meta.env.DEV) {
       console.log('AppRoutes component mounted');
-      console.log('Auth state:', { isAuthenticated, role });
+      console.log('Auth state:', { isAuthenticated, role, isLoading });
     }
-  }, [isAuthenticated, role]);
+  }, [isAuthenticated, role, isLoading]);
 
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<Index />} />
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/about" element={<AboutUs />} />
 
-        {/* Admin routes need to handle all sub-routes */}
+        {/* Admin routes with proper protection */}
         <Route path="/admin/*" element={
           <AdminProtectedRoute>
             <Admin />
           </AdminProtectedRoute>
         } />
         
-        {/* New Expert Dashboard with proper protection - Make this work with all sub-routes */}
+        {/* Expert Dashboard with proper protection - Handle all sub-routes */}
         <Route 
           path="/expert-dashboard/*" 
           element={
@@ -107,7 +108,7 @@ const AppRoutes: React.FC = () => {
         })}
         
         {/* Fallback route for 404 */}
-        <Route path="*" element={<Index />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );

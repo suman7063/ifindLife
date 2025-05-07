@@ -53,6 +53,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             onLogout={handleLogout}
             isSuperAdmin={isSuperAdmin}
             username={currentUser?.username || 'Admin'}
+            userPermissions={currentUser?.permissions}
           />
           
           <SidebarInset className="relative">

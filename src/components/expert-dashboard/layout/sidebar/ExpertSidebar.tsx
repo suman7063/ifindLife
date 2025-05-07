@@ -19,16 +19,16 @@ import { useMessaging } from '@/hooks/useMessaging';
 
 const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
-  const { logout, expertProfile, currentUser } = useAuth();
-  const { conversations, fetchConversations } = useMessaging(currentUser);
+  const { logout, expertProfile } = useAuth();
+  const { conversations, fetchConversations } = useMessaging(expertProfile?.id);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Calculate unread message count
   useEffect(() => {
-    if (currentUser) {
+    if (expertProfile?.id) {
       fetchConversations();
     }
-  }, [currentUser, fetchConversations]);
+  }, [expertProfile?.id, fetchConversations]);
 
   useEffect(() => {
     // Calculate total unread messages
@@ -48,7 +48,7 @@ const ExpertSidebar: React.FC = () => {
   return (
     <div className="w-64 border-r h-screen flex flex-col bg-background">
       <div className="p-4">
-        <ExpertProfileSummary />
+        {expertProfile && <ExpertProfileSummary expert={expertProfile} />}
       </div>
 
       <nav className="flex-1 p-2 space-y-1">

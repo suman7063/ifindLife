@@ -18,6 +18,7 @@ interface AdminSidebarProps {
   onLogout: () => void;
   isSuperAdmin: boolean;
   username: string;
+  userPermissions?: Record<string, boolean>;
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ 
@@ -25,7 +26,8 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onTabChange,
   onLogout,
   isSuperAdmin,
-  username
+  username,
+  userPermissions
 }) => {
   const { toggleSidebar } = useSidebar();
 
@@ -41,6 +43,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
           activeTab={activeTab}
           onTabChange={onTabChange}
           isSuperAdmin={isSuperAdmin}
+          userPermissions={userPermissions}
         />
       </SidebarContent>
 

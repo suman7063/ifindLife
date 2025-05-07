@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 const Admin = () => {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, isLoading: authLoading } = useAuth();
   const location = useLocation();
   
   // Extract the current tab from the URL path
@@ -59,6 +59,11 @@ const Admin = () => {
       setRetryCount(0);
     }
   }, [loading, error]);
+
+  // Show loading state while authentication is being checked
+  if (authLoading) {
+    return <AdminContentLoader retryCount={0} />;
+  }
 
   // If not authenticated, redirect to admin login
   if (!isAuthenticated) {

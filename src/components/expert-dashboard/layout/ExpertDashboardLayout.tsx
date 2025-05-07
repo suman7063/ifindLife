@@ -46,11 +46,11 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   return (
     <div className="min-h-screen flex bg-gray-50">
       {/* Sidebar */}
-      <ExpertSidebar expert={expertProfile} />
+      <ExpertSidebar />
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        <ExpertHeader expert={expertProfile} />
+        <ExpertHeader />
         <div className="flex-1 p-8 overflow-auto">
           {children}
         </div>
