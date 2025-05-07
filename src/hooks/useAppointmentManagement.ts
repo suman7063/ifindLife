@@ -27,18 +27,19 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         query = query.eq('expert_id', expId);
       }
       
-      // Use retry operation for fetching
-      const { data, error: appointmentsError } = await retryOperation(() => 
-        query.in('status', ['pending', 'confirmed', 'cancelled', 'completed'])
-      );
+      // Use retry operation for fetching - fixed to properly handle Promise
+      const result = await retryOperation(async () => {
+        const response = await query.in('status', ['pending', 'confirmed', 'cancelled', 'completed']);
+        return response;
+      });
       
-      if (appointmentsError) {
-        handleDatabaseError(appointmentsError, 'Failed to load appointments');
-        throw appointmentsError;
+      if (result.error) {
+        handleDatabaseError(result.error, 'Failed to load appointments');
+        throw result.error;
       }
       
       // Map to the correct shape for our interface
-      const formattedAppointments = (data || []).map(apt => ({
+      const formattedAppointments = (result.data || []).map(apt => ({
         id: apt.id,
         expert_id: apt.expert_id,
         user_id: apt.user_id,
@@ -80,17 +81,18 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
       
       // First check if time slot is available
       if (timeSlotId) {
-        const { data: slots, error: checkError } = await supabase
+        const checkResult = await supabase
           .from('expert_time_slots')
           .select('*')
           .eq('id', timeSlotId)
           .eq('is_booked', false);
         
-        if (checkError) {
-          handleDatabaseError(checkError, 'Error checking time slot availability');
-          throw checkError;
+        if (checkResult.error) {
+          handleDatabaseError(checkResult.error, 'Error checking time slot availability');
+          throw checkResult.error;
         }
         
+        const slots = checkResult.data;
         if (!slots || slots.length === 0) {
           toast.error('This time slot is no longer available');
           return null;
@@ -98,24 +100,25 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
       }
       
       // Fetch expert name
-      const { data: expertData, error: expertError } = await supabase
+      const expertResult = await supabase
         .from('expert_accounts')
         .select('name')
         .eq('id', expertId)
         .single();
       
-      if (expertError) {
-        handleDatabaseError(expertError, 'Error fetching expert information');
-        throw expertError;
+      if (expertResult.error) {
+        handleDatabaseError(expertResult.error, 'Error fetching expert information');
+        throw expertResult.error;
       }
       
+      const expertData = expertResult.data;
       if (!expertData || !expertData.name) {
         toast.error('Expert information not found');
         return null;
       }
       
       // Insert new appointment
-      const { data, error: appointmentError } = await supabase
+      const appointmentResult = await supabase
         .from('appointments')
         .insert({
           expert_id: expertId,
@@ -132,22 +135,24 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
         .select()
         .single();
       
-      if (appointmentError) {
-        handleDatabaseError(appointmentError, 'Failed to book appointment');
-        throw appointmentError;
+      if (appointmentResult.error) {
+        handleDatabaseError(appointmentResult.error, 'Failed to book appointment');
+        throw appointmentResult.error;
       }
+      
+      const data = appointmentResult.data;
       
       // Mark time slot as booked if provided
       if (timeSlotId) {
-        const { error: updateError } = await supabase
+        const updateResult = await supabase
           .from('expert_time_slots')
           .update({ is_booked: true })
           .eq('id', timeSlotId);
         
-        if (updateError) {
-          handleDatabaseError(updateError, 'Failed to update time slot status');
+        if (updateResult.error) {
+          handleDatabaseError(updateResult.error, 'Failed to update time slot status');
           // Continue anyway since the appointment is created
-          console.error('Failed to update time slot status:', updateError);
+          console.error('Failed to update time slot status:', updateResult.error);
         }
       }
       
@@ -171,16 +176,16 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
       setLoading(true);
       setError(null);
       
-      const { data, error } = await supabase
+      const result = await supabase
         .from('appointments')
         .update({ status })
         .eq('id', appointmentId)
         .select()
         .single();
       
-      if (error) {
-        handleDatabaseError(error, 'Failed to update appointment status');
-        throw error;
+      if (result.error) {
+        handleDatabaseError(result.error, 'Failed to update appointment status');
+        throw result.error;
       }
       
       // Update state with the new status
@@ -191,7 +196,7 @@ export const useAppointmentManagement = (currentUser: UserProfile | null, expert
       );
       
       toast.success(`Appointment ${status} successfully`);
-      return data;
+      return result.data;
     } catch (error: any) {
       console.error('Error updating appointment:', error);
       setError(error.message);

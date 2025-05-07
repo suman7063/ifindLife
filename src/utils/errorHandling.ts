@@ -98,6 +98,7 @@ export const handleDatabaseError = (error: any, customMessage?: string): boolean
 
 /**
  * Retry a database operation with exponential backoff
+ * Modified to properly handle Promise typing
  */
 export const retryOperation = async <T>(
   operation: () => Promise<T>,

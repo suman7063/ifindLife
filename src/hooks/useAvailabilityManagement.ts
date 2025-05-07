@@ -17,18 +17,21 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
       setLoading(true);
       setError(null);
       
-      // Fetch availabilities with retry
-      const { data: availabilityData, error: availabilityError } = await retryOperation(() => 
-        supabase
+      // Fetch availabilities with retry - fixed to properly handle Promise
+      const availabilityResult = await retryOperation(async () => {
+        const response = await supabase
           .from('expert_availabilities')
           .select('*')
-          .eq('expert_id', expertId)
-      );
+          .eq('expert_id', expertId);
+        return response;
+      });
       
-      if (availabilityError) {
-        handleDatabaseError(availabilityError, 'Failed to load expert availabilities');
-        throw availabilityError;
+      if (availabilityResult.error) {
+        handleDatabaseError(availabilityResult.error, 'Failed to load expert availabilities');
+        throw availabilityResult.error;
       }
+      
+      const availabilityData = availabilityResult.data;
       
       if (!availabilityData || availabilityData.length === 0) {
         setAvailabilities([]);
@@ -39,15 +42,17 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
       const availabilitiesWithSlots = await Promise.all(
         availabilityData.map(async (availability) => {
           try {
-            const { data: timeSlots, error: timeSlotsError } = await supabase
+            const timeSlotsResult = await supabase
               .from('expert_time_slots')
               .select('*')
               .eq('availability_id', availability.id);
             
-            if (timeSlotsError) {
-              handleDatabaseError(timeSlotsError, 'Failed to load time slots');
-              throw timeSlotsError;
+            if (timeSlotsResult.error) {
+              handleDatabaseError(timeSlotsResult.error, 'Failed to load time slots');
+              throw timeSlotsResult.error;
             }
+            
+            const timeSlots = timeSlotsResult.data;
             
             // Return properly shaped data
             return {
@@ -97,7 +102,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
       setError(null);
       
       // Insert availability 
-      const { data: newAvailability, error: availabilityError } = await supabase
+      const availabilityResult = await supabase
         .from('expert_availabilities')
         .insert({
           expert_id: expertId,
@@ -108,10 +113,12 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
         .select()
         .single();
       
-      if (availabilityError) {
-        handleDatabaseError(availabilityError, 'Failed to create availability');
-        throw availabilityError;
+      if (availabilityResult.error) {
+        handleDatabaseError(availabilityResult.error, 'Failed to create availability');
+        throw availabilityResult.error;
       }
+      
+      const newAvailability = availabilityResult.data;
       
       if (!newAvailability) {
         throw new Error('Failed to create availability');
@@ -119,7 +126,7 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
       
       // Insert time slots for each slot
       for (const slot of timeSlots) {
-        const { error: slotError } = await supabase
+        const slotResult = await supabase
           .from('expert_time_slots')
           .insert({
             availability_id: newAvailability.id,
@@ -129,9 +136,9 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
             specific_date: slot.specific_date
           });
         
-        if (slotError) {
-          handleDatabaseError(slotError, 'Failed to create time slot');
-          throw slotError;
+        if (slotResult.error) {
+          handleDatabaseError(slotResult.error, 'Failed to create time slot');
+          throw slotResult.error;
         }
       }
       
@@ -156,14 +163,14 @@ export const useAvailabilityManagement = (currentUser: UserProfile | null) => {
       setError(null);
       
       // Delete the availability 
-      const { error } = await supabase
+      const result = await supabase
         .from('expert_availabilities')
         .delete()
         .eq('id', availabilityId);
       
-      if (error) {
-        handleDatabaseError(error, 'Failed to delete availability');
-        throw error;
+      if (result.error) {
+        handleDatabaseError(result.error, 'Failed to delete availability');
+        throw result.error;
       }
       
       // Update the state by filtering out the deleted availability
