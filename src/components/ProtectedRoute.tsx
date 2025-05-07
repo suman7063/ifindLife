@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/admin-auth';
 import { toast } from 'sonner';
+import { hasPermission, isSuperAdmin } from './admin/utils/permissionUtils';
 
 type ProtectedRouteProps = {
   children: React.ReactNode;
@@ -25,11 +26,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (!isAuthenticated) {
       console.log('Admin user not authenticated, will redirect');
       toast.error('Please log in to access this page');
-    } else if (requiredRole && currentUser?.role !== requiredRole) {
+    } else if (requiredRole && currentUser?.role !== requiredRole && !isSuperAdmin(currentUser)) {
       console.log(`Required role: ${requiredRole}, but user has role: ${currentUser?.role}`);
       toast.error(`You need ${requiredRole} permissions to access this page`);
-    } else if (requiredPermission && currentUser?.permissions && 
-              !currentUser.permissions[requiredPermission as keyof typeof currentUser.permissions]) {
+    } else if (requiredPermission && !hasPermission(currentUser, requiredPermission)) {
       console.log(`Required permission: ${requiredPermission}, but user doesn't have it`);
       toast.error(`You don't have permission to access this page`);
     }
@@ -41,15 +41,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/admin-login" replace state={{ from: location }} />;
   }
 
-  // If a specific role is required, check it
-  if (requiredRole && currentUser?.role !== requiredRole) {
+  // If a specific role is required, check it (but superadmins always pass)
+  if (requiredRole && currentUser?.role !== requiredRole && !isSuperAdmin(currentUser)) {
     console.log(`Role ${requiredRole} required, but user has ${currentUser?.role}`);
     return <Navigate to="/admin" replace />;
   }
 
   // If a specific permission is required, check it
-  if (requiredPermission && currentUser?.permissions && 
-      !currentUser.permissions[requiredPermission as keyof typeof currentUser.permissions]) {
+  if (requiredPermission && !hasPermission(currentUser, requiredPermission)) {
     console.log(`Permission ${requiredPermission} required, but user doesn't have it`);
     return <Navigate to="/admin" replace />;
   }

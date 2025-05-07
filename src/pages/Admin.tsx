@@ -17,10 +17,10 @@ const Admin = () => {
   const location = useLocation();
   
   // Extract the current tab from the URL path
-  const getCurrentTabFromPath = () => {
+  const getCurrentTabFromPath = useCallback(() => {
     const path = location.pathname.split('/');
     return path.length > 2 ? path[2] : 'overview';
-  };
+  }, [location.pathname]);
   
   const [activeTab, setActiveTab] = useState(getCurrentTabFromPath());
   const [retryCount, setRetryCount] = useState(0);
@@ -29,7 +29,7 @@ const Admin = () => {
   // Update active tab when the URL changes
   useEffect(() => {
     setActiveTab(getCurrentTabFromPath());
-  }, [location.pathname]);
+  }, [location.pathname, getCurrentTabFromPath]);
 
   // Load content using the custom hook
   const { 
@@ -79,19 +79,18 @@ const Admin = () => {
   
   // Debug log data loading status
   useEffect(() => {
-    if (loading) {
-      console.log('Admin Dashboard: Loading data...');
-    } else {
+    console.log('Admin Dashboard: Data loading status:', { loading, error });
+    
+    if (!loading && !error) {
       console.log('Admin Dashboard: Data loaded', { 
         expertsCount: experts?.length || 0,
         servicesCount: services?.length || 0,
-        error: error || 'none'
       });
-      
-      // Show toast if there's an error
-      if (error) {
-        toast.error(`Error loading data: ${error}`);
-      }
+    }
+    
+    // Show toast if there's an error
+    if (error) {
+      toast.error(`Error loading data: ${error}`);
     }
   }, [loading, experts, services, error]);
 
@@ -124,16 +123,13 @@ const Admin = () => {
     );
   }
 
-  // Get isSuperAdmin from currentUser
-  const isSuperAdmin = currentUser?.role === 'superadmin';
-
   return (
     <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
       {loading ? (
         <AdminContentLoader retryCount={retryCount} />
       ) : (
         <AdminRoutes
-          isSuperAdmin={isSuperAdmin}
+          isSuperAdmin={currentUser?.role === 'superadmin'}
           loading={loading}
           experts={experts}
           setExperts={setExperts}

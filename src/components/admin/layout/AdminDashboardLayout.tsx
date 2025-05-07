@@ -54,7 +54,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             onLogout={handleLogout}
             isSuperAdmin={isSuperAdmin}
             username={currentUser?.username || 'Admin'}
-            userPermissions={currentUser?.permissions as Record<string, boolean>}
+            userPermissions={(currentUser?.permissions || {}) as Record<string, boolean>}
           />
           
           <SidebarInset className="relative">

@@ -34,6 +34,45 @@ export const hasPermission = (user: AdminUser | null, permission: string): boole
     return true;
   }
   
+  // Convert the permissions object to a Record<string, boolean>
+  const permissionsRecord = user.permissions as Record<string, boolean>;
+  
   // Check if the permission exists in the user's permissions object
-  return !!user.permissions[permission as keyof typeof user.permissions];
+  return !!permissionsRecord[permission];
+};
+
+/**
+ * Check if the user is a super admin
+ * @param user Admin user object
+ * @returns boolean indicating if the user is a super admin
+ */
+export const isSuperAdmin = (user: AdminUser | null): boolean => {
+  if (!user) {
+    return false;
+  }
+  return user.role === 'superadmin';
+};
+
+/**
+ * Get a list of permissions that the user has
+ * @param user Admin user object
+ * @returns array of permission names that the user has
+ */
+export const getUserPermissions = (user: AdminUser | null): string[] => {
+  if (!user || !user.permissions) {
+    return [];
+  }
+  
+  // If user is superadmin, return all permissions
+  if (user.role === 'superadmin') {
+    return Object.keys(user.permissions);
+  }
+  
+  // Convert the permissions object to a Record<string, boolean>
+  const permissionsRecord = user.permissions as Record<string, boolean>;
+  
+  // Return only the permissions that are set to true
+  return Object.entries(permissionsRecord)
+    .filter(([_, value]) => value === true)
+    .map(([key, _]) => key);
 };
