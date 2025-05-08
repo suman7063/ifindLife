@@ -33,11 +33,6 @@ export const useAuthBackCompat = () => {
         return await auth.signup(email, password, userData);
       }
       
-      // Fallback for expert signup
-      if (auth.expertSignup) {
-        return await auth.expertSignup(email, password, userData);
-      }
-      
       throw new Error('Signup function not available');
     } catch (err: any) {
       setErrorMessage(err.message || 'Signup failed');
@@ -61,6 +56,42 @@ export const useAuthBackCompat = () => {
     }
   }, [auth]);
   
+  // Create compatibility objects for user and expert auth
+  const userAuth = {
+    currentUser: auth.userProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
+    login: handleLogin,
+    signup: handleSignup,
+    logout: handleLogout,
+    authLoading: auth.isLoading,
+    loading: auth.isLoading,
+    profileNotFound: !auth.userProfile && !auth.isLoading,
+    user: auth.user,
+    updateProfile: auth.updateUserProfile,
+    updatePassword: auth.updatePassword,
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
+    rechargeWallet: auth.rechargeWallet,
+    addReview: auth.addReview,
+    reportExpert: auth.reportExpert,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom,
+    getExpertShareLink: auth.getExpertShareLink,
+    getReferralLink: auth.getReferralLink,
+  };
+
+  const expertAuth = {
+    currentUser: auth.expertProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+    login: handleLogin,
+    logout: handleLogout,
+    authLoading: auth.isLoading,
+    loading: auth.isLoading,
+    profileNotFound: !auth.expertProfile && !auth.isLoading,
+    user: auth.user,
+    updateProfile: auth.updateExpertProfile,
+    updatePassword: auth.updatePassword
+  };
+  
   return {
     isAuthenticated: auth.isAuthenticated,
     user: auth.user,
@@ -70,6 +101,8 @@ export const useAuthBackCompat = () => {
     logout: handleLogout,
     isSubmitting,
     error: errorMessage,
-    isLoading: auth.isLoading
+    isLoading: auth.isLoading,
+    userAuth,
+    expertAuth
   };
 };

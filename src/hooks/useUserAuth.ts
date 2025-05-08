@@ -3,8 +3,8 @@
 import { useAuthBackCompat } from './auth/useAuthBackCompat';
 
 export const useUserAuth = () => {
-  const { userAuth } = useAuthBackCompat();
-  return userAuth;
+  const auth = useAuthBackCompat();
+  return auth.userAuth;
 };
 
 // Export the new hook directly as well

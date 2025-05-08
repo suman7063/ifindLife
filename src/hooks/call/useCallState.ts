@@ -3,6 +3,12 @@ import { useState, useEffect, useCallback } from 'react';
 import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
 import { CallState, createClient } from '@/utils/agoraService';
 
+export interface CallInitOptions {
+  expertId: string;
+  expertName: string;
+  chatMode?: boolean;
+}
+
 export const useCallState = () => {
   const [callState, setCallState] = useState<CallState>({
     localAudioTrack: null,
@@ -11,6 +17,7 @@ export const useCallState = () => {
     client: null,
     isJoined: false,
     isMuted: false,
+    isAudioEnabled: true,
     isVideoEnabled: true
   });
   
@@ -48,6 +55,35 @@ export const useCallState = () => {
   // Define error handler with proper signature
   const handleError = useCallback((err: Error) => {
     console.error("Agora client error:", err);
+  }, []);
+  
+  // Initialize call function
+  const initializeCall = useCallback(async (options: CallInitOptions) => {
+    console.log("Initializing call with options:", options);
+    
+    let client = callState.client;
+    
+    if (!client) {
+      client = createClient();
+      console.log("Created new Agora client:", client);
+      setCallState(prev => ({ ...prev, client }));
+    }
+    
+    return { client };
+  }, [callState.client]);
+  
+  // End call function
+  const endCall = useCallback(() => {
+    setCallState(prev => ({
+      ...prev,
+      localAudioTrack: null,
+      localVideoTrack: null,
+      remoteUsers: [],
+      isJoined: false,
+      isMuted: false,
+      isAudioEnabled: true,
+      isVideoEnabled: true
+    }));
   }, []);
   
   useEffect(() => {
@@ -101,6 +137,8 @@ export const useCallState = () => {
 
   return {
     callState,
-    setCallState
+    setCallState,
+    initializeCall,
+    endCall
   };
 };

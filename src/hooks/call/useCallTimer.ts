@@ -1,3 +1,4 @@
+
 import { useState, useRef, useCallback } from 'react';
 import { calculateCallCost } from '@/utils/agoraService';
 
@@ -5,11 +6,39 @@ export const useCallTimer = (expertPrice: number) => {
   const [duration, setDuration] = useState(0);
   const [cost, setCost] = useState(0);
   const [isExtending, setIsExtending] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [remainingTime, setRemainingTime] = useState(15 * 60); // 15 minutes in seconds
+  const [remainingFreeTime, setRemainingFreeTime] = useState(15 * 60); // 15 minutes in seconds
+  
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const initialSlot = 15 * 60; // 15 minutes in seconds
   const initialSlotMinutes = initialSlot / 60; // Convert to minutes for calculation
+
+  const startTimer = useCallback(() => {
+    setIsPaused(false);
+    startTimers();
+  }, []);
+
+  const pauseTimer = useCallback(() => {
+    setIsPaused(true);
+    stopTimers();
+  }, []);
+
+  const resumeTimer = useCallback(() => {
+    setIsPaused(false);
+    startTimers();
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    stopTimers();
+    setDuration(0);
+    setCost(0);
+    setRemainingTime(initialSlot);
+    setRemainingFreeTime(initialSlot);
+    setIsExtending(false);
+    setIsPaused(false);
+  }, [initialSlot]);
 
   const startTimers = useCallback(() => {
     durationTimerRef.current = setInterval(() => {
@@ -17,7 +46,6 @@ export const useCallTimer = (expertPrice: number) => {
         const newDuration = prev + 1;
         
         if (newDuration > initialSlot) {
-          // Ensure we're passing all required arguments to calculateCallCost
           setCost(calculateCallCost(newDuration, expertPrice, initialSlotMinutes));
         }
         
@@ -33,8 +61,13 @@ export const useCallTimer = (expertPrice: number) => {
         }
         return prev - 1;
       });
+      
+      setRemainingFreeTime(prev => {
+        if (prev <= 1) return 0;
+        return prev - 1;
+      });
     }, 1000);
-  }, [expertPrice, initialSlotMinutes]);
+  }, [expertPrice, initialSlot, initialSlotMinutes]);
 
   const stopTimers = useCallback(() => {
     if (timerRef.current) {
@@ -50,6 +83,7 @@ export const useCallTimer = (expertPrice: number) => {
 
   const extendCall = useCallback(() => {
     setRemainingTime(prev => prev + 15 * 60);
+    setRemainingFreeTime(prev => prev + 15 * 60);
     setIsExtending(false);
   }, []);
 
@@ -58,7 +92,6 @@ export const useCallTimer = (expertPrice: number) => {
       return 0;
     }
     
-    // Ensure we're passing all required arguments here as well
     return calculateCallCost(duration, expertPrice, initialSlotMinutes);
   }, [duration, expertPrice, initialSlot, initialSlotMinutes]);
 
@@ -78,7 +111,13 @@ export const useCallTimer = (expertPrice: number) => {
     duration,
     cost,
     remainingTime,
+    remainingFreeTime,
+    isPaused,
     isExtending,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    resetTimer,
     startTimers,
     stopTimers,
     extendCall,

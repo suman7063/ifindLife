@@ -47,7 +47,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // If authenticated but not in allowed roles, redirect to appropriate dashboard
-  if (role && !allowedRoles.includes(role)) {
+  if (role && !allowedRoles.includes(role as UserRole)) {
     console.log(`User role ${role} not in allowed roles ${allowedRoles.join(', ')}`);
     
     // Redirect based on role

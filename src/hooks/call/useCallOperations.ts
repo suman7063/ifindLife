@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { 
   CallSettings, 
@@ -20,6 +21,42 @@ export const useCallOperations = (
   const { currentUser } = useUserAuth();
   const [callType, setCallType] = useState<CallType>('video');
   const [callError, setCallError] = useState<string | null>(null);
+  const [hasVideoPermission, setHasVideoPermission] = useState(true);
+  const [hasMicrophonePermission, setHasMicrophonePermission] = useState(true);
+
+  const join = useCallback(async () => {
+    // Implementation would go here
+    console.log("Joining call");
+  }, []);
+
+  const leave = useCallback(async () => {
+    // Implementation would go here
+    console.log("Leaving call");
+    return endCall();
+  }, []);
+
+  const toggleMicrophone = useCallback(() => {
+    if (!callState.localAudioTrack) return;
+    
+    const newMuteState = toggleMute(callState.localAudioTrack, callState.isMuted);
+    
+    setCallState(prev => ({
+      ...prev,
+      isMuted: newMuteState,
+      isAudioEnabled: !newMuteState
+    }));
+  }, [callState, setCallState]);
+
+  const toggleCamera = useCallback(() => {
+    if (!callState.localVideoTrack) return;
+    
+    const newVideoState = toggleVideo(callState.localVideoTrack, callState.isVideoEnabled);
+    
+    setCallState(prev => ({
+      ...prev,
+      isVideoEnabled: newVideoState
+    }));
+  }, [callState, setCallState]);
 
   const startCall = useCallback(async (selectedCallType: CallType = 'video') => {
     setCallError(null);
@@ -58,6 +95,7 @@ export const useCallOperations = (
         localVideoTrack,
         isJoined: true,
         isMuted: false,
+        isAudioEnabled: true,
         isVideoEnabled: selectedCallType === 'video'
       }));
       
@@ -92,6 +130,7 @@ export const useCallOperations = (
         remoteUsers: [],
         isJoined: false,
         isMuted: false,
+        isAudioEnabled: true,
         isVideoEnabled: true
       }));
       
@@ -105,30 +144,12 @@ export const useCallOperations = (
   }, [callState, setCallState, stopTimers, calculateFinalCost]);
 
   const handleToggleMute = useCallback(() => {
-    const { localAudioTrack, isMuted } = callState;
-    
-    if (!localAudioTrack) return;
-    
-    const newMuteState = toggleMute(localAudioTrack, isMuted);
-    
-    setCallState(prev => ({
-      ...prev,
-      isMuted: newMuteState
-    }));
-  }, [callState, setCallState]);
+    toggleMicrophone();
+  }, [toggleMicrophone]);
 
   const handleToggleVideo = useCallback(() => {
-    const { localVideoTrack, isVideoEnabled } = callState;
-    
-    if (!localVideoTrack) return;
-    
-    const newVideoState = toggleVideo(localVideoTrack, isVideoEnabled);
-    
-    setCallState(prev => ({
-      ...prev,
-      isVideoEnabled: newVideoState
-    }));
-  }, [callState, setCallState]);
+    toggleCamera();
+  }, [toggleCamera]);
 
   return {
     callType,
@@ -136,6 +157,12 @@ export const useCallOperations = (
     startCall,
     endCall,
     handleToggleMute,
-    handleToggleVideo
+    handleToggleVideo,
+    join,
+    leave,
+    toggleMicrophone,
+    toggleCamera,
+    hasVideoPermission,
+    hasMicrophonePermission
   };
 };
