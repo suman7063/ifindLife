@@ -17,6 +17,7 @@ import AdminUsersManager from '@/components/admin/users/AdminUsersManager';
 import AdminAnalytics from '@/components/admin/analytics/AdminAnalytics';
 import AdminReports from '@/components/admin/reports/AdminReports';
 import AdminUsersList from '@/components/admin/users/AdminUsersList';
+import ContentSearchManager from '@/components/admin/content/ContentSearchManager';
 
 interface AdminRoutesProps {
   isSuperAdmin: boolean;
@@ -59,12 +60,14 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
         return <AdminAnalytics />;
       case 'reports':
         return <AdminReports />;
+      case 'content':
+        return <ContentSearchManager />;
       case 'experts':
-        return <ExpertsEditor experts={experts} setExperts={setExperts} />;
+        return <ExpertsEditor experts={experts} setExperts={setExperts} loading={loading} error={error} onRefresh={onRefresh} />;
       case 'expertApprovals':
         return <ExpertApprovals />;
       case 'services':
-        return <ServicesEditor services={services} setServices={setServices} />;
+        return <ServicesEditor categories={services} setCategories={setServices} loading={loading} error={error} onRefresh={onRefresh} />;
       case 'herosection':
         return <HeroSectionEditor heroSettings={heroSettings} setHeroSettings={setHeroSettings} />;
       case 'testimonials':

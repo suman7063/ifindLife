@@ -1,4 +1,3 @@
-
 export interface AdminPermissions {
   [key: string]: boolean;
 }
@@ -17,7 +16,8 @@ export const defaultPermissions: AdminPermissions = {
   settings: false,
   analytics: true,
   reports: false,
-  users: false
+  users: false,
+  content: true
 };
 
 export const superAdminPermissions: AdminPermissions = {
@@ -34,7 +34,8 @@ export const superAdminPermissions: AdminPermissions = {
   settings: true,
   analytics: true,
   reports: true,
-  users: true
+  users: true,
+  content: true
 };
 
 export type AdminRole = 'superadmin' | 'admin';

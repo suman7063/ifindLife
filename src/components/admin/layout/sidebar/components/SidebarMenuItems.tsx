@@ -18,7 +18,8 @@ import {
   Mail,
   UserCog,
   LineChart,
-  FilePieChart
+  FilePieChart,
+  Search
 } from 'lucide-react';
 import { hasPermission } from '@/components/admin/utils/permissionUtils';
 
@@ -65,6 +66,16 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
           label="Reports"
           isActive={activeTab === 'reports'}
           onClick={() => onTabChange('reports')}
+        />
+      )}
+
+      {/* Content Management - New Section */}
+      {checkPermission('content') && (
+        <AdminSidebarMenuItem
+          icon={Search}
+          label="Content Search"
+          isActive={activeTab === 'content'}
+          onClick={() => onTabChange('content')}
         />
       )}
 
