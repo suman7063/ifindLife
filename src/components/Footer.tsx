@@ -46,27 +46,27 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/services/therapy-sessions" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/services/therapy" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Therapy Sessions
                 </Link>
               </li>
               <li>
-                <Link to="/services/guided-meditations" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/services/meditation" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Guided Meditations
                 </Link>
               </li>
               <li>
-                <Link to="/services/mindful-listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/services/listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Heart2Heart Listening
                 </Link>
               </li>
               <li>
-                <Link to="/services/offline-retreats" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/services/retreats" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Offline Retreats
                 </Link>
               </li>
               <li>
-                <Link to="/services/life-coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/services/coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Life Coaching
                 </Link>
               </li>
@@ -92,7 +92,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/faq" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <Link to="/faqs" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   FAQ
                 </Link>
               </li>

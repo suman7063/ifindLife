@@ -11,7 +11,6 @@ import { SheetClose } from '@/components/ui/sheet';
 import MobileAccordionItem from './MobileAccordionItem';
 import MobileMenuLink from './MobileMenuLink';
 
-// Updated MobileMenuLink component prop type from 'href' to 'to' to match usage
 const MobileMenuSections: React.FC = () => {
   return (
     <div className="flex-1 overflow-y-auto py-4">
@@ -49,7 +48,21 @@ const MobileMenuSections: React.FC = () => {
             <SheetClose asChild>
               <MobileMenuLink to="/services">All Services</MobileMenuLink>
             </SheetClose>
-            {/* Additional service links can be added here */}
+            <SheetClose asChild>
+              <MobileMenuLink to="/services/therapy">Therapy Sessions</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink to="/services/meditation">Guided Meditations</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink to="/services/listening">Heart2Heart Listening</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink to="/services/retreats">Offline Retreats</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink to="/services/coaching">Life Coaching</MobileMenuLink>
+            </SheetClose>
           </MobileAccordionItem>
           
           <MobileAccordionItem title="Login" value="login">
@@ -59,7 +72,6 @@ const MobileMenuSections: React.FC = () => {
             <SheetClose asChild>
               <MobileMenuLink to="/expert-login">Expert Login</MobileMenuLink>
             </SheetClose>
-            {/* Removed Admin Login option from here */}
           </MobileAccordionItem>
           
           <MobileAccordionItem title="Support" value="support">
@@ -68,6 +80,9 @@ const MobileMenuSections: React.FC = () => {
             </SheetClose>
             <SheetClose asChild>
               <MobileMenuLink to="/faqs">FAQs</MobileMenuLink>
+            </SheetClose>
+            <SheetClose asChild>
+              <MobileMenuLink to="/blog">Blog</MobileMenuLink>
             </SheetClose>
           </MobileAccordionItem>
         </Accordion>
