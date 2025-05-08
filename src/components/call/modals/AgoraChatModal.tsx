@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import AgoraChatTypeSelector from './call/AgoraChatTypeSelector';
-import AgoraCallContent from './call/AgoraCallContent';
-import AgoraCallControls from './call/AgoraCallControls';
-import AgoraCallModalHeader from './call/modals/AgoraCallModalHeader';
-import CallAuthMessage from './call/modals/CallAuthMessage';
-import CallErrorMessage from './call/modals/CallErrorMessage';
+import AgoraChatTypeSelector from '../AgoraChatTypeSelector';
+import AgoraCallContent from '../AgoraCallContent';
+import AgoraCallControls from '../AgoraCallControls';
+import AgoraCallModalHeader from './AgoraCallModalHeader';
+import CallAuthMessage from './CallAuthMessage';
+import CallErrorMessage from './CallErrorMessage';
 import { useCallState } from '@/hooks/call/useCallState';
 import { useCallTimer } from '@/hooks/call/useCallTimer';
 import { useCallOperations } from '@/hooks/call/useCallOperations';
@@ -159,7 +158,10 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
 
     // Show error message
     if (chatStatus === 'error') {
-      return <CallErrorMessage errorMessage={errorMessage || 'An error occurred'} onRetry={handleRetry} />;
+      return <CallErrorMessage 
+        errorMessage={errorMessage || 'An error occurred'} 
+        onRetry={handleRetry} 
+      />;
     }
 
     // Type selection

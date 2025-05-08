@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
@@ -49,8 +48,18 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const asPromise = <T,>(fn: ((id: string | number) => T) | undefined): ((id: string | number) => Promise<T>) => {
     return async (id: string | number) => {
       if (!fn) return Promise.resolve(false as T);
-      const result = fn(id);
-      return Promise.resolve(result);
+      try {
+        const result = fn(id);
+        // If the result is already a Promise, return it directly
+        if (result instanceof Promise) {
+          return result;
+        }
+        // Otherwise wrap it in a Promise
+        return Promise.resolve(result);
+      } catch (error) {
+        console.error("Error in asPromise wrapper:", error);
+        return Promise.resolve(false as T);
+      }
     };
   };
   
@@ -61,7 +70,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     login: auth.login,
     signup: auth.signup || (async () => false),
     logout: auth.logout,
-    authLoading: auth.isLoading, // Add this for consistency
+    authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateUserProfile || (async () => false),

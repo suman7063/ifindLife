@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -153,7 +152,10 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
 
     // Show error message
     if (chatStatus === 'error' && errorMessage) {
-      return <CallErrorMessage errorMessage={errorMessage} />;
+      return <CallErrorMessage 
+        errorMessage={errorMessage} 
+        onRetry={() => setChatStatus('choosing')} 
+      />;
     }
 
     // Type selection
