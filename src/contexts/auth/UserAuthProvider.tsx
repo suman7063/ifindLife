@@ -46,7 +46,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
   
   // Helper function to convert non-promise functions to promise
-  const asPromise = <T,>(fn: ((id: string | number) => T) | undefined): ((id: string | number) => Promise<T>) => {
+  const asPromise = <T,>(fn: ((id: string | number) => T | Promise<T>) | undefined): ((id: string | number) => Promise<T>) => {
     return async (id: string | number) => {
       if (!fn) return Promise.resolve(false as T);
       try {
@@ -62,6 +62,19 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return Promise.resolve(false as T);
       }
     };
+  };
+  
+  // Define a properly typed hasTakenServiceFrom function that handles both Promise and non-Promise cases
+  const adaptedHasTakenServiceFrom = async (id: string | number): Promise<boolean> => {
+    if (!auth.hasTakenServiceFrom) return Promise.resolve(false);
+    
+    try {
+      const result = auth.hasTakenServiceFrom(id);
+      return result instanceof Promise ? result : Promise.resolve(result);
+    } catch (error) {
+      console.error("Error in hasTakenServiceFrom:", error);
+      return Promise.resolve(false);
+    }
   };
   
   // Create a compatible context value that matches the UserAuthContextType
@@ -81,12 +94,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     rechargeWallet: auth.rechargeWallet || (async () => false),
     addReview: adaptedAddReview,
     reportExpert: adaptedReportExpert,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom ? 
-      async (id: string | number) => {
-        const result = auth.hasTakenServiceFrom(id);
-        return result instanceof Promise ? result : Promise.resolve(result);
-      } :
-      async () => Promise.resolve(false),
+    hasTakenServiceFrom: adaptedHasTakenServiceFrom,
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,

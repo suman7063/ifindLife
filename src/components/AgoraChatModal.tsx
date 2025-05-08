@@ -1,17 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import AgoraChatTypeSelector from './call/AgoraChatTypeSelector';
-import AgoraCallContent from './call/AgoraCallContent';
-import AgoraCallControls from './call/AgoraCallControls';
-import AgoraCallModalHeader from './call/modals/AgoraCallModalHeader';
-import CallAuthMessage from './call/modals/CallAuthMessage';
-import CallErrorMessage from './call/modals/CallErrorMessage';
 import { useCallState } from '@/hooks/call/useCallState';
 import { useCallTimer } from '@/hooks/call/useCallTimer';
 import { useCallOperations } from '@/hooks/call/useCallOperations';
+import { useChatModalState } from '@/hooks/chat/useChatModalState';
+import { useChatInitialization } from '@/hooks/chat/useChatInitialization';
+import AgoraCallModalHeader from '@/components/chat/modals/AgoraCallModalHeader';
+import ChatModalContent from '@/components/chat/ChatModalContent';
 
 interface AgoraChatModalProps {
   isOpen: boolean;
@@ -29,13 +26,10 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
   onClose,
   expert,
 }) => {
-  const { isAuthenticated, isLoading: authLoading, userProfile } = useAuth();
-  const [chatStatus, setChatStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
-  const [chatType, setChatType] = useState<'text' | 'video'>('text');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [showChat, setShowChat] = useState(false);
-
+  // Initialize call state and operations
   const { callState, setCallState, initializeCall, endCall } = useCallState();
+  
+  // Initialize timer
   const {
     duration,
     cost,
@@ -50,7 +44,8 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
     stopTimers,
     calculateFinalCost
   } = useCallTimer(expert.price);
-
+  
+  // Initialize call operations
   const {
     callType,
     callError,
@@ -58,8 +53,6 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
     endCall: finishCall,
     handleToggleMute,
     handleToggleVideo,
-    hasVideoPermission,
-    hasMicrophonePermission
   } = useCallOperations(
     expert.id,
     setCallState,
@@ -69,144 +62,60 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
     calculateFinalCost
   );
   
-  // Reset state when modal is closed
-  useEffect(() => {
-    if (!isOpen) {
-      setTimeout(() => {
-        setChatStatus('choosing');
-        setChatType('text');
-        setErrorMessage(null);
-        setShowChat(false);
-        resetTimer();
-        endCall();
-      }, 300);
-    }
-  }, [isOpen, resetTimer, endCall]);
-
-  // Initialize chat
-  const handleStartChat = async (selectedType: 'text' | 'video') => {
-    try {
-      setChatType(selectedType);
-      setChatStatus('connecting');
-      
-      // Initialize the call/chat infrastructure
-      await initializeCall({
-        expertId: expert.id.toString(),
-        expertName: expert.name,
-        chatMode: true
+  // Chat modal state management
+  const {
+    chatStatus,
+    setChatStatus,
+    chatType,
+    setChatType,
+    errorMessage,
+    setErrorMessage,
+    showChat,
+    handleToggleChatPanel,
+    handleRetry
+  } = useChatModalState(isOpen, resetTimer, endCall);
+  
+  // Chat initialization functions
+  const {
+    handleStartChat,
+    handleEndChat
+  } = useChatInitialization({
+    expertId: expert.id,
+    expertName: expert.name,
+    setChatType,
+    setChatStatus,
+    setErrorMessage,
+    initializeCall,
+    startCall,
+    startTimer
+  });
+  
+  // Handle close (wrapper function)
+  const handleCloseModal = () => {
+    if (chatStatus === 'connected') {
+      // If call is active, end it first
+      handleEndChat(finishCall).then(success => {
+        if (success) {
+          setTimeout(() => onClose(), 1000);
+        }
       });
-      
-      // Start a call of appropriate type
-      const success = await startCall(selectedType === 'video' ? 'video' : 'audio');
-      
-      if (success) {
-        setChatStatus('connected');
-        startTimer();
-      } else {
-        setErrorMessage('Failed to initialize chat session. Please try again.');
-        setChatStatus('error');
-      }
-      
-    } catch (error: any) {
-      console.error('Failed to start chat:', error);
-      setErrorMessage('Failed to initialize chat session. Please try again.');
-      setChatStatus('error');
+    } else {
+      onClose();
     }
   };
-
-  // End chat
-  const handleEndChat = async () => {
-    try {
-      const result = await finishCall();
-      
-      if (result.success) {
-        setChatStatus('ended');
-        pauseTimer();
-        toast.success(`Chat ended successfully. ${result.cost > 0 ? `Total cost: ₹${result.cost.toFixed(2)}` : ''}`);
-      } else {
-        setErrorMessage('Failed to end chat properly. Please refresh the page.');
-        setChatStatus('error');
-      }
-      
+  
+  // Handle end chat (wrapper function)
+  const handleEndChatClick = async () => {
+    const success = await handleEndChat(finishCall);
+    if (success) {
+      pauseTimer();
       // Close the modal after a short delay
-      setTimeout(() => {
-        onClose();
-      }, 2000);
-      
-    } catch (error) {
-      console.error('Error ending chat:', error);
-      setErrorMessage('Failed to end chat properly. Please refresh the page.');
-      setChatStatus('error');
+      setTimeout(() => onClose(), 2000);
     }
-  };
-
-  const handleToggleChatPanel = () => {
-    setShowChat(!showChat);
-  };
-
-  // Modal content based on state
-  const renderModalContent = () => {
-    // Show auth message if not authenticated
-    if (!isAuthenticated && !authLoading) {
-      return <CallAuthMessage expertName={expert.name} onClose={onClose} />;
-    }
-
-    // Show error message
-    if (chatStatus === 'error' && errorMessage) {
-      return <CallErrorMessage 
-        errorMessage={errorMessage} 
-        onRetry={() => setChatStatus('choosing')} 
-      />;
-    }
-
-    // Type selection
-    if (chatStatus === 'choosing') {
-      return (
-        <AgoraChatTypeSelector 
-          expert={expert} 
-          onSelectChatType={handleStartChat} 
-        />
-      );
-    }
-
-    // Connected or connecting
-    return (
-      <>
-        <AgoraCallContent
-          callState={callState}
-          callStatus={chatStatus}
-          showChat={showChat}
-          duration={duration}
-          remainingTime={remainingFreeTime}
-          cost={cost}
-          formatTime={formatTime}
-          expertPrice={expert.price}
-          userName={userProfile?.name || 'You'}
-          expertName={expert.name}
-        />
-        
-        {chatStatus === 'connected' && (
-          <div className="flex justify-center mt-4">
-            <AgoraCallControls
-              callState={callState}
-              callType={callType}
-              isExtending={isExtending}
-              isFullscreen={false}
-              onToggleMute={handleToggleMute}
-              onToggleVideo={handleToggleVideo}
-              onEndCall={handleEndChat}
-              onExtendCall={() => {}}
-              onToggleChat={handleToggleChatPanel}
-              onToggleFullscreen={() => {}}
-            />
-          </div>
-        )}
-      </>
-    );
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleCloseModal()}>
       <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden">
         <div className="p-4">
           <AgoraCallModalHeader
@@ -217,7 +126,28 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
           />
           
           <div className="my-4">
-            {renderModalContent()}
+            <ChatModalContent
+              expertId={expert.id}
+              expertName={expert.name}
+              expertPrice={expert.price}
+              chatStatus={chatStatus}
+              chatType={chatType}
+              showChat={showChat}
+              errorMessage={errorMessage || callError}
+              callState={callState}
+              callType={callType}
+              duration={duration}
+              cost={cost}
+              remainingFreeTime={remainingFreeTime}
+              isExtending={isExtending}
+              formatTime={formatTime}
+              onToggleMute={handleToggleMute}
+              onToggleVideo={handleToggleVideo}
+              onStartChat={handleStartChat}
+              onEndChat={handleEndChatClick}
+              onToggleChat={handleToggleChatPanel}
+              onRetry={handleRetry}
+            />
           </div>
         </div>
       </DialogContent>
