@@ -4,7 +4,7 @@ import { UserProfile } from '@/types/supabase';
 import { ExpertProfile } from '@/types/supabase/expert';
 import { ExpertProfile as AuthExpertProfile } from '@/contexts/auth/types';
 
-// Updated to accept both ExpertProfile types
+// Domain entity types
 export type MessagingUser = ExpertProfile | AuthExpertProfile | UserProfile | null;
 
 export interface Conversation {
@@ -16,6 +16,15 @@ export interface Conversation {
   unreadCount: number;
 }
 
+// Use case interfaces
+export interface MessagingRepository {
+  fetchMessages: (userId: string, partnerId: string) => Promise<Message[]>;
+  fetchConversations: (userId: string) => Promise<Conversation[]>;
+  sendMessage: (senderId: string, receiverId: string, content: string) => Promise<Message | null>;
+  markConversationAsRead: (userId: string, partnerId: string) => Promise<boolean>;
+}
+
+// Return types for hooks
 export interface UseMessagingReturn {
   messages: Message[];
   conversations: Conversation[];
@@ -27,4 +36,19 @@ export interface UseMessagingReturn {
   fetchConversations: () => Promise<Conversation[]>;
   sendMessage: (receiverId: string, content: string) => Promise<Message | null>;
   markConversationAsRead: (partnerId: string) => Promise<boolean>;
+}
+
+export interface UseMessagesReturn {
+  messages: Message[];
+  messagesLoading: boolean;
+  fetchMessages: (partnerId: string) => Promise<Message[]>;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  error: string | null;
+}
+
+export interface UseConversationsReturn {
+  conversations: Conversation[];
+  conversationsLoading: boolean;
+  fetchConversations: () => Promise<Conversation[]>;
+  error: string | null;
 }

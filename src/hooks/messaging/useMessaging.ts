@@ -6,6 +6,9 @@ import { useConversations } from './useConversations';
 import { useMessages } from './useMessages';
 import { sendMessage as sendMessageApi, markConversationAsRead as markConversationAsReadApi } from './messagingApi';
 
+/**
+ * Main messaging hook that provides complete messaging functionality
+ */
 export const useMessaging = (currentUser: MessagingUser): UseMessagingReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -13,14 +16,16 @@ export const useMessaging = (currentUser: MessagingUser): UseMessagingReturn => 
   const { 
     conversations, 
     conversationsLoading, 
-    fetchConversations, 
+    fetchConversations,
+    error: conversationsError 
   } = useConversations(currentUser);
   
   const {
     messages,
     messagesLoading,
     fetchMessages,
-    setMessages
+    setMessages,
+    error: messagesError
   } = useMessages(currentUser);
   
   /**
@@ -35,7 +40,7 @@ export const useMessaging = (currentUser: MessagingUser): UseMessagingReturn => 
       
       if (newMessage) {
         // Update local messages state
-        setMessages(prev => [...prev, newMessage as Message]);
+        setMessages(prev => [...prev, newMessage]);
       }
       
       return newMessage;
@@ -69,7 +74,7 @@ export const useMessaging = (currentUser: MessagingUser): UseMessagingReturn => 
       }
       
       return success;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in markConversationAsRead:', error);
       return false;
     } finally {
@@ -77,13 +82,16 @@ export const useMessaging = (currentUser: MessagingUser): UseMessagingReturn => 
     }
   };
   
+  // Combine errors from all sources
+  const combinedError = error || conversationsError || messagesError;
+  
   return {
     messages,
     conversations,
     loading,
     messagesLoading,
     conversationsLoading,
-    error,
+    error: combinedError,
     fetchMessages,
     fetchConversations,
     sendMessage,
