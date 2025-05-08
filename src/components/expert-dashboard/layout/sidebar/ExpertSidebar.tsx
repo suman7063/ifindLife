@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import ExpertProfileSummary from './ExpertProfileSummary';
 import SidebarNavItem from './SidebarNavItem';
@@ -20,7 +21,7 @@ const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, expertProfile } = useAuth();
   // Fix: Pass the expert ID as a number or undefined instead of the whole profile
-  const { conversations, fetchConversations } = useMessaging(expertProfile?.id ? parseInt(expertProfile.id) : undefined);
+  const { conversations, fetchConversations } = useMessaging(expertProfile?.id ? Number(expertProfile.id) : undefined);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Calculate unread message count

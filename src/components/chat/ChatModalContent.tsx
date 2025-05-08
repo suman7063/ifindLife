@@ -3,7 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import AgoraChatTypeSelector from '@/components/chat/AgoraChatTypeSelector';
 import AgoraCallContent from '@/components/chat/AgoraCallContent';
-import AgoraCallControls from '@/components/chat/AgoraCallControls';
+import AgoraCallControls from '@/components/call/AgoraCallControls'; // Fixed import path
 import CallAuthMessage from '@/components/chat/modals/CallAuthMessage';
 import CallErrorMessage from '@/components/chat/modals/CallErrorMessage';
 import { CallState } from '@/utils/agoraService';
