@@ -64,7 +64,7 @@ const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
       <TabsList className="w-full grid grid-cols-3 mb-8">
         <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="reviews">Reviews</TabsTrigger>
-        <TabsTrigger value="booking">Book Session</TabsTrigger>
+        <TabsTrigger id="booking-tab" value="booking">Book Session</TabsTrigger>
       </TabsList>
       
       <TabsContent value="about">

@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AgoraCallModal from '@/components/AgoraCallModal';
+import AgoraChatModal from '@/components/AgoraChatModal';
 import { toast } from 'sonner';
 import ExpertHeader from '@/components/expert/ExpertHeader';
 import ExpertProfile from '@/components/expert/ExpertProfile';
@@ -13,10 +14,14 @@ const ExpertDetail = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   
   useEffect(() => {
     if (searchParams.get('call') === 'true') {
       setIsCallModalOpen(true);
+    }
+    if (searchParams.get('chat') === 'true') {
+      setIsChatModalOpen(true);
     }
   }, [searchParams]);
   
@@ -69,6 +74,23 @@ const ExpertDetail = () => {
     }
   };
   
+  const handleBookClick = () => {
+    const tabElement = document.getElementById('booking-tab');
+    if (tabElement) {
+      tabElement.click();
+    }
+  };
+  
+  const handleChatClick = () => {
+    if (expert.online && expert.waitTime === "Available") {
+      setIsChatModalOpen(true);
+    } else {
+      toast.error("Expert Unavailable", {
+        description: "This expert is currently offline or busy. Please try again later."
+      });
+    }
+  };
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -80,7 +102,9 @@ const ExpertDetail = () => {
             <div className="md:col-span-1">
               <ExpertProfile 
                 expert={expert} 
-                onCallClick={handleCallClick} 
+                onCallClick={handleCallClick}
+                onBookClick={handleBookClick}
+                onChatClick={handleChatClick}
               />
             </div>
             
@@ -96,6 +120,17 @@ const ExpertDetail = () => {
       <AgoraCallModal 
         isOpen={isCallModalOpen}
         onClose={() => setIsCallModalOpen(false)}
+        expert={{
+          id: expert.id,
+          name: expert.name,
+          imageUrl: expert.imageUrl,
+          price: expert.price
+        }}
+      />
+      
+      <AgoraChatModal 
+        isOpen={isChatModalOpen}
+        onClose={() => setIsChatModalOpen(false)}
         expert={{
           id: expert.id,
           name: expert.name,

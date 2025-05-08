@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, PhoneCall, Star, MessageSquare, Clock } from 'lucide-react';
+import { Calendar, PhoneCall, Star, MessageCircle, Clock } from 'lucide-react';
 
 interface ExpertProfileProps {
   expert: {
@@ -19,9 +19,16 @@ interface ExpertProfileProps {
     languages: string[];
   };
   onCallClick: () => void;
+  onBookClick: () => void;
+  onChatClick: () => void;
 }
 
-const ExpertProfile: React.FC<ExpertProfileProps> = ({ expert, onCallClick }) => {
+const ExpertProfile: React.FC<ExpertProfileProps> = ({ 
+  expert, 
+  onCallClick, 
+  onBookClick, 
+  onChatClick 
+}) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6 border border-border">
       {/* Expert Image and Online Status */}
@@ -97,6 +104,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({ expert, onCallClick }) =>
         <Button 
           variant="outline"
           className="flex items-center justify-center"
+          onClick={onBookClick}
         >
           <Calendar className="w-4 h-4 mr-2" />
           Book
@@ -105,8 +113,9 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({ expert, onCallClick }) =>
         <Button 
           variant="outline" 
           className="col-span-2 flex items-center justify-center"
+          onClick={onChatClick}
         >
-          <MessageSquare className="w-4 h-4 mr-2" />
+          <MessageCircle className="w-4 h-4 mr-2" />
           Chat
         </Button>
       </div>

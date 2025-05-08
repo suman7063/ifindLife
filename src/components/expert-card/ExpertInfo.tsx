@@ -10,38 +10,42 @@ const ExpertInfo: React.FC<ExpertInfoProps> = ({
   specialties,
   rating,
   waitTime,
-  price,
+  price
 }) => {
   return (
-    <div className="space-y-2 mb-3">
-      <div className="flex justify-between items-start">
-        <h3 className="font-medium">{name}</h3>
-        <div className="flex items-center text-yellow-500">
-          <Star className="h-3.5 w-3.5 fill-current" />
-          <span className="ml-1 text-sm text-foreground">{rating?.toFixed(1) || '0.0'}</span>
+    <div className="space-y-3 mb-4">
+      <div>
+        <h3 className="font-semibold text-lg">{name}</h3>
+        <p className="text-sm text-muted-foreground">{experience} years experience</p>
+      </div>
+      
+      <div className="flex items-center">
+        <div className="flex items-center text-amber-500 mr-3">
+          <Star className="h-4 w-4 fill-current" />
+          <span className="ml-1 text-sm font-medium">{rating}</span>
+        </div>
+        
+        <div className="flex items-center text-sm">
+          <span className={`h-2 w-2 rounded-full mr-1 ${waitTime === 'Available' ? 'bg-green-500' : 'bg-orange-500'}`}></span>
+          <span className="text-muted-foreground">{waitTime}</span>
         </div>
       </div>
       
-      <p className="text-xs text-muted-foreground">
-        {experience} years experience
-      </p>
-      
       <div className="flex flex-wrap gap-1">
-        {specialties.slice(0, 2).map((specialty, i) => (
-          <Badge key={i} variant="outline" className="text-xs bg-secondary/10">
+        {specialties.slice(0, 3).map((specialty, index) => (
+          <Badge key={index} variant="outline" className="text-xs">
             {specialty}
           </Badge>
         ))}
-        {specialties.length > 2 && (
+        {specialties.length > 3 && (
           <Badge variant="outline" className="text-xs">
-            +{specialties.length - 2}
+            +{specialties.length - 3}
           </Badge>
         )}
       </div>
       
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-muted-foreground">{waitTime || 'Available'}</span>
-        <span className="font-medium text-sm">₹{price}/min</span>
+      <div className="font-semibold">
+        ₹{price}/min
       </div>
     </div>
   );

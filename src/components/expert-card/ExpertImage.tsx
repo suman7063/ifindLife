@@ -6,16 +6,16 @@ import { ExpertImageProps } from './types';
 const ExpertImage: React.FC<ExpertImageProps> = ({ imageUrl, name, online }) => {
   return (
     <div className="relative">
-      <div className="h-40 w-full overflow-hidden">
-        <img
-          src={imageUrl || '/placeholder.svg'}
-          alt={name}
+      <div className="aspect-[3/2] overflow-hidden">
+        <img 
+          src={imageUrl} 
+          alt={name} 
           className="w-full h-full object-cover"
         />
       </div>
       
       {online && (
-        <Badge className="absolute top-2 right-2 bg-green-500 text-white">
+        <Badge className="absolute top-2 left-2 bg-green-500 text-white border-0">
           Online
         </Badge>
       )}

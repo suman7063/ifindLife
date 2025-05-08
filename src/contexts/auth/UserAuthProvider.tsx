@@ -45,6 +45,15 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return false;
   };
   
+  // Helper function to convert non-promise functions to promise
+  const asPromise = <T,>(fn: ((id: string | number) => T) | undefined): ((id: string | number) => Promise<T>) => {
+    return async (id: string | number) => {
+      if (!fn) return Promise.resolve(false as T);
+      const result = fn(id);
+      return Promise.resolve(result);
+    };
+  };
+  
   // Create a compatible context value that matches the UserAuthContextType
   const userAuthValue = {
     currentUser: auth.userProfile,
@@ -62,7 +71,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     rechargeWallet: auth.rechargeWallet || (async () => false),
     addReview: adaptedAddReview,
     reportExpert: adaptedReportExpert,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    hasTakenServiceFrom: asPromise(auth.hasTakenServiceFrom),
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,

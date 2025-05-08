@@ -1,84 +1,75 @@
 
-import { useAuth as useUnifiedAuth } from '@/contexts/auth/AuthContext';
-import { useState } from 'react';
-import { toast } from 'sonner';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useState, useCallback } from 'react';
 
-/**
- * Hook that provides backward compatibility for old auth hooks
- * Maps unified auth context to the separate old expert/user auth contexts
- */
 export const useAuthBackCompat = () => {
-  const unifiedAuth = useUnifiedAuth();
-  const [error, setError] = useState<string | null>(null);
+  const auth = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
-  // Create a compatible expert auth implementation
-  const expertAuth = {
-    currentExpert: unifiedAuth.expertProfile,
-    isAuthenticated: unifiedAuth.isAuthenticated && unifiedAuth.role === 'expert',
-    loading: unifiedAuth.isLoading,
-    isLoading: unifiedAuth.isLoading,
-    error: unifiedAuth.error || error,
-    initialized: true,
-    authInitialized: true,
-    user: unifiedAuth.user,
-    login: async (email: string, password: string) => {
-      try {
-        return await unifiedAuth.login(email, password, 'expert');
-      } catch (error: any) {
-        console.error('Expert login error:', error);
-        setError(error?.message || 'An error occurred during expert login');
-        toast.error('An error occurred during expert login');
-        return false;
-      }
-    },
-    logout: unifiedAuth.logout,
-    register: async (data: any) => {
-      if (unifiedAuth.expertSignup) {
-        return await unifiedAuth.expertSignup(data);
-      }
-      setError('Expert signup not implemented');
-      console.error('Expert signup not implemented');
+  // Compatibility function for login
+  const handleLogin = useCallback(async (email: string, password: string, role?: string) => {
+    try {
+      setIsSubmitting(true);
+      setErrorMessage(null);
+      const success = await auth.login(email, password, role);
+      return success;
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Login failed');
       return false;
-    },
-    updateProfile: async () => {
-      setError('Update profile not yet implemented in compatibility layer');
-      console.error('Update profile not yet implemented in compatibility layer');
-      return false;
-    },
-    hasUserAccount: async () => {
-      setError('hasUserAccount not yet implemented in compatibility layer');
-      console.error('hasUserAccount not yet implemented in compatibility layer');
-      return false;
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }, [auth]);
   
-  // Create a compatible user auth implementation
-  const userAuth = {
-    currentUser: unifiedAuth.userProfile,
-    isAuthenticated: unifiedAuth.isAuthenticated && unifiedAuth.role === 'user',
-    loading: unifiedAuth.isLoading,
-    isLoading: unifiedAuth.isLoading,
-    error: unifiedAuth.error || error,
-    initialized: true,
-    authInitialized: true,
-    user: unifiedAuth.user,
-    login: async (email: string, password: string) => {
-      try {
-        return await unifiedAuth.login(email, password, 'user');
-      } catch (error: any) {
-        console.error('User login error:', error);
-        setError(error?.message || 'An error occurred during user login');
-        toast.error('An error occurred during user login');
-        return false;
+  // Compatibility function for signup
+  const handleSignup = useCallback(async (email: string, password: string, userData?: any) => {
+    try {
+      setIsSubmitting(true);
+      setErrorMessage(null);
+      
+      // Use signup function from auth context if available
+      if (auth.signup) {
+        return await auth.signup(email, password, userData);
       }
-    },
-    logout: unifiedAuth.logout,
-    register: async (data: any) => {
-      setError('User register not yet implemented in compatibility layer');
-      console.error('User register not yet implemented in compatibility layer');
+      
+      // Fallback for expert signup
+      if (auth.expertSignup) {
+        return await auth.expertSignup(email, password, userData);
+      }
+      
+      throw new Error('Signup function not available');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Signup failed');
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
-  };
+  }, [auth]);
   
-  return { expertAuth, userAuth };
+  // Compatibility function for logout
+  const handleLogout = useCallback(async () => {
+    try {
+      setIsSubmitting(true);
+      setErrorMessage(null);
+      return await auth.logout();
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Logout failed');
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [auth]);
+  
+  return {
+    isAuthenticated: auth.isAuthenticated,
+    user: auth.user,
+    userProfile: auth.userProfile,
+    login: handleLogin,
+    signup: handleSignup,
+    logout: handleLogout,
+    isSubmitting,
+    error: errorMessage,
+    isLoading: auth.isLoading
+  };
 };
