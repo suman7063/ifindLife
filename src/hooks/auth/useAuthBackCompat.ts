@@ -1,6 +1,7 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useState, useCallback } from 'react';
+import type { ExpertProfile, UserProfile } from '@/contexts/auth/types';
 
 export const useAuthBackCompat = () => {
   const auth = useAuth();
@@ -80,7 +81,7 @@ export const useAuthBackCompat = () => {
   };
 
   const expertAuth = {
-    currentUser: auth.expertProfile,
+    currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
     login: handleLogin,
     logout: handleLogout,

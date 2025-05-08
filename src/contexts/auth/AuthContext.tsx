@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile, ExpertProfile, UserRole } from '@/contexts/auth/types';
 
 export type AuthContextType = {
   isAuthenticated: boolean;
@@ -10,22 +10,24 @@ export type AuthContextType = {
   user: User | null;
   session: Session | null;
   userProfile: UserProfile | null;
-  expertProfile: any | null;
-  role: string | null;
+  expertProfile: ExpertProfile | null;
+  role: UserRole;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   login: (email: string, password: string, role?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   updateUserProfile?: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateExpertProfile?: (updates: Partial<ExpertProfile>) => Promise<boolean>;
   updatePassword?: (password: string) => Promise<boolean>;
   signup?: (email: string, password: string, userData?: any) => Promise<boolean>;
-  hasTakenServiceFrom?: (expertId: number) => boolean;
+  hasTakenServiceFrom?: (expertId: number | string) => Promise<boolean>;
   addToFavorites?: (expertId: number) => Promise<boolean>;
   removeFromFavorites?: (expertId: number) => Promise<boolean>;
   rechargeWallet?: (amount: number) => Promise<boolean>;
   addReview?: (reviewParams: any) => Promise<boolean>;
   reportExpert?: (reportParams: any) => Promise<boolean>;
-  getExpertShareLink?: (expertId: number) => string;
+  getExpertShareLink?: (expertId: number | string) => string;
   getReferralLink?: () => string | null;
+  error: string | null;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,9 +38,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [expertProfile, setExpertProfile] = useState<any | null>(null);
-  const [role, setRole] = useState<string | null>(null);
+  const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
+  const [role, setRole] = useState<UserRole>(null);
   const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
+  const [error, setError] = useState<string | null>(null);
 
   // Initialize auth state and set up listener
   useEffect(() => {
@@ -125,22 +128,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Fetch expert profile (if exists)
-      const { data: expertProfile, error: expertError } = await supabase
-        .from('experts')
+      const { data: expertData, error: expertError } = await supabase
+        .from('expert_accounts')
         .select('*')
-        .eq('user_id', userId)
+        .eq('auth_id', userId)
         .single();
       
       if (expertError && expertError.code !== 'PGRST116') { // Not found error
         console.error("Error fetching expert profile:", expertError);
       }
+
+      // Ensure the expert data has the status property
+      const expertProfile = expertData ? {
+        ...expertData,
+        status: expertData.status || 'pending'
+      } as ExpertProfile : null;
       
       // Determine role and session type
       const hasUserProfile = !!userProfile;
       const hasExpertProfile = !!expertProfile && expertProfile.status === 'approved';
       
       let sessionType: 'none' | 'user' | 'expert' | 'dual' = 'none';
-      let role: string | null = null;
+      let role: UserRole = null;
       
       if (hasUserProfile && hasExpertProfile) {
         sessionType = 'dual';
@@ -150,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Check local storage for saved role preference
         const savedRole = localStorage.getItem('preferredRole');
         if (savedRole === 'expert' || savedRole === 'user') {
-          role = savedRole;
+          role = savedRole as UserRole;
         }
       } else if (hasUserProfile) {
         sessionType = 'user';
@@ -168,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       setUserProfile(userProfile || null);
-      setExpertProfile(expertProfile || null);
+      setExpertProfile(expertProfile);
       setSessionType(sessionType);
       setRole(role);
       
@@ -204,11 +213,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error("Login error:", error);
+        setError(error.message);
         return false;
       }
       
       if (!data.session) {
         console.error("Login failed: No session created");
+        setError("Login failed: No session was created");
         return false;
       }
       
@@ -223,8 +234,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Unexpected login error:", error);
+      setError(error.message || "Unexpected login error");
       return false;
     } finally {
       setIsLoading(false);
@@ -241,6 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (error) {
         console.error("Logout error:", error);
+        setError(error.message);
         return false;
       }
       
@@ -258,11 +271,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       console.log("AuthContext: Logout successful");
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Unexpected logout error:", error);
+      setError(error.message || "Unexpected logout error");
       return false;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Update User Profile
+  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+    if (!user) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', user.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setUserProfile(prev => prev ? { ...prev, ...updates } : null);
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error updating user profile:', error);
+      setError(error.message || "Error updating profile");
+      return false;
+    }
+  };
+  
+  // Update Expert Profile
+  const updateExpertProfile = async (updates: Partial<ExpertProfile>): Promise<boolean> => {
+    if (!user || !expertProfile) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(updates)
+        .eq('auth_id', user.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setExpertProfile(prev => prev ? { ...prev, ...updates } : null);
+      
+      return true;
+    } catch (error: any) {
+      console.error('Error updating expert profile:', error);
+      setError(error.message || "Error updating profile");
+      return false;
     }
   };
 
@@ -276,8 +336,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     expertProfile,
     role,
     sessionType,
+    error,
     login,
-    logout
+    logout,
+    updateUserProfile,
+    updateExpertProfile
   };
 
   return (
