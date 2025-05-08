@@ -1,5 +1,5 @@
-
 import { lazy } from 'react';
+import NotFound from './pages/NotFound'; // Import NotFound directly to avoid lazy loading issues
 
 // Define route types without extending RouteObject from react-router-dom
 export interface AppRoute {
