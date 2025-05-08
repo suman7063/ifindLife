@@ -43,7 +43,7 @@ const Services = () => {
                 Comprehensive mental wellness services tailored to your unique needs and journey.
               </p>
               
-              {/* Service Navigation Menu - Fixed for better visibility */}
+              {/* Service Navigation Menu - Updated with anchor links */}
               <div className="flex justify-center mb-8">
                 <div className="flex flex-wrap justify-center gap-2">
                   {servicesData.map((service) => (
