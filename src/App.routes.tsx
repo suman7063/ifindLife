@@ -1,4 +1,3 @@
-
 import { lazy } from 'react';
 import NotFound from './pages/NotFound'; // Import NotFound directly to avoid lazy loading issues
 
@@ -37,13 +36,6 @@ const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
 const Referral = lazy(() => import('./pages/Referral'));
 const UserWallet = lazy(() => import('./pages/UserWallet'));
-
-// Import service category pages
-const TherapyService = lazy(() => import('./pages/service/TherapyService'));
-const MeditationService = lazy(() => import('./pages/service/MeditationService'));
-const ListeningService = lazy(() => import('./pages/service/ListeningService'));
-const RetreatsService = lazy(() => import('./pages/service/RetreatsService'));
-const CoachingService = lazy(() => import('./pages/service/CoachingService'));
 
 export const routes: AppRoute[] = [
   // Main navigation routes 
@@ -111,27 +103,6 @@ export const routes: AppRoute[] = [
   {
     path: '/services/:serviceId',
     element: <ServiceDetailPage />
-  },
-  // New service category routes
-  {
-    path: '/services/therapy',
-    element: <TherapyService />
-  },
-  {
-    path: '/services/meditation',
-    element: <MeditationService />
-  },
-  {
-    path: '/services/listening',
-    element: <ListeningService />
-  },
-  {
-    path: '/services/retreats',
-    element: <RetreatsService />
-  },
-  {
-    path: '/services/coaching',
-    element: <CoachingService />
   },
   {
     path: '/privacy',

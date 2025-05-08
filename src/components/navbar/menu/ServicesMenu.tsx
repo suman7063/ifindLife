@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 
 const ServicesMenu = () => {
+  console.log('ServicesMenu component rendering');
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Services</NavigationMenuTrigger>
@@ -27,7 +28,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/therapy" 
+                to="/services/therapy-sessions" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Therapy Sessions
@@ -37,7 +38,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/meditation" 
+                to="/services/guided-meditations" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Guided Meditations
@@ -47,17 +48,17 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/listening" 
+                to="/services/mindful-listening" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
-                Heart2Heart Listening
+                Heart2Heart Listening Sessions
               </Link>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/retreats" 
+                to="/services/offline-retreats" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Offline Retreats
@@ -67,7 +68,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/coaching" 
+                to="/services/life-coaching" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Life Coaching

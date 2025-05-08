@@ -76,18 +76,17 @@ const NavigationMenuContent = React.forwardRef<
       className
     )}
     onMouseLeave={(e) => {
-      if (document.activeElement) {
-        const element = e.currentTarget;
-        setTimeout(() => {
-          if (element && !element.contains(document.activeElement) && !element.matches(':hover')) {
-            const event = new MouseEvent('mouseleave', {
-              bubbles: true,
-              cancelable: true,
-            });
-            element.dispatchEvent(event);
-          }
-        }, 300);
-      }
+      e.persist();
+      setTimeout(() => {
+        if (!e.currentTarget.contains(document.activeElement) &&
+            !e.currentTarget.matches(':hover')) {
+          const event = new MouseEvent('mouseleave', {
+            bubbles: true,
+            cancelable: true,
+          });
+          e.currentTarget.dispatchEvent(event);
+        }
+      }, 300);
     }}
     {...props}
   />
@@ -108,18 +107,17 @@ const NavigationMenuViewport = React.forwardRef<
       )}
       ref={ref}
       onMouseLeave={(e) => {
-        if (document.activeElement) {
-          const element = e.currentTarget;
-          setTimeout(() => {
-            if (element && !element.contains(document.activeElement) && !element.matches(':hover')) {
-              const event = new MouseEvent('mouseleave', {
-                bubbles: true,
-                cancelable: true,
-              });
-              element.dispatchEvent(event);
-            }
-          }, 300);
-        }
+        e.persist();
+        setTimeout(() => {
+          if (!e.currentTarget.contains(document.activeElement) && 
+              !e.currentTarget.matches(':hover')) {
+            const event = new MouseEvent('mouseleave', {
+              bubbles: true,
+              cancelable: true,
+            });
+            e.currentTarget.dispatchEvent(event);
+          }
+        }, 300);
       }}
       {...props}
     />
