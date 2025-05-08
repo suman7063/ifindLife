@@ -1,5 +1,5 @@
-
 import { MessagingRepository, MessagingUser, Conversation, Message } from './types';
+import { Message as AppointmentMessage } from '@/types/appointments';
 
 /**
  * API functions for messaging functionality
@@ -8,7 +8,7 @@ export const messagingRepository: MessagingRepository = {
   /**
    * Fetch messages between two users
    */
-  fetchMessages: async (userId: string, partnerId: string): Promise<Message[]> => {
+  fetchMessages: async (userId: string, partnerId: string): Promise<AppointmentMessage[]> => {
     try {
       console.log(`Fetching messages between ${userId} and ${partnerId}`);
       
