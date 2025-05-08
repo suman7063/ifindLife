@@ -1,223 +1,151 @@
 
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { Message } from '@/types/appointments';
-import { MessagingUser, MessagingRepository } from './types';
+import { MessagingRepository, MessagingUser, Conversation, Message } from './types';
 
-// Implementation of the MessagingRepository interface for Supabase
-class SupabaseMessagingRepository implements MessagingRepository {
+/**
+ * API functions for messaging functionality
+ */
+export const messagingRepository: MessagingRepository = {
   /**
-   * Fetch messages for a conversation between two users
+   * Fetch messages between two users
    */
-  async fetchMessages(userId: string, partnerId: string): Promise<Message[]> {
+  fetchMessages: async (userId: string, partnerId: string): Promise<Message[]> => {
     try {
-      const { data: messages, error: messagesError } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`and(sender_id.eq.${userId},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${userId})`)
-        .order('created_at', { ascending: true });
+      console.log(`Fetching messages between ${userId} and ${partnerId}`);
       
-      if (messagesError) {
-        console.error('Error fetching messages:', messagesError);
-        toast.error('Failed to load messages');
-        return [];
-      }
+      // Mock API call - in a real app, this would be a call to your backend
+      // Simulating API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Mark received messages as read
-      const unreadMessages = messages?.filter(msg => 
-        msg.sender_id === partnerId && 
-        msg.receiver_id === userId && 
-        !msg.read
-      ) || [];
-      
-      if (unreadMessages.length > 0) {
-        const unreadIds = unreadMessages.map(msg => msg.id);
-        const { error: updateError } = await supabase
-          .from('messages')
-          .update({ read: true })
-          .in('id', unreadIds);
-        
-        if (updateError) {
-          console.error('Error marking messages as read:', updateError);
+      // Return mock data
+      return [
+        {
+          id: '1',
+          sender_id: userId,
+          receiver_id: partnerId,
+          content: 'Hello, how are you?',
+          created_at: new Date().toISOString(),
+          read: true
+        },
+        {
+          id: '2',
+          sender_id: partnerId,
+          receiver_id: userId,
+          content: 'I am good, thanks for asking!',
+          created_at: new Date().toISOString(),
+          read: false
         }
-      }
-      
-      return messages as Message[] || [];
-    } catch (error: any) {
-      console.error('Error in fetchMessages:', error);
-      return [];
+      ];
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw error;
     }
-  }
-
+  },
+  
   /**
    * Fetch all conversations for a user
    */
-  async fetchConversations(userId: string) {
+  fetchConversations: async (userId: string): Promise<Conversation[]> => {
     try {
-      // First get all messages where the user is either sender or receiver
-      const { data: messageData, error: messageError } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-        .order('created_at', { ascending: false });
+      console.log(`Fetching conversations for user ${userId}`);
       
-      if (messageError) {
-        console.error('Error fetching messages:', messageError);
-        toast.error('Failed to load conversations');
-        return [];
-      }
+      // Mock API call - in a real app, this would be a call to your backend
+      // Simulating API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      if (!messageData || messageData.length === 0) {
-        return [];
-      }
-      
-      // Extract unique user IDs from messages (excluding the current user)
-      const userIds = new Set<string>();
-      messageData.forEach(msg => {
-        if (msg.sender_id === userId) {
-          userIds.add(msg.receiver_id);
-        } else {
-          userIds.add(msg.sender_id);
+      // Return mock data
+      return [
+        {
+          userId: '123',
+          userName: 'John Doe',
+          userAvatar: 'https://example.com/avatar1.jpg',
+          lastMessage: 'Hello, how are you?',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 2
+        },
+        {
+          userId: '456',
+          userName: 'Jane Smith',
+          userAvatar: 'https://example.com/avatar2.jpg',
+          lastMessage: 'Let\'s schedule a meeting tomorrow.',
+          lastMessageTime: new Date().toISOString(),
+          unreadCount: 0
         }
-      });
-      
-      // Get user details for all conversation partners
-      const userIdsArray = Array.from(userIds);
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, name, profile_picture')
-        .in('id', userIdsArray);
-      
-      if (userError) {
-        console.error('Error fetching user details:', userError);
-      }
-      
-      // Create a map of user IDs to user details for easier access
-      const userMap = new Map();
-      (userData || []).forEach(user => {
-        userMap.set(user.id, user);
-      });
-      
-      // Group messages by conversation partner
-      const conversationMap = new Map<string, any[]>();
-      messageData.forEach(msg => {
-        const partnerId = msg.sender_id === userId ? msg.receiver_id : msg.sender_id;
-        if (!conversationMap.has(partnerId)) {
-          conversationMap.set(partnerId, []);
-        }
-        conversationMap.get(partnerId)?.push(msg);
-      });
-      
-      // Create conversation objects
-      const conversationsArray = [];
-      conversationMap.forEach((messages, userId) => {
-        // Sort messages by created_at in descending order
-        messages.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        
-        const lastMessage = messages[0];
-        const unreadCount = messages.filter(msg => msg.sender_id !== userId && !msg.read).length;
-        const user = userMap.get(userId);
-        
-        conversationsArray.push({
-          userId,
-          userName: user?.name || 'Unknown User',
-          userAvatar: user?.profile_picture,
-          lastMessage: lastMessage.content,
-          lastMessageTime: lastMessage.created_at,
-          unreadCount
-        });
-      });
-      
-      // Sort conversations by last message time
-      conversationsArray.sort((a, b) => 
-        new Date(b.lastMessageTime).getTime() - new Date(a.lastMessageTime).getTime()
-      );
-      
-      return conversationsArray;
-    } catch (error: any) {
-      console.error('Error in fetchConversations:', error);
-      return [];
+      ];
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
+      throw error;
     }
-  }
-
+  },
+  
   /**
    * Send a message to another user
    */
-  async sendMessage(
-    senderId: string, 
-    receiverId: string, 
-    content: string
-  ) {
+  sendMessage: async (senderId: string, receiverId: string, content: string): Promise<Message | null> => {
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: senderId,
-          receiver_id: receiverId,
-          content,
-          read: false
-        })
-        .select()
-        .single();
+      console.log(`Sending message from ${senderId} to ${receiverId}`);
       
-      if (error) {
-        console.error('Error sending message:', error);
-        toast.error('Failed to send message');
-        return null;
-      }
+      // Mock API call - in a real app, this would be a call to your backend
+      // Simulating API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
-      return data as Message;
-    } catch (error: any) {
-      console.error('Error in sendMessage:', error);
-      return null;
+      // Return mock data
+      return {
+        id: Math.random().toString(36).substr(2, 9),
+        sender_id: senderId,
+        receiver_id: receiverId,
+        content,
+        created_at: new Date().toISOString(),
+        read: false
+      };
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
     }
-  }
-
+  },
+  
   /**
    * Mark all messages in a conversation as read
    */
-  async markConversationAsRead(
-    userId: string,
-    partnerId: string
-  ) {
+  markConversationAsRead: async (userId: string, partnerId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('sender_id', partnerId)
-        .eq('receiver_id', userId)
-        .eq('read', false);
+      console.log(`Marking conversation as read between ${userId} and ${partnerId}`);
       
-      if (error) {
-        console.error('Error marking conversation as read:', error);
-        return false;
-      }
+      // Mock API call - in a real app, this would be a call to your backend
+      // Simulating API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Return success
       return true;
     } catch (error) {
-      console.error('Error in markConversationAsRead:', error);
-      return false;
+      console.error('Error marking conversation as read:', error);
+      throw error;
     }
   }
-}
+};
 
-// Export a singleton instance of the repository
-export const messagingRepository = new SupabaseMessagingRepository();
-
-// Adapter functions for backward compatibility
-export async function sendMessage(
-  currentUser: MessagingUser, 
+// Helper function to send a message
+export const sendMessage = async (
+  currentUser: MessagingUser | null, 
   receiverId: string, 
   content: string
-): Promise<Message | null> {
-  if (!currentUser || !currentUser.id) return null;
+): Promise<Message | null> => {
+  if (!currentUser || !currentUser.id) {
+    console.error('Cannot send message: No current user');
+    return null;
+  }
+  
   return messagingRepository.sendMessage(currentUser.id, receiverId, content);
-}
+};
 
-export async function markConversationAsRead(
-  currentUser: MessagingUser,
+// Helper function to mark conversation as read
+export const markConversationAsRead = async (
+  currentUser: MessagingUser | null,
   partnerId: string
-): Promise<boolean> {
-  if (!currentUser || !currentUser.id) return false;
+): Promise<boolean> => {
+  if (!currentUser || !currentUser.id) {
+    console.error('Cannot mark conversation: No current user');
+    return false;
+  }
+  
   return messagingRepository.markConversationAsRead(currentUser.id, partnerId);
-}
+};
