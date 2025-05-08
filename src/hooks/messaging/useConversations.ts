@@ -13,7 +13,7 @@ export function useConversations(currentUser: MessagingUser) {
    * Fetch all conversations for the current user
    */
   const fetchConversations = useCallback(async () => {
-    if (!currentUser) return [];
+    if (!currentUser || !currentUser.id) return [];
     
     try {
       setConversationsLoading(true);

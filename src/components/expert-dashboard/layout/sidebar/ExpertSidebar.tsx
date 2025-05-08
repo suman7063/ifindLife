@@ -20,7 +20,7 @@ import { useMessaging } from '@/hooks/messaging';
 const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, expertProfile } = useAuth();
-  // Passing the entire expertProfile object to the useMessaging hook
+  // Pass the expertProfile directly, now the types are compatible
   const { conversations, fetchConversations } = useMessaging(expertProfile);
   const [unreadCount, setUnreadCount] = useState(0);
 

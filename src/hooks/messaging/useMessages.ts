@@ -14,7 +14,7 @@ export function useMessages(currentUser: MessagingUser) {
    * Fetch messages for a specific conversation
    */
   const fetchMessages = useCallback(async (partnerId: string) => {
-    if (!currentUser) return [];
+    if (!currentUser || !currentUser.id) return [];
     
     try {
       setMessagesLoading(true);

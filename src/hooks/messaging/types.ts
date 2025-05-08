@@ -2,6 +2,10 @@
 import { Message } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
 import { ExpertProfile } from '@/types/supabase/expert';
+import { ExpertProfile as AuthExpertProfile } from '@/contexts/auth/types';
+
+// Updated to accept both ExpertProfile types
+export type MessagingUser = ExpertProfile | AuthExpertProfile | UserProfile | null;
 
 export interface Conversation {
   userId: string;
@@ -11,8 +15,6 @@ export interface Conversation {
   lastMessageTime: string;
   unreadCount: number;
 }
-
-export type MessagingUser = ExpertProfile | UserProfile | null;
 
 export interface UseMessagingReturn {
   messages: Message[];

@@ -12,7 +12,7 @@ export async function sendMessage(
   receiverId: string, 
   content: string
 ): Promise<Message | null> {
-  if (!currentUser) return null;
+  if (!currentUser || !currentUser.id) return null;
   
   try {
     const { data, error } = await supabase
@@ -46,7 +46,7 @@ export async function markConversationAsRead(
   currentUser: MessagingUser,
   partnerId: string
 ): Promise<boolean> {
-  if (!currentUser) return false;
+  if (!currentUser || !currentUser.id) return false;
   
   try {
     const { error } = await supabase
