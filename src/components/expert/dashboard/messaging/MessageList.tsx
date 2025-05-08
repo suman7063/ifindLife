@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2 } from 'lucide-react';
 import { useUserAuth } from '@/hooks/user-auth';
-import { useMessaging } from '@/hooks/useMessaging';
+import { useMessaging } from '@/hooks/messaging';
 import { formatDistanceToNow } from 'date-fns';
 
 interface MessageListProps {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Send } from 'lucide-react';
 import { useUserAuth } from '@/hooks/user-auth';
-import { useMessaging } from '@/hooks/useMessaging';
+import { useMessaging } from '@/hooks/messaging';
 import { format } from 'date-fns';
 import { Message } from '@/types/appointments';
 

@@ -15,12 +15,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { useMessaging } from '@/hooks/useMessaging';
+import { useMessaging } from '@/hooks/messaging';
 
 const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, expertProfile } = useAuth();
-  // Fix: Pass the current expert profile ID to the useMessaging hook
+  // Passing the entire expertProfile object to the useMessaging hook
   const { conversations, fetchConversations } = useMessaging(expertProfile);
   const [unreadCount, setUnreadCount] = useState(0);
 

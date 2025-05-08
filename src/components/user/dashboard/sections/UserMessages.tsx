@@ -7,7 +7,7 @@ import {
   Send, 
   Loader2 
 } from 'lucide-react';
-import { useMessaging } from '@/hooks/useMessaging';
+import { useMessaging } from '@/hooks/messaging';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
