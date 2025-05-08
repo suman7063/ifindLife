@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import AdminDashboard from './AdminDashboard';
 import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
-import ServicesEditor from '@/components/admin/ServicesEditor';
+import { ServicesEditor } from '@/components/admin/services';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
