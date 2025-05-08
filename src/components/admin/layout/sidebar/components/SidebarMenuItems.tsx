@@ -1,27 +1,15 @@
 
 import React from 'react';
-import AdminSidebarMenuItem from './SidebarMenuItem';
-import { 
-  LayoutDashboard, 
-  Users, 
-  FileText, 
-  MessageSquare, 
-  PanelLeft, 
-  Settings,
-  Star,
-  UserCheck,
-  BarChart,
-  Ticket,
-  BookOpen,
-  Bookmark,
-  AtSign,
-  Mail,
-  UserCog,
-  LineChart,
-  FilePieChart,
-  Search
-} from 'lucide-react';
-import { hasPermission } from '@/components/admin/utils/permissionUtils';
+import {
+  OverviewSection,
+  AnalyticsSection,
+  ContentSection,
+  ExpertSection,
+  ContentManagementSection,
+  CommunicationSection,
+  UserManagementSection,
+  SettingsSection
+} from './sections';
 
 type SidebarMenuItemsProps = {
   activeTab?: string;
@@ -30,6 +18,10 @@ type SidebarMenuItemsProps = {
   userPermissions?: Record<string, boolean>;
 };
 
+/**
+ * SidebarMenuItems component renders all menu sections
+ * using smaller, focused components for better maintainability
+ */
 const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
   activeTab,
   onTabChange,
@@ -42,168 +34,62 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
   };
 
   return (
-    <div className="space-y-1">
-      <AdminSidebarMenuItem
-        icon={LayoutDashboard}
-        label="Overview"
-        isActive={activeTab === 'overview'}
-        onClick={() => onTabChange('overview')}
+    <div className="space-y-4">
+      <OverviewSection 
+        activeTab={activeTab}
+        onTabChange={onTabChange}
       />
 
-      {/* Analytics section */}
-      {checkPermission('analytics') && (
-        <AdminSidebarMenuItem
-          icon={LineChart}
-          label="Analytics"
-          isActive={activeTab === 'analytics'}
-          onClick={() => onTabChange('analytics')}
-        />
-      )}
+      <AnalyticsSection
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasAnalyticsPermission={checkPermission('analytics')}
+        hasReportsPermission={checkPermission('reports')}
+      />
 
-      {checkPermission('reports') && (
-        <AdminSidebarMenuItem
-          icon={FilePieChart}
-          label="Reports"
-          isActive={activeTab === 'reports'}
-          onClick={() => onTabChange('reports')}
-        />
-      )}
+      <ContentSection
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasContentPermission={checkPermission('content')}
+      />
 
-      {/* Content Management - New Section */}
-      {checkPermission('content') && (
-        <AdminSidebarMenuItem
-          icon={Search}
-          label="Content Search"
-          isActive={activeTab === 'content'}
-          onClick={() => onTabChange('content')}
-        />
-      )}
+      <ExpertSection
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasExpertsPermission={checkPermission('experts')}
+        hasExpertApprovalsPermission={checkPermission('expertApprovals')}
+      />
 
-      {/* Expert related menus */}
-      {checkPermission('experts') && (
-        <AdminSidebarMenuItem
-          icon={Users}
-          label="Experts"
-          isActive={activeTab === 'experts'}
-          onClick={() => onTabChange('experts')}
-        />
-      )}
-      
-      {checkPermission('expertApprovals') && (
-        <AdminSidebarMenuItem
-          icon={UserCheck}
-          label="Expert Approvals"
-          isActive={activeTab === 'expertApprovals'}
-          onClick={() => onTabChange('expertApprovals')}
-        />
-      )}
+      <ContentManagementSection
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasServicesPermission={checkPermission('services')}
+        hasHeroSectionPermission={checkPermission('herosection')}
+        hasTestimonialsPermission={checkPermission('testimonials')}
+        hasProgramsPermission={checkPermission('programs')}
+        hasSessionsPermission={checkPermission('sessions')}
+        hasBlogPermission={checkPermission('blog')}
+      />
 
-      {/* Service related menus */}
-      {checkPermission('services') && (
-        <AdminSidebarMenuItem
-          icon={FileText}
-          label="Services"
-          isActive={activeTab === 'services'}
-          onClick={() => onTabChange('services')}
-        />
-      )}
+      <CommunicationSection
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasReferralsPermission={checkPermission('referrals')}
+        hasContactPermission={checkPermission('contact')}
+      />
 
-      {/* Content related menus */}
-      {checkPermission('herosection') && (
-        <AdminSidebarMenuItem
-          icon={PanelLeft}
-          label="Hero Section"
-          isActive={activeTab === 'herosection'}
-          onClick={() => onTabChange('herosection')}
-        />
-      )}
-      
-      {checkPermission('testimonials') && (
-        <AdminSidebarMenuItem
-          icon={Star}
-          label="Testimonials"
-          isActive={activeTab === 'testimonials'}
-          onClick={() => onTabChange('testimonials')}
-        />
-      )}
+      <UserManagementSection
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasUsersPermission={checkPermission('users')}
+        isSuperAdmin={isSuperAdmin}
+      />
 
-      {/* Programs and sessions menus */}
-      {checkPermission('programs') && (
-        <AdminSidebarMenuItem
-          icon={BookOpen}
-          label="Programs"
-          isActive={activeTab === 'programs'}
-          onClick={() => onTabChange('programs')}
-        />
-      )}
-      
-      {checkPermission('sessions') && (
-        <AdminSidebarMenuItem
-          icon={Bookmark}
-          label="Sessions"
-          isActive={activeTab === 'sessions'}
-          onClick={() => onTabChange('sessions')}
-        />
-      )}
-
-      {/* Analytics and reporting */}
-      {checkPermission('referrals') && (
-        <AdminSidebarMenuItem
-          icon={AtSign}
-          label="Referrals"
-          isActive={activeTab === 'referrals'}
-          onClick={() => onTabChange('referrals')}
-        />
-      )}
-      
-      {checkPermission('blog') && (
-        <AdminSidebarMenuItem
-          icon={MessageSquare}
-          label="Blog"
-          isActive={activeTab === 'blog'}
-          onClick={() => onTabChange('blog')}
-        />
-      )}
-
-      {/* Communication */}
-      {checkPermission('contact') && (
-        <AdminSidebarMenuItem
-          icon={Mail}
-          label="Contact Submissions"
-          isActive={activeTab === 'contact'}
-          onClick={() => onTabChange('contact')}
-        />
-      )}
-
-      {/* User Management */}
-      {checkPermission('users') && (
-        <AdminSidebarMenuItem
-          icon={Users}
-          label="Users"
-          isActive={activeTab === 'users'}
-          onClick={() => onTabChange('users')}
-        />
-      )}
-
-      {/* Admin only menus */}
-      {isSuperAdmin && (
-        <AdminSidebarMenuItem
-          icon={UserCog}
-          label="Admin Users"
-          isActive={activeTab === 'adminUsers'}
-          onClick={() => onTabChange('adminUsers')}
-        />
-      )}
-
-      {/* Settings menu - usually accessible to all admins */}
-      {checkPermission('settings') && (
-        <AdminSidebarMenuItem
-          icon={Settings}
-          label="Settings"
-          isActive={activeTab === 'settings'}
-          onClick={() => onTabChange('settings')}
-        />
-      )}
+      <SettingsSection
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasSettingsPermission={checkPermission('settings')}
+      />
     </div>
   );
 };
