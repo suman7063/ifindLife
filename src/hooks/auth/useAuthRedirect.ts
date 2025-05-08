@@ -7,11 +7,22 @@ export const useAuthRedirect = (defaultRedirectPath: string = '/') => {
   const location = useLocation();
   
   const getRedirectPath = useCallback((role?: string | null): string => {
-    // First check role-specific default paths
-    if (role === 'expert') {
-      return '/expert-dashboard';
-    } else if (role === 'user') {
-      return '/user-dashboard';
+    // Check for pending booking action in sessionStorage
+    const pendingActionStr = sessionStorage.getItem('pendingAction');
+    if (pendingActionStr) {
+      try {
+        const pendingAction = JSON.parse(pendingActionStr);
+        if (pendingAction.type === 'book' && pendingAction.id) {
+          console.log('Found pending booking action, redirecting to expert page');
+          return `/experts/${pendingAction.id}?book=true`;
+        }
+        if (pendingAction.path) {
+          console.log('Found pending action with path, redirecting to:', pendingAction.path);
+          return pendingAction.path;
+        }
+      } catch (error) {
+        console.error('Error parsing pending action:', error);
+      }
     }
     
     // Check for intended URL in state if coming from a protected route
@@ -27,6 +38,13 @@ export const useAuthRedirect = (defaultRedirectPath: string = '/') => {
     const redirectParam = searchParams.get('redirect');
     if (redirectParam) {
       return redirectParam;
+    }
+    
+    // For role-specific redirects
+    if (role === 'expert') {
+      return '/expert-dashboard';
+    } else if (role === 'user') {
+      return '/user-dashboard';
     }
     
     // Finally, use the default path

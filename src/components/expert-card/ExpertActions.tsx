@@ -33,6 +33,7 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
     e.stopPropagation();
     
     if (!isAuthenticated) {
+      console.log("User not authenticated, storing call action and redirecting to login");
       // Store pending action in sessionStorage
       sessionStorage.setItem('pendingAction', JSON.stringify({
         type: 'call',
@@ -42,7 +43,7 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
       }));
       
       toast.info("Please log in to call this expert");
-      navigate('/user-login');
+      navigate('/login');
       return;
     }
     
@@ -57,6 +58,7 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
     e.stopPropagation();
     
     if (!isAuthenticated) {
+      console.log("User not authenticated, storing book action and redirecting to login");
       // Store pending action in sessionStorage
       sessionStorage.setItem('pendingAction', JSON.stringify({
         type: 'book',
@@ -66,7 +68,7 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
       }));
       
       toast.info("Please log in to book an appointment");
-      navigate('/user-login');
+      navigate('/login');
       return;
     }
     
@@ -81,6 +83,7 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
     e.stopPropagation();
     
     if (!isAuthenticated) {
+      console.log("User not authenticated, storing favorite action and redirecting to login");
       // Store pending action in sessionStorage
       sessionStorage.setItem('pendingAction', JSON.stringify({
         type: 'favorite',
@@ -90,7 +93,7 @@ const ExpertActions: React.FC<ExpertActionProps> = ({
       }));
       
       toast.info("Please log in to add favorites");
-      navigate('/user-login');
+      navigate('/login');
       return;
     }
     

@@ -1,3 +1,4 @@
+
 import { lazy } from 'react';
 import NotFound from './pages/NotFound'; // Import NotFound directly to avoid lazy loading issues
 
@@ -42,6 +43,10 @@ export const routes: AppRoute[] = [
   {
     path: '/login',
     element: <Login />
+  },
+  {
+    path: '/user-login',
+    element: <Login />  // Alias for /login for backward compatibility
   },
   // ExpertLogin is directly imported in AppRoutes.tsx, not included here to avoid circular dependencies
   {

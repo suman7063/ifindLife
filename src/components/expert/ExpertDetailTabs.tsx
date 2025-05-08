@@ -27,20 +27,40 @@ interface ExpertDetailTabsProps {
 
 const ExpertDetailTabs: React.FC<ExpertDetailTabsProps> = ({ expert }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const defaultTab = searchParams.get('book') === 'true' ? 'booking' : 'about';
+  const [currentTab, setCurrentTab] = React.useState<string>('about');
 
-  // Effect to handle URL params for direct booking tab access
+  // Effect to handle URL params for direct booking or call tab access
   useEffect(() => {
     if (searchParams.get('book') === 'true') {
-      // Remove the parameter after setting the tab
-      // to avoid reactivating the tab on navigation
-      searchParams.delete('book');
-      setSearchParams(searchParams);
+      setCurrentTab('booking');
+      // Don't remove the parameter immediately to allow for page refreshes
+    } else if (searchParams.get('call') === 'true') {
+      // In case we want to handle call tabs in the future
+      console.log('Call parameter detected');
     }
-  }, [searchParams, setSearchParams]);
+  }, [searchParams]);
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setCurrentTab(value);
+    
+    // Update URL params based on selected tab
+    if (value === 'booking') {
+      if (!searchParams.has('book')) {
+        searchParams.set('book', 'true');
+        setSearchParams(searchParams);
+      }
+    } else {
+      // Remove booking parameter if not on booking tab
+      if (searchParams.has('book')) {
+        searchParams.delete('book');
+        setSearchParams(searchParams);
+      }
+    }
+  };
 
   return (
-    <Tabs defaultValue={defaultTab}>
+    <Tabs value={currentTab} onValueChange={handleTabChange}>
       <TabsList className="w-full grid grid-cols-3 mb-8">
         <TabsTrigger value="about">About</TabsTrigger>
         <TabsTrigger value="reviews">Reviews</TabsTrigger>

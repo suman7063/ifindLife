@@ -22,9 +22,14 @@ export const useAuthJourneyPreservation = () => {
       if (pendingActionStr) {
         try {
           const pendingAction: PendingAction = JSON.parse(pendingActionStr);
+          console.log("AuthJourneyPreservation - Found pending action:", pendingAction);
+          
+          // Clear the pending action to prevent repeated processing
+          sessionStorage.removeItem('pendingAction');
           
           // Navigate to the stored path if different from current
-          if (window.location.pathname !== pendingAction.path) {
+          if (pendingAction.path && window.location.pathname !== pendingAction.path) {
+            console.log("AuthJourneyPreservation - Navigating to stored path:", pendingAction.path);
             navigate(pendingAction.path);
           }
           
@@ -35,9 +40,6 @@ export const useAuthJourneyPreservation = () => {
             
             // Execute the stored action based on type
             executeStoredAction(pendingAction);
-            
-            // Clear pending action
-            sessionStorage.removeItem('pendingAction');
           }, 500);
         } catch (error) {
           console.error('Error processing pending action:', error);
