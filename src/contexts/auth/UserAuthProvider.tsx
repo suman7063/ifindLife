@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
@@ -80,7 +81,12 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     rechargeWallet: auth.rechargeWallet || (async () => false),
     addReview: adaptedAddReview,
     reportExpert: adaptedReportExpert,
-    hasTakenServiceFrom: asPromise(auth.hasTakenServiceFrom),
+    hasTakenServiceFrom: auth.hasTakenServiceFrom ? 
+      async (id: string | number) => {
+        const result = auth.hasTakenServiceFrom(id);
+        return result instanceof Promise ? result : Promise.resolve(result);
+      } :
+      async () => Promise.resolve(false),
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,

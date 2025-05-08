@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import AppRoutes from './AppRoutes';
 import { AuthProvider } from './contexts/auth/AuthContext';
 import { Toaster } from './components/ui/toaster';
-import { ThemeProvider } from './components/theme-provider';
+import { ThemeProvider } from './components/theme/theme-provider';
 import { FavoritesProvider } from './contexts/favorites';
 
 const App = () => {
