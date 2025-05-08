@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Message } from '@/types/appointments';
 import { UserProfile } from '@/types/supabase';
+import { ExpertProfile } from '@/types/supabase/expert';
 
 interface Conversation {
   userId: string;
@@ -14,7 +15,7 @@ interface Conversation {
   unreadCount: number;
 }
 
-export const useMessaging = (currentUser: UserProfile | null) => {
+export const useMessaging = (currentUser: ExpertProfile | UserProfile | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(false);

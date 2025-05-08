@@ -20,8 +20,8 @@ import { useMessaging } from '@/hooks/useMessaging';
 const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, expertProfile } = useAuth();
-  // Fix: Pass the expert ID as a number or undefined instead of the whole profile
-  const { conversations, fetchConversations } = useMessaging(expertProfile?.id ? Number(expertProfile.id) : undefined);
+  // Fix: Pass the current expert profile ID to the useMessaging hook
+  const { conversations, fetchConversations } = useMessaging(expertProfile);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Calculate unread message count
