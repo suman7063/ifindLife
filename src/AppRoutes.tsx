@@ -40,6 +40,11 @@ const AppRoutes: React.FC = () => {
       console.log('AppRoutes component mounted');
       console.log('Auth state:', { isAuthenticated, role, isLoading });
     }
+
+    // Preload the AboutUs component to ensure it's available
+    import('./pages/AboutUs').catch(e => {
+      console.error('Failed to preload AboutUs:', e);
+    });
   }, [isAuthenticated, role, isLoading]);
 
   return (

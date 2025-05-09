@@ -1,7 +1,6 @@
 
 import { lazy } from 'react';
 import NotFound from './pages/NotFound'; // Import NotFound directly to avoid lazy loading issues
-import AboutUs from './pages/AboutUs'; // Direct import for critical page
 
 // Define route types without extending RouteObject from react-router-dom
 export interface AppRoute {
@@ -22,7 +21,7 @@ const ProgramsForWellnessSeekers = lazy(() => import('./pages/ProgramsForWellnes
 const ProgramsForAcademicInstitutes = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
 const ProgramsForBusiness = lazy(() => import('./pages/ProgramsForBusiness'));
 const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
-// AboutUs is now directly imported at the top
+// AboutUs is imported and defined directly in AppRoutes.tsx only
 const CareerGuidance = lazy(() => import('./pages/CareerGuidance'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
@@ -85,7 +84,7 @@ export const routes: AppRoute[] = [
     path: '/program/:id',
     element: <ProgramDetail />
   },
-  // AboutUs route is removed from here as it's directly defined in AppRoutes.tsx
+  // AboutUs route is completely removed from here as it's directly defined in AppRoutes.tsx
   {
     path: '/career-guidance',
     element: <CareerGuidance />
