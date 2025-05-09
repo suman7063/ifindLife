@@ -6,13 +6,14 @@ import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
 import AdminProtectedRoute from './components/ProtectedRoute';
 import { routes } from './App.routes'; // Import routes from consolidated file
-import AboutUs from './pages/AboutUs'; // Direct import for AboutUs to avoid lazy loading issues
 import NotFound from './pages/NotFound'; // Import NotFound page for 404 handling
 
 // Import critical routes directly to prevent loading issues
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
 import ExpertLogin from './pages/ExpertLogin';
+// Import AboutUs directly to avoid lazy loading issues
+import AboutUs from './pages/AboutUs';
 
 // Only log in development environment
 if (import.meta.env.DEV) {

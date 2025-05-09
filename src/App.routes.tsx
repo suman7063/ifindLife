@@ -21,7 +21,7 @@ const ProgramsForWellnessSeekers = lazy(() => import('./pages/ProgramsForWellnes
 const ProgramsForAcademicInstitutes = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
 const ProgramsForBusiness = lazy(() => import('./pages/ProgramsForBusiness'));
 const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
-// Directly import AboutUs instead of using lazy loading to avoid potential issues
+// Import AboutUs directly instead of using lazy loading
 import AboutUs from './pages/AboutUs';
 const CareerGuidance = lazy(() => import('./pages/CareerGuidance'));
 const Blog = lazy(() => import('./pages/Blog'));
