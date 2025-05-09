@@ -12,8 +12,7 @@ import NotFound from './pages/NotFound'; // Import NotFound page for 404 handlin
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
 import ExpertLogin from './pages/ExpertLogin';
-// Import AboutUs directly to avoid lazy loading issues
-import AboutUs from './pages/AboutUs';
+import AboutUs from './pages/AboutUs'; // Direct import for critical page
 
 // Only log in development environment
 if (import.meta.env.DEV) {
@@ -51,6 +50,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
+        
+        {/* Define AboutUs route directly without lazy loading */}
         <Route path="/about" element={<AboutUs />} />
 
         {/* Admin routes with proper protection */}
