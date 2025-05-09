@@ -21,7 +21,7 @@ const ProgramsForWellnessSeekers = lazy(() => import('./pages/ProgramsForWellnes
 const ProgramsForAcademicInstitutes = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
 const ProgramsForBusiness = lazy(() => import('./pages/ProgramsForBusiness'));
 const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
-// AboutUs is imported and defined directly in AppRoutes.tsx only
+// AboutUs is directly defined in AppRoutes.tsx only
 const CareerGuidance = lazy(() => import('./pages/CareerGuidance'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));

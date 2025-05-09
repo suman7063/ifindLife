@@ -7,12 +7,12 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 import AdminProtectedRoute from './components/ProtectedRoute';
 import { routes } from './App.routes'; // Import routes from consolidated file
 import NotFound from './pages/NotFound'; // Import NotFound page for 404 handling
+import AboutUs from './pages/AboutUs'; // Direct import for critical page
 
 // Import critical routes directly to prevent loading issues
 import UserLogin from './pages/UserLogin';
 import AdminLogin from './pages/AdminLogin';
 import ExpertLogin from './pages/ExpertLogin';
-import AboutUs from './pages/AboutUs'; // Direct import for critical page
 
 // Only log in development environment
 if (import.meta.env.DEV) {
@@ -40,11 +40,6 @@ const AppRoutes: React.FC = () => {
       console.log('AppRoutes component mounted');
       console.log('Auth state:', { isAuthenticated, role, isLoading });
     }
-
-    // Preload the AboutUs component to ensure it's available
-    import('./pages/AboutUs').catch(e => {
-      console.error('Failed to preload AboutUs:', e);
-    });
   }, [isAuthenticated, role, isLoading]);
 
   return (
