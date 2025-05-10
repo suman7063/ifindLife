@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -126,7 +125,7 @@ const AboutUs = () => {
                             </AvatarFallback>
                           </Avatar>
                           <div className="absolute -bottom-2 -right-2 bg-ifind-aqua text-white text-xs py-1 px-2 rounded-full">
-                            Founder
+                            {member.id === 3 ? 'Program Director' : 'Founder'}
                           </div>
                         </div>
                       </div>
