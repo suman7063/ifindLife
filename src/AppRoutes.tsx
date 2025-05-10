@@ -28,6 +28,9 @@ const Index = lazy(() => {
   return import('./pages/Index');
 });
 
+// Import test page for hero banner mockup
+const HomePageTest = lazy(() => import('./pages/HomePageTest'));
+
 // Import the new expert dashboard
 const NewExpertDashboard = lazy(() => import('./pages/NewExpertDashboard'));
 
@@ -50,6 +53,9 @@ const AppRoutes: React.FC = () => {
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
+        
+        {/* New test route for hero banner mockup */}
+        <Route path="/hero-test" element={<HomePageTest />} />
         
         {/* Define AboutUs route directly without lazy loading */}
         <Route path="/about" element={<AboutUs />} />
