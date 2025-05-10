@@ -14,7 +14,7 @@ const WhatWeDoSection = () => {
         "Personalized wellness plans"
       ],
       color: "bg-ifind-aqua/10",
-      href: "/programs"
+      href: "/programs-for-wellness-seekers" // Updated to use the correct path
     },
     {
       title: "For Academic Institutes",

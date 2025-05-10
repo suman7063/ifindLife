@@ -7,13 +7,13 @@ import { UserProfile } from '@/types/supabase';
 import ProgramCard from './ProgramCard';
 import { Loader2 } from 'lucide-react';
 
-interface ProgramsForWellnessSeekersProps {
+interface ProgramsListingComponentProps {
   programType: ProgramType;
   currentUser: UserProfile | null;
   isAuthenticated: boolean;
 }
 
-const ProgramsForWellnessSeekers: React.FC<ProgramsForWellnessSeekersProps> = ({
+const ProgramsListingComponent: React.FC<ProgramsListingComponentProps> = ({
   programType,
   currentUser,
   isAuthenticated
@@ -114,4 +114,4 @@ const ProgramsForWellnessSeekers: React.FC<ProgramsForWellnessSeekersProps> = ({
   );
 };
 
-export default ProgramsForWellnessSeekers;
+export default ProgramsListingComponent;
