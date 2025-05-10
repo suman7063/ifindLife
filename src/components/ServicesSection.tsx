@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import FeaturedPrograms from './services/FeaturedPrograms';
 import SessionDetailDialog from './services/SessionDetailDialog';
-import { Circle, MessageCircle, Headphones, BookOpen } from 'lucide-react';
+import { Circle, MessageCircle, BookOpen } from 'lucide-react';
 
 const ServicesSection = () => {
   const [selectedCategory, setSelectedCategory] = useState<{
@@ -58,7 +59,7 @@ const ServicesSection = () => {
   };
 
   return (
-    <section className="py-16 bg-ifind-purple/5">
+    <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
         <h2 className="text-3xl font-bold mb-4">IFL Programs for Individuals</h2>
         <p className="text-gray-600 mb-8 max-w-3xl">

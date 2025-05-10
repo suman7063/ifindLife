@@ -137,9 +137,9 @@ const EnhancedHero: React.FC = () => {
           </div>
         ))}
         
-        {/* Headline - Positioned higher on mobile */}
+        {/* Headline - Moved down by 100px */}
         <div 
-          className={`absolute inset-0 flex flex-col justify-start ${isMobile ? 'pt-[80px]' : 'pt-[120px]'} px-6 sm:px-12 lg:px-[60px]`}
+          className={`absolute inset-0 flex flex-col justify-start ${isMobile ? 'pt-[180px]' : 'pt-[220px]'} px-6 sm:px-12 lg:px-[60px]`}
         >
           <h1 
             className="text-white font-bold"
