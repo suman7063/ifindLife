@@ -3,7 +3,6 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ServicesEditor from '@/components/admin/ServicesEditor';
 import ExpertsEditor from '@/components/admin/experts';
-import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
 import { SessionsEditor } from '@/components/admin/sessions';
@@ -22,8 +21,6 @@ interface AdminTabsProps {
   setExperts: React.Dispatch<React.SetStateAction<Expert[]>>;
   services: any[];
   setServices: React.Dispatch<React.SetStateAction<any[]>>;
-  heroSettings: any;
-  setHeroSettings: React.Dispatch<React.SetStateAction<any>>;
   testimonials: any[];
   setTestimonials: React.Dispatch<React.SetStateAction<any[]>>;
 }
@@ -35,8 +32,6 @@ const AdminTabs: React.FC<AdminTabsProps> = ({
   setExperts,
   services,
   setServices,
-  heroSettings,
-  setHeroSettings,
   testimonials,
   setTestimonials
 }) => {
