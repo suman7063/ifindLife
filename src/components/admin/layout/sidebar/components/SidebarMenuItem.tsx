@@ -1,39 +1,42 @@
 
 import React from 'react';
-import { SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
-import { cn } from '@/lib/utils';
-import { LucideIcon } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { LucideIcon } from "lucide-react";
 
-interface AdminSidebarMenuItemProps {
-  label: string;
+interface SidebarMenuItemProps {
   icon: LucideIcon;
-  isActive: boolean;
-  onClick: () => void;
-  tooltip?: string;
+  label: string;
+  active?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
 }
 
-const AdminSidebarMenuItem: React.FC<AdminSidebarMenuItemProps> = ({
-  label,
+const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
   icon: Icon,
-  isActive,
+  label,
+  active = false,
   onClick,
-  tooltip
+  disabled = false
 }) => {
   return (
-    <SidebarMenuItem>
-      <SidebarMenuButton 
-        isActive={isActive} 
-        onClick={onClick}
-        tooltip={tooltip || label}
-        className={cn(
-          isActive && "bg-ifind-teal/10 text-ifind-teal font-medium"
-        )}
-      >
-        <Icon className={cn("h-4 w-4", isActive && "text-ifind-teal")} />
-        <span>{label}</span>
-      </SidebarMenuButton>
-    </SidebarMenuItem>
+    <button
+      className={cn(
+        "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors",
+        active 
+          ? "bg-ifind-aqua text-white font-medium" 
+          : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
+        disabled && "opacity-50 cursor-not-allowed"
+      )}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <Icon className="h-4 w-4 mr-3" />
+      <span>{label}</span>
+      {active && (
+        <div className="ml-auto h-full w-1 bg-ifind-purple rounded-full"></div>
+      )}
+    </button>
   );
 };
 
-export default AdminSidebarMenuItem;
+export default SidebarMenuItem;

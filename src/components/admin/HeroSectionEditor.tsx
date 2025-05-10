@@ -1,142 +1,136 @@
 
-import React from 'react';
-import { Input } from "@/components/ui/input";
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Video } from "lucide-react";
-import { HeroSettings } from './hooks/useHeroSettings';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from 'sonner';
 
-// Function to check if a video URL is inappropriate
-const isInappropriateVideo = (url: string): boolean => {
-  const inappropriatePatterns = [
-    'dQw4w9WgXcQ', // Rick Astley Never Gonna Give You Up video ID
-    'rick astley',
-    'rickroll',
-    'never gonna give you up'
-  ];
-  
-  const lowercaseUrl = url.toLowerCase();
-  return inappropriatePatterns.some(pattern => lowercaseUrl.includes(pattern.toLowerCase()));
-};
+interface HeroSectionEditorProps {
+  heroSettings: any;
+  setHeroSettings: React.Dispatch<React.SetStateAction<any>>;
+}
 
-type HeroSettingsProps = {
-  heroSettings: HeroSettings;
-  setHeroSettings: React.Dispatch<React.SetStateAction<HeroSettings>>;
-};
+const HeroSectionEditor: React.FC<HeroSectionEditorProps> = ({ heroSettings, setHeroSettings }) => {
+  const [localSettings, setLocalSettings] = useState(heroSettings);
+  const [isSaving, setIsSaving] = useState(false);
 
-const HeroSectionEditor: React.FC<HeroSettingsProps> = ({ 
-  heroSettings, 
-  setHeroSettings 
-}) => {
-  // Function to handle video URL changes and ensure autoplay is disabled
-  const handleVideoUrlChange = (url: string) => {
-    // Check if URL is inappropriate
-    if (isInappropriateVideo(url)) {
-      toast.error("Inappropriate content detected and blocked");
-      return;
+  const handleSave = () => {
+    setIsSaving(true);
+    try {
+      setHeroSettings(localSettings);
+      // Save to localStorage for persistence
+      localStorage.setItem('ifindlife-content', JSON.stringify({
+        ...JSON.parse(localStorage.getItem('ifindlife-content') || '{}'),
+        heroSettings: localSettings
+      }));
+      toast.success("Hero section settings saved successfully");
+    } catch (error) {
+      toast.error("Failed to save hero section settings");
+      console.error("Error saving hero settings:", error);
+    } finally {
+      setIsSaving(false);
     }
-    
-    // Clean the URL to remove existing autoplay parameter if present
-    let cleanUrl = url.replace(/([?&])autoplay=1/g, '$1autoplay=0').replace(/\?$/, '');
-    
-    // Add autoplay=0 parameter
-    if (cleanUrl) {
-      cleanUrl = cleanUrl.includes('?') 
-        ? `${cleanUrl}&autoplay=0` 
-        : `${cleanUrl}?autoplay=0`;
-    }
-    
-    setHeroSettings({...heroSettings, videoUrl: cleanUrl});
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setLocalSettings(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Edit Hero Section</h2>
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">Title</label>
-          <Input 
-            value={heroSettings.title} 
-            onChange={(e) => setHeroSettings({...heroSettings, title: e.target.value})}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Subtitle (Gradient Text)</label>
-          <Input 
-            value={heroSettings.subtitle} 
-            onChange={(e) => setHeroSettings({...heroSettings, subtitle: e.target.value})}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Description</label>
-          <textarea 
-            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-            rows={4}
-            value={heroSettings.description} 
-            onChange={(e) => setHeroSettings({...heroSettings, description: e.target.value})}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">CTA Text</label>
-          <Input 
-            value={heroSettings.ctaText || ''} 
-            onChange={(e) => setHeroSettings({...heroSettings, ctaText: e.target.value})}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">CTA Link</label>
-          <Input 
-            value={heroSettings.ctaLink || ''} 
-            onChange={(e) => setHeroSettings({...heroSettings, ctaLink: e.target.value})}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Video URL (YouTube Embed)</label>
-          <div className="flex gap-2">
-            <Input 
-              value={heroSettings.videoUrl?.replace(/([?&])autoplay=[01]/g, '').replace(/\?$/, '') || ''}
-              onChange={(e) => handleVideoUrlChange(e.target.value)}
-              placeholder="e.g., https://www.youtube.com/embed/VIDEO_ID"
-            />
-            <Button 
-              variant="outline" 
-              type="button"
-              className="flex-shrink-0 bg-ifind-offwhite"
-              onClick={() => {
-                // Professional mental health video for testing
-                handleVideoUrlChange("https://www.youtube.com/embed/0J_Vg-uWY-k");
-              }}
-            >
-              <Video className="h-4 w-4 mr-2" />
-              Test
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Note: Use embed URLs (e.g., https://www.youtube.com/embed/VIDEO_ID). The video will not autoplay to improve user experience.
-          </p>
-        </div>
-        <div className="mt-2">
-          <h3 className="text-sm font-medium mb-2">Preview:</h3>
-          <div className="border p-4 rounded-lg">
-            <h1 className="text-3xl font-bold">
-              <span className="block">{heroSettings.title}</span>
-              <span className="text-gradient">{heroSettings.subtitle}</span>
-            </h1>
-            <p className="text-sm mt-2">{heroSettings.description}</p>
-            {heroSettings.videoUrl && !isInappropriateVideo(heroSettings.videoUrl) && (
-              <div className="mt-4 bg-black rounded-lg aspect-video w-full max-w-md">
-                <iframe
-                  className="w-full h-full rounded-lg"
-                  src={heroSettings.videoUrl}
-                  title="Preview"
-                  allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              </div>
-            )}
-          </div>
-        </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Hero Section Settings</h1>
+        <Button 
+          onClick={handleSave}
+          disabled={isSaving}
+          className="bg-ifind-aqua hover:bg-ifind-teal"
+        >
+          {isSaving ? "Saving..." : "Save Changes"}
+        </Button>
       </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Main Content</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Heading</label>
+            <input
+              type="text"
+              name="heading"
+              value={localSettings?.heading || "Find Your Inner Peace"}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Subheading</label>
+            <input
+              type="text"
+              name="subheading"
+              value={localSettings?.subheading || "Professional mental health support when you need it most"}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">CTA Button Text</label>
+            <input
+              type="text"
+              name="ctaText"
+              value={localSettings?.ctaText || "Get Started"}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">CTA Button URL</label>
+            <input
+              type="text"
+              name="ctaUrl"
+              value={localSettings?.ctaUrl || "/assessment"}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Visual Settings</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Background Image URL</label>
+            <input
+              type="text"
+              name="backgroundImage"
+              value={localSettings?.backgroundImage || "/stars-bg.png"}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Hero Image URL</label>
+            <input
+              type="text"
+              name="heroImage"
+              value={localSettings?.heroImage || "/public/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png"}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

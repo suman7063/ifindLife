@@ -1,46 +1,50 @@
 
 import React from 'react';
-import AdminSidebarMenuItem from './SidebarMenuItem';
-import { LucideIcon } from 'lucide-react';
+import SidebarMenuItem from './SidebarMenuItem';
+import { LucideIcon } from "lucide-react";
 
-interface MenuItemProps {
+interface MenuSectionItem {
   icon: LucideIcon;
   label: string;
-  isActive: boolean;
-  onClick: () => void;
+  isActive?: boolean;
+  onClick?: () => void;
+  disabled?: boolean;
 }
 
 interface MenuSectionProps {
-  title?: string;
-  items: MenuItemProps[];
+  items: MenuSectionItem[];
   showSection: boolean;
+  sectionLabel?: string;
 }
 
-const MenuSection: React.FC<MenuSectionProps> = ({
-  title,
-  items,
-  showSection
+const MenuSection: React.FC<MenuSectionProps> = ({ 
+  items, 
+  showSection,
+  sectionLabel 
 }) => {
   if (!showSection || items.length === 0) {
     return null;
   }
 
   return (
-    <div className="space-y-1">
-      {title && (
-        <div className="px-3 py-2">
-          <h3 className="text-xs font-medium text-muted-foreground">{title}</h3>
+    <div className="border rounded-md overflow-hidden">
+      {sectionLabel && (
+        <div className="bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
+          {sectionLabel}
         </div>
       )}
-      {items.map((item) => (
-        <AdminSidebarMenuItem
-          key={item.label}
-          icon={item.icon}
-          label={item.label}
-          isActive={item.isActive}
-          onClick={item.onClick}
-        />
-      ))}
+      <div className="flex flex-col gap-1 p-2">
+        {items.map((item, index) => (
+          <SidebarMenuItem
+            key={`${item.label}-${index}`}
+            icon={item.icon}
+            label={item.label}
+            active={item.isActive}
+            onClick={item.onClick}
+            disabled={item.disabled}
+          />
+        ))}
+      </div>
     </div>
   );
 };

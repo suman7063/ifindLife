@@ -11,7 +11,7 @@ export const defaultAdminUsers: AdminUser[] = [
   },
   {
     username: 'IFLsuperadmin',
-    password: 'Admin@123',
+    password: 'Freesoul@99IFL',
     role: 'superadmin',
     permissions: superAdminPermissions,
     createdAt: new Date().toISOString(),
