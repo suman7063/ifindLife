@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { UserProfile } from '@/types/supabase';
 import ProgramCard from './ProgramCard';
 import { Loader2 } from 'lucide-react';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 
 interface ProgramsListingComponentProps {
   programType: ProgramType;
@@ -19,11 +20,9 @@ const ProgramsListingComponent: React.FC<ProgramsListingComponentProps> = ({
   isAuthenticated
 }) => {
   const [featuredPrograms, setFeaturedPrograms] = useState<Program[]>([]);
-  const [favoritePrograms, setFavoritePrograms] = useState<
-    { id: string; user_id: string; program_id: number }[]
-  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const { programFavorites, isProgramFavorite } = useFavorites();
 
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -39,12 +38,7 @@ const ProgramsListingComponent: React.FC<ProgramsListingComponentProps> = ({
 
         // Type assertion to handle unknown data structure
         setFeaturedPrograms((data || []) as unknown as Program[]);
-
-        if (isAuthenticated) {
-          fetchFavorites();
-        } else {
-          setLoading(false);
-        }
+        setLoading(false);
       } catch (err) {
         console.error('Error fetching programs:', err);
         setError(err instanceof Error ? err : new Error('Failed to fetch programs'));
@@ -53,40 +47,15 @@ const ProgramsListingComponent: React.FC<ProgramsListingComponentProps> = ({
       }
     };
 
-    const fetchFavorites = async () => {
-      if (!currentUser) return;
-
-      try {
-        const { data, error } = await from('user_favorite_programs')
-          .select('*')
-          .eq('user_id', currentUser.id);
-
-        if (error) {
-          throw new Error(error.message);
-        }
-
-        // Type assertion to handle unknown data structure
-        setFavoritePrograms((data || []) as unknown as { id: string; user_id: string; program_id: number }[]);
-      } catch (err) {
-        console.error('Error fetching favorite programs:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPrograms();
-  }, [currentUser, isAuthenticated, programType]);
+  }, [programType]);
 
   const programsWithFavorites = useMemo(() => {
-    if (!isAuthenticated || favoritePrograms.length === 0) {
-      return featuredPrograms;
-    }
-
     return featuredPrograms.map(program => ({
       ...program,
-      is_favorite: favoritePrograms.some(fp => fp.program_id === program.id)
+      is_favorite: isProgramFavorite(program.id)
     }));
-  }, [featuredPrograms, favoritePrograms, isAuthenticated]);
+  }, [featuredPrograms, programFavorites, isProgramFavorite]);
 
   if (loading) {
     return (

@@ -27,10 +27,10 @@ const SessionDetailDialog: React.FC<SessionDetailDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center">
             {selectedCategory?.icon && React.cloneElement(selectedCategory.icon as React.ReactElement, { className: 'h-6 w-6 mr-2' })}
-            {selectedCategory?.title}
+            {selectedCategory?.title || 'Session Details'}
           </DialogTitle>
           <DialogDescription>
-            {selectedCategory?.description}
+            {selectedCategory?.description || 'Learn more about this service and how we can help.'}
           </DialogDescription>
         </DialogHeader>
         <div className="p-4">
