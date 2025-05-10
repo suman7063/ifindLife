@@ -75,13 +75,14 @@ export const useWellnessPrograms = () => {
     };
     
     fetchPrograms();
-  }, [programFavorites, isProgramFavorite]);
+  }, [isProgramFavorite]);
 
   // Apply category and sort filters
   useEffect(() => {
     if (programs.length === 0) return;
     
     console.log('Applying filters. Category:', selectedCategory, 'Sort option:', sortOption);
+    console.log('Current favorites:', programFavorites);
     
     let categoryFiltered = [...programs];
     
@@ -136,7 +137,10 @@ export const useWellnessPrograms = () => {
     
     programs.forEach(program => {
       if (program.category in categories) {
-        categories[program.category].push(program);
+        categories[program.category].push({
+          ...program,
+          is_favorite: isProgramFavorite(program.id)
+        });
       }
     });
     

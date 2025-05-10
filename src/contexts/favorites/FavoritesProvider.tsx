@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -76,7 +77,6 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Fetch program details for these IDs
       if (programIds.length > 0) {
-        // Programs table appears to expect numbers not strings
         const { data: programsDetails, error: programsDetailsError } = await supabase
           .from('programs')
           .select('id, title')
@@ -177,6 +177,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   // Program favorites implementation
   const addProgramFavorite = async (programId: number) => {
     try {
+      console.log('Adding program to favorites:', programId);
       if (!user) {
         toast.error('You must be logged in to add favorites');
         return false;
@@ -189,7 +190,10 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           program_id: programId
         });
         
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
       
       setProgramFavorites(prev => [...prev, programId]);
       
@@ -215,6 +219,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const removeProgramFavorite = async (programId: number) => {
     try {
+      console.log('Removing program from favorites:', programId);
       if (!user) {
         toast.error('You must be logged in to remove favorites');
         return false;
@@ -226,7 +231,10 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .eq('user_id', user.id)
         .eq('program_id', programId);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
       
       setProgramFavorites(prev => prev.filter(id => id !== programId));
       setProgramFavoriteDetails(prev => prev.filter(item => item.id !== programId));
@@ -245,6 +253,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const toggleProgramFavorite = async (programId: number) => {
+    console.log('Toggling program favorite:', programId, 'Current state:', isProgramFavorite(programId));
     if (isProgramFavorite(programId)) {
       return await removeProgramFavorite(programId);
     } else {

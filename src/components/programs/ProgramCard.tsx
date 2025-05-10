@@ -30,11 +30,12 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
   const auth = useAuth();
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   
-  // Use either the program's is_favorite property or check from our favorites context
+  // Check if program is favorited
   const isFavorite = program.is_favorite || isProgramFavorite(program.id);
 
   const handleFavoriteToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log("Toggling favorite for program:", program.id);
     
     // Store the program to continue user journey after login
     if (!isAuthenticated && !auth.isAuthenticated) {
@@ -50,7 +51,9 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
     
     setIsTogglingFavorite(true);
     try {
-      await toggleProgramFavorite(program.id);
+      const result = await toggleProgramFavorite(program.id);
+      console.log("Toggle result:", result);
+      // No need to manually update program.is_favorite as it will be updated via context re-render
     } catch (error) {
       console.error('Error toggling favorite:', error);
       toast.error('Failed to update favorite status');
@@ -62,7 +65,10 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
   const handleCardClick = () => {
     showDialog(
       <ProgramDetailDialog 
-        program={program} 
+        program={{
+          ...program,
+          is_favorite: isProgramFavorite(program.id)
+        }} 
         currentUser={currentUser}
         isAuthenticated={isAuthenticated || auth.isAuthenticated}
       />
