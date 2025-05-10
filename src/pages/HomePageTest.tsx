@@ -16,7 +16,6 @@ const CTASection = lazy(() => import('@/components/CTASection'));
 const Footer = lazy(() => import('@/components/Footer'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
 const StayInTouchSection = lazy(() => import('@/components/StayInTouchSection'));
-const HomepageIssueSessions = lazy(() => import('@/components/HomepageIssueSessions'));
 
 // Loading fallback component
 const SectionLoadingFallback = () => (
@@ -45,11 +44,6 @@ const HomePageTest = () => {
       <main className="flex-1">
         {/* Section 1: Hero Banner with tabs */}
         <EnhancedHero />
-        
-        {/* Section 2: Issue-based Sessions */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <HomepageIssueSessions />
-        </Suspense>
         
         {/* Section 3: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
