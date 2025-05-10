@@ -106,7 +106,7 @@ const EnhancedHero: React.FC = () => {
   );
 
   return (
-    <div className="relative h-[100vh]">
+    <div className="relative h-[80vh]">
       {/* Hero image/slider */}
       <div className="relative w-full h-full overflow-hidden">
         {sliderImages.map((image, index) => (
@@ -132,8 +132,7 @@ const EnhancedHero: React.FC = () => {
               }}
               loading={index === 0 ? "eager" : "lazy"}
             />
-            {/* Add a semi-transparent overlay to improve text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-black/20"></div>
+            {/* Removed the semi-transparent overlay to make images brighter */}
           </div>
         ))}
         
