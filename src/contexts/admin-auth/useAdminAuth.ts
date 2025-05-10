@@ -26,12 +26,13 @@ export const useAdminAuth = ({
     console.log('Admin auth: Available users:', adminUsers.map(u => u.username));
     
     try {
+      // Case insensitive username comparison but case sensitive password
       const foundUser = adminUsers.find(
         user => user.username.toLowerCase() === username.toLowerCase() && user.password === password
       );
       
       if (foundUser) {
-        console.log('Admin auth: Login successful for user:', foundUser.username);
+        console.log('Admin auth: Login successful for user:', foundUser.username, 'with role:', foundUser.role);
         
         // Create updated user with login timestamp
         const updatedUser = {
@@ -54,6 +55,8 @@ export const useAdminAuth = ({
         return true;
       } else {
         console.log('Admin auth: Login failed: Invalid credentials');
+        console.log('Admin auth: Attempted username:', username);
+        console.log('Admin auth: Available usernames:', adminUsers.map(u => u.username));
         setLoginError('Invalid username or password');
         toast.error('Invalid username or password');
         return false;

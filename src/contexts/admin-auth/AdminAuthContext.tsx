@@ -1,7 +1,6 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { AdminUser, AdminPermissions, AuthContextType, defaultPermissions, superAdminPermissions } from './types';
-import { defaultAdminUsers } from './constants';
+import React, { createContext, useContext } from 'react';
+import { AdminUser, AuthContextType } from './types';
 import { useAdminAuth } from './useAdminAuth';
 import { useAdminSession } from './useAdminSession';
 
@@ -20,23 +19,23 @@ const AdminAuthContext = createContext<AuthContextType>({
   updateAdminUser: () => {},
 });
 
-// Initial admin users are now only fetched from constants to avoid duplication
+// Admin auth provider component
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Use the session hook to get and set authentication state
   const {
     isAuthenticated, 
     setIsAuthenticated,
     adminUsers, 
     setAdminUsers,
     currentUser, 
-    setCurrentUser
+    setCurrentUser,
+    isLoading
   } = useAdminSession();
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Use the authentication hooks
+  // Use the auth hooks for login, logout, etc.
   const {
     login,
     logout,
-    loginError,
     addAdmin,
     removeAdmin,
     updateAdminPermissions,
@@ -48,31 +47,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setCurrentUser,
     currentUser
   });
-
-  // Initialize data
-  useEffect(() => {
-    // Initialize admin users from localStorage or use defaults
-    const storedAdminUsers = localStorage.getItem('admin-users');
-    if (storedAdminUsers) {
-      try {
-        const parsedAdminUsers = JSON.parse(storedAdminUsers);
-        setAdminUsers(parsedAdminUsers);
-        console.log('Loaded admin users from localStorage:', parsedAdminUsers.length);
-      } catch (error) {
-        console.error('Error parsing stored admin users:', error);
-        localStorage.removeItem('admin-users');
-        setAdminUsers(defaultAdminUsers);
-        // Save default admin users to localStorage
-        localStorage.setItem('admin-users', JSON.stringify(defaultAdminUsers));
-      }
-    } else {
-      console.log('No stored admin users found, using defaults');
-      // Save default admin users to localStorage
-      localStorage.setItem('admin-users', JSON.stringify(defaultAdminUsers));
-    }
-    
-    setIsLoading(false);
-  }, []);
 
   // Check if current user is a super admin
   const isSuperAdmin = currentUser?.role === 'superadmin';

@@ -15,7 +15,7 @@ const AdminLogin = () => {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && currentUser) {
       console.log('User is already authenticated as', currentUser?.role, 'redirecting to admin panel');
       navigate('/admin');
     }

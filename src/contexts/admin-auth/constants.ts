@@ -1,36 +1,19 @@
 
-import { AdminUser, defaultPermissions, superAdminPermissions } from "./types";
+import { AdminUser, defaultPermissions, superAdminPermissions } from './types';
 
 export const defaultAdminUsers: AdminUser[] = [
   {
-    username: 'IFLsuperadmin',
-    password: 'Freesoul@99IFL',
-    role: 'superadmin',
-    permissions: superAdminPermissions
-  },
-  {
     username: 'admin',
-    password: 'adminpass',
-    role: 'superadmin',
-    permissions: superAdminPermissions
+    password: 'admin123',
+    role: 'admin',
+    permissions: defaultPermissions,
+    createdAt: new Date().toISOString(),
   },
   {
-    username: 'editor',
-    password: 'editorpass',
-    role: 'admin',
-    permissions: defaultPermissions
+    username: 'IFLsuperadmin',
+    password: 'Admin@123',
+    role: 'superadmin',
+    permissions: superAdminPermissions,
+    createdAt: new Date().toISOString(),
   }
 ];
-
-export const initialAuthContext = {
-  isAuthenticated: false,
-  login: (username: string, password: string) => false,
-  logout: () => {},
-  adminUsers: defaultAdminUsers,
-  addAdmin: () => {},
-  removeAdmin: () => {},
-  isSuperAdmin: false,
-  currentUser: null,
-  updateAdminPermissions: () => {},
-  isLoading: true
-};

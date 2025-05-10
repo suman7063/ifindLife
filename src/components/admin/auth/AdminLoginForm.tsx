@@ -16,7 +16,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const { login, adminUsers } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,9 +24,10 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
     
     // Debug logs
     console.log('Admin login form submitted with username:', username);
+    console.log('Available admin users:', adminUsers.map(u => u.username));
     
     try {
-      // The login function returns boolean immediately, not a Promise
+      // The login function returns boolean immediately
       const success = login(username, password);
       console.log('Admin login result:', success ? 'success' : 'failed');
       

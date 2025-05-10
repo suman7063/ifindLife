@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/auth/AuthContext';
 import { Toaster } from './components/ui/toaster';
 import { ThemeProvider } from './components/theme/theme-provider';
 import { FavoritesProvider } from './contexts/favorites';
+import { AdminAuthProvider } from './contexts/admin-auth';
 
 const App = () => {
   useEffect(() => {
@@ -14,10 +15,12 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="ifind-theme">
       <AuthProvider>
-        <FavoritesProvider>
-          <AppRoutes />
-          <Toaster />
-        </FavoritesProvider>
+        <AdminAuthProvider>
+          <FavoritesProvider>
+            <AppRoutes />
+            <Toaster />
+          </FavoritesProvider>
+        </AdminAuthProvider>
       </AuthProvider>
     </ThemeProvider>
   );
