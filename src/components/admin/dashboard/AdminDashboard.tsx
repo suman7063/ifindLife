@@ -17,7 +17,6 @@ const AdminDashboard = () => {
   // States for all content sections
   const [experts, setExperts] = useState<Expert[]>([]);
   const [services, setServices] = useState<any[]>([]);
-  const [heroSettings, setHeroSettings] = useState<any>({});
   const [testimonials, setTestimonials] = useState<any[]>([]);
 
   useEffect(() => {
@@ -54,8 +53,6 @@ const AdminDashboard = () => {
             setExperts={setExperts}
             services={services}
             setServices={setServices}
-            heroSettings={heroSettings}
-            setHeroSettings={setHeroSettings}
             testimonials={testimonials}
             setTestimonials={setTestimonials}
           />
