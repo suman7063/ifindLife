@@ -47,13 +47,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Fetch expert details for these IDs
       if (expertIds.length > 0) {
-        // Convert numbers to strings for Supabase .in() method
-        const expertIdsAsStrings = expertIds.map(id => id.toString());
+        // Convert numbers to strings for Supabase .in() method if needed
+        const expertIdsForQuery = expertIds.map(id => id.toString());
         
         const { data: expertsDetails, error: expertsDetailsError } = await supabase
           .from('experts')
           .select('id, name')
-          .in('id', expertIdsAsStrings);
+          .in('id', expertIdsForQuery);
           
         if (expertsDetailsError) throw expertsDetailsError;
         
@@ -76,13 +76,11 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Fetch program details for these IDs
       if (programIds.length > 0) {
-        // Convert numbers to strings for Supabase .in() method
-        const programIdsAsStrings = programIds.map(id => id.toString());
-        
+        // Programs table appears to expect numbers not strings
         const { data: programsDetails, error: programsDetailsError } = await supabase
           .from('programs')
           .select('id, title')
-          .in('id', programIdsAsStrings);
+          .in('id', programIds);
           
         if (programsDetailsError) throw programsDetailsError;
         
@@ -118,7 +116,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const { data: expertData, error: expertError } = await supabase
         .from('experts')
         .select('id, name')
-        .eq('id', expertId)
+        .eq('id', expertId.toString())
         .single();
         
       if (!expertError && expertData) {
