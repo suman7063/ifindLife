@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import { lazy, Suspense } from 'react';
-import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 
-// Lazy load non-critical components
+// Lazy load non-critical components (same as index page)
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
@@ -46,20 +45,22 @@ const HomePageTest = () => {
         {/* Enhanced Hero with full viewport height */}
         <EnhancedHero />
         
-        {/* Section 2: Issue Based Sessions */}
-        <section className="py-16 bg-ifind-purple/5">
-          <div className="container mx-auto px-6 sm:px-12">
-            <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
-            <HomepageIssueSessions />
-          </div>
-        </section>
+        {/* Issue Based Sessions Section - Moved up in the hierarchy */}
+        <Suspense fallback={<SectionLoadingFallback />}>
+          <section className="py-16 bg-ifind-purple/5">
+            <div className="container mx-auto px-6 sm:px-12">
+              <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
+              <ServicesSection initialSection="issues" />
+            </div>
+          </section>
+        </Suspense>
 
-        {/* Section 3: Top Therapists Section */}
+        {/* Top Therapists Section - Moved up */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
 
-        {/* Section 4: IFL Programs for Individuals - Redesigned with circular icons */}
+        {/* IFL Programs for Individuals - Changed from tabs to cards */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-6 sm:px-12">
             <h2 className="text-3xl font-bold mb-6">IFL Programs for Individuals</h2>
@@ -70,7 +71,7 @@ const HomePageTest = () => {
           </div>
         </section>
         
-        {/* Section 5: Programs for Organizations */}
+        {/* Programs Section for Organizations */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
@@ -101,7 +102,7 @@ const HomePageTest = () => {
           </div>
         </section>
 
-        {/* Section 6: Why Choose Us Section */}
+        {/* Why Choose Us Section - Moved up */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
@@ -127,7 +128,6 @@ const HomePageTest = () => {
         </Suspense>
       </main>
 
-      {/* Section 7: Footer */}
       <Suspense fallback={<div className="h-40 bg-gray-100" />}>
         <Footer />
       </Suspense>

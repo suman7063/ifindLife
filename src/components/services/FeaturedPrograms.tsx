@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Circle } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface FeaturedProgramsProps {
   onProgramClick: (href: string) => void;
@@ -46,7 +47,7 @@ const FeaturedPrograms: React.FC<FeaturedProgramsProps> = ({ onProgramClick }) =
         <div 
           key={program.id}
           onClick={() => onProgramClick(program.href)}
-          className={`rounded-xl p-6 shadow-md border ${program.colorClass} cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 bg-gray-50`}
+          className={`rounded-xl p-6 shadow-md border ${program.colorClass} cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1`}
         >
           <div className="flex items-center gap-4 mb-4">
             <div className={`rounded-full p-3 ${program.iconColor} bg-white/80`}>
