@@ -42,36 +42,13 @@ const HomePageTest = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
-        {/* Enhanced Hero with full viewport height */}
+        {/* Use our new EnhancedHero component instead of the regular Hero */}
         <EnhancedHero />
         
-        {/* Issue Based Sessions Section - Moved up in the hierarchy */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <section className="py-16 bg-ifind-purple/5">
-            <div className="container mx-auto px-6 sm:px-12">
-              <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
-              <ServicesSection initialSection="issues" />
-            </div>
-          </section>
-        </Suspense>
-
-        {/* Top Therapists Section - Moved up */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <TopTherapistsSection />
-        </Suspense>
-
-        {/* IFL Programs for Individuals - Changed from tabs to cards */}
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-6 sm:px-12">
-            <h2 className="text-3xl font-bold mb-6">IFL Programs for Individuals</h2>
-            <p className="text-gray-600 mb-8 max-w-3xl">
-              IFL provides 3 kinds of programs in addition to issue/situation based sessions
-            </p>
-            <ServicesSection initialSection="programs" />
-          </div>
-        </section>
+        {/* Services/Categories Section - Critical for first impression */}
+        <ServicesSection />
         
-        {/* Programs Section for Organizations */}
+        {/* Programs Section for Organizations - Updated for row alignment of buttons */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
@@ -102,27 +79,27 @@ const HomePageTest = () => {
           </div>
         </section>
 
-        {/* Why Choose Us Section - Moved up */}
+        {/* Lazy load the rest of the components - just like the main Index page */}
+        <Suspense fallback={<SectionLoadingFallback />}>
+          <TopTherapistsSection />
+        </Suspense>
+
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Testimonials Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
         
-        {/* Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <BlogSection />
         </Suspense>
         
-        {/* CTA Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <CTASection />
         </Suspense>
         
-        {/* Stay In Touch Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <StayInTouchSection />
         </Suspense>
