@@ -15,9 +15,9 @@ const WhyChooseUsSection = () => {
   ];
   
   return (
-    <section className="py-20 bg-gradient-to-r from-ifind-purple/30 to-ifind-teal/30 relative">
+    <section className="py-20 bg-gradient-to-r from-ifind-purple/50 to-ifind-teal/50 relative">
       {/* Overlay for additional contrast */}
-      <div className="absolute inset-0 bg-gray-800/10"></div>
+      <div className="absolute inset-0 bg-gray-800/20"></div>
       
       <Container className="px-6 sm:px-12 relative z-10">
         <div className="text-center mb-12">
