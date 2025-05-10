@@ -131,16 +131,16 @@ const EnhancedHero: React.FC = () => {
           </div>
         ))}
         
-        {/* Headline - Moved down by 100px */}
+        {/* Headline - positioned to match screenshot */}
         <div 
-          className={`absolute inset-0 flex flex-col justify-start ${isMobile ? 'pt-[180px]' : 'pt-[220px]'} px-6 sm:px-12 lg:px-[60px]`}
+          className={`absolute inset-0 flex flex-col justify-start ${isMobile ? 'pt-[180px]' : 'pt-[200px]'} px-6 sm:px-12 lg:px-[60px]`}
         >
           <h1 
             className="text-white font-bold"
             style={{
               fontFamily: 'Roboto, sans-serif',
-              fontSize: isMobile ? '48px' : '80px',
-              lineHeight: isMobile ? '54px' : '90px',
+              fontSize: isMobile ? '58px' : '96px', // Increased by 20% (48px to 58px, 80px to 96px)
+              lineHeight: isMobile ? '64px' : '108px', // Increased proportionally
               fontWeight: 700,
               color: '#FFFFFF',
               maxWidth: '540px'
@@ -153,8 +153,6 @@ const EnhancedHero: React.FC = () => {
         
         {/* Service Cards - always use horizontal layout */}
         <HorizontalLayout />
-        
-        {/* Layout toggle button has been removed */}
       </div>
     </div>
   );
