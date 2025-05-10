@@ -6,7 +6,7 @@ import { LucideIcon } from "lucide-react";
 interface SidebarMenuItemProps {
   icon: LucideIcon;
   label: string;
-  active?: boolean;
+  isActive?: boolean;
   onClick?: () => void;
   disabled?: boolean;
 }
@@ -14,7 +14,7 @@ interface SidebarMenuItemProps {
 const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
   icon: Icon,
   label,
-  active = false,
+  isActive = false,
   onClick,
   disabled = false
 }) => {
@@ -22,7 +22,7 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
     <button
       className={cn(
         "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors",
-        active 
+        isActive 
           ? "bg-ifind-aqua text-white font-medium" 
           : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800",
         disabled && "opacity-50 cursor-not-allowed"
@@ -32,7 +32,7 @@ const SidebarMenuItem: React.FC<SidebarMenuItemProps> = ({
     >
       <Icon className="h-4 w-4 mr-3" />
       <span>{label}</span>
-      {active && (
+      {isActive && (
         <div className="ml-auto h-full w-1 bg-ifind-purple rounded-full"></div>
       )}
     </button>

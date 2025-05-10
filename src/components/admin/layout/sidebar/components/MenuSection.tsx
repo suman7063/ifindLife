@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, LucideIcon } from 'lucide-react';
 import SidebarMenuItem from './SidebarMenuItem';
 
 export interface MenuSectionProps {
   sectionLabel: string;
   items: {
-    icon: React.ElementType;
+    icon: LucideIcon;
     label: string;
     isActive: boolean;
     onClick: () => void;
