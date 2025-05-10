@@ -28,8 +28,8 @@ const Index = lazy(() => {
   return import('./pages/Index');
 });
 
-// Import test page for hero banner mockup
-const HomePageTest = lazy(() => import('./pages/HomePageTest'));
+// Import test page for hero banner mockup - now pointing to the original index
+const IndexOriginal = lazy(() => import('./pages/IndexOriginal'));
 
 // Import the new expert dashboard
 const NewExpertDashboard = lazy(() => import('./pages/NewExpertDashboard'));
@@ -54,8 +54,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
         
-        {/* New test route for hero banner mockup */}
-        <Route path="/hero-test" element={<HomePageTest />} />
+        {/* New route for the original homepage version */}
+        <Route path="/hero-test" element={<IndexOriginal />} />
         
         {/* Define AboutUs route directly without lazy loading */}
         <Route path="/about" element={<AboutUs />} />
