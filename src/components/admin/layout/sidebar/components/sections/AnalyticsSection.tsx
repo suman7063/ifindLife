@@ -38,7 +38,7 @@ const AnalyticsSection: React.FC<AnalyticsSectionProps> = ({
 
   return (
     <MenuSection
-      title="Analytics & Reporting"
+      sectionLabel="Analytics & Reporting"
       items={items}
       showSection={items.length > 0}
     />

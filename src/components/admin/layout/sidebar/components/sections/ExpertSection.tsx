@@ -38,7 +38,7 @@ const ExpertSection: React.FC<ExpertSectionProps> = ({
 
   return (
     <MenuSection
-      title="Expert Management"
+      sectionLabel="Expert Management"
       items={items}
       showSection={items.length > 0}
     />

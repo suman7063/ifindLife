@@ -27,7 +27,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 
   return (
     <MenuSection
-      title="System"
+      sectionLabel="System"
       items={items}
       showSection={items.length > 0}
     />

@@ -27,7 +27,7 @@ const ContentSection: React.FC<ContentSectionProps> = ({
 
   return (
     <MenuSection
-      title="Content Management"
+      sectionLabel="Content Management"
       items={items}
       showSection={items.length > 0}
     />

@@ -38,7 +38,7 @@ const CommunicationSection: React.FC<CommunicationSectionProps> = ({
 
   return (
     <MenuSection
-      title="Communication"
+      sectionLabel="Communication"
       items={items}
       showSection={items.length > 0}
     />

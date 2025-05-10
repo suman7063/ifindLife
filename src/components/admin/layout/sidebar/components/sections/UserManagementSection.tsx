@@ -38,7 +38,7 @@ const UserManagementSection: React.FC<UserManagementSectionProps> = ({
 
   return (
     <MenuSection
-      title="User Management"
+      sectionLabel="User Management"
       items={items}
       showSection={items.length > 0}
     />

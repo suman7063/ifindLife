@@ -8,23 +8,24 @@ interface OverviewSectionProps {
   onTabChange: (tab: string) => void;
 }
 
-const OverviewSection: React.FC<OverviewSectionProps> = ({ 
-  activeTab, 
-  onTabChange 
+const OverviewSection: React.FC<OverviewSectionProps> = ({
+  activeTab,
+  onTabChange,
 }) => {
   const items = [
     {
       icon: LayoutDashboard,
-      label: "Overview",
-      isActive: activeTab === 'overview',
+      label: "Dashboard",
+      isActive: activeTab === 'overview' || !activeTab,
       onClick: () => onTabChange('overview')
     }
   ];
 
   return (
-    <MenuSection 
-      items={items} 
-      showSection={true} 
+    <MenuSection
+      sectionLabel="Overview"
+      items={items}
+      showSection={true}
     />
   );
 };
