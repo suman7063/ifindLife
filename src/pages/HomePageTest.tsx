@@ -16,7 +16,6 @@ const CTASection = lazy(() => import('@/components/CTASection'));
 const Footer = lazy(() => import('@/components/Footer'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
 const StayInTouchSection = lazy(() => import('@/components/StayInTouchSection'));
-const HomepageIssueSessions = lazy(() => import('@/components/HomepageIssueSessions'));
 
 // Loading fallback component
 const SectionLoadingFallback = () => (
@@ -51,12 +50,7 @@ const HomePageTest = () => {
           <TopTherapistsSection />
         </Suspense>
         
-        {/* Section 3: Issue-based Sessions */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <HomepageIssueSessions />
-        </Suspense>
-        
-        {/* Section 4: Combined Programs Section - IFL Programs for Individuals and Programs for Organizations */}
+        {/* Section 3: Combined Programs Section - IFL Programs for Individuals and Programs for Organizations */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-6 sm:px-12">
             {/* IFL Programs for Individuals */}
@@ -93,12 +87,12 @@ const HomePageTest = () => {
           </div>
         </section>
 
-        {/* Section 5: Why Choose Us - Redesigned */}
+        {/* Section 4: Why Choose Us - Redesigned */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 6: Testimonials - Redesigned */}
+        {/* Section 5: Testimonials - Redesigned */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
@@ -114,7 +108,7 @@ const HomePageTest = () => {
         </Suspense>
       </main>
 
-      {/* Section 7: Footer */}
+      {/* Section 6: Footer */}
       <Suspense fallback={<div className="h-40 bg-gray-100" />}>
         <Footer />
       </Suspense>
