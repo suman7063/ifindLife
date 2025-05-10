@@ -77,19 +77,6 @@ const ProgramDetail = () => {
       if (data) {
         // Cast the data to match the Program type
         setProgram(data as unknown as Program);
-        
-        // Check if program is in user's favorites
-        if (isAuthenticated && currentUser) {
-          const { data: favoriteData, error: favoriteError } = await from('user_favorite_programs')
-            .select('*')
-            .eq('user_id', currentUser.id)
-            .eq('program_id', programId)
-            .maybeSingle();
-            
-          if (favoriteError) throw favoriteError;
-          
-          setIsFavorite(!!favoriteData);
-        }
       }
     } catch (error) {
       console.error('Error fetching program:', error);
@@ -261,7 +248,7 @@ const ProgramDetail = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-8">
               <div className="border rounded-lg p-6 shadow-sm">
-                <h2 className="text-2xl font-bold text-ifind-teal mb-4">₹{program.price}</h2>
+                <h2 className="text-2xl font-bold text-ifind-teal mb-4">₹{program?.price}</h2>
                 
                 <div className="flex flex-col gap-3 mb-6">
                   <Button 
