@@ -1,13 +1,18 @@
 
 export interface FavoritesContextType {
+  // Expert favorites (also used as generic favorites for backward compatibility)
   favorites: number[];
-  loading: boolean; // This will replace isLoading for consistency
-  addFavorite: (expertId: number) => Promise<boolean>;
-  removeFavorite: (expertId: number) => Promise<boolean>;
+  expertFavorites: number[];
   isExpertFavorite: (expertId: number) => boolean;
   toggleExpertFavorite: (expertId: number) => Promise<boolean>;
-  expertFavorites: number[];
+  addFavorite: (expertId: number) => Promise<boolean>; // Keep for backward compatibility
+  removeFavorite: (expertId: number) => Promise<boolean>; // Keep for backward compatibility
+  
+  // Program favorites
   programFavorites: number[];
   isProgramFavorite: (programId: number) => boolean;
   toggleProgramFavorite: (programId: number) => Promise<boolean>;
+  
+  // Status
+  loading: boolean;
 }

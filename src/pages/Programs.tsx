@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Program, ProgramType } from '@/types/programs';
 import ProgramCard from '@/components/programs/ProgramCard';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { toast } from 'sonner';
 
 const Programs = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
@@ -96,6 +99,36 @@ const Programs = () => {
       created_at: new Date().toISOString()
     }
   ]);
+
+  const { isAuthenticated } = useAuth();
+  const { toggleProgramFavorite } = useFavorites();
+
+  // Handle post-login actions
+  useEffect(() => {
+    const handlePendingActions = async () => {
+      if (!isAuthenticated) return;
+      
+      const pendingAction = sessionStorage.getItem('pendingAction');
+      const pendingProgramId = sessionStorage.getItem('pendingProgramId');
+      
+      if (pendingAction === 'favorite' && pendingProgramId) {
+        try {
+          // Execute the favorite action
+          const programId = parseInt(pendingProgramId);
+          await toggleProgramFavorite(programId);
+          
+          // Clear the pending action
+          sessionStorage.removeItem('pendingAction');
+          sessionStorage.removeItem('pendingProgramId');
+        } catch (error) {
+          console.error('Error executing pending favorite action:', error);
+          toast.error('Failed to update favorites');
+        }
+      }
+    };
+    
+    handlePendingActions();
+  }, [isAuthenticated, toggleProgramFavorite]);
 
   const filteredPrograms = programs.filter(program => {
     // Filter by active tab (program type)

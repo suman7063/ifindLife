@@ -7,7 +7,8 @@ import { FavoritesContext } from './FavoritesContext';
 import { FavoritesContextType } from './types';
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [expertFavorites, setExpertFavorites] = useState<number[]>([]);
+  const [programFavorites, setProgramFavorites] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated, user, userProfile } = useAuth();
 
@@ -16,7 +17,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (isAuthenticated && user) {
       loadFavorites();
     } else {
-      setFavorites([]);
+      setExpertFavorites([]);
+      setProgramFavorites([]);
       setLoading(false);
     }
   }, [isAuthenticated, user]);
@@ -26,14 +28,25 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setLoading(true);
       if (!user) return;
       
-      const { data, error } = await supabase
+      // Load expert favorites
+      const { data: expertData, error: expertError } = await supabase
         .from('user_favorites')
         .select('expert_id')
         .eq('user_id', user.id);
         
-      if (error) throw error;
+      if (expertError) throw expertError;
       
-      setFavorites(data.map(item => item.expert_id));
+      setExpertFavorites(expertData.map(item => item.expert_id));
+      
+      // Load program favorites
+      const { data: programData, error: programError } = await supabase
+        .from('user_favorite_programs')
+        .select('program_id')
+        .eq('user_id', user.id);
+        
+      if (programError) throw programError;
+      
+      setProgramFavorites(programData.map(item => item.program_id));
     } catch (error) {
       console.error('Error loading favorites:', error);
       toast.error('Failed to load favorites');
@@ -42,7 +55,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const addFavorite = async (expertId: number) => {
+  const addExpertFavorite = async (expertId: number) => {
     try {
       if (!user) {
         toast.error('You must be logged in to add favorites');
@@ -58,7 +71,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
       if (error) throw error;
       
-      setFavorites(prev => [...prev, expertId]);
+      setExpertFavorites(prev => [...prev, expertId]);
       toast.success('Added to favorites');
       return true;
     } catch (error) {
@@ -68,7 +81,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const removeFavorite = async (expertId: number) => {
+  const removeExpertFavorite = async (expertId: number) => {
     try {
       if (!user) {
         toast.error('You must be logged in to remove favorites');
@@ -83,7 +96,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
       if (error) throw error;
       
-      setFavorites(prev => prev.filter(id => id !== expertId));
+      setExpertFavorites(prev => prev.filter(id => id !== expertId));
       toast.success('Removed from favorites');
       return true;
     } catch (error) {
@@ -94,30 +107,89 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const isExpertFavorite = (expertId: number) => {
-    return favorites.includes(expertId);
+    return expertFavorites.includes(expertId);
   };
   
   const toggleExpertFavorite = async (expertId: number) => {
     if (isExpertFavorite(expertId)) {
-      return await removeFavorite(expertId);
+      return await removeExpertFavorite(expertId);
     } else {
-      return await addFavorite(expertId);
+      return await addExpertFavorite(expertId);
     }
   };
   
-  // For program favorites (stub implementation for now)
-  const programFavorites: number[] = [];
-  const isProgramFavorite = (programId: number) => false;
-  const toggleProgramFavorite = async (programId: number) => false;
+  // Program favorites implementation
+  const addProgramFavorite = async (programId: number) => {
+    try {
+      if (!user) {
+        toast.error('You must be logged in to add favorites');
+        return false;
+      }
+      
+      const { error } = await supabase
+        .from('user_favorite_programs')
+        .insert({
+          user_id: user.id,
+          program_id: programId
+        });
+        
+      if (error) throw error;
+      
+      setProgramFavorites(prev => [...prev, programId]);
+      toast.success('Program added to favorites');
+      return true;
+    } catch (error) {
+      console.error('Error adding program favorite:', error);
+      toast.error('Failed to add program to favorites');
+      return false;
+    }
+  };
+
+  const removeProgramFavorite = async (programId: number) => {
+    try {
+      if (!user) {
+        toast.error('You must be logged in to remove favorites');
+        return false;
+      }
+      
+      const { error } = await supabase
+        .from('user_favorite_programs')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('program_id', programId);
+        
+      if (error) throw error;
+      
+      setProgramFavorites(prev => prev.filter(id => id !== programId));
+      toast.success('Program removed from favorites');
+      return true;
+    } catch (error) {
+      console.error('Error removing program favorite:', error);
+      toast.error('Failed to remove program from favorites');
+      return false;
+    }
+  };
+
+  const isProgramFavorite = (programId: number) => {
+    return programFavorites.includes(programId);
+  };
+
+  const toggleProgramFavorite = async (programId: number) => {
+    if (isProgramFavorite(programId)) {
+      return await removeProgramFavorite(programId);
+    } else {
+      return await addProgramFavorite(programId);
+    }
+  };
 
   const contextValue: FavoritesContextType = {
-    favorites,
+    favorites: expertFavorites, // Keep for backward compatibility
     loading,
-    addFavorite,
-    removeFavorite,
+    addFavorite: addExpertFavorite, // Keep for backward compatibility
+    removeFavorite: removeExpertFavorite, // Keep for backward compatibility
     isExpertFavorite,
     toggleExpertFavorite,
-    expertFavorites: favorites,
+    expertFavorites,
     programFavorites,
     isProgramFavorite,
     toggleProgramFavorite

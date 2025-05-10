@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase/user';
@@ -28,10 +28,10 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
   isAuthenticated,
   onClose
 }) => {
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { showDialog, DialogComponent } = useDialog();
   const { toggleProgramFavorite, isProgramFavorite } = useFavorites();
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   
   // Use favorites context to determine if this program is a favorite
   const isFavorite = program.is_favorite || isProgramFavorite(program.id);
@@ -41,13 +41,22 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
     if (!isAuthenticated) {
       sessionStorage.setItem('pendingAction', 'favorite');
       sessionStorage.setItem('pendingProgramId', program.id.toString());
+      sessionStorage.setItem('returnPath', window.location.pathname);
       
       toast.info("Please log in to save programs to your favorites");
       navigate('/user-login');
       return;
     }
     
-    await toggleProgramFavorite(program.id);
+    setIsTogglingFavorite(true);
+    try {
+      await toggleProgramFavorite(program.id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite status');
+    } finally {
+      setIsTogglingFavorite(false);
+    }
   };
 
   const handleEnroll = () => {
@@ -55,6 +64,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
       // Store program ID for post-login action
       sessionStorage.setItem('pendingAction', 'enroll');
       sessionStorage.setItem('pendingProgramId', program.id.toString());
+      sessionStorage.setItem('returnPath', window.location.pathname);
       
       toast.info("Please log in to enroll in programs");
       navigate('/user-login');
@@ -69,22 +79,13 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
     );
   };
 
-  if (loading) {
-    return (
-      <Dialog open>
-        <DialogContent>
-          <Loader2 className="h-10 w-10 animate-spin" />
-        </DialogContent>
-      </Dialog>
-    );
-  }
-
   return (
     <>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-0 gap-0 overflow-hidden mx-auto">
         <ProgramImageHeader 
           program={program}
           isFavorite={isFavorite}
+          isTogglingFavorite={isTogglingFavorite}
           onFavoriteToggle={handleFavoriteToggle}
         />
         

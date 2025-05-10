@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
@@ -7,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { from, supabase } from '@/lib/supabase';
 import { Program } from '@/types/programs';
 import { useUserAuth } from '@/hooks/user-auth';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 import { 
   Calendar, 
   Clock, 
@@ -25,9 +25,9 @@ const ProgramDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [program, setProgram] = useState<Program | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const { currentUser, isAuthenticated } = useUserAuth();
+  const { isProgramFavorite, toggleProgramFavorite } = useFavorites();
   const navigate = useNavigate();
   const { showDialog, DialogComponent } = useDialog();
 
@@ -36,6 +36,33 @@ const ProgramDetail = () => {
       fetchProgram(parseInt(id));
     }
   }, [id]);
+  
+  // Handle pending actions
+  useEffect(() => {
+    const handlePendingActions = async () => {
+      if (!isAuthenticated || !program) return;
+      
+      const pendingAction = sessionStorage.getItem('pendingAction');
+      const pendingProgramId = sessionStorage.getItem('pendingProgramId');
+      
+      if (pendingAction === 'favorite' && pendingProgramId && pendingProgramId === id) {
+        try {
+          // Execute the favorite action
+          const programId = parseInt(pendingProgramId);
+          await toggleProgramFavorite(programId);
+          
+          // Clear the pending action
+          sessionStorage.removeItem('pendingAction');
+          sessionStorage.removeItem('pendingProgramId');
+        } catch (error) {
+          console.error('Error executing pending favorite action:', error);
+          toast.error('Failed to update favorites');
+        }
+      }
+    };
+    
+    handlePendingActions();
+  }, [isAuthenticated, program, id, toggleProgramFavorite]);
 
   const fetchProgram = async (programId: number) => {
     setIsLoading(true);
@@ -73,11 +100,18 @@ const ProgramDetail = () => {
     }
   };
 
+  // Calculate if the program is a favorite
+  const isFavorite = program?.is_favorite || (program && isProgramFavorite(program.id)) || false;
+
   const handleFavoriteToggle = async () => {
-    if (isTogglingFavorite) return;
+    if (isTogglingFavorite || !program) return;
     
     // Prompt login if not authenticated
     if (!isAuthenticated) {
+      sessionStorage.setItem('pendingAction', 'favorite');
+      sessionStorage.setItem('pendingProgramId', program.id.toString());
+      sessionStorage.setItem('returnPath', window.location.pathname);
+      
       toast.info("Please log in to save programs to your favorites");
       navigate('/user-login');
       return;
@@ -86,30 +120,7 @@ const ProgramDetail = () => {
     setIsTogglingFavorite(true);
     
     try {
-      if (isFavorite) {
-        // Remove from favorites
-        const { error } = await from('user_favorite_programs')
-          .delete()
-          .eq('user_id', currentUser?.id)
-          .eq('program_id', program?.id);
-          
-        if (error) throw error;
-        
-        toast.success('Removed from favorites');
-      } else {
-        // Add to favorites
-        const { error } = await from('user_favorite_programs')
-          .insert({
-            user_id: currentUser?.id,
-            program_id: program?.id
-          });
-          
-        if (error) throw error;
-        
-        toast.success('Added to favorites');
-      }
-      
-      setIsFavorite(!isFavorite);
+      await toggleProgramFavorite(program.id);
     } catch (error) {
       console.error('Error toggling favorite:', error);
       toast.error('Failed to update favorites');

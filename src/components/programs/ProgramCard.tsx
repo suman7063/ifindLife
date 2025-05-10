@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Program } from '@/types/programs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
   const { showDialog, DialogComponent } = useDialog();
   const { toggleProgramFavorite, isProgramFavorite } = useFavorites();
   const auth = useAuth();
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   
   // Use either the program's is_favorite property or check from our favorites context
   const isFavorite = program.is_favorite || isProgramFavorite(program.id);
@@ -36,17 +37,26 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
     e.stopPropagation();
     
     // Store the program to continue user journey after login
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !auth.isAuthenticated) {
       // Save program ID to session storage for post-login action
       sessionStorage.setItem('pendingAction', 'favorite');
       sessionStorage.setItem('pendingProgramId', program.id.toString());
+      sessionStorage.setItem('returnPath', window.location.pathname);
       
       toast.info("Please log in to save programs to your favorites");
       navigate('/user-login');
       return;
     }
     
-    await toggleProgramFavorite(program.id);
+    setIsTogglingFavorite(true);
+    try {
+      await toggleProgramFavorite(program.id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite status');
+    } finally {
+      setIsTogglingFavorite(false);
+    }
   };
 
   const handleCardClick = () => {
@@ -84,6 +94,7 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
           
           <FavoriteButton
             isFavorite={isFavorite}
+            isLoading={isTogglingFavorite}
             onClick={handleFavoriteToggle}
             className="absolute top-3 right-3"
             tooltipText={isFavorite ? "Remove from favorites" : "Add to favorites"}
