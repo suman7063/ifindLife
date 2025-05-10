@@ -12,7 +12,12 @@ interface UserFavoritesProps {
 }
 
 const UserFavorites: React.FC<UserFavoritesProps> = ({ user }) => {
-  const { expertFavorites, programFavorites } = useFavorites();
+  const { 
+    expertFavorites, 
+    programFavorites, 
+    expertFavoriteDetails, 
+    programFavoriteDetails 
+  } = useFavorites();
   const navigate = useNavigate();
   
   return (
@@ -31,11 +36,11 @@ const UserFavorites: React.FC<UserFavoritesProps> = ({ user }) => {
             <Heart className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {expertFavorites && expertFavorites.length > 0 ? (
+            {expertFavoriteDetails && expertFavoriteDetails.length > 0 ? (
               <div className="space-y-2">
-                {expertFavorites.map((id) => (
-                  <div key={id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                    <span>Expert ID: {id}</span>
+                {expertFavoriteDetails.map((expert) => (
+                  <div key={expert.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <span>{expert.name}</span>
                   </div>
                 ))}
                 <Button 
@@ -67,11 +72,11 @@ const UserFavorites: React.FC<UserFavoritesProps> = ({ user }) => {
             <Heart className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {programFavorites && programFavorites.length > 0 ? (
+            {programFavoriteDetails && programFavoriteDetails.length > 0 ? (
               <div className="space-y-2">
-                {programFavorites.map((id) => (
-                  <div key={id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                    <span>Program ID: {id}</span>
+                {programFavoriteDetails.map((program) => (
+                  <div key={program.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <span>{program.title}</span>
                   </div>
                 ))}
                 <Button 

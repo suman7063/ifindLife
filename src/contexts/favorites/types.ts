@@ -13,6 +13,10 @@ export interface FavoritesContextType {
   isProgramFavorite: (programId: number) => boolean;
   toggleProgramFavorite: (programId: number) => Promise<boolean>;
   
+  // Detailed favorites
+  expertFavoriteDetails: Array<{ id: number, name: string }>;
+  programFavoriteDetails: Array<{ id: number, title: string }>;
+  
   // Status
   loading: boolean;
 }

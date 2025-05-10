@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Program } from '@/types/programs';
 import { supabase } from '@/lib/supabase';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 
 export const useWellnessPrograms = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -10,6 +11,7 @@ export const useWellnessPrograms = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortOption, setSortOption] = useState<string>('popularity');
+  const { programFavorites, isProgramFavorite } = useFavorites();
 
   // Fetch programs on component mount
   useEffect(() => {
@@ -44,7 +46,8 @@ export const useWellnessPrograms = () => {
             category: program.category as Program['category'],
             programType: program.programType as Program['programType'],
             enrollments: program.enrollments || 0,
-            created_at: program.created_at
+            created_at: program.created_at,
+            is_favorite: isProgramFavorite(program.id)
           }));
           
           const sortedPrograms = [...programData].sort((a, b) => 
@@ -72,7 +75,7 @@ export const useWellnessPrograms = () => {
     };
     
     fetchPrograms();
-  }, []);
+  }, [programFavorites, isProgramFavorite]);
 
   // Apply category and sort filters
   useEffect(() => {
@@ -80,12 +83,20 @@ export const useWellnessPrograms = () => {
     
     console.log('Applying filters. Category:', selectedCategory, 'Sort option:', sortOption);
     
-    let categoryFiltered = programs;
+    let categoryFiltered = [...programs];
+    
+    // Update favorite status based on current programFavorites array
+    categoryFiltered = categoryFiltered.map(program => ({
+      ...program,
+      is_favorite: isProgramFavorite(program.id)
+    }));
+    
     if (selectedCategory !== 'all') {
       if (selectedCategory === 'favorites') {
-        categoryFiltered = programs.filter(program => program.is_favorite);
+        categoryFiltered = categoryFiltered.filter(program => isProgramFavorite(program.id));
+        console.log("Filtered favorites:", categoryFiltered);
       } else {
-        categoryFiltered = programs.filter(program => program.category === selectedCategory);
+        categoryFiltered = categoryFiltered.filter(program => program.category === selectedCategory);
       }
     }
     
@@ -112,7 +123,7 @@ export const useWellnessPrograms = () => {
     
     console.log('Filtered programs count:', sorted.length);
     setFilteredPrograms(sorted);
-  }, [selectedCategory, programs, sortOption]);
+  }, [selectedCategory, programs, sortOption, programFavorites, isProgramFavorite]);
 
   // Organize programs by category
   const programsByCategory = () => {

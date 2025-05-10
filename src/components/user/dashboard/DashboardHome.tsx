@@ -12,7 +12,7 @@ interface DashboardHomeProps {
 }
 
 const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
-  const { expertFavorites, programFavorites } = useFavorites();
+  const { expertFavorites, programFavorites, expertFavoriteDetails, programFavoriteDetails } = useFavorites();
   const navigate = useNavigate();
   
   // Add debug logging to track component lifecycle and data
@@ -22,10 +22,12 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
       username: user?.name,
       expertFavoritesCount: expertFavorites?.length || 0,
       programFavoritesCount: programFavorites?.length || 0,
+      expertFavoriteDetails,
+      programFavoriteDetails,
       walletBalance: user?.wallet_balance,
       domElement: document.querySelector('.dashboard-content')
     });
-  }, [user, expertFavorites, programFavorites]);
+  }, [user, expertFavorites, programFavorites, expertFavoriteDetails, programFavoriteDetails]);
   
   return (
     <div className="space-y-6">
@@ -36,6 +38,7 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
         </p>
       </div>
       
+      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Quick Stats */}
         <Card>
@@ -96,18 +99,18 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Recent Activity */}
+        {/* Expert Favorites */}
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Favorite Experts</CardTitle>
             <CardDescription>Experts you've bookmarked</CardDescription>
           </CardHeader>
           <CardContent>
-            {expertFavorites && expertFavorites.length > 0 ? (
+            {expertFavoriteDetails && expertFavoriteDetails.length > 0 ? (
               <div className="space-y-2">
-                {expertFavorites.slice(0, 3).map((id) => (
-                  <div key={id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                    <span>Expert ID: {id}</span>
+                {expertFavoriteDetails.slice(0, 3).map((expert) => (
+                  <div key={expert.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <span>{expert.name}</span>
                   </div>
                 ))}
               </div>
@@ -126,18 +129,18 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
           </CardContent>
         </Card>
         
-        {/* Upcoming Consultations */}
+        {/* Program Favorites */}
         <Card className="col-span-1">
           <CardHeader>
             <CardTitle>Favorite Programs</CardTitle>
             <CardDescription>Programs you've bookmarked</CardDescription>
           </CardHeader>
           <CardContent>
-            {programFavorites && programFavorites.length > 0 ? (
+            {programFavoriteDetails && programFavoriteDetails.length > 0 ? (
               <div className="space-y-2">
-                {programFavorites.slice(0, 3).map((id) => (
-                  <div key={id} className="flex items-center justify-between p-2 bg-muted rounded-md">
-                    <span>Program ID: {id}</span>
+                {programFavoriteDetails.slice(0, 3).map((program) => (
+                  <div key={program.id} className="flex items-center justify-between p-2 bg-muted rounded-md">
+                    <span>{program.title}</span>
                   </div>
                 ))}
               </div>

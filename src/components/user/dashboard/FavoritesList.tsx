@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 import { Loader2, Heart } from 'lucide-react';
@@ -13,9 +13,11 @@ interface FavoritesListProps {
 
 const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
   const { 
-    expertFavorites, 
+    expertFavorites,
     programFavorites, 
-    loading, // Use loading instead of isLoading for consistency
+    expertFavoriteDetails,
+    programFavoriteDetails,
+    loading,
     toggleExpertFavorite,
     toggleProgramFavorite
   } = useFavorites();
@@ -24,11 +26,12 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
   // Debug logs
   useEffect(() => {
     console.log(`FavoritesList ${type} rendering with:`, 
-      type === 'experts' ? expertFavorites : programFavorites);
-  }, [type, expertFavorites, programFavorites]);
+      type === 'experts' ? expertFavoriteDetails : programFavoriteDetails);
+  }, [type, expertFavoriteDetails, programFavoriteDetails]);
   
   // Define favorites correctly with proper typing
-  const favorites = type === 'experts' ? expertFavorites : programFavorites;
+  const favoriteIds = type === 'experts' ? expertFavorites : programFavorites;
+  const favoriteDetails = type === 'experts' ? expertFavoriteDetails : programFavoriteDetails;
   
   const handleToggle = async (id: string | number) => {
     if (onToggle) {
@@ -61,7 +64,7 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
     );
   }
 
-  if (favorites.length === 0) {
+  if (favoriteIds.length === 0) {
     return (
       <div className="text-center py-10">
         <Heart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
@@ -84,23 +87,27 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
   return (
     <div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {favorites.map((id) => (
-          <Card key={id.toString()} className="overflow-hidden">
+        {favoriteDetails.map((item) => (
+          <Card key={item.id.toString()} className="overflow-hidden">
             <CardHeader className="pb-3">
-              <CardTitle>{type === 'experts' ? `Expert ID: ${id}` : `Program ID: ${id}`}</CardTitle>
+              <CardTitle>
+                {type === 'experts' ? 
+                  `${item.name}` : 
+                  `${item.title}`}
+              </CardTitle>
             </CardHeader>
             <CardContent className="flex justify-between items-center">
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={() => handleViewDetails(id)}
+                onClick={() => handleViewDetails(item.id)}
               >
                 View Details
               </Button>
               <Button 
                 variant="ghost" 
                 size="icon" 
-                onClick={() => handleToggle(id)}
+                onClick={() => handleToggle(item.id)}
               >
                 <Heart className="h-5 w-5 fill-red-500 text-red-500" />
               </Button>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -7,8 +6,14 @@ import { FavoritesContext } from './FavoritesContext';
 import { FavoritesContextType } from './types';
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Favorite IDs
   const [expertFavorites, setExpertFavorites] = useState<number[]>([]);
   const [programFavorites, setProgramFavorites] = useState<number[]>([]);
+  
+  // Favorite details with full data
+  const [expertFavoriteDetails, setExpertFavoriteDetails] = useState<Array<{ id: number, name: string }>>([]);
+  const [programFavoriteDetails, setProgramFavoriteDetails] = useState<Array<{ id: number, title: string }>>([]);
+  
   const [loading, setLoading] = useState(true);
   const { isAuthenticated, user, userProfile } = useAuth();
 
@@ -19,6 +24,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } else {
       setExpertFavorites([]);
       setProgramFavorites([]);
+      setExpertFavoriteDetails([]);
+      setProgramFavoriteDetails([]);
       setLoading(false);
     }
   }, [isAuthenticated, user]);
@@ -28,27 +35,55 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setLoading(true);
       if (!user) return;
       
-      // Load expert favorites
+      // Load expert favorites with details
       const { data: expertData, error: expertError } = await supabase
         .from('user_favorites')
-        .select('expert_id')
-        .eq('user_id', user.id);
+        .select('expert_id');
         
       if (expertError) throw expertError;
       
-      setExpertFavorites(expertData.map(item => item.expert_id));
+      const expertIds = expertData.map(item => item.expert_id);
+      setExpertFavorites(expertIds);
       
-      // Load program favorites
+      // Fetch expert details for these IDs
+      if (expertIds.length > 0) {
+        const { data: expertsDetails, error: expertsDetailsError } = await supabase
+          .from('experts')
+          .select('id, name')
+          .in('id', expertIds);
+          
+        if (expertsDetailsError) throw expertsDetailsError;
+        
+        // Convert UUID strings to numbers if needed
+        setExpertFavoriteDetails(expertsDetails.map(expert => ({
+          id: typeof expert.id === 'string' ? parseInt(expert.id) : expert.id,
+          name: expert.name
+        })));
+      }
+      
+      // Load program favorites with details
       const { data: programData, error: programError } = await supabase
         .from('user_favorite_programs')
-        .select('program_id')
-        .eq('user_id', user.id);
+        .select('program_id');
         
       if (programError) throw programError;
       
-      setProgramFavorites(programData.map(item => item.program_id));
+      const programIds = programData.map(item => item.program_id);
+      setProgramFavorites(programIds);
+      
+      // Fetch program details for these IDs
+      if (programIds.length > 0) {
+        const { data: programsDetails, error: programsDetailsError } = await supabase
+          .from('programs')
+          .select('id, title')
+          .in('id', programIds);
+          
+        if (programsDetailsError) throw programsDetailsError;
+        
+        setProgramFavoriteDetails(programsDetails);
+      }
     } catch (error) {
-      console.error('Error loading favorites:', error);
+      console.error('Error loading favorites with details:', error);
       toast.error('Failed to load favorites');
     } finally {
       setLoading(false);
@@ -72,6 +107,21 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (error) throw error;
       
       setExpertFavorites(prev => [...prev, expertId]);
+      
+      // Fetch the expert details to update the details array
+      const { data: expertData, error: expertError } = await supabase
+        .from('experts')
+        .select('id, name')
+        .eq('id', expertId)
+        .single();
+        
+      if (!expertError && expertData) {
+        setExpertFavoriteDetails(prev => [...prev, {
+          id: typeof expertData.id === 'string' ? parseInt(expertData.id) : expertData.id,
+          name: expertData.name
+        }]);
+      }
+      
       toast.success('Added to favorites');
       return true;
     } catch (error) {
@@ -97,6 +147,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (error) throw error;
       
       setExpertFavorites(prev => prev.filter(id => id !== expertId));
+      setExpertFavoriteDetails(prev => prev.filter(item => item.id !== expertId));
+      
       toast.success('Removed from favorites');
       return true;
     } catch (error) {
@@ -136,6 +188,18 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (error) throw error;
       
       setProgramFavorites(prev => [...prev, programId]);
+      
+      // Fetch the program details to update the details array
+      const { data: programData, error: programError } = await supabase
+        .from('programs')
+        .select('id, title')
+        .eq('id', programId)
+        .single();
+        
+      if (!programError && programData) {
+        setProgramFavoriteDetails(prev => [...prev, programData]);
+      }
+      
       toast.success('Program added to favorites');
       return true;
     } catch (error) {
@@ -161,6 +225,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (error) throw error;
       
       setProgramFavorites(prev => prev.filter(id => id !== programId));
+      setProgramFavoriteDetails(prev => prev.filter(item => item.id !== programId));
+      
       toast.success('Program removed from favorites');
       return true;
     } catch (error) {
@@ -192,7 +258,9 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     expertFavorites,
     programFavorites,
     isProgramFavorite,
-    toggleProgramFavorite
+    toggleProgramFavorite,
+    expertFavoriteDetails,
+    programFavoriteDetails
   };
 
   return (
