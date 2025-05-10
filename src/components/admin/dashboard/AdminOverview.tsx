@@ -9,7 +9,7 @@ const AdminOverview: React.FC = () => {
   
   return (
     <div className="space-y-6 w-full">
-      <h1 className="text-2xl font-bold mb-6">Dashboard Overview</h1>
+      {/* Removed duplicate h1 title since it's already in the parent component */}
       
       <DashboardOverview />
       

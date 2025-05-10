@@ -61,7 +61,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             userPermissions={(currentUser?.permissions || {}) as Record<string, boolean>}
           />
           
-          <SidebarInset className="relative">
+          <SidebarInset className="relative w-full"> {/* Added w-full to ensure content takes full width */}
             <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-6 bg-background border-b">
               <h2 className="text-xl font-semibold">
                 {getTabTitle(activeTab || 'overview')}

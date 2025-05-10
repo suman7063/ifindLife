@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Award, Calendar, Activity, TrendingUp, CreditCard } from 'lucide-react';
+import { Users, Award, Calendar, Activity, TrendingUp } from 'lucide-react';
 
 const DashboardOverview: React.FC = () => {
   // Mock data - in a real app, these would come from API calls
