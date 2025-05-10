@@ -47,10 +47,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Fetch expert details for these IDs
       if (expertIds.length > 0) {
+        // Convert numbers to strings for Supabase .in() method
+        const expertIdsAsStrings = expertIds.map(id => id.toString());
+        
         const { data: expertsDetails, error: expertsDetailsError } = await supabase
           .from('experts')
           .select('id, name')
-          .in('id', expertIds);
+          .in('id', expertIdsAsStrings);
           
         if (expertsDetailsError) throw expertsDetailsError;
         
@@ -73,10 +76,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Fetch program details for these IDs
       if (programIds.length > 0) {
+        // Convert numbers to strings for Supabase .in() method
+        const programIdsAsStrings = programIds.map(id => id.toString());
+        
         const { data: programsDetails, error: programsDetailsError } = await supabase
           .from('programs')
           .select('id, title')
-          .in('id', programIds);
+          .in('id', programIdsAsStrings);
           
         if (programsDetailsError) throw programsDetailsError;
         
