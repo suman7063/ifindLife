@@ -1,58 +1,65 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import CategoryCard from '@/components/CategoryCard';
-import { Brain, CircleDot, Star } from 'lucide-react';
+import { Circle } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 interface FeaturedProgramsProps {
   onProgramClick: (href: string) => void;
 }
 
 const FeaturedPrograms: React.FC<FeaturedProgramsProps> = ({ onProgramClick }) => {
-  const featuredPrograms = [
+  const programTypes = [
     {
-      icon: <Brain className="h-8 w-8 text-white" />,
-      title: "QuickEase Programs",
-      description: "Short-term solutions for immediate stress and anxiety relief",
-      href: "/programs-for-wellness-seekers?category=quick-ease",
-      color: "bg-gradient-to-r from-ifind-aqua/60 to-ifind-aqua/80",
-      textColor: "text-white"
+      id: "quickease",
+      name: "Quick Ease",
+      description: "Short, focused sessions to quickly address specific mental health concerns",
+      colorClass: "bg-ifind-purple/10 border-ifind-purple",
+      iconColor: "text-ifind-purple",
+      href: "/programs/quickease",
+      duration: "15-30 min",
+      sessions: "1-3 sessions"
     },
     {
-      icon: <CircleDot className="h-8 w-8 text-white" />,
-      title: "Emotional Resilience",
-      description: "Build psychological strength to handle life's challenges",
-      href: "/programs-for-wellness-seekers?category=resilience-building",
-      color: "bg-gradient-to-r from-ifind-aqua/80 to-ifind-teal",
-      textColor: "text-white"
+      id: "resilience",
+      name: "Resilience Builder",
+      description: "Develop emotional strength and skills to navigate life's challenges",
+      colorClass: "bg-ifind-aqua/10 border-ifind-aqua",
+      iconColor: "text-ifind-aqua",
+      href: "/programs/resilience",
+      duration: "30-45 min",
+      sessions: "4-8 sessions"
     },
     {
-      icon: <Star className="h-8 w-8 text-white" />,
-      title: "Super Human Life",
-      description: "Achieve your highest potential through mental optimization",
-      href: "/programs-for-wellness-seekers?category=super-human",
-      color: "bg-gradient-to-r from-ifind-purple/80 to-ifind-purple",
-      textColor: "text-white"
+      id: "superhuman",
+      name: "Super Human",
+      description: "Transform and elevate your mental capabilities to their full potential",
+      colorClass: "bg-ifind-teal/10 border-ifind-teal",
+      iconColor: "text-ifind-teal",
+      href: "/programs/superhuman",
+      duration: "45-60 min",
+      sessions: "8-12 sessions"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-      {featuredPrograms.map((program, index) => (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      {programTypes.map((program) => (
         <div 
-          key={`program-${index}`} 
-          onClick={() => onProgramClick(program.href)} 
-          className="cursor-pointer transform transition-transform duration-300 hover:scale-105"
+          key={program.id}
+          onClick={() => onProgramClick(program.href)}
+          className={`rounded-xl p-6 shadow-md border ${program.colorClass} cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1`}
         >
-          <CategoryCard 
-            icon={program.icon}
-            title={program.title}
-            description={program.description}
-            href={program.href}
-            color={program.color}
-            textColor={program.textColor}
-            cardStyle="program"
-          />
+          <div className="flex items-center gap-4 mb-4">
+            <div className={`rounded-full p-3 ${program.iconColor} bg-white/80`}>
+              <Circle className="h-6 w-6" />
+            </div>
+            <h4 className="text-xl font-semibold">{program.name}</h4>
+          </div>
+          <p className="text-gray-600 mb-4">{program.description}</p>
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>{program.duration}</span>
+            <span>{program.sessions}</span>
+          </div>
         </div>
       ))}
     </div>

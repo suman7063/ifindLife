@@ -77,7 +77,7 @@ const EnhancedHero: React.FC = () => {
 
   // Layout Option 1: Horizontal Cards Below Headline
   const HorizontalLayout = () => (
-    <div className="absolute bottom-12 left-0 right-0 px-6 md:px-12 lg:px-[60px]">
+    <div className="absolute bottom-[15%] left-0 right-0 px-6 md:px-12 lg:px-[60px]">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
         {serviceCards.map((card, index) => (
           <ServiceCard key={index} {...card} />
@@ -88,7 +88,7 @@ const EnhancedHero: React.FC = () => {
 
   // Layout Option 2: Feature Grid with Large Center Button
   const GridLayout = () => (
-    <div className="absolute bottom-12 left-0 right-0 px-6 md:px-12 lg:px-[60px]">
+    <div className="absolute bottom-[15%] left-0 right-0 px-6 md:px-12 lg:px-[60px]">
       <div className="grid grid-cols-1 gap-3 md:gap-5">
         <div className="grid grid-cols-2 gap-3 md:gap-5">
           <ServiceCard {...serviceCards[0]} />
@@ -105,8 +105,8 @@ const EnhancedHero: React.FC = () => {
 
   return (
     <div className="relative">
-      {/* Hero image/slider */}
-      <div className="relative w-full h-[550px] overflow-hidden">
+      {/* Hero image/slider with full viewport height */}
+      <div className="relative w-full h-screen overflow-hidden">
         {sliderImages.map((image, index) => (
           <div 
             key={index}
@@ -124,7 +124,7 @@ const EnhancedHero: React.FC = () => {
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '550px',
+                height: '100vh',
                 objectFit: 'cover',
                 objectPosition: 'center 30%',
                 borderRadius: '0px'
@@ -136,9 +136,9 @@ const EnhancedHero: React.FC = () => {
           </div>
         ))}
         
-        {/* Headline */}
+        {/* Headline - positioned higher to avoid model's face */}
         <div 
-          className="absolute inset-0 flex flex-col justify-start pt-[60px] px-[60px]"
+          className="absolute inset-0 flex flex-col justify-start pt-[15%] px-[60px]"
           style={{
             width: '100%',
             height: '100%'
