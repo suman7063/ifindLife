@@ -7,7 +7,11 @@ import FeaturedPrograms from './services/FeaturedPrograms';
 import IssueSessions from './services/IssueSessions';
 import SessionDetailDialog from './services/SessionDetailDialog';
 
-const ServicesSection = () => {
+interface ServicesProps {
+  initialSection?: string;
+}
+
+const ServicesSection: React.FC<ServicesProps> = ({ initialSection = "programs" }) => {
   const [categories, setCategories] = useState(defaultCategoryData);
   const [selectedCategory, setSelectedCategory] = useState<{
     title: string;
@@ -51,8 +55,8 @@ const ServicesSection = () => {
           IFL provides 3 kinds of programs in addition to issue/situation based sessions
         </p>
 
-        <FeaturedPrograms onProgramClick={handleProgramClick} />
-        <IssueSessions onCategoryClick={handleCategoryClick} />
+        {initialSection === "programs" && <FeaturedPrograms onProgramClick={handleProgramClick} />}
+        {initialSection === "issues" && <IssueSessions onCategoryClick={handleCategoryClick} />}
       </div>
 
       <SessionDetailDialog 

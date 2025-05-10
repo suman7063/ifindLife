@@ -77,7 +77,7 @@ const EnhancedHero: React.FC = () => {
 
   // Layout Option 1: Horizontal Cards Below Headline
   const HorizontalLayout = () => (
-    <div className="absolute bottom-[15%] left-0 right-0 px-6 md:px-12 lg:px-[60px]">
+    <div className="absolute bottom-[15%] md:bottom-[20%] left-0 right-0 px-6 md:px-12 lg:px-[60px]">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
         {serviceCards.map((card, index) => (
           <ServiceCard key={index} {...card} />
@@ -88,7 +88,7 @@ const EnhancedHero: React.FC = () => {
 
   // Layout Option 2: Feature Grid with Large Center Button
   const GridLayout = () => (
-    <div className="absolute bottom-[15%] left-0 right-0 px-6 md:px-12 lg:px-[60px]">
+    <div className="absolute bottom-[15%] md:bottom-[20%] left-0 right-0 px-6 md:px-12 lg:px-[60px]">
       <div className="grid grid-cols-1 gap-3 md:gap-5">
         <div className="grid grid-cols-2 gap-3 md:gap-5">
           <ServiceCard {...serviceCards[0]} />
@@ -132,24 +132,22 @@ const EnhancedHero: React.FC = () => {
               loading={index === 0 ? "eager" : "lazy"}
             />
             {/* Add a semi-transparent overlay to improve text readability */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-black/20"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-black/30"></div>
           </div>
         ))}
         
         {/* Headline - positioned higher to avoid model's face */}
         <div 
-          className="absolute inset-0 flex flex-col justify-start pt-[15%] px-[60px]"
+          className="absolute inset-0 flex flex-col justify-start pt-[20%] sm:pt-[15%] px-6 sm:px-[60px]"
           style={{
             width: '100%',
             height: '100%'
           }}
         >
           <h1 
-            className="text-white font-bold"
+            className="text-white font-bold text-5xl sm:text-6xl md:text-7xl lg:text-[80px] leading-tight sm:leading-normal md:leading-tight lg:leading-[90px]"
             style={{
               fontFamily: 'Roboto, sans-serif',
-              fontSize: '80px',
-              lineHeight: '90px',
               fontWeight: 700,
               color: '#FFFFFF',
               maxWidth: '540px'
@@ -164,7 +162,7 @@ const EnhancedHero: React.FC = () => {
         {currentLayout === LAYOUT_HORIZONTAL ? <HorizontalLayout /> : <GridLayout />}
         
         {/* Layout toggle button - for demo purposes */}
-        <div className="absolute top-4 right-4">
+        <div className="absolute top-4 right-4 z-10">
           <Button 
             variant="outline" 
             className="bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white/30"
