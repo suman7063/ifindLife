@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Users } from 'lucide-react';
-import { Dialog, DialogTrigger, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 interface ServiceCTAProps {
   title: string;
@@ -42,6 +42,9 @@ const ServiceCTA: React.FC<ServiceCTAProps> = ({
             </DialogTrigger>
             <DialogContent>
               <DialogTitle>Inquiry Form</DialogTitle>
+              <DialogDescription>
+                Please fill out this form to learn more about our services.
+              </DialogDescription>
               <p>This dialog content is provided by the parent component.</p>
             </DialogContent>
           </Dialog>

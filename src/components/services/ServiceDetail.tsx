@@ -49,6 +49,8 @@ const ServiceDetail = () => {
   
   // Handler for the book now button click
   const handleBookNowClick = () => {
+    console.log("Book Now button clicked");
+    
     if (!isAuthenticated) {
       toast.error("Please login to book a session");
       navigate('/login');

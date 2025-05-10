@@ -23,13 +23,13 @@ const SessionDetailDialog: React.FC<SessionDetailDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" aria-labelledby="session-dialog-title" aria-describedby="session-dialog-description">
         <DialogHeader>
-          <DialogTitle className="flex items-center">
+          <DialogTitle id="session-dialog-title" className="flex items-center">
             {selectedCategory?.icon && React.cloneElement(selectedCategory.icon as React.ReactElement, { className: 'h-6 w-6 mr-2' })}
             {selectedCategory?.title || 'Session Details'}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription id="session-dialog-description">
             {selectedCategory?.description || 'Learn more about this service and how we can help.'}
           </DialogDescription>
         </DialogHeader>

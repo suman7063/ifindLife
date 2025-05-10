@@ -31,10 +31,14 @@ const BookingDialog: React.FC<BookingDialogProps> = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent 
+        className="sm:max-w-[800px]"
+        aria-labelledby="booking-dialog-title"
+        aria-describedby="booking-dialog-description"
+      >
         <DialogHeader>
-          <DialogTitle>Book a {serviceName} Session</DialogTitle>
-          <DialogDescription>
+          <DialogTitle id="booking-dialog-title">Book a {serviceName} Session</DialogTitle>
+          <DialogDescription id="booking-dialog-description">
             Select an expert and schedule your appointment.
           </DialogDescription>
         </DialogHeader>

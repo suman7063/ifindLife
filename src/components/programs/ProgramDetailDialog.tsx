@@ -14,7 +14,6 @@ import ProgramDescription from './dialog/ProgramDescription';
 import ProgramPriceFooter from './dialog/ProgramPriceFooter';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 interface ProgramDetailDialogProps {
   program: Program;
@@ -82,12 +81,13 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
 
   return (
     <>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] p-0 gap-0 overflow-hidden mx-auto">
-        {/* Visually hidden title for accessibility */}
-        <VisuallyHidden>
-          <h2 id="program-dialog-title">{program.title} Details</h2>
-          <p id="program-dialog-description">View program details and enrollment options</p>
-        </VisuallyHidden>
+      <DialogContent 
+        className="sm:max-w-[700px] max-h-[90vh] p-0 gap-0 overflow-hidden mx-auto"
+        aria-labelledby="program-dialog-title"
+        aria-describedby="program-dialog-description"
+      >
+        <h2 id="program-dialog-title" className="sr-only">{program.title} Details</h2>
+        <p id="program-dialog-description" className="sr-only">View program details and enrollment options</p>
         
         <ProgramImageHeader 
           program={program}
