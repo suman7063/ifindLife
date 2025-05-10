@@ -1,50 +1,61 @@
 
-import React from 'react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import SidebarMenuItem from './SidebarMenuItem';
-import { LucideIcon } from "lucide-react";
 
-interface MenuSectionItem {
-  icon: LucideIcon;
-  label: string;
-  isActive?: boolean;
-  onClick?: () => void;
-  disabled?: boolean;
-}
-
-interface MenuSectionProps {
-  items: MenuSectionItem[];
+export interface MenuSectionProps {
+  sectionLabel: string;
+  items: {
+    icon: React.ElementType;
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+  }[];
   showSection: boolean;
-  sectionLabel?: string;
 }
 
-const MenuSection: React.FC<MenuSectionProps> = ({ 
-  items, 
-  showSection,
-  sectionLabel 
+const MenuSection: React.FC<MenuSectionProps> = ({
+  sectionLabel,
+  items,
+  showSection
 }) => {
-  if (!showSection || items.length === 0) {
+  const [isExpanded, setIsExpanded] = useState(true);
+
+  if (!showSection) {
     return null;
   }
 
+  const hasActiveItem = items.some(item => item.isActive);
+
   return (
-    <div className="border rounded-md overflow-hidden">
-      {sectionLabel && (
-        <div className="bg-muted px-3 py-2 text-xs font-medium text-muted-foreground">
+    <div className="mb-2">
+      <div 
+        className="flex items-center justify-between p-2 rounded-md cursor-pointer text-sm font-medium hover:bg-gray-100 dark:hover:bg-gray-800"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        <span className={`text-gray-500 dark:text-gray-400 ${hasActiveItem ? 'font-semibold text-ifind-aqua' : ''}`}>
           {sectionLabel}
+        </span>
+        {isExpanded ? (
+          <ChevronUp className="h-4 w-4 text-gray-500" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-gray-500" />
+        )}
+      </div>
+      
+      {isExpanded && (
+        <div className="ml-2 space-y-1 mt-1">
+          {items.map((item, index) => (
+            <SidebarMenuItem 
+              key={index}
+              icon={item.icon}
+              label={item.label}
+              isActive={item.isActive}
+              onClick={item.onClick}
+            />
+          ))}
         </div>
       )}
-      <div className="flex flex-col gap-1 p-2">
-        {items.map((item, index) => (
-          <SidebarMenuItem
-            key={`${item.label}-${index}`}
-            icon={item.icon}
-            label={item.label}
-            active={item.isActive}
-            onClick={item.onClick}
-            disabled={item.disabled}
-          />
-        ))}
-      </div>
     </div>
   );
 };

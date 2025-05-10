@@ -37,6 +37,7 @@ const ServicesEditor: React.FC<ServicesEditorProps> = ({
           // Use website services if they exist
           if (categories.length === 0 || window.confirm('Sync with website services?')) {
             setCategories(parsedContent.services);
+            toast.success('Services synced with website content');
           }
         }
       }
@@ -111,6 +112,7 @@ const ServicesEditor: React.FC<ServicesEditorProps> = ({
       toast.success("Services saved successfully");
     } catch (error) {
       console.error("Error saving services to localStorage:", error);
+      toast.error("Failed to save services");
     }
   };
   
