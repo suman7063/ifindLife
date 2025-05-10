@@ -32,36 +32,3 @@ export const handlePolicyError = (error: any) => {
   }
   return false;
 };
-
-// Add a helper to clean up URLs that might have been corrupted
-export const sanitizeVideoUrl = (url: string): string => {
-  if (!url) return '';
-  
-  const inappropriatePatterns = [
-    'dQw4w9WgXcQ', // Rick Astley Never Gonna Give You Up video ID
-    'rick astley',
-    'rickroll',
-    'never gonna give you up'
-  ];
-  
-  const lowercaseUrl = url.toLowerCase();
-  const isInappropriate = inappropriatePatterns.some(pattern => 
-    lowercaseUrl.includes(pattern.toLowerCase())
-  );
-  
-  if (isInappropriate) {
-    console.warn("Inappropriate video URL detected and replaced");
-    return "https://www.youtube.com/embed/0J_Vg-uWY-k?autoplay=0";
-  }
-  
-  // Ensure autoplay is disabled
-  let sanitized = url.replace(/([?&])autoplay=1/g, '$1autoplay=0');
-  
-  if (!sanitized.includes('autoplay=')) {
-    sanitized = sanitized.includes('?') 
-      ? `${sanitized}&autoplay=0` 
-      : `${sanitized}?autoplay=0`;
-  }
-  
-  return sanitized;
-};

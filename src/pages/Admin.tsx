@@ -35,7 +35,6 @@ const Admin = () => {
   const { 
     experts, setExperts,
     services, setServices,
-    heroSettings, setHeroSettings,
     testimonials, setTestimonials,
     loading,
     error,
@@ -135,8 +134,6 @@ const Admin = () => {
           setExperts={setExperts}
           services={services}
           setServices={setServices}
-          heroSettings={heroSettings}
-          setHeroSettings={setHeroSettings}
           testimonials={testimonials}
           setTestimonials={setTestimonials}
           error={error}

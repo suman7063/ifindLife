@@ -5,7 +5,6 @@ import AdminDashboard from './AdminDashboard';
 import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
 import { ServicesEditor } from '@/components/admin/services';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
-import HeroSectionEditor from '@/components/admin/HeroSectionEditor';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
 import AdminSettings from './AdminSettings';
 import ProgramsEditor from '@/components/admin/programs/ProgramsEditor';
@@ -26,8 +25,6 @@ interface AdminRoutesProps {
   setExperts: React.Dispatch<React.SetStateAction<any[]>>;
   services: any[];
   setServices: React.Dispatch<React.SetStateAction<any[]>>;
-  heroSettings: any;
-  setHeroSettings: React.Dispatch<React.SetStateAction<any>>;
   testimonials: any[];
   setTestimonials: React.Dispatch<React.SetStateAction<any[]>>;
   error: string | null;
@@ -41,8 +38,6 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
   setExperts,
   services,
   setServices,
-  heroSettings,
-  setHeroSettings,
   testimonials,
   setTestimonials,
   error,
@@ -68,8 +63,6 @@ const AdminRoutes: React.FC<AdminRoutesProps> = ({
         return <ExpertApprovals />;
       case 'services':
         return <ServicesEditor categories={services} setCategories={setServices} loading={loading} error={error} onRefresh={onRefresh} />;
-      case 'herosection':
-        return <HeroSectionEditor heroSettings={heroSettings} setHeroSettings={setHeroSettings} />;
       case 'testimonials':
         return <TestimonialsEditor testimonials={testimonials} setTestimonials={setTestimonials} />;
       case 'programs':

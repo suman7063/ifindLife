@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, PanelLeft, Star, BookOpen, Bookmark, MessageSquare } from 'lucide-react';
+import { FileText, Star, BookOpen, Bookmark, MessageSquare } from 'lucide-react';
 import MenuSection from '../MenuSection';
 
 interface ContentManagementSectionProps {
@@ -18,7 +18,6 @@ const ContentManagementSection: React.FC<ContentManagementSectionProps> = ({
   activeTab,
   onTabChange,
   hasServicesPermission,
-  hasHeroSectionPermission,
   hasTestimonialsPermission,
   hasProgramsPermission,
   hasSessionsPermission,
@@ -32,15 +31,6 @@ const ContentManagementSection: React.FC<ContentManagementSectionProps> = ({
       label: "Services",
       isActive: activeTab === 'services',
       onClick: () => onTabChange('services')
-    });
-  }
-  
-  if (hasHeroSectionPermission) {
-    items.push({
-      icon: PanelLeft,
-      label: "Hero Section",
-      isActive: activeTab === 'herosection',
-      onClick: () => onTabChange('herosection')
     });
   }
   

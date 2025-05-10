@@ -1,18 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Headphones, BookOpen } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Layout option constants
-const LAYOUT_HORIZONTAL = 'horizontal';
-const LAYOUT_GRID = 'grid';
-
 const EnhancedHero: React.FC = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-  // Keep one layout as default without allowing toggle
-  const [currentLayout] = useState<string>(LAYOUT_HORIZONTAL);
   const isMobile = useIsMobile();
   
   // Slider images
@@ -72,34 +67,6 @@ const EnhancedHero: React.FC = () => {
     </div>
   );
 
-  // Layout Option 1: Horizontal Cards Below Headline
-  const HorizontalLayout = () => (
-    <div className="absolute bottom-8 sm:bottom-10 md:bottom-12 left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-[60px]">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
-        {serviceCards.map((card, index) => (
-          <ServiceCard key={index} {...card} />
-        ))}
-      </div>
-    </div>
-  );
-
-  // Layout Option 2: Feature Grid with Large Center Button
-  const GridLayout = () => (
-    <div className="absolute bottom-8 sm:bottom-10 md:bottom-12 left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-[60px]">
-      <div className="grid grid-cols-1 gap-3 md:gap-5">
-        <div className="grid grid-cols-2 gap-3 md:gap-5">
-          <ServiceCard {...serviceCards[0]} />
-          <ServiceCard {...serviceCards[1]} />
-        </div>
-        <div className="mx-auto w-full md:w-2/3">
-          <ServiceCard {...serviceCards[2]} 
-            color="from-ifind-teal/80 to-ifind-teal/95"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="relative h-[100vh]">
       {/* Hero image/slider */}
@@ -127,7 +94,6 @@ const EnhancedHero: React.FC = () => {
               }}
               loading={index === 0 ? "eager" : "lazy"}
             />
-            {/* Removed the semi-transparent overlay to make images brighter */}
           </div>
         ))}
         
@@ -139,8 +105,8 @@ const EnhancedHero: React.FC = () => {
             className="text-white font-bold"
             style={{
               fontFamily: 'Roboto, sans-serif',
-              fontSize: isMobile ? '58px' : '96px', // Increased by 20% (48px to 58px, 80px to 96px)
-              lineHeight: isMobile ? '64px' : '108px', // Increased proportionally
+              fontSize: isMobile ? '58px' : '96px',
+              lineHeight: isMobile ? '64px' : '108px',
               fontWeight: 700,
               color: '#FFFFFF',
               maxWidth: '540px'
@@ -151,8 +117,14 @@ const EnhancedHero: React.FC = () => {
           </h1>
         </div>
         
-        {/* Service Cards - always use horizontal layout */}
-        <HorizontalLayout />
+        {/* Service Cards */}
+        <div className="absolute bottom-8 sm:bottom-10 md:bottom-12 left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-[60px]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
+            {serviceCards.map((card, index) => (
+              <ServiceCard key={index} {...card} />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

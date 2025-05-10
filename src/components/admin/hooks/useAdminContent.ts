@@ -2,17 +2,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Expert } from '@/components/admin/experts/types';
-import { initialHeroSettings } from '@/data/initialAdminData';
 import { useExpertsData } from './useExpertsData';
 import { useServicesData, ServiceCategory } from './useServicesData';
-import { useHeroSettings, HeroSettings } from './useHeroSettings';
 import { useTestimonialsData, Testimonial } from './testimonials';
 import { loadContentFromLocalStorage, saveContentToLocalStorage } from './utils/dataLoaders';
 
 interface AdminContent {
   experts: Expert[];
   services: ServiceCategory[];
-  heroSettings: HeroSettings;
   testimonials: Testimonial[];
   loading: boolean;
 }
@@ -20,7 +17,6 @@ interface AdminContent {
 export const useAdminContent = (): AdminContent & {
   setExperts: React.Dispatch<React.SetStateAction<Expert[]>>;
   setServices: React.Dispatch<React.SetStateAction<ServiceCategory[]>>;
-  setHeroSettings: React.Dispatch<React.SetStateAction<HeroSettings>>;
   setTestimonials: React.Dispatch<React.SetStateAction<Testimonial[]>>;
   error?: string | null;
   refreshData: () => void;
@@ -31,15 +27,10 @@ export const useAdminContent = (): AdminContent & {
   const [initialData, setInitialData] = useState<{
     experts: Expert[];
     services: ServiceCategory[];
-    heroSettings: HeroSettings;
     testimonials: Testimonial[];
   }>({
     experts: [],
     services: [],
-    heroSettings: {
-      ...initialHeroSettings,
-      videoUrl: initialHeroSettings.videoUrl
-    },
     testimonials: []
   });
 
@@ -63,7 +54,6 @@ export const useAdminContent = (): AdminContent & {
           setInitialData({
             experts: parsedContent.experts || [],
             services: parsedContent.services || [],
-            heroSettings: parsedContent.heroSettings || initialHeroSettings,
             testimonials: parsedContent.testimonials || []
           });
         }
@@ -102,15 +92,6 @@ export const useAdminContent = (): AdminContent & {
     (newServices) => updateContent({ services: newServices })
   );
   
-  const { 
-    heroSettings, 
-    setHeroSettings,
-    error: heroError
-  } = useHeroSettings(
-    initialData.heroSettings,
-    (newSettings) => updateContent({ heroSettings: newSettings })
-  );
-  
   const testimonialsHook = useTestimonialsData(
     initialData.testimonials,
     (newTestimonials) => updateContent({ testimonials: newTestimonials })
@@ -129,7 +110,6 @@ export const useAdminContent = (): AdminContent & {
     const content = {
       experts: newContent.experts || experts,
       services: newContent.services || services,
-      heroSettings: newContent.heroSettings || heroSettings,
       testimonials: newContent.testimonials || testimonials
     };
     
@@ -140,7 +120,7 @@ export const useAdminContent = (): AdminContent & {
       console.error("Failed to save content to localStorage:", e);
       toast.error("Failed to save changes locally");
     }
-  }, [loading, experts, services, heroSettings, testimonials]);
+  }, [loading, experts, services, testimonials]);
   
   // Create a setTestimonials function that wraps the original one
   const setTestimonials = useCallback((newTestimonials: React.SetStateAction<Testimonial[]>) => {
@@ -162,10 +142,9 @@ export const useAdminContent = (): AdminContent & {
     // Use safe type handling to avoid instanceof errors
     if (expertsError) setError(String(expertsError));
     else if (servicesError) setError(String(servicesError));
-    else if (heroError) setError(String(heroError));
     else if (testimonialsError) setError(String(testimonialsError));
     else setError(null);
-  }, [expertsLoading, servicesLoading, expertsError, servicesError, heroError, testimonialsError]);
+  }, [expertsLoading, servicesLoading, expertsError, servicesError, testimonialsError]);
 
   // Save content to localStorage whenever it changes
   useEffect(() => {
@@ -174,18 +153,15 @@ export const useAdminContent = (): AdminContent & {
     updateContent({
       experts,
       services,
-      heroSettings,
       testimonials
     });
-  }, [experts, services, heroSettings, testimonials, loading, updateContent]);
+  }, [experts, services, testimonials, loading, updateContent]);
 
   return {
     experts,
     setExperts,
     services,
     setServices,
-    heroSettings,
-    setHeroSettings,
     testimonials,
     setTestimonials,
     loading,

@@ -2,16 +2,6 @@
 // Default data for Admin sections
 // Using string icons (emojis) instead of React Elements
 
-export const initialHeroSettings = {
-  title: "Take Control of Your Mental Health Journey",
-  subtitle: "Mental Health Journey",
-  description: "We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance and natural energy alignment, avoiding pills. Find your inner peace, and move forward gently. Get answers when you need it the most.",
-  ctaText: "Get Started",
-  ctaLink: "/services",
-  image: "/lovable-uploads/1086590e-2848-41ea-a5f9-40b33666bb9d.png",
-  videoUrl: "https://www.youtube.com/embed/0J_Vg-uWY-k?autoplay=0" // Professional mental health video
-};
-
 // Services with string icons instead of React components
 export const categoryData = [
   {

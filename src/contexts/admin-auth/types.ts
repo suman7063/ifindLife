@@ -1,3 +1,4 @@
+
 export interface AdminPermissions {
   [key: string]: boolean;
 }
@@ -6,7 +7,6 @@ export const defaultPermissions: AdminPermissions = {
   experts: true,
   expertApprovals: false,
   services: true,
-  herosection: true,
   testimonials: true,
   blog: true,
   programs: true,
@@ -24,7 +24,6 @@ export const superAdminPermissions: AdminPermissions = {
   experts: true,
   expertApprovals: true,
   services: true,
-  herosection: true,
   testimonials: true,
   blog: true,
   programs: true,

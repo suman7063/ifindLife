@@ -3,63 +3,15 @@ import React, { useEffect, useState } from 'react';
 import { HeroHeader } from './HeroHeader';
 import { HelpSection } from './HelpSection';
 import { DiscoverSection } from './DiscoverSection';
-import { initialHeroSettings } from '@/data/initialAdminData';
-import { sanitizeVideoUrl } from '@/components/admin/hooks/utils/dataLoaders';
-import { toast } from 'sonner';
 
 const Hero = () => {
-  const [heroSettings, setHeroSettings] = useState({
-    title: initialHeroSettings.title,
-    subtitle: initialHeroSettings.subtitle,
-    description: initialHeroSettings.description,
-    videoUrl: initialHeroSettings.videoUrl
-  });
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Slider images - update with just two images and remove the third one
+  // Slider images
   const sliderImages = [
     "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // First image (man)
     "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Second image (woman)
   ];
-
-  // Load content from localStorage on component mount
-  useEffect(() => {
-    try {
-      const savedContent = localStorage.getItem('ifindlife-content');
-      if (savedContent) {
-        const parsedContent = JSON.parse(savedContent);
-        if (parsedContent.heroSettings) {
-          // Sanitize the video URL to prevent inappropriate content
-          const safeVideoUrl = sanitizeVideoUrl(parsedContent.heroSettings.videoUrl || initialHeroSettings.videoUrl);
-          
-          setHeroSettings({
-            title: parsedContent.heroSettings.title || initialHeroSettings.title,
-            subtitle: parsedContent.heroSettings.subtitle || initialHeroSettings.subtitle,
-            description: parsedContent.heroSettings.description || initialHeroSettings.description,
-            videoUrl: safeVideoUrl
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading content from localStorage:', error);
-      // Fallback to correct default content in case of error
-      setHeroSettings({
-        title: initialHeroSettings.title,
-        subtitle: initialHeroSettings.subtitle,
-        description: initialHeroSettings.description,
-        videoUrl: initialHeroSettings.videoUrl
-      });
-      toast.error('Error loading hero content. Using default settings.');
-    }
-  }, []);
-
-  // Effect to manage video loading state
-  useEffect(() => {
-    if (heroSettings.videoUrl && !isVideoLoaded) {
-      setIsVideoLoaded(true);
-    }
-  }, [heroSettings.videoUrl, isVideoLoaded]);
 
   // Auto slide rotation with fade effect
   useEffect(() => {
@@ -81,8 +33,8 @@ const Hero = () => {
         description={"Connect with our currently online experts through an instant call"} 
       />
       <DiscoverSection 
-        videoUrl={heroSettings.videoUrl} 
-        isVideoLoaded={isVideoLoaded}
+        videoUrl={"https://www.youtube.com/embed/0J_Vg-uWY-k?autoplay=0"} 
+        isVideoLoaded={true}
         title="Take Control of Your"
         description="We know how it feels to be stuck. Don't carry that weight alone. iFindlife provides compassionate guidance, root cause healing and energy alignment, naturally. Find your inner peace, and move forward gently. Get answers when you need it the most."
         rating="4.8/5.0"
