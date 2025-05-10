@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,14 +11,10 @@ const LAYOUT_GRID = 'grid';
 const EnhancedHero: React.FC = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [currentLayout, setCurrentLayout] = useState<string>(LAYOUT_HORIZONTAL);
+  // Keep one layout as default without allowing toggle
+  const [currentLayout] = useState<string>(LAYOUT_HORIZONTAL);
   const isMobile = useIsMobile();
   
-  // Toggle between layouts - for demo purposes
-  const toggleLayout = () => {
-    setCurrentLayout(prev => prev === LAYOUT_HORIZONTAL ? LAYOUT_GRID : LAYOUT_HORIZONTAL);
-  };
-
   // Slider images
   const sliderImages = [
     "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // First image (man)
@@ -106,7 +101,7 @@ const EnhancedHero: React.FC = () => {
   );
 
   return (
-    <div className="relative h-[80vh]">
+    <div className="relative h-[100vh]">
       {/* Hero image/slider */}
       <div className="relative w-full h-full overflow-hidden">
         {sliderImages.map((image, index) => (
@@ -156,19 +151,10 @@ const EnhancedHero: React.FC = () => {
           </h1>
         </div>
         
-        {/* Service Cards - conditionally render based on selected layout */}
-        {currentLayout === LAYOUT_HORIZONTAL ? <HorizontalLayout /> : <GridLayout />}
+        {/* Service Cards - always use horizontal layout */}
+        <HorizontalLayout />
         
-        {/* Layout toggle button - for demo purposes */}
-        <div className="absolute top-4 right-4">
-          <Button 
-            variant="outline" 
-            className="bg-white/20 backdrop-blur-sm text-white border-white/30 hover:bg-white/30"
-            onClick={toggleLayout}
-          >
-            Toggle Layout: {currentLayout === LAYOUT_HORIZONTAL ? 'Horizontal' : 'Grid'}
-          </Button>
-        </div>
+        {/* Layout toggle button has been removed */}
       </div>
     </div>
   );
