@@ -12,6 +12,23 @@ export const useAdminSession = () => {
   useEffect(() => {
     try {
       console.log('AuthProvider: Checking for existing session');
+      
+      // First check for the stored user object which has more data
+      const storedUser = localStorage.getItem('admin-user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          console.log('AuthProvider: Found stored user data:', parsedUser.username);
+          setCurrentUser(parsedUser);
+          setIsAuthenticated(true);
+          return;
+        } catch (error) {
+          console.error('Error parsing stored admin user:', error);
+          localStorage.removeItem('admin-user');
+        }
+      }
+      
+      // Fall back to the older session storage method
       const adminSession = localStorage.getItem('admin_session');
       const adminUsername = localStorage.getItem('admin_username');
       
@@ -25,6 +42,9 @@ export const useAdminSession = () => {
           console.log('AuthProvider: Found authenticated user:', foundUser);
           setIsAuthenticated(true);
           setCurrentUser(foundUser);
+          
+          // Update to new storage format
+          localStorage.setItem('admin-user', JSON.stringify(foundUser));
         } else {
           console.log('AuthProvider: No matching user found, clearing session');
           localStorage.removeItem('admin_session');
@@ -34,7 +54,7 @@ export const useAdminSession = () => {
     } catch (err) {
       console.error('Error checking admin session:', err);
     }
-  }, []);
+  }, [adminUsers]);
 
   return {
     isAuthenticated, 

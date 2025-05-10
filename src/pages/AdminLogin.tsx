@@ -8,18 +8,18 @@ import PageHeader from '@/components/common/PageHeader';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 
 const AdminLogin = () => {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   
   console.log('AdminLogin component rendered, isAuthenticated:', isAuthenticated, 'currentUser:', currentUser?.username);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isLoading && isAuthenticated) {
       console.log('User is already authenticated as', currentUser?.role, 'redirecting to admin panel');
       navigate('/admin');
     }
-  }, [isAuthenticated, navigate, currentUser]);
+  }, [isAuthenticated, navigate, currentUser, isLoading]);
 
   const handleLoginSuccess = () => {
     console.log('Login successful, redirecting to admin panel');

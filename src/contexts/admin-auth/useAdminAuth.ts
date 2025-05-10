@@ -32,32 +32,48 @@ export const useAdminAuth = ({
       
       if (foundUser) {
         console.log('Admin auth: Login successful for user:', foundUser.username);
-        setIsAuthenticated(true);
-        setCurrentUser(foundUser);
         
-        // Store session info in localStorage
+        // Create updated user with login timestamp
+        const updatedUser = {
+          ...foundUser,
+          lastLogin: new Date().toISOString()
+        };
+        
+        // Update authentication state
+        setIsAuthenticated(true);
+        setCurrentUser(updatedUser);
+        
+        // Store session info in localStorage - both formats for compatibility
         localStorage.setItem('admin_session', 'true');
         localStorage.setItem('admin_username', foundUser.username);
-        localStorage.setItem('admin-user', JSON.stringify(foundUser));
+        localStorage.setItem('admin-user', JSON.stringify(updatedUser));
+        
+        // Also update the user in the adminUsers array
+        updateAdminUser(foundUser.username, { lastLogin: updatedUser.lastLogin });
         
         return true;
       } else {
         console.log('Admin auth: Login failed: Invalid credentials');
         setLoginError('Invalid username or password');
+        toast.error('Invalid username or password');
         return false;
       }
     } catch (error) {
       console.error('Admin auth: Login error:', error);
       setLoginError('An error occurred during login');
+      toast.error('An error occurred during login');
       return false;
     }
   };
   
   const logout = () => {
+    console.log('Admin auth: Logging out');
     setIsAuthenticated(false);
     setCurrentUser(null);
     localStorage.removeItem('admin_session');
     localStorage.removeItem('admin_username');
+    localStorage.removeItem('admin-user');
+    toast.info('You have been logged out');
   };
   
   const addAdmin = (username: string, password: string, permissions: AdminPermissions = defaultPermissions) => {
@@ -75,10 +91,13 @@ export const useAdminAuth = ({
       username,
       password,
       role: 'admin',
-      permissions
+      permissions,
+      createdAt: new Date().toISOString()
     };
     
-    setAdminUsers(prev => [...prev, newUser]);
+    const updatedUsers = [...adminUsers, newUser];
+    setAdminUsers(updatedUsers);
+    localStorage.setItem('admin-users', JSON.stringify(updatedUsers));
     toast.success(`Admin user '${username}' added successfully`);
   };
   
@@ -88,23 +107,50 @@ export const useAdminAuth = ({
       return;
     }
     
-    setAdminUsers(prev => prev.filter(user => user.username !== username));
+    const updatedUsers = adminUsers.filter(user => user.username !== username);
+    setAdminUsers(updatedUsers);
+    localStorage.setItem('admin-users', JSON.stringify(updatedUsers));
     toast.success(`Admin user '${username}' removed successfully`);
   };
   
   const updateAdminPermissions = (username: string, permissions: AdminPermissions) => {
-    setAdminUsers(prev => prev.map(user => 
-      user.username === username 
-        ? { ...user, permissions } 
-        : user
-    ));
+    const updatedUsers = adminUsers.map(user => {
+      if (user.username === username) {
+        return { ...user, permissions };
+      }
+      return user;
+    });
     
-    // If we're updating the current user, also update the current user state
+    setAdminUsers(updatedUsers);
+    localStorage.setItem('admin-users', JSON.stringify(updatedUsers));
+    
+    // If the updated user is the current user, update the current user state and localStorage
     if (currentUser && currentUser.username === username) {
-      setCurrentUser({ ...currentUser, permissions });
+      const updatedUser = { ...currentUser, permissions };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('admin-user', JSON.stringify(updatedUser));
     }
     
     toast.success(`Permissions updated for '${username}'`);
+  };
+  
+  const updateAdminUser = (username: string, userData: Partial<AdminUser>) => {
+    const updatedUsers = adminUsers.map(user => {
+      if (user.username === username) {
+        return { ...user, ...userData };
+      }
+      return user;
+    });
+    
+    setAdminUsers(updatedUsers);
+    localStorage.setItem('admin-users', JSON.stringify(updatedUsers));
+    
+    // If the updated user is the current user, update the current user state and localStorage
+    if (currentUser && currentUser.username === username) {
+      const updatedUser = { ...currentUser, ...userData };
+      setCurrentUser(updatedUser);
+      localStorage.setItem('admin-user', JSON.stringify(updatedUser));
+    }
   };
   
   return {
@@ -113,6 +159,7 @@ export const useAdminAuth = ({
     loginError,
     addAdmin,
     removeAdmin,
-    updateAdminPermissions
+    updateAdminPermissions,
+    updateAdminUser
   };
 };
