@@ -1,57 +1,73 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import CategoryCard from '@/components/CategoryCard';
-import { Brain, CircleDot, Star } from 'lucide-react';
+import { Brain, Heart, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
 
 interface FeaturedProgramsProps {
   onProgramClick: (href: string) => void;
 }
 
 const FeaturedPrograms: React.FC<FeaturedProgramsProps> = ({ onProgramClick }) => {
-  const featuredPrograms = [
+  const designCategories = [
     {
-      icon: <Brain className="h-8 w-8 text-white" />,
-      title: "QuickEase Programs",
-      description: "Short-term solutions for immediate stress and anxiety relief",
-      href: "/programs-for-wellness-seekers?category=quick-ease",
-      color: "bg-gradient-to-r from-ifind-aqua/60 to-ifind-aqua/80",
-      textColor: "text-white"
+      icon: <Brain className="h-8 w-8 text-ifind-aqua" />,
+      title: "Anxiety & Depression",
+      description: "Get help managing anxiety, depression, and stress from licensed therapists.",
+      href: "/anxiety-depression",
+      color: "bg-blue-100"
     },
     {
-      icon: <CircleDot className="h-8 w-8 text-white" />,
-      title: "Emotional Resilience",
-      description: "Build psychological strength to handle life's challenges",
-      href: "/programs-for-wellness-seekers?category=resilience-building",
-      color: "bg-gradient-to-r from-ifind-aqua/80 to-ifind-teal",
-      textColor: "text-white"
+      icon: <Heart className="h-8 w-8 text-ifind-aqua" />,
+      title: "Relationship Counseling",
+      description: "Improve communication and resolve conflicts in all types of relationships.",
+      href: "/relationship-counseling",
+      color: "bg-red-100"
     },
     {
-      icon: <Star className="h-8 w-8 text-white" />,
-      title: "Super Human Life",
-      description: "Achieve your highest potential through mental optimization",
-      href: "/programs-for-wellness-seekers?category=super-human",
-      color: "bg-gradient-to-r from-ifind-purple/80 to-ifind-purple",
-      textColor: "text-white"
+      icon: <Lightbulb className="h-8 w-8 text-ifind-aqua" />,
+      title: "Career Guidance",
+      description: "Navigate work stress, career transitions, and professional development.",
+      href: "/career-guidance",
+      color: "bg-yellow-100"
+    },
+    {
+      icon: <Users className="h-8 w-8 text-ifind-aqua" />,
+      title: "Family Therapy",
+      description: "Address family dynamics, parenting challenges, and intergenerational issues.",
+      href: "/family-therapy",
+      color: "bg-green-100"
+    },
+    {
+      icon: <Sparkles className="h-8 w-8 text-ifind-aqua" />,
+      title: "Trauma Recovery",
+      description: "Process and heal from past trauma with specialized therapeutic approaches.",
+      href: "/trauma-recovery",
+      color: "bg-purple-100"
+    },
+    {
+      icon: <MessageCircle className="h-8 w-8 text-ifind-aqua" />,
+      title: "Teen Counseling",
+      description: "Support for adolescents facing academic pressure, identity, and social challenges.",
+      href: "/teen-counseling",
+      color: "bg-orange-100"
     }
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
-      {featuredPrograms.map((program, index) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {designCategories.map((category, index) => (
         <div 
-          key={`program-${index}`} 
-          onClick={() => onProgramClick(program.href)} 
+          key={`category-${index}`}
+          onClick={() => onProgramClick(category.href)}
           className="cursor-pointer transform transition-transform duration-300 hover:scale-105"
         >
           <CategoryCard 
-            icon={program.icon}
-            title={program.title}
-            description={program.description}
-            href={program.href}
-            color={program.color}
-            textColor={program.textColor}
-            cardStyle="program"
+            icon={category.icon}
+            title={category.title}
+            description={category.description}
+            href={category.href}
+            color={category.color}
+            cardStyle="session" 
           />
         </div>
       ))}

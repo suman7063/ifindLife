@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import { lazy, Suspense } from 'react';
 
-// Lazy load non-critical components (same as index page)
+// Lazy load non-critical components
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
@@ -16,6 +16,7 @@ const CTASection = lazy(() => import('@/components/CTASection'));
 const Footer = lazy(() => import('@/components/Footer'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
 const StayInTouchSection = lazy(() => import('@/components/StayInTouchSection'));
+const HomepageIssueSessions = lazy(() => import('@/components/HomepageIssueSessions'));
 
 // Loading fallback component
 const SectionLoadingFallback = () => (
@@ -42,13 +43,23 @@ const HomePageTest = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
-        {/* Use our new EnhancedHero component instead of the regular Hero */}
+        {/* Section 1: Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Services/Categories Section - Critical for first impression */}
+        {/* Section 2: Issue-based Sessions */}
+        <Suspense fallback={<SectionLoadingFallback />}>
+          <HomepageIssueSessions />
+        </Suspense>
+        
+        {/* Section 3: Top IFL Experts */}
+        <Suspense fallback={<SectionLoadingFallback />}>
+          <TopTherapistsSection />
+        </Suspense>
+        
+        {/* Section 4: IFL Programs for Individuals - redesigned section */}
         <ServicesSection />
         
-        {/* Programs Section for Organizations - Updated for row alignment of buttons */}
+        {/* Section 5: Programs for Organizations - Academic and Business */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
@@ -79,32 +90,33 @@ const HomePageTest = () => {
           </div>
         </section>
 
-        {/* Lazy load the rest of the components - just like the main Index page */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <TopTherapistsSection />
-        </Suspense>
-
+        {/* Section 6: Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
+        {/* Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
         
+        {/* Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <BlogSection />
         </Suspense>
         
+        {/* CTA Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <CTASection />
         </Suspense>
         
+        {/* Stay in Touch Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <StayInTouchSection />
         </Suspense>
       </main>
 
+      {/* Section 7: Footer */}
       <Suspense fallback={<div className="h-40 bg-gray-100" />}>
         <Footer />
       </Suspense>

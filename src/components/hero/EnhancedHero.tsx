@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Headphones, BookOpen } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Layout option constants
 const LAYOUT_HORIZONTAL = 'horizontal';
@@ -12,6 +13,7 @@ const EnhancedHero: React.FC = () => {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentLayout, setCurrentLayout] = useState<string>(LAYOUT_HORIZONTAL);
+  const isMobile = useIsMobile();
   
   // Toggle between layouts - for demo purposes
   const toggleLayout = () => {
@@ -65,19 +67,19 @@ const EnhancedHero: React.FC = () => {
       className={`cursor-pointer rounded-lg bg-gradient-to-r ${color} backdrop-blur-sm text-white shadow-lg 
                 hover:shadow-xl transition-all duration-300 transform hover:scale-105 flex flex-col`}
     >
-      <div className="p-5 flex flex-col h-full">
-        <div className="flex items-center gap-3 mb-3">
+      <div className="p-4 md:p-5 flex flex-col h-full">
+        <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
           {icon}
-          <h3 className="text-lg md:text-xl font-bold">{title}</h3>
+          <h3 className="text-base md:text-lg lg:text-xl font-bold">{title}</h3>
         </div>
-        <p className="text-sm md:text-base opacity-90">{description}</p>
+        <p className="text-xs md:text-sm lg:text-base opacity-90">{description}</p>
       </div>
     </div>
   );
 
   // Layout Option 1: Horizontal Cards Below Headline
   const HorizontalLayout = () => (
-    <div className="absolute bottom-12 left-0 right-0 px-6 md:px-12 lg:px-[60px]">
+    <div className="absolute bottom-8 sm:bottom-10 md:bottom-12 left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-[60px]">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-5">
         {serviceCards.map((card, index) => (
           <ServiceCard key={index} {...card} />
@@ -88,7 +90,7 @@ const EnhancedHero: React.FC = () => {
 
   // Layout Option 2: Feature Grid with Large Center Button
   const GridLayout = () => (
-    <div className="absolute bottom-12 left-0 right-0 px-6 md:px-12 lg:px-[60px]">
+    <div className="absolute bottom-8 sm:bottom-10 md:bottom-12 left-0 right-0 px-4 sm:px-6 md:px-12 lg:px-[60px]">
       <div className="grid grid-cols-1 gap-3 md:gap-5">
         <div className="grid grid-cols-2 gap-3 md:gap-5">
           <ServiceCard {...serviceCards[0]} />
@@ -104,9 +106,9 @@ const EnhancedHero: React.FC = () => {
   );
 
   return (
-    <div className="relative">
+    <div className="relative h-[100vh]">
       {/* Hero image/slider */}
-      <div className="relative w-full h-[550px] overflow-hidden">
+      <div className="relative w-full h-full overflow-hidden">
         {sliderImages.map((image, index) => (
           <div 
             key={index}
@@ -124,10 +126,9 @@ const EnhancedHero: React.FC = () => {
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '550px',
+                height: '100%',
                 objectFit: 'cover',
                 objectPosition: 'center 30%',
-                borderRadius: '0px'
               }}
               loading={index === 0 ? "eager" : "lazy"}
             />
@@ -136,20 +137,16 @@ const EnhancedHero: React.FC = () => {
           </div>
         ))}
         
-        {/* Headline */}
+        {/* Headline - Positioned higher on mobile */}
         <div 
-          className="absolute inset-0 flex flex-col justify-start pt-[60px] px-[60px]"
-          style={{
-            width: '100%',
-            height: '100%'
-          }}
+          className={`absolute inset-0 flex flex-col justify-start ${isMobile ? 'pt-[80px]' : 'pt-[120px]'} px-6 sm:px-12 lg:px-[60px]`}
         >
           <h1 
             className="text-white font-bold"
             style={{
               fontFamily: 'Roboto, sans-serif',
-              fontSize: '80px',
-              lineHeight: '90px',
+              fontSize: isMobile ? '48px' : '80px',
+              lineHeight: isMobile ? '54px' : '90px',
               fontWeight: 700,
               color: '#FFFFFF',
               maxWidth: '540px'
