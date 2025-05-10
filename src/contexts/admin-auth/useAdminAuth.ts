@@ -22,6 +22,8 @@ export const useAdminAuth = ({
 
   const login = (username: string, password: string): boolean => {
     setLoginError(null);
+    console.log('Admin auth: Attempting login with username:', username);
+    console.log('Admin auth: Available users:', adminUsers.map(u => u.username));
     
     try {
       const foundUser = adminUsers.find(
@@ -29,25 +31,24 @@ export const useAdminAuth = ({
       );
       
       if (foundUser) {
-        console.log('Login successful for user:', foundUser);
+        console.log('Admin auth: Login successful for user:', foundUser.username);
         setIsAuthenticated(true);
         setCurrentUser(foundUser);
         
         // Store session info in localStorage
         localStorage.setItem('admin_session', 'true');
         localStorage.setItem('admin_username', foundUser.username);
+        localStorage.setItem('admin-user', JSON.stringify(foundUser));
         
         return true;
       } else {
-        console.log('Login failed: Invalid credentials');
+        console.log('Admin auth: Login failed: Invalid credentials');
         setLoginError('Invalid username or password');
-        toast.error('Invalid username or password');
         return false;
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('Admin auth: Login error:', error);
       setLoginError('An error occurred during login');
-      toast.error('An error occurred during login');
       return false;
     }
   };

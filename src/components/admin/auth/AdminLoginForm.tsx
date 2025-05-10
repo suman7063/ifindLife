@@ -21,16 +21,17 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
     setIsLoading(true);
     
     // Debug logs
-    console.log('Login form submitted');
+    console.log('Admin login form submitted with username:', username);
     
     try {
-      // Attempt login
+      // The login function returns boolean immediately, not a Promise
       const success = login(username, password);
-      console.log('Login result:', success ? 'success' : 'failed');
+      console.log('Admin login result:', success ? 'success' : 'failed');
       
       if (success) {
         toast.success('Successfully logged in as administrator');
         console.log('Login successful, redirecting to admin panel');
+        
         // Call the onLoginSuccess callback - this triggers navigation to admin panel
         onLoginSuccess(); 
       } else {
