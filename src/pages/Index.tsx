@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
-import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import { lazy, Suspense } from 'react';
 
 // Lazy load non-critical components
@@ -45,9 +44,6 @@ const Index = () => {
       <main className="flex-1">
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
-        
-        {/* Section 1.5: Issues Sessions - Help categories */}
-        <HomepageIssueSessions />
         
         {/* Section 2: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
