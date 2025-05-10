@@ -16,6 +16,7 @@ const CTASection = lazy(() => import('@/components/CTASection'));
 const Footer = lazy(() => import('@/components/Footer'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
 const StayInTouchSection = lazy(() => import('@/components/StayInTouchSection'));
+const HomepageIssueSessions = lazy(() => import('@/components/HomepageIssueSessions'));
 
 // Loading fallback component
 const SectionLoadingFallback = () => (
@@ -45,58 +46,61 @@ const HomePageTest = () => {
         {/* Section 1: Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Section 3: Top IFL Experts */}
+        {/* Section 2: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
         
-        {/* Section 4: IFL Programs for Individuals - redesigned section */}
-        <ServicesSection />
+        {/* Section 3: Issue-based Sessions */}
+        <Suspense fallback={<SectionLoadingFallback />}>
+          <HomepageIssueSessions />
+        </Suspense>
         
-        {/* Section 5: Programs for Organizations - Academic and Business */}
-        <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Academic Institutes</h3>
-                <p className="mb-6 text-gray-700">
-                  Comprehensive mental health programs designed for schools, colleges, and universities to support students, teachers, and staff.
-                </p>
-                <div className="flex flex-row justify-center space-x-4">
-                  <Link to="/programs-for-academic-institutes" className="w-full">
-                    <Button className="w-full">View Academic Programs</Button>
-                  </Link>
+        {/* Section 4: Combined Programs Section - IFL Programs for Individuals and Programs for Organizations */}
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-6 sm:px-12">
+            {/* IFL Programs for Individuals */}
+            <ServicesSection />
+            
+            {/* Programs for Organizations - Academic and Business */}
+            <div className="mt-16">
+              <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                  <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Academic Institutes</h3>
+                  <p className="mb-6 text-gray-700">
+                    Comprehensive mental health programs designed for schools, colleges, and universities to support students, teachers, and staff.
+                  </p>
+                  <div className="flex flex-row justify-center space-x-4">
+                    <Link to="/programs-for-academic-institutes" className="w-full">
+                      <Button className="w-full">View Academic Programs</Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-              <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Businesses</h3>
-                <p className="mb-6 text-gray-700">
-                  Mental health and wellness solutions to support your organization, improve productivity, and create a positive work environment.
-                </p>
-                <div className="flex flex-row justify-center space-x-4">
-                  <Link to="/programs-for-business" className="w-full">
-                    <Button className="w-full">View Business Programs</Button>
-                  </Link>
+                <div className="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                  <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Businesses</h3>
+                  <p className="mb-6 text-gray-700">
+                    Mental health and wellness solutions to support your organization, improve productivity, and create a positive work environment.
+                  </p>
+                  <div className="flex flex-row justify-center space-x-4">
+                    <Link to="/programs-for-business" className="w-full">
+                      <Button className="w-full">View Business Programs</Button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Section 6: Why Choose Us */}
+        {/* Section 5: Why Choose Us - Redesigned */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Testimonials */}
+        {/* Section 6: Testimonials - Redesigned */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
-        </Suspense>
-        
-        {/* Blog Section */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <BlogSection />
         </Suspense>
         
         {/* CTA Section */}

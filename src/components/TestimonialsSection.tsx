@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { testimonialData as defaultTestimonialData } from '@/data/homePageData';
+import TestimonialCard from '@/components/TestimonialCard';
+import { Quote } from 'lucide-react';
 
 type Testimonial = {
-  id?: string;  // Make id optional since some testimonials might not have it
+  id?: string;
   name: string;
   location: string;
   rating: number;
@@ -70,63 +72,58 @@ const TestimonialsSection = () => {
   }, []);
 
   return (
-    <section className="py-16 bg-white">
+    <section className="py-20 bg-gradient-to-b from-gray-100 to-white">
       <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-2xl font-bold mb-8">Testimonials</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
-                <img 
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop" 
-                  alt="Amisha M." 
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div>
-                <h3 className="font-bold">Amisha M.</h3>
-                <p className="text-gray-500 text-sm">Delhi, India</p>
-              </div>
-            </div>
-            <div className="flex text-yellow-400 mb-3">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <svg key={i} className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                </svg>
-              ))}
-            </div>
-            <p className="text-sm">
-              "The guidance I received here transformed my relationship with my teenage son. Dr. Kumar's approach was practical and effective."
-            </p>
+        <div className="text-center mb-16">
+          <div className="flex justify-center mb-4">
+            <Quote className="h-12 w-12 text-ifind-purple opacity-40" />
           </div>
-          
-          {testimonials.slice(0, 3).map((testimonial, index) => (
-            <div key={testimonial.id || index} className="bg-gray-50 p-6 rounded-lg">
-              <div className="flex items-center mb-4">
-                <div className="w-12 h-12 rounded-full overflow-hidden mr-3">
-                  <img 
-                    src={testimonial.imageUrl} 
-                    alt={testimonial.name} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <h3 className="font-bold">{testimonial.name}</h3>
-                  <p className="text-gray-500 text-sm">{testimonial.location}</p>
-                </div>
-              </div>
-              <div className="flex text-yellow-400 mb-3">
-                {Array.from({ length: testimonial.rating }).map((_, i) => (
-                  <svg key={i} className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                    <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                  </svg>
-                ))}
-              </div>
-              <p className="text-sm">"{testimonial.text}"</p>
-            </div>
-          ))}
+          <h2 className="text-4xl font-bold mb-4 text-gray-800">What Our Clients Say</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Real stories from real people who have experienced the positive impact of our services
+          </p>
         </div>
+        
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[1, 2, 3, 4].map(index => (
+              <div key={index} className="animate-pulse bg-white rounded-lg shadow p-6">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
+                  <div>
+                    <div className="h-4 bg-gray-200 rounded w-24 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-32"></div>
+                  </div>
+                </div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...testimonials, {
+              id: 'amisha',
+              name: 'Amisha M.',
+              location: 'Delhi, India',
+              rating: 5,
+              text: 'The guidance I received here transformed my relationship with my teenage son. Dr. Kumar\'s approach was practical and effective.',
+              date: '2 months ago',
+              imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=1974&auto=format&fit=crop'
+            }].slice(0, 4).map((testimonial, index) => (
+              <TestimonialCard 
+                key={testimonial.id || index} 
+                name={testimonial.name}
+                location={testimonial.location}
+                rating={testimonial.rating}
+                text={testimonial.text}
+                date={testimonial.date}
+                imageUrl={testimonial.imageUrl}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
