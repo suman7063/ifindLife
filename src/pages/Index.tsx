@@ -13,8 +13,8 @@ const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSectio
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
 const CTASection = lazy(() => import('@/components/CTASection'));
-const Footer = lazy(() => import('@/components/Footer'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
+const Footer = lazy(() => import('@/components/Footer'));
 const StayInTouchSection = lazy(() => import('@/components/StayInTouchSection'));
 const IssueSessions = lazy(() => import('@/components/services/IssueSessions'));
 
@@ -113,13 +113,18 @@ const Index = () => {
           <CTASection />
         </Suspense>
         
-        {/* Section 9: Stay always in touch */}
+        {/* Section 9: Blog Section - Added back to the homepage */}
+        <Suspense fallback={<SectionLoadingFallback />}>
+          <BlogSection />
+        </Suspense>
+        
+        {/* Section 10: Stay always in touch */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <StayInTouchSection />
         </Suspense>
       </main>
 
-      {/* Section 10: Footer */}
+      {/* Section 11: Footer */}
       <Suspense fallback={<div className="h-40 bg-gray-100" />}>
         <Footer />
       </Suspense>

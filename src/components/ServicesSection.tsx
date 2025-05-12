@@ -2,9 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import FeaturedPrograms from './services/FeaturedPrograms';
 import SessionDetailDialog from './services/SessionDetailDialog';
-import { MessageCircle, HeartPulse, Brain, Leaf, Sparkles, Globe } from 'lucide-react';
+import { MessageCircle, HeartPulse, Brain } from 'lucide-react';
 
 const ServicesSection = () => {
   const [selectedCategory, setSelectedCategory] = useState<{
@@ -17,61 +16,34 @@ const ServicesSection = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Updated featured programs with correct text and links
+  // Updated featured programs to match the screenshot
   const featuredPrograms = [
     {
       id: 1,
-      title: "Heart2Heart Listening Sessions",
-      description: "A unique space where you can express yourself freely while being deeply heard without judgment",
-      icon: <MessageCircle className="h-12 w-12 text-ifind-teal" />,
-      href: "/services/mindful-listening",
-      accentColor: "border-ifind-teal",
-      iconBgColor: "bg-ifind-teal/10"
+      title: "QuickEase Programs",
+      description: "Short-term solutions for immediate stress and anxiety relief",
+      icon: <Brain className="h-12 w-12 text-ifind-aqua" />,
+      href: "/services/quick-ease",
+      accentColor: "border-ifind-aqua",
+      iconBgColor: "bg-ifind-aqua/10"
     },
     {
       id: 2,
-      title: "Therapy Sessions",
-      description: "Professional sessions to help you navigate life's challenges and enhance personal growth",
-      icon: <HeartPulse className="h-12 w-12 text-ifind-purple" />,
-      href: "/services/therapy-sessions",
+      title: "Emotional Resilience",
+      description: "Build psychological strength to handle life's challenges",
+      icon: <MessageCircle className="h-12 w-12 text-ifind-purple" />,
+      href: "/services/emotional-resilience",
       accentColor: "border-ifind-purple",
       iconBgColor: "bg-ifind-purple/10"
     },
     {
       id: 3,
-      title: "Guided Meditations",
-      description: "Expertly led sessions to reduce stress, increase mindfulness, and cultivate inner peace",
-      icon: <Brain className="h-12 w-12 text-ifind-aqua" />,
-      href: "/services/guided-meditations",
-      accentColor: "border-ifind-aqua",
-      iconBgColor: "bg-ifind-aqua/10"
-    },
-    {
-      id: 4,
-      title: "Offline Retreats",
-      description: "Immersive retreat experiences to disconnect from daily stress and reconnect with yourself",
-      icon: <Leaf className="h-12 w-12 text-green-600" />,
-      href: "/services/offline-retreats",
-      accentColor: "border-green-600",
-      iconBgColor: "bg-green-600/10"
-    },
-    {
-      id: 5,
-      title: "Life Coaching",
-      description: "Goal-oriented guidance to help you achieve personal and professional success",
-      icon: <Sparkles className="h-12 w-12 text-amber-500" />,
-      href: "/services/life-coaching",
-      accentColor: "border-amber-500",
-      iconBgColor: "bg-amber-500/10"
-    },
-    {
-      id: 6,
-      title: "Global Healing Traditions",
-      description: "Ancient wisdom and practices from around the world to promote holistic well-being",
-      icon: <Globe className="h-12 w-12 text-blue-600" />,
-      href: "/services/global-healing",
-      accentColor: "border-blue-600",
-      iconBgColor: "bg-blue-600/10"
+      title: "Super Human Life",
+      description: "Achieve your highest potential through mental optimization",
+      icon: <HeartPulse className="h-12 w-12 text-green-500" />,
+      href: "/services/super-human",
+      accentColor: "border-green-500",
+      iconBgColor: "bg-green-500/10"
     }
   ];
 
@@ -93,7 +65,7 @@ const ServicesSection = () => {
           IFL provides specialized programs to support your mental health journey
         </p>
 
-        {/* Redesigned Program Cards with all six services */}
+        {/* Updated Program Cards to match the screenshot */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {featuredPrograms.map((program) => (
             <div
