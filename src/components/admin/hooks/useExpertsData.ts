@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Expert } from '@/components/admin/experts/types';
 import { supabase } from '@/lib/supabase';
@@ -117,18 +118,31 @@ export function useExpertsData(
           // Continue with Supabase fetch if localStorage fails
         }
         
-        // If no experts in localStorage, fetch from Supabase
         console.log('Fetching experts from Supabase...');
         
+        // First try to fetch pending experts from expert_accounts table (for admin approval)
         try {
-          // First try to fetch from expert_accounts table which has expert status info
           const { data: expertAccountsData, error: expertAccountsError } = await supabase
             .from('expert_accounts')
             .select('*');
           
-          console.log('Supabase expert_accounts response:', { count: expertAccountsData?.length, error: expertAccountsError });
+          console.log('Supabase expert_accounts response:', { 
+            count: expertAccountsData?.length, 
+            error: expertAccountsError ? expertAccountsError.message : null 
+          });
+          
+          if (expertAccountsError) {
+            // Check for specific error types that might indicate configuration issues
+            if (expertAccountsError.code === '42P17' || expertAccountsError.message?.includes('recursion')) {
+              console.warn('Policy recursion error detected - this is a known issue with RLS policies');
+              throw new Error(`Database policy error: ${expertAccountsError.message}`);
+            }
             
-          if (!expertAccountsError && expertAccountsData && expertAccountsData.length > 0) {
+            console.error('Error fetching expert accounts:', expertAccountsError);
+            throw expertAccountsError;
+          }
+            
+          if (expertAccountsData && expertAccountsData.length > 0) {
             // Transform experts data to match our expected format using our utility
             const formattedExperts = safeDataTransform(expertAccountsData, (expert) => 
               mapDbExpertToExpert(dbTypeConverter(expert))
@@ -147,14 +161,24 @@ export function useExpertsData(
             setFetchAttempts(0); // Reset on success
             toast.success(`Loaded ${formattedExperts.length} experts`);
             return;
+          } else {
+            console.log('No pending expert accounts found, checking approved experts');
           }
+        } catch (expertAccountsError) {
+          console.error('Error fetching expert accounts:', expertAccountsError);
+          // Continue to next data source
+        }
           
-          // If expert_accounts failed or is empty, try the experts table
+        // If expert_accounts failed or is empty, try the experts table
+        try {
           const { data: expertsData, error: expertsError } = await supabase
             .from('experts')
             .select('*');
           
-          console.log('Supabase experts response:', { count: expertsData?.length, error: expertsError });
+          console.log('Supabase experts response:', { 
+            count: expertsData?.length, 
+            error: expertsError ? expertsError.message : null
+          });
             
           if (expertsError) {
             // Check if the error is related to infinite recursion or RLS policies
@@ -187,14 +211,12 @@ export function useExpertsData(
             toast.success(`Loaded ${formattedExperts.length} experts`);
           } else {
             console.warn('No expert data found in the database, using default data');
-            if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
-              setExperts(DEFAULT_EXPERTS);
-              updateCallback(DEFAULT_EXPERTS);
-              toast.error('Could not load experts. Using default data.');
-            }
+            setExperts(DEFAULT_EXPERTS);
+            updateCallback(DEFAULT_EXPERTS);
+            toast.info('Using default expert data');
           }
-        } catch (supabaseError) {
-          console.error('Supabase experts query error:', supabaseError);
+        } catch (expertsError) {
+          console.error('Supabase experts query error:', expertsError);
           if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
             console.warn(`Max fetch attempts (${MAX_FETCH_ATTEMPTS}) reached, using default data`);
             setError('Failed to load experts data after multiple attempts');
@@ -235,7 +257,7 @@ export function useExpertsData(
     };
     
     fetchExperts();
-  }, [initialExperts, isLoading, updateCallback, fetchAttempts]);
+  }, [initialExperts, updateCallback, fetchAttempts]);
 
   return {
     experts,

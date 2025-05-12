@@ -1,10 +1,12 @@
 
 export interface Testimonial {
-  id?: string;
+  id: string;
   name: string;
-  location: string;
+  text: string; // The actual testimonial content
+  content?: string; // Alias for text for backward compatibility
+  company?: string; // Alias for location for backward compatibility
+  location?: string; // Where the testimonial is from
   rating: number;
-  text: string;
-  date: string;
   imageUrl: string;
+  date?: string;
 }

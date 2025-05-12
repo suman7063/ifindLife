@@ -8,10 +8,10 @@ const mapDbToTestimonial = (data: any): Testimonial => {
   return {
     id: String(data.id),
     name: data.name || '',
-    content: data.text || '', // Map 'text' field to 'content'
+    text: data.text || '',
     rating: Number(data.rating) || 5,
     imageUrl: data.image_url || '',
-    company: data.location || '', // Map 'location' field to 'company'
+    location: data.location || '',
     date: data.date || new Date().toISOString().split('T')[0]
   };
 };
@@ -65,10 +65,10 @@ export const createTestimonial = async (testimonial: Omit<Testimonial, 'id'>): P
     // Convert from app format to DB format
     const dbTestimonial = {
       name: testimonial.name,
-      text: testimonial.content,
+      text: testimonial.text || testimonial.content, // Use text or content
       rating: testimonial.rating,
       image_url: testimonial.imageUrl,
-      location: testimonial.company,
+      location: testimonial.location || testimonial.company, // Use location or company
       date: testimonial.date || new Date().toISOString().split('T')[0]
     };
     
@@ -97,9 +97,11 @@ export const updateTestimonial = async (id: string, updates: Partial<Testimonial
     const dbUpdates: Record<string, any> = {};
     
     if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.text !== undefined) dbUpdates.text = updates.text;
     if (updates.content !== undefined) dbUpdates.text = updates.content;
     if (updates.rating !== undefined) dbUpdates.rating = updates.rating;
     if (updates.imageUrl !== undefined) dbUpdates.image_url = updates.imageUrl;
+    if (updates.location !== undefined) dbUpdates.location = updates.location;
     if (updates.company !== undefined) dbUpdates.location = updates.company;
     if (updates.date !== undefined) dbUpdates.date = updates.date;
     

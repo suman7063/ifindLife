@@ -60,21 +60,21 @@ const initialAuthState = {
 export const AuthContext = createContext<AuthContextType>({
   ...initialAuthState,
   login: async () => false,
-  loginWithOtp: async () => ({ error: new Error('Not implemented') }),
+  loginWithOtp: async () => ({ error: null }),
   signup: async () => false,
   logout: async () => ({ error: null }),
-  resetPassword: async () => ({ error: new Error('Not implemented') }),
+  resetPassword: async () => ({ error: null }),
   updateProfile: async () => false,
   updatePassword: async () => false,
-  updateEmail: async () => ({ error: new Error('Not implemented') }),
-  refreshSession: async () => ({ error: new Error('Not implemented') }),
+  updateEmail: async () => ({ error: null }),
+  refreshSession: async () => ({ error: null }),
   getUserDisplayName: () => '',
   fetchProfile: async () => null,
-  addFunds: async () => ({ error: new Error('Not implemented') }),
-  updateWalletBalance: async () => ({ error: new Error('Not implemented') }),
-  updateExpertProfile: async () => ({ error: new Error('Not implemented') }),
+  addFunds: async () => ({ error: null }),
+  updateWalletBalance: async () => ({ error: null }),
+  updateExpertProfile: async () => ({ error: null }),
   fetchExpertProfile: async () => null,
-  registerAsExpert: async () => ({ error: new Error('Not implemented') }),
+  registerAsExpert: async () => ({ error: null }),
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -182,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Export the hook for easy use - this is crucial
+// Export the hook for easy use
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

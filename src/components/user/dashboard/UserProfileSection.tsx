@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, Upload, Lock, Bell } from 'lucide-react';
+import { getUserProfile, getUpdateUserProfile } from '@/utils/profileConverters';
 
 interface UserProfileSectionProps {
   user: UserProfile | null;
@@ -16,6 +16,8 @@ interface UserProfileSectionProps {
 
 const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
   const auth = useAuth();
+  const userProfile = getUserProfile(auth);
+  const updateUserProfile = getUpdateUserProfile(auth);
   
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
@@ -48,12 +50,12 @@ const UserProfileSection: React.FC<UserProfileSectionProps> = ({ user }) => {
     
     try {
       // Check if updateUserProfile exists in the auth context
-      if (!auth.updateUserProfile) {
+      if (!updateUserProfile) {
         toast.error("Profile update functionality is not available");
         return;
       }
       
-      const success = await auth.updateUserProfile({
+      const success = await updateUserProfile({
         ...profileData
       });
       
