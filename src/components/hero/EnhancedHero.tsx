@@ -16,28 +16,28 @@ const EnhancedHero: React.FC = () => {
     "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Second image (woman)
   ];
 
-  // Service cards data - Swapped colors between "Speak your Heart" and "Take a Test"
+  // Service cards data - Updated colors to match the services detail pages
   const serviceCards = [
     {
       title: "Speak your Heart",
       description: "We are here to listen mindfully. No judgement",
       icon: <MessageSquare className="h-6 w-6" />,
       action: () => navigate("/services/speak"),
-      color: "from-ifind-teal/70 to-ifind-teal/90" // Changed from aqua to teal
+      color: "from-ifind-teal/70 to-ifind-teal/90" // Teal color for Heart2Heart
     },
     {
       title: "Get Guidance",
       description: "Get 1 on 1 guidance from experts for your situation",
       icon: <Headphones className="h-6 w-6" />,
       action: () => navigate("/experts"),
-      color: "from-ifind-purple/70 to-ifind-purple/90" // No change
+      color: "from-ifind-purple/70 to-ifind-purple/90" // Purple color for Therapy
     },
     {
       title: "Take a Test",
       description: "Discover insights about your mental wellbeing through our assessment",
       icon: <BookOpen className="h-6 w-6" />,
       action: () => navigate("/mental-health-assessment"),
-      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Changed from teal to aqua
+      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Aqua color for Guided Meditation
     }
   ];
 

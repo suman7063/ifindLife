@@ -17,34 +17,34 @@ const ServicesSection = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Reordered featured programs with updated colors
+  // Reordered featured programs with updated colors to match service detail pages
   const featuredPrograms = [
     {
       id: 1,
       title: "Heart2Heart Listening Sessions",
       description: "A unique space where you can express yourself freely while being deeply heard without judgment",
-      icon: <MessageCircle className="h-12 w-12 text-ifind-teal" />, // Changed from aqua to teal
+      icon: <MessageCircle className="h-12 w-12 text-ifind-teal" />, // Teal color
       href: "/services/mindful-listening",
-      accentColor: "border-ifind-teal", // Changed from aqua to teal
-      iconBgColor: "bg-ifind-teal/10" // Changed from aqua to teal
+      accentColor: "border-ifind-teal", // Teal color
+      iconBgColor: "bg-ifind-teal/10" // Teal color
     },
     {
       id: 2,
       title: "Therapy Sessions",
       description: "Professional sessions to help you navigate life's challenges and enhance personal growth",
-      icon: <HeartPulse className="h-12 w-12 text-ifind-purple" />,
+      icon: <HeartPulse className="h-12 w-12 text-ifind-purple" />, // Purple color
       href: "/services/therapy-sessions",
-      accentColor: "border-ifind-purple",
-      iconBgColor: "bg-ifind-purple/10"
+      accentColor: "border-ifind-purple", // Purple color
+      iconBgColor: "bg-ifind-purple/10" // Purple color
     },
     {
       id: 3,
       title: "Guided Meditations",
       description: "Expertly led sessions to reduce stress, increase mindfulness, and cultivate inner peace",
-      icon: <Brain className="h-12 w-12 text-ifind-aqua" />, // Changed from gray-500 to ifind-aqua
+      icon: <Brain className="h-12 w-12 text-ifind-aqua" />, // Blue (Aqua) color
       href: "/services/guided-meditations",
-      accentColor: "border-ifind-aqua", // Changed from gray-400 to ifind-aqua
-      iconBgColor: "bg-ifind-aqua/10" // Changed from gray-200/50 to ifind-aqua/10
+      accentColor: "border-ifind-aqua", // Blue (Aqua) color
+      iconBgColor: "bg-ifind-aqua/10" // Blue (Aqua) color
     }
   ];
 

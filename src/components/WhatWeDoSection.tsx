@@ -13,7 +13,7 @@ const WhatWeDoSection = () => {
         "Stress management techniques",
         "Personalized wellness plans"
       ],
-      color: "bg-ifind-aqua/10",
+      color: "bg-ifind-aqua/10", // Aqua color consistent with Guided Meditation
       href: "/programs-for-wellness-seekers" // Updated to use the correct path
     },
     {
@@ -25,7 +25,7 @@ const WhatWeDoSection = () => {
         "Bullying prevention strategies",
         "Wellness workshops for campus life"
       ],
-      color: "bg-ifind-purple/10",
+      color: "bg-ifind-purple/10", // Purple color consistent with Therapy Sessions
       href: "/programs-for-academic-institutes"
     },
     {
@@ -37,7 +37,7 @@ const WhatWeDoSection = () => {
         "Team building for psychological safety",
         "Burnout prevention strategies"
       ],
-      color: "bg-ifind-teal/10",
+      color: "bg-ifind-teal/10", // Teal color consistent with Heart2Heart
       href: "/programs-for-business"
     }
   ];
