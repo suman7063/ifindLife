@@ -1,9 +1,9 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowDown, Brain, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
 import { servicesData } from '@/components/services/detail/servicesData';
 import { useScrollAnimation } from '@/hooks/useScrollAnimation';
@@ -11,6 +11,7 @@ import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 const Services = () => {
   // References for scrolling to sections
   const servicesRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
   
   // Function to scroll to services section
   const scrollToServices = () => {
@@ -30,6 +31,20 @@ const Services = () => {
         return '';
     }
   };
+
+  // Handle hash navigation on page load
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.substring(1); // Remove the # symbol
+      const element = document.getElementById(id);
+      if (element) {
+        // Add a small delay to ensure the DOM is fully rendered
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+  }, [location]);
   
   return (
     <>
@@ -51,6 +66,13 @@ const Services = () => {
                       key={service.id}
                       href={`#${service.id}`} 
                       className={`inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 ${service.buttonColor} text-white h-10 px-4 py-2 m-1 shadow-sm hover:shadow-md`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const element = document.getElementById(service.id);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }}
                     >
                       {service.title}
                     </a>

@@ -16,20 +16,20 @@ const EnhancedHero: React.FC = () => {
     "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Second image (woman)
   ];
 
-  // Service cards data - Updated colors to match the services detail pages
+  // Service cards data - Updated colors and links to match service pages
   const serviceCards = [
     {
       title: "Speak your Heart",
       description: "We are here to listen mindfully. No judgement",
       icon: <MessageSquare className="h-6 w-6" />,
-      action: () => navigate("/services/speak"),
+      action: () => navigate("/services/mindful-listening"), // Updated to Heart2Heart service page
       color: "from-ifind-teal/70 to-ifind-teal/90" // Teal color for Heart2Heart
     },
     {
       title: "Get Guidance",
       description: "Get 1 on 1 guidance from experts for your situation",
       icon: <Headphones className="h-6 w-6" />,
-      action: () => navigate("/experts"),
+      action: () => navigate("/services/therapy-sessions"), // Updated to Therapy Sessions page
       color: "from-ifind-purple/70 to-ifind-purple/90" // Purple color for Therapy
     },
     {
