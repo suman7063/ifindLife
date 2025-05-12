@@ -43,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     actionLoading
   } = useAuthActions(fetchUserData);
   
-  // Profile functions with correct param types
+  // Profile functions with correct param types - fix the function signature by passing null values
   const {
     updateProfile: updateProfileFn,
     getUserDisplayName,

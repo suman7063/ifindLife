@@ -82,15 +82,15 @@ export function useServicesData(
           
           if (data && data.length > 0) {
             // Map Supabase data to the expected format, providing defaults for missing fields
-            const formattedServices: ServiceCategory[] = data.map((service: DbService) => ({
-              id: ensureStringId(service.id),
-              name: service.name,
+            const formattedServices: ServiceCategory[] = data.map((dbService: DbService) => ({
+              id: ensureStringId(dbService.id.toString()),
+              name: dbService.name,
               items: [], // Required property
-              title: service.name,
-              description: service.description || '',
-              href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
-              icon: service.icon || DEFAULT_ICON, // Default icon if none in database
-              color: service.color || DEFAULT_COLOR // Default color if none in database
+              title: dbService.name, // Use name as title
+              description: dbService.description || '',
+              href: `/services/${dbService.name.toLowerCase().replace(/\s+/g, '-')}`,
+              icon: DEFAULT_ICON, // Default icon since it doesn't exist in DB
+              color: DEFAULT_COLOR // Default color since it doesn't exist in DB
             }));
             
             console.log('Formatted services:', formattedServices);

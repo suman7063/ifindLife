@@ -24,13 +24,11 @@ export interface ServiceSettings {
   categories: ServiceCategory[];
 }
 
-// Add the missing DbService interface
+// Update the DbService interface to match the database schema
 export interface DbService {
-  id: string;
-  title: string;
+  id: number;
+  name: string;
   description: string;
-  category_id: string;
-  icon: string;
-  color: string;
-  href: string;
+  rate_usd: number;
+  rate_inr: number;
 }
