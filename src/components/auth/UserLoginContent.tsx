@@ -92,7 +92,7 @@ const UserLoginContent: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md w-full mx-auto">
+    <div className="w-full">
       {pendingAction && (
         <Alert className="mb-4">
           <AlertDescription>

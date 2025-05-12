@@ -36,10 +36,8 @@ const UserLogin: React.FC = () => {
   return (
     <>
       <Navbar />
-      <div className="py-8 md:py-12">
-        <Container className="max-w-md mx-auto">
-          <UserLoginPage />
-        </Container>
+      <div className="py-8 md:py-12 bg-gray-50 min-h-screen">
+        <UserLoginPage />
       </div>
       <Footer />
     </>
