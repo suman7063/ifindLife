@@ -1,7 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { Testimonial } from './types';
-import { safeDataTransform } from '@/utils/supabaseUtils';
+import { safeDataTransform, supabaseCast } from '@/utils/supabaseUtils';
 import { DatabaseTestimonial } from '@/types/supabase/tables';
 
 /**
@@ -18,7 +18,7 @@ export const fetchTestimonialsFromSupabase = async (): Promise<Testimonial[]> =>
   }
   
   // Use safeDataTransform to safely convert db format to app format
-  return safeDataTransform<DatabaseTestimonial, Testimonial>(
+  return safeDataTransform<any, Testimonial>(
     data,
     error,
     (item) => ({
