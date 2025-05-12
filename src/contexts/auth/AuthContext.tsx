@@ -11,6 +11,7 @@ import { useExpertInteractions } from './hooks/useExpertInteractions';
 // Import types
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus } from './types';
 import { supabase } from '@/lib/supabase';
+import { normalizeId } from '@/utils/supabaseUtils';
 
 // Define AuthContextType interface
 export interface AuthContextType {
@@ -102,10 +103,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const {
     updateProfile: updateProfileFn,
     getUserDisplayName,
-    fetchProfile,
+    fetchProfile: fetchProfileFn,
     addFunds,
     updateWalletBalance
-  } = useProfileFunctions(user, session, setAuthState, setAuthState);
+  } = useProfileFunctions(user, session);
   
   // Expert interactions
   const {
@@ -115,6 +116,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     getExpertShareLink,
     getReferralLink
   } = useExpertInteractions(profile?.id);
+
+  // Wrapper for fetchProfile to match the expected interface
+  const fetchProfile = async (): Promise<UserProfile | null> => {
+    if (!user) return null;
+    return fetchProfileFn();
+  };
 
   // Default implementations for missing methods
   const loginWithOtp = async (email: string) => {
@@ -167,9 +174,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) return { error: new Error('No authenticated user') };
       
+      // Ensure ID is string
+      const updatedData = { ...updates };
+      if (updatedData.id !== undefined) {
+        updatedData.id = String(updatedData.id);
+      }
+      
       const { error } = await supabase
         .from('expert_accounts')
-        .update(updates)
+        .update(updatedData)
         .eq('auth_id', user.id);
         
       return { error: error ? new Error(error.message) : null };
@@ -186,10 +199,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', user.id)
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
-      return data;
+      return data as ExpertProfile;
     } catch (error) {
       console.error('Error fetching expert profile:', error);
       return null;

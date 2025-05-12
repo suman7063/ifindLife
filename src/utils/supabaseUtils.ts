@@ -58,13 +58,6 @@ export function camelToSnake(obj: Record<string, any>): Record<string, any> {
 }
 
 /**
- * Merges two objects, with the second object's properties taking precedence
- */
-export function mergeObjects<T>(obj1: Partial<T>, obj2: Partial<T>): T {
-  return { ...obj1, ...obj2 } as T;
-}
-
-/**
  * Safely transforms database records to application types
  * Prevents errors if the data is null or undefined
  */
@@ -122,4 +115,11 @@ export function dbTypeConverter<T extends Record<string, any>>(data: Record<stri
   });
   
   return result as T;
+}
+
+/**
+ * Validates if data exists and is not null/undefined
+ */
+export function isValidData<T>(data: T | null | undefined): data is T {
+  return data !== null && data !== undefined;
 }

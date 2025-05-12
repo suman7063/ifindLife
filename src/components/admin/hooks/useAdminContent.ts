@@ -92,16 +92,12 @@ export const useAdminContent = (): AdminContent & {
     (newServices) => updateContent({ services: newServices })
   );
   
+  // Use the testimonials hook
   const testimonialsHook = useTestimonialsData(
     initialData.testimonials,
     (newTestimonials) => updateContent({ testimonials: newTestimonials })
   );
   
-  const { 
-    testimonials,
-    error: testimonialsError
-  } = testimonialsHook;
-
   // Create update callback for content changes
   const updateContent = useCallback((newContent: Partial<AdminContent>) => {
     if (loading) return;
@@ -110,7 +106,7 @@ export const useAdminContent = (): AdminContent & {
     const content = {
       experts: newContent.experts || experts,
       services: newContent.services || services,
-      testimonials: newContent.testimonials || testimonials
+      testimonials: newContent.testimonials || testimonialsHook.testimonials
     };
     
     // Save to localStorage with error handling
@@ -120,16 +116,7 @@ export const useAdminContent = (): AdminContent & {
       console.error("Failed to save content to localStorage:", e);
       toast.error("Failed to save changes locally");
     }
-  }, [loading, experts, services, testimonials]);
-  
-  // Create a setTestimonials function that wraps the original one
-  const setTestimonials = useCallback((newTestimonials: React.SetStateAction<Testimonial[]>) => {
-    testimonialsHook.setTestimonials(newTestimonials);
-    if (typeof newTestimonials !== 'function') {
-      // If it's a direct value, use the update callback
-      updateContent({ testimonials: newTestimonials });
-    }
-  }, [testimonialsHook, updateContent]);
+  }, [loading, experts, services, testimonialsHook.testimonials]);
 
   // Update overall loading state
   useEffect(() => {
@@ -138,9 +125,9 @@ export const useAdminContent = (): AdminContent & {
     // Set error if any loading hook has an error - Convert all errors to strings
     if (expertsError) setError(String(expertsError));
     else if (servicesError) setError(String(servicesError));
-    else if (testimonialsError) setError(String(testimonialsError));
+    else if (testimonialsHook.error) setError(String(testimonialsHook.error));
     else setError(null);
-  }, [expertsLoading, servicesLoading, expertsError, servicesError, testimonialsError]);
+  }, [expertsLoading, servicesLoading, expertsError, servicesError, testimonialsHook.error]);
 
   // Save content to localStorage whenever it changes
   useEffect(() => {
@@ -149,17 +136,17 @@ export const useAdminContent = (): AdminContent & {
     updateContent({
       experts,
       services,
-      testimonials
+      testimonials: testimonialsHook.testimonials
     });
-  }, [experts, services, testimonials, loading, updateContent]);
+  }, [experts, services, testimonialsHook.testimonials, loading, updateContent]);
 
   return {
     experts,
     setExperts,
     services,
     setServices,
-    testimonials,
-    setTestimonials,
+    testimonials: testimonialsHook.testimonials,
+    setTestimonials: testimonialsHook.setTestimonials,
     loading,
     error,
     refreshData

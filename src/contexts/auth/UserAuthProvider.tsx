@@ -57,6 +57,17 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return Promise.resolve(false);
     }
   };
+
+  // Adapt logout function to return boolean
+  const adaptedLogout = async (): Promise<boolean> => {
+    try {
+      const result = await auth.logout();
+      return result && !result.error;
+    } catch (error) {
+      console.error("Error in logout:", error);
+      return false;
+    }
+  };
   
   // Create a compatible context value that matches the UserAuthContextType
   const userAuthValue = {
@@ -64,7 +75,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
     signup: auth.signup || (async () => false),
-    logout: auth.logout,
+    logout: adaptedLogout,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
