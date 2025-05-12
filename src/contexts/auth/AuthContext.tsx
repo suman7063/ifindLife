@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
 import { UserProfile, ExpertProfile, UserRole, initialAuthState } from '@/contexts/auth/types';
 import { useAuthState } from './hooks/useAuthState';
+import { toast } from 'sonner';
 
 export type AuthContextType = {
   isAuthenticated: boolean;
@@ -28,13 +29,15 @@ export type AuthContextType = {
   reportExpert?: (reportParams: any) => Promise<boolean>;
   getExpertShareLink?: (expertId: number | string) => string;
   getReferralLink?: () => string | null;
+  expertFetchError: string | null;
   error: string | null;
+  refreshUserData: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { authState, setAuthState } = useAuthState();
+  const { authState, setAuthState, fetchUserData, expertFetchError } = useAuthState();
   const [error, setError] = useState<string | null>(null);
 
   // Extract values from auth state for easier access
@@ -48,6 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role, 
     sessionType 
   } = authState;
+
+  // Refresh user data - useful when we need to force a refresh
+  const refreshUserData = async () => {
+    if (user) {
+      await fetchUserData(user.id);
+    }
+  };
 
   // Login function with role override
   const login = async (email: string, password: string, roleOverride?: string): Promise<boolean> => {
@@ -148,6 +158,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
+  // Show toast when expert fetch fails
+  useEffect(() => {
+    if (expertFetchError) {
+      toast.error(`Failed to retrieve expert profile: ${expertFetchError}`);
+    }
+  }, [expertFetchError]);
+
   // Export the context value
   const contextValue: AuthContextType = {
     isAuthenticated,
@@ -161,6 +178,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     error,
+    expertFetchError: expertFetchError?.message || null,
+    refreshUserData,
   };
 
   return (

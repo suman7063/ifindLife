@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState, initialAuthState, UserRole } from '../types';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
+  const [expertFetchError, setExpertFetchError] = useState<Error | null>(null);
   
   useEffect(() => {
     console.log("Setting up auth state listener");
@@ -73,32 +75,51 @@ export const useAuthState = () => {
         .eq('id', userId)
         .maybeSingle();
       
-      // Then check if it's an expert
-      const { data: expertData, error: expertError } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', userId)
-        .maybeSingle();
+      let expertProfile = null;
+      let expertError = null;
+      
+      try {
+        // Then check if it's an expert
+        const response = await supabase
+          .from('expert_accounts')
+          .select('*')
+          .eq('auth_id', userId)
+          .maybeSingle();
+          
+        expertProfile = response.data;
+        expertError = response.error;
         
+        if (expertError) {
+          console.error("Error fetching expert profile:", expertError);
+          setExpertFetchError(new Error(`Failed to fetch expert profile: ${expertError.message}`));
+        }
+      } catch (error) {
+        console.error("Exception when fetching expert profile:", error);
+        setExpertFetchError(error instanceof Error ? error : new Error('Unknown error fetching expert profile'));
+      }
+      
       console.log("Fetch results:", {
         userProfile: userProfile ? "found" : "not found",
-        expertData: expertData ? "found" : "not found",
+        expertProfile: expertProfile ? "found" : "not found",
+        expertError: expertError ? expertError.message : null
       });
       
       // Determine role and session type
       const hasUserProfile = !!userProfile;
-      const hasExpertProfile = !!expertData && expertData.status === 'approved';
+      // Only consider an expert profile valid if it exists AND is approved
+      const hasExpertProfile = !!expertProfile && expertProfile.status === 'approved';
       
       let sessionType: 'none' | 'user' | 'expert' | 'dual' = 'none';
       let role: UserRole = null;
       
+      // Get login origin from sessionStorage - set during login
+      const loginOrigin = sessionStorage.getItem('loginOrigin');
+      // Get role preference from localStorage
+      const savedRole = localStorage.getItem('preferredRole');
+      
       if (hasUserProfile && hasExpertProfile) {
         // Both profiles exist - this is a dual account
         sessionType = 'dual';
-        
-        // Get role preference from localStorage if it exists
-        const savedRole = localStorage.getItem('preferredRole');
-        const loginOrigin = sessionStorage.getItem('loginOrigin');
         
         console.log("Dual account detected:", { 
           savedRole, 
@@ -107,18 +128,18 @@ export const useAuthState = () => {
           hasExpertProfile 
         });
         
-        // If logging in from expert page, prioritize expert role
+        // CRITICAL: Priority order for role determination
+        // 1. Login origin (where the user clicked login from)
+        // 2. Saved preference
+        // 3. Default to user
+        
         if (loginOrigin === 'expert') {
           role = 'expert';
           localStorage.setItem('preferredRole', 'expert');
-        }
-        // If logging in from user page, prioritize user role
-        else if (loginOrigin === 'user') {
+        } else if (loginOrigin === 'user') {
           role = 'user';
           localStorage.setItem('preferredRole', 'user');
-        }
-        // Otherwise use saved preference or default to user
-        else if (savedRole === 'expert' || savedRole === 'user') {
+        } else if (savedRole === 'expert' || savedRole === 'user') {
           role = savedRole;
         } else {
           role = 'user'; // Default for dual accounts
@@ -130,29 +151,38 @@ export const useAuthState = () => {
       } else if (hasExpertProfile) {
         sessionType = 'expert';
         role = 'expert';
+      } else if (loginOrigin === 'expert' && expertProfile && !hasExpertProfile) {
+        // Special case: When logging in from expert page and expert profile exists but is pending/disapproved
+        sessionType = 'expert';
+        role = 'expert';
       }
       
       console.log("Role determination complete:", { 
         sessionType, 
         role,
+        loginOrigin,
         userProfile: hasUserProfile ? "exists" : "missing",
-        expertProfile: hasExpertProfile ? "exists" : "missing",
+        expertProfile: expertProfile ? `exists (status: ${expertProfile.status})` : "missing",
+        expertError: expertError ? expertError.message : "none"
       });
       
       // Ensure the expert profile includes the status field
-      const expertProfile = expertData ? {
-        ...expertData,
-        status: (expertData.status || 'pending') as 'pending' | 'approved' | 'disapproved'
+      const normalizedExpertProfile = expertProfile ? {
+        ...expertProfile,
+        // Ensure ID is always a string
+        id: String(expertProfile.id),
+        status: (expertProfile.status || 'pending') as 'pending' | 'approved' | 'disapproved'
       } : null;
       
       // Update auth state with all user data
       setAuthState(prev => ({
         ...prev,
         userProfile,
-        expertProfile,
+        expertProfile: normalizedExpertProfile,
         role,
         sessionType,
         isLoading: false,
+        expertFetchError: expertError ? expertError.message : null,
       }));
       
       // Store session type and role in local storage to persist across page refreshes
@@ -203,6 +233,7 @@ export const useAuthState = () => {
     authState,
     setAuthState,
     checkUserRole,
-    fetchUserData
+    fetchUserData,
+    expertFetchError
   };
 };

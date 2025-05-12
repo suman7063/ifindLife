@@ -27,7 +27,15 @@ const ExpertLogin: React.FC = () => {
   const [systemError, setSystemError] = useState<string | null>(null);
   
   // Get auth context
-  const { isLoading, isAuthenticated, expertProfile, userProfile, role, login } = useAuth();
+  const { 
+    isLoading, 
+    isAuthenticated, 
+    expertProfile, 
+    userProfile, 
+    role, 
+    login, 
+    expertFetchError 
+  } = useAuth();
   
   // Debug logging
   useEffect(() => {
@@ -35,15 +43,17 @@ const ExpertLogin: React.FC = () => {
       isLoading, 
       isAuthenticated, 
       hasExpertProfile: !!expertProfile,
+      expertProfileStatus: expertProfile?.status,
       hasUserProfile: !!userProfile,
       role,
       redirectAttempted,
-      dbErrorRetries
+      dbErrorRetries,
+      expertFetchError
     });
     
     // Clear any previous login origins
     sessionStorage.setItem('loginOrigin', 'expert');
-  }, [isLoading, isAuthenticated, expertProfile, userProfile, role, redirectAttempted, dbErrorRetries]);
+  }, [isLoading, isAuthenticated, expertProfile, userProfile, role, redirectAttempted, dbErrorRetries, expertFetchError]);
   
   // Clear any cached redirects
   useEffect(() => {
@@ -78,17 +88,38 @@ const ExpertLogin: React.FC = () => {
     }
   }, [searchParams]);
   
+  // Handle expert fetch errors
+  useEffect(() => {
+    if (expertFetchError) {
+      setSystemError(`Database error: ${expertFetchError}`);
+    }
+  }, [expertFetchError]);
+
   // Redirect if already authenticated as expert
   useEffect(() => {
     if (!isLoading && isAuthenticated && !redirectAttempted) {
       setRedirectAttempted(true);
       
-      console.log('ExpertLogin: Authentication status check', { role, hasExpertProfile: !!expertProfile });
+      console.log('ExpertLogin: Authentication status check', { 
+        role, 
+        hasExpertProfile: !!expertProfile,
+        expertStatus: expertProfile?.status
+      });
       
-      if (role === 'expert' && expertProfile) {
+      if (role === 'expert' && expertProfile && expertProfile.status === 'approved') {
         console.log('ExpertLogin: User is authenticated as expert, redirecting to expert dashboard');
         // Use replace: true to prevent going back to login
         navigate('/expert-dashboard', { replace: true });
+      } else if (role === 'expert' && expertProfile && expertProfile.status !== 'approved') {
+        // For pending or disapproved experts
+        const status = expertProfile.status;
+        console.log(`ExpertLogin: User is expert but status is ${status}`);
+        setStatusMessage({
+          type: 'error',
+          message: status === 'pending' 
+            ? 'Your account is pending approval. You will be notified once approved.'
+            : 'Your account was not approved. Please contact support for more information.'
+        });
       } else if (role === 'user') {
         console.log('ExpertLogin: User is authenticated as regular user, not as expert');
         toast.error('You are logged in as a user. Please log out first to access expert portal.');
@@ -118,6 +149,7 @@ const ExpertLogin: React.FC = () => {
       
       // CRITICAL FIX: Always set login origin for role determination
       sessionStorage.setItem('loginOrigin', 'expert');
+      localStorage.setItem('preferredRole', 'expert');
       
       // CRITICAL FIX: Check if login function is available
       if (!login) {
@@ -135,7 +167,12 @@ const ExpertLogin: React.FC = () => {
         if (success) {
           console.log('ExpertLogin: Login successful');
           toast.success('Successfully logged in as expert!');
-          navigate('/expert-dashboard', { replace: true });
+          
+          // Wait a bit to allow expert profile fetch to complete
+          setTimeout(() => {
+            navigate('/expert-dashboard', { replace: true });
+          }, 500);
+          
           return true;
         } else {
           // Handle database error as a special case
