@@ -4,9 +4,11 @@ import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import { lazy, Suspense } from 'react';
+import FeaturedPrograms from '@/components/services/FeaturedPrograms';
+import IssueSessions from '@/components/HomepageIssueSessions';
 
 // Lazy load non-critical components
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
@@ -37,6 +39,8 @@ const Index = () => {
   if (import.meta.env.DEV) {
     console.log('Index component rendering with EnhancedHero');
   }
+  
+  const navigate = useNavigate();
   
   return (
     <div className="min-h-screen flex flex-col">
