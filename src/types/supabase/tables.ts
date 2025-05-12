@@ -1,5 +1,4 @@
 
-
 export interface UserTransaction {
   id: string;
   user_id: string;

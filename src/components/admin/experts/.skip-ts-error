@@ -1,4 +1,10 @@
 
 // This file is used to skip type checking for complex components that need refactoring
 // ExpertApprovals.tsx is skipped due to its complex nature and size
-// TODO: Refactor ExpertApprovals.tsx to use the new utility functions
+// TODO: Refactor ExpertApprovals.tsx to use the new utility functions and proper type safety
+// The component is still functional but has TypeScript errors that need addressing in a separate refactoring task
+
+// ExpertApprovals.tsx has numerous type errors including:
+// - Spread types may only be created from object types
+// - Type mismatches between Supabase return values and component expected types
+// - Incompatible parameter types in database operations
