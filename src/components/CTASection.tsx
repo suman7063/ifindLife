@@ -25,7 +25,7 @@ const CTASection = () => {
                 Speak Your Heart
               </Button>
             </Link>
-            <Link to="/experts" onClick={handleLinkClick}>
+            <Link to="/services/therapy-sessions" onClick={handleLinkClick}>
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <Search className="mr-2 h-5 w-5" />
                 Get Guidance
