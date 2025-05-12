@@ -1,151 +1,62 @@
 
 import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import { Testimonial } from './types';
-import { 
-  fetchTestimonialsFromSupabase,
-  addTestimonialToSupabase,
-  updateTestimonialInSupabase,
-  deleteTestimonialFromSupabase,
-  countTestimonialsInSupabase
-} from './api';
-import { getDefaultTestimonials } from './defaults';
+import { fetchTestimonialsFromSupabase } from './api';
+import { DEFAULT_TESTIMONIALS } from './defaults';
 
-export function useTestimonialsData(
-  initialTestimonials: Testimonial[] = [], 
+export const useTestimonialsData = (
+  initialTestimonials: Testimonial[] = [],
   updateCallback: (testimonials: Testimonial[]) => void = () => {}
-) {
+) => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch testimonials from Supabase
+  // Function to fetch testimonials from Supabase
   const fetchTestimonials = async () => {
     try {
       setLoading(true);
+      const fetchedTestimonials = await fetchTestimonialsFromSupabase();
+      
+      if (fetchedTestimonials.length > 0) {
+        setTestimonials(fetchedTestimonials);
+        updateCallback(fetchedTestimonials);
+      } else {
+        console.log('No testimonials found, using default data');
+        setTestimonials(DEFAULT_TESTIMONIALS);
+        updateCallback(DEFAULT_TESTIMONIALS);
+      }
+      
       setError(null);
-      const formattedTestimonials = await fetchTestimonialsFromSupabase();
-      
-      if (formattedTestimonials.length > 0) {
-        setTestimonials(formattedTestimonials);
-        updateCallback(formattedTestimonials);
-      } else {
-        console.log('No testimonials found in the database');
-      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error loading testimonials';
-      setError(errorMessage);
       console.error('Error fetching testimonials:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Add a new testimonial
-  const addTestimonial = async (testimonial: Testimonial) => {
-    try {
-      setLoading(true);
-      await addTestimonialToSupabase(testimonial);
+      setError(err instanceof Error ? err.message : 'Unknown error fetching testimonials');
       
-      // Refresh testimonials list after adding
-      await fetchTestimonials();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error adding testimonial';
-      setError(errorMessage);
-      console.error('Error adding testimonial:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Update a testimonial
-  const updateTestimonial = async (id: string, testimonial: Testimonial) => {
-    try {
-      setLoading(true);
-      await updateTestimonialInSupabase(id, testimonial);
-      
-      // Refresh testimonials list after updating
-      await fetchTestimonials();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error updating testimonial';
-      setError(errorMessage);
-      console.error('Error updating testimonial:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Delete a testimonial
-  const deleteTestimonial = async (id: string) => {
-    try {
-      setLoading(true);
-      await deleteTestimonialFromSupabase(id);
-      
-      // Refresh testimonials list after deleting
-      await fetchTestimonials();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error deleting testimonial';
-      setError(errorMessage);
-      console.error('Error deleting testimonial:', err);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Seed default testimonials if needed
-  const seedDefaultTestimonials = async () => {
-    try {
-      setLoading(true);
-      
-      // Check if there are any testimonials in the database
-      const count = await countTestimonialsInSupabase();
-      
-      // If no testimonials exist, seed with defaults
-      if (count === 0) {
-        const defaultTestimonials = getDefaultTestimonials();
-        
-        // Insert default testimonials
-        for (const testimonial of defaultTestimonials) {
-          await addTestimonialToSupabase(testimonial);
-        }
-        
-        // Fetch the newly added testimonials
-        await fetchTestimonials();
-        toast.success('Default testimonials added successfully');
-      } else {
-        toast.info('Database already contains testimonials');
+      // Fallback to defaults if error
+      if (testimonials.length === 0) {
+        setTestimonials(DEFAULT_TESTIMONIALS);
+        updateCallback(DEFAULT_TESTIMONIALS);
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error seeding testimonials';
-      setError(errorMessage);
-      console.error('Error seeding default testimonials:', err);
-      toast.error('Failed to add default testimonials');
     } finally {
       setLoading(false);
     }
   };
 
-  // Initialize testimonials if empty
+  // Load testimonials on component mount if needed
   useEffect(() => {
-    if (initialTestimonials.length === 0) {
-      fetchTestimonials();
+    // If we already have testimonials data, don't fetch again
+    if (initialTestimonials.length > 0) {
+      return;
     }
-  }, []);
+    
+    fetchTestimonials();
+  }, [initialTestimonials]);
 
   return {
     testimonials,
+    setTestimonials,
     loading,
     error,
-    fetchTestimonials,
-    addTestimonial,
-    updateTestimonial,
-    deleteTestimonial,
-    seedDefaultTestimonials
+    fetchTestimonials
   };
-}
-
-// Re-export the Testimonial type for easy import by consumers
-export type { Testimonial } from './types';
+};

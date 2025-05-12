@@ -1,3 +1,5 @@
 
-export { useTestimonialsData } from './useTestimonialsData';
-export type { Testimonial } from './types';
+export * from './api';
+export * from './defaults';
+export * from './types';
+export * from './useTestimonialsData';

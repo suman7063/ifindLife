@@ -124,22 +124,18 @@ export const useAdminContent = (): AdminContent & {
   
   // Create a setTestimonials function that wraps the original one
   const setTestimonials = useCallback((newTestimonials: React.SetStateAction<Testimonial[]>) => {
-    if (typeof newTestimonials === 'function') {
-      // If it's a function, apply it to the current testimonials
-      const updatedTestimonials = newTestimonials(testimonials);
-      testimonialsHook.fetchTestimonials(); // Refresh from the database
-    } else {
-      // If it's a direct value, use it
-      testimonialsHook.fetchTestimonials(); // Refresh from the database
+    testimonialsHook.setTestimonials(newTestimonials);
+    if (typeof newTestimonials !== 'function') {
+      // If it's a direct value, use the update callback
+      updateContent({ testimonials: newTestimonials });
     }
-  }, [testimonialsHook, testimonials]);
+  }, [testimonialsHook, updateContent]);
 
   // Update overall loading state
   useEffect(() => {
     setLoading(expertsLoading || servicesLoading);
     
     // Set error if any loading hook has an error - Convert all errors to strings
-    // Use safe type handling to avoid instanceof errors
     if (expertsError) setError(String(expertsError));
     else if (servicesError) setError(String(servicesError));
     else if (testimonialsError) setError(String(testimonialsError));

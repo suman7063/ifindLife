@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { Expert } from '@/components/admin/experts/types';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
 
 export function useExpertsData(
   initialExperts: Expert[] = [], 
@@ -58,6 +58,30 @@ export function useExpertsData(
       country: "USA"
     }
   ];
+
+  // Map database experts to our Expert type
+  const mapDbExpertToExpert = (dbExpert: any): Expert => {
+    return {
+      id: String(dbExpert.id),
+      name: dbExpert.name || 'Unknown Expert',
+      experience: Number(dbExpert.experience) || 0,
+      specialties: dbExpert.specialization ? [dbExpert.specialization] : [],
+      rating: dbExpert.average_rating || 4.5,
+      consultations: dbExpert.reviews_count || 0,
+      price: 30, // Default price if not specified
+      waitTime: "Available",
+      imageUrl: dbExpert.profile_picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop",
+      online: true,
+      languages: [],
+      bio: dbExpert.bio || "",
+      email: dbExpert.email || "",
+      phone: dbExpert.phone || "",
+      address: dbExpert.address || "",
+      city: dbExpert.city || "",
+      state: dbExpert.state || "",
+      country: dbExpert.country || ""
+    };
+  };
 
   // Load experts data from the same source as public site
   useEffect(() => {
@@ -115,27 +139,10 @@ export function useExpertsData(
           } 
           
           if (expertsData && expertsData.length > 0) {
-            // Transform experts data to match our expected format
-            const formattedExperts = expertsData.map(expert => ({
-              id: expert.id.toString(),
-              name: expert.name || 'Unknown Expert',
-              experience: Number(expert.experience) || 0,
-              specialties: expert.specialization ? [expert.specialization] : [],
-              rating: expert.average_rating || 4.5,
-              consultations: expert.reviews_count || 0,
-              price: 30, // Default price if not specified
-              waitTime: "Available",
-              imageUrl: expert.profile_picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop",
-              online: true,
-              languages: [],
-              bio: expert.bio || "",
-              email: expert.email || "",
-              phone: expert.phone || "",
-              address: expert.address || "",
-              city: expert.city || "",
-              state: expert.state || "",
-              country: expert.country || ""
-            }));
+            // Transform experts data to match our expected format using our utility
+            const formattedExperts = safeDataTransform(expertsData, (expert) => 
+              mapDbExpertToExpert(dbTypeConverter(expert))
+            );
             
             console.log('Formatted experts:', formattedExperts.length);
             setExperts(formattedExperts);
@@ -204,27 +211,10 @@ export function useExpertsData(
         }
         
         if (expertAccountsData && expertAccountsData.length > 0) {
-          // Transform expert_accounts data to match our expected format
-          const formattedExperts = expertAccountsData.map(expert => ({
-            id: expert.id.toString(),
-            name: expert.name || 'Unknown Expert',
-            experience: Number(expert.experience) || 0,
-            specialties: expert.specialization ? [expert.specialization] : [],
-            rating: expert.average_rating || 4.5,
-            consultations: expert.reviews_count || 0,
-            price: 30, // Default price if not specified
-            waitTime: "Available",
-            imageUrl: expert.profile_picture || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop",
-            online: true,
-            languages: [],
-            bio: expert.bio || "",
-            email: expert.email || "",
-            phone: expert.phone || "",
-            address: expert.address || "",
-            city: expert.city || "",
-            state: expert.state || "",
-            country: expert.country || ""
-          }));
+          // Transform expert_accounts data using our utility
+          const formattedExperts = safeDataTransform(expertAccountsData, (expert) => 
+            mapDbExpertToExpert(dbTypeConverter(expert))
+          );
           
           setExperts(formattedExperts);
           updateCallback(formattedExperts);
@@ -265,6 +255,6 @@ export function useExpertsData(
     experts,
     setExperts,
     loading,
-    error // This is now always a string
+    error
   };
 }

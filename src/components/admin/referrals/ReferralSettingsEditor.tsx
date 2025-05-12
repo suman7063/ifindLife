@@ -3,9 +3,11 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useReferralSettings } from "@/hooks/useReferralSettings";
+import { Label } from "@/components/ui/label";
 import ReferralRewardsForm from './ReferralRewardsForm';
 import ReferralDescriptionField from './ReferralDescriptionField';
 import LoadingState from './LoadingState';
+import { safeSingleRecord } from '@/utils/supabaseUtils';
 
 const ReferralSettingsEditor: React.FC = () => {
   const { 

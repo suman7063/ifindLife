@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { Testimonial } from './types';
+import { safeDataTransform, dbTypeConverter, safeSingleRecord } from '@/utils/supabaseUtils';
 
 /**
  * Fetch testimonials from Supabase
@@ -16,8 +17,8 @@ export const fetchTestimonialsFromSupabase = async (): Promise<Testimonial[]> =>
   }
   
   if (data && data.length > 0) {
-    // Convert from database format to our application format
-    const formattedTestimonials = data.map(item => ({
+    // Convert from database format to our application format using utility
+    const formattedTestimonials = safeDataTransform(data, (item) => ({
       id: item.id,
       name: item.name,
       location: item.location,

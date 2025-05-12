@@ -1,120 +1,147 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { handleDatabaseError, retryOperation } from '@/utils/errorHandling';
+import { mapDbServices, generateRandomId } from './mappers';
+import { ServiceCategory, ServiceItem } from './types';
+import { DEFAULT_CATEGORIES } from './constants';
+import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
 
-import { categoryData as defaultServiceData } from '@/data/initialAdminData';
-import { ServiceCategory, UseServicesDataOptions, UseServicesDataReturn } from './types';
-import { MAX_FETCH_ATTEMPTS, BASE_RETRY_DELAY } from './constants';
-import { mapDbServicesToUiFormat } from './mappers';
+// Define the shape of a service from the database
+export interface DbService {
+  id: number;
+  name: string;
+  description?: string;
+  rate_usd: number;
+  rate_inr: number;
+}
 
-/**
- * Hook for managing services data with improved error handling
- */
-export function useServicesData({
-  initialServices = [],
-  updateCallback = () => {},
-  maxFetchAttempts = MAX_FETCH_ATTEMPTS
-}: UseServicesDataOptions = {}): UseServicesDataReturn {
+export function useServicesData(
+  initialServices: ServiceCategory[] = [],
+  updateCallback: (services: ServiceCategory[]) => void = () => {}
+) {
   const [services, setServices] = useState<ServiceCategory[]>(initialServices);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fetchAttempts, setFetchAttempts] = useState(0);
-  
-  // Load services data function with better error handling
-  const fetchServices = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('Fetching services data... Attempt:', fetchAttempts + 1);
 
-      // First check localStorage which is used by the public site
-      const savedContent = localStorage.getItem('ifindlife-content');
-      if (savedContent) {
-        try {
-          const parsedContent = JSON.parse(savedContent);
-          if (parsedContent.services && parsedContent.services.length > 0) {
-            console.log('Services found in localStorage:', parsedContent.services.length);
-            setServices(parsedContent.services);
-            updateCallback(parsedContent.services);
-            return;
-          }
-        } catch (parseError) {
-          console.error('Error parsing localStorage content:', parseError);
-          // Continue to fetch from Supabase if localStorage parsing fails
-        }
-      }
-      
-      // If no services in localStorage, fetch from Supabase
-      await retryOperation(async () => {
-        console.log('Fetching services from Supabase...');
-        const { data, error } = await supabase.from('services').select('*');
-        
-        console.log('Supabase response:', { data, error });
-        
-        if (error) {
-          throw error;
-        }
-        
-        if (data && data.length > 0) {
-          const formattedServices = mapDbServicesToUiFormat(data);
-          
-          console.log('Formatted services:', formattedServices);
-          setServices(formattedServices);
-          updateCallback(formattedServices);
-          setFetchAttempts(0); // Reset attempts on success
-        } else {
-          console.log('No services found in Supabase, using default data');
-          setServices(defaultServiceData);
-          updateCallback(defaultServiceData);
-        }
-      }, maxFetchAttempts);
-      
-    } catch (err: any) {
-      console.error('Error loading services data:', err);
-      
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage);
-      
-      // If we've reached max attempts, fall back to default data
-      if (fetchAttempts >= maxFetchAttempts - 1) {
-        console.warn(`Max fetch attempts (${maxFetchAttempts}) reached, using default data`);
-        setServices(defaultServiceData);
-        updateCallback(defaultServiceData);
-        handleDatabaseError(err, 'Could not load services from database. Using default data.');
-      } else {
-        // Schedule a retry with exponential backoff
-        const retryDelay = Math.min(BASE_RETRY_DELAY * Math.pow(2, fetchAttempts), 10000);
-        console.log(`Scheduling retry in ${retryDelay}ms...`);
-        
-        setTimeout(() => {
-          setFetchAttempts(prev => prev + 1);
-          fetchServices();
-        }, retryDelay);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchAttempts, updateCallback, maxFetchAttempts]);
-
-  // Initial data load
+  // Load services data from Supabase
   useEffect(() => {
+    // If we already have services data, don't fetch again
+    if (initialServices.length > 0) {
+      return;
+    }
+    
+    const fetchServices = async () => {
+      try {
+        setLoading(true);
+        
+        // Try to fetch services from Supabase
+        const { data: servicesData, error: servicesError } = await supabase
+          .from('services')
+          .select('*');
+          
+        if (servicesError) {
+          console.error('Error fetching services:', servicesError);
+          throw servicesError;
+        }
+        
+        if (servicesData && servicesData.length > 0) {
+          // Convert Supabase data to our app format
+          const dbServices = safeDataTransform(servicesData, (service) => 
+            dbTypeConverter<DbService>(service)
+          );
+            
+          // Map services to our category/item structure
+          const categorizedServices = mapDbServices(dbServices);
+          
+          setServices(categorizedServices);
+          updateCallback(categorizedServices);
+        } else {
+          console.log('No services found, using default data');
+          setServices(DEFAULT_CATEGORIES);
+          updateCallback(DEFAULT_CATEGORIES);
+        }
+      } catch (err) {
+        console.error('Error loading services:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error loading services');
+        
+        // Fallback to default services
+        setServices(DEFAULT_CATEGORIES);
+        updateCallback(DEFAULT_CATEGORIES);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
     fetchServices();
-  }, [fetchServices]);
+  }, [initialServices, updateCallback]);
 
-  // Public refresh function
-  const refreshServices = useCallback(async () => {
-    setFetchAttempts(0);
-    await fetchServices();
-  }, [fetchServices]);
+  // Add a new service item to a category
+  const addService = (categoryId: string, service: Omit<ServiceItem, 'id'>) => {
+    const newService = {
+      ...service,
+      id: generateRandomId()
+    };
+    
+    const updatedServices = services.map(category => {
+      if (category.id === categoryId) {
+        return {
+          ...category,
+          items: [...category.items, newService]
+        };
+      }
+      return category;
+    });
+    
+    setServices(updatedServices);
+    updateCallback(updatedServices);
+  };
+
+  // Update an existing service
+  const updateService = (categoryId: string, serviceId: string, updatedService: Partial<ServiceItem>) => {
+    const updatedServices = services.map(category => {
+      if (category.id === categoryId) {
+        return {
+          ...category,
+          items: category.items.map(item => {
+            if (item.id === serviceId) {
+              return { ...item, ...updatedService };
+            }
+            return item;
+          })
+        };
+      }
+      return category;
+    });
+    
+    setServices(updatedServices);
+    updateCallback(updatedServices);
+  };
+
+  // Remove a service
+  const removeService = (categoryId: string, serviceId: string) => {
+    const updatedServices = services.map(category => {
+      if (category.id === categoryId) {
+        return {
+          ...category,
+          items: category.items.filter(item => item.id !== serviceId)
+        };
+      }
+      return category;
+    });
+    
+    setServices(updatedServices);
+    updateCallback(updatedServices);
+  };
 
   return {
     services,
     setServices,
     loading,
     error,
-    refreshServices
+    actions: {
+      addService,
+      updateService,
+      removeService
+    }
   };
 }
