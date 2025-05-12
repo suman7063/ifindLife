@@ -21,12 +21,11 @@ const ProgramDataReset = () => {
       let deleted = false;
       
       try {
-        // Try using Supabase with a more generic filter
-        // Delete all rows without specifying a specific ID type
+        // Try using Supabase if available
         const { error } = await supabase
           .from('programs')
           .delete()
-          .neq('id', -1 as any); // Using type assertion to bypass type check
+          .neq('id', 0); // Delete all rows
           
         if (!error) {
           console.log("Successfully deleted programs from Supabase");

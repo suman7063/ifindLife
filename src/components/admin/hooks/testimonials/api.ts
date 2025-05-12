@@ -1,8 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
 import { Testimonial } from './types';
-import { safeDataTransform, supabaseCast } from '@/utils/supabaseUtils';
-import { DatabaseTestimonial } from '@/types/supabase/tables';
 
 /**
  * Fetch testimonials from Supabase
@@ -17,11 +15,9 @@ export const fetchTestimonialsFromSupabase = async (): Promise<Testimonial[]> =>
     throw error;
   }
   
-  // Use safeDataTransform to safely convert db format to app format
-  return safeDataTransform<any, Testimonial>(
-    data,
-    error,
-    (item) => ({
+  if (data && data.length > 0) {
+    // Convert from database format to our application format
+    const formattedTestimonials = data.map(item => ({
       id: item.id,
       name: item.name,
       location: item.location,
@@ -29,28 +25,28 @@ export const fetchTestimonialsFromSupabase = async (): Promise<Testimonial[]> =>
       text: item.text,
       date: item.date,
       imageUrl: item.image_url  // Map from image_url to imageUrl
-    }),
-    [] // Empty array fallback
-  );
+    }));
+    
+    return formattedTestimonials;
+  }
+  
+  return [];
 };
 
 /**
  * Add a new testimonial to Supabase
  */
 export const addTestimonialToSupabase = async (testimonial: Testimonial): Promise<any> => {
-  // Create a database-compatible object from the testimonial
-  const dbTestimonial = {
-    name: testimonial.name,
-    location: testimonial.location,
-    rating: testimonial.rating,
-    text: testimonial.text,
-    date: testimonial.date,
-    image_url: testimonial.imageUrl  // Map from imageUrl to image_url
-  };
-  
   const { data, error } = await supabase
     .from('testimonials')
-    .insert([dbTestimonial as any])
+    .insert([{
+      name: testimonial.name,
+      location: testimonial.location,
+      rating: testimonial.rating,
+      text: testimonial.text,
+      date: testimonial.date,
+      image_url: testimonial.imageUrl  // Map from imageUrl to image_url
+    }])
     .select();
   
   if (error) {
@@ -73,8 +69,8 @@ export const updateTestimonialInSupabase = async (id: string, testimonial: Testi
       text: testimonial.text,
       date: testimonial.date,
       image_url: testimonial.imageUrl  // Map from imageUrl to image_url
-    } as any)
-    .eq('id', id as any);
+    })
+    .eq('id', id);
   
   if (error) {
     throw error;
@@ -88,7 +84,7 @@ export const deleteTestimonialFromSupabase = async (id: string): Promise<void> =
   const { error } = await supabase
     .from('testimonials')
     .delete()
-    .eq('id', id as any);
+    .eq('id', id);
   
   if (error) {
     throw error;

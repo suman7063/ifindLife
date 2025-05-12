@@ -4,7 +4,6 @@ import { supabase } from '@/lib/supabase';
 import { testimonialData as defaultTestimonialData } from '@/data/homePageData';
 import TestimonialCard from '@/components/TestimonialCard';
 import { Quote } from 'lucide-react';
-import { safeDataTransform } from '@/utils/supabaseUtils';
 
 type Testimonial = {
   id?: string;
@@ -15,19 +14,6 @@ type Testimonial = {
   date: string;
   imageUrl: string;
 };
-
-// Define the database schema type explicitly
-interface DatabaseTestimonial {
-  id: string;
-  name: string;
-  location: string;
-  rating: number;
-  text: string;
-  date: string;
-  image_url: string;
-  created_at?: string;
-  updated_at?: string;
-}
 
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>(defaultTestimonialData);
@@ -48,23 +34,18 @@ const TestimonialsSection = () => {
           throw error;
         }
         
-        // Use the utility function to safely transform data
-        const formattedTestimonials = safeDataTransform<any, Testimonial>(
-          data,
-          error,
-          (item) => ({
-            id: item.id || '',
-            name: item.name || '',
-            location: item.location || '',
-            rating: item.rating || 5,
-            text: item.text || '',
-            date: item.date || '',
-            imageUrl: item.image_url || ''
-          }),
-          defaultTestimonialData
-        );
-        
-        if (formattedTestimonials && formattedTestimonials.length > 0) {
+        if (data && data.length > 0) {
+          // Convert from database format to our application format
+          const formattedTestimonials = data.map(item => ({
+            id: item.id,
+            name: item.name,
+            location: item.location,
+            rating: item.rating,
+            text: item.text,
+            date: item.date,
+            imageUrl: item.image_url
+          }));
+          
           setTestimonials(formattedTestimonials);
         }
       } catch (err) {
@@ -98,7 +79,7 @@ const TestimonialsSection = () => {
             <Quote className="h-12 w-12 text-ifind-purple opacity-40" />
           </div>
           <h2 className="text-4xl font-bold mb-4 text-gray-800">What Our Clients Say</h2>
-          <p className="text-lg text-center text-gray-600 mb-12 max-w-3xl mx-auto">
+          <p className="text-gray-600 max-w-2xl mx-auto">
             Real stories from real people who have experienced the positive impact of our services
           </p>
         </div>

@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { supabase, from } from '@/lib/supabase';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,16 +27,6 @@ const contactFormSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
-// Define a type that exactly matches the database insert schema
-type ContactFormSubmission = {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  created_at?: string;
-  is_read?: boolean;
-};
-
 const StayInTouchSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -54,19 +43,17 @@ const StayInTouchSection = () => {
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
     try {
-      // Create submission data that matches the database schema exactly
-      const submission: ContactFormSubmission = {
-        name: data.name,
-        email: data.email, 
-        subject: data.subject,
-        message: data.message,
-        created_at: new Date().toISOString(),
-        is_read: false
-      };
-
-      const { error } = await supabase
-        .from('contact_submissions')
-        .insert(submission as any); // Type assertion to bypass type checking temporarily
+      // Store contact form submission in Supabase
+      const { error } = await from('contact_submissions')
+        .insert([
+          {
+            name: data.name,
+            email: data.email, 
+            subject: data.subject,
+            message: data.message,
+            created_at: new Date().toISOString(),
+          },
+        ]);
 
       if (error) {
         console.error('Error submitting form:', error);

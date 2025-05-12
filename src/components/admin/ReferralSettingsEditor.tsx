@@ -1,33 +1,23 @@
-import React, { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { safeSingleRecord } from '@/utils/supabaseUtils';
-
-export interface ReferralSettings {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  active: boolean;
-  description: string;
-  updated_at?: string;
-}
-
-// Default settings to use as fallback
-const defaultSettings: ReferralSettings = {
-  id: '',
-  referrer_reward: 10,
-  referred_reward: 5,
-  active: true,
-  description: 'Invite friends and earn rewards when they make their first purchase.',
-};
+import { ReferralSettings } from "@/types/supabase";
 
 const ReferralSettingsEditor: React.FC = () => {
-  const [settings, setSettings] = useState<ReferralSettings>(defaultSettings);
+  const [settings, setSettings] = useState<ReferralSettings>({
+    id: '',
+    referrer_reward: 10,
+    referred_reward: 5,
+    active: true,
+    description: 'Invite friends and earn rewards when they make their first purchase.',
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<{
@@ -49,25 +39,8 @@ const ReferralSettingsEditor: React.FC = () => {
         if (error) {
           console.error('Error fetching referral settings:', error);
           toast.error('Failed to load referral settings');
-          return; // Use default settings on error
-        }
-
-        if (data) {
-          // Use the utility function to safely process the data
-          const safeSettings = safeSingleRecord<any, ReferralSettings>(
-            data,
-            null,
-            (item) => ({
-              id: item.id || defaultSettings.id,
-              referrer_reward: typeof item.referrer_reward === 'number' ? item.referrer_reward : defaultSettings.referrer_reward,
-              referred_reward: typeof item.referred_reward === 'number' ? item.referred_reward : defaultSettings.referred_reward,
-              active: Boolean(item.active),
-              description: typeof item.description === 'string' ? item.description : defaultSettings.description
-            }),
-            defaultSettings
-          );
-          
-          setSettings(safeSettings);
+        } else if (data) {
+          setSettings(data);
         }
       } catch (error) {
         console.error('Error fetching referral settings:', error);
@@ -112,6 +85,7 @@ const ReferralSettingsEditor: React.FC = () => {
     setIsSaving(true);
     try {
       const updatedSettings = {
+        id: settings.id || undefined,
         referrer_reward: settings.referrer_reward,
         referred_reward: settings.referred_reward,
         active: settings.active,
@@ -119,14 +93,9 @@ const ReferralSettingsEditor: React.FC = () => {
         updated_at: new Date().toISOString()
       };
 
-      // Add ID if we have one for upsert
-      if (settings.id) {
-        (updatedSettings as any).id = settings.id;
-      }
-
       const { data, error } = await supabase
         .from('referral_settings')
-        .upsert(updatedSettings as any)
+        .upsert(updatedSettings)
         .select()
         .single();
 
@@ -136,22 +105,7 @@ const ReferralSettingsEditor: React.FC = () => {
       } else {
         toast.success('Referral settings saved successfully');
         if (data) {
-          // Safely update the state with safeSingleRecord
-          const safeData = safeSingleRecord<any, ReferralSettings>(
-            data,
-            null,
-            (item) => ({
-              id: item.id || settings.id,
-              referrer_reward: typeof item.referrer_reward === 'number' ? item.referrer_reward : settings.referrer_reward,
-              referred_reward: typeof item.referred_reward === 'number' ? item.referred_reward : settings.referred_reward,
-              active: Boolean(item.active), 
-              description: typeof item.description === 'string' ? item.description : settings.description,
-              updated_at: item.updated_at || new Date().toISOString()
-            }),
-            settings
-          );
-          
-          setSettings(safeData);
+          setSettings(data);
         }
       }
     } catch (error) {
@@ -218,7 +172,7 @@ const ReferralSettingsEditor: React.FC = () => {
       <CardContent>
         <div className="grid gap-6">
           <div className="flex items-center space-x-2 mb-4">
-            <Switch 
+            <Checkbox 
               id="active" 
               checked={settings.active} 
               onCheckedChange={handleActiveChange} 

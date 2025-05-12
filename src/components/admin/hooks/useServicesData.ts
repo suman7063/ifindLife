@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { safeDataTransform, supabaseCast } from '@/utils/supabaseUtils';
 
 // Import default data without JSX elements
 import { categoryData as defaultServiceData } from '@/data/initialAdminData';
@@ -16,7 +15,7 @@ export interface ServiceCategory {
 }
 
 // Interface for the database service object
-export interface DbService {
+interface DbService {
   id: number;
   name: string;
   description: string;
@@ -87,19 +86,15 @@ export function useServicesData(
           }
           
           if (data && data.length > 0) {
-            // Use our safe transform utility with proper typing
-            const formattedServices = safeDataTransform<any, ServiceCategory>(
-              data,
-              error,
-              (service) => ({
-                icon: service.icon || DEFAULT_ICON,
-                title: service.name,
-                description: service.description || '',
-                href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
-                color: service.color || DEFAULT_COLOR
-              }),
-              []
-            );
+            // Map Supabase data to the expected format, providing defaults for missing fields
+            const formattedServices = data.map((service: DbService) => ({
+              // Use string icons (emoji) instead of React Elements
+              icon: service.icon || DEFAULT_ICON, // Default icon if none in database
+              title: service.name,
+              description: service.description || '',
+              href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
+              color: service.color || DEFAULT_COLOR // Default color if none in database
+            }));
             
             console.log('Formatted services:', formattedServices);
             setServices(formattedServices);
@@ -153,7 +148,7 @@ export function useServicesData(
     };
     
     fetchServices();
-  }, [updateCallback, fetchAttempts, MAX_FETCH_ATTEMPTS]);
+  }, [updateCallback]);
 
   return {
     services,

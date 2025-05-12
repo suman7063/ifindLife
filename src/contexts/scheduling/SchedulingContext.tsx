@@ -62,9 +62,8 @@ export const SchedulingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (isAuthenticated && user?.id) {
         if (expertProfile) {
           // Load expert availabilities and appointments
-          // Ensure id is always treated as a string
-          await availabilityManager.fetchAvailabilities(String(expertProfile.id));
-          await appointmentManager.fetchAppointments(undefined, String(expertProfile.id));
+          await availabilityManager.fetchAvailabilities(expertProfile.id);
+          await appointmentManager.fetchAppointments(undefined, expertProfile.id);
         } else if (userProfile) {
           // Load user appointments
           await appointmentManager.fetchAppointments(userProfile.id);
@@ -89,7 +88,7 @@ export const SchedulingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     
     return availabilityManager.createAvailability(
-      String(expertProfile.id),
+      expertProfile.id,
       startDate,
       endDate,
       availabilityType,
@@ -139,14 +138,14 @@ export const SchedulingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   // Refresh functions
   const refreshAvailabilities = async () => {
     if (!expertProfile) return [];
-    return availabilityManager.fetchAvailabilities(String(expertProfile.id));
+    return availabilityManager.fetchAvailabilities(expertProfile.id);
   };
   
   const refreshAppointments = async () => {
     if (!userProfile) return [];
     
     if (expertProfile) {
-      return appointmentManager.fetchAppointments(undefined, String(expertProfile.id));
+      return appointmentManager.fetchAppointments(undefined, expertProfile.id);
     } else {
       return appointmentManager.fetchAppointments(userProfile.id);
     }

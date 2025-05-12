@@ -25,17 +25,14 @@ export interface UserReview {
 }
 
 export interface ContactSubmission {
-  id: number; // ID is a number in the database schema
+  id: number;
   name: string;
   email: string;
   subject: string;
   message: string;
-  created_at?: string | null;
-  is_read?: boolean | null;
+  created_at: string | null;
+  is_read: boolean | null;
 }
-
-// Add this utility type for Supabase insert operations
-export type ContactSubmissionInsert = Omit<ContactSubmission, 'id'>;
 
 // Full Report type from DB
 export type Report = {
@@ -70,26 +67,3 @@ export type NewReview = {
   rating: number;
   comment?: string;
 };
-
-// Testimonial type from DB schema
-export interface DatabaseTestimonial {
-  id: string;
-  name: string;
-  location: string;
-  rating: number;
-  text: string;
-  date: string;
-  image_url: string;
-  created_at: string;
-  updated_at: string;
-}
-
-// Referral Settings type
-export interface ReferralSetting {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  active: boolean;
-  description?: string;
-  updated_at?: string;
-}

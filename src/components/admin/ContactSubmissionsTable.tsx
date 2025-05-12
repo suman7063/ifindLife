@@ -14,7 +14,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { ContactSubmission } from '@/types/supabase/tables';
-import { safeDataTransform } from '@/utils/supabaseUtils';
 
 const ContactSubmissionsTable = () => {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
@@ -32,23 +31,7 @@ const ContactSubmissionsTable = () => {
         throw error;
       }
 
-      // Safely transform the data with proper error handling
-      const formattedSubmissions = safeDataTransform<any, ContactSubmission>(
-        data,
-        error,
-        (item) => ({
-          id: item.id || 0,
-          name: item.name || '',
-          email: item.email || '',
-          subject: item.subject || '',
-          message: item.message || '',
-          created_at: item.created_at || new Date().toISOString(),
-          is_read: Boolean(item.is_read)
-        }),
-        [] // Empty array as fallback
-      );
-      
-      setSubmissions(formattedSubmissions);
+      setSubmissions(data as ContactSubmission[] || []);
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
       toast.error('Failed to load contact submissions');
@@ -59,14 +42,10 @@ const ContactSubmissionsTable = () => {
 
   const markAsRead = async (id: number) => {
     try {
-      // Convert id to number
-      const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
-      // Use the correct type for the update operation
       const { error } = await supabase
         .from('contact_submissions')
-        .update({ is_read: true } as any)
-        .eq('id', numericId as any);
+        .update({ is_read: true })
+        .eq('id', id);
 
       if (error) {
         throw error;
@@ -134,7 +113,7 @@ const ContactSubmissionsTable = () => {
                   className={submission.is_read ? "" : "bg-blue-50"}
                 >
                   <TableCell className="font-medium">
-                    {submission.created_at ? format(new Date(submission.created_at), 'MMM d, yyyy HH:mm') : 'Unknown date'}
+                    {format(new Date(submission.created_at), 'MMM d, yyyy HH:mm')}
                   </TableCell>
                   <TableCell>{submission.name}</TableCell>
                   <TableCell>
@@ -160,11 +139,11 @@ const ContactSubmissionsTable = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    {!submission.is_read && submission.id && (
+                    {!submission.is_read && (
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => markAsRead(submission.id as number)}
+                        onClick={() => markAsRead(submission.id)}
                       >
                         Mark as read
                       </Button>
