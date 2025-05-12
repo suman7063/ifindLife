@@ -35,6 +35,12 @@ const UserLoginContent: React.FC = () => {
     }
   }, []);
   
+  // CRITICAL FIX: Set login origin to 'user' to ensure correct role determination
+  useEffect(() => {
+    sessionStorage.setItem('loginOrigin', 'user');
+    console.log('UserLoginContent: Setting login origin to user');
+  }, []);
+  
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLoggingIn(true);
     setLoginError(null);

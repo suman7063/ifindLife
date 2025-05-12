@@ -40,6 +40,9 @@ const ExpertLogin: React.FC = () => {
       redirectAttempted,
       dbErrorRetries
     });
+    
+    // Clear any previous login origins
+    sessionStorage.setItem('loginOrigin', 'expert');
   }, [isLoading, isAuthenticated, expertProfile, userProfile, role, redirectAttempted, dbErrorRetries]);
   
   // Clear any cached redirects
@@ -112,6 +115,9 @@ const ExpertLogin: React.FC = () => {
         console.log('ExpertLogin: Found existing session, signing out first');
         await supabase.auth.signOut({ scope: 'local' });
       }
+      
+      // CRITICAL FIX: Always set login origin for role determination
+      sessionStorage.setItem('loginOrigin', 'expert');
       
       // CRITICAL FIX: Check if login function is available
       if (!login) {

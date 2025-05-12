@@ -37,6 +37,12 @@ const UserDashboard: React.FC = () => {
       redirectAttempted
     });
     
+    // Ensure role is set to user when accessing this page
+    if (isAuthenticated && role !== 'user') {
+      console.log('Setting preferred role to user');
+      localStorage.setItem('preferredRole', 'user');
+    }
+    
     // If user is an expert, redirect them to expert dashboard
     if (!isLoading && isAuthenticated && role === 'expert' && !redirectAttempted) {
       console.log('UserDashboard: Detected expert role, should redirect to expert dashboard');
