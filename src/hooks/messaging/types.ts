@@ -4,8 +4,13 @@ import { UserProfile } from '@/types/supabase';
 import { ExpertProfile } from '@/types/supabase/expert';
 import { ExpertProfile as AuthExpertProfile } from '@/contexts/auth/types';
 
-// Domain entity types
-export type MessagingUser = ExpertProfile | AuthExpertProfile | UserProfile | null;
+// Update MessagingUser type to ensure it has consistent id type (string)
+export interface MessagingUser {
+  id: string;
+  name?: string;
+  email?: string;
+  profile_picture?: string;
+}
 
 export interface Conversation {
   userId: string;

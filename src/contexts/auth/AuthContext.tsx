@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User, Session } from '@supabase/supabase-js';
-import { UserProfile, ExpertProfile, UserRole } from '@/contexts/auth/types';
+import { UserProfile, ExpertProfile, UserRole, initialAuthState } from '@/contexts/auth/types';
 import { useAuthState } from './hooks/useAuthState';
 
 export type AuthContextType = {

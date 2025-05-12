@@ -66,9 +66,15 @@ export const useProfileFunctions = (
       
       setIsUpdating(true);
       
+      // Ensure id is a string in updates
+      const updatesWithStringId = {
+        ...updates,
+        id: updates.id ? String(updates.id) : undefined
+      };
+      
       const { data, error } = await supabase
         .from('expert_accounts')
-        .update(updates)
+        .update(updatesWithStringId)
         .eq('auth_id', authState.user.id)
         .select()
         .single();
@@ -83,6 +89,7 @@ export const useProfileFunctions = (
       const updatedExpertProfile: ExpertProfile = {
         ...authState.expertProfile,
         ...updates,
+        id: String(authState.expertProfile.id), // Ensure ID is always a string
         status: (updates.status || authState.expertProfile.status) as 'pending' | 'approved' | 'disapproved'
       };
       

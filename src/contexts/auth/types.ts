@@ -22,7 +22,7 @@ export interface UserProfile {
 
 // Define expert profile structure
 export interface ExpertProfile {
-  id: string | number;
+  id: string; // Change to string only to fix type issues
   auth_id?: string | null;
   name: string;
   email: string;
