@@ -1,4 +1,3 @@
-
 import React, { createContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus, AuthContextType } from '../types';
@@ -41,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user?.id) {
       return fetchUserData(user.id);
     }
-    return fetchUserData();
+    return fetchUserData(undefined);
   };
   
   // Auth actions with correct param types
