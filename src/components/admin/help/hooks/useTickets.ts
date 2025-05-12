@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { HelpTicket } from '../types';
-import { safeDataTransform } from '@/utils/supabaseUtils';
+import { safeDataTransform, supabaseCast } from '@/utils/supabaseUtils';
 
 export const useTickets = () => {
   const [tickets, setTickets] = useState<HelpTicket[]>([]);
