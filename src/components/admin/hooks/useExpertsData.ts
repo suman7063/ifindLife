@@ -2,8 +2,35 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { safeDataTransform, supabaseCast } from '@/utils/supabaseUtils';
-import { Expert } from '../experts/types';
+import { safeDataTransform, supabaseCast, dbTypeConverter } from '@/utils/supabaseUtils';
+
+// Define a more compatible Expert type to match both the database schema and the component expectations
+export interface Expert {
+  id: string;
+  name: string;
+  experience: string | number; // Allow both string and number
+  specialization?: string;
+  average_rating: number;
+  reviews_count: number;
+  profile_picture?: string | null;
+  email?: string;
+  phone?: string;
+  bio?: string;
+  specialties?: string[];  // Required by the UI
+  rating?: number;         // Required by the UI
+  consultations?: number;  // Required by the UI
+  price?: number;          // Required by the UI
+  waitTime?: string;       // Required by the UI
+  imageUrl?: string;       // Required by the UI
+  online?: boolean;        // Required by the UI
+  verified?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  pricing?: {
+    price_per_min?: number;
+    consultation_fee?: number;
+  };
+}
 
 export const useExpertsData = () => {
   const [experts, setExperts] = useState<Expert[]>([]);
@@ -35,15 +62,22 @@ export const useExpertsData = () => {
           specialization: item.specialization || 'General',
           average_rating: typeof item.average_rating === 'number' ? item.average_rating : 0,
           reviews_count: typeof item.reviews_count === 'number' ? item.reviews_count : 0,
-          // Add other fields with safe defaults
           profile_picture: item.profile_picture || null,
-          pricing: {},
-          bio: item.bio || '',
           email: item.email || '',
           phone: item.phone || '',
+          bio: item.bio || '',
           verified: Boolean(item.verified),
           created_at: item.created_at || new Date().toISOString(),
           updated_at: item.updated_at || new Date().toISOString(),
+          // Add fields required by the UI components
+          specialties: item.specialties || [],
+          rating: item.average_rating || 0,
+          consultations: item.reviews_count || 0,
+          price: 0,
+          waitTime: "Available",
+          imageUrl: item.profile_picture || '',
+          online: false,
+          pricing: {},
         }),
         [] // Empty array fallback
       );
@@ -88,13 +122,20 @@ export const useExpertsData = () => {
             reviews_count: 0,
             profile_picture: item.profile_picture || null,
             email: item.email || '',
-            // Add other required fields
-            pricing: {},
             bio: item.bio || '',
             phone: item.phone || '',
             verified: false,
             created_at: item.created_at,
             updated_at: item.updated_at,
+            // Add fields required by the UI components
+            specialties: [],
+            rating: 0,
+            consultations: 0,
+            price: 0,
+            waitTime: "Available",
+            imageUrl: item.profile_picture || '',
+            online: false,
+            pricing: {},
           }),
           []
         )[0];
@@ -119,7 +160,7 @@ export const useExpertsData = () => {
       const { error } = await supabase
         .from('experts')
         .update(expertData as any)
-        .eq('id', id as any);
+        .eq('id', dbTypeConverter<string>(id));
       
       if (error) throw error;
       
@@ -144,7 +185,7 @@ export const useExpertsData = () => {
       const { error } = await supabase
         .from('experts')
         .delete()
-        .eq('id', id as any);
+        .eq('id', dbTypeConverter<string>(id));
       
       if (error) throw error;
       
@@ -168,5 +209,6 @@ export const useExpertsData = () => {
     addExpert,
     updateExpert,
     deleteExpert,
+    setExperts, // Add this to resolve TS2339 in useAdminContent.ts
   };
 };

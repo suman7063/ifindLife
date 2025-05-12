@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
-import { Expert } from '@/components/admin/experts/types';
+import { Expert } from '@/components/admin/hooks/useExpertsData';
 import { useExpertsData } from './useExpertsData';
 import { useServicesData, ServiceCategory } from './useServicesData';
 import { useTestimonialsData, Testimonial } from './testimonials';
@@ -70,33 +70,25 @@ export const useAdminContent = (): AdminContent & {
     loadContent();
   }, [refreshTrigger]); // Add refreshTrigger to dependencies
 
-  // Use the smaller hooks with the update callback
+  // Use the experts data hook
+  const expertsHook = useExpertsData();
   const { 
     experts, 
-    setExperts, 
     loading: expertsLoading, 
-    error: expertsError 
-  } = useExpertsData(
-    initialData.experts, 
-    loading,
-    (newExperts) => updateContent({ experts: newExperts })
-  );
+    error: expertsError,
+    setExperts 
+  } = expertsHook;
   
+  // Use the services data hook
   const { 
     services, 
     setServices, 
     loading: servicesLoading, 
     error: servicesError 
-  } = useServicesData(
-    initialData.services,
-    (newServices) => updateContent({ services: newServices })
-  );
+  } = useServicesData();
   
-  const testimonialsHook = useTestimonialsData(
-    initialData.testimonials,
-    (newTestimonials) => updateContent({ testimonials: newTestimonials })
-  );
-  
+  // Use the testimonials data hook
+  const testimonialsHook = useTestimonialsData();
   const { 
     testimonials,
     error: testimonialsError
@@ -126,13 +118,12 @@ export const useAdminContent = (): AdminContent & {
   const setTestimonials = useCallback((newTestimonials: React.SetStateAction<Testimonial[]>) => {
     if (typeof newTestimonials === 'function') {
       // If it's a function, apply it to the current testimonials
-      const updatedTestimonials = newTestimonials(testimonials);
       testimonialsHook.fetchTestimonials(); // Refresh from the database
     } else {
       // If it's a direct value, use it
       testimonialsHook.fetchTestimonials(); // Refresh from the database
     }
-  }, [testimonialsHook, testimonials]);
+  }, [testimonialsHook]);
 
   // Update overall loading state
   useEffect(() => {

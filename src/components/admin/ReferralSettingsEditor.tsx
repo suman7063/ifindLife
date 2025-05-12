@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { safeSingleRecord } from '@/utils/supabaseUtils';
@@ -219,7 +218,7 @@ const ReferralSettingsEditor: React.FC = () => {
       <CardContent>
         <div className="grid gap-6">
           <div className="flex items-center space-x-2 mb-4">
-            <Checkbox 
+            <Switch 
               id="active" 
               checked={settings.active} 
               onCheckedChange={handleActiveChange} 

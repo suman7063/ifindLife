@@ -66,13 +66,23 @@ export function safeSingleRecord<T, R>(
 
 /**
  * Type assertion to safely cast Supabase query result to a specific type
- * Adds "as any" intermediate step to prevent TypeScript errors
+ * Adds intermediate step to prevent TypeScript errors
  * 
  * @param data The Supabase query result data
  * @returns The type-asserted data
  */
 export function supabaseCast<T>(data: unknown): T {
   // This is a safe casting utility specifically for Supabase query results
-  // It helps bridge the gap between Supabase types and our application types
   return data as any as T;
+}
+
+/**
+ * Handles type conversion for database operations, especially for ID fields
+ * that may be strings or UUIDs
+ * 
+ * @param value The value to convert
+ * @returns The value cast to the appropriate type
+ */
+export function dbTypeConverter<T>(value: any): T {
+  return value as unknown as T;
 }
