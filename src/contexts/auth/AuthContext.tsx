@@ -99,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     actionLoading
-  } = useAuthActions(() => fetchUserData()); // Changed to a function that doesn't take parameters
+  } = useAuthActions(fetchUserData); // Fixed: Pass the function without calling it
   
   // Profile functions
   const {
@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     fetchProfile: fetchProfileFn,
     addFunds,
     updateWalletBalance
-  } = useProfileFunctions(user, session);
+  } = useProfileFunctions(user, session, fetchUserData, checkUserRole); // Fixed: Pass all required arguments
   
   // Expert interactions
   const {
