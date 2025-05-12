@@ -1,70 +1,78 @@
 
-import { Session, User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 
-// Define user roles
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 
-// Define user profile structure
+export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
+
 export interface UserProfile {
   id: string;
-  name?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  country?: string | null;
-  city?: string | null;
-  wallet_balance?: number | null;
-  profile_picture?: string | null;
-  currency?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  [key: string]: any; // Allow additional properties
-}
-
-// Define expert profile structure
-export interface ExpertProfile {
-  id: string | number;
-  auth_id?: string | null;
   name: string;
   email: string;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  specialization?: string | null;
-  experience?: string | null;
-  bio?: string | null;
-  certificate_urls?: string[] | null;
-  profile_picture?: string | null;
-  status: 'pending' | 'approved' | 'disapproved';
-  average_rating?: number | null;
-  reviews_count?: number | null;
-  selected_services?: number[] | null;
-  verified?: boolean | null;
-  created_at?: string | null;
-  [key: string]: any; // Allow additional properties
+  phone?: string;
+  country?: string;
+  city?: string;
+  avatar_url?: string;
+  currency?: string;
+  wallet_balance?: number;
+  referral_code?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Define authentication state
+export interface ExpertProfile {
+  id: number | string;
+  name: string;
+  email: string;
+  auth_id?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  bio?: string;
+  profile_picture?: string;
+  certificate_urls?: string[];
+  selected_services?: number[];
+  status?: 'pending' | 'approved' | 'disapproved';
+  created_at?: string;
+  updated_at?: string;
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
+}
+
 export interface AuthState {
-  isAuthenticated: boolean;
   isLoading: boolean;
+  isAuthenticated: boolean;
   user: User | null;
   session: Session | null;
+  authStatus: AuthStatus;
   userProfile: UserProfile | null;
+  profile: UserProfile | null; // Alias for backward compatibility
   expertProfile: ExpertProfile | null;
   role: UserRole;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
+  walletBalance: number;
 }
 
-// Define initial authentication state
 export const initialAuthState: AuthState = {
-  isAuthenticated: false,
   isLoading: true,
+  isAuthenticated: false,
   user: null,
   session: null,
+  authStatus: 'loading',
   userProfile: null,
+  profile: null,
   expertProfile: null,
   role: null,
   sessionType: 'none',
+  walletBalance: 0,
 };
+
+// Create a utility function to convert snake_case IDs to camelCase or vice versa
+export function normalizeId(id: string | number): string {
+  return String(id);
+}

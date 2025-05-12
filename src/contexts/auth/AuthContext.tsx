@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
@@ -12,7 +12,36 @@ import { useAuthSessionEffects } from './hooks/useAuthSessionEffects';
 import { useExpertInteractions } from './hooks/useExpertInteractions';
 
 // Import types
-import { AuthContextType, AuthStatus, UserProfile, UserRole } from './types';
+import { AuthState, UserProfile, UserRole, ExpertProfile } from './types';
+
+// Define AuthContextType interface
+export interface AuthContextType {
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  user: User | null;
+  session: Session | null;
+  authStatus: 'loading' | 'authenticated' | 'unauthenticated';
+  profile: UserProfile | null;
+  role: UserRole;
+  expertProfile: ExpertProfile | null;
+  walletBalance: number;
+  login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
+  loginWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  signup: (email: string, password: string, userData?: Partial<UserProfile>) => Promise<boolean>;
+  logout: () => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
+  updateEmail: (newEmail: string) => Promise<{ error: Error | null }>;
+  refreshSession: () => Promise<{ error: Error | null }>;
+  getUserDisplayName: () => string;
+  fetchProfile: () => Promise<UserProfile | null>;
+  addFunds: (amount: number) => Promise<{ error: Error | null }>;
+  updateWalletBalance: (newBalance: number) => Promise<{ error: Error | null }>;
+  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<{ error: Error | null }>;
+  fetchExpertProfile: () => Promise<ExpertProfile | null>;
+  registerAsExpert: (data: any) => Promise<{ error: Error | null }>;
+}
 
 // Default state values
 const initialAuthState = {
@@ -20,7 +49,7 @@ const initialAuthState = {
   isAuthenticated: false,
   user: null,
   session: null,
-  authStatus: 'loading' as AuthStatus,
+  authStatus: 'loading' as const,
   profile: null,
   role: null,
   expertProfile: null,
@@ -30,13 +59,13 @@ const initialAuthState = {
 // Context creation
 export const AuthContext = createContext<AuthContextType>({
   ...initialAuthState,
-  login: async () => ({ error: new Error('Not implemented') }),
+  login: async () => false,
   loginWithOtp: async () => ({ error: new Error('Not implemented') }),
-  signup: async () => ({ error: new Error('Not implemented') }),
+  signup: async () => false,
   logout: async () => ({ error: null }),
   resetPassword: async () => ({ error: new Error('Not implemented') }),
-  updateProfile: async () => ({ error: new Error('Not implemented') }),
-  updatePassword: async () => ({ error: new Error('Not implemented') }),
+  updateProfile: async () => false,
+  updatePassword: async () => false,
   updateEmail: async () => ({ error: new Error('Not implemented') }),
   refreshSession: async () => ({ error: new Error('Not implemented') }),
   getUserDisplayName: () => '',
@@ -49,7 +78,13 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // State from hooks
+  // Get auth state from hook
+  const {
+    authState,
+    setAuthState
+  } = useAuthState();
+  
+  // Extract state properties
   const {
     isLoading,
     isAuthenticated,
@@ -60,7 +95,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role,
     expertProfile,
     walletBalance,
-  } = useAuthState();
+  } = authState;
   
   // Initialize auth
   useAuthInitialization();
@@ -145,4 +180,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       {children}
     </AuthContext.Provider>
   );
+};
+
+// Export the hook for easy use
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

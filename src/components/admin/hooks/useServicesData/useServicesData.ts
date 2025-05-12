@@ -1,215 +1,211 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { mapDbServiceToServiceItem, mapDbServices, generateRandomId } from './mappers';
 import { ServiceCategory, ServiceItem, DbService } from './types';
-import { DEFAULT_CATEGORIES } from './constants';
-import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
+import { toast } from 'sonner';
+import { normalizeId, toNumberId } from '@/utils/supabaseUtils';
 
-export const useServicesData = (
-  initialServices: ServiceCategory[] = [],
-  updateCallback: (services: ServiceCategory[]) => void = () => {}
-) => {
-  const [services, setServices] = useState<ServiceCategory[]>(initialServices);
-  const [loading, setLoading] = useState(false);
+const useServicesData = () => {
+  const [services, setServices] = useState<ServiceCategory[]>([]);
+  const [flatServices, setFlatServices] = useState<DbService[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch services data from Supabase
+  // Fetch all services from the database
   const fetchServices = useCallback(async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
-      
-      console.log('Fetching services from Supabase...');
       
       const { data, error } = await supabase
         .from('services')
         .select('*')
-        .order('id');
+        .order('id', { ascending: true });
       
       if (error) {
-        throw error;
+        throw new Error(`Error fetching services: ${error.message}`);
       }
       
-      console.log(`Retrieved ${data?.length || 0} services from database`);
-      
-      if (data && data.length > 0) {
-        // Transform database services into our application format using the mapper
-        const transformedData = safeDataTransform(data, (service) => 
-          dbTypeConverter<DbService>(service)
-        );
-        
-        const serviceCategoriesData = mapDbServices(transformedData);
-        setServices(serviceCategoriesData);
-        updateCallback(serviceCategoriesData);
-        
-        console.log('Services data successfully processed');
-      } else {
-        console.log('No services found, using default data');
-        setServices(DEFAULT_CATEGORIES);
-        updateCallback(DEFAULT_CATEGORIES);
+      if (!data) {
+        throw new Error('No services data returned');
       }
-    } catch (err) {
-      console.error('Error fetching services:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error fetching services');
       
-      // Fallback to defaults if error
-      setServices(DEFAULT_CATEGORIES);
-      updateCallback(DEFAULT_CATEGORIES);
+      // Convert data to our format with normalized IDs
+      const formattedServices = data.map(service => ({
+        ...service,
+        id: normalizeId(service.id) // Ensure ID is a string for consistency
+      }));
+
+      setFlatServices(formattedServices);
+      
+      // Group services by categories (for UI display)
+      const categorizedServices = groupServicesByCategory(formattedServices);
+      setServices(categorizedServices);
+      
+      return { services: categorizedServices, flatServices: formattedServices };
+    } catch (err: any) {
+      console.error('Error in fetchServices:', err);
+      setError(err.message);
+      toast.error(`Failed to load services: ${err.message}`);
+      return { services: [], flatServices: [] };
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
-  }, [updateCallback]);
+  }, []);
+
+  // Group services into categories
+  const groupServicesByCategory = (services: DbService[]): ServiceCategory[] => {
+    // Example categorization - customize based on your needs
+    const mentalHealthCategory: ServiceCategory = {
+      id: 'mental_health',
+      name: 'Mental Health',
+      items: []
+    };
+    
+    const wellnessCategory: ServiceCategory = {
+      id: 'wellness',
+      name: 'Wellness',
+      items: []
+    };
+    
+    const otherCategory: ServiceCategory = {
+      id: 'other',
+      name: 'Other Services',
+      items: []
+    };
+    
+    services.forEach(service => {
+      const serviceItem: ServiceItem = {
+        id: normalizeId(service.id),
+        title: service.name,
+        description: service.description || '',
+        href: `/services/${service.id}`,
+        icon: 'sparkles',
+        color: 'bg-indigo-500'
+      };
+      
+      // Simple categorization logic - replace with your own
+      const name = service.name.toLowerCase();
+      
+      if (name.includes('therapy') || name.includes('counseling')) {
+        mentalHealthCategory.items.push(serviceItem);
+      } else if (name.includes('wellness') || name.includes('yoga')) {
+        wellnessCategory.items.push(serviceItem);
+      } else {
+        otherCategory.items.push(serviceItem);
+      }
+    });
+    
+    // Only return categories with items
+    return [mentalHealthCategory, wellnessCategory, otherCategory]
+      .filter(category => category.items.length > 0);
+  };
   
   // Add a new service
-  const addService = async (serviceData: Partial<DbService>): Promise<boolean> => {
+  const addService = useCallback(async (service: Omit<DbService, 'id'>) => {
     try {
-      setLoading(true);
-      
-      // Insert new service into database
       const { data, error } = await supabase
         .from('services')
         .insert({
-          name: serviceData.name || 'New Service',
-          description: serviceData.description || '',
-          rate_usd: serviceData.rate_usd || 0,
-          rate_inr: serviceData.rate_inr || 0
+          name: service.name,
+          description: service.description,
+          rate_usd: service.rate_usd,
+          rate_inr: service.rate_inr
         })
         .select();
       
-      if (error) throw error;
-      
-      if (data && data.length > 0) {
-        // Get the new service in our format
-        const newService = mapDbServiceToServiceItem(dbTypeConverter<DbService>(data[0]));
-        
-        // Find which category to add it to or create new category
-        let foundCategory = false;
-        const updatedServices = services.map(category => {
-          if (category.name === 'Other Services') {
-            foundCategory = true;
-            return {
-              ...category,
-              items: [...category.items, newService]
-            };
-          }
-          return category;
-        });
-        
-        // If no "Other Services" category exists, create one
-        if (!foundCategory) {
-          updatedServices.push({
-            name: 'Other Services',
-            id: 'other-services',
-            items: [newService]
-          });
-        }
-        
-        setServices(updatedServices);
-        updateCallback(updatedServices);
-        toast.success('Service created successfully');
-        return true;
+      if (error) {
+        throw new Error(`Error adding service: ${error.message}`);
       }
       
-      return false;
-    } catch (err) {
-      console.error('Error adding service:', err);
-      toast.error('Failed to add service');
-      return false;
-    } finally {
-      setLoading(false);
+      // Refresh services to get the updated list
+      await fetchServices();
+      
+      toast.success('Service added successfully');
+      return { success: true, data };
+    } catch (err: any) {
+      console.error('Error in addService:', err);
+      toast.error(`Failed to add service: ${err.message}`);
+      return { success: false, error: err.message };
     }
-  };
+  }, [fetchServices]);
   
   // Update an existing service
-  const updateService = async (serviceId: string, updatedData: Partial<DbService>): Promise<boolean> => {
+  const updateService = useCallback(async (service: DbService) => {
     try {
-      setLoading(true);
+      // Ensure ID is properly handled as a number for database operations
+      const serviceId = toNumberId(service.id);
       
-      // Update service in database
+      if (serviceId === null) {
+        throw new Error('Invalid service ID');
+      }
+      
       const { error } = await supabase
         .from('services')
         .update({
-          name: updatedData.name,
-          description: updatedData.description,
-          rate_usd: updatedData.rate_usd,
-          rate_inr: updatedData.rate_inr
+          name: service.name,
+          description: service.description,
+          rate_usd: service.rate_usd,
+          rate_inr: service.rate_inr
         })
         .eq('id', serviceId);
       
-      if (error) throw error;
+      if (error) {
+        throw new Error(`Error updating service: ${error.message}`);
+      }
       
-      // Update service in local state
-      const updatedServices = services.map(category => ({
-        ...category,
-        items: category.items.map(item => 
-          item.id === serviceId
-            ? {
-                ...item,
-                title: updatedData.name || item.title,
-                description: updatedData.description || item.description
-              }
-            : item
-        )
-      }));
+      // Refresh services to get the updated list
+      await fetchServices();
       
-      setServices(updatedServices);
-      updateCallback(updatedServices);
       toast.success('Service updated successfully');
-      return true;
-    } catch (err) {
-      console.error('Error updating service:', err);
-      toast.error('Failed to update service');
-      return false;
-    } finally {
-      setLoading(false);
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error in updateService:', err);
+      toast.error(`Failed to update service: ${err.message}`);
+      return { success: false, error: err.message };
     }
-  };
+  }, [fetchServices]);
   
   // Delete a service
-  const deleteService = async (serviceId: string): Promise<boolean> => {
+  const deleteService = useCallback(async (serviceId: string | number) => {
     try {
-      setLoading(true);
+      // Ensure ID is properly handled as a number for database operations
+      const id = toNumberId(serviceId);
       
-      // Delete service from database
+      if (id === null) {
+        throw new Error('Invalid service ID');
+      }
+      
       const { error } = await supabase
         .from('services')
         .delete()
-        .eq('id', serviceId);
+        .eq('id', id);
       
-      if (error) throw error;
+      if (error) {
+        throw new Error(`Error deleting service: ${error.message}`);
+      }
       
-      // Remove service from local state
-      const updatedServices = services.map(category => ({
-        ...category,
-        items: category.items.filter(item => item.id !== serviceId)
-      })).filter(category => category.items.length > 0);
+      // Refresh services to get the updated list
+      await fetchServices();
       
-      setServices(updatedServices);
-      updateCallback(updatedServices);
       toast.success('Service deleted successfully');
-      return true;
-    } catch (err) {
-      console.error('Error deleting service:', err);
-      toast.error('Failed to delete service');
-      return false;
-    } finally {
-      setLoading(false);
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error in deleteService:', err);
+      toast.error(`Failed to delete service: ${err.message}`);
+      return { success: false, error: err.message };
     }
-  };
+  }, [fetchServices]);
 
-  // Load services data on component mount if needed
+  // Load services on component mount
   useEffect(() => {
-    if (initialServices.length === 0) {
-      fetchServices();
-    }
-  }, [initialServices, fetchServices]);
+    fetchServices();
+  }, [fetchServices]);
 
   return {
     services,
-    setServices,
-    loading,
+    flatServices,
+    isLoading,
     error,
     fetchServices,
     addService,
@@ -217,3 +213,5 @@ export const useServicesData = (
     deleteService
   };
 };
+
+export default useServicesData;

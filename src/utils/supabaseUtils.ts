@@ -1,72 +1,65 @@
 
 /**
- * Utilities for working with Supabase data and handling type conversions
+ * Utility functions for handling Supabase data
  */
 
 /**
- * Safely transform data from Supabase query results to expected types
- * @param data The data returned from a Supabase query
- * @param transformer A function to transform each item in the data array
- * @returns An array of transformed items or an empty array if data is null/undefined
+ * Normalizes an ID to a string consistently
+ * This helps with comparing IDs that might be numbers or strings
  */
-export function safeDataTransform<T, R>(data: T[] | null | undefined, transformer: (item: T) => R): R[] {
-  if (!data || !Array.isArray(data)) {
-    return [];
+export function normalizeId(id: string | number | null | undefined): string {
+  if (id === null || id === undefined) {
+    return '';
   }
-  
-  return data.map(item => transformer(item));
-}
-
-/**
- * Safely handle a single record from Supabase query results
- * @param data The data returned from a Supabase query
- * @param transformer A function to transform the item
- * @returns The transformed item or null if data is null/undefined
- */
-export function safeSingleRecord<T, R>(data: T | null | undefined, transformer: (item: T) => R): R | null {
-  if (!data) {
-    return null;
-  }
-  
-  return transformer(data);
-}
-
-/**
- * Convert a Supabase database record to a specific type
- * This uses type assertion to bypass TypeScript errors from Supabase query results
- * @param record The database record from Supabase
- * @returns The same record but with the specific type
- */
-export function dbTypeConverter<T extends Record<string, any>>(record: any): T {
-  return record as unknown as T;
-}
-
-/**
- * Ensure ID values are consistent strings
- * Some database operations might return IDs as numbers or strings
- * @param id The ID value to normalize
- * @returns The ID as a string
- */
-export function normalizeId(id: string | number): string {
   return String(id);
 }
 
 /**
- * Creates a lightweight type-safe Supabase response handler
- * @param data The data returned from a Supabase query
- * @param error The error returned from a Supabase query
- * @param fallback Optional fallback value if data is null/undefined
- * @returns The data or fallback value
+ * Safely converts an ID that might be a string to a number
+ * Returns null if conversion is not possible
  */
-export function handleSupabaseResponse<T>(
-  data: T | null, 
-  error: any, 
-  fallback: T | null = null
-): T | null {
-  if (error) {
-    console.error('Supabase error:', error);
-    return fallback;
+export function toNumberId(id: string | number | null | undefined): number | null {
+  if (id === null || id === undefined || id === '') {
+    return null;
   }
   
-  return data || fallback;
+  const num = Number(id);
+  return isNaN(num) ? null : num;
+}
+
+/**
+ * Map database object keys from snake_case to camelCase
+ */
+export function snakeToCamel(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  
+  Object.keys(obj).forEach(key => {
+    // Convert key from snake_case to camelCase
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    result[camelKey] = obj[key];
+  });
+  
+  return result;
+}
+
+/**
+ * Map database object keys from camelCase to snake_case
+ */
+export function camelToSnake(obj: Record<string, any>): Record<string, any> {
+  const result: Record<string, any> = {};
+  
+  Object.keys(obj).forEach(key => {
+    // Convert key from camelCase to snake_case
+    const snakeKey = key.replace(/([A-Z])/g, (_, letter) => `_${letter.toLowerCase()}`);
+    result[snakeKey] = obj[key];
+  });
+  
+  return result;
+}
+
+/**
+ * Merges two objects, with the second object's properties taking precedence
+ */
+export function mergeObjects<T>(obj1: Partial<T>, obj2: Partial<T>): T {
+  return { ...obj1, ...obj2 } as T;
 }
