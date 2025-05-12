@@ -23,3 +23,14 @@ export interface ServiceSettings {
   defaultRate: number;
   categories: ServiceCategory[];
 }
+
+// Add the missing DbService interface
+export interface DbService {
+  id: string;
+  title: string;
+  description: string;
+  category_id: string;
+  icon: string;
+  color: string;
+  href: string;
+}

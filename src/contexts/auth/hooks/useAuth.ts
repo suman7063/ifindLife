@@ -1,6 +1,6 @@
 
 import { useContext } from 'react';
-import { AuthContext } from '../provider/AuthContextProvider';
+import { AuthContext } from '../AuthContext';
 import { AuthContextType } from '../types';
 
 // Export the hook for easy use

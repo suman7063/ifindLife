@@ -1,9 +1,7 @@
 
 import React, { createContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-
-// Import types
-import { AuthContextType, AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus } from '../types';
+import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus, AuthContextType } from '../types';
 
 // Import hooks
 import { useAuthState } from '../hooks/useAuthState';
@@ -19,8 +17,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Get auth state from hook
   const {
     authState,
-    fetchUserData,
-    checkUserRole,
+    fetchUserData
   } = useAuthState();
   
   // Extract state properties
@@ -44,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     actionLoading
-  } = useAuthActions(() => fetchUserData);
+  } = useAuthActions(fetchUserData);
   
   // Profile functions with correct param types
   const {

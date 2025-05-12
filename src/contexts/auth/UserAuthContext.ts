@@ -27,3 +27,15 @@ export interface UserAuthContextType {
 }
 
 export const UserAuthContext = React.createContext<UserAuthContextType>({} as UserAuthContextType);
+
+// Hook for accessing the context
+export const useUserAuth = () => {
+  const context = React.useContext(UserAuthContext);
+  if (!context) {
+    throw new Error('useUserAuth must be used within a UserAuthProvider');
+  }
+  return context;
+};
+
+// Re-export provider
+export { UserAuthProvider } from './UserAuthProvider';
