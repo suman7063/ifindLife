@@ -1,6 +1,6 @@
 
 import React, { lazy, Suspense, useEffect } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
 import { useAuth } from './contexts/auth/AuthContext';
 import ProtectedRoute from './components/routing/ProtectedRoute';
@@ -36,6 +36,7 @@ const NewExpertDashboard = lazy(() => import('./pages/NewExpertDashboard'));
 
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, role, isLoading } = useAuth();
+  const location = useLocation();
   
   useEffect(() => {
     // Only log in development environment 
@@ -44,6 +45,11 @@ const AppRoutes: React.FC = () => {
       console.log('Auth state:', { isAuthenticated, role, isLoading });
     }
   }, [isAuthenticated, role, isLoading]);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <Suspense fallback={<LoadingScreen />}>

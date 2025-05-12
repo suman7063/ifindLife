@@ -55,6 +55,7 @@ const ServicesSection = () => {
 
   const handleProgramClick = (href: string) => {
     navigate(href);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
