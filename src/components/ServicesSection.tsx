@@ -16,12 +16,12 @@ const ServicesSection = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Updated featured programs to match the screenshot
+  // Updated featured programs with new descriptions and renamed "Emotional Resilience" to "Resilience Building"
   const featuredPrograms = [
     {
       id: 1,
       title: "QuickEase Programs",
-      description: "Short-term solutions for immediate stress and anxiety relief",
+      description: "Quick solutions for Immediate stress and anxiety relief",
       icon: <Brain className="h-12 w-12 text-ifind-aqua" />,
       href: "/services/quick-ease",
       accentColor: "border-ifind-aqua",
@@ -29,21 +29,21 @@ const ServicesSection = () => {
     },
     {
       id: 2,
-      title: "Emotional Resilience",
-      description: "Build psychological strength to handle life's challenges",
+      title: "Resilience Building",
+      description: "Build Mental & Emotional strength to handle life's challenges",
       icon: <MessageCircle className="h-12 w-12 text-ifind-purple" />,
-      href: "/services/emotional-resilience",
+      href: "/services/resilience-building",
       accentColor: "border-ifind-purple",
       iconBgColor: "bg-ifind-purple/10"
     },
     {
       id: 3,
       title: "Super Human Life",
-      description: "Achieve your highest potential through mental optimization",
-      icon: <HeartPulse className="h-12 w-12 text-green-500" />,
+      description: "Unleash your true potential to live a life beyond traps and matrix",
+      icon: <HeartPulse className="h-12 w-12 text-ifind-teal" />,
       href: "/services/super-human",
-      accentColor: "border-green-500",
-      iconBgColor: "bg-green-500/10"
+      accentColor: "border-ifind-teal",
+      iconBgColor: "bg-ifind-teal/10"
     }
   ];
 
@@ -65,7 +65,7 @@ const ServicesSection = () => {
           IFL provides specialized programs to support your mental health journey
         </p>
 
-        {/* Updated Program Cards to match the screenshot */}
+        {/* Updated Program Cards with new descriptions and colors */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {featuredPrograms.map((program) => (
             <div
