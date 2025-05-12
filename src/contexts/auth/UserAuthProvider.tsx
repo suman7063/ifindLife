@@ -3,6 +3,7 @@ import React from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
 import { NewReview, NewReport } from '@/types/supabase/tables';
+import { ensureStringIdArray } from '@/utils/idConverters';
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
@@ -70,8 +71,14 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
   
   // Create a compatible context value that matches the UserAuthContextType
+  // Ensure we convert favorite_experts to string[] if it's number[]
+  const currentUser = auth.profile ? {
+    ...auth.profile,
+    favorite_experts: auth.profile.favorite_experts ? ensureStringIdArray(auth.profile.favorite_experts) : []
+  } : null;
+  
   const userAuthValue = {
-    currentUser: auth.profile,
+    currentUser,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
     signup: auth.signup || (async () => false),

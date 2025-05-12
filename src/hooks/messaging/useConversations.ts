@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { MessagingUser, UseConversationsReturn } from './types';
 import { messagingRepository } from './messagingApi';
-import { ensureStringId } from '@/utils/supabaseUtils';
+import { ensureStringId } from '@/utils/idConverters';
 
 export function useConversations(currentUser: MessagingUser): UseConversationsReturn {
   const [conversations, setConversations] = useState([]);

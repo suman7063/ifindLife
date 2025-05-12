@@ -20,11 +20,11 @@ export interface ServiceCategory {
   id: string;
   name: string;
   items: ServiceItem[];
-  title?: string;
+  title: string;
   description?: string;
   href?: string;
-  icon?: string;
-  color?: string;
+  icon: string;
+  color: string;
 }
 
 /**

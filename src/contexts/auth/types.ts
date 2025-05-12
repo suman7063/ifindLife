@@ -18,8 +18,8 @@ export interface UserProfile {
   referral_code?: string;
   created_at?: string;
   updated_at?: string;
-  // Add missing fields for profileFetcher.ts
-  favorite_experts?: number[];
+  // Changed favorite_experts to string[] for consistency with other interfaces
+  favorite_experts?: string[];
   enrolled_courses?: any[];
   reviews?: any[];
   reports?: any[];

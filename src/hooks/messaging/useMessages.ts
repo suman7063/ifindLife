@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { Message } from '@/types/appointments';
 import { MessagingUser, UseMessagesReturn } from './types';
 import { messagingRepository } from './messagingApi';
-import { ensureStringId } from '@/utils/supabaseUtils';
+import { ensureStringId } from '@/utils/idConverters';
 
 export function useMessages(currentUser: MessagingUser): UseMessagesReturn {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -22,7 +22,7 @@ export function useMessages(currentUser: MessagingUser): UseMessagesReturn {
       
       const messages = await messagingRepository.fetchMessages(
         ensureStringId(currentUser.id), 
-        partnerId
+        ensureStringId(partnerId)
       );
       setMessages(messages);
       return messages;
