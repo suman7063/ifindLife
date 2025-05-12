@@ -23,10 +23,10 @@ const ServicesSection = () => {
       id: 1,
       title: "Heart2Heart Listening Sessions",
       description: "A unique space where you can express yourself freely while being deeply heard without judgment",
-      icon: <MessageCircle className="h-12 w-12 text-ifind-aqua" />,
+      icon: <MessageCircle className="h-12 w-12 text-ifind-teal" />, // Changed from aqua to teal
       href: "/services/mindful-listening",
-      accentColor: "border-ifind-aqua",
-      iconBgColor: "bg-ifind-aqua/10"
+      accentColor: "border-ifind-teal", // Changed from aqua to teal
+      iconBgColor: "bg-ifind-teal/10" // Changed from aqua to teal
     },
     {
       id: 2,
@@ -41,10 +41,10 @@ const ServicesSection = () => {
       id: 3,
       title: "Guided Meditations",
       description: "Expertly led sessions to reduce stress, increase mindfulness, and cultivate inner peace",
-      icon: <Brain className="h-12 w-12 text-gray-500" />,
+      icon: <Brain className="h-12 w-12 text-ifind-aqua" />, // Changed from gray-500 to ifind-aqua
       href: "/services/guided-meditations",
-      accentColor: "border-gray-400",
-      iconBgColor: "bg-gray-200/50"
+      accentColor: "border-ifind-aqua", // Changed from gray-400 to ifind-aqua
+      iconBgColor: "bg-ifind-aqua/10" // Changed from gray-200/50 to ifind-aqua/10
     }
   ];
 

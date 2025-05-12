@@ -28,7 +28,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/mindful-listening" 
+                to="/services#mindful-listening" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Heart2Heart Listening Sessions
@@ -38,7 +38,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/therapy-sessions" 
+                to="/services#therapy-sessions" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Therapy Sessions
@@ -48,7 +48,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/guided-meditations" 
+                to="/services#guided-meditations" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Guided Meditations
@@ -58,7 +58,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/offline-retreats" 
+                to="/services#offline-retreats" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Offline Retreats
@@ -68,7 +68,7 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/life-coaching" 
+                to="/services#life-coaching" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Life Coaching

@@ -9,10 +9,10 @@ export const servicesData = [
     title: "Heart2Heart Listening Sessions",
     description: "A unique space where you can express yourself freely while being deeply heard without judgment or interruption.",
     image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
-    color: "bg-ifind-aqua",
-    gradientColor: "from-ifind-aqua/20 to-white",
-    textColor: "text-ifind-aqua",
-    buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90",
+    color: "bg-ifind-teal", // Changed from aqua to teal
+    gradientColor: "from-ifind-teal/20 to-white", // Changed from aqua to teal
+    textColor: "text-ifind-teal", // Changed from aqua to teal
+    buttonColor: "bg-ifind-teal hover:bg-ifind-teal/90", // Changed from aqua to teal
     icon: React.createElement(MessageCircle, { className: "h-8 w-8 text-white" }),
     detailedDescription: "Our Heart2Heart Listening Sessions provide a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy, the focus is entirely on giving you space to express yourself without interruption or advice-giving. Our trained listeners create a safe container for you to process thoughts, feelings, and experiences aloud, which can lead to profound insights and emotional release. This practice can be particularly helpful for clarifying thoughts, processing experiences, or simply feeling acknowledged and validated.",
     benefits: [
@@ -51,10 +51,10 @@ export const servicesData = [
     title: "Guided Meditations",
     description: "Expertly led meditation sessions to reduce stress, increase mindfulness, and cultivate inner peace and mental clarity.",
     image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    color: "bg-gray-400",
-    gradientColor: "from-gray-300/20 to-white",
-    textColor: "text-gray-600",
-    buttonColor: "bg-gray-500 hover:bg-gray-600",
+    color: "bg-ifind-aqua", // Changed from gray-400 to aqua
+    gradientColor: "from-ifind-aqua/20 to-white", // Changed from gray-300 to aqua
+    textColor: "text-ifind-aqua", // Changed from gray-600 to aqua
+    buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90", // Changed from gray-500 to aqua
     icon: React.createElement(Brain, { className: "h-8 w-8 text-white" }),
     detailedDescription: "Our guided meditation sessions help you cultivate mindfulness, reduce stress, and enhance overall well-being. Led by experienced meditation instructors, these sessions combine breathing techniques, visualization, and mindfulness practices to quiet the mind and bring awareness to the present moment. Perfect for both beginners and experienced practitioners, our guided meditations can be customized to address specific concerns such as stress, sleep issues, or emotional regulation.",
     benefits: [
