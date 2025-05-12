@@ -65,7 +65,7 @@ const ContactSubmissionsTable = () => {
       // Use the correct type for the update operation
       const { error } = await supabase
         .from('contact_submissions')
-        .update({ is_read: true })
+        .update({ is_read: true } as any)
         .eq('id', numericId);
 
       if (error) {

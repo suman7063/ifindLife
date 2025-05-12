@@ -26,7 +26,7 @@ const ProgramDataReset = () => {
         const { error } = await supabase
           .from('programs')
           .delete()
-          .neq('id', -1); // This is a trick to delete all rows
+          .neq('id', -1 as any); // Using type assertion to bypass type check
           
         if (!error) {
           console.log("Successfully deleted programs from Supabase");

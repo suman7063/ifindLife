@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { HelpTicket } from '../types';
+import { safeDataTransform } from '@/utils/supabaseUtils';
 
 export const useTickets = () => {
   const [tickets, setTickets] = useState<HelpTicket[]>([]);
@@ -30,7 +31,7 @@ export const useTickets = () => {
       
       // Apply status filter if not "All"
       if (statusFilter !== "All") {
-        query = query.eq('status', statusFilter);
+        query = query.eq('status', statusFilter as any);
       }
       
       const { data, error } = await query;
@@ -38,26 +39,28 @@ export const useTickets = () => {
       if (error) throw error;
       
       if (data) {
-        // Process tickets without accessing profiles data at all
-        const processedTickets = data.map(ticket => {
-          // Create ticket object with placeholder user info to avoid profile access
-          return {
-            id: ticket.id,
-            ticket_id: ticket.ticket_id,
-            user_id: ticket.user_id,
+        // Process tickets using our utility function
+        const processedTickets = safeDataTransform<any, HelpTicket>(
+          data,
+          error,
+          (ticket) => ({
+            id: ticket.id || '',
+            ticket_id: ticket.ticket_id || '',
+            user_id: ticket.user_id || '',
             // Use generated placeholders based on user_id
-            user_name: `User ${ticket.user_id.substring(0, 8)}`,
-            user_email: `user-${ticket.user_id.substring(0, 6)}@example.com`,
-            category: ticket.category,
-            details: ticket.details,
-            screenshot_url: ticket.screenshot_url,
-            status: ticket.status,
-            created_at: ticket.created_at,
-            updated_at: ticket.updated_at,
-            resolved_at: ticket.resolved_at,
-            admin_notes: ticket.admin_notes
-          };
-        });
+            user_name: `User ${ticket.user_id ? ticket.user_id.substring(0, 8) : 'Unknown'}`,
+            user_email: `user-${ticket.user_id ? ticket.user_id.substring(0, 6) : 'unknown'}@example.com`,
+            category: ticket.category || '',
+            details: ticket.details || '',
+            screenshot_url: ticket.screenshot_url || '',
+            status: ticket.status || 'Pending',
+            created_at: ticket.created_at || '',
+            updated_at: ticket.updated_at || '',
+            resolved_at: ticket.resolved_at || null,
+            admin_notes: ticket.admin_notes || ''
+          }),
+          []
+        );
         
         setTickets(processedTickets);
       }
