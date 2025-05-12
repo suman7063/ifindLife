@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Phone, MessageCircle, Calendar, FileText } from 'lucide-react';
+import { Heart, Search, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const CTASection = () => {
@@ -16,20 +16,20 @@ const CTASection = () => {
           <div className="flex flex-wrap justify-center gap-4">
             <Link to="/mental-health-assessment">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
-                <FileText className="mr-2 h-5 w-5" />
-                Take Free Assessment
+                <Heart className="mr-2 h-5 w-5" />
+                Speak your heart
               </Button>
             </Link>
             <Link to="/experts">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
-                <Phone className="mr-2 h-5 w-5" />
-                Talk to a Therapist
+                <Search className="mr-2 h-5 w-5" />
+                Get guidance
               </Button>
             </Link>
             <Link to="/services">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
-                <Calendar className="mr-2 h-5 w-5" />
-                Book an Appointment
+                <FileText className="mr-2 h-5 w-5" />
+                Take a test
               </Button>
             </Link>
           </div>
