@@ -36,8 +36,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   } = authState;
   
   // Create a wrapper function that matches the expected signature (no parameters)
-  // but internally calls fetchUserData() with no arguments
+  // but internally calls fetchUserData() with the user ID if available, or without arguments if not
   const wrappedFetchUserData = async (): Promise<void> => {
+    if (user?.id) {
+      return fetchUserData(user.id);
+    }
     return fetchUserData();
   };
   
