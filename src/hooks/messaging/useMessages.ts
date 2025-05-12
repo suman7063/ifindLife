@@ -1,8 +1,9 @@
+
 import { useState, useCallback } from 'react';
 import { Message } from '@/types/appointments';
 import { MessagingUser, UseMessagesReturn } from './types';
 import { messagingRepository } from './messagingApi';
-import { normalizeId } from '@/utils/supabaseUtils';
+import { ensureStringId } from '@/utils/supabaseUtils';
 
 export function useMessages(currentUser: MessagingUser): UseMessagesReturn {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -19,7 +20,10 @@ export function useMessages(currentUser: MessagingUser): UseMessagesReturn {
       setMessagesLoading(true);
       setError(null);
       
-      const messages = await messagingRepository.fetchMessages(currentUser.id, partnerId);
+      const messages = await messagingRepository.fetchMessages(
+        ensureStringId(currentUser.id), 
+        partnerId
+      );
       setMessages(messages);
       return messages;
     } catch (error: any) {

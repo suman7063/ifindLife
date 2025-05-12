@@ -20,6 +20,11 @@ export interface ServiceCategory {
   id: string;
   name: string;
   items: ServiceItem[];
+  title?: string;
+  description?: string;
+  href?: string;
+  icon?: string;
+  color?: string;
 }
 
 /**
@@ -32,6 +37,8 @@ export interface DbService {
   description?: string;
   rate_usd?: number;
   rate_inr?: number;
+  icon?: string;
+  color?: string;
 }
 
 /**

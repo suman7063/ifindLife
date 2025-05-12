@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ServiceCategory } from './types';
+import { ServiceCategory, ServiceItem } from './types';
 import { toast } from 'sonner';
 import { categoryData as defaultServiceData } from '@/data/initialAdminData';
 import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
@@ -68,12 +68,14 @@ export function useServicesData(
           
           if (data && data.length > 0) {
             // Map Supabase data to the expected format, providing defaults for missing fields
-            const formattedServices = safeDataTransform(data, (service) => ({
-              // Use string icons (emoji) instead of React Elements
-              icon: service.icon || DEFAULT_ICON, // Default icon if none in database
+            const formattedServices: ServiceCategory[] = data.map((service: any) => ({
+              id: service.id.toString(),
+              name: service.name,
+              items: [], // Required property
               title: service.name,
               description: service.description || '',
               href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
+              icon: service.icon || DEFAULT_ICON, // Default icon if none in database
               color: service.color || DEFAULT_COLOR // Default color if none in database
             }));
             

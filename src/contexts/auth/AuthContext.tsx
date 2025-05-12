@@ -11,7 +11,7 @@ import { useExpertInteractions } from './hooks/useExpertInteractions';
 // Import types
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus } from './types';
 import { supabase } from '@/lib/supabase';
-import { normalizeId } from '@/utils/supabaseUtils';
+import { normalizeId, ensureStringId } from '@/utils/supabaseUtils';
 
 // Define AuthContextType interface
 export interface AuthContextType {
@@ -177,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Ensure ID is string
       const updatedData = { ...updates };
       if (updatedData.id !== undefined) {
-        updatedData.id = String(updatedData.id);
+        updatedData.id = ensureStringId(updatedData.id);
       }
       
       const { error } = await supabase
