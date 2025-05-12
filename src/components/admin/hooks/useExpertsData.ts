@@ -121,6 +121,35 @@ export function useExpertsData(
         console.log('Fetching experts from Supabase...');
         
         try {
+          // First try to fetch from expert_accounts table which has expert status info
+          const { data: expertAccountsData, error: expertAccountsError } = await supabase
+            .from('expert_accounts')
+            .select('*');
+          
+          console.log('Supabase expert_accounts response:', { count: expertAccountsData?.length, error: expertAccountsError });
+            
+          if (!expertAccountsError && expertAccountsData && expertAccountsData.length > 0) {
+            // Transform experts data to match our expected format using our utility
+            const formattedExperts = safeDataTransform(expertAccountsData, (expert) => 
+              mapDbExpertToExpert(dbTypeConverter(expert))
+            );
+            
+            console.log('Formatted experts from expert_accounts:', formattedExperts.length);
+            setExperts(formattedExperts);
+            updateCallback(formattedExperts);
+            
+            // Also update localStorage if needed
+            if (parsedContent) {
+              parsedContent.experts = formattedExperts;
+              localStorage.setItem('ifindlife-content', JSON.stringify(parsedContent));
+            }
+            
+            setFetchAttempts(0); // Reset on success
+            toast.success(`Loaded ${formattedExperts.length} experts`);
+            return;
+          }
+          
+          // If expert_accounts failed or is empty, try the experts table
           const { data: expertsData, error: expertsError } = await supabase
             .from('experts')
             .select('*');
@@ -130,7 +159,7 @@ export function useExpertsData(
           if (expertsError) {
             // Check if the error is related to infinite recursion or RLS policies
             if (expertsError.code === '42P17' || expertsError.message?.includes('recursion') || expertsError.message?.includes('policy')) {
-              console.warn('Database policy error detected for experts table, trying fallback');
+              console.warn('Database policy error detected for experts table, using fallback');
               throw new Error(`Database policy error: ${expertsError.message}`);
             }
             
@@ -157,14 +186,30 @@ export function useExpertsData(
             setFetchAttempts(0); // Reset on success
             toast.success(`Loaded ${formattedExperts.length} experts`);
           } else {
-            console.warn('No expert data found in the database');
-            // Check for expert_accounts table as a fallback
-            checkExpertAccounts();
+            console.warn('No expert data found in the database, using default data');
+            if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
+              setExperts(DEFAULT_EXPERTS);
+              updateCallback(DEFAULT_EXPERTS);
+              toast.error('Could not load experts. Using default data.');
+            }
           }
         } catch (supabaseError) {
           console.error('Supabase experts query error:', supabaseError);
-          // Try alternate experts source
-          checkExpertAccounts();
+          if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
+            console.warn(`Max fetch attempts (${MAX_FETCH_ATTEMPTS}) reached, using default data`);
+            setError('Failed to load experts data after multiple attempts');
+            setExperts(DEFAULT_EXPERTS);
+            updateCallback(DEFAULT_EXPERTS);
+            toast.error('Error loading experts. Using default settings.');
+          } else {
+            // Schedule retry
+            const retryDelay = Math.min(1000 * Math.pow(2, fetchAttempts), 10000);
+            console.log(`Scheduling experts data retry in ${retryDelay}ms...`);
+            
+            setTimeout(() => {
+              setFetchAttempts(prev => prev + 1);
+            }, retryDelay);
+          }
         }
       } catch (err) {
         console.error('Error loading experts data:', err);
@@ -182,69 +227,10 @@ export function useExpertsData(
           
           setTimeout(() => {
             setFetchAttempts(prev => prev + 1);
-            fetchExperts();
           }, retryDelay);
         }
       } finally {
         setLoading(false);
-      }
-    };
-    
-    // Fallback to check expert_accounts table if experts table fails
-    const checkExpertAccounts = async () => {
-      try {
-        console.log('Trying to fetch from expert_accounts table instead...');
-        const { data: expertAccountsData, error: expertAccountsError } = await supabase
-          .from('expert_accounts')
-          .select('*');
-          
-        console.log('expert_accounts response:', { count: expertAccountsData?.length, error: expertAccountsError });
-          
-        if (expertAccountsError) {
-          if (expertAccountsError.code === '42P17' || expertAccountsError.message?.includes('recursion') || expertAccountsError.message?.includes('policy')) {
-            console.warn('Database policy error detected in expert_accounts, using default data');
-            throw new Error(`Database policy error in fallback: ${expertAccountsError.message}`);
-          }
-          
-          console.error('Error fetching expert_accounts:', expertAccountsError);
-          throw expertAccountsError;
-        }
-        
-        if (expertAccountsData && expertAccountsData.length > 0) {
-          // Transform expert_accounts data using our utility
-          const formattedExperts = safeDataTransform(expertAccountsData, (expert) => 
-            mapDbExpertToExpert(dbTypeConverter(expert))
-          );
-          
-          setExperts(formattedExperts);
-          updateCallback(formattedExperts);
-          setFetchAttempts(0); // Reset on success
-          toast.success(`Loaded ${formattedExperts.length} experts from expert_accounts`);
-        } else {
-          // If both tables fail, use default experts
-          console.warn('No experts found in any tables, using default data');
-          if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
-            setExperts(DEFAULT_EXPERTS);
-            updateCallback(DEFAULT_EXPERTS);
-            toast.error('Could not load experts. Using default data.');
-          }
-        }
-      } catch (fallbackError) {
-        console.error('Error in expert_accounts fallback:', fallbackError);
-        
-        if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
-          console.warn(`Max fetch attempts (${MAX_FETCH_ATTEMPTS}) reached, using default data`);
-          setExperts(DEFAULT_EXPERTS);
-          updateCallback(DEFAULT_EXPERTS);
-          toast.error('Error loading experts. Using default data.');
-        } else {
-          // Schedule another retry attempt
-          const retryDelay = Math.min(1000 * Math.pow(2, fetchAttempts), 10000);
-          setTimeout(() => {
-            setFetchAttempts(prev => prev + 1);
-            fetchExperts();
-          }, retryDelay);
-        }
       }
     };
     

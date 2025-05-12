@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 export const useAuthBackCompat = () => {
   const auth = useAuth();
   
-  // Create backward compatible API
+  // Create backward compatible API for components using old auth patterns
   return {
     // Main auth context
     auth,
@@ -14,11 +14,13 @@ export const useAuthBackCompat = () => {
     userAuth: {
       user: auth.user,
       profile: auth.profile,
+      currentUser: auth.profile, // Alias for backward compatibility
       isAuthenticated: auth.isAuthenticated,
       loading: auth.isLoading,
       login: auth.login,
       logout: auth.logout,
       updateProfile: auth.updateProfile,
+      updateUserProfile: auth.updateProfile, // Alias for backward compatibility
       updatePassword: auth.updatePassword,
     },
     

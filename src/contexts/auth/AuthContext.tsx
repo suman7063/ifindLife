@@ -12,7 +12,7 @@ import { useAuthSessionEffects } from './hooks/useAuthSessionEffects';
 import { useExpertInteractions } from './hooks/useExpertInteractions';
 
 // Import types
-import { AuthState, UserProfile, UserRole, ExpertProfile } from './types';
+import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus } from './types';
 
 // Define AuthContextType interface
 export interface AuthContextType {
@@ -20,7 +20,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   session: Session | null;
-  authStatus: 'loading' | 'authenticated' | 'unauthenticated';
+  authStatus: AuthStatus;
   profile: UserProfile | null;
   role: UserRole;
   expertProfile: ExpertProfile | null;
@@ -182,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Export the hook for easy use
+// Export the hook for easy use - this is crucial
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

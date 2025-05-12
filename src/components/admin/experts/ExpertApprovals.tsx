@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/types/supabase/expert';
@@ -77,7 +76,7 @@ const ExpertApprovals = () => {
           if (fallbackData && fallbackData.length > 0) {
             // Convert to expected format - adding status field
             data = fallbackData.map(expert => ({
-              ...dbTypeConverter<any>(expert),
+              ...expert,
               status: 'pending', // Assume pending since it's in the experts table but not approved yet
               auth_id: null,     // These might be empty in fallback data
               verified: false    // These might be empty in fallback data
@@ -86,8 +85,8 @@ const ExpertApprovals = () => {
             data = [];
           }
         } else if (data) {
-          // Convert the expert_accounts data to our expected format
-          data = data.map(expert => dbTypeConverter<ExpertProfileWithStatus>(expert));
+          // Keep data as is - we already have correct types
+          console.log('Found expert applications:', data.length);
         }
         
         console.log('Expert applications found:', data?.length || 0);

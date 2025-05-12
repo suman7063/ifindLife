@@ -1,90 +1,60 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Testimonial } from './types';
-import { fetchTestimonialsFromSupabase } from './api';
-import { DEFAULT_TESTIMONIALS, getDefaultTestimonials } from './defaults';
+import { fetchTestimonials } from './api';
+import { defaultTestimonials } from './defaults';
 
 export const useTestimonialsData = (
   initialTestimonials: Testimonial[] = [],
-  updateCallback: (testimonials: Testimonial[]) => void = () => {}
+  onUpdate?: (testimonials: Testimonial[]) => void
 ) => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials.length > 0 ? initialTestimonials : defaultTestimonials);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Function to fetch testimonials from Supabase
-  const fetchTestimonials = async () => {
+  // Fetch testimonials from Supabase
+  const loadTestimonials = useCallback(async () => {
     try {
       setLoading(true);
-      const fetchedTestimonials = await fetchTestimonialsFromSupabase();
-      
-      if (fetchedTestimonials.length > 0) {
-        setTestimonials(fetchedTestimonials);
-        updateCallback(fetchedTestimonials);
-      } else {
-        console.log('No testimonials found, using default data');
-        setTestimonials(DEFAULT_TESTIMONIALS);
-        updateCallback(DEFAULT_TESTIMONIALS);
-      }
-      
       setError(null);
-    } catch (err) {
-      console.error('Error fetching testimonials:', err);
-      setError(err instanceof Error ? err.message : 'Unknown error fetching testimonials');
       
-      // Fallback to defaults if error
-      if (testimonials.length === 0) {
-        setTestimonials(DEFAULT_TESTIMONIALS);
-        updateCallback(DEFAULT_TESTIMONIALS);
+      const fetchedTestimonials = await fetchTestimonials();
+      
+      if (fetchedTestimonials && fetchedTestimonials.length > 0) {
+        setTestimonials(fetchedTestimonials);
+        if (onUpdate) onUpdate(fetchedTestimonials);
+      } else if (initialTestimonials.length === 0) {
+        // Use default testimonials if no data and no initial testimonials
+        setTestimonials(defaultTestimonials);
+        if (onUpdate) onUpdate(defaultTestimonials);
+      }
+    } catch (err) {
+      console.error('Error loading testimonials:', err);
+      setError(err instanceof Error ? err.message : 'Error loading testimonials');
+      
+      // Fallback to default testimonials on error
+      if (initialTestimonials.length === 0) {
+        setTestimonials(defaultTestimonials);
+        if (onUpdate) onUpdate(defaultTestimonials);
       }
     } finally {
       setLoading(false);
     }
-  };
+  }, [initialTestimonials, onUpdate]);
 
-  // Additional utility functions for testimonial management
-  const addTestimonial = async (testimonial: Testimonial) => {
-    setTestimonials(prev => [...prev, testimonial]);
-    updateCallback([...testimonials, testimonial]);
-  };
-
-  const updateTestimonial = async (id: string, updatedTestimonial: Partial<Testimonial>) => {
-    setTestimonials(prev => 
-      prev.map(t => t.id === id ? { ...t, ...updatedTestimonial } : t)
-    );
-    updateCallback(testimonials.map(t => t.id === id ? { ...t, ...updatedTestimonial } : t));
-  };
-
-  const deleteTestimonial = async (id: string) => {
-    setTestimonials(prev => prev.filter(t => t.id !== id));
-    updateCallback(testimonials.filter(t => t.id !== id));
-  };
-
-  const seedDefaultTestimonials = () => {
-    const defaultData = getDefaultTestimonials();
-    setTestimonials(defaultData);
-    updateCallback(defaultData);
-  };
-
-  // Load testimonials on component mount if needed
+  // Load testimonials on initial mount
   useEffect(() => {
-    // If we already have testimonials data, don't fetch again
-    if (initialTestimonials.length > 0) {
-      return;
+    if (initialTestimonials.length === 0) {
+      loadTestimonials();
     }
-    
-    fetchTestimonials();
-  }, [initialTestimonials]);
+  }, [loadTestimonials, initialTestimonials.length]);
 
   return {
     testimonials,
     setTestimonials,
     loading,
     error,
-    fetchTestimonials,
-    addTestimonial,
-    updateTestimonial,
-    deleteTestimonial,
-    seedDefaultTestimonials
+    refreshTestimonials: loadTestimonials
   };
 };

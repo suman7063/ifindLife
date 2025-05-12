@@ -6,7 +6,6 @@ export const defaultTestimonials: Testimonial[] = [
   {
     id: '1',
     name: 'Jane Cooper',
-    role: 'Senior Executive',
     company: 'ABC Corporation',
     content: 'Working with iFind Life has completely transformed my approach to stress management. The experts really listen and provide practical solutions.',
     rating: 5,
@@ -15,7 +14,6 @@ export const defaultTestimonials: Testimonial[] = [
   {
     id: '2',
     name: 'Michael Johnson',
-    role: 'Software Engineer',
     company: 'Tech Innovations',
     content: 'I was skeptical about online counseling, but iFind Life proved me wrong. The platform is easy to use and the therapists are truly exceptional.',
     rating: 4,
@@ -24,7 +22,6 @@ export const defaultTestimonials: Testimonial[] = [
   {
     id: '3',
     name: 'Sarah Williams',
-    role: 'Healthcare Professional',
     company: 'City Hospital',
     content: 'As someone who helps others daily, I needed support myself. iFind Life connected me with a coach who understood my unique challenges.',
     rating: 5,

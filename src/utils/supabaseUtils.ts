@@ -63,3 +63,63 @@ export function camelToSnake(obj: Record<string, any>): Record<string, any> {
 export function mergeObjects<T>(obj1: Partial<T>, obj2: Partial<T>): T {
   return { ...obj1, ...obj2 } as T;
 }
+
+/**
+ * Safely transforms database records to application types
+ * Prevents errors if the data is null or undefined
+ */
+export function safeDataTransform<T, R>(
+  data: T[] | null | undefined,
+  transformer: (item: T) => R
+): R[] {
+  if (!data || !Array.isArray(data)) {
+    return [];
+  }
+  
+  return data
+    .filter(item => item !== null && item !== undefined)
+    .map(item => transformer(item));
+}
+
+/**
+ * Safely handles a single record from the database
+ * Returns null if the data is missing or invalid
+ */
+export function safeSingleRecord<T, R>(
+  data: T | null | undefined,
+  transformer: (item: T) => R
+): R | null {
+  if (!data) {
+    return null;
+  }
+  
+  try {
+    return transformer(data);
+  } catch (error) {
+    console.error('Error transforming single record:', error);
+    return null;
+  }
+}
+
+/**
+ * Converts database types to make them consistent for the application
+ * Handles null/undefined values and converts string numbers to actual numbers
+ */
+export function dbTypeConverter<T extends Record<string, any>>(data: Record<string, any>): T {
+  if (!data) {
+    return {} as T;
+  }
+  
+  const result: Record<string, any> = {};
+  
+  Object.entries(data).forEach(([key, value]) => {
+    // Convert string numbers to actual numbers where appropriate
+    if (typeof value === 'string' && !isNaN(Number(value)) && key.endsWith('_id')) {
+      result[key] = Number(value);
+    } else {
+      result[key] = value;
+    }
+  });
+  
+  return result as T;
+}
