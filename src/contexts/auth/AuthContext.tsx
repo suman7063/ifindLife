@@ -99,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     actionLoading
-  } = useAuthActions(fetchUserData);
+  } = useAuthActions(() => fetchUserData()); // Changed to a function that doesn't take parameters
   
   // Profile functions
   const {
@@ -229,8 +229,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Update signup function to match interface
+  const wrappedSignup = async (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string): Promise<boolean> => {
+    try {
+      // Convert parameters to the format expected by the original signup function
+      const signupData = {
+        email,
+        password,
+        name: userData?.name || email.split('@')[0],
+        phone: userData?.phone || '',
+        country: userData?.country || '',
+        city: userData?.city || '',
+        referralCode: referralCode || ''
+      };
+      
+      // Call the original signup function
+      return await signup(signupData);
+    } catch (error) {
+      console.error('Error in wrapped signup:', error);
+      return false;
+    }
+  };
+  
+  // Wrapper for logout to match the expected interface
+  const wrappedLogout = async (): Promise<{ error: Error | null }> => {
+    try {
+      const success = await logout();
+      return { error: success ? null : new Error('Logout failed') };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+  
+  // Wrapper for updateProfile to match the expected interface
+  const wrappedUpdateProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+    try {
+      const { error } = await updateProfileFn(updates);
+      return !error;
+    } catch (error) {
+      console.error('Error in wrapped updateProfile:', error);
+      return false;
+    }
+  };
+  
+  // Wrapper for updateUserProfile to match the expected interface (alias for updateProfile)
+  const wrappedUpdateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+    return wrappedUpdateProfile(updates);
+  };
+
   // Alias methods for backward compatibility
-  const updateUserProfile = updateProfileFn;
   const rechargeWallet = async (amount: number) => {
     const { error } = await addFunds(amount);
     return !error;
@@ -287,11 +334,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Auth methods
     login,
     loginWithOtp,
-    signup,
-    logout,
+    signup: wrappedSignup,
+    logout: wrappedLogout,
     resetPassword,
-    updateProfile: updateProfileFn,
-    updateUserProfile, // Alias for backward compatibility
+    updateProfile: wrappedUpdateProfile,
+    updateUserProfile: wrappedUpdateUserProfile, // Alias for backward compatibility
     updatePassword,
     updateEmail,
     refreshSession,
