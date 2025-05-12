@@ -31,3 +31,25 @@ export function safeDataTransform<T, R>(
     return fallback;
   }
 }
+
+/**
+ * Safely handle single Supabase record with proper error handling
+ */
+export function safeSingleRecord<T, R>(
+  data: T | null | undefined,
+  error: PostgrestError | null,
+  transform: (item: T) => R,
+  fallback: R
+): R {
+  if (error || !data) {
+    console.error("Supabase query error:", error || "No data returned");
+    return fallback;
+  }
+  
+  try {
+    return transform(data);
+  } catch (err) {
+    console.error("Error transforming data:", err);
+    return fallback;
+  }
+}

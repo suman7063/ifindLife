@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,11 +21,12 @@ const ProgramDataReset = () => {
       let deleted = false;
       
       try {
-        // Try using Supabase with filter that works for both number and string IDs
+        // Try using Supabase with a more generic filter
+        // Delete all rows without specifying a specific ID type
         const { error } = await supabase
           .from('programs')
           .delete()
-          .gte('id', 0); // Delete all rows with ID greater than or equal to 0
+          .neq('id', -1); // This is a trick to delete all rows
           
         if (!error) {
           console.log("Successfully deleted programs from Supabase");

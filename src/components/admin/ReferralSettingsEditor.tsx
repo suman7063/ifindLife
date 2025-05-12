@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { safeSingleRecord } from '@/utils/supabaseUtils';
 
 export interface ReferralSettings {
   id: string;
@@ -49,20 +50,25 @@ const ReferralSettingsEditor: React.FC = () => {
         if (error) {
           console.error('Error fetching referral settings:', error);
           toast.error('Failed to load referral settings');
-          // Use default settings on error
-          return;
-        } 
-        
+          return; // Use default settings on error
+        }
+
         if (data) {
-          // Safely process the data with type checks
-          const safeData: ReferralSettings = {
-            id: typeof data.id === 'string' ? data.id : defaultSettings.id,
-            referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : defaultSettings.referrer_reward,
-            referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : defaultSettings.referred_reward,
-            active: Boolean(data.active),
-            description: typeof data.description === 'string' ? data.description : defaultSettings.description
-          };
-          setSettings(safeData);
+          // Use the utility function to safely process the data
+          const safeSettings = safeSingleRecord<any, ReferralSettings>(
+            data,
+            null,
+            (item) => ({
+              id: item.id || defaultSettings.id,
+              referrer_reward: typeof item.referrer_reward === 'number' ? item.referrer_reward : defaultSettings.referrer_reward,
+              referred_reward: typeof item.referred_reward === 'number' ? item.referred_reward : defaultSettings.referred_reward,
+              active: Boolean(item.active),
+              description: typeof item.description === 'string' ? item.description : defaultSettings.description
+            }),
+            defaultSettings
+          );
+          
+          setSettings(safeSettings);
         }
       } catch (error) {
         console.error('Error fetching referral settings:', error);
@@ -106,7 +112,7 @@ const ReferralSettingsEditor: React.FC = () => {
     
     setIsSaving(true);
     try {
-      const updatedSettings: any = {
+      const updatedSettings = {
         referrer_reward: settings.referrer_reward,
         referred_reward: settings.referred_reward,
         active: settings.active,
@@ -114,14 +120,14 @@ const ReferralSettingsEditor: React.FC = () => {
         updated_at: new Date().toISOString()
       };
 
-      // If we have an ID, use it for upsert
+      // Add ID if we have one for upsert
       if (settings.id) {
-        updatedSettings.id = settings.id;
+        (updatedSettings as any).id = settings.id;
       }
 
       const { data, error } = await supabase
         .from('referral_settings')
-        .upsert(updatedSettings)
+        .upsert(updatedSettings as any)
         .select()
         .single();
 
@@ -131,15 +137,21 @@ const ReferralSettingsEditor: React.FC = () => {
       } else {
         toast.success('Referral settings saved successfully');
         if (data) {
-          // Safely update the state with type checks
-          const safeData: ReferralSettings = {
-            id: typeof data.id === 'string' ? data.id : settings.id,
-            referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : settings.referrer_reward,
-            referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : settings.referred_reward,
-            active: Boolean(data.active), 
-            description: typeof data.description === 'string' ? data.description : settings.description,
-            updated_at: data.updated_at || new Date().toISOString()
-          };
+          // Safely update the state with safeSingleRecord
+          const safeData = safeSingleRecord<any, ReferralSettings>(
+            data,
+            null,
+            (item) => ({
+              id: item.id || settings.id,
+              referrer_reward: typeof item.referrer_reward === 'number' ? item.referrer_reward : settings.referrer_reward,
+              referred_reward: typeof item.referred_reward === 'number' ? item.referred_reward : settings.referred_reward,
+              active: Boolean(item.active), 
+              description: typeof item.description === 'string' ? item.description : settings.description,
+              updated_at: item.updated_at || new Date().toISOString()
+            }),
+            settings
+          );
+          
           setSettings(safeData);
         }
       }

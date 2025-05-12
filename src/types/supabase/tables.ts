@@ -1,3 +1,4 @@
+
 export interface UserTransaction {
   id: string;
   user_id: string;
@@ -24,7 +25,7 @@ export interface UserReview {
 }
 
 export interface ContactSubmission {
-  id?: number; // Changed from string to number to match DB schema
+  id: number; // ID is a number in the database schema
   name: string;
   email: string;
   subject: string;
@@ -69,3 +70,26 @@ export type NewReview = {
   rating: number;
   comment?: string;
 };
+
+// Testimonial type from DB schema
+export interface DatabaseTestimonial {
+  id: string;
+  name: string;
+  location: string;
+  rating: number;
+  text: string;
+  date: string;
+  image_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Referral Settings type
+export interface ReferralSetting {
+  id: string;
+  referrer_reward: number;
+  referred_reward: number;
+  active: boolean;
+  description?: string;
+  updated_at?: string;
+}

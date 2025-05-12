@@ -59,11 +59,14 @@ const ContactSubmissionsTable = () => {
 
   const markAsRead = async (id: number) => {
     try {
-      // Explicitly use the right types for update and ID
+      // Convert id to number
+      const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+      
+      // Use the correct type for the update operation
       const { error } = await supabase
         .from('contact_submissions')
-        .update({ is_read: true } as any)
-        .eq('id', id);
+        .update({ is_read: true })
+        .eq('id', numericId);
 
       if (error) {
         throw error;

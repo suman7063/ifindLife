@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { testimonialData as defaultTestimonialData } from '@/data/homePageData';
@@ -15,15 +16,17 @@ type Testimonial = {
   imageUrl: string;
 };
 
-// Define the database schema type
+// Define the database schema type explicitly
 interface DatabaseTestimonial {
-  id?: string;
+  id: string;
   name: string;
   location: string;
   rating: number;
   text: string;
   date: string;
   image_url: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const TestimonialsSection = () => {
@@ -45,9 +48,9 @@ const TestimonialsSection = () => {
           throw error;
         }
         
-        // Convert database format to application format with proper error handling
-        const formattedTestimonials = safeDataTransform<DatabaseTestimonial, Testimonial>(
-          data as DatabaseTestimonial[],
+        // Use the utility function to safely transform data
+        const formattedTestimonials = safeDataTransform<any, Testimonial>(
+          data,
           error,
           (item) => ({
             id: item.id || '',
@@ -58,11 +61,10 @@ const TestimonialsSection = () => {
             date: item.date || '',
             imageUrl: item.image_url || ''
           }),
-          // Fallback to default testimonials if there's an error
           defaultTestimonialData
         );
         
-        if (formattedTestimonials.length > 0) {
+        if (formattedTestimonials && formattedTestimonials.length > 0) {
           setTestimonials(formattedTestimonials);
         }
       } catch (err) {
