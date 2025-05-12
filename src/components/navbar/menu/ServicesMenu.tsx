@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 
 const ServicesMenu = () => {
+  console.log('ServicesMenu component rendering');
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Services</NavigationMenuTrigger>
