@@ -2,37 +2,20 @@
 import { useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { UserProfile, ExpertProfile } from '../types';
+import { UserProfile, UserRole } from '../types';
 import { toast } from 'sonner';
-import { normalizeId } from '@/utils/supabaseUtils';
-
-// Helper function to normalize an expert profile ID
-function normalizeExpertProfileId(profile: Partial<ExpertProfile>): Partial<ExpertProfile> {
-  if (profile.id) {
-    return {
-      ...profile,
-      id: normalizeId(profile.id)
-    };
-  }
-  return profile;
-}
 
 export const useProfileFunctions = (
   user: User | null,
   session: Session | null,
-  setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>,
-  setWalletBalance: React.Dispatch<React.SetStateAction<number>>
+  profile: UserProfile | null,
+  role: UserRole
 ) => {
-  // State for tracking operation status
-  const [updating, setUpdating] = useState(false);
-  
   // Update user profile
   const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     if (!user) return { error: new Error('No user logged in') };
     
     try {
-      setUpdating(true);
-      
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -40,19 +23,12 @@ export const useProfileFunctions = (
         .select()
         .single();
         
-      if (error) throw error;
-      
-      // Update local state
-      setProfile(prev => prev ? { ...prev, ...data } : data);
-      
-      return { error: null };
+      return { error };
     } catch (error) {
       console.error('Error updating profile:', error);
       return { error };
-    } finally {
-      setUpdating(false);
     }
-  }, [user, setProfile]);
+  }, [user]);
   
   // Get displayable user name
   const getUserDisplayName = useCallback(() => {
@@ -67,15 +43,14 @@ export const useProfileFunctions = (
   }, [user]);
   
   // Fetch user profile
-  const fetchProfile = useCallback(async (userId?: string) => {
-    const id = userId || user?.id;
-    if (!id) return null;
+  const fetchProfile = useCallback(async () => {
+    if (!user?.id) return null;
     
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', id)
+        .eq('id', user.id)
         .single();
         
       if (error) throw error;
@@ -99,15 +74,12 @@ export const useProfileFunctions = (
         
       if (error) throw error;
       
-      // Update local state
-      setWalletBalance(newBalance);
-      
       return { error: null };
     } catch (error) {
       console.error('Error updating wallet balance:', error);
       return { error };
     }
-  }, [user, setWalletBalance]);
+  }, [user]);
   
   // Add funds to wallet
   const addFunds = useCallback(async (amount: number) => {
@@ -151,8 +123,6 @@ export const useProfileFunctions = (
         // Continue anyway, since the wallet was updated
       }
       
-      // Update local state
-      setWalletBalance(newBalance);
       toast.success(`Successfully added $${amount} to your wallet`);
       
       return { error: null };
@@ -161,7 +131,7 @@ export const useProfileFunctions = (
       toast.error('Failed to add funds to your wallet');
       return { error };
     }
-  }, [user, setWalletBalance]);
+  }, [user]);
   
   return {
     updateProfile,

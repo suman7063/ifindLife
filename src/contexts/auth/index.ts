@@ -1,17 +1,9 @@
 
-import { UserAuthContext } from './UserAuthContext';
-import { UserAuthProvider } from './UserAuthProvider';
-import { useContext } from 'react';
-import { UserAuthContextType } from './UserAuthContext';
+// Re-export context and provider
+export { AuthContext, AuthProvider } from './provider/AuthContextProvider';
 
-// Hook for using the auth context
-export const useUserAuth = (): UserAuthContextType => {
-  const context = useContext(UserAuthContext);
-  if (context === undefined) {
-    throw new Error('useUserAuth must be used within a UserAuthProvider');
-  }
-  return context;
-};
+// Re-export types
+export type { AuthContextType } from './types';
 
-export { UserAuthContext, UserAuthProvider };
-export type { UserAuthContextType };
+// Re-export hook
+export { useAuth } from './hooks/useAuth';
