@@ -10,3 +10,12 @@ export interface Testimonial {
   imageUrl: string;
   date?: string;
 }
+
+export interface TestimonialFormData {
+  name: string;
+  location: string;
+  rating: number;
+  text: string;
+  date: string;
+  imageUrl: string;
+}

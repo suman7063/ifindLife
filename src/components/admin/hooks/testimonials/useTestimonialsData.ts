@@ -1,107 +1,208 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
+import { supabase } from '@/lib/supabase';
 import { Testimonial } from './types';
-import { fetchTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from './api';
 import { defaultTestimonials } from './defaults';
+import { safeSingleRecord, safeDataTransform } from '@/utils/supabaseUtils';
 
 export const useTestimonialsData = (
   initialTestimonials: Testimonial[] = [],
-  onUpdate?: (testimonials: Testimonial[]) => void
+  updateParentState?: (testimonials: Testimonial[]) => void
 ) => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials.length > 0 ? initialTestimonials : defaultTestimonials);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch testimonials from Supabase
-  const loadTestimonials = useCallback(async () => {
+  const fetchTestimonials = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setLoading(true);
-      setError(null);
-      
-      const fetchedTestimonials = await fetchTestimonials();
-      
-      if (fetchedTestimonials && fetchedTestimonials.length > 0) {
-        setTestimonials(fetchedTestimonials);
-        if (onUpdate) onUpdate(fetchedTestimonials);
-      } else if (initialTestimonials.length === 0) {
-        // Use default testimonials if no data and no initial testimonials
-        setTestimonials(defaultTestimonials);
-        if (onUpdate) onUpdate(defaultTestimonials);
+      // First check localStorage
+      const savedContent = localStorage.getItem('ifindlife-content');
+      if (savedContent) {
+        try {
+          const parsedContent = JSON.parse(savedContent);
+          if (parsedContent.testimonials && parsedContent.testimonials.length > 0) {
+            console.log('Testimonials found in localStorage:', parsedContent.testimonials.length);
+            const storedTestimonials = parsedContent.testimonials;
+            setTestimonials(storedTestimonials);
+            if (updateParentState) updateParentState(storedTestimonials);
+            return;
+          }
+        } catch (parseError) {
+          console.error('Error parsing localStorage content:', parseError);
+        }
       }
-    } catch (err) {
-      console.error('Error loading testimonials:', err);
-      setError(err instanceof Error ? err.message : 'Error loading testimonials');
       
-      // Fallback to default testimonials on error
-      if (initialTestimonials.length === 0) {
+      // Try to fetch from Supabase
+      const { data, error } = await supabase.from('testimonials').select('*').order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      if (data && data.length > 0) {
+        // Transform from DB format to component format if needed
+        const formattedTestimonials = data.map((item: any): Testimonial => ({
+          id: item.id,
+          name: item.name,
+          text: item.text,
+          location: item.location,
+          rating: item.rating,
+          imageUrl: item.image_url,
+          date: item.date || new Date(item.created_at).toLocaleDateString()
+        }));
+        
+        setTestimonials(formattedTestimonials);
+        if (updateParentState) updateParentState(formattedTestimonials);
+        
+        // Save to localStorage
+        saveToLocalStorage(formattedTestimonials);
+      } else {
+        // If no data, use defaults
         setTestimonials(defaultTestimonials);
-        if (onUpdate) onUpdate(defaultTestimonials);
+        if (updateParentState) updateParentState(defaultTestimonials);
       }
+    } catch (err: any) {
+      console.error('Error fetching testimonials:', err);
+      setError(err.message || 'Failed to fetch testimonials');
+      
+      // Fall back to defaults on error
+      setTestimonials(defaultTestimonials);
+      if (updateParentState) updateParentState(defaultTestimonials);
     } finally {
       setLoading(false);
     }
-  }, [initialTestimonials, onUpdate]);
+  };
+
+  // Save testimonials to localStorage
+  const saveToLocalStorage = (data: Testimonial[]) => {
+    try {
+      const content = JSON.parse(localStorage.getItem('ifindlife-content') || '{}');
+      localStorage.setItem('ifindlife-content', JSON.stringify({
+        ...content,
+        testimonials: data
+      }));
+      console.log('Content saved to localStorage');
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  };
 
   // Add a new testimonial
-  const addTestimonial = async (testimonial: Omit<Testimonial, 'id'>) => {
+  const addTestimonial = async (newTestimonial: Testimonial) => {
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      const newTestimonial = await createTestimonial(testimonial);
-      if (newTestimonial) {
-        const updatedTestimonials = [...testimonials, newTestimonial];
-        setTestimonials(updatedTestimonials);
-        if (onUpdate) onUpdate(updatedTestimonials);
-        return true;
+      // Generate an ID if one doesn't exist
+      if (!newTestimonial.id) {
+        newTestimonial.id = Date.now().toString();
       }
-      return false;
-    } catch (err) {
+      
+      // First try to save to Supabase
+      const { error } = await supabase.from('testimonials').insert({
+        id: newTestimonial.id,
+        name: newTestimonial.name,
+        text: newTestimonial.text,
+        location: newTestimonial.location,
+        rating: newTestimonial.rating,
+        image_url: newTestimonial.imageUrl,
+        date: newTestimonial.date
+      });
+      
+      if (error) {
+        console.warn('Could not save testimonial to Supabase:', error);
+        // Continue to update local state even if Supabase fails
+      }
+      
+      // Update local state
+      const updatedTestimonials = [...testimonials, newTestimonial];
+      setTestimonials(updatedTestimonials);
+      if (updateParentState) updateParentState(updatedTestimonials);
+      
+      // Update localStorage
+      saveToLocalStorage(updatedTestimonials);
+      
+      return newTestimonial;
+    } catch (err: any) {
       console.error('Error adding testimonial:', err);
-      setError(err instanceof Error ? err.message : 'Error adding testimonial');
-      return false;
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   // Update an existing testimonial
-  const updateTestimonialById = async (id: string, updates: Partial<Testimonial>) => {
+  const updateTestimonial = async (id: string, updatedTestimonial: Testimonial) => {
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      const updatedTestimonial = await updateTestimonial(id, updates);
-      if (updatedTestimonial) {
-        const updatedTestimonials = testimonials.map(t => 
-          t.id === id ? updatedTestimonial : t
-        );
-        setTestimonials(updatedTestimonials);
-        if (onUpdate) onUpdate(updatedTestimonials);
-        return true;
+      // First try to update in Supabase
+      const { error } = await supabase
+        .from('testimonials')
+        .update({
+          name: updatedTestimonial.name,
+          text: updatedTestimonial.text,
+          location: updatedTestimonial.location,
+          rating: updatedTestimonial.rating,
+          image_url: updatedTestimonial.imageUrl,
+          date: updatedTestimonial.date
+        })
+        .eq('id', id);
+      
+      if (error) {
+        console.warn('Could not update testimonial in Supabase:', error);
+        // Continue to update local state even if Supabase fails
       }
-      return false;
-    } catch (err) {
+      
+      // Update local state
+      const updatedTestimonials = testimonials.map(item => 
+        item.id === id ? { ...item, ...updatedTestimonial } : item
+      );
+      
+      setTestimonials(updatedTestimonials);
+      if (updateParentState) updateParentState(updatedTestimonials);
+      
+      // Update localStorage
+      saveToLocalStorage(updatedTestimonials);
+      
+      return updatedTestimonial;
+    } catch (err: any) {
       console.error('Error updating testimonial:', err);
-      setError(err instanceof Error ? err.message : 'Error updating testimonial');
-      return false;
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   // Delete a testimonial
-  const deleteTestimonialById = async (id: string) => {
+  const deleteTestimonial = async (id: string) => {
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      const success = await deleteTestimonial(id);
-      if (success) {
-        const updatedTestimonials = testimonials.filter(t => t.id !== id);
-        setTestimonials(updatedTestimonials);
-        if (onUpdate) onUpdate(updatedTestimonials);
-        return true;
+      // First try to delete from Supabase
+      const { error } = await supabase
+        .from('testimonials')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.warn('Could not delete testimonial from Supabase:', error);
+        // Continue to update local state even if Supabase fails
       }
-      return false;
-    } catch (err) {
+      
+      // Update local state
+      const updatedTestimonials = testimonials.filter(item => item.id !== id);
+      setTestimonials(updatedTestimonials);
+      if (updateParentState) updateParentState(updatedTestimonials);
+      
+      // Update localStorage
+      saveToLocalStorage(updatedTestimonials);
+      
+      return true;
+    } catch (err: any) {
       console.error('Error deleting testimonial:', err);
-      setError(err instanceof Error ? err.message : 'Error deleting testimonial');
-      return false;
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -109,38 +210,45 @@ export const useTestimonialsData = (
 
   // Seed default testimonials
   const seedDefaultTestimonials = async () => {
+    setLoading(true);
+    
     try {
-      setLoading(true);
-      const promises = defaultTestimonials.map(t => createTestimonial(t));
-      await Promise.all(promises);
-      await loadTestimonials();
+      setTestimonials(defaultTestimonials);
+      if (updateParentState) updateParentState(defaultTestimonials);
+      
+      // Update localStorage
+      saveToLocalStorage(defaultTestimonials);
+      
+      // Optionally try to save to Supabase
+      for (const testimonial of defaultTestimonials) {
+        await supabase.from('testimonials').upsert({
+          id: testimonial.id,
+          name: testimonial.name,
+          text: testimonial.text,
+          location: testimonial.location,
+          rating: testimonial.rating,
+          image_url: testimonial.imageUrl,
+          date: testimonial.date
+        }, { onConflict: 'id' });
+      }
+      
       return true;
-    } catch (err) {
-      console.error('Error seeding default testimonials:', err);
-      setError(err instanceof Error ? err.message : 'Error seeding testimonials');
-      return false;
+    } catch (err: any) {
+      console.error('Error seeding testimonials:', err);
+      throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  // Load testimonials on initial mount
-  useEffect(() => {
-    if (initialTestimonials.length === 0) {
-      loadTestimonials();
-    }
-  }, [loadTestimonials, initialTestimonials.length]);
-
   return {
     testimonials,
-    setTestimonials,
     loading,
     error,
-    refreshTestimonials: loadTestimonials,
-    fetchTestimonials: loadTestimonials,
+    fetchTestimonials,
     addTestimonial,
-    updateTestimonial: updateTestimonialById,
-    deleteTestimonial: deleteTestimonialById,
+    updateTestimonial,
+    deleteTestimonial,
     seedDefaultTestimonials
   };
 };

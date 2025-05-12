@@ -1,87 +1,79 @@
 
-import React, { createContext, useState, useEffect, useCallback, useMemo, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
 
 // Import hooks
 import { useAuthState } from './hooks/useAuthState';
 import { useAuthActions } from './hooks/useAuthActions';
-import { useAuthInitialization } from './hooks/useAuthInitialization';
-import { useProfileActions } from './hooks/useProfileActions';
-import { useAuthSessionEffects } from './hooks/useAuthSessionEffects';
+import { useProfileFunctions } from './hooks/useProfileFunctions';
 import { useExpertInteractions } from './hooks/useExpertInteractions';
 
 // Import types
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus } from './types';
+import { supabase } from '@/lib/supabase';
 
 // Define AuthContextType interface
 export interface AuthContextType {
+  // Authentication state
   isLoading: boolean;
   isAuthenticated: boolean;
   user: User | null;
   session: Session | null;
   authStatus: AuthStatus;
+  userProfile: UserProfile | null; // For backward compatibility
   profile: UserProfile | null;
   role: UserRole;
   expertProfile: ExpertProfile | null;
   walletBalance: number;
+  
+  // Authentication methods
   login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
   loginWithOtp: (email: string) => Promise<{ error: Error | null }>;
-  signup: (email: string, password: string, userData?: Partial<UserProfile>) => Promise<boolean>;
+  signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>; // Alias for backward compatibility
   updatePassword: (newPassword: string) => Promise<boolean>;
   updateEmail: (newEmail: string) => Promise<{ error: Error | null }>;
   refreshSession: () => Promise<{ error: Error | null }>;
+  
+  // User profile methods
   getUserDisplayName: () => string;
   fetchProfile: () => Promise<UserProfile | null>;
+  
+  // Wallet methods
   addFunds: (amount: number) => Promise<{ error: Error | null }>;
   updateWalletBalance: (newBalance: number) => Promise<{ error: Error | null }>;
+  rechargeWallet: (amount: number) => Promise<boolean>;
+  
+  // Expert methods
   updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<{ error: Error | null }>;
   fetchExpertProfile: () => Promise<ExpertProfile | null>;
   registerAsExpert: (data: any) => Promise<{ error: Error | null }>;
-}
-
-// Default state values
-const initialAuthState = {
-  isLoading: true,
-  isAuthenticated: false,
-  user: null,
-  session: null,
-  authStatus: 'loading' as const,
-  profile: null,
-  role: null,
-  expertProfile: null,
-  walletBalance: 0,
+  
+  // User actions
+  addReview: (reviewData: any) => Promise<boolean>;
+  reportExpert: (reportData: any) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink: (expertId: string | number) => string;
+  getReferralLink: () => string | null;
+  
+  // Favorites
+  addToFavorites: (expertId: number) => Promise<boolean>;
+  removeFromFavorites: (expertId: number) => Promise<boolean>;
 };
 
-// Context creation
-export const AuthContext = createContext<AuthContextType>({
-  ...initialAuthState,
-  login: async () => false,
-  loginWithOtp: async () => ({ error: null }),
-  signup: async () => false,
-  logout: async () => ({ error: null }),
-  resetPassword: async () => ({ error: null }),
-  updateProfile: async () => false,
-  updatePassword: async () => false,
-  updateEmail: async () => ({ error: null }),
-  refreshSession: async () => ({ error: null }),
-  getUserDisplayName: () => '',
-  fetchProfile: async () => null,
-  addFunds: async () => ({ error: null }),
-  updateWalletBalance: async () => ({ error: null }),
-  updateExpertProfile: async () => ({ error: null }),
-  fetchExpertProfile: async () => null,
-  registerAsExpert: async () => ({ error: null }),
-});
+// Create the context with default values
+export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Get auth state from hook
   const {
     authState,
-    setAuthState
+    setAuthState,
+    checkUserRole,
+    fetchUserData
   } = useAuthState();
   
   // Extract state properties
@@ -91,48 +83,179 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     session,
     authStatus,
+    userProfile,
     profile,
     role,
     expertProfile,
     walletBalance,
   } = authState;
   
-  // Initialize auth
-  useAuthInitialization();
-  
-  // Handle session effects
-  useAuthSessionEffects();
-  
   // Auth actions
-  const {
+  const { 
     login,
-    loginWithOtp,
     signup,
     logout,
-    resetPassword,
-    updatePassword,
-    updateEmail,
-    refreshSession,
-  } = useAuthActions();
+    actionLoading
+  } = useAuthActions(fetchUserData);
   
-  // Profile actions
+  // Profile functions
   const {
-    updateProfile,
+    updateProfile: updateProfileFn,
     getUserDisplayName,
     fetchProfile,
     addFunds,
-    updateWalletBalance,
-  } = useProfileActions();
+    updateWalletBalance
+  } = useProfileFunctions(user, session, setAuthState, setAuthState);
   
   // Expert interactions
   const {
-    updateExpertProfile,
-    fetchExpertProfile,
-    registerAsExpert,
-  } = useExpertInteractions();
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink
+  } = useExpertInteractions(profile?.id);
+
+  // Default implementations for missing methods
+  const loginWithOtp = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ email });
+      return { error: error ? new Error(error.message) : null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email);
+      return { error: error ? new Error(error.message) : null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      return !error;
+    } catch (error) {
+      console.error('Error updating password:', error);
+      return false;
+    }
+  };
+
+  const updateEmail = async (newEmail: string) => {
+    try {
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      return { error: error ? new Error(error.message) : null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  const refreshSession = async () => {
+    try {
+      const { error } = await supabase.auth.refreshSession();
+      return { error: error ? new Error(error.message) : null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  const updateExpertProfile = async (updates: Partial<ExpertProfile>) => {
+    try {
+      if (!user) return { error: new Error('No authenticated user') };
+      
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(updates)
+        .eq('auth_id', user.id);
+        
+      return { error: error ? new Error(error.message) : null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  const fetchExpertProfile = async () => {
+    try {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .eq('auth_id', user.id)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error fetching expert profile:', error);
+      return null;
+    }
+  };
+
+  const registerAsExpert = async (data: any) => {
+    try {
+      if (!user) return { error: new Error('No authenticated user') };
+      
+      const { error } = await supabase
+        .from('expert_accounts')
+        .insert({
+          ...data,
+          auth_id: user.id,
+          status: 'pending'
+        });
+        
+      return { error: error ? new Error(error.message) : null };
+    } catch (error: any) {
+      return { error };
+    }
+  };
+
+  // Alias methods for backward compatibility
+  const updateUserProfile = updateProfileFn;
+  const rechargeWallet = async (amount: number) => {
+    const { error } = await addFunds(amount);
+    return !error;
+  };
   
+  // Add favorite methods
+  const addToFavorites = async (expertId: number) => {
+    try {
+      if (!user) return false;
+      
+      const { error } = await supabase
+        .from('user_favorites')
+        .insert({ user_id: user.id, expert_id: expertId });
+        
+      return !error;
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+      return false;
+    }
+  };
+  
+  const removeFromFavorites = async (expertId: number) => {
+    try {
+      if (!user) return false;
+      
+      const { error } = await supabase
+        .from('user_favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('expert_id', expertId);
+        
+      return !error;
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
+      return false;
+    }
+  };
+
   // Combined context value
-  const contextValue = useMemo(() => ({
+  const contextValue: AuthContextType = {
     // Auth state
     isLoading,
     isAuthenticated,
@@ -140,6 +263,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     authStatus,
     profile,
+    userProfile: profile, // Alias for backward compatibility
     role,
     expertProfile,
     walletBalance,
@@ -150,30 +274,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signup,
     logout,
     resetPassword,
+    updateProfile: updateProfileFn,
+    updateUserProfile, // Alias for backward compatibility
     updatePassword,
     updateEmail,
     refreshSession,
     
     // Profile methods
-    updateProfile,
     getUserDisplayName,
     fetchProfile,
     addFunds,
     updateWalletBalance,
+    rechargeWallet,
     
     // Expert methods
     updateExpertProfile,
     fetchExpertProfile,
     registerAsExpert,
-  }), [
-    isLoading, isAuthenticated, user, session, authStatus,
-    profile, role, expertProfile, walletBalance,
-    login, loginWithOtp, signup, logout, resetPassword,
-    updatePassword, updateEmail, refreshSession,
-    updateProfile, getUserDisplayName, fetchProfile,
-    addFunds, updateWalletBalance,
-    updateExpertProfile, fetchExpertProfile, registerAsExpert,
-  ]);
+    
+    // User actions
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink,
+    
+    // Favorites
+    addToFavorites,
+    removeFromFavorites
+  };
   
   return (
     <AuthContext.Provider value={contextValue}>
@@ -183,7 +312,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 // Export the hook for easy use
-export const useAuth = () => {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

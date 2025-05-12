@@ -1,60 +1,80 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Service } from './types';
+import { DbService } from './types';
 import { toast } from 'sonner';
-import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
 
-export const useServicesData = (
-  initialServices: Service[] = [],
-  isLoading: boolean = false,
-  updateCallback: (services: Service[]) => void = () => {}
-) => {
-  const [services, setServices] = useState<Service[]>(initialServices);
-  const [loading, setLoading] = useState(isLoading);
+// Import default data without JSX elements
+import { categoryData as defaultServiceData } from '@/data/initialAdminData';
+
+export interface ServiceCategory {
+  icon: string;
+  title: string;
+  description: string;
+  href: string;
+  color: string;
+}
+
+// Interface for the database service object
+export interface DbService {
+  id: number;
+  name: string;
+  description: string;
+  rate_usd: number;
+  rate_inr: number;
+  icon?: string; // Make optional since it might not exist in the database
+  color?: string; // Make optional since it might not exist in the database
+}
+
+export function useServicesData(
+  initialServices: ServiceCategory[] = [], 
+  updateCallback: (services: ServiceCategory[]) => void = () => {}
+) {
+  const [services, setServices] = useState<ServiceCategory[]>(initialServices);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetchAttempts, setFetchAttempts] = useState(0);
   const MAX_FETCH_ATTEMPTS = 3;
 
   // Default services for fallback
-  const DEFAULT_SERVICES: Service[] = [
+  const DEFAULT_SERVICES: ServiceCategory[] = [
     {
-      id: 1,
-      name: "Stress Management",
+      icon: "stress-management",
+      title: "Stress Management",
       description: "Techniques to cope with daily stressors and improve mental well-being.",
-      rate_usd: 49.99,
-      rate_inr: 3500
+      href: "/services/stress-management",
+      color: "#FF5733"
     },
     {
-      id: 2,
-      name: "Relationship Counseling",
+      icon: "relationship-counseling",
+      title: "Relationship Counseling",
       description: "Guidance and support to improve communication and resolve conflicts in relationships.",
-      rate_usd: 79.99,
-      rate_inr: 5500
+      href: "/services/relationship-counseling",
+      color: "#33FF57"
     },
     {
-      id: 3,
-      name: "Career Coaching",
+      icon: "career-coaching",
+      title: "Career Coaching",
       description: "Strategies to achieve career goals, enhance professional skills, and find job satisfaction.",
-      rate_usd: 59.99,
-      rate_inr: 4200
+      href: "/services/career-coaching",
+      color: "#5733FF"
     },
     {
-      id: 4,
-      name: "Personal Development",
+      icon: "personal-development",
+      title: "Personal Development",
       description: "Tools and insights to enhance self-awareness, build confidence, and achieve personal growth.",
-      rate_usd: 39.99,
-      rate_inr: 2800
+      href: "/services/personal-development",
+      color: "#3357FF"
     }
   ];
 
   // Map database service to our Service type
-  const mapDatabaseServiceToService = (dbService: any): Service => {
+  const mapDatabaseServiceToService = (dbService: any): ServiceCategory => {
     return {
-      id: dbService.id,
-      name: dbService.name || 'Unknown Service',
+      icon: dbService.icon || 'unknown',
+      title: dbService.name || 'Unknown Service',
       description: dbService.description || '',
-      rate_usd: dbService.rate_usd || 0,
-      rate_inr: dbService.rate_inr || 0
+      href: dbService.href || '',
+      color: dbService.color || '#000000'
     };
   };
 
@@ -168,7 +188,7 @@ export const useServicesData = (
     description: string;
     rate_usd: number;
     rate_inr: number;
-  }): Promise<Service | null> => {
+  }): Promise<ServiceCategory | null> => {
     try {
       console.log('Creating new service:', serviceData);
       
@@ -212,7 +232,7 @@ export const useServicesData = (
     }
   };
 
-  const updateService = async (id: number, updates: Partial<Service>): Promise<Service | null> => {
+  const updateService = async (id: number, updates: Partial<ServiceCategory>): Promise<ServiceCategory | null> => {
     try {
       console.log(`Updating service with ID ${id}:`, updates);
       
@@ -274,4 +294,4 @@ export const useServicesData = (
     updateService,
     deleteService
   };
-};
+}

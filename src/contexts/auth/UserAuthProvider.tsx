@@ -45,25 +45,6 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return false;
   };
   
-  // Helper function to convert non-promise functions to promise
-  const asPromise = <T,>(fn: ((id: string | number) => T | Promise<T>) | undefined): ((id: string | number) => Promise<T>) => {
-    return async (id: string | number) => {
-      if (!fn) return Promise.resolve(false as T);
-      try {
-        const result = fn(id);
-        // If the result is already a Promise, return it directly
-        if (result instanceof Promise) {
-          return result;
-        }
-        // Otherwise wrap it in a Promise
-        return Promise.resolve(result);
-      } catch (error) {
-        console.error("Error in asPromise wrapper:", error);
-        return Promise.resolve(false as T);
-      }
-    };
-  };
-  
   // Define a properly typed hasTakenServiceFrom function that handles both Promise and non-Promise cases
   const adaptedHasTakenServiceFrom = async (id: string | number): Promise<boolean> => {
     if (!auth.hasTakenServiceFrom) return Promise.resolve(false);
@@ -79,15 +60,15 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Create a compatible context value that matches the UserAuthContextType
   const userAuthValue = {
-    currentUser: auth.userProfile,
+    currentUser: auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
     signup: auth.signup || (async () => false),
     logout: auth.logout,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
-    profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateUserProfile || (async () => false),
+    profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
+    updateProfile: auth.updateProfile, // Use updateProfile instead of updateUserProfile
     updatePassword: auth.updatePassword || (async () => false),
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),

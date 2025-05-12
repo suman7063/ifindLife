@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -133,6 +134,7 @@ const TestimonialsEditor: React.FC<TestimonialsEditorProps> = ({
             variant="default" 
             onClick={() => {
               setCurrentTestimonial({
+                id: Date.now().toString(), // Generate temporary ID
                 name: "",
                 location: "",
                 rating: 5,

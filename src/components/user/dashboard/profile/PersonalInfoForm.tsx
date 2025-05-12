@@ -53,13 +53,13 @@ const PersonalInfoForm: React.FC<PersonalInfoFormProps> = ({
     setIsUpdating(true);
     
     try {
-      // Check if updateUserProfile exists in the auth context
-      if (!auth.updateUserProfile) {
+      // Use updateProfile instead of updateUserProfile
+      if (!auth.updateProfile) {
         toast.error("Profile update functionality is not available");
         return;
       }
       
-      const success = await auth.updateUserProfile({
+      const success = await auth.updateProfile({
         name: profileData.name,
         phone: profileData.phone,
         country: profileData.country,
