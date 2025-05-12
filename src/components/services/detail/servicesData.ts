@@ -2,17 +2,38 @@
 import React from 'react';
 import { Brain, HeartPulse, Leaf, MessageCircle, Sparkles } from 'lucide-react';
 
-// Service data with detailed descriptions and updated images
+// Service data with detailed descriptions and updated images - reordered and with updated color themes
 export const servicesData = [
+  {
+    id: "mindful-listening",
+    title: "Heart2Heart Listening Sessions",
+    description: "A unique space where you can express yourself freely while being deeply heard without judgment or interruption.",
+    image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
+    color: "bg-ifind-aqua",
+    gradientColor: "from-ifind-aqua/20 to-white",
+    textColor: "text-ifind-aqua",
+    buttonColor: "bg-ifind-aqua hover:bg-ifind-aqua/90",
+    icon: React.createElement(MessageCircle, { className: "h-8 w-8 text-white" }),
+    detailedDescription: "Our Heart2Heart Listening Sessions provide a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy, the focus is entirely on giving you space to express yourself without interruption or advice-giving. Our trained listeners create a safe container for you to process thoughts, feelings, and experiences aloud, which can lead to profound insights and emotional release. This practice can be particularly helpful for clarifying thoughts, processing experiences, or simply feeling acknowledged and validated.",
+    benefits: [
+      "Experience of being fully heard and acknowledged",
+      "Clarification of thoughts and feelings through verbal expression",
+      "Emotional release and reduced mental burden",
+      "Increased self-understanding without external judgment",
+      "Development of your own solutions through self-expression"
+    ],
+    duration: "45-minute sessions",
+    process: "You'll be welcomed into a comfortable, private setting where you can speak freely about whatever is on your mind. The listener will maintain attentive, supportive presence without interrupting or offering advice unless specifically requested."
+  },
   {
     id: "therapy-sessions",
     title: "Therapy Sessions",
     description: "Professional therapy sessions to help you navigate life's challenges, manage mental health concerns, and enhance personal growth.",
     image: "/lovable-uploads/58321caf-3b5b-4a9d-91a1-44514ae2000b.png",
-    color: "bg-ifind-teal",
-    gradientColor: "from-ifind-teal/20 to-white",
-    textColor: "text-ifind-teal",
-    buttonColor: "bg-ifind-teal hover:bg-ifind-teal/90",
+    color: "bg-ifind-purple",
+    gradientColor: "from-ifind-purple/20 to-white",
+    textColor: "text-ifind-purple",
+    buttonColor: "bg-ifind-purple hover:bg-ifind-purple/90",
     icon: React.createElement(HeartPulse, { className: "h-8 w-8 text-white" }),
     detailedDescription: "Our therapy sessions provide a safe, confidential space where you can explore your thoughts and feelings with a licensed professional. Using evidence-based approaches tailored to your unique needs, our therapists help you develop coping strategies, process difficult emotions, and work toward meaningful change. Sessions can address various concerns including anxiety, depression, relationship issues, trauma, and personal growth.",
     benefits: [
@@ -30,10 +51,10 @@ export const servicesData = [
     title: "Guided Meditations",
     description: "Expertly led meditation sessions to reduce stress, increase mindfulness, and cultivate inner peace and mental clarity.",
     image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    color: "bg-ifind-purple",
-    gradientColor: "from-ifind-purple/20 to-white",
-    textColor: "text-ifind-purple",
-    buttonColor: "bg-ifind-purple hover:bg-ifind-purple/90",
+    color: "bg-gray-400",
+    gradientColor: "from-gray-300/20 to-white",
+    textColor: "text-gray-600",
+    buttonColor: "bg-gray-500 hover:bg-gray-600",
     icon: React.createElement(Brain, { className: "h-8 w-8 text-white" }),
     detailedDescription: "Our guided meditation sessions help you cultivate mindfulness, reduce stress, and enhance overall well-being. Led by experienced meditation instructors, these sessions combine breathing techniques, visualization, and mindfulness practices to quiet the mind and bring awareness to the present moment. Perfect for both beginners and experienced practitioners, our guided meditations can be customized to address specific concerns such as stress, sleep issues, or emotional regulation.",
     benefits: [
@@ -47,31 +68,10 @@ export const servicesData = [
     process: "Sessions begin with a brief introduction and intention setting, followed by guided meditation practice. Each session concludes with time for reflection and integration of the experience."
   },
   {
-    id: "mindful-listening",
-    title: "Heart2Heart Listening Sessions",
-    description: "A unique space where you can express yourself freely while being deeply heard without judgment or interruption.",
-    image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
-    color: "bg-gray-400",
-    gradientColor: "from-gray-300/20 to-white",
-    textColor: "text-gray-600",
-    buttonColor: "bg-gray-500 hover:bg-gray-600",
-    icon: React.createElement(MessageCircle, { className: "h-8 w-8 text-white" }),
-    detailedDescription: "Our Heart2Heart Listening Sessions provide a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy, the focus is entirely on giving you space to express yourself without interruption or advice-giving. Our trained listeners create a safe container for you to process thoughts, feelings, and experiences aloud, which can lead to profound insights and emotional release. This practice can be particularly helpful for clarifying thoughts, processing experiences, or simply feeling acknowledged and validated.",
-    benefits: [
-      "Experience of being fully heard and acknowledged",
-      "Clarification of thoughts and feelings through verbal expression",
-      "Emotional release and reduced mental burden",
-      "Increased self-understanding without external judgment",
-      "Development of your own solutions through self-expression"
-    ],
-    duration: "45-minute sessions",
-    process: "You'll be welcomed into a comfortable, private setting where you can speak freely about whatever is on your mind. The listener will maintain attentive, supportive presence without interrupting or offering advice unless specifically requested."
-  },
-  {
     id: "offline-retreats",
     title: "Offline Retreats",
     description: "Immersive wellness experiences in nature to disconnect from technology and reconnect with yourself and others.",
-    image: "/lovable-uploads/6c427c55-7a38-4dad-8c60-cc782cbc5bd7.png", // Replaced with new image
+    image: "/lovable-uploads/6c427c55-7a38-4dad-8c60-cc782cbc5bd7.png",
     color: "bg-amber-400",
     gradientColor: "from-amber-300/20 to-white",
     textColor: "text-amber-700",

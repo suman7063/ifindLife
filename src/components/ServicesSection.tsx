@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import FeaturedPrograms from './services/FeaturedPrograms';
 import SessionDetailDialog from './services/SessionDetailDialog';
-import { Circle, MessageCircle, BookOpen } from 'lucide-react';
+import { Circle, MessageCircle, Brain, HeartPulse, Leaf, Sparkles } from 'lucide-react';
 
 const ServicesSection = () => {
   const [selectedCategory, setSelectedCategory] = useState<{
@@ -17,34 +17,34 @@ const ServicesSection = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Featured programs with circular icons and descriptions
+  // Reordered featured programs with updated colors
   const featuredPrograms = [
     {
       id: 1,
-      title: "QuickEase Programs",
-      description: "Short-term solutions for immediate stress and anxiety relief",
-      icon: <Circle className="h-12 w-12 text-ifind-aqua" />,
-      href: "/programs-for-wellness-seekers?category=quick-ease",
+      title: "Heart2Heart Listening Sessions",
+      description: "A unique space where you can express yourself freely while being deeply heard without judgment",
+      icon: <MessageCircle className="h-12 w-12 text-ifind-aqua" />,
+      href: "/services/mindful-listening",
       accentColor: "border-ifind-aqua",
       iconBgColor: "bg-ifind-aqua/10"
     },
     {
       id: 2,
-      title: "Emotional Resilience",
-      description: "Build psychological strength to handle life's challenges",
-      icon: <MessageCircle className="h-12 w-12 text-ifind-purple" />,
-      href: "/programs-for-wellness-seekers?category=resilience-building",
+      title: "Therapy Sessions",
+      description: "Professional sessions to help you navigate life's challenges and enhance personal growth",
+      icon: <HeartPulse className="h-12 w-12 text-ifind-purple" />,
+      href: "/services/therapy-sessions",
       accentColor: "border-ifind-purple",
       iconBgColor: "bg-ifind-purple/10"
     },
     {
       id: 3,
-      title: "Super Human Life",
-      description: "Achieve your highest potential through mental optimization",
-      icon: <BookOpen className="h-12 w-12 text-ifind-teal" />,
-      href: "/programs-for-wellness-seekers?category=super-human",
-      accentColor: "border-ifind-teal",
-      iconBgColor: "bg-ifind-teal/10"
+      title: "Guided Meditations",
+      description: "Expertly led sessions to reduce stress, increase mindfulness, and cultivate inner peace",
+      icon: <Brain className="h-12 w-12 text-gray-500" />,
+      href: "/services/guided-meditations",
+      accentColor: "border-gray-400",
+      iconBgColor: "bg-gray-200/50"
     }
   ];
 
