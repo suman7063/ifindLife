@@ -37,8 +37,21 @@ export function useServicesData(
             const parsedContent = JSON.parse(savedContent);
             if (parsedContent.services && parsedContent.services.length > 0) {
               console.log('Services found in localStorage:', parsedContent.services.length);
-              setServices(parsedContent.services);
-              updateCallback(parsedContent.services);
+              
+              // Convert the localStorage data to match ServiceCategory type
+              const formattedServices: ServiceCategory[] = parsedContent.services.map((service: any) => ({
+                id: ensureStringId(service.id || ''),
+                name: service.title || '',
+                items: service.items || [],
+                title: service.title,
+                description: service.description || '',
+                href: service.href || '',
+                icon: service.icon || DEFAULT_ICON,
+                color: service.color || DEFAULT_COLOR
+              }));
+              
+              setServices(formattedServices);
+              updateCallback(formattedServices);
               setLoading(false);
               return;
             }
@@ -86,9 +99,21 @@ export function useServicesData(
             setFetchAttempts(0); // Reset attempts on success
           } else {
             console.log('No services found in Supabase, using default data');
-            // If no data in Supabase either, use default data
-            setServices(defaultServiceData);
-            updateCallback(defaultServiceData);
+            
+            // Format default data to match ServiceCategory type
+            const formattedDefaultData: ServiceCategory[] = defaultServiceData.map((service: any) => ({
+              id: ensureStringId(service.id || ''),
+              name: service.title || '',
+              items: service.items || [],
+              title: service.title,
+              description: service.description || '',
+              href: service.href || '',
+              icon: service.icon || DEFAULT_ICON,
+              color: service.color || DEFAULT_COLOR
+            }));
+            
+            setServices(formattedDefaultData);
+            updateCallback(formattedDefaultData);
           }
         } catch (supabaseError) {
           console.error('Supabase services fetch error:', supabaseError);
@@ -96,8 +121,21 @@ export function useServicesData(
           // If we've reached max attempts, use default data
           if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
             console.warn(`Max fetch attempts (${MAX_FETCH_ATTEMPTS}) reached, using default data`);
-            setServices(defaultServiceData);
-            updateCallback(defaultServiceData);
+            
+            // Format default data to match ServiceCategory type
+            const formattedDefaultData: ServiceCategory[] = defaultServiceData.map((service: any) => ({
+              id: ensureStringId(service.id || ''),
+              name: service.title || '',
+              items: service.items || [],
+              title: service.title,
+              description: service.description || '',
+              href: service.href || '',
+              icon: service.icon || DEFAULT_ICON,
+              color: service.color || DEFAULT_COLOR
+            }));
+            
+            setServices(formattedDefaultData);
+            updateCallback(formattedDefaultData);
             toast.error('Could not load services from database. Using default data.');
           } else {
             // Increment fetch attempts for next try
@@ -122,8 +160,21 @@ export function useServicesData(
         } else {
           // Final fallback to default data on error after all retries
           console.warn('All retry attempts failed, using default data');
-          setServices(defaultServiceData);
-          updateCallback(defaultServiceData);
+          
+          // Format default data to match ServiceCategory type
+          const formattedDefaultData: ServiceCategory[] = defaultServiceData.map((service: any) => ({
+            id: ensureStringId(service.id || ''),
+            name: service.title || '',
+            items: service.items || [],
+            title: service.title,
+            description: service.description || '',
+            href: service.href || '',
+            icon: service.icon || DEFAULT_ICON,
+            color: service.color || DEFAULT_COLOR
+          }));
+          
+          setServices(formattedDefaultData);
+          updateCallback(formattedDefaultData);
           toast.error('Error loading services. Using default settings.');
         }
       } finally {

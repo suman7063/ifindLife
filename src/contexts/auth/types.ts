@@ -18,10 +18,18 @@ export interface UserProfile {
   referral_code?: string;
   created_at?: string;
   updated_at?: string;
+  // Add missing fields for profileFetcher.ts
+  favorite_experts?: number[];
+  enrolled_courses?: any[];
+  reviews?: any[];
+  reports?: any[];
+  transactions?: any[];
+  referrals?: any[];
+  profile_picture?: string;
 }
 
 export interface ExpertProfile {
-  id: number | string;
+  id: string;  // Changed to string only for consistency
   name: string;
   email: string;
   auth_id?: string;
