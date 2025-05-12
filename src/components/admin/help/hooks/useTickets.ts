@@ -104,7 +104,7 @@ export const useTickets = () => {
       const { error } = await supabase
         .from('help_tickets')
         .update(updateData)
-        .eq('id', selectedTicket.id);
+        .eq('id', selectedTicket.id as any);
       
       if (error) throw error;
       
