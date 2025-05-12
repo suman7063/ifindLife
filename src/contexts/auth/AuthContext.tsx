@@ -11,7 +11,7 @@ import { useExpertInteractions } from './hooks/useExpertInteractions';
 // Import types
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus } from './types';
 import { supabase } from '@/lib/supabase';
-import { normalizeId, ensureStringId } from '@/utils/supabaseUtils';
+import { ensureStringId } from '@/utils/idConverters';
 
 // Define AuthContextType interface
 export interface AuthContextType {
@@ -26,6 +26,7 @@ export interface AuthContextType {
   role: UserRole;
   expertProfile: ExpertProfile | null;
   walletBalance: number;
+  sessionType?: 'none' | 'user' | 'expert' | 'dual';
   
   // Authentication methods
   login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
@@ -89,6 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role,
     expertProfile,
     walletBalance,
+    sessionType
   } = authState;
   
   // Auth actions
@@ -280,6 +282,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role,
     expertProfile,
     walletBalance,
+    sessionType,
     
     // Auth methods
     login,

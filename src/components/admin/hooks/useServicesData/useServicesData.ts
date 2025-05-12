@@ -1,10 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ServiceCategory, ServiceItem } from './types';
+import { ServiceCategory, ServiceItem, DbService } from './types';
 import { toast } from 'sonner';
 import { categoryData as defaultServiceData } from '@/data/initialAdminData';
 import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
+import { ensureStringId } from '@/utils/idConverters';
 
 // Define default icon and color for services that don't have them
 const DEFAULT_ICON = '🧠';
@@ -68,8 +69,8 @@ export function useServicesData(
           
           if (data && data.length > 0) {
             // Map Supabase data to the expected format, providing defaults for missing fields
-            const formattedServices: ServiceCategory[] = data.map((service: any) => ({
-              id: service.id.toString(),
+            const formattedServices: ServiceCategory[] = data.map((service: DbService) => ({
+              id: ensureStringId(service.id),
               name: service.name,
               items: [], // Required property
               title: service.name,
