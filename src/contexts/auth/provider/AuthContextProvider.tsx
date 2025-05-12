@@ -35,15 +35,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionType
   } = authState;
   
+  // Create a wrapper function that matches the expected signature (no parameters)
+  // but internally calls fetchUserData() with no arguments
+  const wrappedFetchUserData = async (): Promise<void> => {
+    return fetchUserData();
+  };
+  
   // Auth actions with correct param types
   const { 
     login,
     signup,
     logout,
     actionLoading
-  } = useAuthActions(fetchUserData);
+  } = useAuthActions(wrappedFetchUserData);
   
-  // Profile functions with correct param types - fix the function signature by passing null values
+  // Profile functions with correct param types
   const {
     updateProfile: updateProfileFn,
     getUserDisplayName,
