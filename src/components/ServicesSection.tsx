@@ -23,7 +23,7 @@ const ServicesSection = () => {
       title: "QuickEase Programs",
       description: "Quick solutions for Immediate stress and anxiety relief",
       icon: <Brain className="h-12 w-12 text-ifind-aqua" />,
-      href: "/services/quick-ease",
+      href: "/programs-for-wellness-seekers?category=quick-ease",
       accentColor: "border-ifind-aqua",
       iconBgColor: "bg-ifind-aqua/10"
     },
@@ -32,7 +32,7 @@ const ServicesSection = () => {
       title: "Resilience Building",
       description: "Build Mental & Emotional strength to handle life's challenges",
       icon: <MessageCircle className="h-12 w-12 text-ifind-purple" />,
-      href: "/services/resilience-building",
+      href: "/programs-for-wellness-seekers?category=resilience-building",
       accentColor: "border-ifind-purple",
       iconBgColor: "bg-ifind-purple/10"
     },
@@ -41,7 +41,7 @@ const ServicesSection = () => {
       title: "Super Human Life",
       description: "Unleash your true potential to live a life beyond traps and matrix",
       icon: <HeartPulse className="h-12 w-12 text-ifind-teal" />,
-      href: "/services/super-human",
+      href: "/programs-for-wellness-seekers?category=super-human",
       accentColor: "border-ifind-teal",
       iconBgColor: "bg-ifind-teal/10"
     }

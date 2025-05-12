@@ -17,19 +17,19 @@ const CTASection = () => {
             <Link to="/mental-health-assessment">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <Heart className="mr-2 h-5 w-5" />
-                Speak your heart
+                Take an Assessment
               </Button>
             </Link>
             <Link to="/experts">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <Search className="mr-2 h-5 w-5" />
-                Get guidance
+                Find an Expert
               </Button>
             </Link>
-            <Link to="/services">
+            <Link to="/programs-for-wellness-seekers">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
-                Take a test
+                Explore Programs
               </Button>
             </Link>
           </div>

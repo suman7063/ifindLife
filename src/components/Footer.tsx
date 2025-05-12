@@ -1,11 +1,19 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, Heart, Award, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NewsletterSubscription from './newsletter/NewsletterSubscription';
 
 const Footer = () => {
+  const navigate = useNavigate();
+  
+  // Handle navigation with scroll to top
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
   return (
     <footer className="bg-ifind-charcoal text-ifind-offwhite pt-16 pb-8">
       <div className="container">
@@ -41,34 +49,52 @@ const Footer = () => {
             <h4 className="font-medium text-lg mb-4">Services</h4>
             <ul className="space-y-3">
               <li>
-                <Link to="/services" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors font-medium">
+                <button 
+                  onClick={() => handleNavigation('/services')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors font-medium"
+                >
                   All Services
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/services/mindful-listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/services/mindful-listening')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Heart2Heart Listening Sessions
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/services/therapy-sessions" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/services/therapy-sessions')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Therapy Sessions
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/services/guided-meditations" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/services/guided-meditations')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Guided Meditations
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/services/offline-retreats" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/services/offline-retreats')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Offline Retreats
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/services/life-coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/services/life-coaching')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Life Coaching
-                </Link>
+                </button>
               </li>
             </ul>
           </div>
@@ -77,29 +103,44 @@ const Footer = () => {
             <h4 className="font-medium text-lg mb-4">Support</h4>
             <ul className="space-y-3">
               <li>
-                <Link to="/about" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/about')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   About Us
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/privacy" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/privacy')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Privacy Policy
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/terms" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/terms')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Terms of Service
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/faq" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/faq')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   FAQ
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/contact" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                <button 
+                  onClick={() => handleNavigation('/contact')} 
+                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
+                >
                   Contact Us
-                </Link>
+                </button>
               </li>
             </ul>
           </div>

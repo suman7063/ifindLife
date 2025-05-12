@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   NavigationMenuItem,
   NavigationMenuTrigger,
@@ -9,6 +9,14 @@ import {
 } from "@/components/ui/navigation-menu";
 
 const ServicesMenu = () => {
+  const navigate = useNavigate();
+  
+  // Handle navigation with scroll to top
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Services</NavigationMenuTrigger>
@@ -16,62 +24,62 @@ const ServicesMenu = () => {
         <ul className="grid w-full gap-1 p-2">
           <li>
             <NavigationMenuLink asChild>
-              <Link 
-                to="/services" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium"
+              <button 
+                onClick={() => handleNavigation('/services')}
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium text-left"
               >
                 All Services
-              </Link>
+              </button>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <Link 
-                to="/services/mindful-listening" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+              <button 
+                onClick={() => handleNavigation('/services/mindful-listening')}
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Heart2Heart Listening Sessions
-              </Link>
+              </button>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <Link 
-                to="/services/therapy-sessions" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+              <button 
+                onClick={() => handleNavigation('/services/therapy-sessions')}
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Therapy Sessions
-              </Link>
+              </button>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <Link 
-                to="/services/guided-meditations" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+              <button
+                onClick={() => handleNavigation('/services/guided-meditations')}
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Guided Meditations
-              </Link>
+              </button>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <Link 
-                to="/services/offline-retreats" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+              <button
+                onClick={() => handleNavigation('/services/offline-retreats')}
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Offline Retreats
-              </Link>
+              </button>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <Link 
-                to="/services/life-coaching" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+              <button
+                onClick={() => handleNavigation('/services/life-coaching')}
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Life Coaching
-              </Link>
+              </button>
             </NavigationMenuLink>
           </li>
         </ul>
