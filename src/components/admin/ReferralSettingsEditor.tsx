@@ -40,7 +40,15 @@ const ReferralSettingsEditor: React.FC = () => {
           console.error('Error fetching referral settings:', error);
           toast.error('Failed to load referral settings');
         } else if (data) {
-          setSettings(data);
+          // Safely cast data to our expected type
+          const safeData: ReferralSettings = {
+            id: data.id || '',
+            referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : 10,
+            referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : 5,
+            active: data.active === true,
+            description: data.description || 'Invite friends and earn rewards when they make their first purchase.'
+          };
+          setSettings(safeData);
         }
       } catch (error) {
         console.error('Error fetching referral settings:', error);
@@ -85,7 +93,7 @@ const ReferralSettingsEditor: React.FC = () => {
     setIsSaving(true);
     try {
       const updatedSettings = {
-        id: settings.id || undefined,
+        id: settings.id,
         referrer_reward: settings.referrer_reward,
         referred_reward: settings.referred_reward,
         active: settings.active,
@@ -105,7 +113,16 @@ const ReferralSettingsEditor: React.FC = () => {
       } else {
         toast.success('Referral settings saved successfully');
         if (data) {
-          setSettings(data);
+          // Safely update the state
+          const safeData: ReferralSettings = {
+            id: data.id || settings.id,
+            referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : settings.referrer_reward,
+            referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : settings.referred_reward,
+            active: data.active === true, 
+            description: data.description || settings.description,
+            updated_at: data.updated_at || new Date().toISOString()
+          };
+          setSettings(safeData);
         }
       }
     } catch (error) {

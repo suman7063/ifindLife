@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -57,10 +56,10 @@ export type Tables = Database['public']['Tables'];
 type TableNames = keyof Database['public']['Tables'] | string;
 
 // Enhanced from function with better error handling and retry mechanism
-export function from(tableName: TableNames) {
+export function from<T = any>(tableName: TableNames) {
   try {
     // Using type assertion to prevent TypeScript errors while keeping functionality
-    return supabase.from(tableName as any);
+    return supabase.from(tableName as any) as any;
   } catch (error) {
     console.error(`Error accessing table '${tableName}':`, error);
     throw error;

@@ -34,16 +34,16 @@ const TestimonialsSection = () => {
           throw error;
         }
         
-        if (data && data.length > 0) {
+        if (data && Array.isArray(data) && data.length > 0) {
           // Convert from database format to our application format
           const formattedTestimonials = data.map(item => ({
-            id: item.id,
-            name: item.name,
-            location: item.location,
-            rating: item.rating,
-            text: item.text,
-            date: item.date,
-            imageUrl: item.image_url
+            id: item.id?.toString() || '',
+            name: item.name || '',
+            location: item.location || '',
+            rating: item.rating || 0,
+            text: item.text || '',
+            date: item.date || '',
+            imageUrl: item.image_url || ''
           }));
           
           setTestimonials(formattedTestimonials);

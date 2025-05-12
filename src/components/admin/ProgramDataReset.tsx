@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +24,7 @@ const ProgramDataReset = () => {
         const { error } = await supabase
           .from('programs')
           .delete()
-          .neq('id', 0); // Delete all rows
+          .filter('id', 'neq', '0'); // Delete all rows
           
         if (!error) {
           console.log("Successfully deleted programs from Supabase");

@@ -31,7 +31,22 @@ const ContactSubmissionsTable = () => {
         throw error;
       }
 
-      setSubmissions(data as ContactSubmission[] || []);
+      // Safely type the data
+      if (data) {
+        const typedData = data.map(item => ({
+          id: typeof item.id === 'number' ? item.id : 0,
+          name: item.name || '',
+          email: item.email || '',
+          subject: item.subject || '',
+          message: item.message || '',
+          created_at: item.created_at || new Date().toISOString(),
+          is_read: !!item.is_read
+        })) as ContactSubmission[];
+        
+        setSubmissions(typedData);
+      } else {
+        setSubmissions([]);
+      }
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
       toast.error('Failed to load contact submissions');
@@ -45,7 +60,7 @@ const ContactSubmissionsTable = () => {
       const { error } = await supabase
         .from('contact_submissions')
         .update({ is_read: true })
-        .eq('id', id);
+        .eq('id', id.toString());
 
       if (error) {
         throw error;

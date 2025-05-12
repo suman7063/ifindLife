@@ -1,51 +1,62 @@
 
-import { Session, User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 
-// Define user roles
+// Define user role and session types
 export type UserRole = 'user' | 'expert' | 'admin' | null;
+export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
-// Define user profile structure
+// Define user profile types
 export interface UserProfile {
   id: string;
-  name?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  country?: string | null;
-  city?: string | null;
-  wallet_balance?: number | null;
-  profile_picture?: string | null;
-  currency?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  [key: string]: any; // Allow additional properties
+  name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  currency?: string;
+  profile_picture?: string;
+  wallet_balance?: number;
+  created_at?: string;
+  referral_code?: string;
+  referred_by?: string;
+  referral_link?: string;
+  
+  // Related data collections
+  favorite_experts?: string[];
+  favorite_programs?: number[];
+  enrolled_courses?: any[];
+  transactions?: any[];
+  reviews?: any[];
+  reports?: any[];
+  referrals?: any[];
 }
 
-// Define expert profile structure
+// Define expert profile type with consistent ID as string
 export interface ExpertProfile {
-  id: string; // Change to string only to fix type issues
-  auth_id?: string | null;
+  id: string; // Always use string type for IDs
+  auth_id?: string;
   name: string;
   email: string;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  specialization?: string | null;
-  experience?: string | null;
-  bio?: string | null;
-  certificate_urls?: string[] | null;
-  profile_picture?: string | null;
-  status: 'pending' | 'approved' | 'disapproved';
-  average_rating?: number | null;
-  reviews_count?: number | null;
-  selected_services?: number[] | null;
-  verified?: boolean | null;
-  created_at?: string | null;
-  [key: string]: any; // Allow additional properties
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  bio?: string;
+  certificate_urls?: string[];
+  profile_picture?: string;
+  selected_services?: number[];
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
+  status?: 'pending' | 'approved' | 'disapproved';
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Define authentication state
+// Define auth state type
 export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -54,10 +65,11 @@ export interface AuthState {
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
   role: UserRole;
-  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  sessionType: SessionType;
+  expertFetchError?: string | null;
 }
 
-// Define initial authentication state
+// Define initial auth state
 export const initialAuthState: AuthState = {
   isAuthenticated: false,
   isLoading: true,
@@ -67,4 +79,5 @@ export const initialAuthState: AuthState = {
   expertProfile: null,
   role: null,
   sessionType: 'none',
+  expertFetchError: null
 };

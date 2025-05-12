@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase, from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,16 +45,15 @@ const StayInTouchSection = () => {
     setIsSubmitting(true);
     try {
       // Store contact form submission in Supabase
-      const { error } = await from('contact_submissions')
-        .insert([
-          {
-            name: data.name,
-            email: data.email, 
-            subject: data.subject,
-            message: data.message,
-            created_at: new Date().toISOString(),
-          },
-        ]);
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert({
+          name: data.name,
+          email: data.email, 
+          subject: data.subject,
+          message: data.message,
+          created_at: new Date().toISOString(),
+        });
 
       if (error) {
         console.error('Error submitting form:', error);
