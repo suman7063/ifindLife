@@ -1,8 +1,8 @@
-
 import { useState, useCallback } from 'react';
 import { Message } from '@/types/appointments';
 import { MessagingUser, UseMessagesReturn } from './types';
 import { messagingRepository } from './messagingApi';
+import { normalizeId } from '@/utils/supabaseUtils';
 
 export function useMessages(currentUser: MessagingUser): UseMessagesReturn {
   const [messages, setMessages] = useState<Message[]>([]);

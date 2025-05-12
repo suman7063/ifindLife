@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Testimonial } from './types';
 import { fetchTestimonialsFromSupabase } from './api';
-import { DEFAULT_TESTIMONIALS } from './defaults';
+import { DEFAULT_TESTIMONIALS, getDefaultTestimonials } from './defaults';
 
 export const useTestimonialsData = (
   initialTestimonials: Testimonial[] = [],
@@ -42,6 +42,30 @@ export const useTestimonialsData = (
     }
   };
 
+  // Additional utility functions for testimonial management
+  const addTestimonial = async (testimonial: Testimonial) => {
+    setTestimonials(prev => [...prev, testimonial]);
+    updateCallback([...testimonials, testimonial]);
+  };
+
+  const updateTestimonial = async (id: string, updatedTestimonial: Partial<Testimonial>) => {
+    setTestimonials(prev => 
+      prev.map(t => t.id === id ? { ...t, ...updatedTestimonial } : t)
+    );
+    updateCallback(testimonials.map(t => t.id === id ? { ...t, ...updatedTestimonial } : t));
+  };
+
+  const deleteTestimonial = async (id: string) => {
+    setTestimonials(prev => prev.filter(t => t.id !== id));
+    updateCallback(testimonials.filter(t => t.id !== id));
+  };
+
+  const seedDefaultTestimonials = () => {
+    const defaultData = getDefaultTestimonials();
+    setTestimonials(defaultData);
+    updateCallback(defaultData);
+  };
+
   // Load testimonials on component mount if needed
   useEffect(() => {
     // If we already have testimonials data, don't fetch again
@@ -57,6 +81,10 @@ export const useTestimonialsData = (
     setTestimonials,
     loading,
     error,
-    fetchTestimonials
+    fetchTestimonials,
+    addTestimonial,
+    updateTestimonial,
+    deleteTestimonial,
+    seedDefaultTestimonials
   };
 };

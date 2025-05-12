@@ -40,3 +40,33 @@ export function safeSingleRecord<T, R>(data: T | null | undefined, transformer: 
 export function dbTypeConverter<T extends Record<string, any>>(record: any): T {
   return record as unknown as T;
 }
+
+/**
+ * Ensure ID values are consistent strings
+ * Some database operations might return IDs as numbers or strings
+ * @param id The ID value to normalize
+ * @returns The ID as a string
+ */
+export function normalizeId(id: string | number): string {
+  return String(id);
+}
+
+/**
+ * Creates a lightweight type-safe Supabase response handler
+ * @param data The data returned from a Supabase query
+ * @param error The error returned from a Supabase query
+ * @param fallback Optional fallback value if data is null/undefined
+ * @returns The data or fallback value
+ */
+export function handleSupabaseResponse<T>(
+  data: T | null, 
+  error: any, 
+  fallback: T | null = null
+): T | null {
+  if (error) {
+    console.error('Supabase error:', error);
+    return fallback;
+  }
+  
+  return data || fallback;
+}

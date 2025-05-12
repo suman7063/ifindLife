@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/types/supabase/expert';
@@ -29,6 +30,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
 import { CheckCircle, XCircle, User, CalendarClock, BriefcaseBusiness } from 'lucide-react';
+import { dbTypeConverter } from '@/utils/supabaseUtils';
 
 // Define a more compatible expert profile type that matches both sources
 interface ExpertProfileWithStatus extends Omit<ExpertProfile, 'status'> {
@@ -75,7 +77,7 @@ const ExpertApprovals = () => {
           if (fallbackData && fallbackData.length > 0) {
             // Convert to expected format - adding status field
             data = fallbackData.map(expert => ({
-              ...expert,
+              ...dbTypeConverter<any>(expert),
               status: 'pending', // Assume pending since it's in the experts table but not approved yet
               auth_id: null,     // These might be empty in fallback data
               verified: false    // These might be empty in fallback data
@@ -83,6 +85,9 @@ const ExpertApprovals = () => {
           } else {
             data = [];
           }
+        } else if (data) {
+          // Convert the expert_accounts data to our expected format
+          data = data.map(expert => dbTypeConverter<ExpertProfileWithStatus>(expert));
         }
         
         console.log('Expert applications found:', data?.length || 0);
@@ -121,7 +126,7 @@ const ExpertApprovals = () => {
       const { error: expertAccountsError } = await supabase
         .from('expert_accounts')
         .update({ status: selectedStatus })
-        .eq('id', selectedExpert.id);
+        .eq('id', String(selectedExpert.id));
         
       if (!expertAccountsError) {
         updateSuccess = true;
@@ -150,7 +155,7 @@ const ExpertApprovals = () => {
           const { error: expertUpdateError } = await supabase
             .from('experts')
             .update(updateData)
-            .eq('id', selectedExpert.id);
+            .eq('id', String(selectedExpert.id));
             
           if (!expertUpdateError) {
             updateSuccess = true;

@@ -1,204 +1,143 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
-import { useAppointmentManagement } from '@/hooks/useAppointmentManagement';
-import type { Availability, Appointment, TimeSlot } from '@/types/appointments';
+import React, { createContext, useState, useEffect, useCallback, useContext } from 'react';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { normalizeId } from '@/utils/supabaseUtils';
 
-interface SchedulingContextType {
-  // Data
-  availabilities: Availability[];
-  appointments: Appointment[];
-  
-  // State
-  loading: boolean;
-  error: string | null;
-  
-  // Expert actions
-  createAvailability: (
-    startDate: string,
-    endDate: string,
-    availabilityType: 'date_range' | 'recurring',
-    timeSlots: Omit<TimeSlot, 'id' | 'availability_id'>[]
-  ) => Promise<{ availability: string } | null>;
-  
-  deleteAvailability: (availabilityId: string) => Promise<boolean>;
-  
-  // User actions
-  bookAppointment: (
-    expertId: string,
-    date: string,
-    startTime: string,
-    endTime: string,
-    timeSlotId?: string,
-    notes?: string
-  ) => Promise<string | null>;
-  
-  // Shared actions
-  updateAppointmentStatus: (appointmentId: string, status: Appointment['status']) => Promise<any>;
-  
-  // Refresh functions
-  refreshAvailabilities: () => Promise<Availability[]>;
-  refreshAppointments: () => Promise<Appointment[]>;
-  
-  // Utility functions
-  isTimeSlotAvailable: (timeSlotId: string) => boolean;
-  getUpcomingAppointments: () => Appointment[];
+// Define types for the context
+interface TimeSlot {
+  id: string;
+  start_time: string;
+  end_time: string;
+  is_available: boolean;
 }
 
+interface Appointment {
+  id: string;
+  expert_id: string;
+  user_id: string;
+  time_slot_id: string;
+  date: string;
+}
+
+interface SchedulingContextType {
+  availableTimeSlots: TimeSlot[];
+  appointments: Appointment[];
+  fetchExpertAvailability: (expertId: string | number, date: string) => Promise<void>;
+  bookAppointment: (expertId: string | number, timeSlotId: string, date: string) => Promise<void>;
+  cancelAppointment: (appointmentId: string) => Promise<void>;
+}
+
+// Create the context
 const SchedulingContext = createContext<SchedulingContextType | undefined>(undefined);
 
-export const SchedulingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, userProfile, expertProfile, isAuthenticated } = useAuth();
-  const availabilityManager = useAvailabilityManagement(userProfile);
-  const appointmentManager = useAppointmentManagement(userProfile);
-  
-  const [initialized, setInitialized] = useState(false);
-  
-  // Initialize data
-  useEffect(() => {
-    const initData = async () => {
-      if (isAuthenticated && user?.id) {
-        if (expertProfile) {
-          // Load expert availabilities and appointments
-          await availabilityManager.fetchAvailabilities(expertProfile.id);
-          await appointmentManager.fetchAppointments(undefined, expertProfile.id);
-        } else if (userProfile) {
-          // Load user appointments
-          await appointmentManager.fetchAppointments(userProfile.id);
-        }
-        setInitialized(true);
+// Create the provider component
+interface SchedulingProviderProps {
+  children: React.ReactNode;
+}
+
+export const SchedulingProvider: React.FC<SchedulingProviderProps> = ({ children }) => {
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+
+  // Update the functions that have type issues with the ID
+  const fetchExpertAvailability = async (expertId: string | number, date: string) => {
+    // Convert expert ID to string
+    const expertIdStr = normalizeId(expertId);
+    
+    try {
+      const { data, error } = await supabase
+        .from('expert_availability')
+        .select('*')
+        .eq('expert_id', expertIdStr)
+        .eq('date', date);
+
+      if (error) {
+        console.error('Error fetching expert availability:', error);
+        toast.error('Failed to fetch expert availability');
+        return;
       }
-    };
-    
-    initData();
-  }, [isAuthenticated, user?.id, expertProfile, userProfile]);
-  
-  // Expert actions
-  const createAvailability = async (
-    startDate: string,
-    endDate: string,
-    availabilityType: 'date_range' | 'recurring',
-    timeSlots: Omit<TimeSlot, 'id' | 'availability_id'>[]
-  ) => {
-    if (!expertProfile) {
-      toast.error('You must be logged in as an expert to create availability');
-      return null;
-    }
-    
-    return availabilityManager.createAvailability(
-      expertProfile.id,
-      startDate,
-      endDate,
-      availabilityType,
-      timeSlots
-    );
-  };
-  
-  const deleteAvailability = async (availabilityId: string) => {
-    if (!expertProfile) {
-      toast.error('You must be logged in as an expert to delete availability');
-      return false;
-    }
-    
-    return availabilityManager.deleteAvailability(availabilityId);
-  };
-  
-  // User actions
-  const bookAppointment = async (
-    expertId: string,
-    date: string,
-    startTime: string,
-    endTime: string,
-    timeSlotId?: string,
-    notes?: string
-  ) => {
-    if (!userProfile) {
-      toast.error('You must be logged in to book an appointment');
-      return null;
-    }
-    
-    return appointmentManager.bookAppointment(
-      expertId,
-      userProfile.id,
-      date,
-      startTime,
-      endTime,
-      timeSlotId,
-      notes
-    );
-  };
-  
-  // Shared actions
-  const updateAppointmentStatus = async (appointmentId: string, status: Appointment['status']) => {
-    return appointmentManager.updateAppointmentStatus(appointmentId, status);
-  };
-  
-  // Refresh functions
-  const refreshAvailabilities = async () => {
-    if (!expertProfile) return [];
-    return availabilityManager.fetchAvailabilities(expertProfile.id);
-  };
-  
-  const refreshAppointments = async () => {
-    if (!userProfile) return [];
-    
-    if (expertProfile) {
-      return appointmentManager.fetchAppointments(undefined, expertProfile.id);
-    } else {
-      return appointmentManager.fetchAppointments(userProfile.id);
+
+      if (data) {
+        setAvailableTimeSlots(data as TimeSlot[]);
+      } else {
+        setAvailableTimeSlots([]);
+      }
+    } catch (error) {
+      console.error('Error fetching expert availability:', error);
+      toast.error('Failed to fetch expert availability');
     }
   };
-  
-  // Utility functions
-  const isTimeSlotAvailable = (timeSlotId: string) => {
-    const appointments = appointmentManager.appointments;
-    return !appointments.some(apt => apt.time_slot_id === timeSlotId);
+
+  const bookAppointment = async (expertId: string | number, timeSlotId: string, date: string) => {
+    // Convert expert ID to string
+    const expertIdStr = normalizeId(expertId);
+    
+    try {
+      // Get the current user ID
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('You must be logged in to book an appointment.');
+        return;
+      }
+
+      // Insert the new appointment into the database
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert({
+          expert_id: expertIdStr,
+          user_id: user.id,
+          time_slot_id: timeSlotId,
+          date: date,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error booking appointment:', error);
+        toast.error('Failed to book appointment');
+        return;
+      }
+
+      if (data) {
+        setAppointments([...appointments, data as Appointment]);
+        toast.success('Appointment booked successfully!');
+      }
+    } catch (error) {
+      console.error('Error booking appointment:', error);
+      toast.error('Failed to book appointment');
+    }
   };
-  
-  const getUpcomingAppointments = () => {
-    const now = new Date();
-    return appointmentManager.appointments
-      .filter(apt => {
-        const appointmentDate = new Date(`${apt.appointment_date}T${apt.start_time}`);
-        return appointmentDate > now && apt.status !== 'cancelled';
-      })
-      .sort((a, b) => {
-        const dateA = new Date(`${a.appointment_date}T${a.start_time}`);
-        const dateB = new Date(`${b.appointment_date}T${b.start_time}`);
-        return dateA.getTime() - dateB.getTime();
-      });
+
+  const cancelAppointment = async (appointmentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', appointmentId);
+
+      if (error) {
+        console.error('Error cancelling appointment:', error);
+        toast.error('Failed to cancel appointment');
+        return;
+      }
+
+      setAppointments(appointments.filter(appointment => appointment.id !== appointmentId));
+      toast.success('Appointment cancelled successfully.');
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+      toast.error('Failed to cancel appointment');
+    }
   };
-  
+
+  // Return the modified functions to the context value
   const value: SchedulingContextType = {
-    // Data
-    availabilities: availabilityManager.availabilities,
-    appointments: appointmentManager.appointments,
-    
-    // State
-    loading: availabilityManager.loading || appointmentManager.loading,
-    error: availabilityManager.error || appointmentManager.error,
-    
-    // Expert actions
-    createAvailability,
-    deleteAvailability,
-    
-    // User actions
+    availableTimeSlots,
+    appointments,
+    fetchExpertAvailability,
     bookAppointment,
-    
-    // Shared actions
-    updateAppointmentStatus,
-    
-    // Refresh functions
-    refreshAvailabilities,
-    refreshAppointments,
-    
-    // Utility functions
-    isTimeSlotAvailable,
-    getUpcomingAppointments
+    cancelAppointment,
   };
-  
+
   return (
     <SchedulingContext.Provider value={value}>
       {children}
@@ -206,9 +145,10 @@ export const SchedulingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   );
 };
 
-export const useScheduling = () => {
+// Create a custom hook to use the context
+export const useScheduling = (): SchedulingContextType => {
   const context = useContext(SchedulingContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useScheduling must be used within a SchedulingProvider');
   }
   return context;

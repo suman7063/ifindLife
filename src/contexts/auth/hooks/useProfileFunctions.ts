@@ -1,152 +1,173 @@
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/supabase';
-import { AuthState, ExpertProfile } from '../types';
+import { UserProfile, ExpertProfile } from '../types';
 import { toast } from 'sonner';
+import { normalizeId } from '@/utils/supabaseUtils';
+
+// Helper function to normalize an expert profile ID
+function normalizeExpertProfileId(profile: Partial<ExpertProfile>): Partial<ExpertProfile> {
+  if (profile.id) {
+    return {
+      ...profile,
+      id: normalizeId(profile.id)
+    };
+  }
+  return profile;
+}
 
 export const useProfileFunctions = (
-  authState: AuthState,
-  setAuthState: React.Dispatch<React.SetStateAction<AuthState>>
+  user: User | null,
+  session: Session | null,
+  setProfile: React.Dispatch<React.SetStateAction<UserProfile | null>>,
+  setWalletBalance: React.Dispatch<React.SetStateAction<number>>
 ) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-
-  const updateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
+  // State for tracking operation status
+  const [updating, setUpdating] = useState(false);
+  
+  // Update user profile
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+    if (!user) return { error: new Error('No user logged in') };
+    
     try {
-      if (!authState.user || !authState.userProfile) {
-        toast.error("No authenticated user found");
-        return false;
-      }
-      
-      setIsUpdating(true);
-      
-      // First, try to update the users table
-      let { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', authState.user.id);
-      
-      if (error) {
-        // If that fails, try to update the profiles table
-        console.log("Falling back to profiles table update:", error.message);
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update(updates)
-          .eq('id', authState.user.id);
-          
-        if (profileError) {
-          console.error("Profile update error:", profileError);
-          toast.error(profileError.message);
-          return false;
-        }
-      }
-      
-      // Update the local state
-      setAuthState((prev) => ({
-        ...prev,
-        userProfile: { ...prev.userProfile!, ...updates } as UserProfile,
-      }));
-      
-      return true;
-    } catch (error: any) {
-      console.error("Profile update error:", error);
-      toast.error(error.message || "An error occurred during profile update");
-      return false;
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const updateExpertProfile = async (updates: Partial<ExpertProfile>): Promise<boolean> => {
-    try {
-      if (!authState.user || !authState.expertProfile) {
-        toast.error("No authenticated expert found");
-        return false;
-      }
-      
-      setIsUpdating(true);
+      setUpdating(true);
       
       const { data, error } = await supabase
-        .from('expert_accounts')
+        .from('profiles')
         .update(updates)
-        .eq('auth_id', authState.user.id)
+        .eq('id', user.id)
         .select()
         .single();
         
-      if (error) {
-        console.error("Expert profile update error:", error);
-        toast.error(error.message);
-        return false;
-      }
+      if (error) throw error;
       
-      // Ensure we maintain the required status field when updating state
-      const updatedExpertProfile: ExpertProfile = {
-        ...authState.expertProfile,
-        ...updates,
-        status: (updates.status || authState.expertProfile.status) as 'pending' | 'approved' | 'disapproved'
-      };
+      // Update local state
+      setProfile(prev => prev ? { ...prev, ...data } : data);
       
-      setAuthState((prev) => ({
-        ...prev,
-        expertProfile: updatedExpertProfile,
-      }));
-      
-      toast.success("Expert profile updated successfully");
-      return true;
-    } catch (error: any) {
-      console.error("Expert profile update error:", error);
-      toast.error(error.message || "An error occurred during profile update");
-      return false;
+      return { error: null };
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return { error };
     } finally {
-      setIsUpdating(false);
+      setUpdating(false);
     }
-  };
-
-  const resetPassword = async (email: string): Promise<boolean> => {
+  }, [user, setProfile]);
+  
+  // Get displayable user name
+  const getUserDisplayName = useCallback(() => {
+    if (!user) return '';
+    // Try to get name from user metadata
+    const userMeta = user.user_metadata;
+    if (userMeta && userMeta.name) return userMeta.name;
+    // Fall back to email (first part)
+    if (user.email) return user.email.split('@')[0];
+    // Last resort
+    return 'User';
+  }, [user]);
+  
+  // Fetch user profile
+  const fetchProfile = useCallback(async (userId?: string) => {
+    const id = userId || user?.id;
+    if (!id) return null;
+    
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
       
-      if (error) {
-        console.error("Password reset error:", error);
-        toast.error(error.message);
-        return false;
+      return data;
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      return null;
+    }
+  }, [user]);
+  
+  // Update wallet balance
+  const updateWalletBalance = useCallback(async (newBalance: number) => {
+    if (!user) return { error: new Error('No user logged in') };
+    
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ wallet_balance: newBalance })
+        .eq('id', user.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setWalletBalance(newBalance);
+      
+      return { error: null };
+    } catch (error) {
+      console.error('Error updating wallet balance:', error);
+      return { error };
+    }
+  }, [user, setWalletBalance]);
+  
+  // Add funds to wallet
+  const addFunds = useCallback(async (amount: number) => {
+    if (!user) return { error: new Error('No user logged in') };
+    
+    try {
+      // First get current balance
+      const { data: profile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('wallet_balance')
+        .eq('id', user.id)
+        .single();
+        
+      if (fetchError) throw fetchError;
+      
+      const currentBalance = profile?.wallet_balance || 0;
+      const newBalance = currentBalance + amount;
+      
+      // Update the balance
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ wallet_balance: newBalance })
+        .eq('id', user.id);
+        
+      if (updateError) throw updateError;
+      
+      // Create a transaction record
+      const { error: transactionError } = await supabase
+        .from('user_transactions')
+        .insert({
+          user_id: user.id,
+          amount,
+          currency: 'USD', // Default currency
+          description: 'Wallet recharge',
+          date: new Date().toISOString(),
+          type: 'recharge'
+        });
+        
+      if (transactionError) {
+        console.error('Error creating transaction record:', transactionError);
+        // Continue anyway, since the wallet was updated
       }
       
-      toast.success("Password reset instructions sent to your email");
-      return true;
-    } catch (error: any) {
-      console.error("Password reset error:", error);
-      toast.error(error.message || "An error occurred during password reset");
-      return false;
-    }
-  };
-
-  const updatePassword = async (password: string): Promise<boolean> => {
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
+      // Update local state
+      setWalletBalance(newBalance);
+      toast.success(`Successfully added $${amount} to your wallet`);
       
-      if (error) {
-        console.error("Password update error:", error);
-        toast.error(error.message);
-        return false;
-      }
-      
-      toast.success("Password updated successfully");
-      return true;
-    } catch (error: any) {
-      console.error("Password update error:", error);
-      toast.error(error.message || "An error occurred during password update");
-      return false;
+      return { error: null };
+    } catch (error) {
+      console.error('Error adding funds:', error);
+      toast.error('Failed to add funds to your wallet');
+      return { error };
     }
-  };
-
+  }, [user, setWalletBalance]);
+  
   return {
-    updateUserProfile,
-    updateExpertProfile,
-    resetPassword,
-    updatePassword,
-    isUpdating
+    updateProfile,
+    getUserDisplayName,
+    fetchProfile,
+    addFunds,
+    updateWalletBalance
   };
 };

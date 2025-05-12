@@ -1,6 +1,6 @@
-
 import { MessagingRepository, MessagingUser, Conversation } from './types';
 import { Message } from '@/types/appointments';
+import { normalizeId } from '@/utils/supabaseUtils';
 
 /**
  * API functions for messaging functionality

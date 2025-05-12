@@ -1,33 +1,44 @@
 
-export interface ServiceCategory {
-  icon: string;
+/**
+ * Type definition for a service item
+ * This represents an individual service that can be offered
+ */
+export interface ServiceItem {
+  id: string;
   title: string;
   description: string;
   href: string;
+  icon: string;
   color: string;
 }
 
-// Interface for the database service object
-export interface DbService {
-  id: number;
+/**
+ * Type definition for a service category
+ * Categories contain multiple service items
+ */
+export interface ServiceCategory {
+  id: string;
   name: string;
-  description: string;
-  rate_usd: number;
-  rate_inr: number;
-  icon?: string;
-  color?: string;
+  items: ServiceItem[];
 }
 
-export interface UseServicesDataOptions {
-  initialServices?: ServiceCategory[];
-  updateCallback?: (services: ServiceCategory[]) => void;
-  maxFetchAttempts?: number;
+/**
+ * Type for database service record
+ * This represents the raw data structure from the database
+ */
+export interface DbService {
+  id: number | string;
+  name: string;
+  description?: string;
+  rate_usd?: number;
+  rate_inr?: number;
 }
 
-export interface UseServicesDataReturn {
-  services: ServiceCategory[];
-  setServices: React.Dispatch<React.SetStateAction<ServiceCategory[]>>;
-  loading: boolean;
-  error: string | null;
-  refreshServices: () => Promise<void>;
+/**
+ * Response type for service API operations
+ */
+export interface ServiceResponse {
+  success: boolean;
+  error?: string;
+  data?: ServiceCategory[] | ServiceItem;
 }
