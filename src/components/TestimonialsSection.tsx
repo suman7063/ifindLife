@@ -15,6 +15,16 @@ type Testimonial = {
   imageUrl: string;
 };
 
+interface DatabaseTestimonial {
+  id?: string;
+  name: string;
+  location: string;
+  rating: number;
+  text: string;
+  date: string;
+  image_url: string;
+}
+
 const TestimonialsSection = () => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>(defaultTestimonialData);
   const [loading, setLoading] = useState(true);
@@ -34,17 +44,31 @@ const TestimonialsSection = () => {
           throw error;
         }
         
+        // Make sure data is an array before processing
         if (data && Array.isArray(data) && data.length > 0) {
-          // Convert from database format to our application format
-          const formattedTestimonials = data.map(item => ({
-            id: item.id?.toString() || '',
-            name: item.name || '',
-            location: item.location || '',
-            rating: item.rating || 0,
-            text: item.text || '',
-            date: item.date || '',
-            imageUrl: item.image_url || ''
-          }));
+          // Type guard to ensure we have valid testimonial data
+          const isValidTestimonial = (item: any): item is DatabaseTestimonial => {
+            return (
+              typeof item.name === 'string' &&
+              typeof item.location === 'string' &&
+              typeof item.rating === 'number' &&
+              typeof item.text === 'string' &&
+              typeof item.date === 'string'
+            );
+          };
+          
+          // Filter and convert from database format to application format
+          const formattedTestimonials = data
+            .filter(isValidTestimonial)
+            .map(item => ({
+              id: item.id?.toString() || '',
+              name: item.name,
+              location: item.location,
+              rating: item.rating,
+              text: item.text,
+              date: item.date,
+              imageUrl: item.image_url
+            }));
           
           setTestimonials(formattedTestimonials);
         }
@@ -79,7 +103,7 @@ const TestimonialsSection = () => {
             <Quote className="h-12 w-12 text-ifind-purple opacity-40" />
           </div>
           <h2 className="text-4xl font-bold mb-4 text-gray-800">What Our Clients Say</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-center text-gray-600 mb-12 max-w-3xl mx-auto">
             Real stories from real people who have experienced the positive impact of our services
           </p>
         </div>

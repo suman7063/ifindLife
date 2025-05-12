@@ -33,7 +33,7 @@ export interface UserProfile {
 
 // Define expert profile type with consistent ID as string
 export interface ExpertProfile {
-  id: string; // Always use string type for IDs
+  id: string; 
   auth_id?: string;
   name: string;
   email: string;

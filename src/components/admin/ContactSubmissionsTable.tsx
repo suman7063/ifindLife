@@ -13,7 +13,16 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ContactSubmission } from '@/types/supabase/tables';
+
+export interface ContactSubmission {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string;
+  is_read: boolean;
+}
 
 const ContactSubmissionsTable = () => {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
@@ -31,8 +40,9 @@ const ContactSubmissionsTable = () => {
         throw error;
       }
 
-      // Safely type the data
-      if (data) {
+      // Type guard to ensure array and valid data
+      if (data && Array.isArray(data)) {
+        // Safely map the data with explicit typing
         const typedData = data.map(item => ({
           id: typeof item.id === 'number' ? item.id : 0,
           name: item.name || '',
@@ -40,8 +50,8 @@ const ContactSubmissionsTable = () => {
           subject: item.subject || '',
           message: item.message || '',
           created_at: item.created_at || new Date().toISOString(),
-          is_read: !!item.is_read
-        })) as ContactSubmission[];
+          is_read: Boolean(item.is_read)
+        }));
         
         setSubmissions(typedData);
       } else {
@@ -60,7 +70,7 @@ const ContactSubmissionsTable = () => {
       const { error } = await supabase
         .from('contact_submissions')
         .update({ is_read: true })
-        .eq('id', id.toString());
+        .eq('id', id);
 
       if (error) {
         throw error;

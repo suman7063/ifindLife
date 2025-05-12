@@ -8,7 +8,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
-import { ReferralSettings } from "@/types/supabase";
+
+export interface ReferralSettings {
+  id: string;
+  referrer_reward: number;
+  referred_reward: number;
+  active: boolean;
+  description: string;
+  updated_at?: string;
+}
 
 const ReferralSettingsEditor: React.FC = () => {
   const [settings, setSettings] = useState<ReferralSettings>({
@@ -40,13 +48,13 @@ const ReferralSettingsEditor: React.FC = () => {
           console.error('Error fetching referral settings:', error);
           toast.error('Failed to load referral settings');
         } else if (data) {
-          // Safely cast data to our expected type
+          // Safely process the data with type checks
           const safeData: ReferralSettings = {
-            id: data.id || '',
+            id: typeof data.id === 'string' ? data.id : '',
             referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : 10,
             referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : 5,
-            active: data.active === true,
-            description: data.description || 'Invite friends and earn rewards when they make their first purchase.'
+            active: Boolean(data.active),
+            description: typeof data.description === 'string' ? data.description : 'Invite friends and earn rewards when they make their first purchase.'
           };
           setSettings(safeData);
         }
@@ -93,13 +101,17 @@ const ReferralSettingsEditor: React.FC = () => {
     setIsSaving(true);
     try {
       const updatedSettings = {
-        id: settings.id,
         referrer_reward: settings.referrer_reward,
         referred_reward: settings.referred_reward,
         active: settings.active,
         description: settings.description,
         updated_at: new Date().toISOString()
       };
+
+      // If we have an ID, use it for upsert
+      if (settings.id) {
+        updatedSettings['id'] = settings.id;
+      }
 
       const { data, error } = await supabase
         .from('referral_settings')
@@ -113,13 +125,13 @@ const ReferralSettingsEditor: React.FC = () => {
       } else {
         toast.success('Referral settings saved successfully');
         if (data) {
-          // Safely update the state
+          // Safely update the state with type checks
           const safeData: ReferralSettings = {
-            id: data.id || settings.id,
+            id: typeof data.id === 'string' ? data.id : settings.id,
             referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : settings.referrer_reward,
             referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : settings.referred_reward,
-            active: data.active === true, 
-            description: data.description || settings.description,
+            active: Boolean(data.active), 
+            description: typeof data.description === 'string' ? data.description : settings.description,
             updated_at: data.updated_at || new Date().toISOString()
           };
           setSettings(safeData);

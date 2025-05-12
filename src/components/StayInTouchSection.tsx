@@ -28,6 +28,16 @@ const contactFormSchema = z.object({
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
 
+// Define type for contact submission that matches the database schema
+type ContactSubmission = {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at?: string;
+  is_read?: boolean;
+};
+
 const StayInTouchSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -45,15 +55,17 @@ const StayInTouchSection = () => {
     setIsSubmitting(true);
     try {
       // Store contact form submission in Supabase
+      const submission: ContactSubmission = {
+        name: data.name,
+        email: data.email, 
+        subject: data.subject,
+        message: data.message,
+        created_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('contact_submissions')
-        .insert({
-          name: data.name,
-          email: data.email, 
-          subject: data.subject,
-          message: data.message,
-          created_at: new Date().toISOString(),
-        });
+        .insert(submission);
 
       if (error) {
         console.error('Error submitting form:', error);
