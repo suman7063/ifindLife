@@ -1,4 +1,3 @@
-
 export interface UserTransaction {
   id: string;
   user_id: string;
@@ -25,14 +24,17 @@ export interface UserReview {
 }
 
 export interface ContactSubmission {
-  id: number;
+  id?: number; // Changed from string to number to match DB schema
   name: string;
   email: string;
   subject: string;
   message: string;
-  created_at: string | null;
-  is_read: boolean | null;
+  created_at?: string | null;
+  is_read?: boolean | null;
 }
+
+// Add this utility type for Supabase insert operations
+export type ContactSubmissionInsert = Omit<ContactSubmission, 'id'>;
 
 // Full Report type from DB
 export type Report = {

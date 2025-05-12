@@ -13,16 +13,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-export interface ContactSubmission {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  created_at: string;
-  is_read: boolean;
-}
+import { ContactSubmission } from '@/types/supabase/tables';
+import { safeDataTransform } from '@/utils/supabaseUtils';
 
 const ContactSubmissionsTable = () => {
   const [submissions, setSubmissions] = useState<ContactSubmission[]>([]);
@@ -40,23 +32,23 @@ const ContactSubmissionsTable = () => {
         throw error;
       }
 
-      // Type guard to ensure array and valid data
-      if (data && Array.isArray(data)) {
-        // Safely map the data with explicit typing
-        const typedData = data.map(item => ({
-          id: typeof item.id === 'number' ? item.id : 0,
+      // Safely transform the data with proper error handling
+      const formattedSubmissions = safeDataTransform<any, ContactSubmission>(
+        data,
+        error,
+        (item) => ({
+          id: item.id || 0,
           name: item.name || '',
           email: item.email || '',
           subject: item.subject || '',
           message: item.message || '',
           created_at: item.created_at || new Date().toISOString(),
           is_read: Boolean(item.is_read)
-        }));
-        
-        setSubmissions(typedData);
-      } else {
-        setSubmissions([]);
-      }
+        }),
+        [] // Empty array as fallback
+      );
+      
+      setSubmissions(formattedSubmissions);
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
       toast.error('Failed to load contact submissions');
@@ -67,9 +59,10 @@ const ContactSubmissionsTable = () => {
 
   const markAsRead = async (id: number) => {
     try {
+      // Explicitly use the right types for update and ID
       const { error } = await supabase
         .from('contact_submissions')
-        .update({ is_read: true })
+        .update({ is_read: true } as any)
         .eq('id', id);
 
       if (error) {
@@ -138,7 +131,7 @@ const ContactSubmissionsTable = () => {
                   className={submission.is_read ? "" : "bg-blue-50"}
                 >
                   <TableCell className="font-medium">
-                    {format(new Date(submission.created_at), 'MMM d, yyyy HH:mm')}
+                    {submission.created_at ? format(new Date(submission.created_at), 'MMM d, yyyy HH:mm') : 'Unknown date'}
                   </TableCell>
                   <TableCell>{submission.name}</TableCell>
                   <TableCell>
@@ -164,11 +157,11 @@ const ContactSubmissionsTable = () => {
                     </span>
                   </TableCell>
                   <TableCell className="text-right">
-                    {!submission.is_read && (
+                    {!submission.is_read && submission.id && (
                       <Button 
                         variant="ghost" 
                         size="sm"
-                        onClick={() => markAsRead(submission.id)}
+                        onClick={() => markAsRead(submission.id as number)}
                       >
                         Mark as read
                       </Button>

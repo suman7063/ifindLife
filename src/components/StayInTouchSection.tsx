@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, MapPin } from 'lucide-react';
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { ContactSubmissionInsert } from '@/types/supabase/tables';
 
 // Define form schema
 const contactFormSchema = z.object({
@@ -27,16 +27,6 @@ const contactFormSchema = z.object({
 });
 
 type ContactFormValues = z.infer<typeof contactFormSchema>;
-
-// Define type for contact submission that matches the database schema
-type ContactSubmission = {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  created_at?: string;
-  is_read?: boolean;
-};
 
 const StayInTouchSection = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,13 +44,14 @@ const StayInTouchSection = () => {
   const onSubmit = async (data: ContactFormValues) => {
     setIsSubmitting(true);
     try {
-      // Store contact form submission in Supabase
-      const submission: ContactSubmission = {
+      // Create submission data that matches the database schema
+      const submission: ContactSubmissionInsert = {
         name: data.name,
         email: data.email, 
         subject: data.subject,
         message: data.message,
         created_at: new Date().toISOString(),
+        is_read: false
       };
 
       const { error } = await supabase

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,11 +20,11 @@ const ProgramDataReset = () => {
       let deleted = false;
       
       try {
-        // Try using Supabase if available - use a filter that's safe for string or number IDs
+        // Try using Supabase with filter that works for both number and string IDs
         const { error } = await supabase
           .from('programs')
           .delete()
-          .neq('id', 0); // Delete all rows except ID 0 (which likely doesn't exist)
+          .gte('id', 0); // Delete all rows with ID greater than or equal to 0
           
         if (!error) {
           console.log("Successfully deleted programs from Supabase");

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -18,14 +17,17 @@ export interface ReferralSettings {
   updated_at?: string;
 }
 
+// Default settings to use as fallback
+const defaultSettings: ReferralSettings = {
+  id: '',
+  referrer_reward: 10,
+  referred_reward: 5,
+  active: true,
+  description: 'Invite friends and earn rewards when they make their first purchase.',
+};
+
 const ReferralSettingsEditor: React.FC = () => {
-  const [settings, setSettings] = useState<ReferralSettings>({
-    id: '',
-    referrer_reward: 10,
-    referred_reward: 5,
-    active: true,
-    description: 'Invite friends and earn rewards when they make their first purchase.',
-  });
+  const [settings, setSettings] = useState<ReferralSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<{
@@ -47,14 +49,18 @@ const ReferralSettingsEditor: React.FC = () => {
         if (error) {
           console.error('Error fetching referral settings:', error);
           toast.error('Failed to load referral settings');
-        } else if (data) {
+          // Use default settings on error
+          return;
+        } 
+        
+        if (data) {
           // Safely process the data with type checks
           const safeData: ReferralSettings = {
-            id: typeof data.id === 'string' ? data.id : '',
-            referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : 10,
-            referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : 5,
+            id: typeof data.id === 'string' ? data.id : defaultSettings.id,
+            referrer_reward: typeof data.referrer_reward === 'number' ? data.referrer_reward : defaultSettings.referrer_reward,
+            referred_reward: typeof data.referred_reward === 'number' ? data.referred_reward : defaultSettings.referred_reward,
             active: Boolean(data.active),
-            description: typeof data.description === 'string' ? data.description : 'Invite friends and earn rewards when they make their first purchase.'
+            description: typeof data.description === 'string' ? data.description : defaultSettings.description
           };
           setSettings(safeData);
         }
@@ -100,7 +106,7 @@ const ReferralSettingsEditor: React.FC = () => {
     
     setIsSaving(true);
     try {
-      const updatedSettings = {
+      const updatedSettings: any = {
         referrer_reward: settings.referrer_reward,
         referred_reward: settings.referred_reward,
         active: settings.active,
@@ -110,7 +116,7 @@ const ReferralSettingsEditor: React.FC = () => {
 
       // If we have an ID, use it for upsert
       if (settings.id) {
-        updatedSettings['id'] = settings.id;
+        updatedSettings.id = settings.id;
       }
 
       const { data, error } = await supabase

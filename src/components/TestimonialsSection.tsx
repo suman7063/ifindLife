@@ -1,9 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { testimonialData as defaultTestimonialData } from '@/data/homePageData';
 import TestimonialCard from '@/components/TestimonialCard';
 import { Quote } from 'lucide-react';
+import { safeDataTransform } from '@/utils/supabaseUtils';
 
 type Testimonial = {
   id?: string;
@@ -15,6 +15,7 @@ type Testimonial = {
   imageUrl: string;
 };
 
+// Define the database schema type
 interface DatabaseTestimonial {
   id?: string;
   name: string;
@@ -44,32 +45,24 @@ const TestimonialsSection = () => {
           throw error;
         }
         
-        // Make sure data is an array before processing
-        if (data && Array.isArray(data) && data.length > 0) {
-          // Type guard to ensure we have valid testimonial data
-          const isValidTestimonial = (item: any): item is DatabaseTestimonial => {
-            return (
-              typeof item.name === 'string' &&
-              typeof item.location === 'string' &&
-              typeof item.rating === 'number' &&
-              typeof item.text === 'string' &&
-              typeof item.date === 'string'
-            );
-          };
-          
-          // Filter and convert from database format to application format
-          const formattedTestimonials = data
-            .filter(isValidTestimonial)
-            .map(item => ({
-              id: item.id?.toString() || '',
-              name: item.name,
-              location: item.location,
-              rating: item.rating,
-              text: item.text,
-              date: item.date,
-              imageUrl: item.image_url
-            }));
-          
+        // Convert database format to application format with proper error handling
+        const formattedTestimonials = safeDataTransform<DatabaseTestimonial, Testimonial>(
+          data as DatabaseTestimonial[],
+          error,
+          (item) => ({
+            id: item.id || '',
+            name: item.name || '',
+            location: item.location || '',
+            rating: item.rating || 5,
+            text: item.text || '',
+            date: item.date || '',
+            imageUrl: item.image_url || ''
+          }),
+          // Fallback to default testimonials if there's an error
+          defaultTestimonialData
+        );
+        
+        if (formattedTestimonials.length > 0) {
           setTestimonials(formattedTestimonials);
         }
       } catch (err) {
