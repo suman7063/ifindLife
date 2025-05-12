@@ -35,22 +35,32 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       <Button variant="ghost" asChild>
         <Link to="/">Home</Link>
       </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/about">About</Link>
-      </Button>
+      
+      {/* Services Dropdown - Moved up in the order */}
+      <NavigationMenu>
+        <NavigationMenuList>
+          <ServicesMenu />
+        </NavigationMenuList>
+      </NavigationMenu>
+      
+      {/* Programs Dropdown - Moved up in the order */}
+      <NavigationMenu>
+        <NavigationMenuList>
+          <ProgramsMenu />
+        </NavigationMenuList>
+      </NavigationMenu>
+      
       <Button variant="ghost" asChild>
         <Link to="/experts">Experts</Link>
       </Button>
       
+      <Button variant="ghost" asChild>
+        <Link to="/about">About Us</Link>
+      </Button>
+      
+      {/* Support Dropdown */}
       <NavigationMenu>
         <NavigationMenuList>
-          {/* Programs Dropdown */}
-          <ProgramsMenu />
-
-          {/* Services Dropdown */}
-          <ServicesMenu />
-
-          {/* Support Dropdown */}
           <SupportMenu />
         </NavigationMenuList>
       </NavigationMenu>
