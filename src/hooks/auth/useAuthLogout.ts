@@ -30,9 +30,7 @@ export const useAuthLogout = () => {
       console.log("useAuthLogout: Logout completed successfully, redirecting to home");
       
       // Redirect to home page
-      setTimeout(() => {
-        navigate('/');
-      }, 500);
+      navigate('/');
       
       return true;
     } catch (error) {

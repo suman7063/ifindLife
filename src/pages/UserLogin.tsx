@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import UserLoginPage from '@/components/auth/UserLoginPage';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Container } from '@/components/ui/container';
 
 const UserLogin: React.FC = () => {
   console.log("Rendering UserLogin page");
@@ -35,7 +36,11 @@ const UserLogin: React.FC = () => {
   return (
     <>
       <Navbar />
-      <UserLoginPage />
+      <div className="py-8 md:py-12">
+        <Container className="max-w-md mx-auto">
+          <UserLoginPage />
+        </Container>
+      </div>
       <Footer />
     </>
   );

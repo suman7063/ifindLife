@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from 'sonner';
@@ -164,7 +165,7 @@ export const useAuthActions = (fetchProfile: () => Promise<void>) => {
       console.log("Supabase signOut completed");
       toast.success('Successfully logged out');
       
-      // Redirect to homepage after logout
+      // Always redirect to homepage after logout
       window.location.href = '/';
       return true;
     } catch (error: any) {

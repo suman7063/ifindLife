@@ -24,9 +24,8 @@ export const useExpertLogout = (
       setIsUserLoggedIn(false);
       toast.success('Logged out successfully');
       
-      setTimeout(() => {
-        window.location.href = '/expert-login';
-      }, 500);
+      // Always redirect to home page after logout
+      window.location.href = '/';
       
       return true;
     } catch (error) {
