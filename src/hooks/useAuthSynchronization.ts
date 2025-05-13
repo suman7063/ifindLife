@@ -1,5 +1,6 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
@@ -24,20 +25,20 @@ export const useAuthSynchronization = () => {
   useEffect(() => {
     // Set user authentication state
     setIsAuthenticated(auth.isAuthenticated);
-    setCurrentUser(auth.userProfile);
+    setCurrentUser(auth.profile);
     setCurrentExpert(auth.expertProfile);
     
     // Determine specific authentication state
-    setIsUserAuthenticated(auth.isAuthenticated && auth.role === 'user' && !!auth.userProfile);
+    setIsUserAuthenticated(auth.isAuthenticated && auth.role === 'user' && !!auth.profile);
     setIsExpertAuthenticated(auth.isAuthenticated && auth.role === 'expert' && !!auth.expertProfile);
     
     // Check for dual sessions
-    setHasDualSessions(!!auth.userProfile && !!auth.expertProfile && auth.isAuthenticated);
+    setHasDualSessions(!!auth.profile && !!auth.expertProfile && auth.isAuthenticated);
     
     // Initialize session type
-    if (!!auth.userProfile && !!auth.expertProfile) {
+    if (!!auth.profile && !!auth.expertProfile) {
       setSessionType('dual');
-    } else if (!!auth.userProfile) {
+    } else if (!!auth.profile) {
       setSessionType('user');
     } else if (!!auth.expertProfile) {
       setSessionType('expert');
@@ -50,19 +51,20 @@ export const useAuthSynchronization = () => {
       setIsAuthInitialized(true);
       setInitialized(true);
     }
-  }, [auth.isAuthenticated, auth.role, auth.userProfile, auth.expertProfile, auth.isLoading]);
+  }, [auth.isAuthenticated, auth.role, auth.profile, auth.expertProfile, auth.isLoading]);
   
   // Handle user logout
   const userLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating user logout...");
-      const success = await auth.logout();
-      if (success) {
+      const result = await auth.logout();
+      if (!result.error) {
         console.log("useAuthSynchronization: User logout successful");
+        return true;
       } else {
-        console.warn("useAuthSynchronization: User logout returned false");
+        console.warn("useAuthSynchronization: User logout error:", result.error);
+        return false;
       }
-      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('User logout error:', error);
       toast.error('Error logging out');
@@ -74,13 +76,14 @@ export const useAuthSynchronization = () => {
   const expertLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating expert logout...");
-      const success = await auth.logout();
-      if (success) {
+      const result = await auth.logout();
+      if (!result.error) {
         console.log("useAuthSynchronization: Expert logout successful");
+        return true;
       } else {
-        console.warn("useAuthSynchronization: Expert logout returned false");
+        console.warn("useAuthSynchronization: Expert logout error:", result.error);
+        return false;
       }
-      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('Expert logout error:', error);
       toast.error('Error logging out');
@@ -92,13 +95,14 @@ export const useAuthSynchronization = () => {
   const fullLogout = async (): Promise<boolean> => {
     try {
       console.log("useAuthSynchronization: Initiating full logout...");
-      const success = await auth.logout();
-      if (success) {
+      const result = await auth.logout();
+      if (!result.error) {
         console.log("useAuthSynchronization: Full logout successful");
+        return true;
       } else {
-        console.warn("useAuthSynchronization: Full logout returned false");
+        console.warn("useAuthSynchronization: Full logout error:", result.error);
+        return false;
       }
-      return !!success; // Ensure boolean return
     } catch (error) {
       console.error('Full logout error:', error);
       toast.error('Error logging out');

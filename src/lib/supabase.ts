@@ -17,5 +17,10 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Export the from function for backward compatibility
+export const from = <T = any>(table: string) => {
+  return supabase.from<T>(table);
+};
+
 // Log when the client is initialized
 console.log('Supabase client initialized with URL:', supabaseUrl);

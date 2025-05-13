@@ -46,20 +46,21 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return false;
   };
   
-  // Define a properly typed hasTakenServiceFrom function that handles both Promise and non-Promise cases
+  // Convert expertId to number for hasTakenServiceFrom
   const adaptedHasTakenServiceFrom = async (id: string | number): Promise<boolean> => {
     if (!auth.hasTakenServiceFrom) return Promise.resolve(false);
     
     try {
-      const result = auth.hasTakenServiceFrom(id);
-      return result instanceof Promise ? result : Promise.resolve(result);
+      // Parse string to number if needed
+      const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
+      return await auth.hasTakenServiceFrom(numericId);
     } catch (error) {
       console.error("Error in hasTakenServiceFrom:", error);
-      return Promise.resolve(false);
+      return false;
     }
   };
 
-  // Adapt logout function to return boolean
+  // Fix logout function to properly return boolean
   const adaptedLogout = async (): Promise<boolean> => {
     try {
       const result = await auth.logout();
@@ -97,7 +98,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: async () => null
+    updateProfilePicture: auth.updateProfilePicture || (async () => null)
   };
 
   return (

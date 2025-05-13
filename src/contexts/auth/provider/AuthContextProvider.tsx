@@ -1,3 +1,4 @@
+
 import React, { createContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus, AuthContextType } from '../types';
@@ -81,6 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     registerAsExpert,
     addToFavorites,
     removeFromFavorites,
+    updateProfilePicture
   } = useAuthMethods(user);
 
   // Wrapper functions for type compatibility
@@ -191,7 +193,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Favorites
     addToFavorites,
-    removeFromFavorites
+    removeFromFavorites,
+    
+    // Additional methods
+    updateProfilePicture
   };
   
   return (

@@ -15,12 +15,15 @@ export const useAuthBackCompat = () => {
     isAuthenticated: auth.isAuthenticated,
     login: auth.login,
     signup: auth.signup,
-    logout: auth.logout,
+    logout: async () => {
+      const result = await auth.logout();
+      return !result.error;
+    },
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: false,
     updateProfile: auth.updateProfile,
-    updateProfilePicture: auth.updateProfilePicture,
+    updateProfilePicture: auth.updateProfilePicture || (async () => null),
     updatePassword: auth.updatePassword,
     addToFavorites: auth.addToFavorites,
     removeFromFavorites: auth.removeFromFavorites,
@@ -28,7 +31,11 @@ export const useAuthBackCompat = () => {
     addReview: auth.addReview,
     reportExpert: auth.reportExpert,
     getExpertShareLink: auth.getExpertShareLink,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom,
+    // Convert the return value to Promise<boolean> to match expected type
+    hasTakenServiceFrom: async (expertId: number) => {
+      if (!auth.hasTakenServiceFrom) return false;
+      return await auth.hasTakenServiceFrom(expertId);
+    },
     getReferralLink: auth.getReferralLink,
     refreshProfile: async () => {
       // Refresh profile implementation
@@ -42,7 +49,10 @@ export const useAuthBackCompat = () => {
   // Create a backward-compatible expert auth object
   const expertAuth = {
     login: auth.login,
-    logout: auth.logout,
+    logout: async () => {
+      const result = await auth.logout();
+      return !result.error;
+    },
     loading: auth.isLoading,
     currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
