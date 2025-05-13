@@ -1,23 +1,18 @@
 
 /**
- * Ensures that an array of IDs is converted to strings
- * This helps with compatibility where IDs might be stored as numbers but need to be strings
+ * Ensures that the provided ID is a string
+ * @param id The ID to convert to a string
+ * @returns The ID as a string
  */
-export function ensureStringIdArray(ids: any[]): string[] {
-  if (!Array.isArray(ids)) {
-    return [];
-  }
-  
-  return ids.map(id => String(id));
-}
+export const ensureStringId = (id: string | number): string => {
+  return typeof id === 'number' ? id.toString() : id;
+};
 
 /**
- * Converts a single ID to string format
- * Ensures consistent ID handling throughout the application
+ * Converts an array of IDs to strings
+ * @param ids Array of IDs to convert to strings
+ * @returns Array of string IDs
  */
-export function ensureStringId(id: string | number | null | undefined): string | null {
-  if (id === null || id === undefined) {
-    return null;
-  }
-  return String(id);
-}
+export const ensureStringIdArray = (ids: (string | number)[]): string[] => {
+  return ids.map(id => ensureStringId(id));
+};

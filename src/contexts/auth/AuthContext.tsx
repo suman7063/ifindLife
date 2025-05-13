@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext } from 'react';
-import { AuthContextProvider } from './provider/AuthContextProvider';
+import { AuthContextProvider, AuthProvider } from './provider/AuthContextProvider';
 import { AuthContextType, initialAuthState } from './types';
 
 // Create the context with default values
@@ -45,4 +45,4 @@ export const useAuth = () => {
 };
 
 // Forward the AuthProvider from the provider file
-export const AuthProvider = AuthContextProvider;
+export { AuthProvider };

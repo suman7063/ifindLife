@@ -11,6 +11,7 @@ interface AuthContextProviderProps {
   children: React.ReactNode;
 }
 
+// Export both as named export AND as default export for backwards compatibility
 export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ children }) => {
   const [initialized, setInitialized] = useState(false);
 
@@ -56,3 +57,9 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
     </AuthContext.Provider>
   );
 };
+
+// Adding this export for backward compatibility
+export const AuthProvider = AuthContextProvider;
+
+// Also export as default for dynamic imports
+export default AuthContextProvider;
