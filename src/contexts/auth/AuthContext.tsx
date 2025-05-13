@@ -1,5 +1,5 @@
 
-import { createContext } from 'react';
+import { createContext, useContext } from 'react';
 import { AuthContextType, initialAuthState } from './types';
 
 // Create the initial context
@@ -46,6 +46,3 @@ export const useAuth = () => {
   
   return context;
 };
-
-// Fix missing import
-import { useContext } from 'react';
