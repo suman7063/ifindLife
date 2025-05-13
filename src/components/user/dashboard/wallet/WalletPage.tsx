@@ -9,11 +9,12 @@ import TransactionHistoryCard from './TransactionHistoryCard';
 import useTransactions from '@/hooks/dashboard/useTransactions';
 import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 import RechargeDialog from './RechargeDialog';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/supabase';
 
 const WalletPage: React.FC = () => {
-  const { userProfile } = useAuth();
-  const { transactions, isLoading, refreshTransactions } = useTransactions(userProfile?.id || '');
+  // Fix the reference to userProfile - use profile instead
+  const { profile } = useAuth();
+  const { transactions, isLoading, refreshTransactions } = useTransactions(profile?.id || '');
   const { 
     isRechargeDialogOpen, 
     handleOpenRechargeDialog, 
@@ -22,7 +23,7 @@ const WalletPage: React.FC = () => {
     isProcessing
   } = useRechargeDialog(refreshTransactions);
 
-  if (!userProfile) {
+  if (!profile) {
     return <div className="py-12 text-center">Loading wallet information...</div>;
   }
 
@@ -37,7 +38,7 @@ const WalletPage: React.FC = () => {
       {/* Cards Section */}
       <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
         <WalletBalanceCard 
-          user={userProfile} 
+          user={profile} 
           onRecharge={handleOpenRechargeDialog} 
         />
         <PaymentMethodsCard />

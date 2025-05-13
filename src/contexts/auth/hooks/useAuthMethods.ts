@@ -1,10 +1,8 @@
-
-import { useState } from 'react';
+import { useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile } from '../types';
-import { ensureStringId } from '@/utils/idConverters';
 import { toast } from 'sonner';
+import { ensureStringId } from '@/utils/idConverters';
 
 export const useAuthMethods = (user: User | null) => {
   // Default implementations for auth methods

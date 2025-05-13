@@ -60,14 +60,18 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Fix logout function to properly return boolean
-  const adaptedLogout = async (): Promise<boolean> => {
+  // Fix logout function to properly return an object with error property
+  const adaptedLogout = async (): Promise<{ error: Error | null }> => {
     try {
       const result = await auth.logout();
-      return result && !result.error;
-    } catch (error) {
+      // Ensure result is in the correct format
+      if (typeof result === 'boolean') {
+        return { error: result ? null : new Error('Logout failed') };
+      }
+      return result;
+    } catch (error: any) {
       console.error("Error in logout:", error);
-      return false;
+      return { error };
     }
   };
   
@@ -87,7 +91,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile, // Use updateProfile instead of updateUserProfile
+    updateProfile: auth.updateProfile,
     updatePassword: auth.updatePassword || (async () => false),
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),

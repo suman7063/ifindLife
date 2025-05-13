@@ -1,4 +1,3 @@
-
 import React, { createContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus, AuthContextType } from '../types';

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -57,7 +56,7 @@ interface HelpFormProps {
 }
 
 const HelpForm: React.FC<HelpFormProps> = ({ isOpen, onClose }) => {
-  const { isAuthenticated, userProfile } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [ticketId, setTicketId] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -142,7 +141,7 @@ const HelpForm: React.FC<HelpFormProps> = ({ isOpen, onClose }) => {
         .from('help_tickets')
         .insert({
           ticket_id: newTicketId,
-          user_id: userProfile?.id,
+          user_id: profile?.id,
           category: data.category,
           details: data.details,
           screenshot_url: screenshotUrl,

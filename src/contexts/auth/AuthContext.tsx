@@ -13,18 +13,20 @@ export interface AuthContextType {
   session: Session | null;
   role: UserRole | null;
   profile: UserProfile | null;
+  userProfile: UserProfile | null; // Added for backward compatibility
   expertProfile: ExpertProfile | null;
   
   // Auth methods
   login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
+  logout: () => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updatePassword: (newPassword: string) => Promise<boolean>;
   
   // Profile methods
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture?: (file: File) => Promise<string | null>;
+  updateUserProfile: (data: Partial<UserProfile>) => Promise<boolean>; // Added for backward compatibility
   fetchProfile?: () => Promise<UserProfile | null>;
   
   // User actions
@@ -37,7 +39,10 @@ export interface AuthContextType {
   hasTakenServiceFrom?: (expertId: number) => Promise<boolean>;
   getReferralLink?: () => string | null;
   
-  // Additional fields
+  // Additional fields needed for some components
+  loginWithOtp?: (email: string) => Promise<{ error: Error | null }>;
+  updateEmail?: (email: string) => Promise<{ error: Error | null }>;
+  refreshSession?: () => Promise<{ error: Error | null }>;
   walletBalance?: number;
   sessionType?: string;
   authStatus?: string;
@@ -51,13 +56,15 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   role: null,
   profile: null,
+  userProfile: null,
   expertProfile: null,
   login: async () => false,
   signup: async () => false,
-  logout: async () => false,
+  logout: async () => ({ error: null }),
   resetPassword: async () => ({ error: null }),
   updatePassword: async () => false,
   updateProfile: async () => false,
+  updateUserProfile: async () => false,
 });
 
 // Custom hook to use the auth context
