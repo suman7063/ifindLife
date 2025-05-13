@@ -57,10 +57,10 @@ const JoinCommunitySection = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-6 items-start max-w-5xl mx-auto">
-          {/* Left side - Image - proportionally resized to 80% */}
-          <div className="rounded-lg overflow-hidden h-full flex justify-center items-center">
-            <div className="w-4/5"> {/* 80% width container */}
+        <div className="grid md:grid-cols-2 gap-6 items-center max-w-5xl mx-auto">
+          {/* Left side - Image - adjusted to better align vertically */}
+          <div className="flex justify-center items-center">
+            <div className="w-11/12"> {/* Increased from 80% to ~92% width container */}
               <img 
                 src="/lovable-uploads/31d5ed75-c077-4c81-9a33-da07b649ed30.png" 
                 alt="Community members" 
