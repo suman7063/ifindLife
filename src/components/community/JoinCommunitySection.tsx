@@ -48,7 +48,7 @@ const JoinCommunitySection = () => {
   return (
     <section className="py-10 bg-gray-100">
       <Container>
-        {/* Heading and description - now center aligned */}
+        {/* Heading and description - centered */}
         <div className="text-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Join Our Mindfulness Community</h2>
           <p className="text-base md:text-lg text-gray-700 max-w-2xl mx-auto">
@@ -57,21 +57,20 @@ const JoinCommunitySection = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-6 items-center max-w-5xl mx-auto">
-          {/* Left side - Image - adjusted to better align vertically */}
-          <div className="flex justify-center items-center">
-            <div className="w-11/12"> {/* Increased from 80% to ~92% width container */}
-              <img 
-                src="/lovable-uploads/31d5ed75-c077-4c81-9a33-da07b649ed30.png" 
-                alt="Community members" 
-                className="w-full h-auto object-contain rounded-lg" 
-              />
-            </div>
+        {/* Using flex to better align vertically */}
+        <div className="flex flex-col md:flex-row gap-10 items-center max-w-6xl mx-auto">
+          {/* Left side - Image - full width and height to match content */}
+          <div className="w-full md:w-1/2 flex justify-center">
+            <img 
+              src="/lovable-uploads/31d5ed75-c077-4c81-9a33-da07b649ed30.png" 
+              alt="Community members" 
+              className="w-full h-auto object-cover rounded-lg" 
+            />
           </div>
           
-          {/* Right side - Content with reduced width */}
-          <div className="flex flex-col h-full justify-between">
-            <div className="space-y-4 max-w-md">
+          {/* Right side - Content */}
+          <div className="w-full md:w-1/2 flex flex-col h-full justify-between">
+            <div className="space-y-4">
               {/* Email Subscription */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="h-1.5 bg-[#9b87f5]"></div>

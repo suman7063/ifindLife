@@ -58,8 +58,8 @@ const Index = () => {
         {/* IFL Programs for Individuals - Moved up here */}
         <ServicesSection />
         
-        {/* Section: How Can We Help You Today? - Adjusted padding and heading style */}
-        <section className="py-6 bg-gray-50">
+        {/* Section: How Can We Help You Today? - Style adjusted to match others */}
+        <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-6 sm:px-12">
             <h2 className="text-3xl font-bold mb-8 text-center">How Can We Help You Today?</h2>
             <Suspense fallback={<SectionLoadingFallback />}>
