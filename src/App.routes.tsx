@@ -21,7 +21,7 @@ const ProgramsForWellnessSeekers = lazy(() => import('./pages/ProgramsForWellnes
 const ProgramsForAcademicInstitutes = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
 const ProgramsForBusiness = lazy(() => import('./pages/ProgramsForBusiness'));
 const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
-// AboutUs is directly defined in AppRoutes.tsx only
+// AboutUs is now defined directly in AppRoutes.tsx
 const CareerGuidance = lazy(() => import('./pages/CareerGuidance'));
 const Blog = lazy(() => import('./pages/Blog'));
 const BlogPost = lazy(() => import('./pages/BlogPost'));
@@ -84,7 +84,7 @@ export const routes: AppRoute[] = [
     path: '/program/:id',
     element: <ProgramDetail />
   },
-  // AboutUs route is completely removed from here as it's directly defined in AppRoutes.tsx
+  // AboutUs route is handled directly in AppRoutes.tsx
   {
     path: '/career-guidance',
     element: <CareerGuidance />

@@ -7,7 +7,6 @@ import ProtectedRoute from './components/routing/ProtectedRoute';
 import AdminProtectedRoute from './components/ProtectedRoute';
 import { routes } from './App.routes'; // Import routes from consolidated file
 import NotFound from './pages/NotFound'; // Import NotFound page for 404 handling
-import AboutUs from './pages/AboutUs'; // Direct import for critical page
 
 // Import critical routes directly to prevent loading issues
 import UserLogin from './pages/UserLogin';
@@ -27,6 +26,9 @@ const Index = lazy(() => {
   }
   return import('./pages/Index');
 });
+
+// Lazy load AboutUs for consistent handling with other routes
+const AboutUs = lazy(() => import('./pages/AboutUs'));
 
 // Import test page for hero banner mockup - now pointing to the original index
 const IndexOriginal = lazy(() => import('./pages/IndexOriginal'));
@@ -63,7 +65,7 @@ const AppRoutes: React.FC = () => {
         {/* New route for the original homepage version */}
         <Route path="/hero-test" element={<IndexOriginal />} />
         
-        {/* Define AboutUs route directly without lazy loading */}
+        {/* AboutUs route using lazy-loaded component */}
         <Route path="/about" element={<AboutUs />} />
 
         {/* Admin routes with proper protection */}
