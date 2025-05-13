@@ -7,6 +7,7 @@ import { useWellnessPrograms } from '@/hooks/useWellnessPrograms';
 import WellnessProgramsHeader from '@/components/programs/WellnessProgramsHeader';
 import WellnessProgramsContent from '@/components/programs/WellnessProgramsContent';
 import { useSearchParams } from 'react-router-dom';
+import { ProgramCategory } from '@/types/programs';
 
 const ProgramsForWellnessSeekers: React.FC = () => {
   const { currentUser, isAuthenticated } = useUserAuth();
@@ -30,8 +31,8 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     }
   }, [searchParams, selectedCategory, setSelectedCategory]);
 
-  // Define all possible category options with explicit typing
-  const allCategoryOptions = [
+  // Define all possible category options with explicit typing to match the expected types
+  const allCategoryOptions: { value: 'all' | 'favorites' | ProgramCategory; label: string }[] = [
     { value: 'all', label: 'All Programs' },
     { value: 'quick-ease', label: 'QuickEase' },
     { value: 'resilience-building', label: 'Resilience Building' },

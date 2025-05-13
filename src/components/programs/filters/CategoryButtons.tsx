@@ -7,7 +7,7 @@ import { Tag } from 'lucide-react';
 interface CategoryButtonsProps {
   activeCategory: string;
   setActiveCategory: (category: string) => void;
-  categoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[];
+  categoryOptions: { value: ProgramCategory | 'all' | 'favorites'; label: string }[];
 }
 
 const CategoryButtons: React.FC<CategoryButtonsProps> = ({ 

@@ -25,7 +25,11 @@ export const useWellnessPrograms = () => {
     }
     
     if (selectedCategory === 'favorites') {
-      const favoriteIds = new Set(programFavorites.map(fav => fav.program_id));
+      // Fix: Ensure we're handling favoriteIds correctly - programFavorites might contain
+      // either objects with program_id property or just the IDs themselves
+      const favoriteIds = new Set(
+        programFavorites.map(fav => typeof fav === 'object' && 'program_id' in fav ? fav.program_id : fav)
+      );
       return sortPrograms(
         programs.filter(program => favoriteIds.has(program.id)),
         sortOption
