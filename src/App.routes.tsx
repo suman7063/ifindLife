@@ -37,6 +37,11 @@ const Admin = lazy(() => import('./pages/Admin'));
 const Referral = lazy(() => import('./pages/Referral'));
 const UserWallet = lazy(() => import('./pages/UserWallet'));
 
+// New course pages
+const CoursesList = lazy(() => import('./pages/CoursesList'));
+const CourseView = lazy(() => import('./pages/CourseView'));
+const CourseCheckout = lazy(() => import('./pages/CourseCheckout'));
+
 export const routes: AppRoute[] = [
   // Main navigation routes 
   {
@@ -124,6 +129,26 @@ export const routes: AppRoute[] = [
   {
     path: '/referral',
     element: <Referral />
+  },
+  
+  // New course routes
+  {
+    path: '/courses',
+    element: <CoursesList />
+  },
+  {
+    path: '/course/:courseId',
+    element: <CourseView />,
+    requiredRole: 'user'
+  },
+  {
+    path: '/course-checkout/:courseId',
+    element: <CourseCheckout />,
+    requiredRole: 'user'
+  },
+  {
+    path: '/course-preview/:courseId',
+    element: <CourseView />
   },
   
   // Protected routes with role requirements
