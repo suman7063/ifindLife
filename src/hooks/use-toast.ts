@@ -1,14 +1,16 @@
 
 import { useState, useCallback } from "react";
-import { toast as sonnerToast, Toast } from "sonner";
+import { toast as sonnerToast } from "sonner";
 
-export type ToastProps = Toast & {
+export type ToastProps = {
   title?: string;
   description?: string;
   action?: React.ReactNode;
+  id?: string;
+  [key: string]: any;
 };
 
-export function toast(props: ToastProps) {
+export function toast(props: ToastProps | string) {
   if (typeof props === "string") {
     return sonnerToast(props);
   }

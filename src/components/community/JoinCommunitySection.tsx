@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Mail, WhatsApp, Users } from 'lucide-react';
+import { Mail, MessageSquare, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import { from } from '@/lib/supabase';
 
@@ -100,7 +100,7 @@ const JoinCommunitySection = () => {
           <div className="bg-white p-8 rounded-lg shadow-md border border-gray-100 flex flex-col">
             <div className="flex items-center mb-4">
               <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
-                <WhatsApp className="h-6 w-6 text-green-600" />
+                <MessageSquare className="h-6 w-6 text-green-600" />
               </div>
               <h3 className="text-xl font-bold">Join WhatsApp Community</h3>
             </div>
@@ -115,7 +115,7 @@ const JoinCommunitySection = () => {
                 className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2"
                 onClick={() => window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank')}
               >
-                <WhatsApp size={18} />
+                <MessageSquare size={18} />
                 Join WhatsApp Group
               </Button>
               <p className="text-xs text-center mt-2 text-gray-500">
