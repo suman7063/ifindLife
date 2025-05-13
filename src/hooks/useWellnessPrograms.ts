@@ -35,8 +35,9 @@ export const useWellnessPrograms = () => {
               return fav.program_id;
             }
             // If fav is not an object with program_id, return it directly
-            return fav;
+            return typeof fav === 'number' ? fav : null;
           })
+          .filter(id => id !== null) // Filter out any null values that might have been returned
       );
       
       return sortPrograms(
