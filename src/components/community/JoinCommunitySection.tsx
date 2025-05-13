@@ -48,7 +48,7 @@ const JoinCommunitySection = () => {
   return (
     <section className="py-10 bg-gray-100">
       <Container>
-        {/* Heading and description - now above everything */}
+        {/* Heading and description - now center aligned */}
         <div className="text-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Join Our Mindfulness Community</h2>
           <p className="text-base md:text-lg text-gray-700 max-w-2xl mx-auto">
@@ -57,14 +57,16 @@ const JoinCommunitySection = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-6 items-start">
-          {/* Left side - Image */}
-          <div className="rounded-lg overflow-hidden h-full flex">
-            <img 
-              src="/lovable-uploads/31d5ed75-c077-4c81-9a33-da07b649ed30.png" 
-              alt="Community members" 
-              className="w-full object-cover h-full"
-            />
+        <div className="grid md:grid-cols-2 gap-6 items-start max-w-5xl mx-auto">
+          {/* Left side - Image - reduced to 80% width with center alignment */}
+          <div className="rounded-lg overflow-hidden h-full flex justify-center">
+            <div className="w-4/5"> {/* 80% width container */}
+              <img 
+                src="/lovable-uploads/31d5ed75-c077-4c81-9a33-da07b649ed30.png" 
+                alt="Community members" 
+                className="w-full object-cover h-full"
+              />
+            </div>
           </div>
           
           {/* Right side - Content with reduced width */}
@@ -113,7 +115,7 @@ const JoinCommunitySection = () => {
                 </div>
               </div>
               
-              {/* WhatsApp Community - Changed to brand teal color */}
+              {/* WhatsApp Community - Uses brand teal color */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                 <div className="h-1.5 bg-[#7DD8C9]"></div>
                 <div className="p-5">
