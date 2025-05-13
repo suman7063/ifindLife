@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
@@ -16,7 +15,7 @@ import Footer from '@/components/Footer';
 const CourseCheckout: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const { courses, loading: loadingCourses } = useCourses();
-  const { currentUser, isAuthenticated } = useAuth();
+  const { profile, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   const [course, setCourse] = useState<Course | null>(null);
@@ -41,7 +40,7 @@ const CourseCheckout: React.FC = () => {
     }
   }, [courseId, courses, isAuthenticated, navigate]);
   
-  const hasEnoughBalance = (currentUser?.walletBalance || 0) >= (course?.price || 0);
+  const hasEnoughBalance = (profile?.wallet_balance || 0) >= (course?.price || 0);
   
   const handleCheckout = async () => {
     if (!course) return;
@@ -117,19 +116,19 @@ const CourseCheckout: React.FC = () => {
               <div className="flex gap-4 items-start">
                 <div className="w-24 h-16 rounded-md overflow-hidden flex-shrink-0">
                   <img 
-                    src={course.thumbnailUrl} 
-                    alt={course.title} 
+                    src={course?.thumbnailUrl} 
+                    alt={course?.title || "Course"} 
                     className="w-full h-full object-cover"
                   />
                 </div>
                 
                 <div>
-                  <h3 className="font-medium">{course.title}</h3>
+                  <h3 className="font-medium">{course?.title}</h3>
                   <div className="text-sm text-muted-foreground mt-1">
-                    {course.totalModules} modules • {course.duration}
+                    {course?.totalModules} modules • {course?.duration}
                   </div>
                   <div className="flex gap-2 mt-1">
-                    {course.instructorName && (
+                    {course?.instructorName && (
                       <span className="text-sm text-muted-foreground">
                         By {course.instructorName}
                       </span>
@@ -155,7 +154,7 @@ const CourseCheckout: React.FC = () => {
                       <div>
                         <div>Pay with Wallet</div>
                         <div className="text-sm text-muted-foreground">
-                          Balance: ₹{currentUser?.walletBalance || 0}
+                          Balance: ₹{profile?.wallet_balance || 0}
                         </div>
                       </div>
                     </Label>
@@ -197,7 +196,7 @@ const CourseCheckout: React.FC = () => {
               <div className="space-y-3 mb-4">
                 <div className="flex justify-between">
                   <span>Course Price</span>
-                  <span>₹{course.price}</span>
+                  <span>₹{course?.price || 0}</span>
                 </div>
                 <div className="flex justify-between text-green-600">
                   <span>Discount</span>
@@ -205,7 +204,7 @@ const CourseCheckout: React.FC = () => {
                 </div>
                 <div className="border-t pt-2 flex justify-between font-semibold">
                   <span>Total</span>
-                  <span>₹{course.price}</span>
+                  <span>₹{course?.price || 0}</span>
                 </div>
               </div>
               
