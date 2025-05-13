@@ -58,10 +58,10 @@ const Index = () => {
         {/* IFL Programs for Individuals - Moved up here */}
         <ServicesSection />
         
-        {/* Section: How Can We Help You Today? - Left-aligned heading and reduced gap */}
+        {/* Section: How Can We Help You Today? - Center-aligned with redundant heading removed */}
         <section className="py-16 bg-gray-50">
-          <div className="container mx-auto px-6 sm:px-12">
-            <h2 className="text-3xl font-bold mb-4 text-left">How Can We Help You Today?</h2>
+          <div className="container mx-auto px-6 sm:px-12 text-center">
+            <h2 className="text-3xl font-bold mb-6 text-center">How Can We Help You Today?</h2>
             <Suspense fallback={<SectionLoadingFallback />}>
               <IssueSessions onCategoryClick={handleCategoryClick} />
             </Suspense>
@@ -73,11 +73,11 @@ const Index = () => {
         
         {/* Programs for Organizations */}
         <section className="py-16 bg-white">
-          <div className="container mx-auto px-6 sm:px-12">
-            <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
+          <div className="container mx-auto px-6 sm:px-12 text-center">
+            <h2 className="text-3xl font-bold mb-8 text-center">Programs for Organizations</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Academic Institutes</h3>
+                <h3 className="text-2xl font-semibold mb-4 text-ifind-teal text-center">For Academic Institutes</h3>
                 <p className="mb-6 text-gray-700">
                   Comprehensive mental health programs designed for schools, colleges, and universities to support students, teachers, and staff.
                 </p>
@@ -88,7 +88,7 @@ const Index = () => {
                 </div>
               </div>
               <div className="bg-white p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                <h3 className="text-2xl font-semibold mb-4 text-ifind-teal">For Businesses</h3>
+                <h3 className="text-2xl font-semibold mb-4 text-ifind-teal text-center">For Businesses</h3>
                 <p className="mb-6 text-gray-700">
                   Mental health and wellness solutions to support your organization, improve productivity, and create a positive work environment.
                 </p>
