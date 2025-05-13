@@ -59,7 +59,7 @@ const Index = () => {
         <ServicesSection />
         
         {/* Section: How Can We Help You Today? - Reduced padding */}
-        <section className="py-8 bg-gray-50"> {/* Changed padding from py-16 to py-8 */}
+        <section className="py-6 bg-gray-50">
           <div className="container mx-auto px-6 sm:px-12">
             <Suspense fallback={<SectionLoadingFallback />}>
               <IssueSessions onCategoryClick={handleCategoryClick} />
