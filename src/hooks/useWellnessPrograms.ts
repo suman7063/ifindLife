@@ -25,19 +25,21 @@ export const useWellnessPrograms = () => {
     }
     
     if (selectedCategory === 'favorites') {
-      // Fix: Ensure we're handling favoriteIds correctly and properly check for null values
+      // First filter out null values
+      const nonNullFavorites = (programFavorites || []).filter(
+        (fav): fav is NonNullable<typeof fav> => fav !== null
+      );
+      
+      // Then map to IDs, safely handling different shapes of the favorite data
       const favoriteIds = new Set(
-        (programFavorites || [])
-          .filter((fav): fav is NonNullable<typeof fav> => fav !== null) // Remove null values with type predicate
-          .map(fav => {
-            // Ensure fav is an object before trying to access properties
-            if (typeof fav === 'object' && fav !== null && 'program_id' in fav) {
-              return fav.program_id;
-            }
-            // If fav is not an object with program_id, return it directly if it's a number
-            return typeof fav === 'number' ? fav : null;
-          })
-          .filter((id): id is number => id !== null) // Filter out any null values with type predicate
+        nonNullFavorites.map(fav => {
+          // Now we know fav is not null here
+          if (typeof fav === 'object' && 'program_id' in fav) {
+            return fav.program_id;
+          }
+          // If fav is not an object with program_id, return it directly if it's a number
+          return typeof fav === 'number' ? fav : null;
+        }).filter((id): id is number => id !== null) // Filter out any null values from the mapping
       );
       
       return sortPrograms(
