@@ -61,7 +61,7 @@ const JoinCommunitySection = () => {
           {/* Left side - Image */}
           <div className="rounded-lg overflow-hidden h-full">
             <img 
-              src="/lovable-uploads/ff7b8926-2545-4f58-bb3e-c05e2b4116b7.png" 
+              src="/lovable-uploads/31d5ed75-c077-4c81-9a33-da07b649ed30.png" 
               alt="Community members" 
               className="w-full h-full object-cover"
             />
@@ -112,13 +112,13 @@ const JoinCommunitySection = () => {
               </div>
             </div>
             
-            {/* WhatsApp Community */}
+            {/* WhatsApp Community - Changed to brand teal color */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="h-1.5 bg-green-500"></div>
+              <div className="h-1.5 bg-[#7DD8C9]"></div>
               <div className="p-5">
                 <div className="flex items-center mb-3">
-                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
-                    <MessageSquare className="h-4 w-4 text-green-600" />
+                  <div className="w-8 h-8 rounded-full bg-[#7DD8C9]/20 flex items-center justify-center mr-3">
+                    <MessageSquare className="h-4 w-4 text-[#7DD8C9]" />
                   </div>
                   <h3 className="text-lg font-semibold">Join WhatsApp Community</h3>
                 </div>
@@ -129,7 +129,7 @@ const JoinCommunitySection = () => {
                 </p>
                 
                 <Button 
-                  className="w-full bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2"
+                  className="w-full bg-[#7DD8C9] hover:bg-[#7DD8C9]/90 flex items-center justify-center gap-2"
                   onClick={() => {
                     window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank');
                     toast.success("WhatsApp link opened. Join our community chat!");
