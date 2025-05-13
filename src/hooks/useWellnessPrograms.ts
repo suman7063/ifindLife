@@ -25,11 +25,18 @@ export const useWellnessPrograms = () => {
     }
     
     if (selectedCategory === 'favorites') {
-      // Fix: Ensure we're handling favoriteIds correctly - programFavorites might contain
-      // either objects with program_id property or just the IDs themselves
+      // Fix: Ensure we're handling favoriteIds correctly and properly check for null values
       const favoriteIds = new Set(
-        programFavorites.map(fav => typeof fav === 'object' && 'program_id' in fav ? fav.program_id : fav)
+        programFavorites
+          .filter(fav => fav !== null) // Filter out null values first
+          .map(fav => {
+            if (typeof fav === 'object' && fav !== null && 'program_id' in fav) {
+              return fav.program_id;
+            }
+            return fav;
+          })
       );
+      
       return sortPrograms(
         programs.filter(program => favoriteIds.has(program.id)),
         sortOption
