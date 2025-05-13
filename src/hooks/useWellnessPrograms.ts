@@ -25,35 +25,32 @@ export const useWellnessPrograms = () => {
     }
     
     if (selectedCategory === 'favorites') {
-      // First create a safe array from programFavorites (either the array or empty array)
-      const safeProgFavorites = programFavorites || [];
-      
-      // Then filter out null values with a type guard
-      const nonNullFavorites = safeProgFavorites.filter(
-        (fav): fav is NonNullable<typeof fav> => fav !== null && fav !== undefined
-      );
-      
-      // Create a Set of program IDs from favorites, with careful handling of different data types
-      const favoriteIds = new Set<number>();
-
-      // Use imperative approach to avoid TypeScript null inference issues
-      for (const favorite of nonNullFavorites) {
-        if (!favorite) continue;
-        
-        if (typeof favorite === 'object' && 'program_id' in favorite) {
-          const programId = (favorite as { program_id: number }).program_id;
-          if (typeof programId === 'number') {
-            favoriteIds.add(programId);
-          }
-        } else if (typeof favorite === 'number') {
-          favoriteIds.add(favorite);
+      // Use type assertion to tell TypeScript we know what we're doing
+      const favoritePrograms = programs.filter(program => {
+        if (!programFavorites || !Array.isArray(programFavorites)) {
+          return false;
         }
-      }
+        
+        // Check each favorite item
+        return programFavorites.some((fav: any) => {
+          // Skip if null/undefined
+          if (!fav) return false;
+          
+          // Check if it's an object with program_id
+          if (fav && typeof fav === 'object' && 'program_id' in fav) {
+            return fav.program_id === program.id;
+          }
+          
+          // Check if it's a direct number
+          if (typeof fav === 'number') {
+            return fav === program.id;
+          }
+          
+          return false;
+        });
+      });
       
-      return sortPrograms(
-        programs.filter(program => favoriteIds.has(program.id)),
-        sortOption
-      );
+      return sortPrograms(favoritePrograms, sortOption);
     }
     
     return sortPrograms(
