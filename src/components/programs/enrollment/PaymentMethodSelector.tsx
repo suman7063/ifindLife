@@ -31,7 +31,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           <Wallet className="h-5 w-5 text-ifind-purple" />
           <div>
             <h3 className="font-medium">Pay with Wallet</h3>
-            <p className="text-sm text-muted-foreground">Current Balance: ₹{currentUser.walletBalance || 0}</p>
+            <p className="text-sm text-muted-foreground">Current Balance: ₹{currentUser.wallet_balance || 0}</p>
           </div>
         </div>
         {enrollmentMethod === 'wallet' && (

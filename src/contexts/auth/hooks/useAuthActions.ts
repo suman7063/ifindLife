@@ -92,14 +92,18 @@ export const useAuthActions = (fetchUserData: () => Promise<void>) => {
         toast.success('Signup successful! Please check your email for verification.');
         
         // Check if there's a referral code and process it
-        if (data.referralCode) {
+        if (data.referralCode && authData.user.id) {
           try {
+            // Generate a random referral code for the referred user
+            const newReferralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+            
             // Process referral in a separate API call
             const { error: referralError } = await supabase.from('referrals').insert({
               referrer_id: data.referralCode,
               referred_id: authData.user.id,
               status: 'pending',
-              reward_claimed: false
+              reward_claimed: false,
+              referral_code: newReferralCode
             });
             
             if (referralError) {

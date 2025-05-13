@@ -13,7 +13,7 @@ const DashboardStatsGrid: React.FC<DashboardStatsGridProps> = ({ userProfile }) 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StatsCard
         title="My Courses"
-        value={userProfile?.enrolledCourses?.length || 0}
+        value={userProfile?.enrolled_courses?.length || 0}
         description="Courses you've enrolled in"
         icon={Users}
       />

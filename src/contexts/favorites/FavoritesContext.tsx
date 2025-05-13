@@ -1,32 +1,40 @@
 
 import { createContext, useContext } from 'react';
-
-// Define the FavoritesContext type
-export interface FavoritesContextType {
-  isExpertFavorite?: (id: number) => boolean;
-  toggleExpertFavorite?: (id: number) => Promise<void>;
-  isProgramFavorite?: (id: number) => boolean;
-  toggleProgramFavorite?: (id: number) => Promise<void>;
-  favoriteExperts?: number[];
-  favoritePrograms?: number[];
-  loading?: boolean;
-}
+import { FavoritesContextType } from './types';
 
 // Create the context with default values
-export const FavoritesContext = createContext<FavoritesContextType | null>(null);
+export const FavoritesContext = createContext<FavoritesContextType>({
+  // Expert favorites (for backward compatibility)
+  favorites: [],
+  expertFavorites: [],
+  isExpertFavorite: () => false,
+  toggleExpertFavorite: async () => false,
+  addFavorite: async () => false,
+  removeFavorite: async () => false,
+  
+  // Program favorites
+  programFavorites: [],
+  isProgramFavorite: () => false,
+  toggleProgramFavorite: async () => false,
+  
+  // Detailed favorites
+  expertFavoriteDetails: [],
+  programFavoriteDetails: [],
+  
+  // Status
+  loading: false
+});
 
-// Safe hook to access the favorites context
-export const useSafeFavorites = () => {
-  const context = useContext(FavoritesContext);
-  // Return the context even if null - caller will handle this case
-  return context;
-};
-
-// Original hook that throws if used outside provider
+// Hook to access the favorites context
 export const useFavorites = () => {
   const context = useContext(FavoritesContext);
   if (!context) {
     throw new Error('useFavorites must be used within a FavoritesProvider');
   }
   return context;
+};
+
+// Safe version that doesn't throw an error
+export const useSafeFavorites = () => {
+  return useContext(FavoritesContext);
 };

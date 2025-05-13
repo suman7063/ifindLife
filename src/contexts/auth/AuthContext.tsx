@@ -6,7 +6,7 @@ import { AuthContextType, initialAuthState } from './types';
 export const AuthContext = createContext<AuthContextType>({
   ...initialAuthState,
   login: async () => false,
-  loginWithOtp: async () => ({ error: new Error('Not implemented') }),
+  loginWithOtp: async () => ({ error: null }),
   signup: async () => false,
   logout: async () => ({ error: null }),
   resetPassword: async () => ({ error: null }),
@@ -18,7 +18,7 @@ export const AuthContext = createContext<AuthContextType>({
   getUserDisplayName: () => '',
   fetchProfile: async () => null,
   addFunds: async () => ({ error: null }),
-  updateWalletBalance: async () => false,
+  updateWalletBalance: async () => ({ error: null }),
   rechargeWallet: async () => false,
   updateExpertProfile: async () => ({ error: null }),
   fetchExpertProfile: async () => null,
