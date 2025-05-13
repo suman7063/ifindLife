@@ -1,8 +1,9 @@
 
-import React, { createContext, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus, AuthContextType, initialAuthState } from '../types';
+import { AuthContext } from '../AuthContext';
 
 // Import hooks
 import { useAuthState } from '../hooks/useAuthState';
