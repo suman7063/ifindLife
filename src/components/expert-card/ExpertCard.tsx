@@ -1,75 +1,50 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
-import ExpertImage from './ExpertImage';
-import ExpertInfo from './ExpertInfo';
-import ExpertActions from './ExpertActions';
-import { ExpertCardProps } from './types';
-import { useSafeFavorites } from '@/contexts/favorites/FavoritesContext';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { Expert } from '@/types/expert';
 
-const ExpertCard: React.FC<ExpertCardProps> = ({
-  id,
-  name,
-  experience,
-  specialties,
-  rating,
-  price,
-  imageUrl,
-  waitTime,
-  online,
-  isFavorite: propIsFavorite,
-}) => {
-  const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
-  const favoritesContext = useSafeFavorites();
-  
-  // Parse id to number if it's a string
-  const expertId = typeof id === 'string' ? parseInt(id, 10) : id;
-  
-  // Determine if expert is favorite based on prop or from the context (if available)
-  const isFavorite = propIsFavorite !== undefined 
-    ? propIsFavorite 
-    : (favoritesContext?.isExpertFavorite?.(expertId) || false);
-  
-  const handleViewProfile = () => {
-    navigate(`/experts/${id}`);
+interface ExpertCardProps {
+  expert: {
+    id: string;
+    name: string;
+    specialization?: string;
+    profile_picture?: string;
+    average_rating?: number;
   };
-  
-  const handleFavoriteToggle = async (expertId: string | number) => {
-    // Convert to number if it's a string
-    const numericExpertId = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
-    
-    if (isAuthenticated && favoritesContext?.toggleExpertFavorite) {
-      await favoritesContext.toggleExpertFavorite(numericExpertId);
-    }
-  };
-  
+}
+
+const ExpertCard: React.FC<ExpertCardProps> = ({ expert }) => {
   return (
-    <Card 
-      className="overflow-hidden transition-shadow hover:shadow-md cursor-pointer border bg-card h-full"
-      onClick={handleViewProfile}
-    >
-      <ExpertImage imageUrl={imageUrl} name={name} online={online} />
-      
+    <Card className="overflow-hidden">
       <CardContent className="p-4">
-        <ExpertInfo
-          name={name}
-          experience={experience}
-          specialties={specialties}
-          rating={rating}
-          waitTime={waitTime}
-          price={price}
-        />
-        
-        <ExpertActions 
-          id={id} 
-          online={online} 
-          isFavorite={isFavorite}
-          onFavoriteToggle={handleFavoriteToggle}
-        />
+        <div className="flex items-center space-x-4">
+          <div className="flex-shrink-0 w-12 h-12 rounded-full bg-gray-200 overflow-hidden">
+            {expert.profile_picture ? (
+              <img 
+                src={expert.profile_picture} 
+                alt={expert.name} 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-semibold">
+                {expert.name.charAt(0)}
+              </div>
+            )}
+          </div>
+          <div className="flex-grow">
+            <h3 className="font-medium">{expert.name}</h3>
+            {expert.specialization && (
+              <p className="text-sm text-muted-foreground">{expert.specialization}</p>
+            )}
+            {expert.average_rating !== undefined && (
+              <div className="flex items-center mt-1">
+                <span className="text-sm text-amber-500 font-medium">
+                  {expert.average_rating.toFixed(1)}
+                </span>
+                <span className="text-xs text-muted-foreground ml-1">★</span>
+              </div>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

@@ -27,6 +27,14 @@ export function ensureNumberId(id: string | number | undefined | null): number {
   return id;
 }
 
+/**
+ * Ensures an array of IDs are all converted to strings
+ */
+export function ensureStringIdArray(ids: (string | number | undefined | null)[]): string[] {
+  if (!Array.isArray(ids)) return [];
+  return ids.map(id => ensureStringId(id)).filter(id => id !== '');
+}
+
 // Alternative names if needed elsewhere
 export const toStringId = ensureStringId;
 export const toNumberId = ensureNumberId;
