@@ -34,16 +34,21 @@ export const useWellnessPrograms = () => {
       );
       
       // Create a Set of program IDs from favorites, with careful handling of different data types
-      const favoriteIds = new Set(
-        nonNullFavorites.map(favorite => {
-          // Using type guard to ensure favorite is not null before accessing properties
-          if (favorite && typeof favorite === 'object' && 'program_id' in favorite) {
-            return favorite.program_id;
+      const favoriteIds = new Set<number>();
+
+      // Use imperative approach to avoid TypeScript null inference issues
+      for (const favorite of nonNullFavorites) {
+        if (!favorite) continue;
+        
+        if (typeof favorite === 'object' && 'program_id' in favorite) {
+          const programId = (favorite as { program_id: number }).program_id;
+          if (typeof programId === 'number') {
+            favoriteIds.add(programId);
           }
-          // If it's a number, return it directly; otherwise return null
-          return typeof favorite === 'number' ? favorite : null;
-        }).filter((id): id is number => id !== null)
-      );
+        } else if (typeof favorite === 'number') {
+          favoriteIds.add(favorite);
+        }
+      }
       
       return sortPrograms(
         programs.filter(program => favoriteIds.has(program.id)),
