@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import { lazy, Suspense } from 'react';
+import WelcomeSection from '@/components/WelcomeSection';
 
 // Lazy load non-critical components
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
@@ -49,6 +50,9 @@ const Index = () => {
       <main className="flex-1">
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
+        
+        {/* New Welcome Section */}
+        <WelcomeSection />
         
         {/* Section 2: Issue Based Sessions - Moved up in the order */}
         <section className="py-16 bg-gray-50">
@@ -98,7 +102,7 @@ const Index = () => {
           <TopTherapistsSection />
         </Suspense>
 
-        {/* Section 6: Why Choose Us */}
+        {/* Section 6: Why Choose Us - Redesigned */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>

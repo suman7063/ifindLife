@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import { lazy, Suspense } from 'react';
+import WelcomeSection from '@/components/WelcomeSection';
 
 // Lazy load non-critical components
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
@@ -44,6 +45,9 @@ const HomePageTest = () => {
       <main className="flex-1">
         {/* Section 1: Hero Banner with tabs */}
         <EnhancedHero />
+        
+        {/* New Welcome Section */}
+        <WelcomeSection />
         
         {/* Section 2: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
