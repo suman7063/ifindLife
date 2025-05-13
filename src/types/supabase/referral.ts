@@ -25,4 +25,6 @@ export interface ReferralUI extends Referral {
   referred_name?: string;
   referrer_name?: string;
   reward_amount?: number;
+  referredName?: string; // Added for backward compatibility
+  rewardClaimed?: boolean; // Added for backward compatibility
 }

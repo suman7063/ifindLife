@@ -33,3 +33,30 @@ export interface NewReport {
   reason: string;
   details?: string;
 }
+
+export interface UserReview {
+  id: string;
+  user_id: string;
+  expert_id: number;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+}
+
+export interface Report {
+  id: string;
+  expert_id: number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+}
+
+export interface Review {
+  id: string;
+  expertId: string;
+  rating: number;
+  comment: string;
+  date: string;
+}

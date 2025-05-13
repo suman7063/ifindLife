@@ -5,7 +5,7 @@ import { useAuthState } from '../hooks/useAuthState';
 import { useAuthActions } from '../hooks/useAuthActions';
 import { useProfileFunctions } from '../hooks/useProfileFunctions';
 import { useAuthMethods } from '../hooks/useAuthMethods';
-import { AuthState } from '../types';
+import { AuthState, initialAuthState } from '../types';
 
 interface AuthContextProviderProps {
   children: React.ReactNode;
@@ -29,7 +29,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
   }, [authState.isLoading, initialized]);
 
   // Combine all the pieces into a single context value
-  const combinedContextValue = {
+  const contextValue = {
     ...authState,
     ...authActions,
     ...profileFunctions,
@@ -52,7 +52,7 @@ export const AuthContextProvider: React.FC<AuthContextProviderProps> = ({ childr
   };
   
   return (
-    <AuthContext.Provider value={combinedContextValue}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

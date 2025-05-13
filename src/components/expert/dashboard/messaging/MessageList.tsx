@@ -1,10 +1,11 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2 } from 'lucide-react';
 import { useUserAuth } from '@/hooks/user-auth';
-import { useMessaging } from '@/hooks/messaging';
+import useMessaging from '@/hooks/messaging';
 import { formatDistanceToNow } from 'date-fns';
 
 interface MessageListProps {
@@ -16,15 +17,15 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
   const { currentUser } = useUserAuth();
   const { 
     conversations, 
-    fetchConversations, 
-    conversationsLoading 
+    loadConversations,
+    isLoadingConversations 
   } = useMessaging(currentUser);
 
   useEffect(() => {
     if (currentUser) {
-      fetchConversations();
+      loadConversations();
     }
-  }, [currentUser, fetchConversations]);
+  }, [currentUser, loadConversations]);
 
   // Function to get initials for the avatar
   const getInitials = (name: string) => {
@@ -36,7 +37,7 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
       .substring(0, 2);
   };
 
-  if (conversationsLoading) {
+  if (isLoadingConversations) {
     return (
       <div className="flex justify-center items-center h-40">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
