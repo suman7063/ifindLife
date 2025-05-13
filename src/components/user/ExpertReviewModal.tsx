@@ -11,85 +11,53 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Rating } from "@smastrom/react-rating";
-import "@smastrom/react-rating/style.css";
-import { useToast } from "@/components/ui/use-toast"
-import { useUserAuth } from '@/hooks/user-auth';
-import { NewReview } from '@/types/supabase/tables';
+import { toast } from "sonner"
+import { useUserAuth } from '@/contexts/UserAuthContext';
+import { Star } from 'lucide-react';
 
 interface ExpertReviewModalProps {
-  expertId: string;
-  expertName: string;
+  expertId: string | number;
 }
 
-const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertName }) => {
+const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId }) => {
   const [open, setOpen] = useState(false);
-  const [rating, setRating] = useState<number | null>(null);
+  const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState('');
-  const { toast } = useToast();
-  const { addReview, currentUser } = useUserAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const userName = currentUser?.name || 'Anonymous';
-  const userId = currentUser?.id;
+  const [submitting, setSubmitting] = useState(false);
+  const { currentUser: user, addReview } = useUserAuth();
 
   const handleSubmit = async () => {
-    if (!rating) {
-      toast({
-        title: "Please provide a rating.",
-      });
+    if (!user || !expertId || rating === 0) {
       return;
     }
 
-    if (!reviewText) {
-      toast({
-        title: "Please provide a review.",
-      });
-      return;
-    }
+    setSubmitting(true);
 
-    if (!userId) {
-      toast({
-        title: "You must be logged in to leave a review.",
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
     try {
-      const reviewData: NewReview = {
-        user_id: userId,
-        expert_id: expertId, // Change from expertId to expert_id
+      const reviewData = {
+        expert_id: Number(expertId),
         rating: rating,
-        comment: reviewText,
-        user_name: userName,
-        date: new Date().toISOString()
+        comment: reviewText
       };
 
       const success = await addReview(reviewData);
+
       if (success) {
-        toast({
-          title: "Review submitted successfully.",
-        });
+        toast.success('Review submitted successfully!');
         setOpen(false);
-        setRating(null);
+        setRating(0);
         setReviewText('');
       } else {
-        toast({
-          title: "Failed to submit review.",
-          variant: "destructive",
-        });
+        toast.error('Failed to submit review. Please try again.');
       }
     } catch (error) {
-      console.error("Error submitting review:", error);
-      toast({
-        title: "An error occurred while submitting the review.",
-        variant: "destructive",
-      });
+      console.error('Error submitting review:', error);
+      toast.error('An unexpected error occurred. Please try again later.');
     } finally {
-      setIsSubmitting(false);
+      setSubmitting(false);
     }
   };
 
@@ -97,34 +65,44 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({ expertId, expertN
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
         <Button variant="outline">
-          Leave a Review
+          Write a Review
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Review {expertName}</AlertDialogTitle>
+          <AlertDialogTitle>Review this Expert</AlertDialogTitle>
           <AlertDialogDescription>
-            What was your experience like?
+            Share your experience to help others make informed decisions.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="rating" className="text-right">
-              Rating
-            </Label>
-            <Rating value={rating} onChange={setRating} />
+          <div className="grid grid-cols-[100px_1fr] items-center gap-4">
+            <Label htmlFor="rating">Rating</Label>
+            <div className="flex items-center">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star
+                  key={star}
+                  className={`w-6 h-6 cursor-pointer ${star <= rating ? 'text-yellow-500' : 'text-gray-300'}`}
+                  onClick={() => setRating(star)}
+                />
+              ))}
+            </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="comment" className="text-right">
-              Review
-            </Label>
-            <Textarea id="comment" value={reviewText} onChange={(e) => setReviewText(e.target.value)} className="col-span-3" />
+          <div className="grid grid-cols-[100px_1fr] items-start gap-4">
+            <Label htmlFor="comment">Comment</Label>
+            <Textarea
+              id="comment"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              className="col-span-1"
+              placeholder="Write your review here"
+            />
           </div>
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction disabled={isSubmitting} onClick={handleSubmit}>
-            {isSubmitting ? "Submitting..." : "Submit"}
+          <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction disabled={submitting} onClick={handleSubmit}>
+            {submitting ? 'Submitting...' : 'Submit Review'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

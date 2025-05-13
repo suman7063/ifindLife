@@ -12,5 +12,6 @@ export interface UserProfile {
   referral_code?: string;
   referral_link?: string;
   favorite_experts?: (string | number)[];
+  favorite_programs?: number[];
   created_at?: string;
 }

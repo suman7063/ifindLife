@@ -21,8 +21,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName })
     messages, 
     fetchMessages, 
     sendMessage, 
-    messagesLoading: loading,
-    loading: sending
+    messagesLoading, 
+    loading 
   } = useMessaging(currentUser);
   const [newMessage, setNewMessage] = useState('');
   const [userProfile, setUserProfile] = useState<any>(null);

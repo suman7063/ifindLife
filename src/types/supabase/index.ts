@@ -6,3 +6,6 @@ export * from './expert';
 export * from './tables';
 export * from './reviews';
 export * from './referral';
+export * from './transactions';
+export * from './userFavorites';
+export * from './courses';

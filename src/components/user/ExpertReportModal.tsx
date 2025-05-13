@@ -13,98 +13,108 @@ import {
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
-import { toast } from 'sonner';
-import { useUserAuth } from '@/hooks/user-auth';
-import { NewReport } from '@/types/supabase/tables';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/components/ui/use-toast"
+import { useUserAuth } from '@/contexts/UserAuthContext';
 
 interface ExpertReportModalProps {
   expertId: string | number;
-  expertName: string;
 }
 
-const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertName }) => {
+const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId }) => {
   const [open, setOpen] = useState(false);
-  const [reportReason, setReportReason] = useState('');
-  const [reportDetails, setReportDetails] = useState('');
-  const { currentUser } = useUserAuth();
+  const [reason, setReason] = useState('');
+  const [details, setDetails] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
+  const { currentUser: user, reportExpert } = useUserAuth();
 
   const handleSubmit = async () => {
-    if (!currentUser) {
-      toast.error('You must be logged in to submit a report.');
+    if (!user || !expertId || !reason || submitting) {
       return;
     }
 
-    const userId = currentUser.id;
-
-    if (!reportReason) {
-      toast.error('Please provide a reason for the report.');
-      return;
-    }
+    setSubmitting(true);
 
     try {
-      const reportData: NewReport = {
-        user_id: userId,
-        expert_id: expertId, // Change from expertId to expert_id
-        reason: reportReason,
-        details: reportDetails,
-        date: new Date().toISOString()
+      const reportData = {
+        expert_id: Number(expertId),
+        reason,
+        details: details || undefined
       };
 
-      // Here you would typically send the reviewData to your Supabase database
-      // For example:
-      // const { data, error } = await supabase
-      //   .from('expert_reports')
-      //   .insert([reportData]);
+      const success = await reportExpert(reportData);
 
-      // if (error) {
-      //   console.error('Error submitting report:', error);
-      //   toast.error('Failed to submit report. Please try again.');
-      // } else {
-        console.log('Report submitted successfully:', reportData);
-        toast.success('Report submitted successfully!');
+      if (success) {
+        toast({
+          title: "Report submitted",
+          description: "Thank you for reporting this expert. We will review your report shortly.",
+        });
         setOpen(false);
-      // }
+        setReason('');
+        setDetails('');
+      } else {
+        toast({
+          title: "Failed to submit report",
+          description: "There was an error submitting your report. Please try again later.",
+          variant: "destructive",
+        });
+      }
     } catch (error) {
-      console.error('Error submitting report:', error);
-      toast.error('An error occurred while submitting the report. Please try again.');
+      console.error("Error submitting report:", error);
+      toast({
+        title: "Failed to submit report",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline">Report Expert</Button>
+        <Button variant="destructive" size="sm">
+          Report Expert
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Report {expertName}</AlertDialogTitle>
+          <AlertDialogTitle>Report Expert</AlertDialogTitle>
           <AlertDialogDescription>
             Are you sure you want to report this expert? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="reportReason">Reason</Label>
-            <Textarea
-              id="reportReason"
-              placeholder="I am concerned about..."
-              value={reportReason}
-              onChange={(e) => setReportReason(e.target.value)}
-            />
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="reason" className="text-right">
+              Reason
+            </Label>
+            <Select onValueChange={setReason} defaultValue={reason}>
+              <SelectTrigger className="col-span-3">
+                <SelectValue placeholder="Select a reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Inappropriate behavior">Inappropriate behavior</SelectItem>
+                <SelectItem value="Misleading information">Misleading information</SelectItem>
+                <SelectItem value="Spam">Spam</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="reportDetails">Details</Label>
-            <Textarea
-              id="reportDetails"
-              placeholder="Provide more details about your concern"
-              value={reportDetails}
-              onChange={(e) => setReportDetails(e.target.value)}
-            />
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="details" className="text-right">
+              Details
+            </Label>
+            <Textarea id="details" className="col-span-3" value={details} onChange={(e) => setDetails(e.target.value)} />
           </div>
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleSubmit}>Report</AlertDialogAction>
+          <AlertDialogCancel disabled={submitting}>Cancel</AlertDialogCancel>
+          <AlertDialogAction disabled={submitting} onClick={handleSubmit}>
+            {submitting ? "Submitting..." : "Submit"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

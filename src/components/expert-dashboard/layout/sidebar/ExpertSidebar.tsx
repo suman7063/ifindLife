@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import ExpertProfileSummary from './ExpertProfileSummary';
 import SidebarNavItem from './SidebarNavItem';
@@ -20,8 +19,7 @@ import { useMessaging } from '@/hooks/messaging';
 const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, expertProfile } = useAuth();
-  // Pass the expertProfile directly, now the types are compatible
-  const { conversations, fetchConversations } = useMessaging(expertProfile);
+  const { conversations, fetchConversations, loadConversations } = useMessaging(expertProfile);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Calculate unread message count

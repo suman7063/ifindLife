@@ -5,37 +5,64 @@ import { useMessages } from './useMessages';
 import { Conversation, Message } from './types';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { ExpertProfile } from '@/types/supabase';
 
-export const useMessaging = () => {
+export const useMessaging = (expertProfile?: ExpertProfile | null) => {
   const { user } = useAuth();
-  const { conversations, loadConversations, isLoadingConversations } = useConversations();
-  const { messages, loadMessages, sendMessage, isLoadingMessages } = useMessages();
+  const { 
+    conversations, 
+    loadConversations: _loadConversations, 
+    isLoadingConversations 
+  } = useConversations();
+  const { 
+    messages, 
+    loadMessages: _loadMessages, 
+    sendMessage: _sendMessage, 
+    isLoadingMessages 
+  } = useMessages();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
 
-  const handleSelectConversation = useCallback(async (conversation: Conversation) => {
-    setSelectedConversation(conversation);
-    if (user) {
-      await loadMessages(conversation.id);
+  const fetchConversations = useCallback(async () => {
+    if (user || expertProfile) {
+      await _loadConversations();
     }
-  }, [user, loadMessages]);
+  }, [user, expertProfile, _loadConversations]);
 
-  const handleSendMessage = useCallback(async (content: string): Promise<boolean> => {
-    if (!selectedConversation || !user || !content.trim()) {
+  const fetchMessages = useCallback(async (conversationId: string) => {
+    if (user || expertProfile) {
+      await _loadMessages(conversationId);
+    }
+  }, [user, expertProfile, _loadMessages]);
+
+  const selectConversation = useCallback(async (conversation: Conversation) => {
+    setSelectedConversation(conversation);
+    if (conversation?.id) {
+      await fetchMessages(conversation.id);
+    }
+  }, [fetchMessages]);
+
+  const sendMessage = useCallback(async (recipientId: string, content: string): Promise<boolean> => {
+    if (!content.trim() || (!user && !expertProfile)) {
       return false;
     }
     
-    return await sendMessage(content, selectedConversation.id);
-  }, [selectedConversation, user, sendMessage]);
+    return await _sendMessage(content, recipientId);
+  }, [user, expertProfile, _sendMessage]);
 
   return {
     conversations,
-    loadConversations,
+    loadConversations: _loadConversations,
+    fetchConversations,
     isLoadingConversations,
+    conversationsLoading: isLoadingConversations,
     messages,
-    loadMessages,
+    loadMessages: _loadMessages,
+    fetchMessages,
     isLoadingMessages,
+    messagesLoading: isLoadingMessages,
+    loading: isLoadingMessages,
     selectedConversation,
-    selectConversation: handleSelectConversation,
-    sendMessage: handleSendMessage
+    selectConversation,
+    sendMessage
   };
 };

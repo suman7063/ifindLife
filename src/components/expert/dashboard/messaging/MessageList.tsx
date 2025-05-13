@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +17,7 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
   const { 
     conversations, 
     fetchConversations, 
-    conversationsLoading: loading 
+    conversationsLoading 
   } = useMessaging(currentUser);
 
   useEffect(() => {
@@ -37,7 +36,7 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
       .substring(0, 2);
   };
 
-  if (loading) {
+  if (conversationsLoading) {
     return (
       <div className="flex justify-center items-center h-40">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

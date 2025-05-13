@@ -16,8 +16,9 @@ export interface Referral {
   created_at: string;
   completed_at?: string;
   referral_code: string;
-  status: 'pending' | 'completed' | 'cancelled';
-  referred_name?: string; // Added for compatibility
+  status: 'pending' | 'completed' | 'cancelled' | 'expired';
+  referred_name?: string;
+  code?: string; // Added for backward compatibility
 }
 
 export interface ReferralUI extends Referral {
