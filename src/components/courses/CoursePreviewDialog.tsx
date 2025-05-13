@@ -38,6 +38,34 @@ const CoursePreviewDialog: React.FC<CoursePreviewDialogProps> = ({ course, isOpe
     navigate(`/course-checkout/${course.id}`);
   };
   
+  // Safely handle video URL to prevent errors
+  const getVideoSrc = () => {
+    if (!course?.introVideoUrl) return '';
+    
+    // Make sure URL is valid for embed
+    try {
+      const url = new URL(course.introVideoUrl);
+      
+      // Handle YouTube URLs specifically
+      if (url.hostname.includes('youtube.com') || url.hostname.includes('youtu.be')) {
+        // For YouTube, ensure the embed format and add parameters
+        const videoId = url.hostname.includes('youtu.be') 
+          ? url.pathname.substring(1)
+          : new URLSearchParams(url.search).get('v');
+          
+        if (videoId) {
+          return `https://www.youtube.com/embed/${videoId}?autoplay=0`;
+        }
+      }
+      
+      // For other video providers, return the original URL
+      return course.introVideoUrl;
+    } catch (error) {
+      console.error("Invalid video URL:", error);
+      return '';
+    }
+  };
+  
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-hidden p-0">
@@ -55,15 +83,26 @@ const CoursePreviewDialog: React.FC<CoursePreviewDialogProps> = ({ course, isOpe
           </DialogDescription>
         </DialogHeader>
         
-        <div className="aspect-video w-full overflow-hidden border-y border-border my-4">
-          <iframe
-            className="w-full h-full"
-            src={`${course.introVideoUrl}?autoplay=0`}
-            title={`${course.title} Introduction`}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
+        {/* Video container with error handling */}
+        <div className="aspect-video w-full overflow-hidden border-y border-border my-4 relative">
+          {getVideoSrc() ? (
+            <iframe
+              className="w-full h-full"
+              src={getVideoSrc()}
+              title={`${course.title} Introduction`}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              onError={(e) => {
+                console.error("Video loading error:", e);
+                e.currentTarget.style.display = 'none';
+              }}
+            ></iframe>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-muted">
+              <p className="text-muted-foreground">Video preview not available</p>
+            </div>
+          )}
         </div>
         
         <div className="px-6 py-2">

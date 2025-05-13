@@ -7,6 +7,7 @@ import { ArrowRight, Brain, Heart, Users, MessageCircle, Sparkles, Lightbulb } f
 import CoursePreviewDialog from '@/components/courses/CoursePreviewDialog';
 import { useCourses } from '@/hooks/useCourses';
 import { Course } from '@/types/courses';
+import { toast } from 'sonner';
 
 interface IssueSessionsProps {
   onCategoryClick: (category: any) => void;
@@ -66,16 +67,26 @@ const IssueSessions: React.FC<IssueSessionsProps> = ({
   };
 
   const handleCategoryClick = (category: any) => {
-    // Find matching course by title
-    const matchingCourse = courses.find(
+    // Look for an exact title match first
+    let matchingCourse = courses.find(
       course => course.title.toLowerCase() === category.title.toLowerCase()
     );
     
+    // If no exact match, try a partial match
+    if (!matchingCourse) {
+      matchingCourse = courses.find(
+        course => course.title.toLowerCase().includes(category.title.toLowerCase()) ||
+                 category.title.toLowerCase().includes(course.title.toLowerCase())
+      );
+    }
+    
     if (matchingCourse) {
+      console.log("Found matching course:", matchingCourse.title);
       setSelectedCourse(matchingCourse);
       setIsDialogOpen(true);
     } else {
       // Fall back to original behavior
+      console.log("No matching course found for:", category.title);
       onCategoryClick(category);
     }
   };
