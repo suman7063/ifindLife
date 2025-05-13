@@ -46,10 +46,10 @@ const JoinCommunitySection = () => {
   };
 
   return (
-    <section className="py-10 bg-[#F2FCE2]">
+    <section className="py-10 bg-gray-100">
       <Container>
         {/* Heading and description - now above everything */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <h2 className="text-2xl md:text-3xl font-bold mb-2">Join Our Mindfulness Community</h2>
           <p className="text-base md:text-lg text-gray-700 max-w-2xl mx-auto">
             Be part of our supportive community and receive daily mindfulness activities 
@@ -57,11 +57,11 @@ const JoinCommunitySection = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-2 gap-6 items-start">
+        <div className="grid md:grid-cols-2 gap-6 items-center">
           {/* Left side - Image */}
-          <div className="rounded-lg overflow-hidden shadow-md h-full">
+          <div className="rounded-lg overflow-hidden h-full">
             <img 
-              src="/lovable-uploads/2d501512-6dd2-4b1a-bc61-6510bd9e9cf6.png" 
+              src="/lovable-uploads/ff7b8926-2545-4f58-bb3e-c05e2b4116b7.png" 
               alt="Community members" 
               className="w-full h-full object-cover"
             />
@@ -70,73 +70,79 @@ const JoinCommunitySection = () => {
           {/* Right side - Content */}
           <div className="space-y-4">
             {/* Email Subscription */}
-            <div className="bg-[#D6BCFA]/30 backdrop-blur-sm p-5 rounded-xl border border-purple-100 shadow-sm">
-              <div className="flex items-center mb-3">
-                <div className="w-8 h-8 rounded-full bg-[#9b87f5]/20 flex items-center justify-center mr-3">
-                  <Mail className="h-4 w-4 text-[#9b87f5]" />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="h-1.5 bg-[#9b87f5]"></div>
+              <div className="p-5">
+                <div className="flex items-center mb-3">
+                  <div className="w-8 h-8 rounded-full bg-[#9b87f5]/20 flex items-center justify-center mr-3">
+                    <Mail className="h-4 w-4 text-[#9b87f5]" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Daily Activities Newsletter</h3>
                 </div>
-                <h3 className="text-lg font-semibold">Daily Activities Newsletter</h3>
+                
+                <p className="mb-4 text-sm text-gray-700">
+                  Join our email list to receive daily mindfulness practices and activities 
+                  directly to your inbox. Start your day with intention and clarity.
+                </p>
+                
+                <form onSubmit={handleEmailSubmit}>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="Your email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isSubmitting}
+                      className="bg-white border-gray-200 text-gray-800 placeholder:text-gray-500 focus:border-[#9b87f5]"
+                      required
+                    />
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting}
+                      className="bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90 font-medium"
+                    >
+                      {isSubmitting ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                      ) : (
+                        "Join"
+                      )}
+                    </Button>
+                  </div>
+                </form>
               </div>
-              
-              <p className="mb-4 text-sm text-gray-700">
-                Join our email list to receive daily mindfulness practices and activities 
-                directly to your inbox. Start your day with intention and clarity.
-              </p>
-              
-              <form onSubmit={handleEmailSubmit}>
-                <div className="flex gap-2">
-                  <Input
-                    type="email"
-                    placeholder="Your email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isSubmitting}
-                    className="bg-white/70 border-purple-100 text-gray-800 placeholder:text-gray-500 focus:border-[#9b87f5]"
-                    required
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={isSubmitting}
-                    className="bg-[#9b87f5] text-white hover:bg-[#9b87f5]/90 font-medium"
-                  >
-                    {isSubmitting ? (
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                    ) : (
-                      "Join"
-                    )}
-                  </Button>
-                </div>
-              </form>
             </div>
             
             {/* WhatsApp Community */}
-            <div className="bg-[#F2FCE2]/50 backdrop-blur-sm p-5 rounded-xl border border-green-100 shadow-sm">
-              <div className="flex items-center mb-3">
-                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
-                  <MessageSquare className="h-4 w-4 text-green-600" />
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="h-1.5 bg-green-500"></div>
+              <div className="p-5">
+                <div className="flex items-center mb-3">
+                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center mr-3">
+                    <MessageSquare className="h-4 w-4 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Join WhatsApp Community</h3>
                 </div>
-                <h3 className="text-lg font-semibold">Join WhatsApp Community</h3>
+                
+                <p className="mb-4 text-sm text-gray-700">
+                  Connect with like-minded individuals in our WhatsApp group. Share experiences, 
+                  get instant support, and participate in group activities.
+                </p>
+                
+                <Button 
+                  className="w-full bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2"
+                  onClick={() => {
+                    window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank');
+                    toast.success("WhatsApp link opened. Join our community chat!");
+                  }}
+                >
+                  <MessageSquare size={16} />
+                  Join WhatsApp Group
+                </Button>
               </div>
-              
-              <p className="mb-4 text-sm text-gray-700">
-                Connect with like-minded individuals in our WhatsApp group. Share experiences, 
-                get instant support, and participate in group activities.
-              </p>
-              
-              <Button 
-                className="w-full bg-green-500 hover:bg-green-600 flex items-center justify-center gap-2"
-                onClick={() => {
-                  window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank');
-                  toast.success("WhatsApp link opened. Join our community chat!");
-                }}
-              >
-                <MessageSquare size={16} />
-                Join WhatsApp Group
-              </Button>
             </div>
 
             <div className="flex justify-center">
-              <div className="inline-flex items-center gap-2 text-gray-700 bg-white/50 px-3 py-1 rounded-full text-sm">
+              <div className="inline-flex items-center gap-2 text-gray-700 bg-white/80 px-3 py-1 rounded-full text-sm border border-gray-200 shadow-sm">
                 <Users size={14} />
                 <span>Join 2,500+ members already in our community</span>
               </div>
