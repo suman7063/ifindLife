@@ -19,25 +19,24 @@ const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName })
   const { currentUser } = useUserAuth();
   const { 
     messages, 
-    loadMessages, 
+    fetchMessages, 
     sendMessage, 
-    isLoadingMessages, 
-    isLoading 
+    messagesLoading: loading,
+    loading: sending
   } = useMessaging(currentUser);
   const [newMessage, setNewMessage] = useState('');
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [sending, setSending] = useState(false); // Add the missing sending state
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch messages
   useEffect(() => {
-    const fetchMessages = async () => {
+    const loadMessages = async () => {
       if (!currentUser || !userId) return;
-      await loadMessages(userId);
+      await fetchMessages(userId);
     };
     
-    fetchMessages();
-  }, [currentUser, userId, loadMessages]);
+    loadMessages();
+  }, [currentUser, userId, fetchMessages]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -49,13 +48,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName })
     
     if (!newMessage.trim() || !currentUser || !userId) return;
     
-    setSending(true); // Set sending to true while sending
-    try {
-      await sendMessage(userId, newMessage.trim());
-      setNewMessage('');
-    } finally {
-      setSending(false); // Set sending to false when done
-    }
+    await sendMessage(userId, newMessage.trim());
+    setNewMessage('');
   };
 
   const formatMessageTime = (timestamp: string) => {
@@ -105,7 +99,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName })
       </CardHeader>
       
       <CardContent className="flex-1 overflow-y-auto p-4">
-        {isLoading ? (
+        {loading ? (
           <div className="flex justify-center items-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>

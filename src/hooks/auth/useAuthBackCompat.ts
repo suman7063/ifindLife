@@ -1,15 +1,14 @@
 
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserAuthContextType } from '@/contexts/UserAuthContext';
+import { useAuth } from '@/contexts/auth';
 
-// This hook provides backward compatibility with the old UserAuthContext
+// This hook provides backward compatibility for components using the old auth hooks
 export const useAuthBackCompat = () => {
   const auth = useAuth();
-
-  // Create a backward compatible interface
-  const userAuth: UserAuthContextType = {
-    currentUser: auth.profile,
-    isAuthenticated: auth.isAuthenticated,
+  
+  // Format the data for user auth
+  const userAuth = {
+    currentUser: auth.userProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
     signup: auth.signup,
     logout: async () => {
@@ -18,33 +17,39 @@ export const useAuthBackCompat = () => {
     },
     authLoading: auth.isLoading,
     loading: auth.isLoading,
-    profileNotFound: !auth.profile && !auth.isLoading,
+    profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateProfile,
-    updateProfilePicture: auth.updateProfilePicture,
     updatePassword: auth.updatePassword,
-    addToFavorites: async (expertId: number) => {
-      return await auth.addToFavorites(expertId);
-    },
-    removeFromFavorites: async (expertId: number) => {
-      return await auth.removeFromFavorites(expertId);
-    },
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
     rechargeWallet: auth.rechargeWallet,
     addReview: auth.addReview,
     reportExpert: auth.reportExpert,
-    getExpertShareLink: auth.getExpertShareLink,
-    hasTakenServiceFrom: async (expertId: number) => {
-      return await auth.hasTakenServiceFrom(expertId);
-    },
-    getReferralLink: auth.getReferralLink,
-    user: auth.user,
-    refreshProfile: async () => {
-      const profile = await auth.fetchProfile();
-      return;
-    }
+    hasTakenServiceFrom: auth.hasTakenServiceFrom,
+    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getReferralLink: auth.getReferralLink || (() => null),
+    user: auth.user
   };
-
+  
+  // Format the data for expert auth
+  const expertAuth = {
+    currentExpert: auth.expertProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+    login: auth.login,
+    logout: async () => {
+      const result = await auth.logout();
+      return !result.error;
+    },
+    authLoading: auth.isLoading,
+    loading: auth.isLoading,
+    profileNotFound: !auth.expertProfile && !auth.isAuthenticated && !auth.isLoading,
+    updateProfile: auth.updateExpertProfile,
+    user: auth.user
+  };
+  
   return {
     userAuth,
+    expertAuth,
     auth
   };
 };

@@ -1,5 +1,4 @@
 
+export * from './useMessaging';
 export * from './types';
-export * from './useConversations';
-export * from './useMessages';
-export { useMessaging } from './useMessaging';
+export { default } from './useMessaging';

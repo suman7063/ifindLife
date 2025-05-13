@@ -1,57 +1,66 @@
 
-// Re-export all our type definitions
-export * from './user';
+// Main index file re-exporting all types from the specialized files
 export * from './userProfile';
-export * from './expert';
-export * from './tables';
-export * from './reviews';
-export * from './referral';
-export * from './transactions';
 export * from './userFavorites';
-export * from './courses';
+export * from './referral';
 
-// Export the ReferralSettings interface that many components are looking for
+// Re-export from tables.ts - use explicit exports to avoid duplicates
+export type {
+  UserTransaction,
+  UserReview,
+  ContactSubmission
+} from './tables';
+
+// Re-export from reviews.ts - but not UserReview (it comes from tables.ts)
+export type {
+  ReviewStats
+} from './reviews';
+
+// Define ReferralSettings interface
 export interface ReferralSettings {
   id: string;
   referrer_reward: number;
   referred_reward: number;
   active: boolean;
-  updated_at: string;
   description?: string;
+  updated_at?: string;
 }
 
-// Export the Review interface that components need
+// Additional UI-specific types
+export interface ReferralUI {
+  id: string;
+  referrerId: string;
+  referredId: string;
+  referredName?: string;
+  referralCode: string;
+  status: string;
+  rewardClaimed: boolean;
+  created_at: string; // Ensure consistency with snake_case
+}
+
+// Define Review type for UI purposes
 export interface Review {
   id: string;
-  expertId: string;
+  expertId: string | number;
   rating: number;
-  comment: string;
+  comment?: string;
   date: string;
+  verified?: boolean;
 }
 
-// Extend the Referral interface with UI-specific properties
-export interface ReferralUI extends Referral {
-  referredName?: string;
-  referrerName?: string;
-  rewardAmount?: number;
-  // For backward compatibility
-  code?: string;
-}
-
-// Make UserProfile available to all components that import from @/types/supabase
-export interface UserProfile {
+// Define Report type for UI purposes
+export interface Report {
   id: string;
-  name?: string;
-  email?: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  currency?: string;
-  wallet_balance?: number;
-  profile_picture?: string;
-  referral_code?: string;
-  referral_link?: string;
-  created_at?: string;
-  favorite_experts?: string[];
-  favorite_programs?: number[];
+  expertId: string | number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
 }
+
+export type { 
+  ExpertProfile,
+  ExpertReview,
+  ExpertService,
+  ExpertAvailability
+} from './expert';

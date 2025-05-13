@@ -119,11 +119,11 @@ const ExpertLogin: React.FC = () => {
       // CRITICAL FIX: Always set login origin for role determination
       sessionStorage.setItem('loginOrigin', 'expert');
       
-      // Check if login function is available
-      if (!login || typeof login !== 'function') {
-        console.error('Login function is not available in auth context');
-        toast.error('Login functionality is not available. Please try again later.');
-        setLoginError('Login functionality is not available. Please try refreshing the page.');
+      // CRITICAL FIX: Check if login function is available
+      if (!login) {
+        console.error('Login function is not available');
+        toast.error('Login functionality is not available');
+        setLoginError('Login functionality is not available');
         setIsLogging(false);
         return false;
       }

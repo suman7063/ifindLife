@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import AgoraChatTypeSelector from '@/components/chat/AgoraChatTypeSelector';
@@ -53,10 +54,10 @@ const ChatModalContent: React.FC<ChatModalContentProps> = ({
   onToggleChat,
   onRetry
 }) => {
-  const { profile, isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, userProfile } = useAuth();
   
   // Show auth message if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !authLoading) {
     return <CallAuthMessage expertName={expertName} onClose={() => {}} />;
   }
 
@@ -95,7 +96,7 @@ const ChatModalContent: React.FC<ChatModalContentProps> = ({
         cost={cost}
         formatTime={formatTime}
         expertPrice={expertPrice}
-        userName={profile?.name || 'You'}
+        userName={userProfile?.name || 'You'}
         expertName={expertName}
       />
       

@@ -46,32 +46,27 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return false;
   };
   
-  // Convert expertId to number for hasTakenServiceFrom
+  // Define a properly typed hasTakenServiceFrom function that handles both Promise and non-Promise cases
   const adaptedHasTakenServiceFrom = async (id: string | number): Promise<boolean> => {
     if (!auth.hasTakenServiceFrom) return Promise.resolve(false);
     
     try {
-      // Parse string to number if needed
-      const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-      return await auth.hasTakenServiceFrom(numericId);
+      const result = auth.hasTakenServiceFrom(id);
+      return result instanceof Promise ? result : Promise.resolve(result);
     } catch (error) {
       console.error("Error in hasTakenServiceFrom:", error);
-      return false;
+      return Promise.resolve(false);
     }
   };
 
-  // Fix logout function to properly return an object with error property
-  const adaptedLogout = async (): Promise<{ error: Error | null }> => {
+  // Adapt logout function to return boolean
+  const adaptedLogout = async (): Promise<boolean> => {
     try {
       const result = await auth.logout();
-      // Ensure result is in the correct format
-      if (typeof result === 'boolean') {
-        return { error: result ? null : new Error('Logout failed') };
-      }
-      return result;
-    } catch (error: any) {
+      return result && !result.error;
+    } catch (error) {
       console.error("Error in logout:", error);
-      return { error };
+      return false;
     }
   };
   
@@ -91,7 +86,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile,
+    updateProfile: auth.updateProfile, // Use updateProfile instead of updateUserProfile
     updatePassword: auth.updatePassword || (async () => false),
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),
@@ -102,7 +97,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture || (async () => null)
+    updateProfilePicture: async () => null
   };
 
   return (

@@ -15,24 +15,25 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import useMessaging from '@/hooks/messaging';
+import { useMessaging } from '@/hooks/messaging';
 
 const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, expertProfile } = useAuth();
-  const { conversations, loadConversations } = useMessaging(expertProfile);
+  // Pass the expertProfile directly, now the types are compatible
+  const { conversations, fetchConversations } = useMessaging(expertProfile);
   const [unreadCount, setUnreadCount] = useState(0);
 
   // Calculate unread message count
   useEffect(() => {
     if (expertProfile?.id) {
-      loadConversations();
+      fetchConversations();
     }
-  }, [expertProfile?.id, loadConversations]);
+  }, [expertProfile?.id, fetchConversations]);
 
   useEffect(() => {
     // Calculate total unread messages
-    const totalUnread = conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
+    const totalUnread = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
     setUnreadCount(totalUnread);
   }, [conversations]);
 

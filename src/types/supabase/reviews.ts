@@ -9,11 +9,3 @@ export interface ReviewStats {
   totalCount: number;
   ratingCounts: Record<number, number>;
 }
-
-export interface Review {
-  id: string;
-  expertId: string;
-  rating: number;
-  comment: string;
-  date: string;
-}

@@ -28,7 +28,7 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
   onClose,
   expert,
 }) => {
-  const { profile, isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, userProfile } = useAuth();
   const [chatStatus, setChatStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [chatType, setChatType] = useState<'text' | 'video'>('text');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -152,7 +152,7 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
   // Modal content based on state
   const renderModalContent = () => {
     // Show auth message if not authenticated
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !authLoading) {
       return <CallAuthMessage expertName={expert.name} onClose={onClose} />;
     }
 
@@ -186,7 +186,7 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
           cost={cost}
           formatTime={formatTime}
           expertPrice={expert.price}
-          userName={profile?.name || 'You'}
+          userName={userProfile?.name || 'You'}
           expertName={expert.name}
         />
         

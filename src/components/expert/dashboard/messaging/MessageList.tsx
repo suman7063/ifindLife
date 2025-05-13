@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2 } from 'lucide-react';
 import { useUserAuth } from '@/hooks/user-auth';
-import useMessaging from '@/hooks/messaging';
+import { useMessaging } from '@/hooks/messaging';
 import { formatDistanceToNow } from 'date-fns';
 
 interface MessageListProps {
@@ -17,15 +17,15 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
   const { currentUser } = useUserAuth();
   const { 
     conversations, 
-    loadConversations,
-    isLoadingConversations 
+    fetchConversations, 
+    conversationsLoading: loading 
   } = useMessaging(currentUser);
 
   useEffect(() => {
     if (currentUser) {
-      loadConversations();
+      fetchConversations();
     }
-  }, [currentUser, loadConversations]);
+  }, [currentUser, fetchConversations]);
 
   // Function to get initials for the avatar
   const getInitials = (name: string) => {
@@ -37,7 +37,7 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
       .substring(0, 2);
   };
 
-  if (isLoadingConversations) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />

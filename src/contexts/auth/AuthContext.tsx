@@ -1,41 +1,63 @@
 
-import React, { createContext, useContext } from 'react';
-import { AuthContextProvider, AuthProvider } from './provider/AuthContextProvider';
-import { AuthContextType, initialAuthState } from './types';
+import { createContext, useContext } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { UserProfile, ExpertProfile, UserRole, AuthStatus } from './types';
 
-// Create the context with default values
-export const AuthContext = createContext<AuthContextType>({
-  ...initialAuthState,
-  // Add required methods with no-op implementations
-  login: async () => false,
-  loginWithOtp: async () => ({ error: null }),
-  signup: async () => false,
-  logout: async () => ({ error: null }),
-  resetPassword: async () => ({ error: null }),
-  updateProfile: async () => false,
-  updateUserProfile: async () => false,
-  updatePassword: async () => false,
-  updateEmail: async () => ({ error: null }),
-  refreshSession: async () => ({ error: null }),
-  getUserDisplayName: () => '',
-  fetchProfile: async () => null,
-  addFunds: async () => ({ error: null }),
-  updateWalletBalance: async () => ({ error: null }),
-  rechargeWallet: async () => false,
-  updateExpertProfile: async () => ({ error: null }),
-  fetchExpertProfile: async () => null,
-  registerAsExpert: async () => ({ error: null }),
-  addReview: async () => false,
-  reportExpert: async () => false,
-  hasTakenServiceFrom: async () => false,
-  getExpertShareLink: () => '',
-  getReferralLink: () => null,
-  addToFavorites: async () => false,
-  removeFromFavorites: async () => false,
-  updateProfilePicture: async () => null
-});
+// Define the AuthContextType interface
+export interface AuthContextType {
+  // Auth state
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  user: User | null;
+  session: Session | null;
+  authStatus: AuthStatus;
+  profile: UserProfile | null;
+  userProfile: UserProfile | null; // Alias for backward compatibility
+  role: UserRole;
+  expertProfile: ExpertProfile | null;
+  walletBalance: number;
+  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  
+  // Auth methods
+  login: (email: string, password: string, role?: string) => Promise<boolean>;
+  loginWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<{ error: Error | null }>;
+  resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>; // Alias for backward compatibility
+  updatePassword: (password: string) => Promise<boolean>;
+  updateEmail: (email: string) => Promise<{ error: Error | null }>;
+  refreshSession: () => Promise<{ error: Error | null }>;
+  
+  // Profile methods
+  getUserDisplayName: () => string;
+  fetchProfile: () => Promise<UserProfile | null>;
+  addFunds: (amount: number) => Promise<{ error: Error | null }>;
+  updateWalletBalance: (newBalance: number) => Promise<{ error: Error | null }>;
+  rechargeWallet: (amount: number) => Promise<boolean>;
+  
+  // Expert methods
+  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<{ error: Error | null }>;
+  fetchExpertProfile: () => Promise<ExpertProfile | null>;
+  registerAsExpert: (data: any) => Promise<{ error: Error | null }>;
+  
+  // User actions
+  addReview: (review: any) => Promise<boolean>;
+  reportExpert: (report: any) => Promise<boolean>;
+  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink: (expertId: string | number) => string;
+  getReferralLink: () => string | null;
+  
+  // Favorites
+  addToFavorites: (expertId: number) => Promise<boolean>;
+  removeFromFavorites: (expertId: number) => Promise<boolean>;
+}
 
-// Hook to use the auth context
+// Create the context
+export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+
+// Create a hook to use the context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -44,5 +66,5 @@ export const useAuth = () => {
   return context;
 };
 
-// Forward the AuthProvider from the provider file
-export { AuthProvider };
+// Re-export the provider from the provider file
+export { AuthProvider } from './provider/AuthContextProvider';

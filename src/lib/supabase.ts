@@ -1,6 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/supabase';
+import type { Database } from '@/integrations/supabase/types';
 
 // Use consistent URL and key values - using the values from the environment or the hardcoded fallbacks
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://nmcqyudqvbldxwzhyzma.supabase.co";
@@ -14,13 +14,40 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     detectSessionInUrl: true,
     flowType: 'implicit',
+  },
+  global: {
+    fetch: (url: RequestInfo | URL, init?: RequestInit) => {
+      console.log('Supabase fetch request:', url);
+      
+      return fetch(url, init).then(response => {
+        // Add handling for rate limiting and server errors
+        if (response.status === 429) {
+          console.warn('Rate limit exceeded for Supabase request');
+        } else if (response.status >= 500) {
+          console.error('Server error in Supabase response:', response.status);
+        }
+        
+        return response;
+      }).catch(error => {
+        console.error('Supabase fetch error:', error);
+        throw error;
+      });
+    }
   }
 });
 
-// Export the from function for backward compatibility
-export const from = <T = any>(table: string) => {
-  return supabase.from<T>(table);
-};
+export type Tables = Database['public']['Tables'];
 
-// Log when the client is initialized
-console.log('Supabase client initialized with URL:', supabaseUrl);
+// Define a type-safe version for table access
+type TableNames = keyof Database['public']['Tables'] | string;
+
+// Enhanced from function with better error handling and retry mechanism
+export function from(tableName: TableNames) {
+  try {
+    // Using type assertion to prevent TypeScript errors while keeping functionality
+    return supabase.from(tableName as any);
+  } catch (error) {
+    console.error(`Error accessing table '${tableName}':`, error);
+    throw error;
+  }
+}

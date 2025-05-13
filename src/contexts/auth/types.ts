@@ -1,3 +1,4 @@
+
 import { User, Session } from '@supabase/supabase-js';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
@@ -59,7 +60,7 @@ export interface AuthContextType {
   session: Session | null;
   authStatus: AuthStatus;
   profile: UserProfile | null;
-  userProfile: UserProfile | null; // Added this alias for backward compatibility
+  userProfile: UserProfile | null; // Alias for backward compatibility
   role: UserRole;
   expertProfile: ExpertProfile | null;
   walletBalance: number;
@@ -72,7 +73,7 @@ export interface AuthContextType {
   logout: () => Promise<{ error: Error | null }>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>; // Added alias for backward compatibility
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>; // Alias for backward compatibility
   updatePassword: (password: string) => Promise<boolean>;
   updateEmail: (email: string) => Promise<{ error: Error | null }>;
   refreshSession: () => Promise<{ error: Error | null }>;
@@ -99,9 +100,6 @@ export interface AuthContextType {
   // Favorites
   addToFavorites: (expertId: number) => Promise<boolean>;
   removeFromFavorites: (expertId: number) => Promise<boolean>;
-  
-  // Additional prop needed for compatibility
-  updateProfilePicture?: (file: File) => Promise<string | null>;
 }
 
 export interface AuthState {

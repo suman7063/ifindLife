@@ -1,68 +1,102 @@
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { Message } from '@/types/appointments';
+import { MessagingUser, UseMessagingReturn } from './types';
 import { useConversations } from './useConversations';
 import { useMessages } from './useMessages';
-import { Conversation, Message } from './types';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { ExpertProfile } from '@/types/supabase';
+import { sendMessage as sendMessageApi, markConversationAsRead as markConversationAsReadApi } from './messagingApi';
 
-export const useMessaging = (expertProfile?: ExpertProfile | null) => {
-  const { user } = useAuth();
+/**
+ * Main messaging hook that provides complete messaging functionality
+ */
+export const useMessaging = (currentUser: MessagingUser): UseMessagingReturn => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
   const { 
     conversations, 
-    loadConversations: _loadConversations, 
-    isLoadingConversations 
-  } = useConversations();
-  const { 
-    messages, 
-    loadMessages: _loadMessages, 
-    sendMessage: _sendMessage, 
-    isLoadingMessages 
-  } = useMessages();
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-
-  const fetchConversations = useCallback(async () => {
-    if (user || expertProfile) {
-      await _loadConversations();
-    }
-  }, [user, expertProfile, _loadConversations]);
-
-  const fetchMessages = useCallback(async (conversationId: string) => {
-    if (user || expertProfile) {
-      await _loadMessages(conversationId);
-    }
-  }, [user, expertProfile, _loadMessages]);
-
-  const selectConversation = useCallback(async (conversation: Conversation) => {
-    setSelectedConversation(conversation);
-    if (conversation?.id) {
-      await fetchMessages(conversation.id);
-    }
-  }, [fetchMessages]);
-
-  const sendMessage = useCallback(async (recipientId: string, content: string): Promise<boolean> => {
-    if (!content.trim() || (!user && !expertProfile)) {
-      return false;
-    }
-    
-    return await _sendMessage(content, recipientId);
-  }, [user, expertProfile, _sendMessage]);
-
-  return {
-    conversations,
-    loadConversations: _loadConversations,
+    conversationsLoading, 
     fetchConversations,
-    isLoadingConversations,
-    conversationsLoading: isLoadingConversations,
+    error: conversationsError 
+  } = useConversations(currentUser);
+  
+  const {
     messages,
-    loadMessages: _loadMessages,
+    messagesLoading,
     fetchMessages,
-    isLoadingMessages,
-    messagesLoading: isLoadingMessages,
-    loading: isLoadingMessages,
-    selectedConversation,
-    selectConversation,
-    sendMessage
+    setMessages,
+    error: messagesError
+  } = useMessages(currentUser);
+  
+  /**
+   * Send a new message
+   */
+  const sendMessage = async (receiverId: string, content: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const newMessage = await sendMessageApi(currentUser, receiverId, content);
+      
+      if (newMessage) {
+        // Update local messages state
+        setMessages(prev => [...prev, newMessage]);
+      }
+      
+      return newMessage;
+    } catch (error: any) {
+      console.error('Error in sendMessage:', error);
+      setError(error.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  /**
+   * Mark all messages in a conversation as read
+   */
+  const markConversationAsRead = async (partnerId: string) => {
+    setLoading(true);
+    
+    try {
+      const success = await markConversationAsReadApi(currentUser, partnerId);
+      
+      if (success) {
+        // Update local messages state
+        setMessages(prev => 
+          prev.map(msg => 
+            msg.sender_id === partnerId && msg.receiver_id === currentUser?.id
+              ? { ...msg, read: true }
+              : msg
+          )
+        );
+      }
+      
+      return success;
+    } catch (error: any) {
+      console.error('Error in markConversationAsRead:', error);
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Combine errors from all sources
+  const combinedError = error || conversationsError || messagesError;
+  
+  return {
+    messages,
+    conversations,
+    loading,
+    messagesLoading,
+    conversationsLoading,
+    error: combinedError,
+    fetchMessages,
+    fetchConversations,
+    sendMessage,
+    markConversationAsRead
   };
 };
+
+export default useMessaging;

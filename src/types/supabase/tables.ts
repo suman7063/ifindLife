@@ -1,62 +1,69 @@
 
-export interface ContactSubmission {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  is_read?: boolean;
-  created_at?: string;
-}
-
 export interface UserTransaction {
   id: string;
   user_id: string;
   amount: number;
+  currency: string;
+  description: string;
   date: string;
   type: string;
-  currency: string;
-  description?: string;
-  // Add these for backward compatibility with existing code
-  transaction_type?: string;
-  created_at?: string;
-}
-
-export interface NewReview {
-  expert_id: number;
-  rating: number;
-  comment?: string;
-}
-
-export interface NewReport {
-  expert_id: number;
-  reason: string;
-  details?: string;
+  status: string;
+  created_at: string;
+  payment_id: string;
+  payment_method: string;
+  transaction_type: string;
 }
 
 export interface UserReview {
-  id: string;
-  user_id: string;
+  id?: string;
   expert_id: number;
+  user_id?: string;
   rating: number;
   comment?: string;
   date: string;
   verified?: boolean;
 }
 
-export interface Report {
+export interface ContactSubmission {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  created_at: string | null;
+  is_read: boolean | null;
+}
+
+// Full Report type from DB
+export type Report = {
   id: string;
-  expert_id: number;
+  expert_id: string | number; // Using expert_id to match database schema
   reason: string;
   details?: string;
   date: string;
   status: string;
-}
+};
 
-export interface Review {
+// Input type for inserting a new report
+export type NewReport = {
+  expertId: string | number; // Keep as expertId for frontend consistency
+  reason: string;
+  details?: string;
+};
+
+// Full Review type
+export type Review = {
   id: string;
-  expertId: string;
+  expert_id: string | number; // Using expert_id to match database schema
   rating: number;
-  comment: string;
+  comment?: string;
   date: string;
-}
+  verified?: boolean;
+};
+
+// Input type for inserting a new review
+export type NewReview = {
+  expertId: string | number; // Keep as expertId for frontend consistency
+  rating: number;
+  comment?: string;
+};
