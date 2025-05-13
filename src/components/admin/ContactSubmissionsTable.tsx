@@ -31,7 +31,8 @@ const ContactSubmissionsTable = () => {
         throw error;
       }
 
-      setSubmissions(data as ContactSubmission[] || []);
+      // Type assertion to ensure data matches our ContactSubmission interface
+      setSubmissions((data as ContactSubmission[]) || []);
     } catch (error) {
       console.error('Error fetching contact submissions:', error);
       toast.error('Failed to load contact submissions');

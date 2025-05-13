@@ -46,3 +46,6 @@ export const useAuth = () => {
   
   return context;
 };
+
+// Export the provider from ./provider/AuthContextProvider.tsx
+export { AuthProvider } from './provider/AuthContextProvider';

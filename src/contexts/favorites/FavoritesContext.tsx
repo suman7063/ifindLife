@@ -1,22 +1,32 @@
 
 import { createContext, useContext } from 'react';
-import { FavoritesContextType } from './types';
 
-// Create favorites context with default values
-export const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
+// Define the FavoritesContext type
+export interface FavoritesContextType {
+  isExpertFavorite?: (id: number) => boolean;
+  toggleExpertFavorite?: (id: number) => Promise<void>;
+  isProgramFavorite?: (id: number) => boolean;
+  toggleProgramFavorite?: (id: number) => Promise<void>;
+  favoriteExperts?: number[];
+  favoritePrograms?: number[];
+  loading?: boolean;
+}
 
-// Hook for using favorites context with better error message
-export const useFavorites = () => {
+// Create the context with default values
+export const FavoritesContext = createContext<FavoritesContextType | null>(null);
+
+// Safe hook to access the favorites context
+export const useSafeFavorites = () => {
   const context = useContext(FavoritesContext);
-  
-  if (context === undefined) {
-    throw new Error('useFavorites must be used within a FavoritesProvider. Check component hierarchy to ensure this component is wrapped in FavoritesProvider.');
-  }
-  
+  // Return the context even if null - caller will handle this case
   return context;
 };
 
-// Safe version of useFavorites that doesn't throw an error
-export const useSafeFavorites = () => {
-  return useContext(FavoritesContext);
+// Original hook that throws if used outside provider
+export const useFavorites = () => {
+  const context = useContext(FavoritesContext);
+  if (!context) {
+    throw new Error('useFavorites must be used within a FavoritesProvider');
+  }
+  return context;
 };
