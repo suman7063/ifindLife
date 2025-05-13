@@ -1,151 +1,113 @@
-
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertTriangle } from 'lucide-react';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
 import { toast } from 'sonner';
+import { useUserAuth } from '@/hooks/user-auth';
 import { NewReport } from '@/types/supabase/tables';
 
 interface ExpertReportModalProps {
-  expertId: string;
+  expertId: string | number;
   expertName: string;
 }
 
-const REPORT_REASONS = [
-  'Inappropriate behavior',
-  'Service not as described',
-  'No-show for appointment',
-  'Unprofessional conduct',
-  'False expertise claim',
-  'Other'
-];
-
 const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertName }) => {
-  const [reason, setReason] = useState('');
-  const [details, setDetails] = useState('');
   const [open, setOpen] = useState(false);
-  
-  const { reportExpert, hasTakenServiceFrom } = useUserAuth();
-  
-  const handleSubmit = () => {
-    if (reason === '') {
-      toast.error('Please select a reason');
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetails, setReportDetails] = useState('');
+  const { currentUser } = useUserAuth();
+
+  const handleSubmit = async () => {
+    if (!currentUser) {
+      toast.error('You must be logged in to submit a report.');
       return;
     }
-    
-    if (details.trim() === '') {
-      toast.error('Please provide details');
+
+    const userId = currentUser.id;
+
+    if (!reportReason) {
+      toast.error('Please provide a reason for the report.');
       return;
     }
-    
-    const report: NewReport = {
-      expertId, 
-      reason, 
-      details
-    };
-    
-    reportExpert(report);
-    
-    setOpen(false);
-    setReason('');
-    setDetails('');
+
+    try {
+      const reportData: NewReport = {
+        user_id: userId,
+        expert_id: expertId, // Change from expertId to expert_id
+        reason: reportReason,
+        details: reportDetails,
+        date: new Date().toISOString()
+      };
+
+      // Here you would typically send the reviewData to your Supabase database
+      // For example:
+      // const { data, error } = await supabase
+      //   .from('expert_reports')
+      //   .insert([reportData]);
+
+      // if (error) {
+      //   console.error('Error submitting report:', error);
+      //   toast.error('Failed to submit report. Please try again.');
+      // } else {
+        console.log('Report submitted successfully:', reportData);
+        toast.success('Report submitted successfully!');
+        setOpen(false);
+      // }
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      toast.error('An error occurred while submitting the report. Please try again.');
+    }
   };
-  
-  const [canReport, setCanReport] = useState(false);
-  
-  React.useEffect(() => {
-    const checkServiceHistory = async () => {
-      try {
-        // Use the expertId as a string directly, since hasTakenServiceFrom expects a string
-        const hasService = await hasTakenServiceFrom(expertId);
-        setCanReport(hasService);
-      } catch (error) {
-        console.error("Error checking service history:", error);
-        setCanReport(false);
-      }
-    };
-    
-    checkServiceHistory();
-  }, [expertId, hasTakenServiceFrom]);
-  
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          onClick={(e) => {
-            if (!canReport) {
-              e.preventDefault();
-              toast.error('You can only report experts after taking their service');
-              return;
-            }
-          }}
-          disabled={!canReport}
-        >
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          Report Expert
-        </Button>
-      </DialogTrigger>
-      
-      {canReport && (
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Report {expertName}</DialogTitle>
-            <DialogDescription>
-              Please provide details about your concern. Reports are reviewed by our admin team.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="py-4 space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="report-reason" className="text-sm font-medium">
-                Reason for Report
-              </label>
-              <Select value={reason} onValueChange={setReason}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a reason" />
-                </SelectTrigger>
-                <SelectContent>
-                  {REPORT_REASONS.map((reason) => (
-                    <SelectItem key={reason} value={reason}>
-                      {reason}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="report-details" className="text-sm font-medium">
-                Details
-              </label>
-              <Textarea
-                id="report-details"
-                placeholder="Please provide specific details about the issue..."
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                rows={5}
-              />
-            </div>
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline">Report Expert</Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Report {expertName}</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to report this expert? This action cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="reportReason">Reason</Label>
+            <Textarea
+              id="reportReason"
+              placeholder="I am concerned about..."
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+            />
           </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSubmit}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Submit Report
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      )}
-    </Dialog>
+          <div className="grid gap-2">
+            <Label htmlFor="reportDetails">Details</Label>
+            <Textarea
+              id="reportDetails"
+              placeholder="Provide more details about your concern"
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+            />
+          </div>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleSubmit}>Report</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
 

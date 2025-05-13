@@ -36,6 +36,9 @@ interface ExpertProfileWithStatus extends Omit<ExpertProfile, 'status'> {
   status?: string;
   auth_id?: string | null;
   verified?: boolean | null;
+  specialization?: string;
+  experience?: string;
+  state?: string;
 }
 
 const ExpertApprovals = () => {

@@ -1,56 +1,50 @@
 
-import { useCallback } from 'react';
-import { UserProfile } from '@/types/supabase';
-import { AuthContextType } from '@/contexts/auth/AuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { UserAuthContextType } from '@/contexts/UserAuthContext';
 
-export const useAuthBackCompat = (auth: AuthContextType) => {
-  // Convert any boolean returns to match required format with error property
-  const logoutWithErrorProp = useCallback(async () => {
-    try {
+// This hook provides backward compatibility with the old UserAuthContext
+export const useAuthBackCompat = () => {
+  const auth = useAuth();
+
+  // Create a backward compatible interface
+  const userAuth: UserAuthContextType = {
+    currentUser: auth.profile,
+    isAuthenticated: auth.isAuthenticated,
+    login: auth.login,
+    signup: auth.signup,
+    logout: async () => {
       const result = await auth.logout();
-      if (typeof result === 'boolean') {
-        return { error: result ? null : new Error('Logout failed') };
-      }
-      return result;
-    } catch (error: any) {
-      return { error };
+      return !result.error;
+    },
+    authLoading: auth.isLoading,
+    loading: auth.isLoading,
+    profileNotFound: !auth.profile && !auth.isLoading,
+    updateProfile: auth.updateProfile,
+    updateProfilePicture: auth.updateProfilePicture,
+    updatePassword: auth.updatePassword,
+    addToFavorites: async (expertId: number) => {
+      return await auth.addToFavorites(expertId);
+    },
+    removeFromFavorites: async (expertId: number) => {
+      return await auth.removeFromFavorites(expertId);
+    },
+    rechargeWallet: auth.rechargeWallet,
+    addReview: auth.addReview,
+    reportExpert: auth.reportExpert,
+    getExpertShareLink: auth.getExpertShareLink,
+    hasTakenServiceFrom: async (expertId: number) => {
+      return await auth.hasTakenServiceFrom(expertId);
+    },
+    getReferralLink: auth.getReferralLink,
+    user: auth.user,
+    refreshProfile: async () => {
+      const profile = await auth.fetchProfile();
+      return;
     }
-  }, [auth.logout]);
-
-  // Special case for specific functions that need Promise<boolean> return type
-  const hasTakenServiceFromAsync = useCallback(
-    async (expertId: number): Promise<boolean> => {
-      if (!auth.hasTakenServiceFrom) return false;
-      try {
-        return await auth.hasTakenServiceFrom(expertId);
-      } catch (error) {
-        console.error('Error in hasTakenServiceFrom:', error);
-        return false;
-      }
-    },
-    [auth.hasTakenServiceFrom]
-  );
-
-  // Add wrapper for resetPassword to handle error format consistently
-  const resetPasswordWithErrorProp = useCallback(
-    async (email: string) => {
-      try {
-        const result = await auth.resetPassword(email);
-        if (typeof result === 'boolean') {
-          return { error: result ? null : new Error('Reset password failed') };
-        }
-        return result;
-      } catch (error: any) {
-        return { error };
-      }
-    },
-    [auth.resetPassword]
-  );
+  };
 
   return {
-    ...auth,
-    logout: logoutWithErrorProp,
-    hasTakenServiceFrom: hasTakenServiceFromAsync,
-    resetPassword: resetPasswordWithErrorProp
+    userAuth,
+    auth
   };
 };

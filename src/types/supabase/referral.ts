@@ -10,6 +10,7 @@ export interface ReferralSettings {
   code_length?: number;
   created_at?: string;
   updated_at?: string;
+  active?: boolean;
 }
 
 export interface Referral {
@@ -20,7 +21,7 @@ export interface Referral {
   status: 'pending' | 'completed' | 'expired';
   created_at?: string;
   completed_at?: string | null;
-  reward_given?: boolean;
+  reward_claimed?: boolean;
 }
 
 export interface ReferralUI extends Referral {

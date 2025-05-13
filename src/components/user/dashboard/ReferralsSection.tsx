@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { Referral } from '@/types/supabase/referral';
@@ -33,35 +32,41 @@ interface ReferralsSectionProps {
 // Mock referrals data
 const mockReferrals: Referral[] = [
   {
-    id: '1',
-    referrer_id: 'current-user',
-    referred_id: 'user-1',
-    status: 'completed',
+    id: "1",
+    referrer_id: "user123",
+    referred_id: "newuser1",
+    status: "completed",
+    code: "REF123",
+    created_at: "2023-05-01",
+    completed_at: "2023-05-15",
     reward_claimed: true,
-    referral_code: 'ABC123',
-    created_at: '2025-03-15T10:00:00Z',
-    completed_at: '2025-03-16T14:30:00Z'
+    referred_name: "John Doe",
+    referred_email: "john@example.com"
   },
   {
-    id: '2',
-    referrer_id: 'current-user',
-    referred_id: 'user-2',
-    status: 'pending',
+    id: "2", 
+    referrer_id: "user123",
+    referred_id: "newuser2",
+    status: "pending",
+    code: "REF124",
+    created_at: "2023-06-01",
+    completed_at: null,
     reward_claimed: false,
-    referral_code: 'ABC123',
-    created_at: '2025-04-20T08:45:00Z',
-    completed_at: null
+    referred_name: "Jane Smith",
+    referred_email: "jane@example.com"
   },
   {
-    id: '3',
-    referrer_id: 'current-user',
-    referred_id: 'user-3',
-    status: 'completed',
-    reward_claimed: true,
-    referral_code: 'ABC123',
-    created_at: '2025-02-25T11:20:00Z',
-    completed_at: '2025-02-28T16:15:00Z'
-  },
+    id: "3",
+    referrer_id: "user123",
+    referred_id: "newuser3",
+    status: "expired",
+    code: "REF125",
+    created_at: "2023-04-01",
+    completed_at: null,
+    reward_claimed: false,
+    referred_name: "Alice Johnson",
+    referred_email: "alice@example.com"
+  }
 ];
 
 // Mock referral rewards data

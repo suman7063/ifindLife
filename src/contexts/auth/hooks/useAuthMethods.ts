@@ -1,185 +1,62 @@
 
 import { useCallback } from 'react';
-import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { AuthState } from '../types';
 import { ensureStringId } from '@/utils/idConverters';
-import { ExpertProfile, UserProfile } from '@/types/supabase';
+import { ExpertProfile } from '@/types/supabase/expert';
+import { UserProfile } from '@/types/supabase/userProfile';
 
-export const useAuthMethods = (user: User | null) => {
-  // Default implementations for auth methods
-  const loginWithOtp = async (email: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithOtp({ email });
-      return { error: error ? new Error(error.message) : null };
-    } catch (error: any) {
-      return { error };
+export const useAuthMethods = (authState: AuthState) => {
+  // Get the user display name for UI purposes
+  const getUserDisplayName = useCallback(() => {
+    if (authState.userProfile?.name) {
+      return authState.userProfile.name;
+    } else if (authState.user?.user_metadata?.name) {
+      return authState.user.user_metadata.name;
+    } else if (authState.user?.email) {
+      return authState.user.email.split('@')[0];
     }
-  };
-
-  const resetPassword = async (email: string) => {
+    return 'User';
+  }, [authState.userProfile, authState.user]);
+  
+  // Check if the user has taken service from an expert
+  const hasTakenServiceFrom = useCallback(async (expertId: string | number): Promise<boolean> => {
+    if (!authState.user) return false;
+    
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      return { error: error ? new Error(error.message) : null };
-    } catch (error: any) {
-      return { error };
-    }
-  };
-
-  const updatePassword = async (newPassword: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      return !error;
-    } catch (error) {
-      console.error('Error updating password:', error);
-      return false;
-    }
-  };
-
-  const updateEmail = async (newEmail: string) => {
-    try {
-      const { error } = await supabase.auth.updateUser({ email: newEmail });
-      return { error: error ? new Error(error.message) : null };
-    } catch (error: any) {
-      return { error };
-    }
-  };
-
-  const refreshSession = async () => {
-    try {
-      const { error } = await supabase.auth.refreshSession();
-      return { error: error ? new Error(error.message) : null };
-    } catch (error: any) {
-      return { error };
-    }
-  };
-
-  const updateExpertProfile = async (updates: Partial<ExpertProfile>) => {
-    try {
-      if (!user) return { error: new Error('No authenticated user') };
+      const { data, error } = await supabase
+        .from('user_expert_services')
+        .select('*')
+        .eq('user_id', authState.user.id)
+        .eq('expert_id', ensureStringId(expertId));
       
-      // Ensure ID is string
-      const updatedData = { ...updates };
-      if (updatedData.id !== undefined) {
-        updatedData.id = ensureStringId(updatedData.id);
+      if (error) {
+        console.error('Error checking service history:', error);
+        return false;
       }
       
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update(updatedData)
-        .eq('auth_id', user.id);
-        
-      return { error: error ? new Error(error.message) : null };
-    } catch (error: any) {
-      return { error };
-    }
-  };
-
-  const fetchExpertProfile = async () => {
-    try {
-      if (!user) return null;
-      
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', user.id)
-        .maybeSingle();
-        
-      if (error) throw error;
-      return data as ExpertProfile;
+      return data && data.length > 0;
     } catch (error) {
-      console.error('Error fetching expert profile:', error);
-      return null;
-    }
-  };
-
-  const registerAsExpert = async (data: any) => {
-    try {
-      if (!user) return { error: new Error('No authenticated user') };
-      
-      const { error } = await supabase
-        .from('expert_accounts')
-        .insert({
-          ...data,
-          auth_id: user.id,
-          status: 'pending'
-        });
-        
-      return { error: error ? new Error(error.message) : null };
-    } catch (error: any) {
-      return { error };
-    }
-  };
-  
-  // Add favorite methods
-  const addToFavorites = async (expertId: number) => {
-    try {
-      if (!user) return false;
-      
-      const { error } = await supabase
-        .from('user_favorites')
-        .insert({ user_id: user.id, expert_id: expertId });
-        
-      return !error;
-    } catch (error) {
-      console.error('Error adding to favorites:', error);
+      console.error('Error checking if user has taken service:', error);
       return false;
     }
-  };
+  }, [authState.user]);
   
-  const removeFromFavorites = async (expertId: number) => {
-    try {
-      if (!user) return false;
-      
-      const { error } = await supabase
-        .from('user_favorites')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('expert_id', expertId);
-        
-      return !error;
-    } catch (error) {
-      console.error('Error removing from favorites:', error);
-      return false;
-    }
-  };
-
-  // A placeholder for profile picture update if not implemented elsewhere
-  const updateProfilePicture = async (file: File): Promise<string | null> => {
-    try {
-      if (!user) return null;
-      
-      const fileName = `${user.id}-${Date.now()}.${file.name.split('.').pop()}`;
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(fileName, file);
-      
-      if (uploadError) throw uploadError;
-      
-      const { data: urlData } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
-      
-      if (!urlData || !urlData.publicUrl) throw new Error('Failed to get public URL');
-      
-      return urlData.publicUrl;
-    } catch (error) {
-      console.error('Error updating profile picture:', error);
-      return null;
-    }
-  };
-
+  // Get a shareable link for an expert
+  const getExpertShareLink = useCallback((expertId: string | number): string => {
+    return `${window.location.origin}/experts/${ensureStringId(expertId)}`;
+  }, []);
+  
+  // Get the user's referral link
+  const getReferralLink = useCallback((): string | null => {
+    if (!authState.userProfile?.referral_code) return null;
+    return `${window.location.origin}/signup?ref=${authState.userProfile.referral_code}`;
+  }, [authState.userProfile]);
+  
   return {
-    loginWithOtp,
-    resetPassword,
-    updatePassword,
-    updateEmail,
-    refreshSession,
-    updateExpertProfile,
-    fetchExpertProfile,
-    registerAsExpert,
-    addToFavorites,
-    removeFromFavorites,
-    updateProfilePicture
+    getUserDisplayName,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink
   };
 };
