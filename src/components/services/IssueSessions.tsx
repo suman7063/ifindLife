@@ -1,14 +1,25 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CategoryCard from '@/components/CategoryCard';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Brain, Heart, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
+import CoursePreviewDialog from '@/components/courses/CoursePreviewDialog';
+import { useCourses } from '@/hooks/useCourses';
+import { Course } from '@/types/courses';
+import { toast } from 'sonner';
+
 interface IssueSessionsProps {
   onCategoryClick: (category: any) => void;
 }
+
 const IssueSessions: React.FC<IssueSessionsProps> = ({
   onCategoryClick
 }) => {
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { courses, loading } = useCourses();
+
   const designCategories = [{
     icon: <Brain className="h-8 w-8 text-ifind-aqua" />,
     title: "Anxiety & Depression",
@@ -54,22 +65,72 @@ const IssueSessions: React.FC<IssueSessionsProps> = ({
       behavior: 'smooth'
     });
   };
-  return <div className="mt-16">
-      
+
+  const handleCategoryClick = (category: any) => {
+    // Look for an exact title match first
+    let matchingCourse = courses.find(
+      course => course.title.toLowerCase() === category.title.toLowerCase()
+    );
+    
+    // If no exact match, try a partial match
+    if (!matchingCourse) {
+      matchingCourse = courses.find(
+        course => course.title.toLowerCase().includes(category.title.toLowerCase()) ||
+                 category.title.toLowerCase().includes(course.title.toLowerCase())
+      );
+    }
+    
+    if (matchingCourse) {
+      console.log("Found matching course:", matchingCourse.title);
+      setSelectedCourse(matchingCourse);
+      setIsDialogOpen(true);
+    } else {
+      // Fall back to original behavior
+      console.log("No matching course found for:", category.title);
+      onCategoryClick(category);
+    }
+  };
+  
+  return (
+    <div className="mt-16">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {designCategories.map((category, index) => <div key={`category-${index}`} onClick={() => onCategoryClick(category)} className="cursor-pointer transform transition-transform duration-300 hover:scale-105">
-            <CategoryCard icon={category.icon} title={category.title} description={category.description} href={category.href} color={category.color} cardStyle="session" />
-          </div>)}
+        {designCategories.map((category, index) => (
+          <div 
+            key={`category-${index}`} 
+            onClick={() => handleCategoryClick(category)} 
+            className="cursor-pointer transform transition-transform duration-300 hover:scale-105"
+          >
+            <CategoryCard 
+              icon={category.icon} 
+              title={category.title} 
+              description={category.description} 
+              href={category.href} 
+              color={category.color} 
+              cardStyle="session" 
+            />
+          </div>
+        ))}
       </div>
       
       {/* See All Issue Based Sessions Link */}
       <div className="mt-8 text-center">
-        <Link to="/programs-for-wellness-seekers?category=issue-based" onClick={handleSeeAllClick}>
+        <Link to="/courses?category=issue-based" onClick={handleSeeAllClick}>
           <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
             See All Issue Based Sessions <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </Link>
       </div>
-    </div>;
+      
+      {/* Course Preview Dialog */}
+      {selectedCourse && (
+        <CoursePreviewDialog 
+          course={selectedCourse}
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+        />
+      )}
+    </div>
+  );
 };
+
 export default IssueSessions;
