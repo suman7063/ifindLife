@@ -28,10 +28,10 @@ export const useWellnessPrograms = () => {
       // Fix: Ensure we're handling favoriteIds correctly and properly check for null values
       const favoriteIds = new Set(
         (programFavorites || [])
-          .filter(Boolean) // Remove null, undefined, and falsy values
+          .filter((fav): fav is NonNullable<typeof fav> => fav !== null) // Remove null values with type predicate
           .map(fav => {
             // Ensure fav is an object before trying to access properties
-            if (fav && typeof fav === 'object' && 'program_id' in fav) {
+            if (typeof fav === 'object' && fav !== null && 'program_id' in fav) {
               return fav.program_id;
             }
             // If fav is not an object with program_id, return it directly if it's a number
