@@ -36,7 +36,7 @@ export const useWellnessPrograms = () => {
       // Create a Set of program IDs from favorites, with careful handling of different data types
       const favoriteIds = new Set(
         nonNullFavorites.map(favorite => {
-          // Add a null check before accessing properties
+          // Using type guard to ensure favorite is not null before accessing properties
           if (favorite && typeof favorite === 'object' && 'program_id' in favorite) {
             return favorite.program_id;
           }
