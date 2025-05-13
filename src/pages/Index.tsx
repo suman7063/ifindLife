@@ -51,10 +51,13 @@ const Index = () => {
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* New Welcome Section */}
+        {/* Welcome Section */}
         <WelcomeSection />
         
-        {/* Section 2: Issue Based Sessions - Moved up in the order */}
+        {/* IFL Programs for Individuals - Moved up here */}
+        <ServicesSection />
+        
+        {/* Section: How Can We Help You Today? (renamed from Issue Based Sessions) */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-6 sm:px-12">
             <Suspense fallback={<SectionLoadingFallback />}>
@@ -63,11 +66,8 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Section 3: IFL Programs for Individuals */}
-        <ServicesSection />
-        
-        {/* Section 4: Programs for Organizations */}
-        <section className="py-16 bg-gray-50">
+        {/* Programs for Organizations */}
+        <section className="py-16 bg-white">
           <div className="container mx-auto px-6 sm:px-12">
             <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -97,38 +97,38 @@ const Index = () => {
           </div>
         </section>
         
-        {/* Section 5: Experts Currently Online */}
+        {/* Experts Currently Online */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
 
-        {/* Section 6: Why Choose Us - Redesigned */}
+        {/* Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 7: What Our Clients Say (Testimonials) */}
+        {/* Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
         
-        {/* Section 8: Ready to start your mental health journey (CTA Section) */}
+        {/* CTA Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <CTASection />
         </Suspense>
         
-        {/* Section 9: Blog Section - Added back to the homepage */}
+        {/* Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <BlogSection />
         </Suspense>
         
-        {/* Section 10: Stay always in touch */}
+        {/* Stay in Touch section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <StayInTouchSection />
         </Suspense>
       </main>
 
-      {/* Section 11: Footer */}
+      {/* Footer */}
       <Suspense fallback={<div className="h-40 bg-gray-100" />}>
         <Footer />
       </Suspense>

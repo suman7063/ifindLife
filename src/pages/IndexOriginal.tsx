@@ -44,13 +44,13 @@ const IndexOriginal = () => {
       <main className="flex-1">
         <Hero />
         
-        {/* New Welcome Section */}
+        {/* Welcome Section */}
         <WelcomeSection />
         
-        {/* Services/Categories Section - Critical for first impression */}
+        {/* IFL Programs for Individuals - Moved up here */}
         <ServicesSection />
         
-        {/* Programs Section for Organizations - Updated for row alignment of buttons */}
+        {/* Programs for Organizations */}
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>

@@ -1,7 +1,9 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import CategoryCard from '@/components/CategoryCard';
-import { Brain, Heart, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ArrowRight, Brain, Heart, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
 
 interface IssueSessionsProps {
   onCategoryClick: (category: any) => void;
@@ -53,9 +55,14 @@ const IssueSessions: React.FC<IssueSessionsProps> = ({ onCategoryClick }) => {
     }
   ];
 
+  // Function to handle navigation with scroll to top
+  const handleSeeAllClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="mt-16">
-      <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
+      <h3 className="text-2xl font-semibold mb-6">How Can We Help You Today?</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {designCategories.map((category, index) => (
           <div 
@@ -73,6 +80,15 @@ const IssueSessions: React.FC<IssueSessionsProps> = ({ onCategoryClick }) => {
             />
           </div>
         ))}
+      </div>
+      
+      {/* See All Issue Based Sessions Link */}
+      <div className="mt-8 text-center">
+        <Link to="/programs-for-wellness-seekers?category=issue-based" onClick={handleSeeAllClick}>
+          <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
+            See All Issue Based Sessions <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </Link>
       </div>
     </div>
   );

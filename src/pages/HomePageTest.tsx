@@ -46,22 +46,22 @@ const HomePageTest = () => {
         {/* Section 1: Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* New Welcome Section */}
+        {/* Welcome Section */}
         <WelcomeSection />
+        
+        {/* IFL Programs for Individuals - Moved up here */}
+        <ServicesSection />
         
         {/* Section 2: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
         
-        {/* Section 3: Combined Programs Section - IFL Programs for Individuals and Programs for Organizations */}
+        {/* Programs for Organizations */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-6 sm:px-12">
-            {/* IFL Programs for Individuals */}
-            <ServicesSection />
-            
             {/* Programs for Organizations - Academic and Business */}
-            <div className="mt-16">
+            <div>
               <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
@@ -91,12 +91,12 @@ const HomePageTest = () => {
           </div>
         </section>
 
-        {/* Section 4: Why Choose Us - Redesigned */}
+        {/* Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 5: Testimonials - Redesigned */}
+        {/* Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
@@ -112,7 +112,7 @@ const HomePageTest = () => {
         </Suspense>
       </main>
 
-      {/* Section 6: Footer */}
+      {/* Footer */}
       <Suspense fallback={<div className="h-40 bg-gray-100" />}>
         <Footer />
       </Suspense>
