@@ -1,62 +1,57 @@
 
-// Define basic types for database tables
+// Main database table types
 
 export interface UserTransaction {
   id: string;
   user_id: string;
   amount: number;
-  date: string;
-  type: string;
   currency: string;
+  type: 'deposit' | 'withdrawal' | 'program_purchase' | 'session_payment' | 'refund' | 'referral_reward' | 'other';
   description?: string;
+  date: string;
+  status?: 'pending' | 'completed' | 'failed' | 'refunded';
+  payment_id?: string;
+  payment_method?: 'wallet' | 'card' | 'bank' | 'upi' | 'other';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface UserReview {
   id: string;
-  user_id?: string;
-  expert_id: number;
+  user_id: string;
+  expert_id: string;
   rating: number;
-  verified?: boolean;
-  comment?: string;
+  comment: string;
   date: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ContactSubmission {
-  id: number;
-  is_read?: boolean;
-  created_at?: string;
+  id: string;
   name: string;
   email: string;
-  subject: string;
+  phone?: string;
   message: string;
+  status: 'new' | 'in_progress' | 'resolved' | 'archived';
+  created_at: string;
+  updated_at?: string;
 }
 
 export interface Review {
   id: string;
-  expertId: string | number;
+  expertId: string;
   rating: number;
-  comment?: string;
+  comment: string;
   date: string;
-  verified?: boolean;
 }
 
 export interface Report {
   id: string;
-  expertId: string | number;
+  expertId: string;
   reason: string;
   details?: string;
   date: string;
   status: string;
-}
-
-export interface NewReview {
-  expertId: number;
-  rating: number;
-  comment?: string;
-}
-
-export interface NewReport {
-  expertId: number;
-  reason: string;
-  details?: string;
 }

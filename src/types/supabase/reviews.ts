@@ -1,9 +1,14 @@
 
-// Review statistics type definition
+// Review statistics types
+
 export interface ReviewStats {
-  average: number;
-  count: number;
+  totalCount: number;
+  averageRating: number;
   distribution: {
-    [key: number]: number;
+    five: number;
+    four: number;
+    three: number;
+    two: number;
+    one: number;
   };
 }
