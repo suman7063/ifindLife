@@ -1,6 +1,8 @@
-import React, { createContext } from 'react';
+
+import React, { createContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus, AuthContextType } from '../types';
+import { supabase } from '@/lib/supabase';
+import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus, AuthContextType, initialAuthState } from '../types';
 
 // Import hooks
 import { useAuthState } from '../hooks/useAuthState';
@@ -9,9 +11,7 @@ import { useProfileFunctions } from '../hooks/useProfileFunctions';
 import { useExpertInteractions } from '../hooks/useExpertInteractions';
 import { useAuthMethods } from '../hooks/useAuthMethods';
 
-// Create the context with default values
-export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
-
+// AuthProvider component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Get auth state from hook
   const {
@@ -34,16 +34,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     sessionType
   } = authState;
   
-  // Create a wrapper function that matches the expected signature (no parameters)
-  // but internally calls fetchUserData() with the user ID if available, or without arguments if not
+  // Create a wrapper function for fetchUserData
   const wrappedFetchUserData = async (): Promise<void> => {
     if (user?.id) {
       return fetchUserData(user.id);
     }
-    return fetchUserData(undefined);
+    return fetchUserData();
   };
   
-  // Auth actions with correct param types
+  // Auth actions
   const { 
     login,
     signup,
@@ -51,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     actionLoading
   } = useAuthActions(wrappedFetchUserData);
   
-  // Profile functions with correct param types
+  // Profile functions
   const {
     updateProfile: updateProfileFn,
     getUserDisplayName,
@@ -89,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return fetchProfileFn();
   };
   
-  // Wrapper for signup to match the expected interface
+  // Wrapper for signup
   const wrappedSignup = async (
     email: string, 
     password: string, 
@@ -116,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Wrapper for logout to match the expected interface
+  // Wrapper for logout
   const wrappedLogout = async (): Promise<{ error: Error | null }> => {
     try {
       const success = await logout();
@@ -126,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Wrapper for updateProfile to match the expected interface
+  // Wrapper for updateProfile
   const wrappedUpdateProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
     try {
       const { error } = await updateProfileFn(updates);
@@ -143,7 +142,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return !error;
   };
   
-  // Combined context value
+  // Combined context value with EXPLICIT login method included
   const contextValue: AuthContextType = {
     // Auth state
     isLoading,
@@ -158,8 +157,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     walletBalance,
     sessionType,
     
-    // Auth methods
-    login,
+    // Auth methods - CRUCIAL: include the login method explicitly
+    login: login,
     loginWithOtp,
     signup: wrappedSignup,
     logout: wrappedLogout,
@@ -193,6 +192,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     addToFavorites,
     removeFromFavorites
   };
+  
+  // Debug output to verify login function
+  console.log('AuthContextProvider: Login function available?', !!contextValue.login);
   
   return (
     <AuthContext.Provider value={contextValue}>

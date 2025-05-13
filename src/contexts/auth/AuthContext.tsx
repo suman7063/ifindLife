@@ -54,15 +54,20 @@ export interface AuthContextType {
   removeFromFavorites: (expertId: number) => Promise<boolean>;
 }
 
-// Create the context
+// Create the context with an empty default value
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 // Create a hook to use the context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
+    console.error('useAuth must be used within an AuthProvider');
     throw new Error('useAuth must be used within an AuthProvider');
   }
+  
+  // Add debugging to trace the issue
+  console.log('Auth context login function available:', !!context.login);
+  
   return context;
 };
 

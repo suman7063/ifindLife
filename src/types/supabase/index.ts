@@ -8,7 +8,9 @@ export * from './referral';
 export type {
   UserTransaction,
   UserReview,
-  ContactSubmission
+  ContactSubmission,
+  Review,
+  Report
 } from './tables';
 
 // Re-export from reviews.ts - but not UserReview (it comes from tables.ts)
@@ -38,24 +40,26 @@ export interface ReferralUI {
   created_at: string; // Ensure consistency with snake_case
 }
 
-// Define Review type for UI purposes
-export interface Review {
+export interface UserProfile {
   id: string;
-  expertId: string | number;
-  rating: number;
-  comment?: string;
-  date: string;
-  verified?: boolean;
-}
-
-// Define Report type for UI purposes
-export interface Report {
-  id: string;
-  expertId: string | number;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
+  name: string;
+  email: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  avatar_url?: string;
+  currency?: string;
+  wallet_balance?: number;
+  referral_code?: string;
+  created_at?: string;
+  updated_at?: string;
+  favorite_experts?: string[];
+  enrolled_courses?: any[];
+  reviews?: any[];
+  reports?: any[];
+  transactions?: any[];
+  referrals?: any[];
+  profile_picture?: string;
 }
 
 export type { 
@@ -64,3 +68,25 @@ export type {
   ExpertService,
   ExpertAvailability
 } from './expert';
+
+// Add Referral interface
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referred_id: string;
+  reward_claimed: boolean;
+  created_at?: string;
+  completed_at?: string;
+  referral_code: string;
+  status: 'pending' | 'completed' | 'cancelled' | 'expired';
+}
+
+// Add Conversation interface for messaging
+export interface Conversation {
+  conversationId: string;
+  userId: string;
+  userName: string;
+  lastMessage?: string;
+  lastMessageTime?: string;
+  unreadCount?: number;
+}

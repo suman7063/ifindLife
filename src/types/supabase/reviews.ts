@@ -1,11 +1,9 @@
 
-// Import UserReview from tables
-import type { UserReview } from './tables';
-
-export type { UserReview };
-
+// Review statistics type definition
 export interface ReviewStats {
-  averageRating: number;
-  totalCount: number;
-  ratingCounts: Record<number, number>;
+  average: number;
+  count: number;
+  distribution: {
+    [key: number]: number;
+  };
 }

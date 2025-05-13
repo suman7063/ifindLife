@@ -1,69 +1,62 @@
 
+// Define basic types for database tables
+
 export interface UserTransaction {
   id: string;
   user_id: string;
   amount: number;
-  currency: string;
-  description: string;
   date: string;
   type: string;
-  status: string;
-  created_at: string;
-  payment_id: string;
-  payment_method: string;
-  transaction_type: string;
+  currency: string;
+  description?: string;
 }
 
 export interface UserReview {
-  id?: string;
-  expert_id: number;
+  id: string;
   user_id?: string;
+  expert_id: number;
   rating: number;
+  verified?: boolean;
   comment?: string;
   date: string;
-  verified?: boolean;
 }
 
 export interface ContactSubmission {
   id: number;
+  is_read?: boolean;
+  created_at?: string;
   name: string;
   email: string;
   subject: string;
   message: string;
-  created_at: string | null;
-  is_read: boolean | null;
 }
 
-// Full Report type from DB
-export type Report = {
+export interface Review {
   id: string;
-  expert_id: string | number; // Using expert_id to match database schema
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-};
-
-// Input type for inserting a new report
-export type NewReport = {
-  expertId: string | number; // Keep as expertId for frontend consistency
-  reason: string;
-  details?: string;
-};
-
-// Full Review type
-export type Review = {
-  id: string;
-  expert_id: string | number; // Using expert_id to match database schema
+  expertId: string | number;
   rating: number;
   comment?: string;
   date: string;
   verified?: boolean;
-};
+}
 
-// Input type for inserting a new review
-export type NewReview = {
-  expertId: string | number; // Keep as expertId for frontend consistency
+export interface Report {
+  id: string;
+  expertId: string | number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+}
+
+export interface NewReview {
+  expertId: number;
   rating: number;
   comment?: string;
-};
+}
+
+export interface NewReport {
+  expertId: number;
+  reason: string;
+  details?: string;
+}
