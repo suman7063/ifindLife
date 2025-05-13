@@ -1,78 +1,56 @@
-import { useAuth } from '@/contexts/auth/AuthContext';
+
+import { useCallback } from 'react';
 import { UserProfile } from '@/types/supabase';
+import { AuthContextType } from '@/contexts/auth/AuthContext';
 
-/**
- * Hook to provide backward compatibility with older components
- * that expect a different auth context or different function signatures.
- */
-export const useAuthBackCompat = () => {
-  const {
-    login,
-    signup,
-    logout,
-    updateProfile,
-    updatePassword,
-    addToFavorites,
-    removeFromFavorites,
-    rechargeWallet,
-    addReview,
-    reportExpert,
-    getExpertShareLink,
-    hasTakenServiceFrom,
-    getReferralLink,
-    user,
-    profile,
-    updateProfilePicture
-  } = useAuth();
-
-  // Fix return types for functions that need to return { error }
-  const wrappedLogin = async (email: string, password: string): Promise<{ error: Error | null }> => {
+export const useAuthBackCompat = (auth: AuthContextType) => {
+  // Convert any boolean returns to match required format with error property
+  const logoutWithErrorProp = useCallback(async () => {
     try {
-      const success = await login(email, password);
-      return { error: success ? null : new Error('Login failed') };
+      const result = await auth.logout();
+      if (typeof result === 'boolean') {
+        return { error: result ? null : new Error('Logout failed') };
+      }
+      return result;
     } catch (error: any) {
       return { error };
     }
-  };
-  
-  // Fix addToFavorites to return Promise<boolean>
-  const wrappedAddToFavorites = async (expertId: number): Promise<boolean> => {
-    try {
-      // Implementation here
-      return true;
-    } catch (error) {
-      console.error('Error adding to favorites:', error);
-      return false;
-    }
-  };
+  }, [auth.logout]);
 
-  // Fix return types for logout
-  const wrappedLogout = async (): Promise<{ error: Error | null }> => {
-    try {
-      const success = await logout();
-      return { error: success ? null : new Error('Logout failed') };
-    } catch (error: any) {
-      return { error };
-    }
-  };
+  // Special case for specific functions that need Promise<boolean> return type
+  const hasTakenServiceFromAsync = useCallback(
+    async (expertId: number): Promise<boolean> => {
+      if (!auth.hasTakenServiceFrom) return false;
+      try {
+        return await auth.hasTakenServiceFrom(expertId);
+      } catch (error) {
+        console.error('Error in hasTakenServiceFrom:', error);
+        return false;
+      }
+    },
+    [auth.hasTakenServiceFrom]
+  );
+
+  // Add wrapper for resetPassword to handle error format consistently
+  const resetPasswordWithErrorProp = useCallback(
+    async (email: string) => {
+      try {
+        const result = await auth.resetPassword(email);
+        if (typeof result === 'boolean') {
+          return { error: result ? null : new Error('Reset password failed') };
+        }
+        return result;
+      } catch (error: any) {
+        return { error };
+      }
+    },
+    [auth.resetPassword]
+  );
 
   return {
-    isAuthenticated: !!user,
-    isLoading: false, // Assuming no loading state here
-    user: profile,
-    login: wrappedLogin,
-    signup: signup || (async () => ({ error: new Error('Signup not available') })),
-    logout: wrappedLogout,
-    updateUserProfile: updateProfile,
-    updatePassword,
-    addToFavorites,
-    removeFromFavorites,
-    rechargeWallet,
-    addReview,
-    reportExpert,
-    getExpertShareLink,
-    hasTakenServiceFrom,
-    getReferralLink,
-    updateProfilePicture
+    ...auth,
+    logout: logoutWithErrorProp,
+    hasTakenServiceFrom: hasTakenServiceFromAsync,
+    resetPassword: resetPasswordWithErrorProp
   };
 };

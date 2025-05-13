@@ -1,69 +1,48 @@
 
-export interface UserTransaction {
-  id: string;
+export interface Review {
+  id: string | number;
   user_id: string;
-  amount: number;
-  currency: string;
-  description: string;
-  date: string;
-  type: string;
-  status: string;
-  created_at: string;
-  payment_id: string;
-  payment_method: string;
-  transaction_type: string;
-}
-
-export interface UserReview {
-  id?: string;
-  expert_id: number;
-  user_id?: string;
+  expert_id: string | number;
   rating: number;
   comment?: string;
-  date: string;
+  created_at?: string;
+  updated_at?: string;
+  user_name?: string;
   verified?: boolean;
 }
 
-export interface ContactSubmission {
-  id: number;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  created_at: string | null;
-  is_read: boolean | null;
+export interface Report {
+  id: string | number;
+  user_id: string;
+  expert_id: string | number;
+  reason: string;
+  details?: string;
+  status: 'pending' | 'reviewed' | 'resolved';
+  created_at?: string;
+  updated_at?: string;
 }
 
-// Full Report type from DB
-export type Report = {
-  id: string;
-  expert_id: string | number; // Using expert_id to match database schema
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-};
+export type NewReview = Omit<Review, 'id' | 'created_at' | 'updated_at'>;
+export type NewReport = Omit<Report, 'id' | 'created_at' | 'updated_at'>;
 
-// Input type for inserting a new report
-export type NewReport = {
-  expertId: string | number; // Keep as expertId for frontend consistency
-  reason: string;
-  details?: string;
-};
+export interface Conversation {
+  id: string | number;
+  user_id: string;
+  expert_id: string | number;
+  last_message?: string;
+  updated_at?: string;
+  created_at?: string;
+  unread_count?: number;
+  user_name?: string;
+  expert_name?: string;
+}
 
-// Full Review type
-export type Review = {
-  id: string;
-  expert_id: string | number; // Using expert_id to match database schema
-  rating: number;
-  comment?: string;
-  date: string;
-  verified?: boolean;
-};
-
-// Input type for inserting a new review
-export type NewReview = {
-  expertId: string | number; // Keep as expertId for frontend consistency
-  rating: number;
-  comment?: string;
-};
+export interface Message {
+  id: string | number;
+  conversation_id: string | number;
+  sender_id: string;
+  sender_type: 'user' | 'expert' | 'system';
+  content: string;
+  created_at?: string;
+  read?: boolean;
+}

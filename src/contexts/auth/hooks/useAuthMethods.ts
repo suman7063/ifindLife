@@ -1,8 +1,10 @@
+
 import { useCallback } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ensureStringId } from '@/utils/idConverters';
+import { ExpertProfile, UserProfile } from '@/types/supabase';
 
 export const useAuthMethods = (user: User | null) => {
   // Default implementations for auth methods
@@ -142,6 +144,31 @@ export const useAuthMethods = (user: User | null) => {
     }
   };
 
+  // A placeholder for profile picture update if not implemented elsewhere
+  const updateProfilePicture = async (file: File): Promise<string | null> => {
+    try {
+      if (!user) return null;
+      
+      const fileName = `${user.id}-${Date.now()}.${file.name.split('.').pop()}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+      
+      if (!urlData || !urlData.publicUrl) throw new Error('Failed to get public URL');
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      return null;
+    }
+  };
+
   return {
     loginWithOtp,
     resetPassword,
@@ -152,6 +179,7 @@ export const useAuthMethods = (user: User | null) => {
     fetchExpertProfile,
     registerAsExpert,
     addToFavorites,
-    removeFromFavorites
+    removeFromFavorites,
+    updateProfilePicture
   };
 };

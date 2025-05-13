@@ -1,136 +1,123 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Message } from './types';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { Message } from '@/types/supabase/tables';
 import { ensureStringId } from '@/utils/idConverters';
 
-interface UseMessagesProps {
-  senderId?: string | null;
-  receiverId?: string | null;
-}
-
-const useMessages = ({ senderId, receiverId }: UseMessagesProps) => {
+const useMessages = (conversationId: string | number | null) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchMessages = useCallback(async () => {
-    if (!senderId || !receiverId) {
-      console.warn("Fetching messages without sender or receiver ID.");
+  useEffect(() => {
+    if (!conversationId) {
+      setMessages([]);
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${senderId},sender_id.eq.${receiverId}`)
-        .or(`receiver_id.eq.${senderId},receiver_id.eq.${receiverId}`)
-        .order('created_at', { ascending: true });
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (error) {
-        console.error("Error fetching messages:", error);
-      }
+        const { data, error: fetchError } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', conversationId)
+          .order('created_at', { ascending: true });
 
-      if (data) {
-        const formattedMessages: Message[] = data.map(msg => ({
-          id: msg.id,
-          senderId: msg.sender_id,
-          receiverId: msg.receiver_id,
+        if (fetchError) throw fetchError;
+
+        const formattedMessages: Message[] = data.map((msg: any) => ({
+          id: msg.id.toString(),
+          conversation_id: ensureStringId(msg.conversation_id) || '',
+          sender_id: msg.sender_id,
+          sender_type: msg.sender_type,
           content: msg.content,
-          createdAt: msg.created_at || new Date().toISOString(),
-          read: msg.read || false,
+          created_at: msg.created_at,
+          read: msg.read || false
         }));
-        setMessages(formattedMessages);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [senderId, receiverId]);
 
-  useEffect(() => {
+        setMessages(formattedMessages);
+      } catch (err: any) {
+        console.error('Error fetching messages:', err);
+        setError(err.message || 'Failed to fetch messages');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMessages();
 
-    const channel = supabase
-      .channel('custom-all-channel')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'messages' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const newMessage = payload.new as any;
-
-            if (
-              (newMessage.sender_id === senderId && newMessage.receiver_id === receiverId) ||
-              (newMessage.sender_id === receiverId && newMessage.receiver_id === senderId)
-            ) {
-              setMessages((prevMessages) => [
-                ...prevMessages,
-                {
-                  id: newMessage.id,
-                  senderId: newMessage.sender_id,
-                  receiverId: newMessage.receiver_id,
-                  content: newMessage.content,
-                  createdAt: newMessage.created_at || new Date().toISOString(),
-                  read: newMessage.read || false,
-                },
-              ]);
-            }
-          }
-        }
-      )
+    // Set up real-time subscription for new messages
+    const subscription = supabase
+      .channel(`conversation_${conversationId}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}` 
+      }, (payload) => {
+        const newMessage = payload.new as Message;
+        setMessages(prev => [...prev, newMessage]);
+      })
       .subscribe();
 
     return () => {
-      channel.unsubscribe();
+      subscription.unsubscribe();
     };
-  }, [fetchMessages, receiverId, senderId, user]);
+  }, [conversationId]);
 
-  const sendMessage = async (content: string) => {
-    if (!user?.id || !receiverId) {
-      console.error("Could not send message: missing user ID or receiver ID.");
-      return null;
-    }
-
+  const sendMessage = async (content: string, senderId: string, senderType: 'user' | 'expert') => {
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .insert([
-          {
-            content: content,
-            sender_id: user.id,
-            receiver_id: receiverId,
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error sending message:", error);
-        return null;
+      if (!conversationId || !content.trim() || !senderId) {
+        return false;
       }
 
-      if (data) {
-        const formattedMessage: Message = {
-          id: data.id,
-          senderId: data.sender_id,
-          receiverId: data.receiver_id,
-          content: data.content,
-          createdAt: data.created_at || new Date().toISOString(),
-          read: data.read || false,
-        };
-        setMessages((prevMessages) => [...prevMessages, formattedMessage]);
-        return formattedMessage;
-      }
-      return null;
-    } catch (error) {
-      console.error("Error sending message:", error);
-      return null;
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: conversationId,
+        sender_id: senderId,
+        sender_type: senderType,
+        content: content.trim(),
+        read: false
+      });
+
+      if (error) throw error;
+
+      // Update the conversation's last message
+      await supabase
+        .from('conversations')
+        .update({ 
+          last_message: content.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversationId);
+
+      return true;
+    } catch (err) {
+      console.error('Error sending message:', err);
+      return false;
     }
   };
 
-  return { messages, loading, sendMessage };
+  const markAsRead = async (messageIds: (string | number)[]) => {
+    try {
+      if (!messageIds.length) return true;
+      
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .in('id', messageIds);
+        
+      return !error;
+    } catch (err) {
+      console.error('Error marking messages as read:', err);
+      return false;
+    }
+  };
+
+  return { messages, loading, error, sendMessage, markAsRead };
 };
 
 export default useMessages;

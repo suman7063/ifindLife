@@ -1,56 +1,27 @@
 
-// Expert profile type for Supabase
-
 export interface ExpertProfile {
-  id: string;
+  id: string | number;
   auth_id?: string;
   name: string;
   email: string;
   phone?: string;
+  bio?: string;
+  specialties?: string[];
+  services?: string[] | number[];
+  experience_years?: number;
+  rate_per_hour?: number;
+  availability?: any[];
+  profile_picture?: string;
   address?: string;
   city?: string;
-  state?: string;
   country?: string;
-  specialization?: string;
-  experience?: string; // Keep as string consistently
-  bio?: string;
-  certificate_urls?: string[];
-  profile_picture?: string;
-  selected_services?: number[];
-  average_rating?: number;
-  reviews_count?: number;
-  verified?: boolean;
-  status?: 'pending' | 'approved' | 'disapproved'; // Use union type instead of string
+  qualifications?: string[];
+  status?: 'pending' | 'approved' | 'rejected' | 'active';
   created_at?: string;
   updated_at?: string;
-}
-
-// Export types related to expert reviews
-export interface ExpertReview {
-  id: string;
-  expert_id: string;
-  user_id: string;
-  rating: number;
-  comment?: string;
-  created_at: string;
-}
-
-// Export types related to expert services
-export interface ExpertService {
-  id: number;
-  expert_id: string;
-  service_id: number;
-  price?: number;
-  is_available: boolean;
-}
-
-// Export types for expert availability
-export interface ExpertAvailability {
-  id: string;
-  expert_id: string;
-  day_of_week: number;
-  start_time: string;
-  end_time: string;
-  is_available: boolean;
-  day?: string; // Adding day property to fix error
+  average_rating?: number;
+  reviews_count?: number;
+  languages?: string[];
+  is_online?: boolean;
+  last_active?: string;
 }

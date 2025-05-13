@@ -8,7 +8,7 @@ export interface UserAuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
+  logout: () => Promise<{ error: Error | null }>;
   authLoading: boolean; // Required property for backward compatibility
   loading: boolean;
   profileNotFound: boolean;

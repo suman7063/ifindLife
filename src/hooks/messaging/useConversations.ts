@@ -1,105 +1,68 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Conversation } from './types';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { Conversation } from '@/types/supabase/tables';
+import { UserProfile } from '@/types/supabase';
 import { ensureStringId } from '@/utils/idConverters';
 
-interface UseConversationsProps {
-  userId?: string | null;
-}
-
-const useConversations = ({ userId }: UseConversationsProps = {}) => {
+const useConversations = (userId: string | null, role: 'user' | 'expert' | null) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
 
-  const currentUserId = userId || user?.id;
-
-  const fetchConversations = useCallback(async () => {
-    if (!currentUserId) {
+  useEffect(() => {
+    if (!userId || !role) {
+      setConversations([]);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select(`
-          *,
-          sender:sender_id (name, id, profile_picture),
-          receiver:receiver_id (name, id, profile_picture)
-        `)
-        .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
-        .order('created_at', { ascending: false });
+    const fetchConversations = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      if (error) {
-        console.error("Error fetching conversations:", error);
+        const idColumn = role === 'user' ? 'user_id' : 'expert_id';
+        const { data, error: fetchError } = await supabase
+          .from('conversations')
+          .select('*, users:user_id(*), experts:expert_id(*)')
+          .eq(idColumn, userId)
+          .order('updated_at', { ascending: false });
+
+        if (fetchError) throw fetchError;
+
+        const formattedConversations: Conversation[] = data.map((conv: any) => ({
+          id: conv.id.toString(),
+          user_id: conv.user_id,
+          expert_id: ensureStringId(conv.expert_id) || '',
+          last_message: conv.last_message,
+          updated_at: conv.updated_at,
+          created_at: conv.created_at,
+          unread_count: conv.unread_count || 0,
+          user_name: conv.users?.name || 'Unknown User',
+          expert_name: conv.experts?.name || 'Unknown Expert'
+        }));
+
+        // Sort by most recent
+        formattedConversations.sort((a, b) => {
+          if (!a.updated_at) return 1;
+          if (!b.updated_at) return -1;
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+        });
+
+        setConversations(formattedConversations);
+      } catch (err: any) {
+        console.error('Error fetching conversations:', err);
+        setError(err.message || 'Failed to fetch conversations');
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      // Process messages to form conversations
-      const processedConversations: { [key: string]: Conversation } = {};
-
-      data.forEach(message => {
-        const otherUserId = message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
-        const conversationId = [currentUserId, otherUserId].sort().join('_');
-
-        if (!processedConversations[conversationId]) {
-          const sender = message.sender_id === currentUserId ? message.sender : message.receiver;
-          const receiver = message.sender_id === currentUserId ? message.receiver : message.sender;
-
-          processedConversations[conversationId] = {
-            id: conversationId,
-            user_id1: currentUserId,
-            user_id2: otherUserId,
-            createdAt: message.created_at,
-            updatedAt: message.created_at,
-            lastMessage: message.content,
-            sender,
-            receiver,
-          };
-        } else {
-          processedConversations[conversationId].updatedAt = message.created_at;
-          processedConversations[conversationId].lastMessage = message.content;
-        }
-      });
-
-      // Convert the processed conversations object to an array
-      const conversationsArray = Object.values(processedConversations);
-
-      // Sort conversations by last message timestamp
-      conversationsArray.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-
-      setConversations(conversationsArray);
-    } catch (error) {
-      console.error("Unexpected error fetching conversations:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentUserId, supabase]);
-
-  useEffect(() => {
     fetchConversations();
+  }, [userId, role]);
 
-    const channel = supabase.channel('public:messages')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, payload => {
-        console.log('Change received!', payload)
-        fetchConversations();
-      })
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [fetchConversations, supabase]);
-
-  return {
-    conversations,
-    loading,
-    refetchConversations: fetchConversations,
-  };
+  return { conversations, loading, error };
 };
 
 export default useConversations;

@@ -1,101 +1,75 @@
 
 import { useState } from 'react';
-import { Message } from '@/types/appointments';
-import { MessagingUser, UseMessagingReturn } from './types';
-import { useConversations } from './useConversations';
-import { useMessages } from './useMessages';
-import { sendMessage as sendMessageApi, markConversationAsRead as markConversationAsReadApi } from './messagingApi';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import useConversations from './useConversations';
+import useMessages from './useMessages';
 
-/**
- * Main messaging hook that provides complete messaging functionality
- */
-export const useMessaging = (currentUser: MessagingUser): UseMessagingReturn => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const useMessaging = () => {
+  const { user, role } = useAuth();
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   
+  const userId = user?.id || null;
+  const { conversations, loading: loadingConversations } = useConversations(userId, role as 'user' | 'expert' | null);
   const { 
-    conversations, 
-    conversationsLoading, 
-    fetchConversations,
-    error: conversationsError 
-  } = useConversations(currentUser);
-  
-  const {
-    messages,
-    messagesLoading,
-    fetchMessages,
-    setMessages,
-    error: messagesError
-  } = useMessages(currentUser);
-  
-  /**
-   * Send a new message
-   */
-  const sendMessage = async (receiverId: string, content: string) => {
-    setLoading(true);
-    setError(null);
+    messages, 
+    loading: loadingMessages, 
+    sendMessage, 
+    markAsRead 
+  } = useMessages(activeConversationId);
+
+  const startConversation = async (recipientId: string, recipientType: 'user' | 'expert') => {
+    if (!user) return null;
     
     try {
-      const newMessage = await sendMessageApi(currentUser, receiverId, content);
+      // Check if conversation already exists
+      const userIdField = recipientType === 'user' ? 'expert_id' : 'user_id';
+      const expertIdField = recipientType === 'expert' ? 'user_id' : 'expert_id';
       
-      if (newMessage) {
-        // Update local messages state
-        setMessages(prev => [...prev, newMessage]);
+      const { data: existingConversation } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq(userIdField, user.id)
+        .eq(expertIdField, recipientId)
+        .maybeSingle();
+        
+      if (existingConversation) {
+        setActiveConversationId(existingConversation.id.toString());
+        return existingConversation.id.toString();
       }
       
-      return newMessage;
-    } catch (error: any) {
-      console.error('Error in sendMessage:', error);
-      setError(error.message);
+      // Create new conversation
+      const { data: newConversation, error } = await supabase
+        .from('conversations')
+        .insert({
+          user_id: recipientType === 'expert' ? user.id : recipientId,
+          expert_id: recipientType === 'expert' ? recipientId : user.id,
+          last_message: '',
+          unread_count: 0
+        })
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      setActiveConversationId(newConversation.id.toString());
+      return newConversation.id.toString();
+    } catch (error) {
+      console.error('Error starting conversation:', error);
       return null;
-    } finally {
-      setLoading(false);
     }
   };
-  
-  /**
-   * Mark all messages in a conversation as read
-   */
-  const markConversationAsRead = async (partnerId: string) => {
-    setLoading(true);
-    
-    try {
-      const success = await markConversationAsReadApi(currentUser, partnerId);
-      
-      if (success) {
-        // Update local messages state
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.sender_id === partnerId && msg.receiver_id === currentUser?.id
-              ? { ...msg, read: true }
-              : msg
-          )
-        );
-      }
-      
-      return success;
-    } catch (error: any) {
-      console.error('Error in markConversationAsRead:', error);
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  };
-  
-  // Combine errors from all sources
-  const combinedError = error || conversationsError || messagesError;
-  
+
   return {
-    messages,
     conversations,
-    loading,
-    messagesLoading,
-    conversationsLoading,
-    error: combinedError,
-    fetchMessages,
-    fetchConversations,
+    messages,
+    loadingConversations,
+    loadingMessages,
+    activeConversationId,
+    setActiveConversationId,
     sendMessage,
-    markConversationAsRead
+    markAsRead,
+    startConversation
   };
 };
 
