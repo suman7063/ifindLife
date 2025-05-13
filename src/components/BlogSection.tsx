@@ -11,9 +11,9 @@ const BlogSection = () => {
 
   return (
     <section className="py-16 bg-white">
-      <div className="container mx-auto px-6 sm:px-12">
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold">From The Blog</h2>
+      <div className="container mx-auto px-6 sm:px-12 text-center">
+        <div className="flex justify-center items-center mb-8 flex-col">
+          <h2 className="text-2xl font-bold mb-4">From The Blog</h2>
           <Button variant="ghost" asChild className="text-ifind-aqua">
             <Link to="/blog" className="flex items-center">
               View all posts <ArrowRight className="ml-2 h-4 w-4" />
@@ -32,8 +32,8 @@ const BlogSection = () => {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                   />
                 </div>
-                <div className="p-4">
-                  <div className="flex items-center text-sm text-gray-500 mb-2">
+                <div className="p-4 text-center">
+                  <div className="flex items-center justify-center text-sm text-gray-500 mb-2">
                     <span>{post.category}</span>
                     <span className="mx-2">•</span>
                     <span>{post.date}</span>

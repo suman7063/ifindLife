@@ -60,9 +60,9 @@ const ServicesSection = () => {
 
   return (
     <section className="py-16 bg-white">
-      <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-3xl font-bold mb-4">IFL Programs for Individuals</h2>
-        <p className="text-gray-600 mb-8 max-w-3xl">
+      <div className="container mx-auto px-6 sm:px-12 text-center">
+        <h2 className="text-3xl font-bold mb-4 text-center">IFL Programs for Individuals</h2>
+        <p className="text-gray-600 mb-8 max-w-3xl mx-auto">
           IFL provides specialized programs to support your mental health journey
         </p>
 
