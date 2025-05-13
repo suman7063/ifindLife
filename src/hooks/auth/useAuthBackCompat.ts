@@ -1,55 +1,60 @@
 
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { UserAuthContextType } from '@/contexts/UserAuthContext';
 
-// This hook provides backward compatibility for components using the old auth hooks
+/**
+ * Backward compatibility layer for existing components that use the old auth hooks
+ */
 export const useAuthBackCompat = () => {
+  // Get auth from the unified context
   const auth = useAuth();
   
-  // Format the data for user auth
-  const userAuth = {
-    currentUser: auth.userProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
+  // Create a backward-compatible user auth object
+  const userAuth: UserAuthContextType = {
+    currentUser: auth.profile,
+    isAuthenticated: auth.isAuthenticated,
     login: auth.login,
     signup: auth.signup,
-    logout: async () => {
-      const result = await auth.logout();
-      return !result.error;
-    },
+    logout: auth.logout,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
-    profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
+    profileNotFound: false,
     updateProfile: auth.updateProfile,
+    updateProfilePicture: auth.updateProfilePicture,
     updatePassword: auth.updatePassword,
     addToFavorites: auth.addToFavorites,
     removeFromFavorites: auth.removeFromFavorites,
     rechargeWallet: auth.rechargeWallet,
     addReview: auth.addReview,
     reportExpert: auth.reportExpert,
+    getExpertShareLink: auth.getExpertShareLink,
     hasTakenServiceFrom: auth.hasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink || (() => ''),
-    getReferralLink: auth.getReferralLink || (() => null),
+    getReferralLink: auth.getReferralLink,
+    refreshProfile: async () => {
+      // Refresh profile implementation
+      if (auth.fetchProfile) {
+        await auth.fetchProfile();
+      }
+    },
     user: auth.user
   };
-  
-  // Format the data for expert auth
+
+  // Create a backward-compatible expert auth object
   const expertAuth = {
+    login: auth.login,
+    logout: auth.logout,
+    loading: auth.isLoading,
     currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    login: auth.login,
-    logout: async () => {
-      const result = await auth.logout();
-      return !result.error;
-    },
-    authLoading: auth.isLoading,
-    loading: auth.isLoading,
-    profileNotFound: !auth.expertProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateExpertProfile,
-    user: auth.user
+    initialized: !auth.isLoading,
+    hasUserAccount: async () => {
+      // For backward compatibility
+      return false;
+    }
   };
-  
+
   return {
     userAuth,
-    expertAuth,
-    auth
+    expertAuth
   };
 };

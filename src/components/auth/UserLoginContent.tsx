@@ -14,12 +14,7 @@ const UserLoginContent: React.FC = () => {
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   
   // Use the unified auth context
-  const { 
-    login,
-    isAuthenticated,
-    isLoading,
-    role
-  } = useAuth();
+  const auth = useAuth();
   
   // Check for pending actions in sessionStorage
   useEffect(() => {
@@ -48,15 +43,16 @@ const UserLoginContent: React.FC = () => {
     try {
       console.log("Attempting user login with:", email);
       
-      if (!login || typeof login !== 'function') {
-        console.error("Login function is not available:", login);
-        toast.error("Login functionality is not available");
+      if (!auth.login || typeof auth.login !== 'function') {
+        console.error("Login function is not available:", auth);
+        toast.error("Login functionality is not available. Please try refreshing the page.");
+        setLoginError("Login functionality is not available. Please try refreshing the page.");
         setIsLoggingIn(false);
         return false;
       }
       
       // Note: Use 'user' role to explicitly indicate this is a user login
-      const success = await login(email, password, 'user');
+      const success = await auth.login(email, password, 'user');
       
       if (success) {
         toast.success("Login successful!");
@@ -67,11 +63,11 @@ const UserLoginContent: React.FC = () => {
           return true;
         } else {
           // Redirect to the appropriate dashboard based on role
-          if (role === 'user') {
+          if (auth.role === 'user') {
             navigate('/user-dashboard');
-          } else if (role === 'expert') {
+          } else if (auth.role === 'expert') {
             navigate('/expert-dashboard');
-          } else if (role === 'admin') {
+          } else if (auth.role === 'admin') {
             navigate('/admin');
           }
         }

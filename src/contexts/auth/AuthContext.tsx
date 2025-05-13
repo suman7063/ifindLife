@@ -1,70 +1,73 @@
 
-import { createContext, useContext } from 'react';
+import React, { createContext, useContext } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { UserProfile, ExpertProfile, UserRole, AuthStatus } from './types';
+import { UserProfile, UserRole, ExpertProfile } from './types';
+import { AuthProvider as AuthContextProvider } from './provider/AuthContextProvider';
 
-// Define the AuthContextType interface
+// Define a comprehensive auth context type
 export interface AuthContextType {
-  // Auth state
-  isLoading: boolean;
+  // Authentication state
   isAuthenticated: boolean;
+  isLoading: boolean;
   user: User | null;
   session: Session | null;
-  authStatus: AuthStatus;
+  role: UserRole | null;
   profile: UserProfile | null;
-  userProfile: UserProfile | null; // Alias for backward compatibility
-  role: UserRole;
   expertProfile: ExpertProfile | null;
-  walletBalance: number;
-  sessionType: 'none' | 'user' | 'expert' | 'dual';
   
   // Auth methods
-  login: (email: string, password: string, role?: string) => Promise<boolean>;
-  loginWithOtp: (email: string) => Promise<{ error: Error | null }>;
-  signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<{ error: Error | null }>;
+  login: (email: string, password: string, roleOverride?: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
-  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>; // Alias for backward compatibility
-  updatePassword: (password: string) => Promise<boolean>;
-  updateEmail: (email: string) => Promise<{ error: Error | null }>;
-  refreshSession: () => Promise<{ error: Error | null }>;
+  updatePassword: (newPassword: string) => Promise<boolean>;
   
   // Profile methods
-  getUserDisplayName: () => string;
-  fetchProfile: () => Promise<UserProfile | null>;
-  addFunds: (amount: number) => Promise<{ error: Error | null }>;
-  updateWalletBalance: (newBalance: number) => Promise<{ error: Error | null }>;
-  rechargeWallet: (amount: number) => Promise<boolean>;
-  
-  // Expert methods
-  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<{ error: Error | null }>;
-  fetchExpertProfile: () => Promise<ExpertProfile | null>;
-  registerAsExpert: (data: any) => Promise<{ error: Error | null }>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updateProfilePicture?: (file: File) => Promise<string | null>;
+  fetchProfile?: () => Promise<UserProfile | null>;
   
   // User actions
-  addReview: (review: any) => Promise<boolean>;
-  reportExpert: (report: any) => Promise<boolean>;
-  hasTakenServiceFrom: (expertId: string | number) => Promise<boolean>;
-  getExpertShareLink: (expertId: string | number) => string;
-  getReferralLink: () => string | null;
+  addToFavorites?: (expertId: number) => Promise<boolean>;
+  removeFromFavorites?: (expertId: number) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  addReview?: (review: any) => Promise<boolean>;
+  reportExpert?: (report: any) => Promise<boolean>;
+  getExpertShareLink?: (expertId: number) => string;
+  hasTakenServiceFrom?: (expertId: number) => Promise<boolean>;
+  getReferralLink?: () => string | null;
   
-  // Favorites
-  addToFavorites: (expertId: number) => Promise<boolean>;
-  removeFromFavorites: (expertId: number) => Promise<boolean>;
+  // Additional fields
+  walletBalance?: number;
+  sessionType?: string;
+  authStatus?: string;
 }
 
-// Create the context
-export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+// Create the auth context with default values
+const AuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  isLoading: true,
+  user: null,
+  session: null,
+  role: null,
+  profile: null,
+  expertProfile: null,
+  login: async () => false,
+  signup: async () => false,
+  logout: async () => false,
+  resetPassword: async () => ({ error: null }),
+  updatePassword: async () => false,
+  updateProfile: async () => false,
+});
 
-// Create a hook to use the context
+// Custom hook to use the auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-// Re-export the provider from the provider file
-export { AuthProvider } from './provider/AuthContextProvider';
+// Re-export the AuthProvider
+export { AuthContextProvider as AuthProvider, AuthContext };

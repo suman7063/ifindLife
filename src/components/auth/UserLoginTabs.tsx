@@ -20,11 +20,20 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     try {
+      // Check if onLogin prop is provided (for custom login handling)
       if (onLogin) {
         return await onLogin(email, password);
-      } else {
-        return await auth.login(email, password);
+      } 
+      
+      // Check if login function is available in auth context
+      if (!auth.login || typeof auth.login !== 'function') {
+        console.error("Login function is not available in auth context:", auth);
+        toast.error('Login functionality is not available. Please try again later.');
+        return false;
       }
+      
+      // Use the auth context login function
+      return await auth.login(email, password);
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred during login. Please try again.');
@@ -46,8 +55,9 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     setIsLoading(true);
     try {
       console.log("Attempting user registration with:", userData.email);
-      if (!auth.signup) {
-        toast.error('Registration feature is not available');
+      if (!auth.signup || typeof auth.signup !== 'function') {
+        console.error("Signup function is not available in auth context:", auth);
+        toast.error('Registration feature is not available. Please try again later.');
         return;
       }
       
@@ -59,7 +69,8 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
           phone: userData.phone,
           country: userData.country,
           city: userData.city
-        }
+        },
+        userData.referralCode
       );
       
       if (success) {
