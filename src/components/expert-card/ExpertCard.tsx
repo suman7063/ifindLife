@@ -13,6 +13,23 @@ interface ExpertCardProps {
 }
 
 const ExpertCard: React.FC<ExpertCardProps> = ({ expert }) => {
+  // Guard clause to prevent accessing properties of undefined
+  if (!expert) {
+    return (
+      <Card className="overflow-hidden">
+        <CardContent className="p-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 rounded-full bg-gray-200"></div>
+            <div className="flex-grow">
+              <div className="h-4 w-24 bg-gray-200 rounded"></div>
+              <div className="h-3 w-16 bg-gray-100 rounded mt-2"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="overflow-hidden">
       <CardContent className="p-4">
@@ -26,12 +43,12 @@ const ExpertCard: React.FC<ExpertCardProps> = ({ expert }) => {
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary font-semibold">
-                {expert.name.charAt(0)}
+                {expert.name?.charAt(0) || '?'}
               </div>
             )}
           </div>
           <div className="flex-grow">
-            <h3 className="font-medium">{expert.name}</h3>
+            <h3 className="font-medium">{expert.name || 'Expert'}</h3>
             {expert.specialization && (
               <p className="text-sm text-muted-foreground">{expert.specialization}</p>
             )}

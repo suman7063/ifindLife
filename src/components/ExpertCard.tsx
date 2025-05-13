@@ -1,4 +1,4 @@
 
-import ExpertCard from './expert-card/expert-card';
+import ExpertCard from './expert-card/ExpertCard';
 
 export default ExpertCard;
