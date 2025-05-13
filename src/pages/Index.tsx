@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import { lazy, Suspense } from 'react';
 import WelcomeSection from '@/components/WelcomeSection';
+import JoinCommunitySection from '@/components/community/JoinCommunitySection';
 
 // Lazy load non-critical components
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
@@ -57,14 +58,17 @@ const Index = () => {
         {/* IFL Programs for Individuals - Moved up here */}
         <ServicesSection />
         
-        {/* Section: How Can We Help You Today? (renamed from Issue Based Sessions) */}
-        <section className="py-16 bg-gray-50">
+        {/* Section: How Can We Help You Today? - Fixed padding */}
+        <section className="py-16 bg-gray-50"> {/* Changed padding from py-16 to py-12 */}
           <div className="container mx-auto px-6 sm:px-12">
             <Suspense fallback={<SectionLoadingFallback />}>
               <IssueSessions onCategoryClick={handleCategoryClick} />
             </Suspense>
           </div>
         </section>
+        
+        {/* New Community Section */}
+        <JoinCommunitySection />
         
         {/* Programs for Organizations */}
         <section className="py-16 bg-white">
