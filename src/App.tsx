@@ -1,32 +1,44 @@
 
-import { useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from '@/components/theme-provider';
+import { AuthProvider } from '@/contexts/auth/AuthProvider';
+import { AdminAuthProvider } from '@/contexts/admin/AdminAuthProvider';
+import { FavoritesProvider } from '@/contexts/favorites/FavoritesContext';
+import { Toaster } from '@/components/ui/toaster';
+import { ToastProvider } from '@radix-ui/react-toast';
 import AppRoutes from './AppRoutes';
-import { AuthProvider } from './contexts/auth';
-import { Toaster } from './components/ui/toaster';
-import { ThemeProvider } from './components/theme/theme-provider';
-import { FavoritesProvider } from './contexts/favorites';
-import { AdminAuthProvider } from './contexts/admin-auth';
-import { UserAuthProvider } from './contexts/auth';
+import './App.css';
 
-const App = () => {
-  useEffect(() => {
-    document.body.classList.add('bg-background');
-  }, []);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: false,
+    },
+  },
+});
 
+function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="ifind-theme">
-      <AuthProvider>
-        <UserAuthProvider>
-          <AdminAuthProvider>
-            <FavoritesProvider>
-              <AppRoutes />
-              <Toaster />
-            </FavoritesProvider>
-          </AdminAuthProvider>
-        </UserAuthProvider>
-      </AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <Router>
+            <AdminAuthProvider>
+              <AuthProvider>
+                <FavoritesProvider>
+                  <AppRoutes />
+                  <Toaster />
+                </FavoritesProvider>
+              </AuthProvider>
+            </AdminAuthProvider>
+          </Router>
+        </ToastProvider>
+      </QueryClientProvider>
     </ThemeProvider>
   );
-};
+}
 
 export default App;

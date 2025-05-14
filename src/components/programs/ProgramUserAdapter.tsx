@@ -6,9 +6,9 @@ import { UserProfile } from '@/types/database/unified';
 import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
 export interface ProgramComponentProps {
-  program: any;
-  currentUser: UserProfileA | UserProfileB | UserProfile | null;
-  isAuthenticated: boolean;
+  program?: any;
+  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+  isAuthenticated?: boolean;
   [key: string]: any;
 }
 

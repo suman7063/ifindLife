@@ -7,7 +7,8 @@ import { useAppointmentManagement } from '@/hooks/useAppointmentManagement';
 import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
 import { format, isWithinInterval } from 'date-fns';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';  // Add this import
+import { supabase } from '@/lib/supabase';  
+import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
 import CalendarDatePicker from './CalendarDatePicker';
 import AvailableTimeSlotsSection from './AvailableTimeSlotsSection';
 import AppointmentNotes from './AppointmentNotes';
@@ -237,4 +238,4 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
   );
 };
 
-export default ExpertBookingCalendar;
+export default withProfileTypeAdapter(ExpertBookingCalendar, 'B');

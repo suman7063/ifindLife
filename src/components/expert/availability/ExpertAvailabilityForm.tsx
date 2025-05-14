@@ -1,5 +1,7 @@
-
-import React, { useState } from 'react';
+import React from 'react';
+import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
+import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
+import { UserProfile } from '@/types/supabase/user';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
@@ -16,7 +18,15 @@ import {
   formatTimeSlotsForSubmission 
 } from './utils/availabilityUtils';
 
-const ExpertAvailabilityForm = () => {
+interface ExpertAvailabilityFormProps {
+  user: UserProfile | null;
+  onSuccess?: () => void;
+}
+
+const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({
+  user,
+  onSuccess
+}) => {
   const { currentUser } = useUserAuth();
   const { createAvailability, loading } = useAppointments(currentUser);
   
@@ -126,4 +136,4 @@ const ExpertAvailabilityForm = () => {
   );
 };
 
-export default ExpertAvailabilityForm;
+export default withProfileTypeAdapter(ExpertAvailabilityForm, 'B');

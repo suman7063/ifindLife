@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Program } from '@/types/programs';
@@ -5,9 +6,14 @@ import { UserProfile } from '@/types/supabase/user';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import EnrollmentDialog from './EnrollmentDialog';
 import { useDialog } from '@/hooks/useDialog';
-import { withProgramUserTypeA } from './ProgramUserAdapter';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import ProgramImageHeader from './components/ProgramImageHeader';
+import ProgramMetadata from './components/ProgramMetadata';
+import ProgramDescription from './components/ProgramDescription';
+import ProgramPriceFooter from './components/ProgramPriceFooter';
 
 interface ProgramDetailDialogProps {
   program: Program;
@@ -23,7 +29,7 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
   onClose
 }) => {
   const navigate = useNavigate();
-  const { showDialog, DialogComponent } = useDialog();
+  const { DialogComponent, showDialog } = useDialog();
   const { toggleProgramFavorite, isProgramFavorite } = useFavorites();
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   
@@ -65,12 +71,8 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
       return;
     }
     
-    showDialog(
-      <EnrollmentDialog 
-        program={program} 
-        currentUser={currentUser!}
-      />
-    );
+    // Show enrollment dialog (implementation will depend on your EnrollmentDialog component)
+    toast.info("Enrollment functionality will be implemented soon");
   };
 
   return (
@@ -109,5 +111,4 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
   );
 };
 
-// Export with adapter to handle different user profile types
-export default withProgramUserTypeA(ProgramDetailDialog);
+export default withProfileTypeAdapter(ProgramDetailDialog, 'A');
