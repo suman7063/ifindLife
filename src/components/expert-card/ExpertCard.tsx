@@ -1,70 +1,63 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
-import { ExpertCardProps } from './types';
-import ExpertInfo from './ExpertInfo';
-import ExpertActions from './ExpertActions';
+import { useNavigate } from 'react-router-dom';
 
-/**
- * ExpertCard component displays an expert's information in a card format
- */
-const ExpertCard: React.FC<ExpertCardProps> = ({ 
-  expert, 
-  onClick, 
-  className = '',
-  showRating = true
+interface ExpertCardProps {
+  id: string | number;
+  name: string;
+  specialization: string;
+  rating: number;
+  profilePicture?: string;
+  experience?: string;
+}
+
+const ExpertCard: React.FC<ExpertCardProps> = ({
+  id,
+  name,
+  specialization,
+  rating,
+  profilePicture,
+  experience
 }) => {
+  const navigate = useNavigate();
+
+  const handleExpertClick = () => {
+    navigate(`/experts/${id}`);
+  };
+
   return (
-    <Card 
-      className={`overflow-hidden hover:shadow-md transition-shadow ${className}`}
-      onClick={onClick}
-      data-testid="expert-card"
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={expert.profilePicture || expert.imageUrl} alt={expert.name} />
-            <AvatarFallback>
-              {expert.name.substring(0, 2).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1">
-            <ExpertInfo expert={expert} showRating={showRating} />
-            
-            {/* Status badge */}
-            {expert.status && (
-              <div className="mt-2">
-                <Badge 
-                  variant={expert.status === 'online' ? 'default' : 'outline'} 
-                  className={expert.status === 'online' ? 'bg-green-500' : ''}
-                >
-                  {expert.status === 'online' ? 'Online' : expert.status === 'busy' ? 'Busy' : 'Offline'}
-                </Badge>
-              </div>
-            )}
-            
-            {/* Specialties */}
-            {expert.specialties && expert.specialties.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {expert.specialties.slice(0, 3).map((specialty, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {specialty}
-                  </Badge>
-                ))}
-                {expert.specialties.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{expert.specialties.length - 3}
-                  </Badge>
-                )}
-              </div>
-            )}
-            
-            {/* Actions */}
-            <ExpertActions expert={expert} onClick={onClick} />
+    <Card className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+        onClick={handleExpertClick}>
+      <CardContent className="p-0">
+        <div className="flex flex-col p-4 gap-3">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={profilePicture} />
+              <AvatarFallback>{name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-semibold text-lg">{name}</h3>
+              <div className="text-sm text-muted-foreground">{specialization}</div>
+              {experience && (
+                <div className="text-xs text-muted-foreground">{experience} years experience</div>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Star className="h-4 w-4 fill-yellow-400 stroke-yellow-400 mr-1" />
+              <span className="text-sm font-medium">{rating.toFixed(1)}</span>
+            </div>
+            <Button variant="outline" size="sm" onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/book/${id}`);
+            }}>
+              Book Now
+            </Button>
           </div>
         </div>
       </CardContent>

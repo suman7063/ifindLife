@@ -1,50 +1,72 @@
 
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { handleAuthError } from '@/utils/authUtils';
 
-export const useAuthPassword = (setLoading: (value: boolean) => void) => {
-  const resetPassword = async (email: string): Promise<boolean> => {
+export const useAuthPassword = (
+  setLoading: (loading: boolean) => void
+) => {
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const resetPassword = async (email: string) => {
     try {
       setLoading(true);
+      setPasswordError(null);
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) {
-        toast.error(error.message);
+        console.error('Password reset error:', error.message);
+        toast.error(`Password reset failed: ${error.message}`);
+        setPasswordError(error.message);
         return false;
       }
 
-      toast.success('Password reset instructions sent to your email');
+      toast.success('Password reset email sent');
       return true;
     } catch (error: any) {
-      handleAuthError(error, 'Failed to send reset instructions');
+      console.error('Password reset error:', error);
+      toast.error(`Password reset failed: ${error.message || 'Unknown error'}`);
+      setPasswordError(error.message || 'Unknown error');
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const updatePassword = async (password: string): Promise<boolean> => {
+  const updatePassword = async (password: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.updateUser({ password });
+      setPasswordError(null);
+
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
 
       if (error) {
-        toast.error(error.message);
+        console.error('Password update error:', error.message);
+        toast.error(`Password update failed: ${error.message}`);
+        setPasswordError(error.message);
         return false;
       }
 
       toast.success('Password updated successfully');
       return true;
     } catch (error: any) {
-      handleAuthError(error, 'Failed to update password');
+      console.error('Password update error:', error);
+      toast.error(`Password update failed: ${error.message || 'Unknown error'}`);
+      setPasswordError(error.message || 'Unknown error');
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { resetPassword, updatePassword };
+  return {
+    resetPassword,
+    updatePassword,
+    passwordError,
+  };
 };

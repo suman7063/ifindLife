@@ -3,29 +3,9 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
+import { Message, Conversation, MessagingHook } from './types';
 
-export interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  content: string;
-  created_at: string;
-  read: boolean;
-  sender_name?: string;
-  receiver_name?: string;
-}
-
-export interface Conversation {
-  id: string;
-  name: string;
-  lastMessage?: string;
-  lastMessageDate?: string;
-  unreadCount: number;
-  otherUserId: string;
-  profilePicture?: string;
-}
-
-const useMessaging = () => {
+export const useMessaging = (): MessagingHook => {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -72,15 +52,15 @@ const useMessaging = () => {
             lastMessage: message.content,
             lastMessageDate: message.created_at,
             unreadCount: message.receiver_id === user.id && !message.read ? 1 : 0,
-            otherUserId,
-            profilePicture: userData?.profile_picture
+            profilePicture: userData?.profile_picture,
+            otherUserId: otherUserId // For compatibility
           });
         } else {
           // Update unread count
           if (message.receiver_id === user.id && !message.read) {
             const conversation = conversationMap.get(otherUserId);
             if (conversation) {
-              conversation.unreadCount += 1;
+              conversation.unreadCount = (conversation.unreadCount || 0) + 1;
             }
           }
         }
@@ -113,7 +93,14 @@ const useMessaging = () => {
         return;
       }
       
-      setMessages(data || []);
+      // Process messages and add isMine and timestamp properties for UI rendering
+      const processedMessages = data?.map(msg => ({
+        ...msg,
+        isMine: msg.sender_id === user.id,
+        timestamp: new Date(msg.created_at)
+      })) || [];
+      
+      setMessages(processedMessages);
       setCurrentConversation(otherUserId);
       
       // Mark unread messages as read
@@ -194,4 +181,3 @@ const useMessaging = () => {
 };
 
 export default useMessaging;
-export { useMessaging };

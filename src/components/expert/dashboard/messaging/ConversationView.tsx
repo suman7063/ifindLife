@@ -1,13 +1,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Send, Loader2 } from 'lucide-react';
-import { formatRelative } from 'date-fns';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useMessaging } from '@/hooks/messaging';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { useMessaging } from '@/hooks/messaging/useMessaging';
+import { format } from 'date-fns';
 
 interface ConversationViewProps {
   userId: string;
@@ -15,124 +14,123 @@ interface ConversationViewProps {
 }
 
 const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName }) => {
-  const [message, setMessage] = useState('');
+  const [messageContent, setMessageContent] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { expertProfile } = useAuth();
-  
-  // Use the messaging hook with proper typing
-  const {
-    messages,
-    sendMessage,
-    refreshMessages,
-    loading,
-    messageLoading
-  } = useMessaging(expertProfile ? {
-    id: expertProfile?.id?.toString() || '',
-    name: expertProfile?.name || 'Expert',
-    profile_picture: expertProfile?.profile_picture
-  } : null);
+  const { 
+    messages, 
+    loading, 
+    sending,
+    fetchMessages, 
+    sendMessage 
+  } = useMessaging();
 
   useEffect(() => {
-    if (userId && expertProfile) {
-      refreshMessages();
+    if (userId) {
+      fetchMessages(userId);
     }
-  }, [userId, expertProfile, refreshMessages]);
+  }, [userId, fetchMessages]);
 
-  // Scroll to bottom whenever messages change
   useEffect(() => {
+    // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim()) return;
+  const handleSendMessage = async () => {
+    if (!messageContent.trim() || !userId) return;
+    
+    const success = await sendMessage(userId, messageContent);
+    if (success) {
+      setMessageContent('');
+    }
+  };
 
-    await sendMessage(message);
-    setMessage('');
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   if (!userId) {
     return (
-      <Card className="h-[calc(100vh-16rem)]">
-        <CardContent className="flex items-center justify-center h-full text-center p-6">
-          <div>
-            <p className="text-lg font-medium">Select a conversation</p>
-            <p className="text-muted-foreground mt-1">Choose a client from the list to view your conversation</p>
-          </div>
+      <Card className="h-full">
+        <CardContent className="p-6 flex flex-col items-center justify-center h-full">
+          <p className="text-center text-muted-foreground">
+            Select a conversation to start messaging
+          </p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="h-[calc(100vh-16rem)] flex flex-col">
-      <CardHeader className="border-b px-4 py-3">
-        <div className="flex items-center">
-          <Avatar className="h-8 w-8 mr-2">
+    <Card className="h-[600px] flex flex-col">
+      <CardHeader className="border-b bg-muted/30 py-3">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="" />
             <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
-          <CardTitle className="text-base font-medium">{userName}</CardTitle>
+          <h3 className="font-medium">{userName}</h3>
         </div>
       </CardHeader>
       
-      <CardContent className="flex-1 overflow-auto p-4">
+      <CardContent className="flex-1 overflow-y-auto p-4 space-y-4">
         {loading ? (
           <div className="flex justify-center items-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="flex justify-center items-center h-full text-center">
-            <div>
-              <p className="text-muted-foreground">No messages yet</p>
-              <p className="text-sm mt-1">Start the conversation by sending a message</p>
-            </div>
+            <Loader2 className="animate-spin h-8 w-8 text-primary" />
           </div>
         ) : (
-          <div className="space-y-4">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex ${
-                  msg.senderId === expertProfile?.id?.toString() ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[75%] rounded-lg px-4 py-2 ${
-                    msg.senderId === expertProfile?.id?.toString()
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted'
-                  }`}
-                >
-                  <p>{msg.content}</p>
-                  <p className="text-xs opacity-70 mt-1">
-                    {formatRelative(new Date(msg.timestamp), new Date())}
-                  </p>
-                </div>
+          <>
+            {messages.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                Start a conversation with {userName}
               </div>
-            ))}
+            ) : (
+              messages.map((message) => (
+                <div 
+                  key={message.id} 
+                  className={`flex ${message.sender_id === userId ? 'justify-start' : 'justify-end'}`}
+                >
+                  <div 
+                    className={`rounded-lg p-3 max-w-[75%] ${
+                      message.sender_id === userId 
+                        ? 'bg-muted text-foreground' 
+                        : 'bg-primary text-primary-foreground'
+                    }`}
+                  >
+                    <p>{message.content}</p>
+                    <div className={`text-xs mt-1 ${message.sender_id === userId ? 'text-muted-foreground' : 'text-primary-foreground/80'}`}>
+                      {message.created_at && format(new Date(message.created_at), 'p')}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
             <div ref={messagesEndRef} />
-          </div>
+          </>
         )}
       </CardContent>
       
-      <CardFooter className="border-t p-2">
-        <form onSubmit={handleSendMessage} className="flex w-full gap-2">
-          <Input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1"
-            disabled={messageLoading}
+      <div className="p-3 border-t">
+        <div className="flex gap-2">
+          <Textarea 
+            placeholder={`Message ${userName}...`}
+            value={messageContent}
+            onChange={(e) => setMessageContent(e.target.value)}
+            onKeyDown={handleKeyPress}
+            className="resize-none"
+            disabled={sending}
           />
-          <Button type="submit" disabled={!message.trim() || messageLoading}>
-            {messageLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+          <Button 
+            onClick={handleSendMessage}
+            disabled={!messageContent.trim() || sending}
+            className="px-3"
+          >
+            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
-        </form>
-      </CardFooter>
+        </div>
+      </div>
     </Card>
   );
 };

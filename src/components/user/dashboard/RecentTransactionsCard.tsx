@@ -1,58 +1,69 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatDate } from '@/utils/formatters';
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowDownRight, ArrowUpRight, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 import { UserTransaction } from '@/types/supabase/tables';
+import { useTransactionAdapter } from '@/hooks/dashboard/useTransactionAdapter';
 
 interface RecentTransactionsCardProps {
   transactions: UserTransaction[];
+  loading?: boolean;
 }
 
-const RecentTransactionsCard: React.FC<RecentTransactionsCardProps> = ({ transactions }) => {
-  // Show only the most recent 5 transactions
-  const recentTransactions = transactions.slice(0, 5);
+const RecentTransactionsCard: React.FC<RecentTransactionsCardProps> = ({ 
+  transactions,
+  loading = false
+}) => {
+  const adaptedTransactions = useTransactionAdapter(transactions);
 
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardTitle>Recent Transactions</CardTitle>
+      <CardHeader>
+        <CardTitle className="text-lg">Recent Transactions</CardTitle>
       </CardHeader>
-      <CardContent>
-        {recentTransactions.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-4">
+      <CardContent className="px-2">
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <Clock className="h-8 w-8 animate-pulse text-muted-foreground" />
+          </div>
+        ) : adaptedTransactions.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
             No transactions yet
-          </p>
+          </div>
         ) : (
           <div className="space-y-4">
-            {recentTransactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-full ${
-                    (transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') 
-                      ? 'bg-green-100 text-green-600' 
-                      : 'bg-red-100 text-red-600'
-                  }`}>
-                    {(transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? (
+            {adaptedTransactions.slice(0, 5).map((transaction) => (
+              <div key={transaction.id} className="flex items-center justify-between px-4 py-2 hover:bg-muted/50 rounded-md">
+                <div className="flex items-center gap-3">
+                  {transaction.type === 'credit' || transaction.transaction_type === 'credit' ? (
+                    <div className="p-2 rounded-full bg-green-100 text-green-600">
                       <ArrowDownRight className="h-4 w-4" />
-                    ) : (
+                    </div>
+                  ) : (
+                    <div className="p-2 rounded-full bg-red-100 text-red-600">
                       <ArrowUpRight className="h-4 w-4" />
-                    )}
-                  </div>
+                    </div>
+                  )}
                   <div>
-                    <p className="text-sm font-medium">
-                      {transaction.description || 
-                        ((transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? 'Wallet Recharge' : 'Purchase')}
+                    <p className="font-medium">{transaction.description || (transaction.type === 'credit' || transaction.transaction_type === 'credit' ? 'Wallet Recharge' : 'Payment')}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {transaction.date || transaction.created_at ? format(new Date(transaction.date || transaction.created_at), 'PP') : 'Unknown date'}
                     </p>
-                    <p className="text-xs text-muted-foreground">{formatDate(transaction.date || transaction.created_at || '')}</p>
                   </div>
                 </div>
-                <p className={`font-medium ${
-                  (transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {(transaction.type?.toLowerCase() === 'credit' || transaction.transaction_type?.toLowerCase() === 'credit') ? '+' : '-'}
-                  {formatCurrency(transaction.amount)}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className={`font-semibold ${
+                    transaction.type === 'credit' || transaction.transaction_type === 'credit' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {transaction.type === 'credit' || transaction.transaction_type === 'credit' ? '+' : '-'}
+                    {transaction.currency}{transaction.amount}
+                  </p>
+                  <Badge variant={transaction.type === 'credit' || transaction.transaction_type === 'credit' ? 'outline' : 'secondary'} className="text-xs">
+                    {transaction.type === 'credit' || transaction.transaction_type === 'credit' ? 'Credit' : 'Debit'}
+                  </Badge>
+                </div>
               </div>
             ))}
           </div>

@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Container } from '@/components/ui/container';
 import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
@@ -13,8 +13,8 @@ import useTransactions from '@/hooks/dashboard/useTransactions';
 import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
 const UserDashboard: React.FC = () => {
-  const { currentUser, isAuthenticated, isLoading: authLoading, logout } = useUserAuth();
-  const { isLoading: authContextLoading } = useAuth();
+  const { currentUser, isAuthenticated, loading: authLoading, logout } = useUserAuth();
+  const { loading: authContextLoading } = useAuth();
   const navigate = useNavigate();
   
   const { 

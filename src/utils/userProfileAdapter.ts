@@ -9,9 +9,11 @@ export function adaptUserProfile(profile: UserProfileA | UserProfileB | null): U
   if (!profile) return null;
   
   // Convert favorite_programs to string[] if it's number[]
-  const favoritePrograms = Array.isArray(profile.favorite_programs) 
-    ? profile.favorite_programs.map(id => String(id))
-    : [];
+  let favoritePrograms: string[] = [];
+  
+  if (Array.isArray(profile.favorite_programs)) {
+    favoritePrograms = profile.favorite_programs.map(id => String(id));
+  }
   
   return {
     id: profile.id,
@@ -34,6 +36,35 @@ export function adaptUserProfile(profile: UserProfileA | UserProfileB | null): U
     reports: profile.reports || [],
     transactions: profile.transactions || [],
     referrals: profile.referrals || []
+  };
+}
+
+/**
+ * Adapts a transaction to ensure it has both date and created_at properties
+ * as well as type and transaction_type properties
+ */
+export function adaptTransaction(transaction: any): any {
+  if (!transaction) return null;
+  
+  return {
+    ...transaction,
+    date: transaction.date || transaction.created_at,
+    created_at: transaction.created_at || transaction.date,
+    type: transaction.type || transaction.transaction_type,
+    transaction_type: transaction.transaction_type || transaction.type
+  };
+}
+
+/**
+ * Adapts a review to ensure it has both expert_id and expertId properties
+ */
+export function adaptReview(review: any): any {
+  if (!review) return null;
+  
+  return {
+    ...review,
+    expert_id: review.expert_id || review.expertId,
+    expertId: review.expertId || review.expert_id
   };
 }
 

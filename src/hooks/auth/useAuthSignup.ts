@@ -1,38 +1,62 @@
 
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { SignupData } from '../useSupabaseAuth';
+import { toast } from 'sonner';
 
-export const useAuthSignup = (setLoading: (loading: boolean) => void) => {
-  const signup = async (userData: SignupData): Promise<boolean> => {
+export const useAuthSignup = (
+  setLoading: (loading: boolean) => void
+) => {
+  const [signupError, setSignupError] = useState<string | null>(null);
+
+  const signup = async (email: string, password: string, userData?: any, referralCode?: string) => {
     try {
       setLoading(true);
-      console.log("Attempting signup with:", userData.email);
-      
-      // Extract email and password from userData, everything else goes to metadata
-      const { email, password, ...metadata } = userData;
-      
+      setSignupError(null);
+
+      // Add referral code to user metadata if provided
+      const metadata = {
+        ...userData,
+      };
+
+      if (referralCode) {
+        metadata.referred_by = referralCode;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: metadata
-        }
+          data: metadata,
+        },
       });
 
       if (error) {
-        console.error('Signup error:', error);
+        console.error('Signup error:', error.message);
+        toast.error(`Registration failed: ${error.message}`);
+        setSignupError(error.message);
         return false;
       }
 
-      console.log("Signup successful:", data);
+      // If email confirmation is required
+      if (!data.session) {
+        toast.success('Registration successful! Please check your email for verification.');
+      } else {
+        toast.success('Registration successful!');
+      }
+      
       return true;
-    } catch (err) {
-      console.error('Exception in signup:', err);
+    } catch (error: any) {
+      console.error('Signup error:', error);
+      toast.error(`Registration failed: ${error.message || 'Unknown error'}`);
+      setSignupError(error.message || 'Unknown error');
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { signup };
+  return {
+    signup,
+    signupError
+  };
 };

@@ -1,101 +1,89 @@
 
 import React, { useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useMessaging } from '@/hooks/messaging';
 import { formatDistanceToNow } from 'date-fns';
+import { useMessaging } from '@/hooks/messaging/useMessaging';
+import { Conversation } from '@/hooks/messaging/types';
 
 interface MessageListProps {
   onSelectConversation: (userId: string, userName: string) => void;
   selectedUserId?: string;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selectedUserId }) => {
-  const { expertProfile } = useAuth();
-  
-  // Use the messaging hook with proper typing
+const MessageList: React.FC<MessageListProps> = ({ 
+  onSelectConversation, 
+  selectedUserId 
+}) => {
   const { 
     conversations, 
-    refreshConversations, 
-    loading 
-  } = useMessaging(expertProfile ? {
-    id: expertProfile?.id?.toString() || '',
-    name: expertProfile?.name || 'Expert',
-    profile_picture: expertProfile?.profile_picture
-  } : null);
+    loading,
+    fetchConversations
+  } = useMessaging();
 
   useEffect(() => {
-    if (expertProfile) {
-      refreshConversations();
-    }
-  }, [expertProfile, refreshConversations]);
-
-  // Function to get initials for the avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(part => part[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+    fetchConversations();
+  }, [fetchConversations]);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center h-40">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="animate-spin h-8 w-8 text-primary" />
       </div>
     );
   }
 
   if (conversations.length === 0) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">No messages yet</p>
-          <p className="text-sm mt-1">Your conversations with clients will appear here</p>
-        </CardContent>
+      <Card className="p-6 text-center text-muted-foreground">
+        <p>No conversations yet</p>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
       {conversations.map((conversation) => (
         <Card 
-          key={conversation.userId}
-          className={`hover:bg-accent/10 transition-colors cursor-pointer ${
-            selectedUserId === conversation.userId ? 'border-primary' : ''
+          key={conversation.id}
+          className={`p-3 cursor-pointer hover:bg-muted/50 transition-colors ${
+            selectedUserId === conversation.id ? 'bg-muted' : ''
           }`}
-          onClick={() => onSelectConversation(conversation.userId, conversation.userName)}
+          onClick={() => onSelectConversation(conversation.id, conversation.name)}
         >
-          <CardContent className="p-3 flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={conversation.userAvatar} />
-              <AvatarFallback>{getInitials(conversation.userName)}</AvatarFallback>
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarImage src={conversation.profilePicture} />
+              <AvatarFallback>
+                {conversation.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-center">
-                <p className="font-medium truncate">{conversation.userName}</p>
-                <span className="text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(conversation.lastMessageTime), { addSuffix: true })}
-                </span>
-              </div>
-              
-              <div className="flex justify-between items-center mt-1">
-                <p className="text-sm text-muted-foreground truncate">{conversation.lastMessage?.content || ''}</p>
-                {conversation.unreadCount > 0 && (
-                  <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5">
-                    {conversation.unreadCount}
-                  </Badge>
+                <h4 className="font-medium truncate">{conversation.name}</h4>
+                {conversation.lastMessageDate && (
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {formatDistanceToNow(new Date(conversation.lastMessageDate), { addSuffix: true })}
+                  </span>
                 )}
               </div>
+              
+              {conversation.lastMessage && (
+                <p className="text-sm text-muted-foreground truncate">
+                  {conversation.lastMessage}
+                </p>
+              )}
             </div>
-          </CardContent>
+            
+            {(conversation.unreadCount && conversation.unreadCount > 0) && (
+              <Badge variant="default" className="text-xs">
+                {conversation.unreadCount}
+              </Badge>
+            )}
+          </div>
         </Card>
       ))}
     </div>

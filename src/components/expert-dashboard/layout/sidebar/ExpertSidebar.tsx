@@ -1,81 +1,129 @@
 
-import React, { useEffect, useState } from 'react';
-import ExpertProfileSummary from './ExpertProfileSummary';
-import SidebarNavItem from './SidebarNavItem';
+import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { 
-  LayoutDashboard,
-  User,
-  Calendar,
-  Users,
-  BarChart,
-  Settings,
-  MessageSquare,
-  LogOut
-} from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { useMessaging } from '@/hooks/messaging';
+import { useMessaging } from '@/hooks/messaging/useMessaging';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { MessageSquareDot, Calendar, Users, Activity, DollarSign, Settings, LogOut } from 'lucide-react';
 
-const ExpertSidebar: React.FC = () => {
+const ExpertSidebar = () => {
+  const { expertProfile, logout } = useAuth();
+  const { conversations, fetchConversations } = useMessaging();
   const navigate = useNavigate();
-  const { logout, expertProfile } = useAuth();
-  const [unreadCount, setUnreadCount] = useState(0);
   
-  // Use the messaging hook with proper typing
-  const messaging = useMessaging(expertProfile ? {
-    id: expertProfile.id.toString(),
-    name: expertProfile.name || 'Expert',
-    profile_picture: expertProfile.profile_picture
-  } : null);
-
-  // Calculate unread message count
   useEffect(() => {
-    if (expertProfile?.id) {
-      messaging.refreshConversations();
-    }
-  }, [expertProfile?.id, messaging]);
-
-  useEffect(() => {
-    // Calculate total unread messages
-    const totalUnread = messaging.conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
-    setUnreadCount(totalUnread);
-  }, [messaging.conversations]);
-
+    fetchConversations();
+  }, [fetchConversations]);
+  
   const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/expert-login');
-    } catch (error) {
-      console.error('Error logging out:', error);
-    }
+    await logout();
+    navigate('/');
   };
-
+  
+  const unreadCount = conversations.reduce((count, conversation) => {
+    return count + (conversation.unreadCount || 0);
+  }, 0);
+  
   return (
     <div className="w-64 border-r h-screen flex flex-col bg-background">
-      <div className="p-4">
-        {expertProfile && <ExpertProfileSummary expert={expertProfile} />}
+      <div className="p-4 border-b">
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarImage src={expertProfile?.profile_picture} />
+            <AvatarFallback>{expertProfile?.name?.substring(0, 2).toUpperCase() || 'EX'}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h2 className="font-medium">{expertProfile?.name || 'Expert'}</h2>
+            <p className="text-xs text-muted-foreground">Online</p>
+          </div>
+        </div>
       </div>
-
-      <nav className="flex-1 p-2 space-y-1">
-        <SidebarNavItem to="/expert-dashboard" icon={<LayoutDashboard size={18} />} label="Dashboard" />
-        <SidebarNavItem to="/expert-dashboard/profile" icon={<User size={18} />} label="Profile" />
-        <SidebarNavItem to="/expert-dashboard/schedule" icon={<Calendar size={18} />} label="Schedule" />
-        <SidebarNavItem to="/expert-dashboard/clients" icon={<Users size={18} />} label="Clients" />
-        <SidebarNavItem 
-          to="/expert-dashboard/messages" 
-          icon={<MessageSquare size={18} />} 
-          label="Messages"
-          badge={unreadCount}
-        />
-        <SidebarNavItem to="/expert-dashboard/analytics" icon={<BarChart size={18} />} label="Analytics" />
-        <SidebarNavItem to="/expert-dashboard/settings" icon={<Settings size={18} />} label="Settings" />
-      </nav>
-
-      <div className="p-4 border-t">
-        <Button variant="outline" className="w-full" onClick={handleLogout}>
-          <LogOut className="w-4 h-4 mr-2" />
-          <span>Log out</span>
+      
+      <ScrollArea className="flex-1 p-3">
+        <nav className="space-y-1">
+          <NavLink to="/expert-dashboard" end
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-3 py-2 rounded-md ${
+                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              }`
+            }
+          >
+            <Activity size={18} />
+            Dashboard
+          </NavLink>
+          
+          <NavLink to="/expert-dashboard/appointments"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-3 py-2 rounded-md ${
+                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              }`
+            }
+          >
+            <Calendar size={18} />
+            Appointments
+          </NavLink>
+          
+          <NavLink to="/expert-dashboard/clients"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-3 py-2 rounded-md ${
+                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              }`
+            }
+          >
+            <Users size={18} />
+            Clients
+          </NavLink>
+          
+          <NavLink to="/expert-dashboard/messages"
+            className={({ isActive }) => 
+              `flex items-center justify-between gap-3 px-3 py-2 rounded-md ${
+                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              }`
+            }
+          >
+            <div className="flex items-center gap-3">
+              <MessageSquareDot size={18} />
+              Messages
+            </div>
+            {unreadCount > 0 && (
+              <span className={`px-2 py-0.5 rounded-full text-xs ${
+                isActive ? 'bg-primary-foreground text-primary' : 'bg-primary text-primary-foreground'
+              }`}>
+                {unreadCount}
+              </span>
+            )}
+          </NavLink>
+          
+          <NavLink to="/expert-dashboard/earnings"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-3 py-2 rounded-md ${
+                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              }`
+            }
+          >
+            <DollarSign size={18} />
+            Earnings
+          </NavLink>
+          
+          <NavLink to="/expert-dashboard/settings"
+            className={({ isActive }) => 
+              `flex items-center gap-3 px-3 py-2 rounded-md ${
+                isActive ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
+              }`
+            }
+          >
+            <Settings size={18} />
+            Settings
+          </NavLink>
+        </nav>
+      </ScrollArea>
+      
+      <div className="p-3 border-t">
+        <Button variant="ghost" className="w-full justify-start" onClick={handleLogout}>
+          <LogOut size={18} className="mr-2" />
+          Logout
         </Button>
       </div>
     </div>

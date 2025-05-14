@@ -1,15 +1,23 @@
 
+import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 
 export const useAuthSession = (
-  setLoading: (value: boolean) => void,
+  setLoading: (loading: boolean) => void,
   setSession: (session: Session | null) => void
 ) => {
-  const getSession = async (): Promise<Session | null> => {
+  const getSession = useCallback(async () => {
     try {
       setLoading(true);
-      const { data } = await supabase.auth.getSession();
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Error getting session:', error.message);
+        return null;
+      }
+      
+      // Set session state
       setSession(data.session);
       return data.session;
     } catch (error) {
@@ -18,7 +26,9 @@ export const useAuthSession = (
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, setSession]);
 
-  return { getSession };
+  return {
+    getSession
+  };
 };

@@ -1,58 +1,54 @@
 
+import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
 import { Session } from '@supabase/supabase-js';
-import { handleAuthError } from '@/utils/authUtils';
+import { toast } from 'sonner';
 
 export const useAuthLogin = (
-  setLoading: (value: boolean) => void,
+  setLoading: (loading: boolean) => void,
   setSession: (session: Session | null) => void
 ) => {
-  /**
-   * Handle user login with email and password
-   */
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const login = async (email: string, password: string, loginAs?: 'user' | 'expert') => {
     try {
       setLoading(true);
-      console.log("Attempting login with email:", email);
-      
-      // Clean up any existing sessions before logging in
-      const { data: existingSession } = await supabase.auth.getSession();
-      if (existingSession.session) {
-        console.log("Found existing session, cleaning up before login");
-        await supabase.auth.signOut({ scope: 'local' });
+      setLoginError(null);
+
+      // Store login origin for role determination
+      if (loginAs) {
+        sessionStorage.setItem('loginOrigin', loginAs);
       }
-      
-      // Sign in with email and password
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password,
+        password
       });
 
       if (error) {
-        console.error("Login error:", error);
-        toast.error(error.message);
+        console.error('Login error:', error.message);
+        toast.error(`Login failed: ${error.message}`);
+        setLoginError(error.message);
         return false;
       }
 
-      if (data && data.user && data.session) {
-        console.log("Login successful, user:", data.user.email);
-        // Store the session
-        setSession(data.session);
-        return true;
-      }
+      // Set the session
+      setSession(data.session);
+      toast.success('Login successful');
       
-      console.log("No user returned from login attempt");
-      toast.error("Login failed. Please try again.");
-      return false;
+      return true;
     } catch (error: any) {
-      console.error("Unexpected login error:", error);
-      handleAuthError(error, 'Login failed');
+      console.error('Login error:', error);
+      toast.error(`Login failed: ${error.message || 'Unknown error'}`);
+      setLoginError(error.message || 'Unknown error');
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  return { login };
+  return {
+    login,
+    loginError
+  };
 };

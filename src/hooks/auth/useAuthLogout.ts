@@ -2,47 +2,38 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
 
 export const useAuthLogout = () => {
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const navigate = useNavigate();
+  const [logoutError, setLogoutError] = useState<string | null>(null);
 
-  const logout = async (): Promise<boolean> => {
+  const logout = async () => {
     try {
-      setIsLoggingOut(true);
+      setLogoutError(null);
+
+      // Clear any stored login origin
+      sessionStorage.removeItem('loginOrigin');
       
-      console.log("useAuthLogout: Starting logout process...");
-      
-      // Complete sign out from Supabase
-      const { error } = await supabase.auth.signOut({
-        scope: 'global' // This ensures complete signout across all tabs/windows
-      });
-      
+      const { error } = await supabase.auth.signOut();
+
       if (error) {
-        console.error("useAuthLogout: Error during signOut:", error);
+        console.error('Logout error:', error.message);
         toast.error(`Logout failed: ${error.message}`);
+        setLogoutError(error.message);
         return false;
       }
-      
-      // Show success toast and redirect to home page
-      toast.success('Successfully logged out');
-      console.log("useAuthLogout: Logout completed successfully, redirecting to home");
-      
-      // Redirect to home page
-      navigate('/');
-      
+
+      toast.success('Logged out successfully');
       return true;
-    } catch (error) {
-      console.error("useAuthLogout: Unexpected error during logout:", error);
-      toast.error('An error occurred during logout');
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast.error(`Logout failed: ${error.message || 'Unknown error'}`);
+      setLogoutError(error.message || 'Unknown error');
       return false;
-    } finally {
-      setIsLoggingOut(false);
     }
   };
 
-  return { logout, isLoggingOut };
+  return {
+    logout,
+    logoutError
+  };
 };
-
-export default useAuthLogout;

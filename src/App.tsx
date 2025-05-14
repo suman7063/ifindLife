@@ -1,11 +1,12 @@
 
 import { useEffect } from 'react';
 import AppRoutes from './AppRoutes';
-import { AuthProvider } from './contexts/auth/AuthContext';
+import { AuthProvider } from './contexts/auth';
 import { Toaster } from './components/ui/toaster';
 import { ThemeProvider } from './components/theme/theme-provider';
 import { FavoritesProvider } from './contexts/favorites';
 import { AdminAuthProvider } from './contexts/admin-auth';
+import { UserAuthProvider } from './contexts/auth';
 
 const App = () => {
   useEffect(() => {
@@ -15,12 +16,14 @@ const App = () => {
   return (
     <ThemeProvider defaultTheme="light" storageKey="ifind-theme">
       <AuthProvider>
-        <AdminAuthProvider>
-          <FavoritesProvider>
-            <AppRoutes />
-            <Toaster />
-          </FavoritesProvider>
-        </AdminAuthProvider>
+        <UserAuthProvider>
+          <AdminAuthProvider>
+            <FavoritesProvider>
+              <AppRoutes />
+              <Toaster />
+            </FavoritesProvider>
+          </AdminAuthProvider>
+        </UserAuthProvider>
       </AuthProvider>
     </ThemeProvider>
   );
