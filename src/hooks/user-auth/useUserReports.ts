@@ -17,7 +17,9 @@ export const useUserReports = (
     try {
       const newReport = {
         user_id: currentUser.id,
-        expert_id: parseInt(String(reportData.expertId), 10), // Convert to number for database
+        expert_id: typeof reportData.expert_id === 'string' ? 
+                  parseInt(reportData.expert_id, 10) : 
+                  reportData.expert_id,
         reason: reportData.reason,
         details: reportData.details,
         date: new Date().toISOString(),
@@ -48,7 +50,7 @@ export const useUserReports = (
       // Optimistically update the local state
       const adaptedReport: Report = {
         id: newId,
-        expert_id: reportData.expertId, // Using expert_id to match database schema
+        expert_id: newReport.expert_id,
         reason: reportData.reason,
         details: reportData.details || '',
         date: new Date().toISOString(),

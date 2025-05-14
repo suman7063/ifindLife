@@ -1,4 +1,3 @@
-
 // Base user profile type
 export interface UserProfile {
   id: string;
@@ -47,16 +46,33 @@ export interface ExpertProfile {
   verified?: boolean;
 }
 
-// Transaction type
+// Updated UserTransaction type to include all needed properties
 export interface UserTransaction {
   id: string;
   user_id?: string;
   amount: number;
   date: string;
   type: string;  // This will be used instead of transaction_type
+  transaction_type?: string; // For backward compatibility
   currency: string;
   description?: string;
+  status?: string;
+  payment_id?: string;
+  payment_method?: string;
+  created_at?: string;
 }
+
+export type NewReview = {
+  expert_id: number | string;
+  rating: number;
+  comment?: string;
+};
+
+export type NewReport = {
+  expert_id: number | string;
+  reason: string;
+  details?: string;
+};
 
 // Review type
 export interface Review {
@@ -70,8 +86,6 @@ export interface Review {
   user_name?: string;
 }
 
-export type NewReview = Omit<Review, 'id' | 'date'>;
-
 // Report type
 export interface Report {
   id: string;
@@ -82,8 +96,6 @@ export interface Report {
   date: string;
   status: string;
 }
-
-export type NewReport = Omit<Report, 'id' | 'date' | 'status'>;
 
 // Referral type
 export interface Referral {

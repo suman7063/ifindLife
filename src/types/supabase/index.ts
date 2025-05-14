@@ -7,8 +7,8 @@ export * from './referral';
 // Re-export from tables.ts - use explicit exports to avoid duplicates
 export type {
   UserTransaction,
-  UserReview,
-  ContactSubmission,
+  NewReview,
+  NewReport,
   Review,
   Report
 } from './tables';
@@ -40,14 +40,16 @@ export interface ReferralUI {
   created_at: string; // Ensure consistency with snake_case
 }
 
+// Ensure UserProfile has all required fields
 export interface UserProfile {
   id: string;
-  name: string;
+  name: string; // Making this required to fix type errors
   email: string;
   phone?: string;
   country?: string;
   city?: string;
   avatar_url?: string;
+  profile_picture?: string;
   currency?: string;
   wallet_balance?: number;
   referral_code?: string;
@@ -59,7 +61,6 @@ export interface UserProfile {
   reports?: any[];
   transactions?: any[];
   referrals?: any[];
-  profile_picture?: string;
 }
 
 export type { 

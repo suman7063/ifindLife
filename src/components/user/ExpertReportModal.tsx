@@ -42,7 +42,7 @@ const ExpertReportModal: React.FC<ExpertReportModalProps> = ({ expertId, expertN
     }
     
     const report: NewReport = {
-      expertId, 
+      expert_id: expertId, 
       reason, 
       details
     };

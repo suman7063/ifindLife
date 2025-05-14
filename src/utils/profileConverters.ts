@@ -1,6 +1,6 @@
 
 import { UserProfile } from '@/contexts/auth/types';
-import { AuthContextType } from '@/contexts/auth/AuthContext';
+import { AuthContext } from '@/contexts/auth/AuthContext';
 import { ensureStringIdArray } from './idConverters';
 
 /**
@@ -53,13 +53,13 @@ export function createMinimalUserProfile(id: string, email: string, name?: strin
 /**
  * This adapter helps components that use the old userProfile property
  */
-export function getUserProfile(auth: AuthContextType) {
-  return auth.profile;
+export function getUserProfile(auth: typeof AuthContext.Provider) {
+  return auth.props.value?.profile;
 }
 
 /**
  * This adapter helps components that use the old updateUserProfile method
  */
-export function getUpdateUserProfile(auth: AuthContextType) {
-  return auth.updateProfile;
+export function getUpdateUserProfile(auth: typeof AuthContext.Provider) {
+  return auth.props.value?.updateProfile;
 }

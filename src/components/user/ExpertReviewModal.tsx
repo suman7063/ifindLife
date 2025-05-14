@@ -41,7 +41,7 @@ const ExpertReviewModal: React.FC<ExpertReviewModalProps> = ({
     try {
       // Create review object with the correct type
       const review: NewReview = {
-        expertId,
+        expert_id: expertId,
         rating,
         comment
       };
