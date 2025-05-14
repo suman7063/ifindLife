@@ -29,7 +29,7 @@ export function adaptUserProfile(profile: UserProfileA | UserProfileB | null): U
     referred_by: profile.referred_by || null,
     referral_code: profile.referral_code || '',
     referral_link: profile.referral_link || '',
-    favorite_experts: Array.isArray(profile.favorite_experts) ? profile.favorite_experts : [],
+    favorite_experts: Array.isArray(profile.favorite_experts) ? profile.favorite_experts.map(id => String(id)) : [],
     favorite_programs: favoritePrograms,
     enrolled_courses: profile.enrolled_courses || [],
     reviews: profile.reviews || [],
@@ -66,6 +66,13 @@ export function adaptReview(review: any): any {
     expert_id: review.expert_id || review.expertId,
     expertId: review.expertId || review.expert_id
   };
+}
+
+/**
+ * Converts expert ID strings to numbers when needed
+ */
+export function normalizeExpertId(expertId: string | number): number {
+  return typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
 }
 
 /**

@@ -1,9 +1,11 @@
 
 // This file is maintained for backward compatibility
 // It re-exports everything from the refactored structure
-import { UserAuthProvider, UserAuthContext, useUserAuth } from './auth';
+import { UserAuthContext } from './auth/UserAuthContext';
+import { UserAuthProvider } from './auth/UserAuthProvider';
+import { useUserAuth } from './auth/hooks/useUserAuth';
 import type { User } from '@supabase/supabase-js';
-import type { UserProfile } from '@/types/supabase';
+import type { UserProfile } from '@/types/supabase/user';
 
 // Define a local type for backward compatibility
 export interface UserAuthContextType {

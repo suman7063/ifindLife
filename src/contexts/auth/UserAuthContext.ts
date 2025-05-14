@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/user';
 import { Review, Report, NewReview, NewReport } from '@/types/supabase/tables';
 
 export interface UserAuthContextType {

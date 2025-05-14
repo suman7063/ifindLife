@@ -2,44 +2,22 @@
 export interface ExpertCardData {
   id: string | number;
   name: string;
-  title?: string;
-  specialties?: string[];
-  specialization?: string; // Added for backward compatibility
-  rating?: number;
-  reviewCount?: number;
-  pricePerMinute?: number;
+  specialization?: string;
+  averageRating?: number;
+  reviewsCount?: number;
+  verified?: boolean;
   profilePicture?: string;
-  imageUrl?: string; // Added for backward compatibility
   status?: 'online' | 'offline' | 'busy';
-  isFavorite?: boolean;
-  location?: string;
+  experience?: number;
+  price?: number;
+  waitTime?: string;
+  bio?: string;
   languages?: string[];
-  experience?: string | number;
-  averageRating?: number; // Added for backward compatibility
-  reviewsCount?: number; // Added for backward compatibility
-  verified?: boolean; // Added for backward compatibility
-  price?: number; // Added for backward compatibility
-  waitTime?: string; // Added for backward compatibility
+  qualifications?: string[];
 }
 
 export interface ExpertCardProps {
   expert: ExpertCardData;
-  onClick?: (expertId: string | number) => void;
-  onFavoriteToggle?: (expertId: string | number, isFavorite: boolean) => void;
-  onCallClick?: (expertId: string | number) => void;
-  onChatClick?: (expertId: string | number) => void;
-  onBookClick?: (expertId: string | number) => void;
-  showActions?: boolean;
-  showRating?: boolean;
+  onClick?: () => void;
   className?: string;
-}
-
-export interface ExpertInfoProps {
-  expert: ExpertCardData;
-  showRating?: boolean;
-}
-
-export interface ExpertActionsProps {
-  expert: ExpertCardData;
-  onClick?: (expertId: string | number) => void;
 }

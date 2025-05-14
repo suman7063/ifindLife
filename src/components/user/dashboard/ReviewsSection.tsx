@@ -1,87 +1,68 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Star, ThumbsUp, Clock, User } from 'lucide-react';
-import { Review } from '@/types/supabase/index';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Star } from 'lucide-react';
 import { adaptReview } from '@/utils/userProfileAdapter';
 
-const MOCK_REVIEWS: Review[] = [
+const mockReviews = [
   {
-    id: '1',
-    expert_id: '1',
+    expertId: '1',
     rating: 5,
-    comment: 'Great session! Very helpful advice.',
-    date: '2023-05-15',
-    verified: true,
+    comment: "Excellent session. Really helped me understand my anxiety issues.",
+    date: "2023-04-15",
+    expert_name: "Dr. Sarah Johnson"
   },
   {
-    id: '2',
-    expert_id: '2',
+    expertId: '2',
     rating: 4,
-    comment: 'Good session. I learned a lot about managing stress.',
-    date: '2023-05-10',
-  },
+    comment: "Very professional and knowledgeable. I've learned a lot about managing stress.",
+    date: "2023-03-22",
+    expert_name: "Dr. Michael Chen"
+  }
 ];
 
 interface ReviewsSectionProps {
-  reviews?: Review[];
+  reviews?: any[];
   loading?: boolean;
 }
 
 const ReviewsSection: React.FC<ReviewsSectionProps> = ({ 
-  reviews = MOCK_REVIEWS,
-  loading = false 
+  reviews = mockReviews, 
+  loading = false
 }) => {
-  // Use adaptReview to ensure reviews have both expert_id and expertId properties
-  const adaptedReviews = React.useMemo(() => {
-    return reviews.map(review => adaptReview(review));
-  }, [reviews]);
+  // Process reviews to ensure they have consistent property names
+  const normalizedReviews = reviews.map(review => adaptReview(review));
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">Your Reviews</CardTitle>
+        <CardTitle>Your Reviews</CardTitle>
+        <CardDescription>Reviews you've left for experts</CardDescription>
       </CardHeader>
-      <CardContent className="px-2">
+      <CardContent className="space-y-4">
         {loading ? (
-          <div className="flex items-center justify-center h-48">
-            <Clock className="h-8 w-8 animate-pulse text-muted-foreground" />
-          </div>
-        ) : adaptedReviews.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            You haven't left any reviews yet
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {adaptedReviews.map((review) => (
-              <div key={review.id} className="border rounded-lg p-4 hover:bg-muted/50">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-primary" />
-                    <span className="font-medium">Expert #{review.expert_id}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Star className="h-4 w-4 fill-yellow-400 stroke-yellow-400" />
-                    <span className="font-medium">{review.rating}</span>
-                    {review.verified && (
-                      <Badge variant="outline" className="ml-2 text-xs gap-1">
-                        <ThumbsUp className="h-3 w-3" />
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
+          <div className="text-center py-4">Loading your reviews...</div>
+        ) : normalizedReviews.length > 0 ? (
+          normalizedReviews.map((review, index) => (
+            <div key={index} className="pb-4 border-b last:border-0 last:pb-0">
+              <div className="flex justify-between items-start">
+                <h4 className="font-medium">{review.expert_name}</h4>
+                <div className="flex">
+                  {Array(5).fill(0).map((_, i) => (
+                    <Star 
+                      key={i} 
+                      className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+                    />
+                  ))}
                 </div>
-                
-                {review.comment && (
-                  <p className="mt-2 text-sm">{review.comment}</p>
-                )}
-                
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {new Date(review.date).toLocaleDateString()}
-                </p>
               </div>
-            ))}
+              <p className="text-sm text-muted-foreground mt-1">{review.date}</p>
+              <p className="mt-2">{review.comment}</p>
+            </div>
+          ))
+        ) : (
+          <div className="text-center py-4 text-muted-foreground">
+            You haven't left any reviews yet.
           </div>
         )}
       </CardContent>

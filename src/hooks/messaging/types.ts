@@ -1,36 +1,32 @@
 
-import { Dispatch, SetStateAction } from 'react';
-
 export interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
+  id: string | number;
+  senderId: string;
+  receiverId: string;
   content: string;
-  created_at: string;
-  read: boolean;
-  isMine?: boolean; // Helper property for UI rendering
-  timestamp?: Date; // Computed property for display
+  timestamp: Date;
+  isRead: boolean;
+  isMine: boolean;
 }
 
 export interface Conversation {
-  id: string; // This is the other user's ID
+  id: string;
   name: string;
   profilePicture?: string;
   lastMessage?: string;
   lastMessageDate?: string;
   unreadCount?: number;
-  otherUserId?: string; // Alias for id for backward compatibility
+  otherUserId: string; // For backward compatibility
 }
 
 export interface MessagingHook {
   messages: Message[];
   conversations: Conversation[];
-  selectedConversation?: string;
   currentConversation: string | null;
   loading: boolean;
   sending: boolean;
-  fetchMessages: (recipientId: string) => Promise<void>;
-  sendMessage: (recipientId: string, content: string) => Promise<boolean>;
+  fetchMessages: (userId: string) => Promise<void>;
+  sendMessage: (userId: string, content: string) => Promise<boolean>;
   fetchConversations: () => Promise<void>;
-  setCurrentConversation: Dispatch<SetStateAction<string | null>>;
+  setCurrentConversation: (id: string | null) => void;
 }

@@ -1,68 +1,103 @@
 
-// Unified database types for both user and expert profiles
+import { UserProfile as UserProfileA } from '@/types/supabase/user';
+import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
 
+// Unified UserProfile type that includes properties from both
 export interface UserProfile {
   id: string;
-  email: string;
   name?: string;
+  email?: string;
   phone?: string;
-  country?: string;
   city?: string;
+  country?: string;
   profile_picture?: string;
   wallet_balance?: number;
+  currency?: string;
   created_at?: string;
   updated_at?: string;
-  referred_by?: string;
   referral_code?: string;
   referral_link?: string;
-  currency?: string;
+  referred_by?: string;
   
-  // Optional nested data for joined queries
-  favorite_experts?: number[];
-  favorite_programs?: string[];
-  enrolled_courses?: string[];
+  // Related data
+  transactions?: any[];
   reviews?: any[];
   reports?: any[];
-  transactions?: any[];
+  favorite_experts?: string[];
+  favorite_programs?: string[]; // Could be string[] or number[]
+  enrolled_courses?: any[];
   referrals?: any[];
 }
 
+// Expert profile from database
 export interface ExpertProfile {
-  id: string | number;
-  user_id: string;
+  id: string;
+  auth_id?: string;
   name: string;
   email: string;
-  title?: string;
-  about?: string;
-  biography?: string;
-  specialties?: string[];
-  languages?: string[];
-  education?: any[];
-  certifications?: any[];
-  experience?: any[];
   phone?: string;
-  country?: string;
-  city?: string;
   address?: string;
-  postal_code?: string;
-  status?: 'online' | 'offline' | 'busy';
-  rating?: number;
-  review_count?: number;
-  price_per_minute?: number;
-  profile_picture?: string;
-  cover_image?: string;
-  created_at?: string;
-  updated_at?: string;
-  is_verified?: boolean;
-  is_admin?: boolean;
-  availability?: any[];
-  services?: any[];
-  
-  // Additional properties for compatibility
-  account_status?: 'pending' | 'approved' | 'rejected' | 'suspended';
-  featured?: boolean;
+  city?: string;
   state?: string;
+  country?: string;
   specialization?: string;
+  experience?: string | number;
   bio?: string;
   certificate_urls?: string[];
+  profile_picture?: string;
+  selected_services?: number[];
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
+  created_at?: string;
+  status?: string;
+}
+
+// Unified message type
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  updated_at?: string;
+  
+  // UI helpers
+  isMine?: boolean;
+  timestamp?: Date;
+}
+
+// Transaction with unified properties
+export interface Transaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  date: string;
+  created_at: string;
+  type: string;
+  transaction_type: string;
+  currency: string;
+  description?: string;
+}
+
+// Reviews with unified properties
+export interface Review {
+  id: string;
+  user_id: string;
+  expert_id: string | number;
+  expertId: string | number;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+  expert_name?: string;
+  user_name?: string;
+}
+
+// Favorite experts
+export interface Favorite {
+  id: string;
+  user_id: string;
+  expert_id: string | number;
 }
