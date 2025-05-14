@@ -1,208 +1,127 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AuthState, initialAuthState, UserRole } from '../types';
+import { AuthState, UserProfile, ExpertProfile, initialAuthState, UserRole } from '../types';
+import { userRepository } from '@/repositories/UserRepository';
+import { expertRepository } from '@/repositories/ExpertRepository';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
-  
-  useEffect(() => {
-    console.log("Setting up auth state listener");
-    
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log("Auth state changed:", event, session ? "Session exists" : "No session");
-        
-        setAuthState((prev) => ({
-          ...prev,
-          session,
-          user: session?.user || null,
-          isAuthenticated: !!session?.user,
-          isLoading: event === 'INITIAL_SESSION' ? prev.isLoading : false,
-        }));
-        
-        if (session?.user) {
-          console.log("Auth state changed with user, fetching profile");
-          // Use setTimeout to avoid potential Supabase auth deadlock
-          setTimeout(() => {
-            fetchUserData(session.user.id);
-          }, 0);
-        } else {
-          console.log("Auth state changed without user, clearing profiles");
-          setAuthState((prev) => ({
-            ...prev,
-            userProfile: null,
-            expertProfile: null,
-            role: null,
-            isLoading: false,
-          }));
-        }
-      }
-    );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", session ? "Session exists" : "No session");
-      
-      if (!session) {
-        setAuthState((prev) => ({
-          ...prev,
-          isLoading: false,
-        }));
-        return;
-      }
-      
-      // If session exists, fetch user data
-      console.log("Session exists, fetching user data for:", session.user.id);
-      fetchUserData(session.user.id);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-  
-  const fetchUserData = async (userId: string) => {
-    try {
-      console.log("Fetching user data for:", userId);
-      
-      // First check if this is a user
-      const { data: userProfile, error: userError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-      
-      // Then check if it's an expert
-      const { data: expertData, error: expertError } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', userId)
-        .maybeSingle();
-        
-      console.log("Fetch results:", {
-        userProfile: userProfile ? "found" : "not found",
-        expertData: expertData ? "found" : "not found",
-      });
-      
-      // Determine role and session type
-      const hasUserProfile = !!userProfile;
-      const hasExpertProfile = !!expertData && expertData.status === 'approved';
-      
-      let sessionType: 'none' | 'user' | 'expert' | 'dual' = 'none';
-      let role: UserRole = null;
-      
-      if (hasUserProfile && hasExpertProfile) {
-        // Both profiles exist - this is a dual account
-        sessionType = 'dual';
-        
-        // Get role preference from localStorage if it exists
-        const savedRole = localStorage.getItem('preferredRole');
-        const loginOrigin = sessionStorage.getItem('loginOrigin');
-        
-        console.log("Dual account detected:", { 
-          savedRole, 
-          loginOrigin,
-          hasUserProfile, 
-          hasExpertProfile 
-        });
-        
-        // If logging in from expert page, prioritize expert role
-        if (loginOrigin === 'expert') {
-          role = 'expert';
-          localStorage.setItem('preferredRole', 'expert');
-        }
-        // If logging in from user page, prioritize user role
-        else if (loginOrigin === 'user') {
-          role = 'user';
-          localStorage.setItem('preferredRole', 'user');
-        }
-        // Otherwise use saved preference or default to user
-        else if (savedRole === 'expert' || savedRole === 'user') {
-          role = savedRole;
-        } else {
-          role = 'user'; // Default for dual accounts
-          localStorage.setItem('preferredRole', 'user');
-        }
-      } else if (hasUserProfile) {
-        sessionType = 'user';
-        role = 'user';
-      } else if (hasExpertProfile) {
-        sessionType = 'expert';
-        role = 'expert';
-      }
-      
-      console.log("Role determination complete:", { 
-        sessionType, 
-        role,
-        userProfile: hasUserProfile ? "exists" : "missing",
-        expertProfile: hasExpertProfile ? "exists" : "missing",
-      });
-      
-      // Ensure the expert profile includes the status field
-      const expertProfile = expertData ? {
-        ...expertData,
-        status: (expertData.status || 'pending') as 'pending' | 'approved' | 'disapproved'
-      } : null;
-      
-      // Update auth state with all user data
+  /**
+   * Fetch user profile data from the database
+   */
+  const fetchUserData = async (userId: string | undefined) => {
+    if (!userId) {
       setAuthState(prev => ({
         ...prev,
+        isLoading: false,
+        userProfile: null,
+        profile: null,
+        expertProfile: null,
+        role: null,
+        sessionType: 'none',
+      }));
+      return;
+    }
+
+    try {
+      console.log('Fetching user data for ID:', userId);
+      
+      // Fetch user profile using repository
+      const userProfile = await userRepository.getUser(userId);
+      
+      // Fetch expert profile using repository
+      const expertProfile = await expertRepository.getExpertByAuthId(userId);
+      
+      // Determine role based on profiles
+      const role = await checkUserRole(userId, userProfile, expertProfile);
+      
+      // Determine session type
+      const sessionType = determineSessionType(userProfile, expertProfile);
+      
+      // Get wallet balance
+      const walletBalance = userProfile?.wallet_balance || 0;
+      
+      setAuthState(prev => ({
+        ...prev,
+        isLoading: false,
+        profile: userProfile,
         userProfile,
         expertProfile,
         role,
         sessionType,
-        isLoading: false,
+        walletBalance
       }));
       
-      // Store session type and role in local storage to persist across page refreshes
-      localStorage.setItem('sessionType', sessionType);
-      if (role) localStorage.setItem('preferredRole', role);
     } catch (error) {
-      console.error("Error fetching user data:", error);
-      setAuthState((prev) => ({
+      console.error('Error fetching user data:', error);
+      setAuthState(prev => ({
         ...prev,
-        isLoading: false,
+        isLoading: false
       }));
-    }
-  };
-
-  const checkUserRole = async (): Promise<UserRole> => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return null;
-
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (userProfile) {
-        return userProfile.email === 'admin@ifindlife.com' ? 'admin' : 'user';
-      }
-
-      const { data: expertProfile } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', session.user.id)
-        .maybeSingle();
-
-      if (expertProfile) {
-        return 'expert';
-      }
-
-      return null;
-    } catch (error) {
-      console.error("Error checking user role:", error);
-      return null;
     }
   };
   
+  /**
+   * Determine session type based on available profiles
+   */
+  const determineSessionType = (
+    userProfile: UserProfile | null, 
+    expertProfile: ExpertProfile | null
+  ): 'none' | 'user' | 'expert' | 'dual' => {
+    if (userProfile && expertProfile) return 'dual';
+    if (userProfile) return 'user';
+    if (expertProfile) return 'expert';
+    return 'none';
+  };
+
+  /**
+   * Check user role from either profiles or origin setting
+   */
+  const checkUserRole = async (
+    userId: string,
+    userProfile: UserProfile | null,
+    expertProfile: ExpertProfile | null
+  ): Promise<UserRole> => {
+    // If there's an approved expert profile, we have an expert role
+    if (expertProfile && expertProfile.status === 'approved') {
+      return 'expert';
+    }
+    
+    // Check for admin role
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('role')
+        .eq('id', userId)
+        .maybeSingle();
+        
+      if (data && data.role) {
+        return 'admin';
+      }
+    } catch (error) {
+      console.error('Error checking for admin role:', error);
+    }
+    
+    // If there's a user profile but no expert profile, or expert profile is not approved
+    if (userProfile) {
+      return 'user';
+    }
+    
+    // If we have a pending expert but no user profile
+    if (expertProfile) {
+      return 'expert'; // This will still be limited by status checks elsewhere
+    }
+    
+    // No valid profiles found
+    return null;
+  };
+
   return {
     authState,
     setAuthState,
-    checkUserRole,
-    fetchUserData
+    fetchUserData,
+    checkUserRole
   };
 };

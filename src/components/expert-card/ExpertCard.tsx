@@ -8,7 +8,6 @@ import ExpertActions from './ExpertActions';
 import { ExpertCardProps } from './types';
 import { useSafeFavorites } from '@/contexts/favorites/FavoritesContext';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Expert } from '@/types/expert';
 
 const ExpertCard: React.FC<ExpertCardProps> = ({
   id,
