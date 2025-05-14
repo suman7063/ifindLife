@@ -422,30 +422,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ifl_community_subscriptions: {
-        Row: {
-          active: boolean | null
-          created_at: string | null
-          email: string
-          id: string
-          source: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          created_at?: string | null
-          email: string
-          id?: string
-          source?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          created_at?: string | null
-          email?: string
-          id?: string
-          source?: string | null
-        }
-        Relationships: []
-      }
       messages: {
         Row: {
           content: string

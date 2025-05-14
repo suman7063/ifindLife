@@ -17,7 +17,7 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({ classNa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !email.trim() || !email.includes('@')) {
+    if (!email || !email.trim()) {
       toast.error('Please enter a valid email address');
       return;
     }

@@ -2,7 +2,7 @@
 import React, { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { normalizeId, ensureStringId } from '@/utils/supabaseUtils';
+import { normalizeId } from '@/utils/supabaseUtils';
 
 // Define types for the context
 interface TimeSlot {
@@ -43,7 +43,7 @@ export const SchedulingProvider: React.FC<SchedulingProviderProps> = ({ children
   // Update the functions that have type issues with the ID
   const fetchExpertAvailability = async (expertId: string | number, date: string) => {
     // Convert expert ID to string
-    const expertIdStr = ensureStringId(expertId);
+    const expertIdStr = normalizeId(expertId);
     
     try {
       const { data, error } = await supabase
@@ -98,7 +98,7 @@ export const SchedulingProvider: React.FC<SchedulingProviderProps> = ({ children
 
   const bookAppointment = async (expertId: string | number, timeSlotId: string, date: string) => {
     // Convert expert ID to string
-    const expertIdStr = ensureStringId(expertId);
+    const expertIdStr = normalizeId(expertId);
     
     try {
       // Get the current user ID
@@ -122,19 +122,16 @@ export const SchedulingProvider: React.FC<SchedulingProviderProps> = ({ children
       }
 
       // Insert the new appointment into the database
-      const appointmentData = {
-        expert_id: expertIdStr,
-        user_id: user.id,
-        time_slot_id: timeSlotId,
-        appointment_date: date,  // Match field name in database schema
-        expert_name: expertData?.name || 'Unknown Expert',
-        status: 'scheduled',
-        duration: 60 // Default duration of 60 minutes
-      };
-
       const { data, error } = await supabase
         .from('appointments')
-        .insert(appointmentData)
+        .insert({
+          expert_id: expertIdStr,
+          user_id: user.id,
+          time_slot_id: timeSlotId,
+          appointment_date: date,  // Match field name in database schema
+          expert_name: expertData?.name || 'Unknown Expert',
+          status: 'scheduled'
+        })
         .select()
         .single();
 

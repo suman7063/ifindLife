@@ -1,159 +1,181 @@
 
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { useState, useCallback } from 'react';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
+import { processReferralCode } from '@/utils/referralUtils';
 
-interface SignupData {
-  email: string;
-  password: string;
-  name?: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  referralCode?: string;
-}
-
-export const useAuthActions = (fetchUserData: () => Promise<void>) => {
+export const useAuthActions = (fetchProfile: () => Promise<void>) => {
   const [actionLoading, setActionLoading] = useState(false);
+  const { login: authLogin, signup: authSignup } = useSupabaseAuth();
 
-  // Login function
-  const login = async (email: string, password: string, roleOverride?: string): Promise<boolean> => {
-    console.log('Login function called with email:', email, 'and role override:', roleOverride);
+  // Check if expert is logged in
+  const isExpertLoggedIn = async (): Promise<boolean> => {
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return false;
+    
+    // Check if there's a profile in the 'expert_accounts' table for this user
+    try {
+      const { data: expertData, error } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .eq('auth_id', data.session.user.id)
+        .single();
+      
+      return !!expertData && !error;
+    } catch (error) {
+      console.error('Error checking expert login status:', error);
+      return false;
+    }
+  };
+
+  // Clean auth state before login
+  const cleanAuthState = async (): Promise<void> => {
+    console.log('User Auth: Cleaning auth state before login');
     
     try {
-      setActionLoading(true);
-
-      // Store login origin in session storage based on roleOverride
-      if (roleOverride) {
-        console.log('Setting login origin to:', roleOverride);
-        sessionStorage.setItem('loginOrigin', roleOverride);
-      }
-
-      // Sign in with email and password
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // Sign out from Supabase to clear current session
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Clear any Supabase-related items from localStorage
+      const storageKeys = Object.keys(localStorage);
+      const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
+      
+      supabaseKeys.forEach(key => {
+        localStorage.removeItem(key);
       });
-
-      if (error) {
-        console.error('Login error:', error.message);
-        toast.error(error.message);
-        return false;
-      }
-
-      if (!data?.user || !data?.session) {
-        console.error('Login failed: Missing user or session');
-        toast.error('Login failed. Please try again.');
-        return false;
-      }
-
-      console.log('Login successful for user:', data.user.email);
       
-      // Fetch user data (profile, role, etc.)
-      await fetchUserData();
-      
-      return true;
-    } catch (error: any) {
-      console.error('Unexpected login error:', error);
-      toast.error(error.message || 'An unexpected error occurred during login');
-      return false;
-    } finally {
-      setActionLoading(false);
+      console.log('User Auth: Auth state cleaned successfully');
+    } catch (e) {
+      console.warn('Error cleaning auth state:', e);
     }
   };
 
-  // Signup function
-  const signup = async (data: SignupData): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean> => {
     try {
       setActionLoading(true);
-
-      // Register with Supabase
-      const { data: authData, error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: {
-            name: data.name || data.email.split('@')[0],
-            phone: data.phone || '',
-            country: data.country || '',
-            city: data.city || ''
-          }
-        }
-      });
-
-      if (error) {
-        console.error('Signup error:', error);
-        toast.error(error.message);
+      console.log("Attempting login in context with:", email);
+      
+      // Check if expert is logged in
+      const expertLoggedIn = await isExpertLoggedIn();
+      
+      if (expertLoggedIn) {
+        console.log('User auth: Expert is already logged in, cannot proceed with user login');
+        toast.error('You are currently logged in as an expert. Please log out before logging in as a user.');
         return false;
       }
-
-      // If signup was successful
-      if (authData.user) {
-        toast.success('Signup successful! Please check your email for verification.');
-        
-        // Check if there's a referral code and process it
-        if (data.referralCode && authData.user.id) {
-          try {
-            // Generate a random referral code for the referred user
-            const newReferralCode = Math.random().toString(36).substring(2, 10).toUpperCase();
-            
-            // Process referral in a separate API call
-            const { error: referralError } = await supabase.from('referrals').insert({
-              referrer_id: data.referralCode,
-              referred_id: authData.user.id,
-              status: 'pending',
-              reward_claimed: false,
-              referral_code: newReferralCode
-            });
-            
-            if (referralError) {
-              console.error('Error processing referral:', referralError);
-            }
-          } catch (referralError) {
-            console.error('Referral processing error:', referralError);
-          }
+      
+      // Clean auth state before login
+      await cleanAuthState();
+      
+      const success = await authLogin(email, password);
+      console.log("Login in context result:", success);
+      
+      if (success) {
+        try {
+          // Fetch user profile after successful login
+          await fetchProfile();
+          console.log("Profile fetched successfully after login");
+          toast.success('Login successful');
+          
+          // Redirect to user dashboard
+          window.location.href = '/user-dashboard';
+          return true;
+        } catch (error) {
+          console.error("Profile fetch error:", error);
+          toast.error('Login successful but profile load failed. Please try again.');
+          return false;
         }
-        
-        return true;
+      } else {
+        toast.error('Login failed. Please check your credentials.');
+        return false;
       }
-
-      return false;
     } catch (error: any) {
-      console.error('Unexpected signup error:', error);
-      toast.error(error.message || 'An unexpected error occurred during signup');
+      console.error("Login error in context:", error);
+      toast.error(error.message || 'Login failed. Please try again.');
       return false;
     } finally {
       setActionLoading(false);
     }
   };
 
-  // Logout function
-  const logout = async (): Promise<boolean> => {
+  const signup = async (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    country: string;
+    city?: string;
+    referralCode?: string;
+  }): Promise<boolean> => {
+    console.log("Context: Attempting signup with:", userData.email);
+    setActionLoading(true);
+    
     try {
-      setActionLoading(true);
-      const { error } = await supabase.auth.signOut();
+      // Clean auth state before signup
+      await cleanAuthState();
+      
+      const success = await authSignup(userData);
+      console.log("Context: Signup result:", success);
+      
+      // If signup was successful and there's a referral code, process it
+      if (success && userData.referralCode) {
+        try {
+          const { data } = await supabase.auth.getUser();
+          if (data?.user) {
+            await processReferralCode(userData.referralCode, data.user.id);
+          }
+        } catch (error) {
+          console.error("Error processing referral:", error);
+        }
+      }
+      
+      if (success) {
+        toast.success('Account created successfully! Please check your email to confirm your account');
+      } else {
+        toast.error('Registration failed. Please try again.');
+      }
+      
+      return success;
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      toast.error(error.message || 'Registration failed. Please try again.');
+      return false;
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const logout = useCallback(async (): Promise<boolean> => {
+    setActionLoading(true);
+    try {
+      console.log("Starting user logout process...");
+      
+      // First, sign out from Supabase (local scope to not affect other tabs)
+      const { error } = await supabase.auth.signOut({
+        scope: 'local'
+      });
       
       if (error) {
-        console.error('Logout error:', error);
-        toast.error(error.message);
+        console.error("Error during Supabase logout:", error);
+        toast.error('An error occurred during logout: ' + error.message);
         return false;
       }
       
-      toast.success('Logged out successfully');
+      console.log("Supabase signOut completed");
+      toast.success('Successfully logged out');
+      
+      // Always redirect to homepage after logout
+      window.location.href = '/';
       return true;
     } catch (error: any) {
-      console.error('Unexpected logout error:', error);
-      toast.error(error.message || 'An unexpected error occurred during logout');
+      console.error("Logout error:", error);
+      toast.error('An error occurred during logout: ' + (error.message || 'Unknown error'));
       return false;
     } finally {
       setActionLoading(false);
     }
-  };
+  }, []);
 
-  return {
-    login,
-    signup,
-    logout,
-    actionLoading
-  };
+  return { login, signup, logout, actionLoading, isExpertLoggedIn };
 };

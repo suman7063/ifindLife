@@ -15,18 +15,6 @@ export function normalizeId(id: string | number | null | undefined): string {
 }
 
 /**
- * Ensures an ID is converted to a string
- * @param id - The ID to convert (can be string or number)
- * @returns The ID as a string
- */
-export function ensureStringId(id: string | number | null | undefined): string {
-  if (id === null || id === undefined) {
-    return '';
-  }
-  return String(id);
-}
-
-/**
  * Safely converts an ID that might be a string to a number
  * Returns null if conversion is not possible
  */

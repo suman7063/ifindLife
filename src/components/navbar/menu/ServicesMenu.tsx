@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
   NavigationMenuItem,
   NavigationMenuTrigger,
@@ -9,14 +9,7 @@ import {
 } from "@/components/ui/navigation-menu";
 
 const ServicesMenu = () => {
-  const navigate = useNavigate();
-  
-  // Handle navigation with scroll to top
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
+  console.log('ServicesMenu component rendering');
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Services</NavigationMenuTrigger>
@@ -24,62 +17,62 @@ const ServicesMenu = () => {
         <ul className="grid w-full gap-1 p-2">
           <li>
             <NavigationMenuLink asChild>
-              <button 
-                onClick={() => handleNavigation('/services')}
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium text-left"
+              <Link 
+                to="/services" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium"
               >
                 All Services
-              </button>
+              </Link>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <button 
-                onClick={() => handleNavigation('/services/mindful-listening')}
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              <Link 
+                to="/services/mindful-listening" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Heart2Heart Listening Sessions
-              </button>
+              </Link>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <button 
-                onClick={() => handleNavigation('/services/therapy-sessions')}
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              <Link 
+                to="/services/therapy-sessions" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Therapy Sessions
-              </button>
+              </Link>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <button
-                onClick={() => handleNavigation('/services/guided-meditations')}
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              <Link 
+                to="/services/guided-meditations" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Guided Meditations
-              </button>
+              </Link>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <button
-                onClick={() => handleNavigation('/services/offline-retreats')}
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              <Link 
+                to="/services/offline-retreats" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Offline Retreats
-              </button>
+              </Link>
             </NavigationMenuLink>
           </li>
           <li>
             <NavigationMenuLink asChild>
-              <button
-                onClick={() => handleNavigation('/services/life-coaching')}
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              <Link 
+                to="/services/life-coaching" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Life Coaching
-              </button>
+              </Link>
             </NavigationMenuLink>
           </li>
         </ul>

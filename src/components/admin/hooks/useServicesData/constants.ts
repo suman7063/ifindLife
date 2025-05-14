@@ -8,9 +8,6 @@ export const DEFAULT_CATEGORIES: ServiceCategory[] = [
   {
     name: 'Therapy & Counseling',
     id: 'therapy-counseling',
-    title: 'Therapy & Counseling', // Added missing title
-    icon: 'Brain', // Added missing icon
-    color: 'blue', // Added missing color
     items: [
       {
         id: 'individual-therapy',
@@ -33,9 +30,6 @@ export const DEFAULT_CATEGORIES: ServiceCategory[] = [
   {
     name: 'Wellness Services',
     id: 'wellness-services',
-    title: 'Wellness Services', // Added missing title
-    icon: 'Flower', // Added missing icon
-    color: 'green', // Added missing color
     items: [
       {
         id: 'meditation',
@@ -58,9 +52,6 @@ export const DEFAULT_CATEGORIES: ServiceCategory[] = [
   {
     name: 'Relationship Services',
     id: 'relationship-services',
-    title: 'Relationship Services', // Added missing title
-    icon: 'Heart', // Added missing icon
-    color: 'pink', // Added missing color
     items: [
       {
         id: 'couples-therapy',

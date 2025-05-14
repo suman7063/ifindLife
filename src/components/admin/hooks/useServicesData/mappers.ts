@@ -28,23 +28,16 @@ export const groupServicesByCategory = (services: ServiceItem[]): ServiceCategor
   services.forEach(service => {
     // Determine category from service name - this is just an example logic
     const categoryName = getCategoryFromServiceName(service.title);
-    const categoryId = categoryName.toLowerCase().replace(/\s/g, '-');
     
-    if (!categories[categoryId]) {
-      categories[categoryId] = {
+    if (!categories[categoryName]) {
+      categories[categoryName] = {
         name: categoryName,
-        id: categoryId,
-        items: [],
-        // Add the required fields to match ServiceCategory interface
-        title: categoryName,
-        icon: getServiceIcon(categoryName),
-        color: getServiceColor(categoryName),
-        description: '', // Optional but adding for consistency
-        href: `/services/${categoryId}` // Optional but adding for consistency
+        id: categoryName.toLowerCase().replace(/\s/g, '-'),
+        items: []
       };
     }
     
-    categories[categoryId].items.push(service);
+    categories[categoryName].items.push(service);
   });
   
   return Object.values(categories);

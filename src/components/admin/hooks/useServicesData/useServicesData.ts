@@ -1,11 +1,10 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ServiceCategory, ServiceItem, DbService } from './types';
+import { ServiceCategory } from './types';
 import { toast } from 'sonner';
 import { categoryData as defaultServiceData } from '@/data/initialAdminData';
 import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
-import { ensureStringId } from '@/utils/idConverters';
 
 // Define default icon and color for services that don't have them
 const DEFAULT_ICON = '🧠';
@@ -37,21 +36,8 @@ export function useServicesData(
             const parsedContent = JSON.parse(savedContent);
             if (parsedContent.services && parsedContent.services.length > 0) {
               console.log('Services found in localStorage:', parsedContent.services.length);
-              
-              // Convert the localStorage data to match ServiceCategory type
-              const formattedServices: ServiceCategory[] = parsedContent.services.map((service: any) => ({
-                id: ensureStringId(service.id || ''),
-                name: service.title || '',
-                items: service.items || [],
-                title: service.title || '',
-                description: service.description || '',
-                href: service.href || '',
-                icon: service.icon || DEFAULT_ICON,
-                color: service.color || DEFAULT_COLOR
-              }));
-              
-              setServices(formattedServices);
-              updateCallback(formattedServices);
+              setServices(parsedContent.services);
+              updateCallback(parsedContent.services);
               setLoading(false);
               return;
             }
@@ -82,15 +68,13 @@ export function useServicesData(
           
           if (data && data.length > 0) {
             // Map Supabase data to the expected format, providing defaults for missing fields
-            const formattedServices: ServiceCategory[] = data.map((dbService: DbService) => ({
-              id: ensureStringId(dbService.id.toString()),
-              name: dbService.name,
-              items: [], // Required property
-              title: dbService.name, // Use name as title
-              description: dbService.description || '',
-              href: `/services/${dbService.name.toLowerCase().replace(/\s+/g, '-')}`,
-              icon: DEFAULT_ICON, // Default icon since it doesn't exist in DB
-              color: DEFAULT_COLOR // Default color since it doesn't exist in DB
+            const formattedServices = safeDataTransform(data, (service) => ({
+              // Use string icons (emoji) instead of React Elements
+              icon: service.icon || DEFAULT_ICON, // Default icon if none in database
+              title: service.name,
+              description: service.description || '',
+              href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
+              color: service.color || DEFAULT_COLOR // Default color if none in database
             }));
             
             console.log('Formatted services:', formattedServices);
@@ -99,21 +83,9 @@ export function useServicesData(
             setFetchAttempts(0); // Reset attempts on success
           } else {
             console.log('No services found in Supabase, using default data');
-            
-            // Format default data to match ServiceCategory type
-            const formattedDefaultData: ServiceCategory[] = defaultServiceData.map((service: any) => ({
-              id: ensureStringId(service.id || ''),
-              name: service.title || '',
-              items: service.items || [],
-              title: service.title || '',
-              description: service.description || '',
-              href: service.href || '',
-              icon: service.icon || DEFAULT_ICON,
-              color: service.color || DEFAULT_COLOR
-            }));
-            
-            setServices(formattedDefaultData);
-            updateCallback(formattedDefaultData);
+            // If no data in Supabase either, use default data
+            setServices(defaultServiceData);
+            updateCallback(defaultServiceData);
           }
         } catch (supabaseError) {
           console.error('Supabase services fetch error:', supabaseError);
@@ -121,21 +93,8 @@ export function useServicesData(
           // If we've reached max attempts, use default data
           if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
             console.warn(`Max fetch attempts (${MAX_FETCH_ATTEMPTS}) reached, using default data`);
-            
-            // Format default data to match ServiceCategory type
-            const formattedDefaultData: ServiceCategory[] = defaultServiceData.map((service: any) => ({
-              id: ensureStringId(service.id || ''),
-              name: service.title || '',
-              items: service.items || [],
-              title: service.title || '',
-              description: service.description || '',
-              href: service.href || '',
-              icon: service.icon || DEFAULT_ICON,
-              color: service.color || DEFAULT_COLOR
-            }));
-            
-            setServices(formattedDefaultData);
-            updateCallback(formattedDefaultData);
+            setServices(defaultServiceData);
+            updateCallback(defaultServiceData);
             toast.error('Could not load services from database. Using default data.');
           } else {
             // Increment fetch attempts for next try
@@ -160,21 +119,8 @@ export function useServicesData(
         } else {
           // Final fallback to default data on error after all retries
           console.warn('All retry attempts failed, using default data');
-          
-          // Format default data to match ServiceCategory type
-          const formattedDefaultData: ServiceCategory[] = defaultServiceData.map((service: any) => ({
-            id: ensureStringId(service.id || ''),
-            name: service.title || '',
-            items: service.items || [],
-            title: service.title || '',
-            description: service.description || '',
-            href: service.href || '',
-            icon: service.icon || DEFAULT_ICON,
-            color: service.color || DEFAULT_COLOR
-          }));
-          
-          setServices(formattedDefaultData);
-          updateCallback(formattedDefaultData);
+          setServices(defaultServiceData);
+          updateCallback(defaultServiceData);
           toast.error('Error loading services. Using default settings.');
         }
       } finally {

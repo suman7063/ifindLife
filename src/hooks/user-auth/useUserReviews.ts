@@ -17,9 +17,7 @@ export const useUserReviews = (
     try {
       const newReview = {
         user_id: currentUser.id,
-        expert_id: typeof reviewData.expert_id === 'string' ? 
-                  parseInt(reviewData.expert_id, 10) : 
-                  reviewData.expert_id,
+        expert_id: parseInt(String(reviewData.expertId), 10), // Convert to number for database
         rating: reviewData.rating,
         comment: reviewData.comment,
         date: new Date().toISOString(),
@@ -49,7 +47,7 @@ export const useUserReviews = (
       // Optimistically update the local state
       const adaptedReview: Review = {
         id: newId,
-        expert_id: newReview.expert_id,
+        expert_id: reviewData.expertId, // Using expert_id to match database schema
         rating: reviewData.rating,
         comment: reviewData.comment,
         date: new Date().toISOString(),

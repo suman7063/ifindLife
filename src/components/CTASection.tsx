@@ -5,11 +5,6 @@ import { Heart, Search, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const CTASection = () => {
-  // Function to scroll to top when link is clicked
-  const handleLinkClick = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <section className="py-16 bg-gradient-to-r from-ifind-aqua to-ifind-teal text-white">
       <div className="container mx-auto px-6 sm:px-12">
@@ -19,22 +14,22 @@ const CTASection = () => {
             Take the first step towards better mental health today. Our experts are ready to help you navigate your challenges.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/services/mindful-listening" onClick={handleLinkClick}>
+            <Link to="/mental-health-assessment">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <Heart className="mr-2 h-5 w-5" />
-                Speak Your Heart
+                Speak your heart
               </Button>
             </Link>
-            <Link to="/services/therapy-sessions" onClick={handleLinkClick}>
+            <Link to="/experts">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <Search className="mr-2 h-5 w-5" />
-                Get Guidance
+                Get guidance
               </Button>
             </Link>
-            <Link to="/mental-health-assessment" onClick={handleLinkClick}>
+            <Link to="/services">
               <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors text-lg py-6 px-8 flex items-center">
                 <FileText className="mr-2 h-5 w-5" />
-                Take a Test
+                Take a test
               </Button>
             </Link>
           </div>

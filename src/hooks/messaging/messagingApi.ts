@@ -1,7 +1,6 @@
-
 import { MessagingRepository, MessagingUser, Conversation } from './types';
 import { Message } from '@/types/appointments';
-import { normalizeId, ensureStringId } from '@/utils/supabaseUtils';
+import { normalizeId } from '@/utils/supabaseUtils';
 
 /**
  * API functions for messaging functionality
@@ -136,7 +135,7 @@ export const sendMessage = async (
     return null;
   }
   
-  return messagingRepository.sendMessage(ensureStringId(currentUser.id), receiverId, content);
+  return messagingRepository.sendMessage(currentUser.id, receiverId, content);
 };
 
 // Helper function to mark conversation as read
@@ -149,5 +148,5 @@ export const markConversationAsRead = async (
     return false;
   }
   
-  return messagingRepository.markConversationAsRead(ensureStringId(currentUser.id), partnerId);
+  return messagingRepository.markConversationAsRead(currentUser.id, partnerId);
 };

@@ -1,121 +1,69 @@
-// Base user profile type
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  avatar_url?: string;
-  currency?: string;
-  wallet_balance?: number;
-  referral_code?: string;
-  created_at?: string;
-  updated_at?: string;
-  favorite_experts?: string[];
-  enrolled_courses?: any[];
-  reviews?: any[];
-  reports?: any[];
-  transactions?: any[];
-  referrals?: any[];
-  profile_picture?: string;
-}
 
-// Expert profile type
-export interface ExpertProfile {
-  id: string;
-  name: string;
-  email: string;
-  auth_id?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  profile_picture?: string;
-  certificate_urls?: string[];
-  selected_services?: number[];
-  status?: 'pending' | 'approved' | 'disapproved';
-  created_at?: string;
-  updated_at?: string;
-  average_rating?: number;
-  reviews_count?: number;
-  verified?: boolean;
-}
-
-// Updated UserTransaction type to include all needed properties
 export interface UserTransaction {
   id: string;
-  user_id?: string;
+  user_id: string;
   amount: number;
-  date: string;
-  type: string;  // This will be used instead of transaction_type
-  transaction_type?: string; // For backward compatibility
   currency: string;
-  description?: string;
-  status?: string;
-  payment_id?: string;
-  payment_method?: string;
-  created_at?: string;
+  description: string;
+  date: string;
+  type: string;
+  status: string;
+  created_at: string;
+  payment_id: string;
+  payment_method: string;
+  transaction_type: string;
 }
 
-export type NewReview = {
-  expert_id: number | string;
-  rating: number;
-  comment?: string;
-};
-
-export type NewReport = {
-  expert_id: number | string;
-  reason: string;
-  details?: string;
-};
-
-// Review type
-export interface Review {
-  id: string;
-  user_id?: string;
+export interface UserReview {
+  id?: string;
   expert_id: number;
+  user_id?: string;
   rating: number;
   comment?: string;
   date: string;
   verified?: boolean;
-  user_name?: string;
 }
 
-// Report type
-export interface Report {
-  id: string;
-  user_id?: string;
-  expert_id: number;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-}
-
-// Referral type
-export interface Referral {
-  id: string;
-  referrer_id: string;
-  referred_id: string;
-  referral_code: string;
-  status: string;
-  reward_claimed: boolean;
-  created_at?: string;
-  completed_at?: string;
-}
-
-// Contact submission type
 export interface ContactSubmission {
   id: number;
   name: string;
   email: string;
   subject: string;
   message: string;
-  is_read: boolean;
-  created_at: string;
+  created_at: string | null;
+  is_read: boolean | null;
 }
+
+// Full Report type from DB
+export type Report = {
+  id: string;
+  expert_id: string | number; // Using expert_id to match database schema
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+};
+
+// Input type for inserting a new report
+export type NewReport = {
+  expertId: string | number; // Keep as expertId for frontend consistency
+  reason: string;
+  details?: string;
+};
+
+// Full Review type
+export type Review = {
+  id: string;
+  expert_id: string | number; // Using expert_id to match database schema
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+};
+
+// Input type for inserting a new review
+export type NewReview = {
+  expertId: string | number; // Keep as expertId for frontend consistency
+  rating: number;
+  comment?: string;
+};

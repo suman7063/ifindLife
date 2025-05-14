@@ -1,66 +1,133 @@
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Program, ProgramType, ProgramCategory } from '@/types/programs';
-import { useProgramData } from '@/hooks/useProgramData';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useState, useEffect } from 'react';
+import { Program } from '@/types/programs';
+import { supabase } from '@/lib/supabase';
+import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 
 export const useWellnessPrograms = () => {
-  const { currentUser } = useUserAuth();
-  const { programFavorites } = useFavorites();
-  
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [filteredPrograms, setFilteredPrograms] = useState<Program[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [sortOption, setSortOption] = useState<string>('popular');
-  
-  // Fetch programs data
-  const { programs, loading: isLoading } = useProgramData(currentUser, {
-    programType: 'wellness',
-    withFavorites: true
-  });
-  
-  // Filter programs based on selected category and favorites
-  const filteredPrograms = useMemo(() => {
-    if (selectedCategory === 'all') {
-      return sortPrograms(programs, sortOption);
-    }
-    
-    if (selectedCategory === 'favorites') {
-      // Use type assertion to tell TypeScript we know what we're doing
-      const favoritePrograms = programs.filter(program => {
-        if (!programFavorites || !Array.isArray(programFavorites)) {
-          return false;
+  const [sortOption, setSortOption] = useState<string>('popularity');
+  const { programFavorites, isProgramFavorite } = useFavorites();
+
+  // Fetch programs on component mount
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        setIsLoading(true);
+        console.log('Fetching wellness programs...');
+        
+        await addSamplePrograms('wellness');
+        
+        const { data, error } = await supabase
+          .from('programs')
+          .select('*')
+          .eq('programType', 'wellness');
+          
+        if (error) {
+          console.error('Error fetching wellness programs:', error);
+          return;
         }
         
-        // Check each favorite item
-        return programFavorites.some((fav: any) => {
-          // Skip if null/undefined
-          if (!fav) return false;
+        console.log('Wellness programs fetched:', data);
+        
+        if (data) {
+          const programData: Program[] = data.map(program => ({
+            id: program.id,
+            title: program.title,
+            description: program.description,
+            duration: program.duration,
+            sessions: program.sessions,
+            price: program.price,
+            image: program.image,
+            category: program.category as Program['category'],
+            programType: program.programType as Program['programType'],
+            enrollments: program.enrollments || 0,
+            created_at: program.created_at,
+            is_favorite: isProgramFavorite(program.id)
+          }));
           
-          // Check if it's an object with program_id
-          if (fav && typeof fav === 'object' && 'program_id' in fav) {
-            return fav.program_id === program.id;
-          }
+          const sortedPrograms = [...programData].sort((a, b) => 
+            (b.enrollments || 0) - (a.enrollments || 0)
+          );
           
-          // Check if it's a direct number
-          if (typeof fav === 'number') {
-            return fav === program.id;
-          }
+          const categoryCounts = {
+            'quick-ease': sortedPrograms.filter(p => p.category === 'quick-ease').length,
+            'resilience-building': sortedPrograms.filter(p => p.category === 'resilience-building').length,
+            'super-human': sortedPrograms.filter(p => p.category === 'super-human').length,
+            'issue-based': sortedPrograms.filter(p => p.category === 'issue-based').length
+          };
           
-          return false;
-        });
-      });
-      
-      return sortPrograms(favoritePrograms, sortOption);
+          console.log('Programs by category count:', categoryCounts);
+          console.log('Setting wellness programs to state:', sortedPrograms);
+          
+          setPrograms(sortedPrograms);
+          setFilteredPrograms(sortedPrograms);
+        }
+      } catch (error) {
+        console.error('Error in wellness programs fetch:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchPrograms();
+  }, [isProgramFavorite]);
+
+  // Apply category and sort filters
+  useEffect(() => {
+    if (programs.length === 0) return;
+    
+    console.log('Applying filters. Category:', selectedCategory, 'Sort option:', sortOption);
+    console.log('Current favorites:', programFavorites);
+    
+    let categoryFiltered = [...programs];
+    
+    // Update favorite status based on current programFavorites array
+    categoryFiltered = categoryFiltered.map(program => ({
+      ...program,
+      is_favorite: isProgramFavorite(program.id)
+    }));
+    
+    if (selectedCategory !== 'all') {
+      if (selectedCategory === 'favorites') {
+        categoryFiltered = categoryFiltered.filter(program => isProgramFavorite(program.id));
+        console.log("Filtered favorites:", categoryFiltered);
+      } else {
+        categoryFiltered = categoryFiltered.filter(program => program.category === selectedCategory);
+      }
     }
     
-    return sortPrograms(
-      programs.filter(program => program.category === selectedCategory),
-      sortOption
-    );
-  }, [programs, selectedCategory, sortOption, programFavorites]);
-  
-  // Group programs by category
-  const programsByCategory = useCallback(() => {
+    const sorted = [...categoryFiltered];
+    
+    switch (sortOption) {
+      case 'newest':
+        sorted.sort((a, b) => {
+          if (!a.created_at || !b.created_at) return 0;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        break;
+      case 'price-low':
+        sorted.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        sorted.sort((a, b) => b.price - a.price);
+        break;
+      case 'popularity':
+      default:
+        sorted.sort((a, b) => (b.enrollments || 0) - (a.enrollments || 0));
+        break;
+    }
+    
+    console.log('Filtered programs count:', sorted.length);
+    setFilteredPrograms(sorted);
+  }, [selectedCategory, programs, sortOption, programFavorites, isProgramFavorite]);
+
+  // Organize programs by category
+  const programsByCategory = () => {
     const categories: Record<string, Program[]> = {
       'quick-ease': [],
       'resilience-building': [],
@@ -69,27 +136,19 @@ export const useWellnessPrograms = () => {
     };
     
     programs.forEach(program => {
-      const category = program.category as string;
-      if (category in categories) {
-        categories[category].push(program);
-      } else {
-        // If a program has a category not in our predefined list
-        if (!categories['other']) {
-          categories['other'] = [];
-        }
-        categories['other'].push(program);
+      if (program.category in categories) {
+        categories[program.category].push({
+          ...program,
+          is_favorite: isProgramFavorite(program.id)
+        });
       }
     });
     
-    // Sort programs in each category
-    Object.keys(categories).forEach(key => {
-      categories[key] = sortPrograms(categories[key], sortOption);
-    });
-    
     return categories;
-  }, [programs, sortOption]);
-  
+  };
+
   return {
+    programs,
     filteredPrograms,
     isLoading,
     selectedCategory,
@@ -98,26 +157,4 @@ export const useWellnessPrograms = () => {
     setSortOption,
     programsByCategory
   };
-};
-
-// Helper function to sort programs
-const sortPrograms = (programs: Program[], sortOption: string): Program[] => {
-  const sortedPrograms = [...programs];
-  
-  switch (sortOption) {
-    case 'newest':
-      return sortedPrograms.sort((a, b) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-    case 'price-low':
-      return sortedPrograms.sort((a, b) => a.price - b.price);
-    case 'price-high':
-      return sortedPrograms.sort((a, b) => b.price - a.price);
-    case 'popular':
-    default:
-      // Sort by enrollments (if available) or default to id
-      return sortedPrograms.sort((a, b) => 
-        (b.enrollments || 0) - (a.enrollments || 0)
-      );
-  }
 };

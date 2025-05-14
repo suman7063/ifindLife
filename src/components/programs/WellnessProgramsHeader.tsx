@@ -1,6 +1,8 @@
 
 import React from 'react';
-import SortButton from '@/components/programs/filters/SortButton';
+import PageHeader from '@/components/common/PageHeader';
+import CategoryButtons from '@/components/programs/filters/CategoryButtons';
+import ProgramSortOptions from '@/components/programs/filters/ProgramSortOptions';
 import { ProgramCategory } from '@/types/programs';
 
 interface WellnessProgramsHeaderProps {
@@ -12,26 +14,46 @@ interface WellnessProgramsHeaderProps {
 }
 
 const WellnessProgramsHeader: React.FC<WellnessProgramsHeaderProps> = ({
+  selectedCategory,
+  setSelectedCategory,
   sortOption,
-  setSortOption
+  setSortOption,
+  categoryOptions
 }) => {
   return (
-    <div className="bg-gradient-to-r from-ifind-offwhite to-white py-12 border-b">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex flex-col items-center text-center mb-4">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Programs for Wellness Seekers
-          </h1>
-          <p className="text-lg text-gray-600 max-w-3xl">
-            Discover our range of mental wellness programs designed to help you thrive. From quick relief to long-term resilience building, find the support you need.
+    <>
+      <PageHeader 
+        title="Programs For Wellness Seekers" 
+        subtitle="Discover mental wellness programs designed to support your personal growth and wellbeing"
+      />
+      
+      <div className="container mx-auto px-4 sm:px-6 py-8">
+        <div className="mb-8">
+          <div className="flex justify-between items-start mb-4">
+            <h2 className="text-xl font-semibold text-ifind-purple">
+              Personalized Mental Wellness Programs
+            </h2>
+            
+            <ProgramSortOptions 
+              sortOption={sortOption} 
+              setSortOption={setSortOption} 
+            />
+          </div>
+          
+          <p className="text-gray-700 mb-6">
+            Our wellness programs are designed to support individuals on their mental health journey.
+            Choose from a variety of evidence-based programs tailored to address specific needs and goals.
           </p>
-        </div>
-        
-        <div className="flex justify-end mt-6">
-          <SortButton sortOption={sortOption} setSortOption={setSortOption} />
+          
+          {/* Category buttons for quick filtering */}
+          <CategoryButtons 
+            activeCategory={selectedCategory}
+            setActiveCategory={setSelectedCategory}
+            categoryOptions={categoryOptions}
+          />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

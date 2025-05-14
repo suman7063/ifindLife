@@ -1,134 +1,79 @@
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
 import CategoryCard from '@/components/CategoryCard';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Brain, Heart, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
-import CoursePreviewDialog from '@/components/courses/CoursePreviewDialog';
-import { useCourses } from '@/hooks/useCourses';
-import { Course } from '@/types/courses';
-import { toast } from 'sonner';
+import { Brain, Heart, Users, MessageCircle, Sparkles, Lightbulb } from 'lucide-react';
 
 interface IssueSessionsProps {
   onCategoryClick: (category: any) => void;
 }
 
-const IssueSessions: React.FC<IssueSessionsProps> = ({
-  onCategoryClick
-}) => {
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { courses, loading } = useCourses();
-
-  const designCategories = [{
-    icon: <Brain className="h-8 w-8 text-ifind-aqua" />,
-    title: "Anxiety & Depression",
-    description: "Get help managing anxiety, depression, and stress from licensed therapists.",
-    href: "/anxiety-depression",
-    color: "bg-blue-100"
-  }, {
-    icon: <Heart className="h-8 w-8 text-ifind-aqua" />,
-    title: "Relationship Counseling",
-    description: "Improve communication and resolve conflicts in all types of relationships.",
-    href: "/relationship-counseling",
-    color: "bg-red-100"
-  }, {
-    icon: <Lightbulb className="h-8 w-8 text-ifind-aqua" />,
-    title: "Career Guidance",
-    description: "Navigate work stress, career transitions, and professional development.",
-    href: "/career-guidance",
-    color: "bg-yellow-100"
-  }, {
-    icon: <Users className="h-8 w-8 text-ifind-aqua" />,
-    title: "Family Therapy",
-    description: "Address family dynamics, parenting challenges, and intergenerational issues.",
-    href: "/family-therapy",
-    color: "bg-green-100"
-  }, {
-    icon: <Sparkles className="h-8 w-8 text-ifind-aqua" />,
-    title: "Trauma Recovery",
-    description: "Process and heal from past trauma with specialized therapeutic approaches.",
-    href: "/trauma-recovery",
-    color: "bg-purple-100"
-  }, {
-    icon: <MessageCircle className="h-8 w-8 text-ifind-aqua" />,
-    title: "Teen Counseling",
-    description: "Support for adolescents facing academic pressure, identity, and social challenges.",
-    href: "/teen-counseling",
-    color: "bg-orange-100"
-  }];
-
-  // Function to handle navigation with scroll to top
-  const handleSeeAllClick = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  };
-
-  const handleCategoryClick = (category: any) => {
-    // Look for an exact title match first
-    let matchingCourse = courses.find(
-      course => course.title.toLowerCase() === category.title.toLowerCase()
-    );
-    
-    // If no exact match, try a partial match
-    if (!matchingCourse) {
-      matchingCourse = courses.find(
-        course => course.title.toLowerCase().includes(category.title.toLowerCase()) ||
-                 category.title.toLowerCase().includes(course.title.toLowerCase())
-      );
+const IssueSessions: React.FC<IssueSessionsProps> = ({ onCategoryClick }) => {
+  const designCategories = [
+    {
+      icon: <Brain className="h-8 w-8 text-ifind-aqua" />,
+      title: "Anxiety & Depression",
+      description: "Get help managing anxiety, depression, and stress from licensed therapists.",
+      href: "/anxiety-depression",
+      color: "bg-blue-100"
+    },
+    {
+      icon: <Heart className="h-8 w-8 text-ifind-aqua" />,
+      title: "Relationship Counseling",
+      description: "Improve communication and resolve conflicts in all types of relationships.",
+      href: "/relationship-counseling",
+      color: "bg-red-100"
+    },
+    {
+      icon: <Lightbulb className="h-8 w-8 text-ifind-aqua" />,
+      title: "Career Guidance",
+      description: "Navigate work stress, career transitions, and professional development.",
+      href: "/career-guidance",
+      color: "bg-yellow-100"
+    },
+    {
+      icon: <Users className="h-8 w-8 text-ifind-aqua" />,
+      title: "Family Therapy",
+      description: "Address family dynamics, parenting challenges, and intergenerational issues.",
+      href: "/family-therapy",
+      color: "bg-green-100"
+    },
+    {
+      icon: <Sparkles className="h-8 w-8 text-ifind-aqua" />,
+      title: "Trauma Recovery",
+      description: "Process and heal from past trauma with specialized therapeutic approaches.",
+      href: "/trauma-recovery",
+      color: "bg-purple-100"
+    },
+    {
+      icon: <MessageCircle className="h-8 w-8 text-ifind-aqua" />,
+      title: "Teen Counseling",
+      description: "Support for adolescents facing academic pressure, identity, and social challenges.",
+      href: "/teen-counseling",
+      color: "bg-orange-100"
     }
-    
-    if (matchingCourse) {
-      console.log("Found matching course:", matchingCourse.title);
-      setSelectedCourse(matchingCourse);
-      setIsDialogOpen(true);
-    } else {
-      // Fall back to original behavior
-      console.log("No matching course found for:", category.title);
-      onCategoryClick(category);
-    }
-  };
-  
+  ];
+
   return (
     <div className="mt-16">
+      <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {designCategories.map((category, index) => (
           <div 
-            key={`category-${index}`} 
-            onClick={() => handleCategoryClick(category)} 
+            key={`category-${index}`}
+            onClick={() => onCategoryClick(category)}
             className="cursor-pointer transform transition-transform duration-300 hover:scale-105"
           >
             <CategoryCard 
-              icon={category.icon} 
-              title={category.title} 
-              description={category.description} 
-              href={category.href} 
-              color={category.color} 
+              icon={category.icon}
+              title={category.title}
+              description={category.description}
+              href={category.href}
+              color={category.color}
               cardStyle="session" 
             />
           </div>
         ))}
       </div>
-      
-      {/* See All Issue Based Sessions Link */}
-      <div className="mt-8 text-center">
-        <Link to="/courses?category=issue-based" onClick={handleSeeAllClick}>
-          <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
-            See All Issue Based Sessions <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
-      </div>
-      
-      {/* Course Preview Dialog */}
-      {selectedCourse && (
-        <CoursePreviewDialog 
-          course={selectedCourse}
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-        />
-      )}
     </div>
   );
 };

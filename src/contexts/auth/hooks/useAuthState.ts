@@ -62,21 +62,9 @@ export const useAuthState = () => {
     };
   }, []);
   
-  const fetchUserData = async (userId?: string) => {
+  const fetchUserData = async (userId: string) => {
     try {
       console.log("Fetching user data for:", userId);
-      
-      if (!userId) {
-        console.log("No user ID provided, clearing profiles");
-        setAuthState((prev) => ({
-          ...prev,
-          userProfile: null,
-          expertProfile: null,
-          role: null,
-          isLoading: false,
-        }));
-        return;
-      }
       
       // First check if this is a user
       const { data: userProfile, error: userError } = await supabase

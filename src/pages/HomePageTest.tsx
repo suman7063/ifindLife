@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import { lazy, Suspense } from 'react';
-import WelcomeSection from '@/components/WelcomeSection';
 
 // Lazy load non-critical components
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
@@ -46,22 +45,19 @@ const HomePageTest = () => {
         {/* Section 1: Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Welcome Section */}
-        <WelcomeSection />
-        
-        {/* IFL Programs for Individuals - Moved up here */}
-        <ServicesSection />
-        
         {/* Section 2: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
         
-        {/* Programs for Organizations */}
+        {/* Section 3: Combined Programs Section - IFL Programs for Individuals and Programs for Organizations */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-6 sm:px-12">
+            {/* IFL Programs for Individuals */}
+            <ServicesSection />
+            
             {/* Programs for Organizations - Academic and Business */}
-            <div>
+            <div className="mt-16">
               <h2 className="text-3xl font-bold mb-8">Programs for Organizations</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="bg-gray-50 p-8 rounded-lg shadow-md hover:shadow-lg transition-shadow">
@@ -91,12 +87,12 @@ const HomePageTest = () => {
           </div>
         </section>
 
-        {/* Why Choose Us */}
+        {/* Section 4: Why Choose Us - Redesigned */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Testimonials */}
+        {/* Section 5: Testimonials - Redesigned */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
@@ -112,7 +108,7 @@ const HomePageTest = () => {
         </Suspense>
       </main>
 
-      {/* Footer */}
+      {/* Section 6: Footer */}
       <Suspense fallback={<div className="h-40 bg-gray-100" />}>
         <Footer />
       </Suspense>

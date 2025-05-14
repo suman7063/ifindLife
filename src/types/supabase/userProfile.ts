@@ -1,51 +1,57 @@
 
-import { Referral } from './referral';
+import { UserTransaction } from './tables';
 
 export interface UserProfile {
   id: string;
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   phone?: string;
-  country?: string;
   city?: string;
+  country?: string;
   profile_picture?: string;
-  avatar_url?: string;
-  currency?: string;
   wallet_balance?: number;
-  referral_code?: string;
+  currency?: string;
   created_at?: string;
   updated_at?: string;
+  referral_code?: string;
+  referral_link?: string;
+  referred_by?: string;
   
-  // Related collections
-  favorite_experts?: string[];
-  enrolled_courses?: any[];
+  // Related data
+  transactions?: UserTransaction[];
   reviews?: any[];
   reports?: any[];
-  transactions?: any[];
-  referrals?: Referral[];
+  favorite_experts?: string[];
+  favorite_programs?: number[]; // Add this property
+  enrolled_courses?: any[];
+  referrals?: any[];
+  
+  // TypeScript doesn't allow interface methods with implementation in .ts files
+  // So let's define these as optional properties
+  profilePicture?: string;
+  walletBalance?: number;
+  favoriteExperts?: string[];
+  enrolledCourses?: any[];
+  referralCode?: string;
 }
 
-// Helper functions for compatibility
-export function mapUserProfileFields(profile: any): UserProfile {
-  return {
-    id: profile.id,
-    name: profile.name || '',
-    email: profile.email || '',
-    phone: profile.phone,
-    country: profile.country,
-    city: profile.city,
-    profile_picture: profile.profile_picture || profile.avatar_url,
-    avatar_url: profile.avatar_url || profile.profile_picture,
-    currency: profile.currency || 'USD',
-    wallet_balance: profile.wallet_balance || 0,
-    referral_code: profile.referral_code,
-    created_at: profile.created_at,
-    updated_at: profile.updated_at,
-    favorite_experts: Array.isArray(profile.favorite_experts) ? profile.favorite_experts : [],
-    enrolled_courses: Array.isArray(profile.enrolled_courses) ? profile.enrolled_courses : [],
-    reviews: Array.isArray(profile.reviews) ? profile.reviews : [],
-    reports: Array.isArray(profile.reports) ? profile.reports : [],
-    transactions: Array.isArray(profile.transactions) ? profile.transactions : [],
-    referrals: Array.isArray(profile.referrals) ? profile.referrals : [],
-  };
+// Export aliases for camelCase access
+export function getProfilePicture(profile: UserProfile): string | undefined {
+  return profile.profile_picture;
+}
+
+export function getWalletBalance(profile: UserProfile): number | undefined {
+  return profile.wallet_balance;
+}
+
+export function getFavoriteExperts(profile: UserProfile): string[] | undefined {
+  return profile.favorite_experts;
+}
+
+export function getEnrolledCourses(profile: UserProfile): any[] | undefined {
+  return profile.enrolled_courses;
+}
+
+export function getReferralCode(profile: UserProfile): string | undefined {
+  return profile.referral_code;
 }

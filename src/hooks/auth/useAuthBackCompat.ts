@@ -1,55 +1,39 @@
 
-import { useAuth } from '@/contexts/auth';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
-// This hook provides backward compatibility for components using the old auth hooks
+// This compatibility layer helps with backward compatibility
 export const useAuthBackCompat = () => {
   const auth = useAuth();
   
-  // Format the data for user auth
-  const userAuth = {
-    currentUser: auth.userProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: auth.login,
-    signup: auth.signup,
-    logout: async () => {
-      const result = await auth.logout();
-      return !result.error;
-    },
-    authLoading: auth.isLoading,
-    loading: auth.isLoading,
-    profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile,
-    updatePassword: auth.updatePassword,
-    addToFavorites: auth.addToFavorites,
-    removeFromFavorites: auth.removeFromFavorites,
-    rechargeWallet: auth.rechargeWallet,
-    addReview: auth.addReview,
-    reportExpert: auth.reportExpert,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink || (() => ''),
-    getReferralLink: auth.getReferralLink || (() => null),
-    user: auth.user
-  };
-  
-  // Format the data for expert auth
-  const expertAuth = {
-    currentExpert: auth.expertProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    login: auth.login,
-    logout: async () => {
-      const result = await auth.logout();
-      return !result.error;
-    },
-    authLoading: auth.isLoading,
-    loading: auth.isLoading,
-    profileNotFound: !auth.expertProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateExpertProfile,
-    user: auth.user
-  };
-  
+  // Create backward compatible API for components using old auth patterns
   return {
-    userAuth,
-    expertAuth,
-    auth
+    // Main auth context
+    auth,
+    
+    // For components using old userAuth
+    userAuth: {
+      user: auth.user,
+      profile: auth.profile,
+      currentUser: auth.profile, // Alias for backward compatibility
+      isAuthenticated: auth.isAuthenticated,
+      loading: auth.isLoading,
+      login: auth.login,
+      logout: auth.logout,
+      updateProfile: auth.updateProfile,
+      updateUserProfile: auth.updateProfile, // Alias for backward compatibility
+      updatePassword: auth.updatePassword,
+    },
+    
+    // For components using old expertAuth
+    expertAuth: {
+      currentExpert: auth.expertProfile,
+      user: auth.user,
+      isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+      loading: auth.isLoading,
+      error: null,
+      login: (email: string, password: string) => auth.login(email, password, 'expert'),
+      logout: auth.logout,
+      updateProfile: (updates: any) => auth.updateExpertProfile(updates).then(({ error }) => !error),
+    }
   };
 };

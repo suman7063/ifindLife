@@ -1,29 +1,16 @@
-
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, Heart, Award, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NewsletterSubscription from './newsletter/NewsletterSubscription';
 
 const Footer = () => {
-  const navigate = useNavigate();
-  
-  // Handle navigation with scroll to top
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
   return (
     <footer className="bg-ifind-charcoal text-ifind-offwhite pt-16 pb-8">
       <div className="container">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
           <div>
-            <Link 
-              to="/" 
-              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-              className="flex items-center mb-6"
-            >
+            <Link to="/" className="flex items-center mb-6">
               <img 
                 src="/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png" 
                 alt="iFindLife Logo" 
@@ -53,52 +40,34 @@ const Footer = () => {
             <h4 className="font-medium text-lg mb-4">Services</h4>
             <ul className="space-y-3">
               <li>
-                <button 
-                  onClick={() => handleNavigation('/services')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors font-medium"
-                >
+                <Link to="/services" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors font-medium">
                   All Services
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/services/mindful-listening')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
-                  Heart2Heart Listening Sessions
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => handleNavigation('/services/therapy-sessions')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/services/therapy-sessions" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Therapy Sessions
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/services/guided-meditations')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/services/guided-meditations" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Guided Meditations
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/services/offline-retreats')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/services/mindful-listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Heart2Heart Listening
+                </Link>
+              </li>
+              <li>
+                <Link to="/services/offline-retreats" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Offline Retreats
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/services/life-coaching')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/services/life-coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Life Coaching
-                </button>
+                </Link>
               </li>
             </ul>
           </div>
@@ -107,44 +76,29 @@ const Footer = () => {
             <h4 className="font-medium text-lg mb-4">Support</h4>
             <ul className="space-y-3">
               <li>
-                <button 
-                  onClick={() => handleNavigation('/about')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/about" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   About Us
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/privacy')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/privacy" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Privacy Policy
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/terms')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/terms" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Terms of Service
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/faq')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/faq" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   FAQ
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => handleNavigation('/contact')} 
-                  className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors"
-                >
+                <Link to="/contact" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Contact Us
-                </button>
+                </Link>
               </li>
             </ul>
           </div>

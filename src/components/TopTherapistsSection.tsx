@@ -57,9 +57,9 @@ const TopTherapistsSection = () => {
 
   return (
     <section className="py-16 bg-gray-100">
-      <div className="container mx-auto px-6 sm:px-12 text-center">
-        <h2 className="text-2xl font-bold mb-6 text-center">Experts Currently Online</h2>
-        <p className="text-gray-600 mb-8 max-w-3xl mx-auto">
+      <div className="container mx-auto px-6 sm:px-12">
+        <h2 className="text-2xl font-bold mb-6">Experts Currently Online</h2>
+        <p className="text-gray-600 mb-8 max-w-3xl">
           Our therapists have helped thousands find clarity through video and voice consultations. Connect now for personalized expert advice.
         </p>
 

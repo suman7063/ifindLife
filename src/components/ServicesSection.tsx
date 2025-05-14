@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import FeaturedPrograms from './services/FeaturedPrograms';
 import SessionDetailDialog from './services/SessionDetailDialog';
-import { MessageCircle, HeartPulse, Brain } from 'lucide-react';
+import { Circle, MessageCircle, Brain, HeartPulse, Leaf, Sparkles } from 'lucide-react';
 
 const ServicesSection = () => {
   const [selectedCategory, setSelectedCategory] = useState<{
@@ -16,34 +17,34 @@ const ServicesSection = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
 
-  // Updated featured programs with new descriptions and renamed "Emotional Resilience" to "Resilience Building"
+  // Reordered featured programs with updated colors to match service detail pages
   const featuredPrograms = [
     {
       id: 1,
-      title: "QuickEase Programs",
-      description: "Quick solutions for Immediate stress and anxiety relief",
-      icon: <Brain className="h-12 w-12 text-ifind-aqua" />,
-      href: "/programs-for-wellness-seekers?category=quick-ease",
-      accentColor: "border-ifind-aqua",
-      iconBgColor: "bg-ifind-aqua/10"
+      title: "Heart2Heart Listening Sessions",
+      description: "A unique space where you can express yourself freely while being deeply heard without judgment",
+      icon: <MessageCircle className="h-12 w-12 text-ifind-teal" />, // Teal color
+      href: "/services/mindful-listening",
+      accentColor: "border-ifind-teal", // Teal color
+      iconBgColor: "bg-ifind-teal/10" // Teal color
     },
     {
       id: 2,
-      title: "Resilience Building",
-      description: "Build Mental & Emotional strength to handle life's challenges",
-      icon: <MessageCircle className="h-12 w-12 text-ifind-purple" />,
-      href: "/programs-for-wellness-seekers?category=resilience-building",
-      accentColor: "border-ifind-purple",
-      iconBgColor: "bg-ifind-purple/10"
+      title: "Therapy Sessions",
+      description: "Professional sessions to help you navigate life's challenges and enhance personal growth",
+      icon: <HeartPulse className="h-12 w-12 text-ifind-purple" />, // Purple color
+      href: "/services/therapy-sessions",
+      accentColor: "border-ifind-purple", // Purple color
+      iconBgColor: "bg-ifind-purple/10" // Purple color
     },
     {
       id: 3,
-      title: "Super Human Life",
-      description: "Unleash your true potential to live a life beyond traps and matrix",
-      icon: <HeartPulse className="h-12 w-12 text-ifind-teal" />,
-      href: "/programs-for-wellness-seekers?category=super-human",
-      accentColor: "border-ifind-teal",
-      iconBgColor: "bg-ifind-teal/10"
+      title: "Guided Meditations",
+      description: "Expertly led sessions to reduce stress, increase mindfulness, and cultivate inner peace",
+      icon: <Brain className="h-12 w-12 text-ifind-aqua" />, // Blue (Aqua) color
+      href: "/services/guided-meditations",
+      accentColor: "border-ifind-aqua", // Blue (Aqua) color
+      iconBgColor: "bg-ifind-aqua/10" // Blue (Aqua) color
     }
   ];
 
@@ -55,18 +56,17 @@ const ServicesSection = () => {
 
   const handleProgramClick = (href: string) => {
     navigate(href);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <section className="py-16 bg-white">
-      <div className="container mx-auto px-6 sm:px-12 text-center">
-        <h2 className="text-3xl font-bold mb-4 text-center">IFL Programs for Individuals</h2>
-        <p className="text-gray-600 mb-8 max-w-3xl mx-auto">
+      <div className="container mx-auto px-6 sm:px-12">
+        <h2 className="text-3xl font-bold mb-4">IFL Programs for Individuals</h2>
+        <p className="text-gray-600 mb-8 max-w-3xl">
           IFL provides specialized programs to support your mental health journey
         </p>
 
-        {/* Updated Program Cards with new descriptions and colors */}
+        {/* Redesigned Program Cards with Circular Icons */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {featuredPrograms.map((program) => (
             <div
@@ -83,6 +83,12 @@ const ServicesSection = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Keep the existing "Issue-based Sessions" content from IssueSessions component */}
+        <div className="mt-8">
+          <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
+          <FeaturedPrograms onProgramClick={handleProgramClick} />
         </div>
       </div>
 

@@ -34,23 +34,15 @@ export const useAuthSynchronization = () => {
     // Check for dual sessions
     setHasDualSessions(!!auth.userProfile && !!auth.expertProfile && auth.isAuthenticated);
     
-    // Initialize session type
-    if (!!auth.userProfile && !!auth.expertProfile) {
-      setSessionType('dual');
-    } else if (!!auth.userProfile) {
-      setSessionType('user');
-    } else if (!!auth.expertProfile) {
-      setSessionType('expert');
-    } else {
-      setSessionType('none');
-    }
+    // Initialize session type from auth context
+    setSessionType(auth.sessionType || 'none');
     
     // Mark auth as initialized once loading is complete
     if (!auth.isLoading) {
       setIsAuthInitialized(true);
       setInitialized(true);
     }
-  }, [auth.isAuthenticated, auth.role, auth.userProfile, auth.expertProfile, auth.isLoading]);
+  }, [auth.isAuthenticated, auth.role, auth.userProfile, auth.expertProfile, auth.isLoading, auth.sessionType]);
   
   // Handle user logout
   const userLogout = async (): Promise<boolean> => {

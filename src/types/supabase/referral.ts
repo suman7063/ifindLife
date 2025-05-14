@@ -1,26 +1,17 @@
 
-// Referral-related type definitions
+// Referral related types
 export interface Referral {
   id: string;
   referrer_id: string;
   referred_id: string;
   referral_code: string;
-  status: 'pending' | 'completed' | 'cancelled' | 'expired';
+  status: string;
   reward_claimed: boolean;
   created_at?: string;
   completed_at?: string;
 }
 
-export interface ReferralSettings {
-  id: string;
-  referrer_reward: number;
-  referred_reward: number;
-  active: boolean;
-  description?: string;
-  updated_at?: string;
-}
-
-// UI representation of a referral
+// Referral UI related interfaces
 export interface ReferralUI {
   id: string;
   referrerId: string;
@@ -29,5 +20,16 @@ export interface ReferralUI {
   referralCode: string;
   status: string;
   rewardClaimed: boolean;
-  created_at: string;
+  createdAt?: string;
+  completedAt?: string;
+}
+
+// Add the ReferralSettings interface with the required properties
+export interface ReferralSettings {
+  id?: string;
+  referrer_reward: number;
+  referred_reward: number;
+  active?: boolean;
+  description?: string;
+  updated_at?: string;
 }
