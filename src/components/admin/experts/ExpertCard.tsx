@@ -1,4 +1,3 @@
 
-import ExpertCard from './expert-card';
-
+import ExpertCard from '../../../components/expert-card';
 export default ExpertCard;

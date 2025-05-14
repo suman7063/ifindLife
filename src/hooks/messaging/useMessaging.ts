@@ -41,8 +41,14 @@ export const useMessaging = (currentUser: MessagingUser | null): UseMessagingRet
       const newMessage = await messagingRepository.sendMessage(currentUser.id, receiverId, content);
       
       if (newMessage) {
-        // Update local messages state
-        setMessages(prev => [...prev, newMessage]);
+        // Update local messages state with proper type conversion
+        const compatibleMessage = {
+          ...newMessage,
+          created_at: newMessage.created_at || new Date().toISOString(),
+          read: newMessage.read || false
+        } as Message;
+        
+        setMessages(prev => [...prev, compatibleMessage]);
         return true;
       }
       
@@ -69,7 +75,7 @@ export const useMessaging = (currentUser: MessagingUser | null): UseMessagingRet
         // Update local messages state
         setMessages(prev => 
           prev.map(msg => 
-            msg.id === messageId ? { ...msg, read: true } : msg
+            msg.id === messageId ? { ...msg, read: true } as Message : msg
           )
         );
       }

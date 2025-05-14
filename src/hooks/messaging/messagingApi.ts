@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase';
-import { Message, Conversation, MessagingUser } from '@/types/database/unified';
+import { Message, MessagingUser } from '@/types/database/unified';
+import { Conversation } from './types';
 
 class MessagingRepository {
   /**
@@ -57,6 +58,23 @@ class MessagingRepository {
   }
   
   /**
+   * Mark a message as read
+   */
+  async markAsRead(messageId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .eq('id', messageId);
+      
+      return !error;
+    } catch (error) {
+      console.error('Repository error in markAsRead:', error);
+      return false;
+    }
+  }
+  
+  /**
    * Get the conversations for a user
    */
   async getConversations(userId: string): Promise<Conversation[]> {
@@ -97,15 +115,17 @@ class MessagingRepository {
         // Fetch user details (this would be better done in a JOIN)
         conversationMap.set(otherUserId, {
           id: otherUserId,
-          participants: [currentUserId, otherUserId],
-          last_message: message.content,
-          last_message_time: message.created_at,
-          unread_count: message.sender_id !== currentUserId && !message.read ? 1 : 0,
-          other_user: {
-            id: otherUserId,
-            name: 'User', // This should be fetched from the user profile
-            profile_picture: undefined
-          }
+          userId: otherUserId,
+          userName: 'User', // This should be fetched from the user profile
+          userAvatar: undefined,
+          lastMessage: {
+            content: message.content,
+            timestamp: message.created_at || '',
+            isRead: !!message.read,
+            senderId: message.sender_id
+          },
+          lastMessageTime: message.created_at || '',
+          unreadCount: message.sender_id !== currentUserId && !message.read ? 1 : 0
         });
       }
     }
@@ -114,47 +134,29 @@ class MessagingRepository {
   }
   
   /**
-   * Get a user by ID for messaging purposes
+   * Search for users
    */
-  async getUser(userId: string): Promise<MessagingUser | null> {
+  async searchUsers(query: string): Promise<MessagingUser[]> {
     try {
       // Try to get from users table
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('id, name, profile_picture')
-        .eq('id', userId)
-        .single();
+        .ilike('name', `%${query}%`)
+        .limit(10);
       
       if (!userError && userData) {
-        return {
-          id: userData.id,
-          name: userData.name || 'User',
-          profile_picture: userData.profile_picture,
-          isOnline: false
-        };
+        return userData.map(user => ({
+          id: user.id,
+          name: user.name || 'User',
+          avatar: user.profile_picture
+        }));
       }
       
-      // Try to get from experts table
-      const { data: expertData, error: expertError } = await supabase
-        .from('expert_accounts')
-        .select('id, name, profile_picture')
-        .eq('id', userId)
-        .single();
-      
-      if (!expertError && expertData) {
-        return {
-          id: expertData.id,
-          name: expertData.name || 'Expert',
-          profile_picture: expertData.profile_picture,
-          isOnline: false
-        };
-      }
-      
-      console.error('User not found in either table');
-      return null;
+      return [];
     } catch (error) {
-      console.error('Repository error in getUser:', error);
-      return null;
+      console.error('Repository error in searchUsers:', error);
+      return [];
     }
   }
 }

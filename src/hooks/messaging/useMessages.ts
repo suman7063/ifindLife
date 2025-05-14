@@ -19,9 +19,16 @@ export function useMessages(currentUser: MessagingUser | null): UseMessagesRetur
       setMessagesLoading(true);
       setError(null);
       
-      const messages = await messagingRepository.getMessages(currentUser.id, partnerId);
-      setMessages(messages);
-      return messages;
+      const fetchedMessages = await messagingRepository.getMessages(currentUser.id, partnerId);
+      // Ensure all required fields are present for compatibility
+      const compatibleMessages = fetchedMessages.map(msg => ({
+        ...msg,
+        created_at: msg.created_at || new Date().toISOString(),
+        read: msg.read || false
+      })) as Message[];
+      
+      setMessages(compatibleMessages);
+      return compatibleMessages;
     } catch (error: any) {
       console.error('Error in fetchMessages:', error);
       setError(error.message);
