@@ -1,11 +1,16 @@
-
 import React from 'react';
-import { useUserAuth } from '@/hooks/user-auth';
-import { useAppointments } from '@/hooks/useAppointments';
-import AvailabilityCard from './AvailabilityCard';
-import EmptyAvailabilityState from './EmptyAvailabilityState';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
+import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
+import { UserProfile } from '@/types/supabase/user';
 
-const ExpertAvailabilityList: React.FC = () => {
+interface ExpertAvailabilityListProps {
+  user: UserProfile;
+}
+
+const ExpertAvailabilityList: React.FC<ExpertAvailabilityListProps> = ({ user }) => {
+  const { toTypeB } = useProfileTypeAdapter();
+  const adaptedUser = toTypeB(user);
+  
   const { currentUser } = useUserAuth();
   const { availabilities, fetchAvailabilities, deleteAvailability, loading } = useAppointments(currentUser);
   
@@ -14,9 +19,8 @@ const ExpertAvailabilityList: React.FC = () => {
   };
   
   return (
-    <div className="space-y-4">
-      <h2 className="text-xl font-semibold">Your Availability Periods</h2>
-      
+    <div className="bg-white p-6 rounded-lg shadow">
+      <h3 className="text-xl font-semibold mb-4">Your Availability Schedule</h3>
       {loading ? (
         <p>Loading availability...</p>
       ) : availabilities.length === 0 ? (
@@ -36,4 +40,4 @@ const ExpertAvailabilityList: React.FC = () => {
   );
 };
 
-export default ExpertAvailabilityList;
+export default withProfileTypeAdapter(ExpertAvailabilityList);

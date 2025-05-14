@@ -1,42 +1,24 @@
 
-import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import ExpertAvailabilityForm from './ExpertAvailabilityForm';
 import ExpertAvailabilityList from './ExpertAvailabilityList';
-import AppointmentsList from '../dashboard/AppointmentsList';
-import { useUserAuth } from '@/hooks/user-auth';
+import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
 
-const AvailabilityManagement = () => {
-  const [activeTab, setActiveTab] = useState('current');
-  const { currentUser } = useUserAuth();
+const AvailabilityManagement: React.FC = () => {
+  const { userProfile } = useAuth();
+  
+  if (!userProfile) {
+    return <div>Loading profile...</div>;
+  }
   
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <h1 className="text-2xl font-bold">Availability Management</h1>
-      </div>
-      
-      <Tabs defaultValue="current" value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="current">Current Availability</TabsTrigger>
-          <TabsTrigger value="set">Set Availability</TabsTrigger>
-          <TabsTrigger value="appointments">Appointments</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="current" className="mt-6">
-          <ExpertAvailabilityList />
-        </TabsContent>
-        
-        <TabsContent value="set" className="mt-6">
-          <ExpertAvailabilityForm />
-        </TabsContent>
-        
-        <TabsContent value="appointments" className="mt-6">
-          <AppointmentsList />
-        </TabsContent>
-      </Tabs>
+    <div className="space-y-8">
+      <h2 className="text-2xl font-bold">Manage Your Availability</h2>
+      <ExpertAvailabilityForm user={userProfile} />
+      <ExpertAvailabilityList user={userProfile} />
     </div>
   );
 };
 
-export default AvailabilityManagement;
+export default withProfileTypeAdapter(AvailabilityManagement);

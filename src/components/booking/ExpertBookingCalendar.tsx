@@ -1,25 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { useUserAuth } from '@/hooks/user-auth';
-import { useAppointmentManagement } from '@/hooks/useAppointmentManagement';
-import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
-import { format, isWithinInterval } from 'date-fns';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';  
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
-import CalendarDatePicker from './CalendarDatePicker';
-import AvailableTimeSlotsSection from './AvailableTimeSlotsSection';
-import AppointmentNotes from './AppointmentNotes';
-import BookingConfirmation from './BookingConfirmation';
-import { isValidBookingTime } from '@/utils/bookingValidation';
-import { Loader2 } from 'lucide-react';
 
+// Define props that work with both profile types
 interface ExpertBookingCalendarProps {
   expertId: string;
   expertName: string;
-  onBookingComplete?: () => void;
+  onBookingComplete: () => void;
 }
 
 const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({ 
@@ -27,215 +15,241 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
   expertName,
   onBookingComplete 
 }) => {
-  const { currentUser } = useUserAuth();
-  const { availabilities, fetchAvailabilities } = useAvailabilityManagement(currentUser);
-  const { bookAppointment, loading, error } = useAppointmentManagement(currentUser);
+  const { userProfile } = useAuth();
+  const { toTypeB } = useProfileTypeAdapter();
   
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState<{
-    startTime: string;
-    endTime: string;
-    timeSlotId?: string;
-  } | null>(null);
-  const [existingAppointments, setExistingAppointments] = useState<any[]>([]);
-  const [notes, setNotes] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [bookingSuccess, setBookingSuccess] = useState(false);
-  const [bookedAppointmentId, setBookedAppointmentId] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
+  // Convert user profile to type B if needed for API calls
+  const adaptedProfile = userProfile ? toTypeB(userProfile) : null;
   
-  // Fetch expert availability when component mounts or refreshKey changes
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [bookingStep, setBookingStep] = useState<number>(1);
+  const [bookingDetails, setBookingDetails] = useState({
+    sessionType: 'video',
+    notes: '',
+  });
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<boolean>(false);
+
+  // Fetch available slots when date changes
   useEffect(() => {
-    if (expertId) {
-      fetchAvailabilities(expertId);
+    if (selectedDate) {
+      fetchAvailableSlots(selectedDate);
     }
-  }, [expertId, refreshKey, fetchAvailabilities]);
-  
-  // Fetch existing appointments for the expert with a refresh mechanism
-  useEffect(() => {
-    const fetchExistingAppointments = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('appointments')
-          .select('id, appointment_date, start_time, end_time, time_slot_id')
-          .eq('expert_id', expertId)
-          .in('status', ['pending', 'confirmed']);
-        
-        if (error) {
-          console.error('Error fetching existing appointments:', error);
-          toast.error('Failed to load appointment data');
-          return;
-        }
-        
-        setExistingAppointments(data || []);
-      } catch (error) {
-        console.error('Error fetching existing appointments:', error);
-      }
-    };
-    
-    if (expertId) {
-      fetchExistingAppointments();
-    }
-    
-    // Set up a polling mechanism to refresh appointments every 30 seconds
-    const pollingInterval = setInterval(fetchExistingAppointments, 30000);
-    
-    return () => clearInterval(pollingInterval);
-  }, [expertId, refreshKey]);
-  
-  const handleBookAppointment = async () => {
-    if (!currentUser || !selectedDate || !selectedTimeSlot) {
-      toast.error('Please select a date and time slot');
-      return;
-    }
-    
-    // Additional validation before booking
-    if (!isValidBookingTime(selectedDate, selectedTimeSlot.startTime)) {
-      toast.error('Cannot book appointments in the past');
-      return;
-    }
-    
+  }, [selectedDate]);
+
+  const fetchAvailableSlots = async (date: Date) => {
+    setIsLoading(true);
+    setError(null);
     try {
-      setIsSubmitting(true);
+      // Format date for API
+      const formattedDate = date.toISOString().split('T')[0];
       
-      const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-      
-      // One final real-time check to ensure the slot is still available
-      if (selectedTimeSlot.timeSlotId) {
-        const { data, error } = await supabase
-          .from('expert_time_slots')
-          .select('is_booked')
-          .eq('id', selectedTimeSlot.timeSlotId)
-          .single();
-          
-        if (error) {
-          toast.error('Error checking time slot availability');
-          setIsSubmitting(false);
-          return;
-        }
-        
-        if (data.is_booked) {
-          toast.error('This time slot has just been booked by someone else. Please select another slot.');
-          // Refresh the available slots
-          setRefreshKey(prev => prev + 1);
-          setSelectedTimeSlot(null);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      
-      const appointmentId = await bookAppointment(
-        expertId,
-        currentUser.id,
-        formattedDate,
-        selectedTimeSlot.startTime,
-        selectedTimeSlot.endTime,
-        selectedTimeSlot.timeSlotId,
-        notes
-      );
-      
-      if (appointmentId) {
-        setBookedAppointmentId(appointmentId);
-        setBookingSuccess(true);
-        
-        // Refresh the available slots
-        setRefreshKey(prev => prev + 1);
-      } else {
-        toast.error('Failed to book appointment. Please try again.');
-      }
+      // Mock API call - replace with actual API call
+      setTimeout(() => {
+        // Mock response
+        const mockSlots = [
+          '09:00', '10:00', '11:00', '14:00', '15:00', '16:00'
+        ];
+        setAvailableSlots(mockSlots);
+        setIsLoading(false);
+      }, 1000);
     } catch (err) {
-      console.error('Error in booking process:', err);
-      toast.error('An unexpected error occurred. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error fetching available slots:', err);
+      setError('Failed to load available time slots. Please try again.');
+      setIsLoading(false);
     }
   };
-  
-  const handleCloseConfirmation = () => {
-    setBookingSuccess(false);
-    setSelectedDate(undefined);
-    setSelectedTimeSlot(null);
-    setNotes('');
-    
-    if (onBookingComplete) {
-      onBookingComplete();
+
+  const handleDateChange = (date: Date | null) => {
+    setSelectedDate(date);
+    setSelectedSlot(null);
+  };
+
+  const handleSlotSelect = (slot: string) => {
+    setSelectedSlot(slot);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setBookingDetails(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleNextStep = () => {
+    if (bookingStep === 1 && !selectedSlot) {
+      setError('Please select a time slot');
+      return;
+    }
+    setError(null);
+    setBookingStep(prev => prev + 1);
+  };
+
+  const handlePrevStep = () => {
+    setBookingStep(prev => prev - 1);
+  };
+
+  const handleSubmitBooking = async () => {
+    if (!selectedDate || !selectedSlot) {
+      setError('Please select a date and time');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Format date and time for API
+      const bookingDate = selectedDate.toISOString().split('T')[0];
+      
+      // Mock API call - replace with actual booking API call
+      setTimeout(() => {
+        setSuccess(true);
+        setIsLoading(false);
+        // Call the onBookingComplete callback
+        onBookingComplete();
+      }, 1500);
+    } catch (err) {
+      console.error('Error submitting booking:', err);
+      setError('Failed to book appointment. Please try again.');
+      setIsLoading(false);
     }
   };
-  
-  const handleViewAppointments = () => {
-    // Navigate to appointments page
-    window.location.href = '/user/appointments';
-  };
-  
-  // If booking was successful, show confirmation
-  if (bookingSuccess && selectedDate && selectedTimeSlot && bookedAppointmentId) {
-    return (
-      <BookingConfirmation
-        appointmentId={bookedAppointmentId}
-        expertName={expertName}
-        date={selectedDate}
-        startTime={selectedTimeSlot.startTime}
-        endTime={selectedTimeSlot.endTime}
-        onClose={handleCloseConfirmation}
-        onViewAppointments={handleViewAppointments}
-      />
-    );
-  }
-  
+
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle>Book an Appointment with {expertName}</CardTitle>
-        <CardDescription>
-          Select a date and time to book your appointment.
-        </CardDescription>
-      </CardHeader>
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-6">Book with {expertName}</h2>
       
-      <CardContent className="space-y-6">
-        <CalendarDatePicker 
-          selectedDate={selectedDate}
-          setSelectedDate={(date) => {
-            setSelectedDate(date);
-            setSelectedTimeSlot(null);
-          }}
-          availabilities={availabilities}
-          existingAppointments={existingAppointments}
-        />
-        
-        {selectedDate && (
-          <AvailableTimeSlotsSection 
-            selectedDate={selectedDate}
-            availabilities={availabilities}
-            existingAppointments={existingAppointments}
-            selectedTimeSlot={selectedTimeSlot}
-            setSelectedTimeSlot={setSelectedTimeSlot}
-          />
-        )}
-        
-        {selectedTimeSlot && (
-          <AppointmentNotes 
-            notes={notes}
-            setNotes={setNotes}
-          />
-        )}
-      </CardContent>
-      
-      <CardFooter>
-        <Button 
-          className="w-full" 
-          disabled={!selectedDate || !selectedTimeSlot || isSubmitting}
-          onClick={handleBookAppointment}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              Booking...
-            </>
-          ) : 'Book Appointment'}
-        </Button>
-      </CardFooter>
-    </Card>
+      {success ? (
+        <div className="text-center py-8">
+          <div className="text-green-500 text-5xl mb-4">✓</div>
+          <h3 className="text-xl font-semibold mb-2">Booking Confirmed!</h3>
+          <p className="mb-4">Your appointment has been scheduled successfully.</p>
+          <button 
+            onClick={() => setSuccess(false)}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Book Another Session
+          </button>
+        </div>
+      ) : (
+        <div>
+          {bookingStep === 1 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Step 1: Select Date & Time</h3>
+              <div className="mb-6">
+                <label className="block text-sm font-medium mb-2">Select Date</label>
+                <input 
+                  type="date"
+                  className="w-full p-2 border rounded"
+                  onChange={(e) => handleDateChange(e.target.value ? new Date(e.target.value) : null)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              
+              {isLoading && <p className="text-gray-500">Loading available slots...</p>}
+              
+              {selectedDate && availableSlots.length > 0 && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium mb-2">Select Time</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableSlots.map(slot => (
+                      <button
+                        key={slot}
+                        onClick={() => handleSlotSelect(slot)}
+                        className={`p-2 border rounded ${selectedSlot === slot ? 'bg-blue-100 border-blue-500' : 'hover:bg-gray-50'}`}
+                      >
+                        {slot}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {selectedDate && availableSlots.length === 0 && !isLoading && (
+                <p className="text-amber-600 mb-4">No available slots for this date. Please select another date.</p>
+              )}
+            </div>
+          )}
+          
+          {bookingStep === 2 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Step 2: Session Details</h3>
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Session Type</label>
+                <select
+                  name="sessionType"
+                  value={bookingDetails.sessionType}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="video">Video Call</option>
+                  <option value="audio">Audio Call</option>
+                  <option value="chat">Chat</option>
+                </select>
+              </div>
+              
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">Notes (Optional)</label>
+                <textarea
+                  name="notes"
+                  value={bookingDetails.notes}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded"
+                  rows={4}
+                  placeholder="Any specific topics you'd like to discuss?"
+                />
+              </div>
+              
+              <div className="mb-4 p-4 bg-gray-50 rounded">
+                <h4 className="font-medium mb-2">Booking Summary</h4>
+                <p><span className="font-medium">Expert:</span> {expertName}</p>
+                <p><span className="font-medium">Date:</span> {selectedDate?.toLocaleDateString()}</p>
+                <p><span className="font-medium">Time:</span> {selectedSlot}</p>
+                <p><span className="font-medium">Session Type:</span> {bookingDetails.sessionType}</p>
+              </div>
+            </div>
+          )}
+          
+          {error && <p className="text-red-500 mb-4">{error}</p>}
+          
+          <div className="flex justify-between mt-6">
+            {bookingStep > 1 && (
+              <button
+                onClick={handlePrevStep}
+                className="px-4 py-2 border rounded hover:bg-gray-50"
+                disabled={isLoading}
+              >
+                Back
+              </button>
+            )}
+            
+            {bookingStep < 2 ? (
+              <button
+                onClick={handleNextStep}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                disabled={!selectedSlot || isLoading}
+              >
+                Next
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmitBooking}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Confirm Booking'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
-export default withProfileTypeAdapter(ExpertBookingCalendar, 'B');
+export default withProfileTypeAdapter(ExpertBookingCalendar);

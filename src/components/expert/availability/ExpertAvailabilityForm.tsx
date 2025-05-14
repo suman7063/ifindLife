@@ -1,139 +1,165 @@
-import React from 'react';
-import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
+import React, { useState } from 'react';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
 import { UserProfile } from '@/types/supabase/user';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
-import { useUserAuth } from '@/hooks/user-auth';
-import { useAppointments } from '@/hooks/useAppointments';
-import { format } from 'date-fns';
-
-import AvailabilityTypeSelector from './AvailabilityTypeSelector';
-import DateRangeSelector from './DateRangeSelector';
-import TimeSlotSection from './TimeSlotSection';
-import { 
-  DurationOption,
-  validateAvailabilityForm, 
-  formatTimeSlotsForSubmission 
-} from './utils/availabilityUtils';
 
 interface ExpertAvailabilityFormProps {
-  user: UserProfile | null;
-  onSuccess?: () => void;
+  user: UserProfile;
 }
 
-const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({
-  user,
-  onSuccess
-}) => {
-  const { currentUser } = useUserAuth();
-  const { createAvailability, loading } = useAppointments(currentUser);
+const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({ user }) => {
+  const { toTypeB } = useProfileTypeAdapter();
+  const adaptedUser = toTypeB(user);
   
-  const [availabilityType, setAvailabilityType] = useState<'date_range' | 'recurring'>('date_range');
-  const [durationOption, setDurationOption] = useState<DurationOption>('3');
-  const [startDate, setStartDate] = useState<Date | undefined>(new Date());
-  const [endDate, setEndDate] = useState<Date | undefined>(new Date());
-  const [timeSlots, setTimeSlots] = useState([{ startTime: '09:00', endTime: '17:00', dayOfWeek: 1 }]);
-  const [error, setError] = useState<string | null>(null);
+  // State variables
+  const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const [startTime, setStartTime] = useState<string>('09:00');
+  const [endTime, setEndTime] = useState<string>('17:00');
+  const [isRecurring, setIsRecurring] = useState<boolean>(true);
+  const [untilDate, setUntilDate] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   
-  const handleDurationChange = (value: DurationOption) => {
-    setDurationOption(value);
-    
-    if (value !== 'custom' && startDate) {
-      const newEndDate = new Date(startDate);
-      newEndDate.setMonth(startDate.getMonth() + parseInt(value));
-      setEndDate(newEndDate);
-    }
-  };
-  
-  const addTimeSlot = () => {
-    setTimeSlots([...timeSlots, { startTime: '09:00', endTime: '17:00', dayOfWeek: 1 }]);
-  };
-  
-  const removeTimeSlot = (index: number) => {
-    setTimeSlots(timeSlots.filter((_, i) => i !== index));
-  };
-  
-  const updateTimeSlot = (index: number, field: string, value: any) => {
-    const updatedSlots = [...timeSlots];
-    updatedSlots[index] = { ...updatedSlots[index], [field]: value };
-    setTimeSlots(updatedSlots);
-  };
-  
-  const handleSubmit = async () => {
-    if (!currentUser || !startDate || !endDate) return;
-    
-    const validation = validateAvailabilityForm(startDate, endDate, timeSlots);
-    if (!validation.isValid) {
-      setError(validation.error);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    // Basic validation
+    if (!selectedDays.length) {
+      alert('Please select at least one day.');
+      setIsLoading(false);
       return;
     }
-    
-    setError(null);
-    
-    const formattedTimeSlots = formatTimeSlotsForSubmission(
-      timeSlots,
-      availabilityType,
-      startDate
-    );
-    
-    await createAvailability(
-      currentUser.id,
-      format(startDate, 'yyyy-MM-dd'),
-      format(endDate, 'yyyy-MM-dd'),
-      availabilityType,
-      formattedTimeSlots
-    );
+
+    if (!startTime || !endTime) {
+      alert('Please select a start and end time.');
+      setIsLoading(false);
+      return;
+    }
+
+    if (isRecurring && !untilDate) {
+      alert('Please select an end date for recurring availability.');
+      setIsLoading(false);
+      return;
+    }
+
+    // Construct availability data
+    const availabilityData = {
+      expertId: adaptedUser?.id,
+      days: selectedDays,
+      startTime,
+      endTime,
+      isRecurring,
+      untilDate: isRecurring ? untilDate : null,
+    };
+
+    // Here you would typically send this data to your backend
+    console.log('Availability data to be submitted:', availabilityData);
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Reset form
+    setSelectedDays([]);
+    setStartTime('09:00');
+    setEndTime('17:00');
+    setIsRecurring(true);
+    setUntilDate('');
+    setIsLoading(false);
+
+    alert('Availability submitted successfully!');
   };
   
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle>Set Your Availability</CardTitle>
-        <CardDescription>
-          Define when you're available for appointments. You can set a date range or recurring availability.
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        <AvailabilityTypeSelector 
-          availabilityType={availabilityType} 
-          onAvailabilityTypeChange={setAvailabilityType} 
-        />
-        
-        <DateRangeSelector 
-          durationOption={durationOption}
-          startDate={startDate}
-          endDate={endDate}
-          onDurationChange={handleDurationChange}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
-        />
-        
-        <TimeSlotSection 
-          availabilityType={availabilityType}
-          timeSlots={timeSlots}
-          onAddTimeSlot={addTimeSlot}
-          onRemoveTimeSlot={removeTimeSlot}
-          onUpdateTimeSlot={updateTimeSlot}
-        />
-        
-        {error && <p className="text-sm text-destructive">{error}</p>}
-      </CardContent>
-      
-      <CardFooter>
-        <Button onClick={handleSubmit} disabled={loading} className="w-full">
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : 'Save Availability'}
-        </Button>
-      </CardFooter>
-    </Card>
+    <div className="bg-white p-6 rounded-lg shadow">
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Select Days:
+          </label>
+          <div className="flex flex-wrap">
+            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
+              <label key={day} className="inline-flex items-center mr-4 mb-2">
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-5 w-5 text-indigo-600"
+                  value={day}
+                  checked={selectedDays.includes(day)}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setSelectedDays([...selectedDays, day]);
+                    } else {
+                      setSelectedDays(selectedDays.filter(d => d !== day));
+                    }
+                  }}
+                />
+                <span className="ml-2 text-gray-700">{day}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            Start Time:
+          </label>
+          <input
+            type="time"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            value={startTime}
+            onChange={e => setStartTime(e.target.value)}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm font-bold mb-2">
+            End Time:
+          </label>
+          <input
+            type="time"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            value={endTime}
+            onChange={e => setEndTime(e.target.value)}
+          />
+        </div>
+
+        <div className="mb-4">
+          <label className="inline-flex items-center">
+            <input
+              type="checkbox"
+              className="form-checkbox h-5 w-5 text-indigo-600"
+              checked={isRecurring}
+              onChange={e => setIsRecurring(e.target.checked)}
+            />
+            <span className="ml-2 text-gray-700">Recurring</span>
+          </label>
+        </div>
+
+        {isRecurring && (
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-bold mb-2">
+              Until Date:
+            </label>
+            <input
+              type="date"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              value={untilDate}
+              onChange={e => setUntilDate(e.target.value)}
+            />
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <button
+            className={`bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Submitting...' : 'Submit Availability'}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
-export default withProfileTypeAdapter(ExpertAvailabilityForm, 'B');
+export default withProfileTypeAdapter(ExpertAvailabilityForm);
