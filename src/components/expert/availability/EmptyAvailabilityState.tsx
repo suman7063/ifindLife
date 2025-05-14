@@ -1,26 +1,28 @@
 
 import React from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Calendar } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
-const EmptyAvailabilityState: React.FC = () => {
-  const navigate = useNavigate();
-  
+interface EmptyAvailabilityStateProps {
+  onSetAvailability?: () => void;
+}
+
+const EmptyAvailabilityState: React.FC<EmptyAvailabilityStateProps> = ({ onSetAvailability }) => {
   return (
-    <Card>
-      <CardContent className="py-12 flex flex-col items-center text-center">
-        <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-xl font-medium mb-2">No Availability Set</h3>
-        <p className="text-muted-foreground max-w-md mb-6">
-          You haven't set any availability periods yet. Define when you're available for appointments to start receiving bookings.
-        </p>
-        <Button onClick={() => navigate('/expert-dashboard')}>
+    <div className="text-center py-12 border border-dashed border-gray-300 rounded-lg bg-gray-50">
+      <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+      <h3 className="text-lg font-medium mb-2">No Availability Set</h3>
+      <p className="text-gray-500 mb-6">
+        You haven't added any availability schedule yet.
+        <br />
+        Set your available times to start accepting bookings.
+      </p>
+      {onSetAvailability && (
+        <Button onClick={onSetAvailability} variant="default">
           Set Your Availability
         </Button>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };
 

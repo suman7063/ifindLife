@@ -2,76 +2,39 @@
 import React from 'react';
 import { Star } from 'lucide-react';
 
-interface StarRatingProps {
+export interface StarRatingProps {
   rating: number;
-  maxRating?: number;
   size?: number;
-  className?: string;
-  color?: string;
-  emptyColor?: string;
-  interactive?: boolean;
   onRatingChange?: (rating: number) => void;
+  editable?: boolean;
 }
 
-const StarRating: React.FC<StarRatingProps> = ({
-  rating,
-  maxRating = 5,
-  size = 20,
-  className = '',
-  color = 'text-yellow-400',
-  emptyColor = 'text-gray-300',
-  interactive = false,
+const StarRating: React.FC<StarRatingProps> = ({ 
+  rating, 
+  size = 24, 
   onRatingChange,
+  editable = false
 }) => {
-  const handleClick = (index: number) => {
-    if (interactive && onRatingChange) {
-      onRatingChange(index + 1);
-    }
+  const renderStar = (starPosition: number) => {
+    const isFilled = starPosition <= rating;
+    
+    return (
+      <span 
+        key={starPosition}
+        onClick={() => editable && onRatingChange && onRatingChange(starPosition)}
+        className={`${editable ? 'cursor-pointer' : ''}`}
+      >
+        <Star 
+          size={size} 
+          className={isFilled ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} 
+        />
+      </span>
+    );
   };
-  
+
   return (
-    <div className={`flex items-center ${className}`}>
-      {Array.from({ length: maxRating }).map((_, index) => {
-        const filled = index < Math.floor(rating);
-        const halfFilled = !filled && index < Math.ceil(rating) && rating % 1 !== 0;
-        
-        return (
-          <div 
-            key={index} 
-            className={`${interactive ? 'cursor-pointer' : ''}`}
-            onClick={() => handleClick(index)}
-          >
-            {halfFilled ? (
-              <div className="relative">
-                <Star 
-                  size={size} 
-                  className={emptyColor} 
-                  fill="none"
-                />
-                <div className="absolute top-0 left-0 w-1/2 overflow-hidden">
-                  <Star 
-                    size={size} 
-                    className={color} 
-                    fill="currentColor"
-                  />
-                </div>
-              </div>
-            ) : (
-              <Star 
-                size={size} 
-                className={filled ? color : emptyColor} 
-                fill={filled ? "currentColor" : "none"}
-              />
-            )}
-          </div>
-        );
-      })}
-      
-      {rating > 0 && (
-        <span className="ml-2 text-sm font-medium">
-          {rating.toFixed(1)}
-        </span>
-      )}
+    <div className="flex items-center">
+      {[1, 2, 3, 4, 5].map(renderStar)}
     </div>
   );
 };

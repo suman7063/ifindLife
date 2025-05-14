@@ -1,72 +1,88 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useEffect, useState } from 'react';
 import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 import { UserProfile as UserProfileA } from '@/types/supabase/user';
 import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
-import { AuthContextType } from '@/contexts/auth/types';
 
 /**
- * Hook that provides backward compatibility for components expecting 
- * different UserProfile interfaces
+ * This hook provides backward compatibility for components using the old auth context
  */
 export const useAuthBackCompat = () => {
   const auth = useAuth();
   const { toTypeA, toTypeB } = useProfileTypeAdapter();
-
-  // Create a compatible profile that should work with both interfaces
-  const adaptedProfile = auth.profile 
-    ? 'favorite_experts' in auth.profile 
-      ? auth.profile as UserProfileA 
-      : toTypeA(auth.profile as UserProfileB)
-    : null;
-
-  // Create a compatible updateProfile function that works with both interfaces
-  const adaptedUpdateProfile = async (updates: Partial<UserProfileA | UserProfileB>): Promise<boolean> => {
-    if (!auth.updateProfile) return false;
+  
+  const [userProfileType, setUserProfileType] = useState<'A' | 'B' | null>(null);
+  const [processedProfile, setProcessedProfile] = useState<UserProfileA | UserProfileB | null>(null);
+  
+  // Process profile when it changes to determine its type and convert if needed
+  useEffect(() => {
+    if (!auth.userProfile) {
+      setProcessedProfile(null);
+      setUserProfileType(null);
+      return;
+    }
     
-    // Convert the updates to the type expected by auth.updateProfile
-    const adaptedUpdates = 'favorite_programs' in updates && Array.isArray(updates.favorite_programs)
-      ? {
-          ...updates,
-          favorite_programs: typeof updates.favorite_programs[0] === 'string'
-            ? (updates.favorite_programs as string[]).map(id => Number(id))
-            : updates.favorite_programs
-        }
-      : updates;
-      
-    return await auth.updateProfile(adaptedUpdates as any);
-  };
-
-  // Create an alternative userAuth object that's compatible with the old interface
+    // Check if it's type A (has favorite_experts property)
+    if ('favorite_experts' in auth.userProfile) {
+      setUserProfileType('A');
+      setProcessedProfile(auth.userProfile);
+    }
+    // Check if it's type B (has favoriteExperts property)
+    else if ('favoriteExperts' in auth.userProfile) {
+      setUserProfileType('B');
+      setProcessedProfile(auth.userProfile);
+    }
+    // If unknown, assume it's type A and try to convert it
+    else {
+      setUserProfileType('A');
+      setProcessedProfile(toTypeA(auth.userProfile as any));
+    }
+  }, [auth.userProfile]);
+  
+  // Prepare the user auth object that matches the old interface
   const userAuth = {
-    currentUser: adaptedProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: auth.login || auth.signIn,
-    signup: auth.signup || auth.signUp,
-    logout: auth.logout || auth.signOut,
-    loading: auth.isLoading,
+    currentUser: processedProfile,
+    isAuthenticated: auth.isAuthenticated,
+    loading: auth.loading || auth.isLoading,
     authLoading: auth.isLoading,
-    profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: adaptedUpdateProfile,
-    updatePassword: auth.updatePassword || (async () => false),
-    addToFavorites: auth.addToFavorites || (async () => false),
-    removeFromFavorites: auth.removeFromFavorites || (async () => false),
-    rechargeWallet: auth.rechargeWallet || (async () => false),
+    login: auth.signIn,
+    signup: auth.signUp,
+    logout: auth.signOut,
+    updateProfile: (updates: Partial<UserProfileA | UserProfileB>) => {
+      // Determine which type the updates are and convert if necessary
+      if (userProfileType === 'A' && 'favoriteExperts' in updates) {
+        // Convert type B updates to type A
+        return auth.updateProfile(toTypeA(updates as UserProfileB) as any);
+      } else if (userProfileType === 'B' && 'favorite_experts' in updates) {
+        // Convert type A updates to type B
+        return auth.updateProfile(toTypeB(updates as UserProfileA) as any);
+      }
+      // No conversion needed
+      return auth.updateProfile(updates as any);
+    },
+    updatePassword: (password: string) => {
+      // This functionality needs to be implemented in AuthContext
+      console.warn('updatePassword is not fully implemented');
+      return Promise.resolve(false);
+    },
+    profileNotFound: false, // Default value
+    addToFavorites: () => Promise.resolve(false),
+    removeFromFavorites: () => Promise.resolve(false),
+    rechargeWallet: () => Promise.resolve(false),
+    addReview: () => Promise.resolve(false),
+    reportExpert: () => Promise.resolve(false),
+    hasTakenServiceFrom: () => Promise.resolve(false),
+    getExpertShareLink: () => '',
+    getReferralLink: () => null,
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture || (async () => null),
-    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
-    
-    // Additional methods that might be expected
-    getExpertShareLink: auth.getExpertShareLink || ((id) => ''),
-    getReferralLink: auth.getReferralLink || (() => null),
-    addReview: auth.addReview || (async () => false),
-    reportExpert: auth.reportExpert || (async () => false),
+    updateProfilePicture: auth.updateProfilePicture
   };
-
+  
   return {
-    auth, // original auth context
-    userAuth, // compatible user auth object
-    adaptedProfile, // the adapted profile
-    adaptedUpdateProfile // the adapted update profile function
+    userAuth,
+    auth,
+    processedProfile,
+    userProfileType
   };
 };

@@ -2,7 +2,7 @@
 import { useAuthBackCompat } from '@/hooks/auth/useAuthBackCompat';
 
 /**
- * Hook for backward compatibility with components expecting the older UserAuthContextType structure
+ * This hook provides backward compatibility for the old useUserAuth hook
  */
 export const useUserAuth = () => {
   const { userAuth } = useAuthBackCompat();

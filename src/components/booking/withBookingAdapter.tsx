@@ -8,20 +8,25 @@ import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 export const withBookingAdapter = <P extends { user?: UserProfileA | UserProfileB | null }>(
   Component: React.ComponentType<P>
 ): React.FC<Omit<P, 'user'> & { user?: UserProfileA | UserProfileB | null }> => {
-  const WrappedComponent = (props: Omit<P, 'user'> & { user?: UserProfileA | UserProfileB | null }) => {
+  const WrappedComponent: React.FC<Omit<P, 'user'> & { user?: UserProfileA | UserProfileB | null }> = (props) => {
     const { toTypeA } = useProfileTypeAdapter();
     const adaptedUser = props.user ? toTypeA(props.user) : null;
     
     return <Component {...props as unknown as P} user={adaptedUser} />;
   };
   
-  WrappedComponent.displayName = `withBookingAdapter(${Component.displayName || Component.name})`;
+  WrappedComponent.displayName = `withBookingAdapter(${Component.displayName || Component.name || 'Component'})`;
   return WrappedComponent;
 };
 
 // This HOC adapts components that need expertId, expertName props instead of a user object
-export const withExpertBookingAdapter = <P extends { expertId: string; expertName: string }>(
+export const withExpertBookingAdapter = <P extends { expertId: string; expertName: string; onBookingComplete?: () => void }>(
   Component: React.ComponentType<P>
 ): React.FC<P> => {
-  return Component; // Pass through since we're not transforming anything
+  const WrappedComponent: React.FC<P> = (props) => {
+    return <Component {...props} />;
+  };
+  
+  WrappedComponent.displayName = `withExpertBookingAdapter(${Component.displayName || Component.name || 'Component'})`;
+  return WrappedComponent;
 };

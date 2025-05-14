@@ -1,7 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
-import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
 
 // Define props that work with both profile types
 interface ExpertBookingCalendarProps {
@@ -16,10 +15,6 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
   onBookingComplete 
 }) => {
   const { userProfile } = useAuth();
-  const { toTypeB } = useProfileTypeAdapter();
-  
-  // Convert user profile to type B if needed for API calls
-  const adaptedProfile = userProfile ? toTypeB(userProfile) : null;
   
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
@@ -252,4 +247,4 @@ const ExpertBookingCalendar: React.FC<ExpertBookingCalendarProps> = ({
   );
 };
 
-export default withProfileTypeAdapter(ExpertBookingCalendar);
+export default ExpertBookingCalendar;

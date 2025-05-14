@@ -1,80 +1,64 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from '@/components/ui/button';
-import ExpertBookingCalendar from '@/components/booking/ExpertBookingCalendar';
-
-interface Expert {
-  id: string;
-  name: string;
-  specialization?: string;
-}
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import BookingTab from '@/components/booking/BookingTab';
+import { User } from '@supabase/supabase-js';
 
 interface BookingDialogProps {
-  isOpen: boolean;
+  open: boolean;
   onOpenChange: (open: boolean) => void;
-  serviceName: string;
-  matchingExperts: Expert[];
-  selectedExpert: Expert | null;
-  setSelectedExpert: (expert: Expert) => void;
-  onBookingComplete: () => void;
+  expert: {
+    id: string;
+    name: string;
+  };
+  user: User | null;
+  isUserLoading: boolean;
 }
 
-const BookingDialog: React.FC<BookingDialogProps> = ({
-  isOpen,
-  onOpenChange,
-  serviceName,
-  matchingExperts,
-  selectedExpert,
-  setSelectedExpert,
-  onBookingComplete
+const BookingDialog: React.FC<BookingDialogProps> = ({ 
+  open, 
+  onOpenChange, 
+  expert,
+  user,
+  isUserLoading
 }) => {
+  const handleBookingComplete = () => {
+    onOpenChange(false);
+  };
+  
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent 
-        className="sm:max-w-[800px]"
-        aria-labelledby="booking-dialog-title"
-        aria-describedby="booking-dialog-description"
-      >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle id="booking-dialog-title">Book a {serviceName} Session</DialogTitle>
-          <DialogDescription id="booking-dialog-description">
-            Select an expert and schedule your appointment.
-          </DialogDescription>
+          <DialogTitle>Book a Session with {expert.name}</DialogTitle>
         </DialogHeader>
         
-        {matchingExperts.length > 0 ? (
-          <div className="space-y-4">
-            {matchingExperts.length > 1 && (
-              <div className="mb-6">
-                <h3 className="text-sm font-medium mb-2">Choose an Expert:</h3>
-                <div className="flex flex-wrap gap-2">
-                  {matchingExperts.map(expert => (
-                    <Button 
-                      key={expert.id} 
-                      variant={selectedExpert?.id === expert.id ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedExpert(expert)}
-                    >
-                      {expert.name}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-            
-            {selectedExpert && (
-              <ExpertBookingCalendar 
-                expertId={selectedExpert.id.toString()} 
-                expertName={selectedExpert.name}
-                onBookingComplete={onBookingComplete}
-              />
-            )}
+        {isUserLoading ? (
+          <div className="flex justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
+          </div>
+        ) : !user ? (
+          <div className="p-6 text-center">
+            <p className="mb-4">Please sign in to book a session with this expert.</p>
+            <button
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => {
+                // Save the current state so we can return to it after login
+                sessionStorage.setItem('returnPath', window.location.pathname);
+                sessionStorage.setItem('pendingAction', 'booking');
+                sessionStorage.setItem('pendingExpertId', expert.id);
+                window.location.href = '/user-login';
+              }}
+            >
+              Sign In to Book
+            </button>
           </div>
         ) : (
-          <div className="p-8 text-center">
-            <p className="text-muted-foreground">No experts are currently available for this service.</p>
-          </div>
+          <BookingTab 
+            expertId={expert.id} 
+            expertName={expert.name}
+            onBookingComplete={handleBookingComplete} 
+          />
         )}
       </DialogContent>
     </Dialog>
