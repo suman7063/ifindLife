@@ -2,10 +2,10 @@
 export interface ExpertCardProps {
   id: string | number;
   name: string;
-  experience?: string | number;
-  specialties?: string[];
-  rating?: number;
-  price?: number;
+  experience: string | number;
+  specialties: string[];
+  rating: number;
+  price: number;
   imageUrl?: string;
   waitTime?: string;
   online?: boolean;
@@ -20,11 +20,11 @@ export interface ExpertImageProps {
 
 export interface ExpertInfoProps {
   name: string;
-  experience?: string | number;
-  specialties?: string[];
-  rating?: number;
-  waitTime?: string;
-  price?: number;
+  experience: string | number;
+  specialties: string[];
+  rating: number;
+  waitTime?: string; 
+  price: number;
 }
 
 export interface ExpertActionsProps {
@@ -32,4 +32,6 @@ export interface ExpertActionsProps {
   online?: boolean;
   isFavorite?: boolean;
   onFavoriteToggle?: (id: string | number) => void;
+  onCallNow?: (id: string | number) => void;
+  onBookAppointment?: (id: string | number) => void;
 }

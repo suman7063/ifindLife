@@ -3,13 +3,13 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { PhoneIcon, CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ExpertActionProps } from './types';
+import { ExpertActionsProps } from './types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { useSafeFavorites } from '@/contexts/favorites/FavoritesContext';
 import FavoriteButton from '@/components/favorites/FavoriteButton';
 
-const ExpertActions: React.FC<ExpertActionProps> = ({ 
+const ExpertActions: React.FC<ExpertActionsProps> = ({ 
   id, 
   online, 
   isFavorite: propIsFavorite,

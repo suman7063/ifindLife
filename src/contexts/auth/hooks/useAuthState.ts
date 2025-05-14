@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AuthState, UserProfile, ExpertProfile, initialAuthState, UserRole } from '../types';
+import { AuthState, initialAuthState, UserRole } from '../types';
 import { userRepository } from '@/repositories/UserRepository';
 import { expertRepository } from '@/repositories/ExpertRepository';
 
@@ -67,8 +67,8 @@ export const useAuthState = () => {
    * Determine session type based on available profiles
    */
   const determineSessionType = (
-    userProfile: UserProfile | null, 
-    expertProfile: ExpertProfile | null
+    userProfile: any | null, 
+    expertProfile: any | null
   ): 'none' | 'user' | 'expert' | 'dual' => {
     if (userProfile && expertProfile) return 'dual';
     if (userProfile) return 'user';
@@ -81,8 +81,8 @@ export const useAuthState = () => {
    */
   const checkUserRole = async (
     userId: string,
-    userProfile: UserProfile | null,
-    expertProfile: ExpertProfile | null
+    userProfile: any | null,
+    expertProfile: any | null
   ): Promise<UserRole> => {
     // If there's an approved expert profile, we have an expert role
     if (expertProfile && expertProfile.status === 'approved') {
