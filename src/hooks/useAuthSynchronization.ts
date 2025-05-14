@@ -54,7 +54,7 @@ export const useAuthSynchronization = () => {
       } else {
         console.warn("useAuthSynchronization: User logout returned false");
       }
-      return !!success; // Ensure boolean return
+      return Boolean(success); // Ensure boolean return
     } catch (error) {
       console.error('User logout error:', error);
       toast.error('Error logging out');
@@ -72,7 +72,7 @@ export const useAuthSynchronization = () => {
       } else {
         console.warn("useAuthSynchronization: Expert logout returned false");
       }
-      return !!success; // Ensure boolean return
+      return Boolean(success); // Ensure boolean return
     } catch (error) {
       console.error('Expert logout error:', error);
       toast.error('Error logging out');
@@ -90,7 +90,7 @@ export const useAuthSynchronization = () => {
       } else {
         console.warn("useAuthSynchronization: Full logout returned false");
       }
-      return !!success; // Ensure boolean return
+      return Boolean(success); // Ensure boolean return
     } catch (error) {
       console.error('Full logout error:', error);
       toast.error('Error logging out');

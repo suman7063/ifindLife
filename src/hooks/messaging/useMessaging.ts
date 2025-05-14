@@ -1,132 +1,177 @@
 
-import { useState } from 'react';
-import { Message } from '@/types/appointments';
-import { MessagingUser, UseMessagingReturn, Conversation } from './types';
-import { useConversations } from './useConversations';
-import { useMessages } from './useMessages';
-import { messagingRepository } from './messagingApi';
+import { useState, useEffect, useCallback } from 'react';
+import { fetchConversations, fetchMessages, sendMessage, markAllMessagesAsRead, fetchUsers, createConversation } from './messagingApi';
+import { Message, Conversation, MessagingUser } from './types';
 
-/**
- * Main messaging hook that provides complete messaging functionality
- */
-export const useMessaging = (currentUser: MessagingUser | null): UseMessagingReturn => {
+export const useMessaging = (currentUserId: string | undefined) => {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [users, setUsers] = useState<MessagingUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [messageLoading, setMessageLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const { 
-    conversations, 
-    conversationsLoading, 
-    fetchConversations,
-    error: conversationsError 
-  } = useConversations(currentUser);
-  
-  const {
-    messages,
-    messagesLoading,
-    fetchMessages,
-    setMessages,
-    error: messagesError
-  } = useMessages(currentUser);
-  
-  /**
-   * Send a new message
-   */
-  const sendMessage = async (receiverId: string, content: string): Promise<boolean> => {
-    if (!currentUser || !currentUser.id) return false;
+
+  // Fetch conversations for the current user
+  const getConversations = useCallback(async () => {
+    if (!currentUserId) return;
     
     setLoading(true);
     setError(null);
     
     try {
-      const newMessage = await messagingRepository.sendMessage(currentUser.id, receiverId, content);
-      
-      if (newMessage) {
-        // Update local messages state with proper type conversion
-        const compatibleMessage = {
-          ...newMessage,
-          created_at: newMessage.created_at || new Date().toISOString(),
-          read: newMessage.read || false
-        } as Message;
-        
-        setMessages(prev => [...prev, compatibleMessage]);
-        return true;
-      }
-      
-      return false;
-    } catch (error: any) {
-      console.error('Error in sendMessage:', error);
-      setError(error.message);
-      return false;
+      const data = await fetchConversations(currentUserId);
+      setConversations(data);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setError('Failed to load conversations. Please try again.');
     } finally {
       setLoading(false);
     }
-  };
-  
-  /**
-   * Mark message as read
-   */
-  const markMessageAsRead = async (messageId: string): Promise<boolean> => {
-    setLoading(true);
+  }, [currentUserId]);
+
+  // Fetch messages for a specific conversation
+  const getMessages = useCallback(async (conversationId: string) => {
+    if (!currentUserId || !conversationId) return;
+    
+    setMessageLoading(true);
+    setError(null);
     
     try {
-      const success = await messagingRepository.markAsRead(messageId);
+      const data = await fetchMessages(conversationId);
+      setMessages(data);
       
-      if (success) {
-        // Update local messages state
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === messageId ? { ...msg, read: true } as Message : msg
-          )
-        );
+      // Mark messages as read
+      await markAllMessagesAsRead(conversationId);
+      
+      // Update conversation unread count
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
+        )
+      );
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+      setError('Failed to load messages. Please try again.');
+    } finally {
+      setMessageLoading(false);
+    }
+  }, [currentUserId]);
+
+  // Select a conversation to display
+  const selectConversation = useCallback((conversation: Conversation) => {
+    setCurrentConversation(conversation);
+    getMessages(conversation.id);
+  }, [getMessages]);
+
+  // Send a new message
+  const sendNewMessage = useCallback(async (content: string) => {
+    if (!currentUserId || !currentConversation) return;
+    
+    try {
+      const newMessage = await sendMessage(currentUserId, currentConversation.userId, content);
+      
+      // Update messages state
+      setMessages(prev => [...prev, newMessage]);
+      
+      // Update conversation last message
+      const updatedConversation = {
+        ...currentConversation,
+        lastMessage: {
+          content,
+          timestamp: newMessage.timestamp,
+          isRead: false,
+          senderId: currentUserId
+        },
+        lastMessageTime: newMessage.timestamp
+      };
+      
+      setCurrentConversation(updatedConversation);
+      
+      // Update conversations list
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === currentConversation.id ? updatedConversation : conv
+        )
+      );
+      
+      return true;
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError('Failed to send message. Please try again.');
+      return false;
+    }
+  }, [currentUserId, currentConversation]);
+
+  // Fetch available users for starting new conversations
+  const getUsers = useCallback(async () => {
+    if (!currentUserId) return;
+    
+    try {
+      const usersData = await fetchUsers();
+      // Convert to the correct type by mapping users
+      const typedUsers: MessagingUser[] = usersData.map(user => ({
+        id: String(user.id), // Ensure id is a string
+        name: user.name,
+        avatar: user.avatar,
+        isOnline: user.isOnline,
+        lastSeen: user.lastSeen,
+        role: user.role
+      }));
+      setUsers(typedUsers);
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError('Failed to load users. Please try again.');
+    }
+  }, [currentUserId]);
+
+  // Start a new conversation with a user
+  const startConversation = useCallback(async (otherUserId: string) => {
+    if (!currentUserId) return;
+    
+    try {
+      // Check if conversation already exists
+      const existingConversation = conversations.find(conv => conv.userId === otherUserId);
+      
+      if (existingConversation) {
+        selectConversation(existingConversation);
+        return;
       }
       
-      return success;
-    } catch (error: any) {
-      console.error('Error in markMessageAsRead:', error);
-      return false;
-    } finally {
-      setLoading(false);
+      // Create new conversation
+      const newConversation = await createConversation(currentUserId, otherUserId);
+      
+      // Update conversations list
+      setConversations(prev => [...prev, newConversation]);
+      
+      // Select the new conversation
+      selectConversation(newConversation);
+    } catch (err) {
+      console.error('Error starting conversation:', err);
+      setError('Failed to start conversation. Please try again.');
     }
-  };
+  }, [currentUserId, conversations, selectConversation]);
 
-  /**
-   * Search for users
-   */
-  const searchUsers = async (query: string): Promise<MessagingUser[]> => {
-    if (!query.trim()) return [];
-    
-    try {
-      return await messagingRepository.searchUsers(query);
-    } catch (error: any) {
-      console.error('Error searching users:', error);
-      return [];
+  // Load conversations when component mounts
+  useEffect(() => {
+    if (currentUserId) {
+      getConversations();
     }
-  };
+  }, [currentUserId, getConversations]);
 
-  /**
-   * Refresh conversations
-   */
-  const refreshConversations = async (): Promise<void> => {
-    await fetchConversations();
-  };
-
-  // Combine errors from all sources
-  const combinedError = error || conversationsError || messagesError;
-  
   return {
-    messages,
     conversations,
+    currentConversation,
+    messages,
+    users,
     loading,
-    messagesLoading,
-    conversationsLoading,
-    error: combinedError,
-    fetchMessages,
-    fetchConversations,
-    sendMessage,
-    markMessageAsRead,
-    refreshConversations,
-    searchUsers,
-    getMessages: fetchMessages // Alias for backward compatibility
+    messageLoading,
+    error,
+    selectConversation,
+    sendMessage: sendNewMessage,
+    getUsers,
+    startConversation,
+    refreshConversations: getConversations
   };
 };
 

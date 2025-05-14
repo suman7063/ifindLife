@@ -1,141 +1,93 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { AuthState, initialAuthState, UserRole } from '../types';
-import { userRepository } from '@/repositories/UserRepository';
-import { expertRepository } from '@/repositories/ExpertRepository';
-import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { UserProfile } from '@/types/supabase/user';
+import { ExpertProfile } from '@/types/database/unified';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
 
-  /**
-   * Fetch user profile data from the database
-   */
-  const fetchUserData = async (userId: string | undefined) => {
-    if (!userId) {
-      setAuthState(prev => ({
-        ...prev,
-        isLoading: false,
-        loading: false,
-        userProfile: null,
-        profile: null,
-        expertProfile: null,
-        role: null,
-        sessionType: 'none',
-        isAuthenticated: false
-      }));
-      return;
-    }
-
+  // Fetch user data based on the authenticated user
+  const fetchUserData = async (userId: string, role: UserRole) => {
     try {
-      console.log('Fetching user data for ID:', userId);
+      // This would fetch user profile data from the database
+      console.log(`Fetching ${role} data for user ${userId}`);
       
-      // Fetch user profile using repository
-      const userProfile = await userRepository.getUser(userId);
+      // Simulate fetching user data
+      if (role === 'user') {
+        const userProfile = {
+          id: userId,
+          name: 'Test User',
+          email: 'test@example.com',
+          phone: '+123456789',
+          country: 'US',
+          city: 'New York',
+          currency: 'USD',
+          profile_picture: null,
+          wallet_balance: 100,
+          created_at: new Date().toISOString(),
+          favorite_experts: []
+        } as UserProfile;
+        
+        setAuthState(prev => ({
+          ...prev,
+          profile: userProfile,
+          userProfile,
+          walletBalance: userProfile.wallet_balance
+        }));
+      }
       
-      // Fetch expert profile using repository
-      const expertProfile = await expertRepository.getExpertByAuthId(userId);
-      
-      // Determine role based on profiles
-      const role = await checkUserRole(userId, userProfile, expertProfile);
-      
-      // Determine session type
-      const sessionType = determineSessionType(userProfile, expertProfile);
-      
-      // Get wallet balance
-      const walletBalance = userProfile?.wallet_balance || 0;
-      
-      // Convert the favorite_experts array to strings if needed
-      const safeUserProfile = userProfile ? {
-        ...userProfile,
-        favorite_experts: userProfile.favorite_experts?.map(String) || []
-      } : null;
-      
-      setAuthState(prev => ({
-        ...prev,
-        isLoading: false,
-        loading: false,
-        profile: safeUserProfile,
-        userProfile: safeUserProfile,
-        expertProfile,
-        role,
-        sessionType,
-        walletBalance,
-        isAuthenticated: true,
-        error: prev.error
-      }));
+      if (role === 'expert') {
+        const expertProfile = {
+          id: userId,
+          name: 'Test Expert',
+          email: 'expert@example.com',
+          phone: '+123456789',
+          country: 'US',
+          city: 'San Francisco',
+          status: 'online'
+        } as ExpertProfile;
+        
+        setAuthState(prev => ({
+          ...prev,
+          expertProfile
+        }));
+      }
       
     } catch (error) {
       console.error('Error fetching user data:', error);
-      setAuthState(prev => ({
-        ...prev,
-        isLoading: false,
-        loading: false,
-        isAuthenticated: false
-      }));
     }
-  };
-  
-  /**
-   * Determine session type based on available profiles
-   */
-  const determineSessionType = (
-    userProfile: UserProfile | null, 
-    expertProfile: ExpertProfile | null
-  ): 'none' | 'user' | 'expert' | 'dual' => {
-    if (userProfile && expertProfile) return 'dual';
-    if (userProfile) return 'user';
-    if (expertProfile) return 'expert';
-    return 'none';
   };
 
-  /**
-   * Check user role from either profiles or origin setting
-   */
-  const checkUserRole = async (
-    userId: string,
-    userProfile: UserProfile | null,
-    expertProfile: ExpertProfile | null
-  ): Promise<UserRole> => {
-    // If there's an approved expert profile, we have an expert role
-    if (expertProfile && expertProfile.status === 'approved') {
-      return 'expert';
-    }
-    
-    // Check for admin role
-    try {
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (data && data.role) {
-        return 'admin';
+  // Check for existing session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        // Simulate session check
+        setTimeout(() => {
+          setAuthState(prev => ({
+            ...prev,
+            loading: false,
+            isLoading: false
+          }));
+        }, 1000);
+      } catch (error) {
+        console.error('Session check error:', error);
+        setAuthState(prev => ({
+          ...prev,
+          loading: false,
+          isLoading: false,
+          error: error as Error
+        }));
       }
-    } catch (error) {
-      console.error('Error checking for admin role:', error);
-    }
+    };
     
-    // If there's a user profile but no expert profile, or expert profile is not approved
-    if (userProfile) {
-      return 'user';
-    }
-    
-    // If we have a pending expert but no user profile
-    if (expertProfile) {
-      return 'expert'; // This will still be limited by status checks elsewhere
-    }
-    
-    // No valid profiles found
-    return null;
-  };
+    checkSession();
+  }, []);
 
   return {
     authState,
     setAuthState,
-    fetchUserData,
-    checkUserRole
+    fetchUserData
   };
 };

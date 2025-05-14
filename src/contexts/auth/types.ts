@@ -1,6 +1,7 @@
 
 // Import the UserProfile from the supabase/user module
 import { UserProfile } from '@/types/supabase/user';
+import { ExpertProfile } from '@/types/database/unified';
 export type { UserProfile };
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
@@ -17,7 +18,7 @@ export interface AuthContextType {
   session: any | null;
   profile: UserProfile | null;
   userProfile: UserProfile | null; // Alias for backward compatibility
-  expertProfile: any | null; // Using any for now, should be updated to use ExpertProfile
+  expertProfile: ExpertProfile | null; 
   loading: boolean;
   isLoading: boolean; // Alias for backward compatibility
   error: Error | null;
@@ -66,7 +67,7 @@ export interface AuthState {
   session: any | null;
   profile: UserProfile | null;
   userProfile: UserProfile | null;
-  expertProfile: any | null;
+  expertProfile: ExpertProfile | null;
   loading: boolean;
   isLoading: boolean;
   error: Error | null;

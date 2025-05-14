@@ -13,7 +13,7 @@ import useTransactions from '@/hooks/dashboard/useTransactions';
 import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
 const UserDashboard: React.FC = () => {
-  const { currentUser, isAuthenticated, loading: authLoading, logout } = useUserAuth();
+  const { currentUser, isAuthenticated, isLoading: authLoading, logout } = useUserAuth();
   const { isLoading: authContextLoading } = useAuth();
   const navigate = useNavigate();
   

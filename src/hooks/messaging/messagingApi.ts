@@ -1,164 +1,190 @@
 
-import { supabase } from '@/lib/supabase';
-import { Message, MessagingUser } from '@/types/database/unified';
-import { Conversation } from './types';
+import { Message, Conversation, MessagingUser } from './types';
 
-class MessagingRepository {
-  /**
-   * Get messages between two users
-   */
-  async getMessages(senderId: string, receiverId: string): Promise<Message[]> {
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${senderId},receiver_id.eq.${senderId}`)
-        .or(`sender_id.eq.${receiverId},receiver_id.eq.${receiverId}`)
-        .order('created_at', { ascending: true });
-      
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return [];
-      }
-      
-      return data as Message[];
-    } catch (error) {
-      console.error('Repository error in getMessages:', error);
-      return [];
-    }
-  }
-  
-  /**
-   * Send a message from one user to another
-   */
-  async sendMessage(senderId: string, receiverId: string, content: string): Promise<Message | null> {
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .insert([
-          {
-            sender_id: senderId,
-            receiver_id: receiverId,
-            content
-          }
-        ])
-        .select()
-        .single();
-      
-      if (error) {
-        console.error('Error sending message:', error);
-        return null;
-      }
-      
-      return data as Message;
-    } catch (error) {
-      console.error('Repository error in sendMessage:', error);
-      return null;
-    }
-  }
-  
-  /**
-   * Mark a message as read
-   */
-  async markAsRead(messageId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .eq('id', messageId);
-      
-      return !error;
-    } catch (error) {
-      console.error('Repository error in markAsRead:', error);
-      return false;
-    }
-  }
-  
-  /**
-   * Get the conversations for a user
-   */
-  async getConversations(userId: string): Promise<Conversation[]> {
-    try {
-      // This is a complex query that should be implemented as a PostgreSQL function
-      // For now, we'll simulate it with a simplified version
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching conversations:', error);
-        return [];
-      }
-      
-      // Process the data to create conversations
-      const conversations = this.processConversations(data as Message[], userId);
-      return conversations;
-    } catch (error) {
-      console.error('Repository error in getConversations:', error);
-      return [];
-    }
-  }
-  
-  /**
-   * Process messages to create conversations
-   */
-  private processConversations(messages: Message[], currentUserId: string): Conversation[] {
-    // This is a simplified version
-    const conversationMap = new Map<string, Conversation>();
-    
-    for (const message of messages) {
-      const otherUserId = message.sender_id === currentUserId ? message.receiver_id : message.sender_id;
-      
-      if (!conversationMap.has(otherUserId)) {
-        // Fetch user details (this would be better done in a JOIN)
-        conversationMap.set(otherUserId, {
-          id: otherUserId,
-          userId: otherUserId,
-          userName: 'User', // This should be fetched from the user profile
-          userAvatar: undefined,
-          lastMessage: {
-            content: message.content,
-            timestamp: message.created_at || '',
-            isRead: !!message.read,
-            senderId: message.sender_id
-          },
-          lastMessageTime: message.created_at || '',
-          unreadCount: message.sender_id !== currentUserId && !message.read ? 1 : 0
-        });
-      }
-    }
-    
-    return Array.from(conversationMap.values());
-  }
-  
-  /**
-   * Search for users
-   */
-  async searchUsers(query: string): Promise<MessagingUser[]> {
-    try {
-      // Try to get from users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id, name, profile_picture')
-        .ilike('name', `%${query}%`)
-        .limit(10);
-      
-      if (!userError && userData) {
-        return userData.map(user => ({
-          id: user.id,
-          name: user.name || 'User',
-          avatar: user.profile_picture
-        }));
-      }
-      
-      return [];
-    } catch (error) {
-      console.error('Repository error in searchUsers:', error);
-      return [];
-    }
-  }
-}
+// Mock data for testing
+const mockUsers: MessagingUser[] = [
+  { id: '1', name: 'John Doe', avatar: 'https://i.pravatar.cc/300?img=1', isOnline: true },
+  { id: '2', name: 'Jane Smith', avatar: 'https://i.pravatar.cc/300?img=2', isOnline: false },
+  { id: '3', name: 'Mike Johnson', avatar: 'https://i.pravatar.cc/300?img=3', isOnline: true },
+  { id: '4', name: 'Sarah Williams', avatar: 'https://i.pravatar.cc/300?img=4', isOnline: true },
+];
 
-export const messagingRepository = new MessagingRepository();
+const mockMessages: Message[] = [
+  {
+    id: '1',
+    content: 'Hello! How are you?',
+    senderId: '1',
+    receiverId: 'current-user',
+    timestamp: '2023-05-10T10:30:00Z',
+    isRead: true
+  },
+  {
+    id: '2',
+    content: 'I\'m good, thanks for asking!',
+    senderId: 'current-user',
+    receiverId: '1',
+    timestamp: '2023-05-10T10:35:00Z',
+    isRead: true
+  },
+  {
+    id: '3',
+    content: 'What are you up to today?',
+    senderId: '1',
+    receiverId: 'current-user',
+    timestamp: '2023-05-10T10:40:00Z',
+    isRead: false
+  },
+  {
+    id: '4',
+    content: 'Hi there!',
+    senderId: '2',
+    receiverId: 'current-user',
+    timestamp: '2023-05-09T15:20:00Z',
+    isRead: true
+  },
+  {
+    id: '5',
+    content: 'Do you have time for a quick call?',
+    senderId: '2',
+    receiverId: 'current-user',
+    timestamp: '2023-05-09T15:25:00Z',
+    isRead: false
+  },
+];
+
+const mockConversations: Conversation[] = [
+  {
+    id: '1',
+    userId: '1',
+    userName: 'John Doe',
+    userAvatar: 'https://i.pravatar.cc/300?img=1',
+    lastMessage: {
+      content: 'What are you up to today?',
+      timestamp: '2023-05-10T10:40:00Z',
+      isRead: false,
+      senderId: '1'
+    },
+    lastMessageTime: '2023-05-10T10:40:00Z',
+    unreadCount: 1,
+    otherUser: mockUsers[0]
+  },
+  {
+    id: '2',
+    userId: '2',
+    userName: 'Jane Smith',
+    userAvatar: 'https://i.pravatar.cc/300?img=2',
+    lastMessage: {
+      content: 'Do you have time for a quick call?',
+      timestamp: '2023-05-09T15:25:00Z',
+      isRead: false,
+      senderId: '2'
+    },
+    lastMessageTime: '2023-05-09T15:25:00Z',
+    unreadCount: 1,
+    otherUser: mockUsers[1]
+  },
+];
+
+// API Functions
+export const fetchConversations = async (userId: string): Promise<Conversation[]> => {
+  // In a real implementation, we would make API calls to fetch conversations
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockConversations);
+    }, 500);
+  });
+};
+
+export const fetchMessages = async (conversationId: string): Promise<Message[]> => {
+  // In a real implementation, we would make API calls to fetch messages
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const filteredMessages = mockMessages.filter(
+        (message) => message.senderId === conversationId || message.receiverId === conversationId
+      );
+      resolve(filteredMessages);
+    }, 500);
+  });
+};
+
+export const sendMessage = async (
+  senderId: string,
+  receiverId: string,
+  content: string
+): Promise<Message> => {
+  // In a real implementation, we would make API calls to send a message
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        content,
+        senderId,
+        receiverId,
+        timestamp: new Date().toISOString(),
+        isRead: false
+      };
+      
+      resolve(newMessage);
+    }, 300);
+  });
+};
+
+export const markMessageAsRead = async (messageId: string): Promise<boolean> => {
+  // In a real implementation, we would make API calls to mark a message as read
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, 200);
+  });
+};
+
+export const markAllMessagesAsRead = async (conversationId: string): Promise<boolean> => {
+  // In a real implementation, we would make API calls to mark all messages as read
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(true);
+    }, 200);
+  });
+};
+
+export const fetchUsers = async (): Promise<MessagingUser[]> => {
+  // In a real implementation, we would make API calls to fetch users
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(mockUsers);
+    }, 500);
+  });
+};
+
+export const createConversation = async (
+  userId: string, 
+  otherUserId: string
+): Promise<Conversation> => {
+  // In a real implementation, we would make API calls to create a conversation
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const otherUser = mockUsers.find(user => user.id === otherUserId);
+      if (!otherUser) {
+        throw new Error('User not found');
+      }
+      
+      const conversation: Conversation = {
+        id: Date.now().toString(),
+        userId: otherUserId,
+        userName: otherUser.name,
+        userAvatar: otherUser.avatar,
+        lastMessage: {
+          content: '',
+          timestamp: new Date().toISOString(),
+          isRead: true,
+          senderId: userId
+        },
+        lastMessageTime: new Date().toISOString(),
+        unreadCount: 0,
+        otherUser
+      };
+      
+      resolve(conversation);
+    }, 300);
+  });
+};

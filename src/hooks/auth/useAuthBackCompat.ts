@@ -1,29 +1,69 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { UserAuthContextType } from '@/contexts/auth/UserAuthContext';
+import { createContext, useContext } from 'react';
+import { UserProfile } from '@/types/supabase/user';
 
-export function useAuthBackCompat() {
+// Define the ExpertAuthContextType interface for backward compatibility
+export interface ExpertAuthContextType {
+  currentUser: any;  // Using any for expert profile
+  updateProfile: (data: any) => Promise<boolean>;
+  logout: () => Promise<void>;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+}
+
+// Create a hook that adapts the unified auth context to separate user and expert auth contexts
+export const useAuthBackCompat = () => {
   const auth = useAuth();
   
-  // Create backward-compatible objects for existing components
-  const userAuth = {
-    currentUser: auth.profile,
+  // Create a backward-compatible user auth context
+  const userAuth: UserAuthContextType = {
+    currentUser: auth.userProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'user',
+    login: auth.login,
+    signup: auth.signup,
+    logout: async () => {
+      const success = await auth.logout();
+      return success;
+    },
+    authLoading: auth.isLoading,
+    loading: auth.isLoading,
+    profileNotFound: !auth.userProfile && !auth.isLoading && auth.isAuthenticated,
     updateProfile: auth.updateProfile,
-    logout: auth.logout,
-    isLoading: auth.isLoading,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'user'
+    updatePassword: auth.updatePassword || (async () => false),
+    addToFavorites: auth.addToFavorites || (async () => false),
+    removeFromFavorites: auth.removeFromFavorites || (async () => false),
+    rechargeWallet: auth.rechargeWallet || (async () => false),
+    addReview: auth.addReview || (async () => false),
+    reportExpert: auth.reportExpert || (async () => false),
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getReferralLink: auth.getReferralLink || (() => null),
+    user: auth.user,
+    updateProfilePicture: auth.updateProfilePicture
   };
   
-  const expertAuth = {
+  // Create a backward-compatible expert auth context
+  const expertAuth: ExpertAuthContextType = {
     currentUser: auth.expertProfile,
-    updateProfile: auth.updateExpertProfile || ((data: any) => Promise.resolve(false)), // Default fallback
-    logout: auth.logout,
-    isLoading: auth.isLoading,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'expert'
+    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+    updateProfile: async (data: any) => {
+      if (auth.updateProfile) {
+        return auth.updateProfile(data);
+      }
+      return false;
+    },
+    logout: async () => {
+      await auth.logout();
+    },
+    isLoading: auth.isLoading
   };
   
   return {
     userAuth,
-    expertAuth
+    expertAuth,
+    // Include the unified auth context as well
+    auth
   };
-}
+};

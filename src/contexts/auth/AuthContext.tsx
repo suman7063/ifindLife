@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { AuthState, initialAuthState, UserRole, AuthContextType } from './types';
 import { useAuthState } from './hooks/useAuthState';
@@ -7,7 +7,7 @@ import { useAuthFunctions } from './hooks/useAuthFunctions';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
 // Create context with default values
-const AuthContext = createContext<AuthContextType>({
+export const AuthContext = createContext<AuthContextType>({
   ...initialAuthState,
   signIn: async () => false,
   signUp: async () => false,
@@ -16,7 +16,17 @@ const AuthContext = createContext<AuthContextType>({
   signup: async () => false,
   logout: async () => false,
   updateProfile: async () => false,
-  clearSession: () => {}
+  clearSession: () => {},
+  updatePassword: async () => false,
+  addToFavorites: async () => false,
+  removeFromFavorites: async () => false,
+  rechargeWallet: async () => false,
+  addReview: async () => false,
+  reportExpert: async () => false,
+  hasTakenServiceFrom: async () => false,
+  getExpertShareLink: () => '',
+  getReferralLink: () => null,
+  updateProfilePicture: async () => null,
 });
 
 // Provider component
@@ -29,7 +39,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signUp, 
     updateProfile, 
     updateExpertProfile,
-    clearSession
+    clearSession,
+    updatePassword,
+    addToFavorites,
+    removeFromFavorites,
+    rechargeWallet,
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink,
+    updateProfilePicture
   } = useAuthFunctions(authState, setAuthState);
   
   // Create function aliases for backward compatibility
@@ -47,7 +67,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     signup,
     updateProfile,
-    clearSession
+    clearSession,
+    updatePassword,
+    addToFavorites,
+    removeFromFavorites,
+    rechargeWallet,
+    addReview,
+    reportExpert,
+    hasTakenServiceFrom,
+    getExpertShareLink,
+    getReferralLink,
+    updateProfilePicture,
+    user: authState.user,
+    userProfile: authState.profile,
+    sessionType: authState.sessionType,
+    expertProfile: authState.expertProfile
   };
   
   return (
