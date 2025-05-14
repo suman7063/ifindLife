@@ -76,3 +76,26 @@ export function adaptToUserProfileB(profile: UserProfileA): UserProfileB {
     referralCode: profile.referral_code
   };
 }
+
+/**
+ * Normalize an expert ID to string format
+ */
+export function normalizeExpertId(id: string | number): string {
+  return String(id);
+}
+
+/**
+ * Adapt review data for consistency
+ */
+export function adaptReview(review: any): any {
+  return {
+    ...review,
+    id: review.id || '',
+    expert_id: normalizeExpertId(review.expert_id || ''),
+    rating: Number(review.rating) || 0,
+    date: review.date || new Date().toISOString(),
+    comment: review.comment || '',
+    verified: !!review.verified,
+    user_name: review.user_name || ''
+  };
+}
