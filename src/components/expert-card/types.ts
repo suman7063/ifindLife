@@ -14,10 +14,26 @@ export interface ExpertCardData {
   bio?: string;
   languages?: string[];
   qualifications?: string[];
+  // Alternative naming for backward compatibility
+  title?: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export interface ExpertCardProps {
   expert: ExpertCardData;
   onClick?: () => void;
   className?: string;
+}
+
+// Add the missing ExpertActionsProps interface
+export interface ExpertActionsProps {
+  expert: ExpertCardData;
+  onClick?: (id: string | number) => void;
+}
+
+// Add the missing ExpertInfoProps interface
+export interface ExpertInfoProps {
+  expert: ExpertCardData;
+  showRating?: boolean;
 }

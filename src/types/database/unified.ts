@@ -24,9 +24,13 @@ export interface UserProfile {
   reviews?: any[];
   reports?: any[];
   favorite_experts?: string[];
-  favorite_programs?: string[]; // Could be string[] or number[]
+  favorite_programs?: string[] | number[]; // Could be string[] or number[]
   enrolled_courses?: any[];
   referrals?: any[];
+  
+  // Aliases for camelCase access
+  profilePicture?: string;
+  walletBalance?: number;
 }
 
 // Expert profile from database
@@ -56,7 +60,7 @@ export interface ExpertProfile {
 // Unified message type
 export interface Message {
   id: string;
-  sender_id: string;
+  sender_id: string; // Keep snake_case for database compatibility
   receiver_id: string;
   content: string;
   read: boolean;
@@ -66,6 +70,10 @@ export interface Message {
   // UI helpers
   isMine?: boolean;
   timestamp?: Date;
+  // Camel case aliases for compatibility
+  senderId?: string;
+  receiverId?: string;
+  createdAt?: string;
 }
 
 // Transaction with unified properties

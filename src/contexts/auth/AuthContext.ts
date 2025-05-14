@@ -30,6 +30,16 @@ export interface AuthContextType {
   
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture?: (file: File) => Promise<string | null>;
+  updatePassword: (password: string) => Promise<boolean>;  // Added this missing method
+  
+  addToFavorites?: (expertId: number) => Promise<boolean>;
+  removeFromFavorites?: (expertId: number) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  addReview?: (review: any) => Promise<boolean>;
+  reportExpert?: (report: any) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink?: (expertId: string | number) => string;
+  getReferralLink?: () => string | null;
   
   clearSession: () => void;
 }

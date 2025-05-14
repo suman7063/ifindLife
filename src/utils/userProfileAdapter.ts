@@ -12,9 +12,11 @@ export function adaptUserProfile(profile: UserProfileA | UserProfileB | null): U
   let favoritePrograms: string[] = [];
   
   if (Array.isArray(profile.favorite_programs)) {
+    // Ensure all favorite programs are strings
     favoritePrograms = profile.favorite_programs.map(id => String(id));
   }
   
+  // Handle missing required properties in UserProfileB by providing defaults
   return {
     id: profile.id,
     name: profile.name || '',
@@ -40,51 +42,37 @@ export function adaptUserProfile(profile: UserProfileA | UserProfileB | null): U
 }
 
 /**
- * Adapts a transaction to ensure it has both date and created_at properties
- * as well as type and transaction_type properties
+ * Helper function to get profile picture with proper type handling
  */
-export function adaptTransaction(transaction: any): any {
-  if (!transaction) return null;
-  
+export function getProfilePicture(profile: UserProfileA | UserProfileB | null): string {
+  if (!profile) return '';
+  return profile.profile_picture || '';
+}
+
+/**
+ * Helper function to normalize favorite programs to string array
+ */
+export function normalizeFavoritePrograms(favorites: string[] | number[] | undefined): string[] {
+  if (!favorites) return [];
+  return favorites.map(id => String(id));
+}
+
+/**
+ * Convert profile for use with API functions that expect UserProfileB
+ */
+export function adaptToUserProfileB(profile: UserProfileA): UserProfileB {
   return {
-    ...transaction,
-    date: transaction.date || transaction.created_at,
-    created_at: transaction.created_at || transaction.date,
-    type: transaction.type || transaction.transaction_type,
-    transaction_type: transaction.transaction_type || transaction.type
+    ...profile,
+    // Convert favorite_programs to number[] if needed
+    favorite_programs: profile.favorite_programs?.map(id => {
+      const numId = Number(id);
+      return isNaN(numId) ? 0 : numId;
+    }),
+    // Add properties that might be expected in UserProfileB
+    profilePicture: profile.profile_picture,
+    walletBalance: profile.wallet_balance,
+    favoriteExperts: profile.favorite_experts,
+    enrolledCourses: profile.enrolled_courses,
+    referralCode: profile.referral_code
   };
-}
-
-/**
- * Adapts a review to ensure it has both expert_id and expertId properties
- */
-export function adaptReview(review: any): any {
-  if (!review) return null;
-  
-  return {
-    ...review,
-    expert_id: review.expert_id || review.expertId,
-    expertId: review.expertId || review.expert_id
-  };
-}
-
-/**
- * Converts expert ID strings to numbers when needed
- */
-export function normalizeExpertId(expertId: string | number): number {
-  return typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
-}
-
-/**
- * Checks if a value is of type UserProfileA
- */
-export function isUserProfileA(profile: any): profile is UserProfileA {
-  return profile && typeof profile.email === 'string';
-}
-
-/**
- * Checks if a value is of type UserProfileB
- */
-export function isUserProfileB(profile: any): profile is UserProfileB {
-  return profile && profile.email !== undefined;
 }

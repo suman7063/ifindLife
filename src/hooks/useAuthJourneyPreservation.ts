@@ -1,91 +1,69 @@
 
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { toast } from 'sonner';
 
-export interface PendingAction {
-  type: string;
-  id: string;
-  path: string;
-  scrollPosition: number;
-}
+export type PendingAction = {
+  type: 'favorite' | 'book' | 'call' | string;
+  id?: string | number;
+  data?: any;
+};
 
 export const useAuthJourneyPreservation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Check for and execute pending actions when authentication state changes
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+
+  // Check for pending actions in sessionStorage
   useEffect(() => {
-    if (isAuthenticated && !isLoading) {
+    if (!isLoading) {
       const pendingActionStr = sessionStorage.getItem('pendingAction');
+      const returnPath = sessionStorage.getItem('returnPath');
+      
       if (pendingActionStr) {
         try {
-          const pendingAction: PendingAction = JSON.parse(pendingActionStr);
-          console.log("AuthJourneyPreservation - Found pending action:", pendingAction);
-          
-          // Clear the pending action to prevent repeated processing
-          sessionStorage.removeItem('pendingAction');
-          
-          // Navigate to the stored path if different from current
-          if (pendingAction.path && window.location.pathname !== pendingAction.path) {
-            console.log("AuthJourneyPreservation - Navigating to stored path:", pendingAction.path);
-            navigate(pendingAction.path);
-          }
-          
-          // Use setTimeout to ensure navigation is complete before executing other actions
-          setTimeout(() => {
-            // Restore scroll position
-            window.scrollTo(0, pendingAction.scrollPosition);
-            
-            // Execute the stored action based on type
-            executeStoredAction(pendingAction);
-          }, 500);
+          const action = JSON.parse(pendingActionStr);
+          setPendingAction(action);
         } catch (error) {
-          console.error('Error processing pending action:', error);
+          console.error('Error parsing pending action:', error);
           sessionStorage.removeItem('pendingAction');
         }
       }
+      
+      // If authenticated and has return path, navigate there
+      if (isAuthenticated && returnPath && location.pathname.includes('/login')) {
+        sessionStorage.removeItem('returnPath');
+        navigate(returnPath, { replace: true });
+      }
     }
-  }, [isAuthenticated, isLoading, navigate]);
-  
-  const executeStoredAction = (action: PendingAction) => {
-    switch (action.type) {
-      case 'favorite':
-        // The favorite action will be handled in the component after navigation
-        toast.info('Now you can add this to your favorites!');
-        break;
-      case 'call':
-        // Handle call action
-        setTimeout(() => {
-          navigate(`/experts/${action.id}?call=true`);
-        }, 100);
-        break;
-      case 'book':
-        // Handle booking action
-        setTimeout(() => {
-          navigate(`/experts/${action.id}?book=true`);
-        }, 100);
-        break;
-      default:
-        console.log('Unknown action type:', action.type);
-    }
+  }, [isAuthenticated, isLoading, navigate, location]);
+
+  // Save current journey state before redirecting to login
+  const saveJourneyAndRedirect = (action: PendingAction) => {
+    sessionStorage.setItem('pendingAction', JSON.stringify(action));
+    sessionStorage.setItem('returnPath', location.pathname);
+    navigate('/user-login', { replace: false });
   };
-  
-  // Function to store a pending action
-  const storePendingAction = (actionType: string, itemId: string, path = window.location.pathname) => {
-    const pendingAction: PendingAction = {
-      type: actionType,
-      id: itemId,
-      path: path,
-      scrollPosition: window.scrollY
-    };
-    sessionStorage.setItem('pendingAction', JSON.stringify(pendingAction));
+
+  // Execute pending action after authentication
+  const executePendingAction = () => {
+    if (!pendingAction) return false;
+    
+    // Logic to execute different types of actions
+    const pendingActionData = pendingAction;
+    
+    // Clear the pending action
+    sessionStorage.removeItem('pendingAction');
+    setPendingAction(null);
+    
+    return pendingActionData;
   };
-  
+
   return {
-    storePendingAction
+    pendingAction,
+    saveJourneyAndRedirect,
+    executePendingAction,
+    hasPendingAction: !!pendingAction
   };
 };
-
-export default useAuthJourneyPreservation;
