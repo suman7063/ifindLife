@@ -56,7 +56,7 @@ const UserLoginContent: React.FC = () => {
       }
       
       // Note: Use 'user' role to explicitly indicate this is a user login
-      const success = await login(email, password, 'user');
+      const success = await login(email, password);
       
       if (success) {
         toast.success("Login successful!");

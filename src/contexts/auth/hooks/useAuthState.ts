@@ -1,79 +1,102 @@
 
-import { useState, useEffect } from 'react';
-import { AuthState, initialAuthState, UserRole } from '../types';
-import { UserProfile } from '@/types/supabase/user';
-import { ExpertProfile } from '@/types/database/unified';
+import { useState, useEffect, useCallback } from 'react';
+import { AuthState, initialAuthState } from '../types';
+import { supabase } from '@/lib/supabase';
+import { Session, User } from '@supabase/supabase-js';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
 
-  // Fetch user data based on the authenticated user
-  const fetchUserData = async (userId: string, role: UserRole) => {
+  // Fetch user data including profiles
+  const fetchUserData = useCallback(async (user: User) => {
     try {
-      // This would fetch user profile data from the database
-      console.log(`Fetching ${role} data for user ${userId}`);
+      setAuthState(prev => ({ ...prev, loading: true, isLoading: true }));
       
-      // Simulate fetching user data
-      if (role === 'user') {
-        const userProfile = {
-          id: userId,
-          name: 'Test User',
-          email: 'test@example.com',
-          phone: '+123456789',
-          country: 'US',
-          city: 'New York',
-          currency: 'USD',
-          profile_picture: null,
-          wallet_balance: 100,
-          created_at: new Date().toISOString(),
-          favorite_experts: []
-        } as UserProfile;
+      // Fetch user profile
+      const { data: userProfile, error: userError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
         
-        setAuthState(prev => ({
-          ...prev,
-          profile: userProfile,
-          userProfile,
-          walletBalance: userProfile.wallet_balance
-        }));
+      // Fetch expert profile
+      const { data: expertProfile, error: expertError } = await supabase
+        .from('expert_profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      // Determine role based on profiles
+      let role = userProfile ? 'user' : null;
+      if (expertProfile) {
+        role = expertProfile.is_admin ? 'admin' : 'expert';
       }
       
-      if (role === 'expert') {
-        const expertProfile = {
-          id: userId,
-          name: 'Test Expert',
-          email: 'expert@example.com',
-          phone: '+123456789',
-          country: 'US',
-          city: 'San Francisco',
-          status: 'online'
-        } as ExpertProfile;
-        
-        setAuthState(prev => ({
-          ...prev,
-          expertProfile
-        }));
+      // Determine session type
+      let sessionType = 'none';
+      if (userProfile && expertProfile) {
+        sessionType = 'dual';
+      } else if (userProfile) {
+        sessionType = 'user';
+      } else if (expertProfile) {
+        sessionType = 'expert';
       }
       
+      // Update state
+      setAuthState(prev => ({
+        ...prev,
+        user: { 
+          id: user.id, 
+          email: user.email,
+          role
+        },
+        profile: userProfile,
+        userProfile: userProfile,
+        expertProfile: expertProfile,
+        role,
+        sessionType,
+        isAuthenticated: true,
+        loading: false,
+        isLoading: false,
+        walletBalance: userProfile?.wallet_balance || 0
+      }));
     } catch (error) {
       console.error('Error fetching user data:', error);
+      setAuthState(prev => ({
+        ...prev,
+        loading: false,
+        isLoading: false,
+        error: error as Error
+      }));
     }
-  };
-
-  // Check for existing session on mount
+  }, []);
+  
+  // Initialize auth state with session
   useEffect(() => {
-    const checkSession = async () => {
+    const initializeAuth = async () => {
       try {
-        // Simulate session check
-        setTimeout(() => {
-          setAuthState(prev => ({
-            ...prev,
+        // Get current session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setAuthState(prev => ({ 
+            ...prev, 
+            session,
+            loading: true,
+            isLoading: true
+          }));
+          
+          await fetchUserData(session.user);
+        } else {
+          setAuthState(prev => ({ 
+            ...prev, 
             loading: false,
             isLoading: false
           }));
-        }, 1000);
+        }
       } catch (error) {
-        console.error('Session check error:', error);
-        setAuthState(prev => ({
+        console.error('Error initializing auth:', error);
+        setAuthState(prev => ({ 
           ...prev,
           loading: false,
           isLoading: false,
@@ -82,12 +105,24 @@ export const useAuthState = () => {
       }
     };
     
-    checkSession();
-  }, []);
-
-  return {
-    authState,
-    setAuthState,
-    fetchUserData
-  };
+    initializeAuth();
+    
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state changed:', event, session);
+      
+      if (event === 'SIGNED_IN' && session?.user) {
+        await fetchUserData(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        setAuthState(initialAuthState);
+      }
+    });
+    
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [fetchUserData]);
+  
+  return { authState, setAuthState, fetchUserData };
 };

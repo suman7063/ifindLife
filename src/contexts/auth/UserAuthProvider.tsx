@@ -62,9 +62,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const userAuthValue = {
     currentUser: auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: auth.login || auth.signIn, 
-    signup: auth.signup || auth.signUp,
-    logout: auth.logout || auth.signOut,
+    login: auth.login, 
+    signup: auth.signup,
+    logout: auth.logout,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,

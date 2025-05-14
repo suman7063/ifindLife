@@ -1,42 +1,49 @@
 
 export interface MessagingUser {
-  id: string;  // Changed from string | number to just string for compatibility
+  id: string;
   name: string;
-  avatar?: string;
-  isOnline?: boolean;
-  lastSeen?: string;
-  role?: string;
+  profile_picture?: string;
 }
 
 export interface Message {
   id: string;
-  content: string;
   senderId: string;
   receiverId: string;
+  content: string;
   timestamp: string;
-  isRead: boolean;
+  read: boolean;
 }
 
 export interface Conversation {
-  id: string;
-  userId: string;  // ID of the other user in the conversation
-  userName: string;  // Name of the other user
-  userAvatar?: string;  // Avatar of the other user
-  lastMessage: {
-    content: string;
-    timestamp: string;
-    isRead: boolean;
-    senderId: string;
-  };
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  lastMessage?: Message;
   lastMessageTime: string;
   unreadCount: number;
-  otherUser: MessagingUser;  // Added to fix type error
 }
 
 export interface MessagingState {
   conversations: Conversation[];
-  activeConversation: Conversation | null;
+  currentConversation: Conversation | null;
   messages: Message[];
+  users: MessagingUser[];
   loading: boolean;
-  error: string | null;
+  messageLoading: boolean;
+  error: Error | null;
 }
+
+export interface MessagingFunctions {
+  sendMessage: (content: string) => Promise<boolean>;
+  selectConversation: (userId: string) => void;
+  markAsRead: (messageId: string) => void;
+  refreshMessages: () => Promise<void>;
+  refreshConversations: () => Promise<void>;
+  fetchMessages: (userId: string) => Promise<void>;
+  fetchConversations: () => Promise<void>;
+}
+
+export type MessagingContextType = MessagingState & MessagingFunctions & {
+  conversationsLoading: boolean;
+  messagesLoading: boolean;
+};

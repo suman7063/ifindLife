@@ -1,7 +1,6 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { UserAuthContextType } from '@/contexts/auth/UserAuthContext';
-import { createContext, useContext } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 
 // Define the ExpertAuthContextType interface for backward compatibility

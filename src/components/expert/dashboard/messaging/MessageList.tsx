@@ -1,9 +1,10 @@
+
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2 } from 'lucide-react';
-import { useUserAuth } from '@/hooks/user-auth';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useMessaging } from '@/hooks/messaging';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -13,22 +14,24 @@ interface MessageListProps {
 }
 
 const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selectedUserId }) => {
-  const { currentUser } = useUserAuth();
+  const { expertProfile } = useAuth();
+  
+  // Use the messaging hook with proper typing
   const { 
     conversations, 
-    fetchConversations, 
-    conversationsLoading: loading 
-  } = useMessaging(currentUser ? {
-    id: currentUser.id,
-    name: currentUser.name || 'Anonymous User',
-    profile_picture: currentUser.profile_picture
+    refreshConversations, 
+    loading 
+  } = useMessaging(expertProfile ? {
+    id: expertProfile?.id?.toString() || '',
+    name: expertProfile?.name || 'Expert',
+    profile_picture: expertProfile?.profile_picture
   } : null);
 
   useEffect(() => {
-    if (currentUser) {
-      fetchConversations();
+    if (expertProfile) {
+      refreshConversations();
     }
-  }, [currentUser, fetchConversations]);
+  }, [expertProfile, refreshConversations]);
 
   // Function to get initials for the avatar
   const getInitials = (name: string) => {

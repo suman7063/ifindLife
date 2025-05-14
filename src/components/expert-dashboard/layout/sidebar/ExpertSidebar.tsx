@@ -20,22 +20,27 @@ import { useMessaging } from '@/hooks/messaging';
 const ExpertSidebar: React.FC = () => {
   const navigate = useNavigate();
   const { logout, expertProfile } = useAuth();
-  // Pass the expertProfile directly, now the types are compatible
-  const { conversations, fetchConversations } = useMessaging(expertProfile);
   const [unreadCount, setUnreadCount] = useState(0);
+  
+  // Use the messaging hook with proper typing
+  const messaging = useMessaging(expertProfile ? {
+    id: expertProfile.id.toString(),
+    name: expertProfile.name || 'Expert',
+    profile_picture: expertProfile.profile_picture
+  } : null);
 
   // Calculate unread message count
   useEffect(() => {
     if (expertProfile?.id) {
-      fetchConversations();
+      messaging.refreshConversations();
     }
-  }, [expertProfile?.id, fetchConversations]);
+  }, [expertProfile?.id, messaging]);
 
   useEffect(() => {
     // Calculate total unread messages
-    const totalUnread = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
+    const totalUnread = messaging.conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
     setUnreadCount(totalUnread);
-  }, [conversations]);
+  }, [messaging.conversations]);
 
   const handleLogout = async () => {
     try {

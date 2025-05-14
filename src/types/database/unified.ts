@@ -1,24 +1,25 @@
 
-// Unified database type definitions
+// Unified database types for both user and expert profiles
+
 export interface UserProfile {
   id: string;
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  country: string | null;
-  city: string | null;
-  currency: string;
-  profile_picture: string | null;
-  wallet_balance: number;
-  created_at: string | null;
-  referred_by?: string | null;
-  referral_code?: string | null;
-  referral_link?: string | null;
+  email: string;
+  name?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  profile_picture?: string;
+  wallet_balance?: number;
+  created_at?: string;
+  updated_at?: string;
+  referred_by?: string;
+  referral_code?: string;
+  referral_link?: string;
   
-  // Additional fields for backward compatibility
-  favorite_experts: string[];
-  favorite_programs?: number[];
-  enrolled_courses?: any[];
+  // Optional nested data for joined queries
+  favorite_experts?: number[];
+  favorite_programs?: string[];
+  enrolled_courses?: string[];
   reviews?: any[];
   reports?: any[];
   transactions?: any[];
@@ -26,85 +27,37 @@ export interface UserProfile {
 }
 
 export interface ExpertProfile {
-  id: string;
-  auth_id?: string | null;
+  id: string | number;
+  user_id: string;
   name: string;
   email: string;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  country?: string | null;
-  specialization?: string | null;
-  experience?: string | null;
-  bio?: string | null;
-  certificate_urls?: string[];
-  profile_picture?: string | null;
-  selected_services?: number[];
-  average_rating?: number;
-  reviews_count?: number;
-  verified?: boolean;
-  created_at?: string | null;
-  status?: string;
+  title?: string;
+  about?: string;
+  biography?: string;
+  specialties?: string[];
+  languages?: string[];
+  education?: any[];
+  certifications?: any[];
+  experience?: any[];
+  phone?: string;
+  country?: string;
+  city?: string;
+  address?: string;
+  postal_code?: string;
+  status?: 'online' | 'offline' | 'busy';
+  rating?: number;
+  review_count?: number;
+  price_per_minute?: number;
+  profile_picture?: string;
+  cover_image?: string;
+  created_at?: string;
+  updated_at?: string;
+  is_verified?: boolean;
+  is_admin?: boolean;
+  availability?: any[];
+  services?: any[];
+  
+  // Additional properties
+  account_status?: 'pending' | 'approved' | 'rejected' | 'suspended';
+  featured?: boolean;
 }
-
-export interface TimeSlot {
-  id: string;
-  availability_id: string;
-  start_time: string;
-  end_time: string;
-  day_of_week?: number | null;
-  specific_date?: string | null;
-  is_booked?: boolean;
-  created_at?: string | null;
-}
-
-export interface Availability {
-  id: string;
-  expert_id: string;
-  start_date: string;
-  end_date: string;
-  availability_type: string;
-  created_at?: string | null;
-  time_slots?: TimeSlot[];
-}
-
-export interface Appointment {
-  id: string;
-  user_id: string;
-  expert_id: string;
-  duration: number;
-  service_id?: number | null;
-  uid?: number | null;
-  created_at: string;
-  start_time?: string | null;
-  end_time?: string | null;
-  time_slot_id?: string | null;
-  expert_name: string;
-  appointment_date: string;
-  status: string;
-  notes?: string | null;
-  channel_name?: string | null;
-  token?: string | null;
-  google_calendar_event_id?: string | null;
-  user_calendar_event_id?: string | null;
-}
-
-export interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  content: string;
-  read?: boolean;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
-
-export type MessagingUser = {
-  id: string | number;
-  name: string;
-  avatar?: string;
-  isOnline?: boolean;
-  lastSeen?: string;
-  role?: string;
-};
