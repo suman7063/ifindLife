@@ -1,55 +1,50 @@
 
 import { useState, useEffect } from 'react';
-import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
+import { useExpertAuth } from '@/hooks/expert-auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const useDashboardState = () => {
-  const { expert, isAuthenticated, loading, logout } = useExpertAuth();
-  const [activeTab, setActiveTab] = useState<string>('overview');
-  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+  const {
+    currentExpert, 
+    loading, 
+    initialized,
+    error,
+    logout
+  } = useExpertAuth();
+  
   const navigate = useNavigate();
-
-  // Rename expert to currentExpert for backwards compatibility
-  const currentExpert = expert;
-
+  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  
+  // Utility function to safely access the expert property
+  const expert = currentExpert;
+  
+  // Clear any cached redirects
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    // Clear local storage redirect data that might be causing issues
+    localStorage.removeItem('redirectAfterLogin');
+  }, []);
+  
+  // If not authenticated, redirect to login
+  useEffect(() => {
+    if (!loading && !currentExpert && !redirectAttempted) {
+      console.log('Not authenticated, redirecting to expert login');
+      setRedirectAttempted(true);
+      toast.error('Please log in to access the expert dashboard');
       navigate('/expert-login');
     }
-  }, [isAuthenticated, loading, navigate]);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      const success = await logout();
-      
-      if (success) {
-        toast.success('Successfully logged out');
-        navigate('/');
-      } else {
-        toast.error('Failed to log out');
-      }
-    } catch (error) {
-      console.error('Error logging out:', error);
-      toast.error('An error occurred while logging out');
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
+  }, [currentExpert, loading, redirectAttempted, navigate]);
 
   return {
-    currentExpert, // Add this for backward compatibility
-    expert,
-    loading,
-    isAuthenticated,
-    activeTab,
-    isLoggingOut,
-    handleTabChange,
-    handleLogout
+    expert, // Make sure this property is available
+    currentExpert,
+    isLoading: loading,
+    isAuthenticated: !!currentExpert,
+    error,
+    initialized,
+    redirectAttempted,
+    logout
   };
 };
+
+export default useDashboardState;

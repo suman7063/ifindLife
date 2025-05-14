@@ -9,6 +9,7 @@ import { UserProfile } from '@/types/database/unified';
 type ComponentWithProfile<P = {}> = React.ComponentType<P & { 
   user?: UserProfileA | UserProfileB | UserProfile | null;
   currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+  profile?: UserProfileA | UserProfileB | UserProfile | null;
 }>;
 
 /**
@@ -17,6 +18,7 @@ type ComponentWithProfile<P = {}> = React.ComponentType<P & {
 export const withProfileTypeAdapter = <P extends { 
   user?: UserProfileA | UserProfileB | UserProfile | null;
   currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+  profile?: UserProfileA | UserProfileB | UserProfile | null;
 }>(
   Component: ComponentWithProfile<P>,
   targetType: 'A' | 'B' = 'A'
@@ -31,10 +33,10 @@ export const withProfileTypeAdapter = <P extends {
     
     // Adapt user property if it exists
     if (props.user) {
-      if (targetType === 'A' && 'profilePicture' in props.user) {
+      if (targetType === 'A' && ('profilePicture' in props.user || 'favorite_programs' in props.user && Array.isArray(props.user.favorite_programs) && props.user.favorite_programs.length > 0 && typeof props.user.favorite_programs[0] === 'number')) {
         // Convert from B to A
         newProps.user = toTypeA(props.user as UserProfileB) as any;
-      } else if (targetType === 'B' && 'favorite_experts' in props.user) {
+      } else if (targetType === 'B' && ('favorite_experts' in props.user || 'favorite_programs' in props.user && Array.isArray(props.user.favorite_programs) && props.user.favorite_programs.length > 0 && typeof props.user.favorite_programs[0] === 'string')) {
         // Convert from A to B
         newProps.user = toTypeB(props.user as UserProfileA) as any;
       }
@@ -42,12 +44,23 @@ export const withProfileTypeAdapter = <P extends {
     
     // Adapt currentUser property if it exists
     if (props.currentUser) {
-      if (targetType === 'A' && 'profilePicture' in props.currentUser) {
+      if (targetType === 'A' && ('profilePicture' in props.currentUser || 'favorite_programs' in props.currentUser && Array.isArray(props.currentUser.favorite_programs) && props.currentUser.favorite_programs.length > 0 && typeof props.currentUser.favorite_programs[0] === 'number')) {
         // Convert from B to A
         newProps.currentUser = toTypeA(props.currentUser as UserProfileB) as any;
-      } else if (targetType === 'B' && 'favorite_experts' in props.currentUser) {
+      } else if (targetType === 'B' && ('favorite_experts' in props.currentUser || 'favorite_programs' in props.currentUser && Array.isArray(props.currentUser.favorite_programs) && props.currentUser.favorite_programs.length > 0 && typeof props.currentUser.favorite_programs[0] === 'string')) {
         // Convert from A to B
         newProps.currentUser = toTypeB(props.currentUser as UserProfileA) as any;
+      }
+    }
+    
+    // Adapt profile property if it exists
+    if (props.profile) {
+      if (targetType === 'A' && ('profilePicture' in props.profile || 'favorite_programs' in props.profile && Array.isArray(props.profile.favorite_programs) && props.profile.favorite_programs.length > 0 && typeof props.profile.favorite_programs[0] === 'number')) {
+        // Convert from B to A
+        newProps.profile = toTypeA(props.profile as UserProfileB) as any;
+      } else if (targetType === 'B' && ('favorite_experts' in props.profile || 'favorite_programs' in props.profile && Array.isArray(props.profile.favorite_programs) && props.profile.favorite_programs.length > 0 && typeof props.profile.favorite_programs[0] === 'string')) {
+        // Convert from A to B
+        newProps.profile = toTypeB(props.profile as UserProfileA) as any;
       }
     }
     
@@ -65,6 +78,7 @@ export const withProfileTypeAdapter = <P extends {
 export const withTypeB = <P extends { 
   user?: UserProfileA | UserProfileB | UserProfile | null;
   currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+  profile?: UserProfileA | UserProfileB | UserProfile | null;
 }>(Component: ComponentWithProfile<P>) => {
   return withProfileTypeAdapter(Component, 'B');
 };
@@ -75,6 +89,7 @@ export const withTypeB = <P extends {
 export const withTypeA = <P extends { 
   user?: UserProfileA | UserProfileB | UserProfile | null;
   currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+  profile?: UserProfileA | UserProfileB | UserProfile | null;
 }>(Component: ComponentWithProfile<P>) => {
   return withProfileTypeAdapter(Component, 'A');
 };

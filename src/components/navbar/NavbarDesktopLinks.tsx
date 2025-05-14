@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import NavbarUserMenu from './NavbarUserMenu';
 import NavbarExpertMenu from './NavbarExpertMenu';
-import { UserProfile } from '@/types/supabase/user';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -13,7 +12,7 @@ import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown } from './menu';
 
 interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
-  currentUser: UserProfile | null;
+  currentUser: any; // Accept any profile type
   hasExpertProfile: boolean;
   userLogout: () => Promise<boolean>;
   expertLogout: () => Promise<boolean>;

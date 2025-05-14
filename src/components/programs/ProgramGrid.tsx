@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Program } from '@/types/programs';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/user';
+import { withProgramUserTypeA } from './ProgramUserAdapter';
 import ProgramCard from './ProgramCard';
 
 interface ProgramGridProps {
@@ -30,4 +31,4 @@ const ProgramGrid: React.FC<ProgramGridProps> = ({
   );
 };
 
-export default ProgramGrid;
+export default withProgramUserTypeA(ProgramGrid);

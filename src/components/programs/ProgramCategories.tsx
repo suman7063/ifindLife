@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Program } from '@/types/programs';
-import ProgramCard from './ProgramCard';
+import { UserProfile } from '@/types/supabase/user';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { UserProfile } from '@/types/supabase';
+import { withProgramUserTypeA } from './ProgramUserAdapter';
+import ProgramCard from './ProgramCard';
 
 interface ProgramCategoriesProps {
   programsByCategory: Record<string, Program[]>;
@@ -55,4 +56,4 @@ const ProgramCategories: React.FC<ProgramCategoriesProps> = ({
   );
 };
 
-export default ProgramCategories;
+export default withProgramUserTypeA(ProgramCategories);

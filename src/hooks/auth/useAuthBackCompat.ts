@@ -28,9 +28,9 @@ export const useAuthBackCompat = () => {
     const adaptedUpdates = 'favorite_programs' in updates && Array.isArray(updates.favorite_programs)
       ? {
           ...updates,
-          favorite_programs: updates.favorite_programs.map(id => 
-            typeof id === 'string' ? Number(id) : id
-          )
+          favorite_programs: typeof updates.favorite_programs[0] === 'string'
+            ? (updates.favorite_programs as string[]).map(id => Number(id))
+            : updates.favorite_programs
         }
       : updates;
       
@@ -41,9 +41,9 @@ export const useAuthBackCompat = () => {
   const userAuth = {
     currentUser: adaptedProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: auth.login,
-    signup: auth.signup,
-    logout: auth.logout,
+    login: auth.login || auth.signIn,
+    signup: auth.signup || auth.signUp,
+    logout: auth.logout || auth.signOut,
     loading: auth.isLoading,
     authLoading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,

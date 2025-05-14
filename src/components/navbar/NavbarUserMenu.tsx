@@ -12,11 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { UserProfile } from '@/types/supabase';
 import { toast } from 'sonner';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
 interface NavbarUserMenuProps {
-  currentUser: UserProfile | null;
+  currentUser: any; // Accept any profile type
   onLogout: () => Promise<boolean>;
   isLoggingOut: boolean;
 }
@@ -29,6 +29,11 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const { toTypeA } = useProfileTypeAdapter();
+  
+  // Convert profile to type A if needed for consistent access
+  const adaptedUser = currentUser ? 
+    ('favorite_experts' in currentUser ? currentUser : toTypeA(currentUser)) : null;
   
   const getInitials = (name: string) => {
     return name
@@ -38,6 +43,13 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
       .toUpperCase()
       .substring(0, 2);
   };
+
+  // Get profile picture from either format
+  const profilePicture = adaptedUser?.profile_picture || 
+    adaptedUser?.profilePicture || '';
+  
+  // Get name from either format
+  const userName = adaptedUser?.name || '';
 
   const handleLogout = async () => {
     if (isLoggingOut || parentIsLoggingOut) return;
@@ -68,8 +80,8 @@ const NavbarUserMenu: React.FC<NavbarUserMenuProps> = ({
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={currentUser?.profilePicture || ''} alt={currentUser?.name || 'User'} />
-            <AvatarFallback>{currentUser?.name ? getInitials(currentUser.name) : 'U'}</AvatarFallback>
+            <AvatarImage src={profilePicture} alt={userName || 'User'} />
+            <AvatarFallback>{userName ? getInitials(userName) : 'U'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

@@ -3,10 +3,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Program, ProgramType } from '@/types/programs';
 import { from } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase';
-import ProgramCard from './ProgramCard';
+import { UserProfile } from '@/types/supabase/user';
 import { Loader2 } from 'lucide-react';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { withProgramUserTypeA } from './ProgramUserAdapter';
+import ProgramCard from './ProgramCard';
 
 interface ProgramsListingComponentProps {
   programType: ProgramType;
@@ -83,4 +84,4 @@ const ProgramsListingComponent: React.FC<ProgramsListingComponentProps> = ({
   );
 };
 
-export default ProgramsListingComponent;
+export default withProgramUserTypeA(ProgramsListingComponent);

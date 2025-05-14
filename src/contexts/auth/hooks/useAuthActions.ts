@@ -1,181 +1,147 @@
 
-import { useState, useCallback } from 'react';
-import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
-import { toast } from 'sonner';
+import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { processReferralCode } from '@/utils/referralUtils';
+import { AuthState, UpdateProfileParams } from '../types';
 
-export const useAuthActions = (fetchProfile: () => Promise<void>) => {
-  const [actionLoading, setActionLoading] = useState(false);
-  const { login: authLogin, signup: authSignup } = useSupabaseAuth();
-
-  // Check if expert is logged in
-  const isExpertLoggedIn = async (): Promise<boolean> => {
-    const { data } = await supabase.auth.getSession();
-    if (!data.session) return false;
-    
-    // Check if there's a profile in the 'expert_accounts' table for this user
+export const useAuthActions = (authState: AuthState, setAuthState: React.Dispatch<React.SetStateAction<AuthState>>) => {
+  // Sign in user
+  const signIn = useCallback(async (email: string, password: string, loginAs?: 'user' | 'expert') => {
     try {
-      const { data: expertData, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', data.session.user.id)
-        .single();
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
-      return !!expertData && !error;
+      if (error) {
+        console.error('Sign in error:', error.message);
+        return false;
+      }
+      
+      return true;
     } catch (error) {
-      console.error('Error checking expert login status:', error);
+      console.error('Sign in error:', error);
       return false;
     }
-  };
-
-  // Clean auth state before login
-  const cleanAuthState = async (): Promise<void> => {
-    console.log('User Auth: Cleaning auth state before login');
-    
+  }, []);
+  
+  // Sign up user
+  const signUp = useCallback(async (email: string, password: string, userData?: any, referralCode?: string) => {
     try {
-      // Sign out from Supabase to clear current session
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // Clear any Supabase-related items from localStorage
-      const storageKeys = Object.keys(localStorage);
-      const supabaseKeys = storageKeys.filter(key => key.startsWith('sb-'));
-      
-      supabaseKeys.forEach(key => {
-        localStorage.removeItem(key);
-      });
-      
-      console.log('User Auth: Auth state cleaned successfully');
-    } catch (e) {
-      console.warn('Error cleaning auth state:', e);
-    }
-  };
-
-  const login = async (email: string, password: string): Promise<boolean> => {
-    try {
-      setActionLoading(true);
-      console.log("Attempting login in context with:", email);
-      
-      // Check if expert is logged in
-      const expertLoggedIn = await isExpertLoggedIn();
-      
-      if (expertLoggedIn) {
-        console.log('User auth: Expert is already logged in, cannot proceed with user login');
-        toast.error('You are currently logged in as an expert. Please log out before logging in as a user.');
-        return false;
-      }
-      
-      // Clean auth state before login
-      await cleanAuthState();
-      
-      const success = await authLogin(email, password);
-      console.log("Login in context result:", success);
-      
-      if (success) {
-        try {
-          // Fetch user profile after successful login
-          await fetchProfile();
-          console.log("Profile fetched successfully after login");
-          toast.success('Login successful');
-          
-          // Redirect to user dashboard
-          window.location.href = '/user-dashboard';
-          return true;
-        } catch (error) {
-          console.error("Profile fetch error:", error);
-          toast.error('Login successful but profile load failed. Please try again.');
-          return false;
-        }
-      } else {
-        toast.error('Login failed. Please check your credentials.');
-        return false;
-      }
-    } catch (error: any) {
-      console.error("Login error in context:", error);
-      toast.error(error.message || 'Login failed. Please try again.');
-      return false;
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const signup = async (userData: {
-    name: string;
-    email: string;
-    phone: string;
-    password: string;
-    country: string;
-    city?: string;
-    referralCode?: string;
-  }): Promise<boolean> => {
-    console.log("Context: Attempting signup with:", userData.email);
-    setActionLoading(true);
-    
-    try {
-      // Clean auth state before signup
-      await cleanAuthState();
-      
-      const success = await authSignup(userData);
-      console.log("Context: Signup result:", success);
-      
-      // If signup was successful and there's a referral code, process it
-      if (success && userData.referralCode) {
-        try {
-          const { data } = await supabase.auth.getUser();
-          if (data?.user) {
-            await processReferralCode(userData.referralCode, data.user.id);
+      // Create auth user
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            ...userData,
+            referral_code: referralCode
           }
-        } catch (error) {
-          console.error("Error processing referral:", error);
         }
-      }
-      
-      if (success) {
-        toast.success('Account created successfully! Please check your email to confirm your account');
-      } else {
-        toast.error('Registration failed. Please try again.');
-      }
-      
-      return success;
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      toast.error(error.message || 'Registration failed. Please try again.');
-      return false;
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const logout = useCallback(async (): Promise<boolean> => {
-    setActionLoading(true);
-    try {
-      console.log("Starting user logout process...");
-      
-      // First, sign out from Supabase (local scope to not affect other tabs)
-      const { error } = await supabase.auth.signOut({
-        scope: 'local'
       });
       
       if (error) {
-        console.error("Error during Supabase logout:", error);
-        toast.error('An error occurred during logout: ' + error.message);
+        console.error('Sign up error:', error.message);
         return false;
       }
       
-      console.log("Supabase signOut completed");
-      toast.success('Successfully logged out');
-      
-      // Always redirect to homepage after logout
-      window.location.href = '/';
       return true;
-    } catch (error: any) {
-      console.error("Logout error:", error);
-      toast.error('An error occurred during logout: ' + (error.message || 'Unknown error'));
+    } catch (error) {
+      console.error('Sign up error:', error);
       return false;
-    } finally {
-      setActionLoading(false);
     }
   }, []);
-
-  return { login, signup, logout, actionLoading, isExpertLoggedIn };
+  
+  // Sign out user
+  const signOut = useCallback(async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error.message);
+        return false;
+      }
+      
+      // Reset auth state
+      setAuthState(prev => ({
+        ...prev,
+        user: null,
+        session: null,
+        profile: null,
+        userProfile: null,
+        expertProfile: null,
+        isAuthenticated: false,
+        role: null,
+        sessionType: 'none',
+        walletBalance: 0
+      }));
+      
+      return true;
+    } catch (error) {
+      console.error('Sign out error:', error);
+      return false;
+    }
+  }, [setAuthState]);
+  
+  // Update user profile
+  const updateProfile = useCallback(async (updates: UpdateProfileParams) => {
+    try {
+      if (!authState.user?.id) {
+        console.error('Update profile error: No user ID');
+        return false;
+      }
+      
+      // Update the user profile in the database
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', authState.user.id);
+      
+      if (error) {
+        console.error('Update profile error:', error.message);
+        return false;
+      }
+      
+      // Update the auth state
+      setAuthState(prev => ({
+        ...prev,
+        profile: prev.profile ? { ...prev.profile, ...updates } : null,
+        userProfile: prev.profile ? { ...prev.profile, ...updates } : null,
+        walletBalance: updates.wallet_balance !== undefined ? updates.wallet_balance : prev.walletBalance
+      }));
+      
+      return true;
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return false;
+    }
+  }, [authState.user, setAuthState]);
+  
+  // Clear session
+  const clearSession = useCallback(() => {
+    setAuthState(prev => ({
+      ...prev,
+      user: null,
+      session: null,
+      profile: null,
+      userProfile: null,
+      expertProfile: null,
+      isAuthenticated: false,
+      role: null,
+      sessionType: 'none',
+      walletBalance: 0
+    }));
+  }, [setAuthState]);
+  
+  // Create aliases for backward compatibility
+  const login = signIn;
+  const signup = signUp;
+  const logout = signOut;
+  
+  return {
+    signIn,
+    signUp,
+    signOut,
+    login,
+    signup,
+    logout,
+    updateProfile,
+    clearSession
+  };
 };

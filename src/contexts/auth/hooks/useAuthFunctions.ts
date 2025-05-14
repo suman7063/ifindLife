@@ -1,8 +1,9 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AuthState, initialAuthState, UserRole } from '@/contexts/auth/types';
+import { AuthState, initialAuthState, UserRole, UpdateProfileParams } from '@/contexts/auth/types';
 import { toast } from '@/hooks/use-toast';
+import { UserProfile } from '@/types/supabase/user';
 
 export const useAuthFunctions = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
@@ -30,7 +31,7 @@ export const useAuthFunctions = () => {
         .from('users')
         .select('*')
         .eq('id', session.user.id)
-        .single();
+        .maybeSingle();
         
       if (userError && userError.code !== 'PGRST116') {
         console.error('Error fetching user data:', userError.message);
@@ -41,7 +42,7 @@ export const useAuthFunctions = () => {
         .from('experts')
         .select('*')
         .eq('auth_id', session.user.id)
-        .single();
+        .maybeSingle();
         
       if (expertError && expertError.code !== 'PGRST116') {
         console.error('Error fetching expert data:', expertError.message);
@@ -56,6 +57,30 @@ export const useAuthFunctions = () => {
         role = 'expert';
       }
       
+      // Create a full user profile with default values for required fields
+      const profile: UserProfile = userData ? {
+        id: userData.id,
+        name: userData.name || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        country: userData.country || '',
+        city: userData.city || '',
+        currency: userData.currency || 'USD',
+        profile_picture: userData.profile_picture || '',
+        wallet_balance: userData.wallet_balance || 0,
+        created_at: userData.created_at || '',
+        referred_by: userData.referred_by || null,
+        referral_code: userData.referral_code || '',
+        referral_link: userData.referral_link || '',
+        favorite_experts: userData.favorite_experts || [],
+        favorite_programs: userData.favorite_programs || [],
+        enrolled_courses: userData.enrolled_courses || [],
+        reviews: userData.reviews || [],
+        reports: userData.reports || [],
+        transactions: userData.transactions || [],
+        referrals: userData.referrals || []
+      } : null;
+      
       // Update auth state
       setAuthState({
         user: {
@@ -64,8 +89,8 @@ export const useAuthFunctions = () => {
           role
         },
         session,
-        profile: userData,
-        userProfile: userData,
+        profile,
+        userProfile: profile,
         expertProfile: expertData,
         loading: false,
         isLoading: false,
@@ -73,7 +98,7 @@ export const useAuthFunctions = () => {
         isAuthenticated: true,
         role,
         sessionType: userData && expertData ? 'dual' : userData ? 'user' : expertData ? 'expert' : 'none',
-        walletBalance: userData?.wallet_balance || 0
+        walletBalance: profile?.wallet_balance || 0
       });
     } catch (error) {
       console.error('Error initializing auth:', error);

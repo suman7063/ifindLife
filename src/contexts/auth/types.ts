@@ -1,7 +1,9 @@
 
 // Import the UserProfile from the supabase/user module
 import { UserProfile } from '@/types/supabase/user';
+import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
 import { ExpertProfile } from '@/types/database/unified';
+
 export type { UserProfile };
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
@@ -11,6 +13,21 @@ export interface AuthUser {
   email: string | null;
   role: UserRole;
   profile?: UserProfile | null;
+}
+
+export interface UpdateProfileParams {
+  id?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  city?: string;
+  country?: string;
+  profile_picture?: string;
+  wallet_balance?: number;
+  currency?: string;
+  favorite_experts?: string[];
+  favorite_programs?: string[] | number[];
+  [key: string]: any; // Allow any additional properties for flexibility
 }
 
 export interface AuthContextType {
@@ -38,7 +55,7 @@ export interface AuthContextType {
   logout: () => Promise<boolean>;
   
   // Profile management
-  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateProfile: (updates: UpdateProfileParams) => Promise<boolean>;
   updateProfilePicture?: (file: File) => Promise<string | null>;
   updatePassword?: (password: string) => Promise<boolean>;
   

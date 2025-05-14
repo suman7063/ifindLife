@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Program } from '@/types/programs';
@@ -8,12 +7,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import EnrollmentDialog from './EnrollmentDialog';
 import { useDialog } from '@/hooks/useDialog';
-import ProgramImageHeader from './dialog/ProgramImageHeader';
-import ProgramMetadata from './dialog/ProgramMetadata';
-import ProgramDescription from './dialog/ProgramDescription';
-import ProgramPriceFooter from './dialog/ProgramPriceFooter';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { withProgramUserTypeA } from './ProgramUserAdapter';
 
 interface ProgramDetailDialogProps {
   program: Program;
@@ -115,4 +109,5 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
   );
 };
 
-export default ProgramDetailDialog;
+// Export with adapter to handle different user profile types
+export default withProgramUserTypeA(ProgramDetailDialog);

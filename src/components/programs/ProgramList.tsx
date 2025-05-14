@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Program } from '@/types/programs';
-import ProgramCard from './ProgramCard';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/supabase/user';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Heart } from 'lucide-react';
+import { withProgramUserTypeA } from './ProgramUserAdapter';
+import ProgramCard from './ProgramCard';
 
 interface ProgramListProps {
   programs: Program[];
@@ -75,4 +76,4 @@ const ProgramList: React.FC<ProgramListProps> = ({
   );
 };
 
-export default ProgramList;
+export default withProgramUserTypeA(ProgramList);
