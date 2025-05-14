@@ -16,6 +16,7 @@ export interface AuthContextType extends AuthState {
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
   updatePassword: (newPassword: string) => Promise<boolean>;
+  updateProfilePicture: (file: File) => Promise<string | null>;
   
   // Favorites methods
   addToFavorites?: (expertId: string | number) => Promise<boolean>;
@@ -50,6 +51,7 @@ const AuthContext = createContext<AuthContextType>({
   updateProfile: async () => false,
   updateExpertProfile: async () => false,
   updatePassword: async () => false,
+  updateProfilePicture: async () => null,
   refreshUserData: async () => {}
 });
 
@@ -64,6 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     updateProfile, 
     updateExpertProfile,
     updatePassword,
+    updateProfilePicture,
     addToFavorites,
     removeFromFavorites,
     rechargeWallet,
@@ -88,8 +91,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     signup,
     updateProfile,
-    updateExpertProfile, 
-    updatePassword,
+    updateExpertProfile,
+    updatePassword, 
+    updateProfilePicture,
     addToFavorites,
     removeFromFavorites,
     rechargeWallet,

@@ -22,6 +22,15 @@ export interface UserProfile {
   referred_by?: string;
   referral_code?: string;
   referral_link?: string;
+  
+  // Related collections that may be joined
+  favorite_experts?: string[];
+  favorite_programs?: number[];
+  enrolled_courses?: any[];
+  transactions?: any[];
+  reviews?: any[];
+  reports?: any[];
+  referrals?: any[];
 }
 
 /**

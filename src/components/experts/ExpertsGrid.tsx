@@ -6,9 +6,14 @@ import { ExpertCardData } from '../expert-card/types';
 interface ExpertsGridProps {
   experts?: ExpertCardData[];
   loading?: boolean;
+  onResetFilters?: () => void; // Add this prop to match usage in Experts.tsx
 }
 
-const ExpertsGrid: React.FC<ExpertsGridProps> = ({ experts = [], loading = false }) => {
+const ExpertsGrid: React.FC<ExpertsGridProps> = ({ 
+  experts = [], 
+  loading = false,
+  onResetFilters // Not used in this component but accepted for compatibility
+}) => {
   const navigate = useNavigate();
 
   // Default experts if none provided

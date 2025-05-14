@@ -1,10 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ServiceCategory } from './types';
+import { ServiceCategory, ServiceCategoryUI, DbService, mapDbServiceToUi } from './types';
 import { toast } from 'sonner';
 import { categoryData as defaultServiceData } from '@/data/initialAdminData';
-import { safeDataTransform, dbTypeConverter } from '@/utils/supabaseUtils';
 
 // Define default icon and color for services that don't have them
 const DEFAULT_ICON = '🧠';
@@ -67,19 +66,25 @@ export function useServicesData(
           }
           
           if (data && data.length > 0) {
-            // Map Supabase data to the expected format, providing defaults for missing fields
-            const formattedServices = safeDataTransform(data, (service) => ({
-              // Use string icons (emoji) instead of React Elements
-              icon: service.icon || DEFAULT_ICON, // Default icon if none in database
-              title: service.name,
-              description: service.description || '',
-              href: `/services/${service.name.toLowerCase().replace(/\s+/g, '-')}`,
-              color: service.color || DEFAULT_COLOR // Default color if none in database
-            }));
+            // Map Supabase data to the expected format with type safety
+            const dbServices = data as DbService[];
+            const formattedServices = dbServices.map(mapDbServiceToUi);
             
-            console.log('Formatted services:', formattedServices);
-            setServices(formattedServices);
-            updateCallback(formattedServices);
+            // Convert to ServiceCategory[] for compatibility
+            const serviceCategories = formattedServices.map(service => ({
+              id: service.id || service.title,
+              name: service.name || service.title,
+              title: service.title,
+              description: service.description,
+              href: service.href,
+              icon: service.icon,
+              color: service.color,
+              items: []
+            })) as ServiceCategory[];
+            
+            console.log('Formatted services:', serviceCategories);
+            setServices(serviceCategories);
+            updateCallback(serviceCategories);
             setFetchAttempts(0); // Reset attempts on success
           } else {
             console.log('No services found in Supabase, using default data');
