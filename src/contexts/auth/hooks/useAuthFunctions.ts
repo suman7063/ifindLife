@@ -7,6 +7,7 @@ import { updateUserProfile, updateProfilePicture as updateUserProfilePicture } f
 import { updateExpertProfile } from '@/utils/expertProfileUtils';
 import { normalizeId } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
+import { userRepository, expertRepository } from '@/repositories';
 
 export const useAuthFunctions = (
   authState: AuthState,
@@ -433,7 +434,7 @@ const determineSessionType = (
 const determineRole = (
   userProfile: UserProfile | null,
   expertProfile: ExpertProfile | null
-): UserRole => {
+): 'user' | 'expert' | 'admin' | null => {
   // If there's an approved expert profile, user has expert role
   if (expertProfile && expertProfile.status === 'approved') {
     return 'expert';

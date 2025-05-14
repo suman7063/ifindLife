@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState } from '@/contexts/auth/types';
@@ -390,7 +389,7 @@ export function useAuthFunctions(
         .from('user_expert_services')
         .select('*')
         .eq('user_id', authState.user.id)
-        .eq('expert_id', expertId)
+        .eq('expert_id', typeof expertId === 'number' ? expertId.toString() : expertId)
         .eq('status', 'completed')
         .limit(1);
         

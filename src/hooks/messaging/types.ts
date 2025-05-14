@@ -1,69 +1,78 @@
 
-export interface Message {
-  id: string;
-  content: string;
-  sender_id: string;
-  receiver_id: string;
-  created_at: string;
-  read: boolean;
-}
+import { Message as AppointmentMessage } from '@/types/appointments';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
+// User who can participate in messaging
 export interface MessagingUser {
   id: string;
-  name: string | undefined;
+  name?: string;
+  email?: string;
   profile_picture?: string;
-  online?: boolean;
-  last_seen?: string;
+  role?: string;
+  type?: 'expert' | 'user' | 'admin';
 }
 
+// Conversation represents a thread between two users
 export interface Conversation {
-  user: MessagingUser;
-  lastMessage?: Message;
+  id: string;
+  otherUser: MessagingUser;
+  lastMessage?: {
+    content: string;
+    timestamp: string;
+    isRead: boolean;
+    senderId: string;
+  };
   unreadCount: number;
-  // Backward compatibility properties
-  userId?: string;
-  userName?: string;
-  userAvatar?: string;
-  lastMessageTime?: string;
 }
 
-export interface MessagingRepository {
-  getMessages: (userId: string, otherUserId: string) => Promise<Message[]>;
-  sendMessage: (senderId: string, receiverId: string, content: string) => Promise<Message | null>;
-  markAsRead: (messageId: string) => Promise<boolean>;
-  getConversations: (userId: string) => Promise<Conversation[]>;
-  getUserById: (userId: string) => Promise<MessagingUser | null>;
-  searchUsers: (query: string) => Promise<MessagingUser[]>;
-}
-
-export interface UseMessagingReturn {
-  sendMessage: (recipientId: string, message: string) => Promise<boolean>;
-  getMessages: (recipientId: string) => Promise<Message[]>;
-  markMessageAsRead: (messageId: string) => Promise<boolean>;
-  conversations: Conversation[];
-  loadingConversations: boolean;
-  refreshConversations: () => Promise<void>;
-  searchUsers: (query: string) => Promise<MessagingUser[]>;
-  // Added for backward compatibility
-  messages: Message[];
-  fetchMessages: (partnerId: string) => Promise<Message[]>;
-  fetchConversations: () => Promise<Conversation[]>;
-  messagesLoading: boolean;
-  conversationsLoading: boolean;
-  loading: boolean;
-}
-
+// Return type for the useMessages hook
 export interface UseMessagesReturn {
-  messages: Message[];
+  messages: AppointmentMessage[];
   messagesLoading: boolean;
-  fetchMessages: (partnerId: string) => Promise<Message[]>;
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  fetchMessages: (conversationId: string) => Promise<AppointmentMessage[]>;
+  setMessages: React.Dispatch<React.SetStateAction<AppointmentMessage[]>>;
   error: string | null;
 }
 
+// Return type for the useConversations hook
 export interface UseConversationsReturn {
   conversations: Conversation[];
   conversationsLoading: boolean;
   fetchConversations: () => Promise<Conversation[]>;
   error: string | null;
+}
+
+// Return type for the main useMessaging hook
+export interface UseMessagingReturn {
+  messages: AppointmentMessage[];
+  conversations: Conversation[];
+  loading: boolean;
+  messagesLoading: boolean;
+  conversationsLoading: boolean;
+  error: string | null;
+  fetchMessages: (userId: string) => Promise<AppointmentMessage[]>;
+  fetchConversations: () => Promise<Conversation[]>;
+  sendMessage: (receiverId: string, content: string) => Promise<boolean>;
+  markMessageAsRead: (messageId: string) => Promise<boolean>;
+  refreshConversations: () => Promise<void>;
+  searchUsers: (query: string) => Promise<MessagingUser[]>;
+  getMessages: (userId: string) => Promise<AppointmentMessage[]>;
+}
+
+// API response format for messages
+export interface MessageApiResponse {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+}
+
+export interface MessageRepositoryInterface {
+  getMessages: (userId1: string, userId2: string) => Promise<AppointmentMessage[]>;
+  sendMessage: (senderId: string, receiverId: string, content: string) => Promise<AppointmentMessage | null>;
+  markAsRead: (messageId: string) => Promise<boolean>;
+  searchUsers: (query: string) => Promise<MessagingUser[]>;
+  getConversations: (userId: string) => Promise<Conversation[]>;
 }

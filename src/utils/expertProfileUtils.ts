@@ -1,49 +1,49 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/database/unified';
+import { ExpertProfile } from '@/types/database/unified';
 
 /**
- * Update user profile data
+ * Update expert profile data
  */
-export const updateUserProfile = async (
-  userId: string, 
-  updates: Partial<UserProfile>
+export const updateExpertProfile = async (
+  expertId: string, 
+  updates: Partial<ExpertProfile>
 ): Promise<boolean> => {
   try {
-    // First check which table has the user's profile
-    const { data: userData } = await supabase
-      .from('users')
+    // First check which table has the expert's profile
+    const { data: expertData } = await supabase
+      .from('expert_accounts')
       .select('id')
-      .eq('id', userId)
+      .eq('id', expertId)
       .maybeSingle();
 
-    const table = userData ? 'users' : 'profiles';
+    const table = expertData ? 'expert_accounts' : 'experts';
     
     // Update the appropriate table
     const { error } = await supabase
       .from(table)
       .update(updates)
-      .eq('id', userId);
+      .eq('id', expertId);
       
     return !error;
   } catch (error) {
-    console.error('Error updating user profile:', error);
+    console.error('Error updating expert profile:', error);
     return false;
   }
 };
 
 /**
- * Update user profile picture
+ * Update expert profile picture
  */
-export const updateProfilePicture = async (
-  userId: string,
+export const updateExpertProfilePicture = async (
+  expertId: string,
   file: File
 ): Promise<string | null> => {
   try {
     // Generate a unique filename
     const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `profile_pictures/${fileName}`;
+    const fileName = `${expertId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `expert_pictures/${fileName}`;
     
     // Upload file to storage
     const { error: uploadError } = await supabase.storage
@@ -59,14 +59,14 @@ export const updateProfilePicture = async (
       
     const publicUrl = urlData.publicUrl;
     
-    // Update profile with new picture URL
-    const success = await updateUserProfile(userId, {
+    // Update expert profile with new picture URL
+    const success = await updateExpertProfile(expertId, {
       profile_picture: publicUrl
     });
     
     return success ? publicUrl : null;
   } catch (error) {
-    console.error('Error updating profile picture:', error);
+    console.error('Error updating expert profile picture:', error);
     return null;
   }
 };

@@ -1,12 +1,11 @@
 
 /**
- * Unified type definitions for database entities
- * These types directly match the database schema column names (snake_case)
+ * Unified type definitions for database schemas
+ * This file contains all the type definitions for the database schemas
+ * to ensure consistent typing across the application
  */
 
-/**
- * UserProfile type that maps directly to the 'users' table schema
- */
+// User profile type definition
 export interface UserProfile {
   id: string;
   name?: string;
@@ -14,28 +13,16 @@ export interface UserProfile {
   phone?: string;
   country?: string;
   city?: string;
+  wallet_balance?: number;
   currency?: string;
   profile_picture?: string;
-  wallet_balance?: number;
-  created_at?: string;
-  updated_at?: string;
-  referred_by?: string;
   referral_code?: string;
+  created_at?: string;
+  referred_by?: string;
   referral_link?: string;
-  
-  // Related collections that may be joined
-  favorite_experts?: string[];
-  favorite_programs?: number[];
-  enrolled_courses?: any[];
-  transactions?: any[];
-  reviews?: any[];
-  reports?: any[];
-  referrals?: any[];
 }
 
-/**
- * ExpertProfile type that maps directly to the 'expert_accounts' table schema
- */
+// Expert profile type definition
 export interface ExpertProfile {
   id: string;
   auth_id?: string;
@@ -49,45 +36,92 @@ export interface ExpertProfile {
   specialization?: string;
   experience?: string;
   bio?: string;
-  profile_picture?: string;
-  certificate_urls?: string[];
   selected_services?: number[];
-  status?: 'pending' | 'approved' | 'disapproved';
-  created_at?: string;
-  updated_at?: string;
+  certificate_urls?: string[];
+  profile_picture?: string;
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
+  status?: string;
+  created_at?: string;
 }
 
-/**
- * Utility functions for consistent property access and conversion
- */
-
-/**
- * Get profile picture with consistent property access
- */
-export function getProfilePicture(profile: UserProfile | ExpertProfile): string | undefined {
-  return profile.profile_picture;
+// Program type definition
+export interface Program {
+  id: number;
+  title: string;
+  description: string;
+  duration: string;
+  sessions: number;
+  price: number;
+  image: string;
+  category: string;
+  programType: string;
+  enrollments?: number;
+  created_at?: string;
 }
 
-/**
- * Get wallet balance with type safety
- */
-export function getWalletBalance(profile: UserProfile): number {
-  return profile.wallet_balance || 0;
+// Service type definition
+export interface Service {
+  id: number;
+  name: string;
+  description?: string;
+  rate_usd: number;
+  rate_inr: number;
 }
 
-/**
- * Type guard to check if a profile is an ExpertProfile
- */
-export function isExpertProfile(profile: UserProfile | ExpertProfile): profile is ExpertProfile {
-  return 'auth_id' in profile;
+// Appointment type definition
+export interface Appointment {
+  id: string;
+  user_id: string;
+  expert_id: string;
+  duration: number;
+  service_id?: number;
+  uid?: number;
+  start_time?: string;
+  end_time?: string;
+  time_slot_id?: string;
+  expert_name: string;
+  appointment_date: string;
+  status: string;
+  notes?: string;
+  channel_name?: string;
+  token?: string;
+  google_calendar_event_id?: string;
+  user_calendar_event_id?: string;
+  created_at: string;
 }
 
-/**
- * Type guard to check if a profile is a UserProfile
- */
-export function isUserProfile(profile: UserProfile | ExpertProfile): profile is UserProfile {
-  return 'referral_code' in profile || 'wallet_balance' in profile;
+// Review type definition
+export interface Review {
+  id: string;
+  user_id?: string;
+  expert_id: number;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+}
+
+// Testimonial type definition
+export interface Testimonial {
+  id: string;
+  name: string;
+  location: string;
+  text: string;
+  rating: number;
+  date: string;
+  image_url: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Referral Settings type definition
+export interface ReferralSettings {
+  id: string;
+  referrer_reward: number;
+  referred_reward: number;
+  active: boolean;
+  description?: string;
+  updated_at?: string;
 }

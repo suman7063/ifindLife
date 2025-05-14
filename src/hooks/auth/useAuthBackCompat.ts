@@ -1,55 +1,53 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserProfile } from '@/types/user';
+import { UserAuthContextType } from '@/contexts/auth/UserAuthContext';
 
-// This hook provides backward compatibility for components
-// that depend on the old authentication hooks
+/**
+ * Hook to provide backward compatibility with old user and expert auth hooks
+ */
 export const useAuthBackCompat = () => {
   const auth = useAuth();
   
-  // Map new unified auth to user auth format
-  const userAuth = {
-    currentUser: auth.userProfile,
+  // Create compatibility layer for userAuth
+  const userAuth: UserAuthContextType = {
+    currentUser: auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: (email: string, password: string) => auth.login(email, password, 'user'),
+    login: auth.login,
+    signup: auth.signup || (async () => false),
     logout: auth.logout,
-    signup: (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string) => 
-      auth.signup(email, password, userData, referralCode),
     authLoading: auth.isLoading,
     loading: auth.isLoading,
-    profileNotFound: auth.isAuthenticated && auth.role === 'user' && !auth.userProfile,
+    profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateProfile,
-    updatePassword: auth.updatePassword,
-    addToFavorites: auth.addToFavorites,
-    removeFromFavorites: auth.removeFromFavorites,
-    rechargeWallet: auth.rechargeWallet,
-    addReview: auth.addReview,
-    reportExpert: auth.reportExpert,
-    hasTakenServiceFrom: auth.hasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink,
-    getReferralLink: auth.getReferralLink,
+    updatePassword: auth.updatePassword || (async () => false),
+    addToFavorites: auth.addToFavorites || (async () => false),
+    removeFromFavorites: auth.removeFromFavorites || (async () => false),
+    rechargeWallet: auth.rechargeWallet || (async () => false),
+    addReview: auth.addReview || (async () => false),
+    reportExpert: auth.reportExpert || (async () => false),
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture
+    updateProfilePicture: auth.updateProfilePicture || (async () => null)
   };
   
-  // Map new unified auth to expert auth format
+  // Create compatibility layer for expertAuth
   const expertAuth = {
     currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    login: (email: string, password: string) => auth.login(email, password, 'expert'),
+    login: auth.login,
     logout: auth.logout,
-    register: (data: any) => auth.signup(data.email, data.password, data),
-    updateProfile: auth.updateExpertProfile,
-    initialized: !auth.isLoading,
     loading: auth.isLoading,
-    error: null,
-    hasUserAccount: async () => {
-      return auth.role === 'user' || auth.sessionType === 'dual';
-    }
+    updateExpert: auth.updateExpertProfile,
+    updateProfilePicture: auth.updateProfilePicture,
+    user: auth.user
   };
   
   return {
     userAuth,
-    expertAuth
+    expertAuth,
+    // Also expose the original auth context
+    auth
   };
 };
