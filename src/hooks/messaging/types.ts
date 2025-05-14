@@ -10,7 +10,7 @@ export interface Message {
 
 export interface MessagingUser {
   id: string;
-  name: string;
+  name: string | undefined;
   profile_picture?: string;
   online?: boolean;
   last_seen?: string;

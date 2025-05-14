@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,12 +12,19 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { MessagingUser } from '@/hooks/messaging/types';
 
 interface UserMessagesProps {
   user: UserProfile | null;
 }
 
 const UserMessages: React.FC<UserMessagesProps> = ({ user }) => {
+  const messaging = useMessaging(user ? {
+    id: user.id,
+    name: user.name || 'User',
+    profile_picture: user.profile_picture
+  } : null);
+  
   const { 
     messages, 
     conversations, 
@@ -27,7 +33,7 @@ const UserMessages: React.FC<UserMessagesProps> = ({ user }) => {
     sendMessage,
     messagesLoading,
     conversationsLoading 
-  } = useMessaging(user);
+  } = messaging;
 
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
@@ -140,7 +146,7 @@ const UserMessages: React.FC<UserMessagesProps> = ({ user }) => {
                             </p>
                           </div>
                           <p className="text-sm text-muted-foreground truncate">
-                            {conversation.lastMessage}
+                            {conversation.lastMessage?.content || ''}
                           </p>
                         </div>
                         {conversation.unreadCount > 0 && (

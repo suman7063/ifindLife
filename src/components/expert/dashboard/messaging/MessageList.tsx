@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +18,11 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
     conversations, 
     fetchConversations, 
     conversationsLoading: loading 
-  } = useMessaging(currentUser);
+  } = useMessaging(currentUser ? {
+    id: currentUser.id,
+    name: currentUser.name || 'Anonymous User',
+    profile_picture: currentUser.profile_picture
+  } : null);
 
   useEffect(() => {
     if (currentUser) {
@@ -81,7 +84,7 @@ const MessageList: React.FC<MessageListProps> = ({ onSelectConversation, selecte
               </div>
               
               <div className="flex justify-between items-center mt-1">
-                <p className="text-sm text-muted-foreground truncate">{conversation.lastMessage}</p>
+                <p className="text-sm text-muted-foreground truncate">{conversation.lastMessage?.content || ''}</p>
                 {conversation.unreadCount > 0 && (
                   <Badge variant="default" className="ml-2 h-5 min-w-5 px-1.5">
                     {conversation.unreadCount}

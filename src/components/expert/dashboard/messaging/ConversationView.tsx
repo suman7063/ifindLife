@@ -9,6 +9,7 @@ import { useUserAuth } from '@/hooks/user-auth';
 import { useMessaging } from '@/hooks/messaging';
 import { format } from 'date-fns';
 import { Message } from '@/types/appointments';
+import { MessagingUser } from '@/hooks/messaging/types';
 
 interface ConversationViewProps {
   userId: string;
@@ -17,13 +18,19 @@ interface ConversationViewProps {
 
 const ConversationView: React.FC<ConversationViewProps> = ({ userId, userName }) => {
   const { currentUser } = useUserAuth();
+  const messaging = useMessaging(currentUser ? {
+    id: currentUser.id,
+    name: currentUser.name || 'Anonymous User',
+    profile_picture: currentUser.profile_picture
+  } : null);
+  
   const { 
     messages, 
     fetchMessages, 
     sendMessage, 
     messagesLoading: loading,
     loading: sending
-  } = useMessaging(currentUser);
+  } = messaging;
   const [newMessage, setNewMessage] = useState('');
   const [userProfile, setUserProfile] = useState<any>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);

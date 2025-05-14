@@ -1,10 +1,11 @@
-
 import { useState } from 'react';
-import { AuthState, UserRole } from '../types';
+import { AuthState } from '../types';
 import { supabase } from '@/lib/supabase';
-import { UserProfile, ExpertProfile } from '@/types/database/unified';
-import { userRepository } from '@/repositories/UserRepository';
-import { expertRepository } from '@/repositories/ExpertRepository';
+import { UserProfile } from '@/types/supabase/user';
+import { ExpertProfile } from '@/hooks/expert-auth/types';
+import { updateUserProfile, updateProfilePicture as updateUserProfilePicture } from '@/utils/userProfileUtils';
+import { updateExpertProfile } from '@/utils/expertProfileUtils';
+import { normalizeId } from '@/utils/supabaseUtils';
 import { toast } from 'sonner';
 
 export const useAuthFunctions = (
@@ -186,48 +187,32 @@ export const useAuthFunctions = (
   };
   
   /**
-   * Update user profile
+   * Update user profile data
    */
   const updateProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
-    if (!authState.user) {
-      toast.error('You must be logged in to update your profile');
-      return false;
-    }
+    if (!authState.user?.id) return false;
     
     try {
-      setIsLoading(true);
+      const success = await updateUserProfile(authState.user.id, updates);
       
-      const userId = authState.user.id;
-      const success = await userRepository.updateUser(userId, updates);
-      
-      if (!success) {
-        toast.error('Failed to update profile');
-        return false;
+      if (success) {
+        // Update local state
+        setAuthState(prev => ({
+          ...prev,
+          profile: prev.profile ? { ...prev.profile, ...updates } : null,
+          userProfile: prev.userProfile ? { ...prev.userProfile, ...updates } : null,
+        }));
       }
       
-      // Refresh user data
-      const updatedProfile = await userRepository.getUser(userId);
-      
-      setAuthState({
-        ...authState,
-        userProfile: updatedProfile,
-        profile: updatedProfile,
-        walletBalance: updatedProfile?.wallet_balance || 0
-      });
-      
-      toast.success('Profile updated successfully');
-      return true;
+      return success;
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('An error occurred while updating your profile');
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
   
   /**
-   * Update expert profile
+   * Update expert profile data
    */
   const updateExpertProfile = async (updates: Partial<ExpertProfile>): Promise<boolean> => {
     if (!authState.user || !authState.expertProfile) {
@@ -293,73 +278,107 @@ export const useAuthFunctions = (
     }
   };
   
-  // Helper function to determine session type
-  const determineSessionType = (
-    userProfile: UserProfile | null,
-    expertProfile: ExpertProfile | null
-  ): 'none' | 'user' | 'expert' | 'dual' => {
-    if (userProfile && expertProfile) return 'dual';
-    if (userProfile) return 'user';
-    if (expertProfile) return 'expert';
-    return 'none';
+  /**
+   * Upload and update profile picture
+   */
+  const updateProfilePicture = async (file: File): Promise<string | null> => {
+    if (!authState.user?.id) return null;
+    
+    try {
+      const imageUrl = await updateUserProfilePicture(authState.user.id, file);
+      
+      if (imageUrl) {
+        // Update local state
+        setAuthState(prev => ({
+          ...prev,
+          profile: prev.profile ? { ...prev.profile, profile_picture: imageUrl } : null,
+          userProfile: prev.userProfile ? { ...prev.userProfile, profile_picture: imageUrl } : null,
+        }));
+      }
+      
+      return imageUrl;
+    } catch (error) {
+      console.error('Error updating profile picture:', error);
+      return null;
+    }
   };
   
-  // Helper function to determine user role
-  const determineRole = (
-    userProfile: UserProfile | null,
-    expertProfile: ExpertProfile | null
-  ): UserRole => {
-    // If there's an approved expert profile, user has expert role
-    if (expertProfile && expertProfile.status === 'approved') {
-      return 'expert';
-    }
-    
-    // Check for admin role (would need to be extended with proper check)
-    // For now, simplify and just check for user profile
-    if (userProfile) {
-      return 'user';
-    }
-    
-    // No valid profile
-    return null;
-  };
-  
-  // TODO: Implement these methods
+  /**
+   * Add user to favorites
+   */
   const addToFavorites = async (expertId: string | number): Promise<boolean> => {
     // Implementation
     return false;
   };
   
+  /**
+   * Remove user from favorites
+   */
   const removeFromFavorites = async (expertId: string | number): Promise<boolean> => {
     // Implementation
     return false;
   };
   
+  /**
+   * Recharge user wallet
+   */
   const rechargeWallet = async (amount: number): Promise<boolean> => {
     // Implementation
     return false;
   };
   
+  /**
+   * Add review to expert
+   */
   const addReview = async (reviewData: any): Promise<boolean> => {
     // Implementation
     return false;
   };
   
+  /**
+   * Report expert
+   */
   const reportExpert = async (reportData: any): Promise<boolean> => {
     // Implementation
     return false;
   };
   
+  /**
+   * Check if user has taken service from an expert
+   */
   const hasTakenServiceFrom = async (expertId: string | number): Promise<boolean> => {
-    // Implementation
-    return false;
+    if (!authState.user?.id) return false;
+    
+    try {
+      const { data, error } = await supabase
+        .from('user_expert_services')
+        .select('id')
+        .eq('user_id', authState.user.id)
+        .eq('expert_id', String(expertId))
+        .limit(1);
+        
+      if (error) {
+        throw error;
+      }
+      
+      return data && data.length > 0;
+    } catch (error) {
+      console.error('Error checking service history:', error);
+      return false;
+    }
   };
   
+  /**
+   * Get expert share link
+   */
   const getExpertShareLink = (expertId: string | number): string => {
     // Implementation
     return `/experts/${expertId}`;
   };
   
+  /**
+   * Get referral link
+   */
   const getReferralLink = (): string | null => {
     // Implementation
     return null;
@@ -387,6 +406,7 @@ export const useAuthFunctions = (
     updateProfile,
     updateExpertProfile,
     updatePassword,
+    updateProfilePicture,
     addToFavorites,
     removeFromFavorites,
     rechargeWallet,
@@ -396,4 +416,35 @@ export const useAuthFunctions = (
     getExpertShareLink,
     getReferralLink
   };
+};
+
+// Helper function to determine session type
+const determineSessionType = (
+  userProfile: UserProfile | null,
+  expertProfile: ExpertProfile | null
+): 'none' | 'user' | 'expert' | 'dual' => {
+  if (userProfile && expertProfile) return 'dual';
+  if (userProfile) return 'user';
+  if (expertProfile) return 'expert';
+  return 'none';
+};
+
+// Helper function to determine user role
+const determineRole = (
+  userProfile: UserProfile | null,
+  expertProfile: ExpertProfile | null
+): UserRole => {
+  // If there's an approved expert profile, user has expert role
+  if (expertProfile && expertProfile.status === 'approved') {
+    return 'expert';
+  }
+  
+  // Check for admin role (would need to be extended with proper check)
+  // For now, simplify and just check for user profile
+  if (userProfile) {
+    return 'user';
+  }
+  
+  // No valid profile
+  return null;
 };

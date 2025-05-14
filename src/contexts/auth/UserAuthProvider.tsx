@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
@@ -80,7 +79,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile, // Use updateProfile instead of updateUserProfile
+    updateProfile: auth.updateProfile, 
     updatePassword: auth.updatePassword || (async () => false),
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),
@@ -91,7 +90,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: async () => null
+    updateProfilePicture: auth.updateProfilePicture || (async () => null)
   };
 
   return (
