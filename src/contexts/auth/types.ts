@@ -1,49 +1,10 @@
 
-
 import { User, Session } from '@supabase/supabase-js';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
-
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  avatar_url?: string;
-  currency?: string;
-  wallet_balance?: number;
-  referral_code?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface ExpertProfile {
-  id: number | string;
-  name: string;
-  email: string;
-  auth_id?: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  profile_picture?: string;
-  certificate_urls?: string[];
-  selected_services?: number[];
-  status?: 'pending' | 'approved' | 'disapproved';
-  created_at?: string;
-  updated_at?: string;
-  average_rating?: number;
-  reviews_count?: number;
-  verified?: boolean;
-}
 
 export interface AuthState {
   isLoading: boolean;
@@ -72,8 +33,3 @@ export const initialAuthState: AuthState = {
   sessionType: 'none',
   walletBalance: 0,
 };
-
-// Create a utility function to convert snake_case IDs to camelCase or vice versa
-export function normalizeId(id: string | number): string {
-  return String(id);
-}

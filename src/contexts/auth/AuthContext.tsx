@@ -9,9 +9,12 @@ import { useProfileFunctions } from './hooks/useProfileFunctions';
 import { useExpertInteractions } from './hooks/useExpertInteractions';
 
 // Import types
-import { AuthState, UserProfile, UserRole, ExpertProfile, AuthStatus } from './types';
+import { AuthState, UserRole, AuthStatus } from './types';
 import { supabase } from '@/lib/supabase';
 import { normalizeId } from '@/utils/supabaseUtils';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { userRepository } from '@/repositories/UserRepository';
+import { expertRepository } from '@/repositories/ExpertRepository';
 
 // Define AuthContextType interface
 export interface AuthContextType {
@@ -63,7 +66,7 @@ export interface AuthContextType {
   // Favorites
   addToFavorites: (expertId: number) => Promise<boolean>;
   removeFromFavorites: (expertId: number) => Promise<boolean>;
-};
+}
 
 // Create the context with default values
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -180,12 +183,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updatedData.id = String(updatedData.id);
       }
       
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update(updatedData)
-        .eq('auth_id', user.id);
-        
-      return { error: error ? new Error(error.message) : null };
+      // Use repository instead of direct database call
+      const success = await expertRepository.updateExpert(String(updates.id), updatedData);
+      return { error: success ? null : new Error('Failed to update expert profile') };
     } catch (error: any) {
       return { error };
     }
@@ -195,14 +195,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!user) return null;
       
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', user.id)
-        .maybeSingle();
-        
-      if (error) throw error;
-      return data as ExpertProfile;
+      // Use repository instead of direct database call
+      return await expertRepository.getExpertByAuthId(user.id);
     } catch (error) {
       console.error('Error fetching expert profile:', error);
       return null;

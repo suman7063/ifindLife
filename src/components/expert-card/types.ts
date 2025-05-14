@@ -10,12 +10,14 @@ export interface ExpertCardProps {
   waitTime?: string;
   online?: boolean;
   isFavorite?: boolean;
+  onFavoriteToggle?: (id: string | number) => void;
+  consultations?: number; // Added to support TopTherapistsSection
 }
 
 export interface ExpertImageProps {
   imageUrl?: string;
-  name: string;
   online?: boolean;
+  verified?: boolean;
 }
 
 export interface ExpertInfoProps {
