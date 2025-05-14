@@ -17,10 +17,14 @@ export interface MessagingUser {
 }
 
 export interface Conversation {
-  id: string;
   user: MessagingUser;
   lastMessage?: Message;
   unreadCount: number;
+  // Backward compatibility properties
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  lastMessageTime?: string;
 }
 
 export interface MessagingRepository {
@@ -40,20 +44,26 @@ export interface UseMessagingReturn {
   loadingConversations: boolean;
   refreshConversations: () => Promise<void>;
   searchUsers: (query: string) => Promise<MessagingUser[]>;
+  // Added for backward compatibility
+  messages: Message[];
+  fetchMessages: (partnerId: string) => Promise<Message[]>;
+  fetchConversations: () => Promise<Conversation[]>;
+  messagesLoading: boolean;
+  conversationsLoading: boolean;
+  loading: boolean;
 }
 
 export interface UseMessagesReturn {
   messages: Message[];
-  loading: boolean;
+  messagesLoading: boolean;
+  fetchMessages: (partnerId: string) => Promise<Message[]>;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
   error: string | null;
-  sendMessage: (content: string) => Promise<boolean>;
-  markAsRead: (messageId: string) => Promise<boolean>;
-  refresh: () => Promise<void>;
 }
 
 export interface UseConversationsReturn {
   conversations: Conversation[];
-  loading: boolean;
+  conversationsLoading: boolean;
+  fetchConversations: () => Promise<Conversation[]>;
   error: string | null;
-  refresh: () => Promise<void>;
 }

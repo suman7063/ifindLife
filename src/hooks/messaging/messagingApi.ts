@@ -1,5 +1,5 @@
-import { MessagingRepository, MessagingUser, Conversation } from './types';
-import { Message } from '@/types/appointments';
+
+import { MessagingRepository, MessagingUser, Conversation, Message } from './types';
 import { normalizeId } from '@/utils/supabaseUtils';
 
 /**
@@ -9,7 +9,7 @@ export const messagingRepository: MessagingRepository = {
   /**
    * Fetch messages between two users
    */
-  fetchMessages: async (userId: string, partnerId: string): Promise<Message[]> => {
+  getMessages: async (userId: string, partnerId: string): Promise<Message[]> => {
     try {
       console.log(`Fetching messages between ${userId} and ${partnerId}`);
       
@@ -45,7 +45,7 @@ export const messagingRepository: MessagingRepository = {
   /**
    * Fetch all conversations for a user
    */
-  fetchConversations: async (userId: string): Promise<Conversation[]> => {
+  getConversations: async (userId: string): Promise<Conversation[]> => {
     try {
       console.log(`Fetching conversations for user ${userId}`);
       
@@ -53,23 +53,49 @@ export const messagingRepository: MessagingRepository = {
       // Simulating API delay
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Return mock data
+      // Return mock data with both new and backward compatibility formats
       return [
         {
+          user: {
+            id: '123',
+            name: 'John Doe',
+            profile_picture: 'https://example.com/avatar1.jpg'
+          },
+          lastMessage: {
+            id: '1',
+            content: 'Hello, how are you?',
+            sender_id: '123',
+            receiver_id: userId,
+            created_at: new Date().toISOString(),
+            read: false
+          },
+          unreadCount: 2,
+          // Backward compatibility properties
           userId: '123',
           userName: 'John Doe',
           userAvatar: 'https://example.com/avatar1.jpg',
-          lastMessage: 'Hello, how are you?',
-          lastMessageTime: new Date().toISOString(),
-          unreadCount: 2
+          lastMessageTime: new Date().toISOString()
         },
         {
+          user: {
+            id: '456',
+            name: 'Jane Smith',
+            profile_picture: 'https://example.com/avatar2.jpg'
+          },
+          lastMessage: {
+            id: '2',
+            content: 'Let\'s schedule a meeting tomorrow.',
+            sender_id: '456',
+            receiver_id: userId,
+            created_at: new Date().toISOString(),
+            read: true
+          },
+          unreadCount: 0,
+          // Backward compatibility properties
           userId: '456',
           userName: 'Jane Smith',
           userAvatar: 'https://example.com/avatar2.jpg',
-          lastMessage: 'Let\'s schedule a meeting tomorrow.',
-          lastMessageTime: new Date().toISOString(),
-          unreadCount: 0
+          lastMessageTime: new Date().toISOString()
         }
       ];
     } catch (error) {
@@ -105,11 +131,11 @@ export const messagingRepository: MessagingRepository = {
   },
   
   /**
-   * Mark all messages in a conversation as read
+   * Mark message as read
    */
-  markConversationAsRead: async (userId: string, partnerId: string): Promise<boolean> => {
+  markAsRead: async (messageId: string): Promise<boolean> => {
     try {
-      console.log(`Marking conversation as read between ${userId} and ${partnerId}`);
+      console.log(`Marking message as read: ${messageId}`);
       
       // Mock API call - in a real app, this would be a call to your backend
       // Simulating API delay
@@ -118,7 +144,66 @@ export const messagingRepository: MessagingRepository = {
       // Return success
       return true;
     } catch (error) {
-      console.error('Error marking conversation as read:', error);
+      console.error('Error marking message as read:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Get user by ID
+   */
+  getUserById: async (userId: string): Promise<MessagingUser | null> => {
+    try {
+      console.log(`Fetching user ${userId}`);
+      
+      // Mock API call - in a real app, this would be a call to your backend
+      // Simulating API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return mock data
+      return {
+        id: userId,
+        name: userId === '123' ? 'John Doe' : 'Jane Smith',
+        profile_picture: `https://example.com/avatar${userId === '123' ? '1' : '2'}.jpg`,
+        online: Math.random() > 0.5
+      };
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Search for users
+   */
+  searchUsers: async (query: string): Promise<MessagingUser[]> => {
+    try {
+      console.log(`Searching users with query: ${query}`);
+      
+      // Mock API call - in a real app, this would be a call to your backend
+      // Simulating API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return mock data
+      return [
+        {
+          id: '123',
+          name: 'John Doe',
+          profile_picture: 'https://example.com/avatar1.jpg',
+          online: true
+        },
+        {
+          id: '456',
+          name: 'Jane Smith',
+          profile_picture: 'https://example.com/avatar2.jpg',
+          online: false,
+          last_seen: new Date().toISOString()
+        }
+      ].filter(user => 
+        user.name.toLowerCase().includes(query.toLowerCase())
+      );
+    } catch (error) {
+      console.error('Error searching users:', error);
       throw error;
     }
   }
@@ -148,5 +233,7 @@ export const markConversationAsRead = async (
     return false;
   }
   
-  return messagingRepository.markConversationAsRead(currentUser.id, partnerId);
+  // In a real implementation, this would mark all messages from partnerId as read
+  // For now, we'll just return true
+  return true;
 };

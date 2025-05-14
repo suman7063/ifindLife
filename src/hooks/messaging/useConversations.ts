@@ -1,10 +1,10 @@
-import { useState, useCallback } from 'react';
-import { MessagingUser, UseConversationsReturn } from './types';
-import { messagingRepository } from './messagingApi';
-import { normalizeId } from '@/utils/supabaseUtils';
 
-export function useConversations(currentUser: MessagingUser): UseConversationsReturn {
-  const [conversations, setConversations] = useState([]);
+import { useState, useCallback } from 'react';
+import { MessagingUser, UseConversationsReturn, Conversation } from './types';
+import { messagingRepository } from './messagingApi';
+
+export function useConversations(currentUser: MessagingUser | null): UseConversationsReturn {
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [conversationsLoading, setConversationsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -18,7 +18,7 @@ export function useConversations(currentUser: MessagingUser): UseConversationsRe
       setConversationsLoading(true);
       setError(null);
       
-      const conversations = await messagingRepository.fetchConversations(currentUser.id);
+      const conversations = await messagingRepository.getConversations(currentUser.id);
       setConversations(conversations);
       return conversations;
     } catch (error: any) {

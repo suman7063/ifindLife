@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ServiceCategory, ServiceCategoryUI, DbService, mapDbServiceToUi } from './types';
+import { ServiceCategory, ServiceCategoryUI, DbService, mapDbServiceToUi, mapUiToServiceCategory } from './types';
 import { toast } from 'sonner';
 import { categoryData as defaultServiceData } from '@/data/initialAdminData';
 
@@ -35,8 +35,23 @@ export function useServicesData(
             const parsedContent = JSON.parse(savedContent);
             if (parsedContent.services && parsedContent.services.length > 0) {
               console.log('Services found in localStorage:', parsedContent.services.length);
-              setServices(parsedContent.services);
-              updateCallback(parsedContent.services);
+              
+              // Ensure data conforms to ServiceCategory structure
+              const formattedServices = parsedContent.services.map((service: any) => 
+                mapUiToServiceCategory({
+                  icon: service.icon || DEFAULT_ICON,
+                  title: service.title || service.name || '',
+                  description: service.description || '',
+                  href: service.href || `/services/${(service.title || service.name || '').toLowerCase().replace(/\s+/g, '-')}`,
+                  color: service.color || DEFAULT_COLOR,
+                  id: service.id,
+                  name: service.name,
+                  items: service.items || []
+                })
+              );
+              
+              setServices(formattedServices);
+              updateCallback(formattedServices);
               setLoading(false);
               return;
             }
@@ -71,16 +86,7 @@ export function useServicesData(
             const formattedServices = dbServices.map(mapDbServiceToUi);
             
             // Convert to ServiceCategory[] for compatibility
-            const serviceCategories = formattedServices.map(service => ({
-              id: service.id || service.title,
-              name: service.name || service.title,
-              title: service.title,
-              description: service.description,
-              href: service.href,
-              icon: service.icon,
-              color: service.color,
-              items: []
-            })) as ServiceCategory[];
+            const serviceCategories = formattedServices.map(mapUiToServiceCategory);
             
             console.log('Formatted services:', serviceCategories);
             setServices(serviceCategories);
@@ -89,8 +95,9 @@ export function useServicesData(
           } else {
             console.log('No services found in Supabase, using default data');
             // If no data in Supabase either, use default data
-            setServices(defaultServiceData);
-            updateCallback(defaultServiceData);
+            const mappedDefaultServices = defaultServiceData.map(mapUiToServiceCategory);
+            setServices(mappedDefaultServices);
+            updateCallback(mappedDefaultServices);
           }
         } catch (supabaseError) {
           console.error('Supabase services fetch error:', supabaseError);
@@ -98,8 +105,9 @@ export function useServicesData(
           // If we've reached max attempts, use default data
           if (fetchAttempts >= MAX_FETCH_ATTEMPTS - 1) {
             console.warn(`Max fetch attempts (${MAX_FETCH_ATTEMPTS}) reached, using default data`);
-            setServices(defaultServiceData);
-            updateCallback(defaultServiceData);
+            const mappedDefaultServices = defaultServiceData.map(mapUiToServiceCategory);
+            setServices(mappedDefaultServices);
+            updateCallback(mappedDefaultServices);
             toast.error('Could not load services from database. Using default data.');
           } else {
             // Increment fetch attempts for next try
@@ -124,8 +132,9 @@ export function useServicesData(
         } else {
           // Final fallback to default data on error after all retries
           console.warn('All retry attempts failed, using default data');
-          setServices(defaultServiceData);
-          updateCallback(defaultServiceData);
+          const mappedDefaultServices = defaultServiceData.map(mapUiToServiceCategory);
+          setServices(mappedDefaultServices);
+          updateCallback(mappedDefaultServices);
           toast.error('Error loading services. Using default settings.');
         }
       } finally {
@@ -134,7 +143,7 @@ export function useServicesData(
     };
     
     fetchServices();
-  }, [updateCallback, fetchAttempts]);
+  }, [updateCallback, fetchAttempts, MAX_FETCH_ATTEMPTS]);
 
   return {
     services,

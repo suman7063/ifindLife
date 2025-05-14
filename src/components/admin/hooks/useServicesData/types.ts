@@ -46,3 +46,17 @@ export function mapDbServiceToUi(service: DbService): ServiceCategoryUI & Partia
     items: [] // Empty items array for compatibility
   };
 }
+
+// Utility function to convert UI format to ServiceCategory for internal usage
+export function mapUiToServiceCategory(ui: ServiceCategoryUI): ServiceCategory {
+  return {
+    id: ui.id || ui.title || Math.random().toString(36).substring(2, 9),
+    name: ui.name || ui.title,
+    title: ui.title,
+    description: ui.description,
+    href: ui.href,
+    icon: ui.icon,
+    color: ui.color,
+    items: ui.items || []
+  };
+}
