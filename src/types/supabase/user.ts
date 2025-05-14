@@ -23,7 +23,7 @@ export interface UserProfile {
   
   // Related data collections
   favorite_experts?: string[];
-  favorite_programs?: number[]; // Make sure this property exists
+  favorite_programs?: number[];
   enrolled_courses?: Course[];
   transactions?: UserTransaction[];
   reviews?: Review[];

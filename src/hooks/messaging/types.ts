@@ -1,4 +1,3 @@
-
 import { Message as AppointmentMessage } from '@/types/appointments';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
@@ -9,7 +8,7 @@ export interface MessagingUser {
   email?: string;
   profile_picture?: string;
   role?: string;
-  type?: 'expert' | 'user' | 'admin';
+  type?: 'expert' | 'user' | 'admin' | string; // Updated to accept string for compatibility
 }
 
 // Conversation represents a thread between two users

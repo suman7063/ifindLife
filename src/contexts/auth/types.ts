@@ -1,35 +1,25 @@
+// Import the UserProfile from the supabase/user module
+import { UserProfile } from '@/types/supabase/user';
+export { UserProfile };
 
-import { User, Session } from '@supabase/supabase-js';
-import { UserProfile, ExpertProfile } from '@/types/database/unified';
+export type UserRole = 'user' | 'expert' | 'admin';
 
-export type UserRole = 'user' | 'expert' | 'admin' | null;
-
-export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
-
-export interface AuthState {
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  user: User | null;
-  session: Session | null;
-  authStatus: AuthStatus;
-  userProfile: UserProfile | null;
-  profile: UserProfile | null; // Alias for backward compatibility
-  expertProfile: ExpertProfile | null;
-  role: UserRole;
-  sessionType: 'none' | 'user' | 'expert' | 'dual';
-  walletBalance: number;
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  role: UserRole | null;
+  profile?: UserProfile | null;
 }
 
-export const initialAuthState: AuthState = {
-  isLoading: true,
-  isAuthenticated: false,
-  user: null,
-  session: null,
-  authStatus: 'loading',
-  userProfile: null,
-  profile: null,
-  expertProfile: null,
-  role: null,
-  sessionType: 'none',
-  walletBalance: 0,
-};
+export interface AuthContextType {
+  user: AuthUser | null;
+  session: any | null;
+  profile: UserProfile | null;
+  loading: boolean;
+  error: Error | null;
+  signIn: (email: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signOut: () => Promise<void>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  clearSession: () => void;
+}

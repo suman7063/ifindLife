@@ -20,7 +20,7 @@ export function convertUserToUserProfile(userData: any): UserProfile | null {
     referred_by: userData.referred_by,
     referral_code: userData.referral_code,
     referral_link: userData.referral_link,
-    // Added properties to match the expected interface
+    // Include the properties that were added to the UserProfile interface
     favorite_experts: userData.favorite_experts || [],
     favorite_programs: userData.favorite_programs || [],
     enrolled_courses: userData.enrolled_courses || [],
