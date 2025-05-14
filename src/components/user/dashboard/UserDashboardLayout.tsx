@@ -1,10 +1,12 @@
-
 import React, { useEffect } from 'react';
 import { UserProfile } from '@/types/supabase/user';
 import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
 import UserDashboardSidebar from './UserDashboardSidebar';
 import Navbar from '@/components/Navbar';
 import { Container } from '@/components/ui/container';
+import { Avatar, AvatarImage, AvatarFallback } from '@radix-ui/react-avatar';
+import { getInitials } from '@/utils/getInitials';
+import { adaptUserProfile } from '@/utils/adaptUserProfile';
 
 interface UserDashboardLayoutProps {
   user: UserProfile | null;
@@ -76,3 +78,23 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
 };
 
 export default UserDashboardLayout;
+
+const UserInfo = ({ user }: { user: UserProfile | null }) => {
+  const adaptedUser = user ? adaptUserProfile(user) : null;
+  
+  return (
+    <div className="flex items-center gap-4 py-4">
+      <Avatar className="h-12 w-12">
+        <AvatarImage 
+          src={adaptedUser?.profile_picture || ""}
+          alt={adaptedUser?.name || "User"} 
+        />
+        <AvatarFallback>{getInitials(adaptedUser?.name || "User")}</AvatarFallback>
+      </Avatar>
+      <div>
+        <p className="text-sm font-medium leading-none">{adaptedUser?.name || "User"}</p>
+        <p className="text-xs text-muted-foreground">{adaptedUser?.email || ""}</p>
+      </div>
+    </div>
+  );
+};

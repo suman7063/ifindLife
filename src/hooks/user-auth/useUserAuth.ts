@@ -1,10 +1,13 @@
 
-import { useAuthBackCompat } from '@/hooks/auth/useAuthBackCompat';
+import { useContext } from 'react';
+import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
 
-/**
- * This hook provides backward compatibility for the old useUserAuth hook
- */
 export const useUserAuth = () => {
-  const { userAuth } = useAuthBackCompat();
-  return userAuth;
+  const context = useContext(UserAuthContext);
+  
+  if (!context) {
+    throw new Error('useUserAuth must be used within a UserAuthProvider');
+  }
+  
+  return context;
 };

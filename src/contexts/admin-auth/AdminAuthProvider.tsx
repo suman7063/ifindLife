@@ -1,85 +1,93 @@
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { AdminAuthContext, AdminUser, AdminPermissions } from './AdminAuthContext';
 
-// Define the context type
-interface AdminAuthContextType {
-  isAdmin: boolean;
-  adminLoading: boolean;
-  adminLogin: (email: string, password: string) => Promise<boolean>;
-  adminLogout: () => Promise<boolean>;
-}
+// Mock admin users for development
+const mockAdminUsers: AdminUser[] = [
+  { id: '1', username: 'admin', role: 'admin' },
+  { id: '2', username: 'superadmin', role: 'superadmin' },
+];
 
-// Create context with default values
-const AdminAuthContext = createContext<AdminAuthContextType>({
-  isAdmin: false,
-  adminLoading: false,
-  adminLogin: async () => false,
-  adminLogout: async () => false
-});
+// Default permissions based on role
+const getDefaultPermissions = (role: 'admin' | 'superadmin'): AdminPermissions => {
+  if (role === 'superadmin') {
+    return {
+      canManageUsers: true,
+      canManageExperts: true,
+      canManagePrograms: true,
+      canManageContent: true,
+      canViewReports: true,
+      canModerate: true
+    };
+  }
+  
+  return {
+    canManageUsers: false,
+    canManageExperts: true,
+    canManagePrograms: true,
+    canManageContent: true,
+    canViewReports: true,
+    canModerate: false
+  };
+};
 
-// Export a hook for using the admin auth context
-export const useAdminAuth = () => useContext(AdminAuthContext);
-
-// Provider component
-export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
-  children 
-}) => {
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [adminLoading, setAdminLoading] = useState<boolean>(false);
-
-  // Mock admin login function
-  const adminLogin = async (email: string, password: string): Promise<boolean> => {
-    setAdminLoading(true);
-    
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For now, just check if the email contains "admin"
-      const loginSuccess = email.includes('admin') && password.length > 5;
-      
-      if (loginSuccess) {
-        setIsAdmin(true);
-        return true;
+export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
+  const [permissions, setPermissions] = useState<AdminPermissions | null>(null);
+  
+  // Check local storage for existing session on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('adminUser');
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser) as AdminUser;
+        setCurrentUser(parsedUser);
+        setPermissions(getDefaultPermissions(parsedUser.role));
+      } catch (error) {
+        console.error('Error parsing stored admin user:', error);
+        localStorage.removeItem('adminUser');
       }
-      
-      return false;
-    } catch (error) {
-      console.error('Admin login error:', error);
-      return false;
-    } finally {
-      setAdminLoading(false);
     }
+  }, []);
+  
+  // Simple mock login function
+  const login = (username: string, password: string): boolean => {
+    // For demo purposes, any non-empty password works
+    if (!username || !password) return false;
+    
+    const user = mockAdminUsers.find(u => u.username === username);
+    if (!user) return false;
+    
+    setCurrentUser(user);
+    setPermissions(getDefaultPermissions(user.role));
+    
+    // Store in localStorage for persistence
+    localStorage.setItem('adminUser', JSON.stringify(user));
+    
+    return true;
   };
   
-  // Admin logout function
-  const adminLogout = async (): Promise<boolean> => {
-    setAdminLoading(true);
-    
-    try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setIsAdmin(false);
-      return true;
-    } catch (error) {
-      console.error('Admin logout error:', error);
-      return false;
-    } finally {
-      setAdminLoading(false);
-    }
+  const logout = () => {
+    setCurrentUser(null);
+    setPermissions(null);
+    localStorage.removeItem('adminUser');
   };
-
-  // Provide the admin auth context to children components
+  
+  const hasPermission = (permission: keyof AdminPermissions): boolean => {
+    if (!permissions) return false;
+    return permissions[permission];
+  };
+  
   return (
-    <AdminAuthContext.Provider 
-      value={{ 
-        isAdmin, 
-        adminLoading, 
-        adminLogin, 
-        adminLogout 
-      }}
-    >
+    <AdminAuthContext.Provider value={{
+      currentUser,
+      isAuthenticated: !!currentUser,
+      login,
+      logout,
+      adminUsers: mockAdminUsers,
+      permissions,
+      hasPermission
+    }}>
       {children}
     </AdminAuthContext.Provider>
   );

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthContext, AuthContextType } from './AuthContext';
@@ -146,14 +145,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
   
-  // Profile management
+  // Make updateProfile compatible with both profile types
   const updateProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
     if (!authState.user?.id) {
       toast.error('Cannot update profile: No user logged in');
       return false;
     }
     
-    const success = await updateUserProfile(authState.user.id, updates);
+    // Convert the updates if necessary to be compatible with the expected format
+    const formattedUpdates = {
+      ...updates,
+      // Handle favorite_programs conversion if needed
+      favorite_programs: updates.favorite_programs 
+        ? Array.isArray(updates.favorite_programs) 
+          ? updates.favorite_programs.map(id => typeof id === 'string' ? id : String(id))
+          : updates.favorite_programs
+        : undefined
+    };
+    
+    const success = await updateUserProfile(authState.user.id, formattedUpdates);
     
     if (success) {
       // Refresh user data after successful update

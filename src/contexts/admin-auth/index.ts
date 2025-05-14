@@ -1,4 +1,4 @@
 
-import { AdminAuthProvider } from './AdminAuthProvider';
-
-export { AdminAuthProvider };
+export { AdminAuthProvider } from './AdminAuthProvider';
+export { useAuth } from './useAdminAuth';
+export type { AdminUser, AdminPermissions } from './AdminAuthContext';

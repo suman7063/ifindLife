@@ -1,87 +1,79 @@
-
-import React, { useEffect } from 'react';
-import { Container } from '@/components/ui/container';
-import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
-import { toast } from 'sonner';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { UserProfile } from '@/types/supabase/user';
+import UserDashboardLayout from './UserDashboardLayout';
+import DashboardHome from './DashboardHome';
+import UserAppointments from './ConsultationsSection';
+import UserFavorites from './sections/UserFavorites';
+import ProfileSettings from './ProfileSettings';
+import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import DashboardHeader from '@/components/user/dashboard/DashboardHeader';
-import DashboardContent from '@/components/user/dashboard/DashboardContent';
-import DashboardLoader from '@/components/user/dashboard/DashboardLoader';
-import RechargeDialog from '@/components/user/dashboard/wallet/RechargeDialog';
-import useTransactions from '@/hooks/dashboard/useTransactions';
-import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 
-const UserDashboard: React.FC = () => {
-  const { currentUser, isAuthenticated, loading: authLoading, logout } = useUserAuth();
-  const { loading: authContextLoading } = useAuth();
+interface UserDashboardProps {
+  user: UserProfile | null;
+}
+
+const UserDashboard: React.FC<UserDashboardProps> = ({ user }) => {
+  const [activeTab, setActiveTab] = useState<string>('overview');
   const navigate = useNavigate();
-  
-  const { 
-    transactions, 
-    isLoading: transactionsLoading, 
-    refreshTransactions 
-  } = useTransactions(currentUser?.id);
-  
-  const {
-    isRechargeDialogOpen,
-    handleOpenRechargeDialog,
-    handleCloseRechargeDialog,
-    handleRechargeSuccess
-  } = useRechargeDialog(refreshTransactions);
+  const location = useLocation();
+  const { profile: userProfile } = useAuth();
 
-  const handleLogout = async (): Promise<boolean> => {
-    try {
-      const success = await logout();
-      if (success) {
-        toast.success('Successfully logged out');
-        navigate('/');
-        return true;
-      } else {
-        toast.error('Error logging out');
-        return false;
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Error logging out');
-      return false;
+  // Function to extract the tab from the URL
+  const getTabFromURL = useCallback(() => {
+    const pathSegments = location.pathname.split('/');
+    const tabSegment = pathSegments[pathSegments.length - 1];
+
+    if (['overview', 'appointments', 'favorites', 'profile'].includes(tabSegment)) {
+      return tabSegment;
     }
-  };
 
+    return 'overview'; // Default tab
+  }, [location.pathname]);
+
+  // Update activeTab based on URL on initial load and when URL changes
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate('/user-login');
-    }
-  }, [isAuthenticated, authLoading, navigate]);
+    const tab = getTabFromURL();
+    setActiveTab(tab);
+  }, [getTabFromURL]);
 
-  if (authLoading || authContextLoading) {
-    return <DashboardLoader />;
-  }
+  // Update URL when activeTab changes
+  useEffect(() => {
+    navigate(`/user-dashboard/${activeTab}`, { replace: true });
+  }, [activeTab, navigate]);
 
-  if (!isAuthenticated) {
-    return null;
-  }
-
+  // Fix the profile types using withProfileTypeAdapter
   return (
-    <Container className="py-8">
-      <DashboardHeader 
-        user={currentUser} 
-        onLogout={handleLogout}
-      />
-      
-      <DashboardContent
-        user={currentUser}
-        isLoading={transactionsLoading}
-        onRecharge={handleOpenRechargeDialog}
-      />
-      
-      <RechargeDialog 
-        open={isRechargeDialogOpen}
-        onOpenChange={handleCloseRechargeDialog}
-        onSuccess={handleRechargeSuccess}
-      />
-    </Container>
+    <UserDashboardLayout user={userProfile}>
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-8">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="appointments">Appointments</TabsTrigger>
+            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-4">
+            <DashboardHome user={userProfile} />
+          </TabsContent>
+
+          <TabsContent value="appointments" className="space-y-4">
+            <UserAppointments user={userProfile} />
+          </TabsContent>
+
+          <TabsContent value="favorites" className="space-y-4">
+            <UserFavorites user={userProfile} />
+          </TabsContent>
+
+          <TabsContent value="profile" className="space-y-4">
+            <ProfileSettings user={userProfile} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </UserDashboardLayout>
   );
 };
 
-export default UserDashboard;
+export default withProfileTypeAdapter(UserDashboard, 'A');
