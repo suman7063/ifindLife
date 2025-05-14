@@ -1,59 +1,48 @@
 
-// User-related types for UI components and business logic
-
-import { UserTransaction } from './tables';
-import { Referral } from './referral';
-import { Expert } from '../expert';
-import { Program } from '../programs';
+// User-specific types for Supabase integration
 
 export interface UserProfile {
   id: string;
+  email: string;
   name?: string;
-  email?: string;
   phone?: string;
   country?: string;
   city?: string;
-  currency?: string;
   profile_picture?: string;
   wallet_balance?: number;
   created_at?: string;
-  referral_code?: string;
+  updated_at?: string;
   referred_by?: string;
+  referral_code?: string;
   referral_link?: string;
+  currency?: string;
   
-  // Related data collections
-  favorite_experts?: string[];
-  favorite_programs?: number[];
-  enrolled_courses?: Course[];
-  transactions?: UserTransaction[];
-  reviews?: Review[];
-  reports?: Report[];
-  referrals?: Referral[];
+  // Optional nested data for joined queries
+  favorite_experts?: string[];  // Changed to string[] for compatibility
+  favorite_programs?: string[];
+  enrolled_courses?: string[];
+  reviews?: any[];
+  reports?: any[];
+  transactions?: any[];
+  referrals?: any[];
 }
 
-export interface Review {
+export interface UserSettings {
   id: string;
-  expertId: string;
-  rating: number;
-  comment: string;
-  date: string;
+  user_id: string;
+  notifications_enabled: boolean;
+  email_notifications: boolean;
+  theme_preference: 'light' | 'dark' | 'system';
+  language: string;
+  timezone: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
-export interface Report {
-  id: string;
-  expertId: string;
-  reason: string;
-  details?: string;
-  date: string;
-  status: string;
-}
-
-export interface Course {
-  id: string;
-  title: string;
-  expertId: string;
-  expertName: string;
-  enrollmentDate: string;
-  progress?: number;
-  completed?: boolean;
+export interface UserAuthState {
+  user: any; // Supabase user object
+  profile: UserProfile | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: Error | null;
 }

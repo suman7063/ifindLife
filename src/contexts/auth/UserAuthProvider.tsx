@@ -69,17 +69,17 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateProfile, 
-    updatePassword: auth.updatePassword,
-    addToFavorites: auth.addToFavorites,
-    removeFromFavorites: auth.removeFromFavorites,
-    rechargeWallet: auth.rechargeWallet,
+    updatePassword: auth.updatePassword || (async () => false),
+    addToFavorites: auth.addToFavorites || (async () => false),
+    removeFromFavorites: auth.removeFromFavorites || (async () => false),
+    rechargeWallet: auth.rechargeWallet || (async () => false),
     addReview: adaptedAddReview,
     reportExpert: adaptedReportExpert,
     hasTakenServiceFrom: adaptedHasTakenServiceFrom,
     getExpertShareLink: auth.getExpertShareLink || ((id) => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture
+    updateProfilePicture: auth.updateProfilePicture || (async () => null)
   };
 
   return (

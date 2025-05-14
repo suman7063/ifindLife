@@ -1,30 +1,25 @@
 
-export interface Expert {
-  id: number;
+export interface ExpertCardData {
+  id: string | number;
   name: string;
   title?: string;
-  imageUrl?: string;
-  profilePicture?: string; 
+  specialties?: string[];
   rating?: number;
   reviewCount?: number;
+  pricePerMinute?: number;
+  profilePicture?: string;
   status?: 'online' | 'offline' | 'busy';
-  specialties?: string[];
-  price?: number;
+  isFavorite?: boolean;
+  location?: string;
+  languages?: string[];
+  experience?: string;
 }
 
 export interface ExpertCardProps {
-  expert: Expert;
-  onClick?: () => void;
-  className?: string;
-  showRating?: boolean;
-}
-
-export interface ExpertInfoProps {
-  expert: Expert;
-  showRating?: boolean;
-}
-
-export interface ExpertActionsProps {
-  expert: Expert;
-  onClick?: () => void;
+  expert: ExpertCardData;
+  onFavoriteToggle?: (expertId: string | number, isFavorite: boolean) => void;
+  onCallClick?: (expertId: string | number) => void;
+  onChatClick?: (expertId: string | number) => void;
+  onBookClick?: (expertId: string | number) => void;
+  showActions?: boolean;
 }

@@ -15,6 +15,7 @@ export interface UserProfile {
   referred_by?: string;
   referral_code?: string;
   referral_link?: string;
+  currency?: string;
   
   // Optional nested data for joined queries
   favorite_experts?: number[];
@@ -57,7 +58,11 @@ export interface ExpertProfile {
   availability?: any[];
   services?: any[];
   
-  // Additional properties
+  // Additional properties for compatibility
   account_status?: 'pending' | 'approved' | 'rejected' | 'suspended';
   featured?: boolean;
+  state?: string;
+  specialization?: string;
+  bio?: string;
+  certificate_urls?: string[];
 }

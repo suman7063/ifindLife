@@ -10,6 +10,8 @@ export interface ExpertAuthContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
+  loading?: boolean;
+  currentExpert?: any;
 }
 
 // Create a hook that adapts the unified auth context to separate user and expert auth contexts
@@ -18,7 +20,7 @@ export const useAuthBackCompat = () => {
   
   // Create a backward-compatible user auth context
   const userAuth: UserAuthContextType = {
-    currentUser: auth.userProfile,
+    currentUser: auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
     signup: auth.signup,
@@ -28,7 +30,7 @@ export const useAuthBackCompat = () => {
     },
     authLoading: auth.isLoading,
     loading: auth.isLoading,
-    profileNotFound: !auth.userProfile && !auth.isLoading && auth.isAuthenticated,
+    profileNotFound: !auth.profile && !auth.isLoading && auth.isAuthenticated,
     updateProfile: auth.updateProfile,
     updatePassword: auth.updatePassword || (async () => false),
     addToFavorites: auth.addToFavorites || (async () => false),
@@ -40,12 +42,13 @@ export const useAuthBackCompat = () => {
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture
+    updateProfilePicture: auth.updateProfilePicture || (async () => null)
   };
   
   // Create a backward-compatible expert auth context
   const expertAuth: ExpertAuthContextType = {
     currentUser: auth.expertProfile,
+    currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
     updateProfile: async (data: any) => {
       if (auth.updateProfile) {
@@ -56,7 +59,8 @@ export const useAuthBackCompat = () => {
     logout: async () => {
       await auth.logout();
     },
-    isLoading: auth.isLoading
+    isLoading: auth.isLoading,
+    loading: auth.isLoading
   };
   
   return {
