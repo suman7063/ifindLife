@@ -1,25 +1,23 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
-import { ExpertImageProps } from './types';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
-const ExpertImage: React.FC<ExpertImageProps> = ({ imageUrl, name, online }) => {
+export interface ExpertImageProps {
+  profilePicture?: string;
+  name?: string;
+  className?: string;
+}
+
+const ExpertImage: React.FC<ExpertImageProps> = ({ profilePicture, name, className }) => {
+  const initials = name 
+    ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+    : 'EA';
+
   return (
-    <div className="relative">
-      <div className="aspect-[3/2] overflow-hidden">
-        <img 
-          src={imageUrl} 
-          alt={name} 
-          className="w-full h-full object-cover"
-        />
-      </div>
-      
-      {online && (
-        <Badge className="absolute top-2 left-2 bg-green-500 text-white border-0">
-          Online
-        </Badge>
-      )}
-    </div>
+    <Avatar className={className || "h-10 w-10"}>
+      <AvatarImage src={profilePicture || ''} alt={name || 'Expert'} />
+      <AvatarFallback>{initials}</AvatarFallback>
+    </Avatar>
   );
 };
 
