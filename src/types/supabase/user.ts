@@ -1,48 +1,75 @@
 
-// User-specific types for Supabase integration
+export interface UserTransaction {
+  id: string;
+  user_id: string;
+  amount: number;
+  date: string;
+  type: 'credit' | 'debit' | string;
+  currency: string;
+  description?: string;
+  transaction_type?: string; // Added for backward compatibility
+  created_at?: string; // Added for backward compatibility
+}
+
+export interface Review {
+  id: string;
+  expert_id: number;
+  rating: number;
+  date: string;
+  comment?: string;
+  verified?: boolean;
+  user_name?: string;
+  expert_name?: string;
+}
+
+export interface Report {
+  id: string;
+  expert_id: number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  expert_name: string;
+  progress: number;
+  completed: boolean;
+  enrollment_date: string;
+}
+
+export interface Referral {
+  id: string;
+  referrer_id: string;
+  referred_id: string;
+  referral_code: string;
+  status: string;
+  reward_claimed: boolean;
+  created_at: string;
+  completed_at?: string;
+}
 
 export interface UserProfile {
   id: string;
+  name: string;
   email: string;
-  name?: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  profile_picture?: string;
-  wallet_balance?: number;
-  created_at?: string;
-  updated_at?: string;
-  referred_by?: string;
-  referral_code?: string;
-  referral_link?: string;
-  currency?: string;
-  
-  // Optional nested data for joined queries
-  favorite_experts?: string[];  // Changed to string[] for compatibility
-  favorite_programs?: string[];
-  enrolled_courses?: string[];
-  reviews?: any[];
-  reports?: any[];
-  transactions?: any[];
-  referrals?: any[];
-}
-
-export interface UserSettings {
-  id: string;
-  user_id: string;
-  notifications_enabled: boolean;
-  email_notifications: boolean;
-  theme_preference: 'light' | 'dark' | 'system';
-  language: string;
-  timezone: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface UserAuthState {
-  user: any; // Supabase user object
-  profile: UserProfile | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: Error | null;
+  phone: string;
+  country: string;
+  city: string;
+  currency: string;
+  profile_picture: string;
+  wallet_balance: number;
+  created_at: string;
+  referred_by: string | null;
+  referral_code: string;
+  referral_link: string;
+  favorite_experts: string[];
+  favorite_programs: string[];
+  enrolled_courses: Course[];
+  reviews: Review[];
+  reports: Report[];
+  transactions: UserTransaction[];
+  referrals: Referral[];
 }

@@ -1,42 +1,29 @@
-
 import React from 'react';
+import { MessageSquare, Phone, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Phone, MessageSquare } from 'lucide-react';
 import { ExpertActionsProps } from './types';
 
 const ExpertActions: React.FC<ExpertActionsProps> = ({ expert, onClick }) => {
-  // Prevent event bubbling when clicking action buttons
-  const handleActionClick = (e: React.MouseEvent, action: () => void) => {
-    e.stopPropagation();
-    action();
+  const handleClick = () => {
+    if (onClick) {
+      onClick(expert.id);
+    }
   };
-  
+
   return (
-    <div className="flex justify-end gap-2 mt-2">
-      <Button 
-        variant="outline" 
-        size="sm" 
-        className="rounded-full"
-        onClick={(e) => handleActionClick(e, () => {
-          // Handle message action
-          console.log('Message expert:', expert.name);
-        })}
+    <div className="flex flex-wrap gap-2 mt-3">
+      {/* View Profile Button (Primary action) */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="flex-1"
+        onClick={handleClick}
       >
-        <MessageSquare className="h-4 w-4 mr-1" />
-        <span>Chat</span>
+        View Profile
       </Button>
       
-      <Button 
-        size="sm" 
-        className="rounded-full"
-        onClick={(e) => handleActionClick(e, () => {
-          // Handle call action
-          console.log('Call expert:', expert.name);
-        })}
-      >
-        <Phone className="h-4 w-4 mr-1" />
-        <span>Call</span>
-      </Button>
+      {/* Optional quick action buttons can be added here */}
+      {/* For now, using a simpler implementation */}
     </div>
   );
 };

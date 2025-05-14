@@ -6,29 +6,26 @@ import { ExpertInfoProps } from './types';
 const ExpertInfo: React.FC<ExpertInfoProps> = ({ expert, showRating = true }) => {
   return (
     <div>
-      {/* Name and price */}
-      <div className="flex justify-between items-start">
-        <h3 className="font-medium text-lg leading-tight">{expert.name}</h3>
-        {expert.price && (
-          <div className="text-muted-foreground font-medium">
-            ${expert.price}/min
-          </div>
-        )}
-      </div>
+      {/* Expert name */}
+      <h3 className="font-semibold text-lg">{expert.name}</h3>
       
-      {/* Title */}
-      {expert.title && (
-        <p className="text-sm text-muted-foreground">{expert.title}</p>
+      {/* Expert title or specialization */}
+      {(expert.title || expert.specialization) && (
+        <p className="text-muted-foreground text-sm">
+          {expert.title || expert.specialization}
+        </p>
       )}
       
       {/* Rating */}
-      {showRating && expert.rating && (
-        <div className="flex items-center gap-1 mt-1">
-          <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-          <span className="text-sm font-medium">{expert.rating}</span>
-          {expert.reviewCount && (
-            <span className="text-xs text-muted-foreground">
-              ({expert.reviewCount} review{expert.reviewCount !== 1 ? 's' : ''})
+      {showRating && (expert.rating !== undefined || expert.averageRating !== undefined) && (
+        <div className="flex items-center mt-1">
+          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
+          <span className="text-sm font-medium">
+            {expert.rating || expert.averageRating || 0}
+          </span>
+          {(expert.reviewCount !== undefined || expert.reviewsCount !== undefined) && (
+            <span className="text-xs text-muted-foreground ml-1">
+              ({expert.reviewCount || expert.reviewsCount || 0} reviews)
             </span>
           )}
         </div>
