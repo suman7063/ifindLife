@@ -46,17 +46,24 @@ export const useAuthState = () => {
       // Get wallet balance
       const walletBalance = userProfile?.wallet_balance || 0;
       
+      // Convert the favorite_experts array to strings if needed
+      const safeUserProfile = userProfile ? {
+        ...userProfile,
+        favorite_experts: userProfile.favorite_experts?.map(String) || []
+      } : null;
+      
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
         loading: false,
-        profile: userProfile,
-        userProfile,
+        profile: safeUserProfile,
+        userProfile: safeUserProfile,
         expertProfile,
         role,
         sessionType,
         walletBalance,
-        isAuthenticated: true
+        isAuthenticated: true,
+        error: prev.error
       }));
       
     } catch (error) {
@@ -90,7 +97,7 @@ export const useAuthState = () => {
     userId: string,
     userProfile: UserProfile | null,
     expertProfile: ExpertProfile | null
-  ): Promise<UserRole | null> => {
+  ): Promise<UserRole> => {
     // If there's an approved expert profile, we have an expert role
     if (expertProfile && expertProfile.status === 'approved') {
       return 'expert';

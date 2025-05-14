@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/database/unified';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
 
-class UserRepository {
+export class UserRepository {
   /**
    * Get a user by ID
    */

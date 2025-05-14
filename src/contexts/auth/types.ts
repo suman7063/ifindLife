@@ -3,12 +3,12 @@
 import { UserProfile } from '@/types/supabase/user';
 export type { UserProfile };
 
-export type UserRole = 'user' | 'expert' | 'admin';
+export type UserRole = 'user' | 'expert' | 'admin' | null;
 
 export interface AuthUser {
   id: string;
   email: string | null;
-  role: UserRole | null;
+  role: UserRole;
   profile?: UserProfile | null;
 }
 
@@ -22,13 +22,42 @@ export interface AuthContextType {
   isLoading: boolean; // Alias for backward compatibility
   error: Error | null;
   isAuthenticated: boolean;
-  role: UserRole | null;
+  role: UserRole;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   walletBalance: number;
-  signIn: (email: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+  
+  // Authentication methods
+  signIn: (email: string, password: string, loginAs?: 'user' | 'expert') => Promise<boolean>;
+  signUp: (email: string, password: string, userData?: any, referralCode?: string) => Promise<boolean>;
+  signOut: () => Promise<boolean>;
+  
+  // Aliases for backward compatibility
+  login: (email: string, password: string, loginAs?: 'user' | 'expert') => Promise<boolean>;
+  signup: (email: string, password: string, userData?: any, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  
+  // Profile management
+  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateProfilePicture?: (file: File) => Promise<string | null>;
+  updatePassword?: (password: string) => Promise<boolean>;
+  
+  // Favorites management
+  addToFavorites?: (expertId: number) => Promise<boolean>;
+  removeFromFavorites?: (expertId: number) => Promise<boolean>;
+  
+  // Wallet management
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  
+  // Review and reporting
+  addReview?: (review: any) => Promise<boolean>;
+  reportExpert?: (report: any) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
+  
+  // Utility methods
+  getExpertShareLink?: (expertId: string | number) => string;
+  getReferralLink?: () => string | null;
+  
+  // Session management
   clearSession: () => void;
 }
 
@@ -42,7 +71,7 @@ export interface AuthState {
   isLoading: boolean;
   error: Error | null;
   isAuthenticated: boolean;
-  role: UserRole | null;
+  role: UserRole;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   walletBalance: number;
 }

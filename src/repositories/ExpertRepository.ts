@@ -2,11 +2,11 @@
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/types/database/unified';
 
-class ExpertRepository {
+export class ExpertRepository {
   /**
    * Get an expert by ID
    */
-  async getExpertById(id: string | number): Promise<ExpertProfile | null> {
+  async getExpertById(id: string): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
@@ -15,7 +15,7 @@ class ExpertRepository {
         .single();
       
       if (error) {
-        console.error('Error fetching expert:', error);
+        console.error('Error fetching expert by ID:', error);
         return null;
       }
       
@@ -25,7 +25,7 @@ class ExpertRepository {
       return null;
     }
   }
-  
+
   /**
    * Get an expert by auth ID
    */
@@ -37,22 +37,22 @@ class ExpertRepository {
         .eq('auth_id', authId)
         .single();
       
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows returned" error
+      if (error && error.code !== 'PGRST116') { // Not found error
         console.error('Error fetching expert by auth ID:', error);
         return null;
       }
       
-      return data as ExpertProfile || null;
+      return data as ExpertProfile;
     } catch (error) {
       console.error('Repository error in getExpertByAuthId:', error);
       return null;
     }
   }
-  
+
   /**
    * Update an expert's profile
    */
-  async updateExpert(id: string | number, updates: Partial<ExpertProfile>): Promise<boolean> {
+  async updateExpert(id: string, updates: Partial<ExpertProfile>): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('expert_accounts')
@@ -65,26 +65,48 @@ class ExpertRepository {
       return false;
     }
   }
-  
+
   /**
-   * Get an expert by email
+   * Get all experts
    */
-  async getExpertByEmail(email: string): Promise<ExpertProfile | null> {
+  async getAllExperts(): Promise<ExpertProfile[]> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('email', email)
+        .eq('status', 'approved');
+      
+      if (error) {
+        console.error('Error fetching experts:', error);
+        return [];
+      }
+      
+      return data as ExpertProfile[];
+    } catch (error) {
+      console.error('Repository error in getAllExperts:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Create a new expert
+   */
+  async createExpert(expertData: Omit<ExpertProfile, 'id'>): Promise<ExpertProfile | null> {
+    try {
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .insert([expertData])
+        .select()
         .single();
       
       if (error) {
-        console.error('Error fetching expert by email:', error);
+        console.error('Error creating expert:', error);
         return null;
       }
       
       return data as ExpertProfile;
     } catch (error) {
-      console.error('Repository error in getExpertByEmail:', error);
+      console.error('Repository error in createExpert:', error);
       return null;
     }
   }

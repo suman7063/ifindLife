@@ -9,10 +9,13 @@ import { UserProfile, ExpertProfile } from '@/types/database/unified';
 // Create context with default values
 const AuthContext = createContext<AuthContextType>({
   ...initialAuthState,
-  signIn: async () => {},
-  signUp: async () => {},
-  signOut: async () => {},
-  updateProfile: async () => {},
+  signIn: async () => false,
+  signUp: async () => false,
+  signOut: async () => false,
+  login: async () => false,
+  signup: async () => false,
+  logout: async () => false,
+  updateProfile: async () => false,
   clearSession: () => {}
 });
 
@@ -29,12 +32,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     clearSession
   } = useAuthFunctions(authState, setAuthState);
   
+  // Create function aliases for backward compatibility
+  const login = signIn;
+  const signup = signUp;
+  const logout = signOut;
+  
   // Combine state and functions into context value
   const contextValue: AuthContextType = {
     ...authState,
     signIn,
     signOut,
     signUp,
+    login,
+    logout,
+    signup,
     updateProfile,
     clearSession
   };

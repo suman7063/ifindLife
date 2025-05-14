@@ -12,32 +12,35 @@ export const useAuthBackCompat = () => {
   const userAuth: UserAuthContextType = {
     currentUser: auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: auth.login,
-    signup: auth.signup || (async () => false),
-    logout: auth.logout,
+    login: auth.login || auth.signIn,
+    signup: auth.signup || auth.signUp,
+    logout: auth.logout || auth.signOut,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile,
-    updatePassword: auth.updatePassword || (async () => false),
-    addToFavorites: auth.addToFavorites || (async () => false),
-    removeFromFavorites: auth.removeFromFavorites || (async () => false),
-    rechargeWallet: auth.rechargeWallet || (async () => false),
-    addReview: auth.addReview || (async () => false),
-    reportExpert: auth.reportExpert || (async () => false),
-    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    updateProfile: async (data) => {
+      const result = await auth.updateProfile(data);
+      return result;
+    },
+    updatePassword: auth.updatePassword,
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
+    rechargeWallet: auth.rechargeWallet,
+    addReview: auth.addReview,
+    reportExpert: auth.reportExpert,
+    hasTakenServiceFrom: auth.hasTakenServiceFrom,
     getExpertShareLink: auth.getExpertShareLink || (() => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture || (async () => null)
+    updateProfilePicture: auth.updateProfilePicture
   };
   
   // Create compatibility layer for expertAuth
   const expertAuth = {
     currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    login: auth.login,
-    logout: auth.logout,
+    login: auth.login || auth.signIn,
+    logout: auth.logout || auth.signOut,
     loading: auth.isLoading,
     updateExpert: auth.updateExpertProfile,
     updateProfilePicture: auth.updateProfilePicture,

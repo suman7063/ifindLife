@@ -1,36 +1,32 @@
 
-/**
- * Unified database type definitions
- * These types should match the database schema structure
- */
-
+// Unified database type definitions
 export interface UserProfile {
   id: string;
-  name?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  country?: string | null;
-  city?: string | null;
-  currency?: string;
-  wallet_balance?: number;
-  profile_picture?: string | null;
-  created_at?: string | null;
+  name: string | null;
+  email: string | null;
+  phone: string | null;
+  country: string | null;
+  city: string | null;
+  currency: string;
+  profile_picture: string | null;
+  wallet_balance: number;
+  created_at: string | null;
   referred_by?: string | null;
   referral_code?: string | null;
   referral_link?: string | null;
   
-  // Additional fields that were added to the UserProfile interface
-  favorite_experts?: Array<number | string> | null;
-  favorite_programs?: Array<number | string> | null;
-  enrolled_courses?: Array<any> | null;
-  reviews?: Array<any> | null;
-  reports?: Array<any> | null;
-  transactions?: Array<any> | null;
-  referrals?: Array<any> | null;
+  // Additional fields for backward compatibility
+  favorite_experts: string[];
+  favorite_programs?: number[];
+  enrolled_courses?: any[];
+  reviews?: any[];
+  reports?: any[];
+  transactions?: any[];
+  referrals?: any[];
 }
 
 export interface ExpertProfile {
-  id: string | number;
+  id: string;
   auth_id?: string | null;
   name: string;
   email: string;
@@ -42,25 +38,25 @@ export interface ExpertProfile {
   specialization?: string | null;
   experience?: string | null;
   bio?: string | null;
-  certificate_urls?: string[] | null;
-  selected_services?: number[] | null;
-  average_rating?: number | null;
-  reviews_count?: number | null;
-  verified?: boolean | null;
-  created_at?: string | null;
+  certificate_urls?: string[];
   profile_picture?: string | null;
-  status?: string | null;
+  selected_services?: number[];
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
+  created_at?: string | null;
+  status?: string;
 }
 
 export interface TimeSlot {
   id: string;
-  day_of_week?: number | null;
   availability_id: string;
   start_time: string;
   end_time: string;
+  day_of_week?: number | null;
   specific_date?: string | null;
   is_booked?: boolean;
-  created_at?: string;
+  created_at?: string | null;
 }
 
 export interface Availability {
@@ -68,8 +64,9 @@ export interface Availability {
   expert_id: string;
   start_date: string;
   end_date: string;
-  created_at?: string;
   availability_type: string;
+  created_at?: string | null;
+  time_slots?: TimeSlot[];
 }
 
 export interface Appointment {
@@ -77,20 +74,20 @@ export interface Appointment {
   user_id: string;
   expert_id: string;
   duration: number;
-  service_id?: number;
-  uid?: number;
+  service_id?: number | null;
+  uid?: number | null;
   created_at: string;
-  start_time?: string;
-  end_time?: string;
-  time_slot_id?: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  time_slot_id?: string | null;
   expert_name: string;
   appointment_date: string;
   status: string;
-  notes?: string;
-  channel_name?: string;
-  token?: string;
-  google_calendar_event_id?: string;
-  user_calendar_event_id?: string;
+  notes?: string | null;
+  channel_name?: string | null;
+  token?: string | null;
+  google_calendar_event_id?: string | null;
+  user_calendar_event_id?: string | null;
 }
 
 export interface Message {
@@ -99,26 +96,15 @@ export interface Message {
   receiver_id: string;
   content: string;
   read?: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
-
-export interface Conversation {
-  id: string;
-  participants: string[];
-  last_message?: string;
-  last_message_time?: string;
-  unread_count?: number;
-  other_user: {
-    id: string;
-    name: string;
-    profile_picture?: string;
-  };
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 export type MessagingUser = {
-  id: string;
+  id: string | number;
   name: string;
-  profile_picture?: string;
+  avatar?: string;
   isOnline?: boolean;
+  lastSeen?: string;
+  role?: string;
 };

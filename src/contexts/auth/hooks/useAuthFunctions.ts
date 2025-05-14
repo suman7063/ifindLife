@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { supabase } from '@/lib/supabase';
-import { AuthState } from '../types';
+import { AuthState, initialAuthState } from '../types';
 import { userRepository } from '@/repositories/UserRepository';
 import { expertRepository } from '@/repositories/ExpertRepository';
 import { UserProfile } from '@/types/database/unified';
@@ -13,7 +13,7 @@ export const useAuthFunctions = (
   /**
    * Sign in with email and password
    */
-  const signIn = async (email: string, password: string, loginAs?: 'user' | 'expert'): Promise<void> => {
+  const signIn = async (email: string, password: string, loginAs?: 'user' | 'expert'): Promise<boolean> => {
     try {
       setAuthState(prev => ({
         ...prev,
@@ -34,6 +34,8 @@ export const useAuthFunctions = (
       if (loginAs) {
         sessionStorage.setItem('loginOrigin', loginAs);
       }
+      
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       setAuthState(prev => ({
@@ -42,14 +44,14 @@ export const useAuthFunctions = (
         loading: false,
         isLoading: false
       }));
-      throw error;
+      return false;
     }
   };
 
   /**
    * Sign up with email and password
    */
-  const signUp = async (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string): Promise<void> => {
+  const signUp = async (email: string, password: string, userData?: Partial<UserProfile>, referralCode?: string): Promise<boolean> => {
     try {
       setAuthState(prev => ({
         ...prev,
@@ -78,6 +80,8 @@ export const useAuthFunctions = (
         loading: false,
         isLoading: false
       }));
+      
+      return true;
     } catch (error) {
       console.error('Signup error:', error);
       setAuthState(prev => ({
@@ -86,7 +90,7 @@ export const useAuthFunctions = (
         loading: false,
         isLoading: false
       }));
-      throw error;
+      return false;
     }
   };
 
@@ -145,10 +149,14 @@ export const useAuthFunctions = (
       if (success) {
         // Update local state with new profile data
         const updatedProfile = await userRepository.getUser(authState.user.id);
+        
+        // Need to be careful with the type here
+        const safeProfile = updatedProfile as UserProfile;
+        
         setAuthState(prev => ({
           ...prev,
-          profile: updatedProfile,
-          userProfile: updatedProfile,
+          profile: safeProfile,
+          userProfile: safeProfile,
           loading: false,
           isLoading: false
         }));

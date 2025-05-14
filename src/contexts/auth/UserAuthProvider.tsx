@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
@@ -57,40 +58,28 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
-  // Adapt logout function to return boolean
-  const adaptedLogout = async (): Promise<boolean> => {
-    try {
-      await auth.logout();
-      // Since we can't check for error directly, assume success if no exception
-      return true;
-    } catch (error) {
-      console.error("Error in logout:", error);
-      return false;
-    }
-  };
-  
   // Create a compatible context value that matches the UserAuthContextType
   const userAuthValue = {
     currentUser: auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: auth.login,
-    signup: auth.signup || (async () => false),
-    logout: adaptedLogout,
+    login: auth.login || auth.signIn, 
+    signup: auth.signup || auth.signUp,
+    logout: auth.logout || auth.signOut,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateProfile, 
-    updatePassword: auth.updatePassword || (async () => false),
-    addToFavorites: auth.addToFavorites || (async () => false),
-    removeFromFavorites: auth.removeFromFavorites || (async () => false),
-    rechargeWallet: auth.rechargeWallet || (async () => false),
+    updatePassword: auth.updatePassword,
+    addToFavorites: auth.addToFavorites,
+    removeFromFavorites: auth.removeFromFavorites,
+    rechargeWallet: auth.rechargeWallet,
     addReview: adaptedAddReview,
     reportExpert: adaptedReportExpert,
     hasTakenServiceFrom: adaptedHasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink || (() => ''),
+    getExpertShareLink: auth.getExpertShareLink || ((id) => ''),
     getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture || (async () => null)
+    updateProfilePicture: auth.updateProfilePicture
   };
 
   return (
