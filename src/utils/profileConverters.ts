@@ -17,10 +17,17 @@ export function convertUserToUserProfile(userData: any): UserProfile | null {
     profile_picture: userData.profile_picture,
     wallet_balance: userData.wallet_balance || 0,
     created_at: userData.created_at,
-    updated_at: userData.updated_at,
     referred_by: userData.referred_by,
     referral_code: userData.referral_code,
-    referral_link: userData.referral_link
+    referral_link: userData.referral_link,
+    // Added properties to match the expected interface
+    favorite_experts: userData.favorite_experts || [],
+    favorite_programs: userData.favorite_programs || [],
+    enrolled_courses: userData.enrolled_courses || [],
+    reviews: userData.reviews || [],
+    reports: userData.reports || [],
+    transactions: userData.transactions || [],
+    referrals: userData.referrals || []
   };
 }
 

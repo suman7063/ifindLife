@@ -1,11 +1,11 @@
 
-import { MessagingRepository, MessagingUser, Conversation, Message } from './types';
+import { MessageRepositoryInterface, MessagingUser, Conversation, Message } from './types';
 import { normalizeId } from '@/utils/supabaseUtils';
 
 /**
  * API functions for messaging functionality
  */
-export const messagingRepository: MessagingRepository = {
+export const messagingRepository: MessageRepositoryInterface = {
   /**
    * Fetch messages between two users
    */
@@ -56,18 +56,17 @@ export const messagingRepository: MessagingRepository = {
       // Return mock data with both new and backward compatibility formats
       return [
         {
-          user: {
+          id: '123',
+          otherUser: {
             id: '123',
             name: 'John Doe',
             profile_picture: 'https://example.com/avatar1.jpg'
           },
           lastMessage: {
-            id: '1',
             content: 'Hello, how are you?',
-            sender_id: '123',
-            receiver_id: userId,
-            created_at: new Date().toISOString(),
-            read: false
+            timestamp: new Date().toISOString(),
+            isRead: false,
+            senderId: '123'
           },
           unreadCount: 2,
           // Backward compatibility properties
@@ -77,18 +76,17 @@ export const messagingRepository: MessagingRepository = {
           lastMessageTime: new Date().toISOString()
         },
         {
-          user: {
+          id: '456',
+          otherUser: {
             id: '456',
             name: 'Jane Smith',
             profile_picture: 'https://example.com/avatar2.jpg'
           },
           lastMessage: {
-            id: '2',
             content: 'Let\'s schedule a meeting tomorrow.',
-            sender_id: '456',
-            receiver_id: userId,
-            created_at: new Date().toISOString(),
-            read: true
+            timestamp: new Date().toISOString(),
+            isRead: true,
+            senderId: '456'
           },
           unreadCount: 0,
           // Backward compatibility properties
@@ -150,30 +148,6 @@ export const messagingRepository: MessagingRepository = {
   },
   
   /**
-   * Get user by ID
-   */
-  getUserById: async (userId: string): Promise<MessagingUser | null> => {
-    try {
-      console.log(`Fetching user ${userId}`);
-      
-      // Mock API call - in a real app, this would be a call to your backend
-      // Simulating API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Return mock data
-      return {
-        id: userId,
-        name: userId === '123' ? 'John Doe' : 'Jane Smith',
-        profile_picture: `https://example.com/avatar${userId === '123' ? '1' : '2'}.jpg`,
-        online: Math.random() > 0.5
-      };
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      throw error;
-    }
-  },
-  
-  /**
    * Search for users
    */
   searchUsers: async (query: string): Promise<MessagingUser[]> => {
@@ -190,17 +164,16 @@ export const messagingRepository: MessagingRepository = {
           id: '123',
           name: 'John Doe',
           profile_picture: 'https://example.com/avatar1.jpg',
-          online: true
+          type: 'user'
         },
         {
           id: '456',
           name: 'Jane Smith',
           profile_picture: 'https://example.com/avatar2.jpg',
-          online: false,
-          last_seen: new Date().toISOString()
+          type: 'expert'
         }
       ].filter(user => 
-        user.name.toLowerCase().includes(query.toLowerCase())
+        user.name?.toLowerCase().includes(query.toLowerCase())
       );
     } catch (error) {
       console.error('Error searching users:', error);

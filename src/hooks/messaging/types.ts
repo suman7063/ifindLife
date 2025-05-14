@@ -23,6 +23,12 @@ export interface Conversation {
     senderId: string;
   };
   unreadCount: number;
+  
+  // Backward compatibility properties
+  userId?: string;
+  userName?: string;
+  userAvatar?: string;
+  lastMessageTime?: string;
 }
 
 // Return type for the useMessages hook
@@ -67,6 +73,10 @@ export interface MessageApiResponse {
   content: string;
   read: boolean;
   created_at: string;
+}
+
+export interface Message extends MessageApiResponse {
+  // Add any additional fields needed
 }
 
 export interface MessageRepositoryInterface {
