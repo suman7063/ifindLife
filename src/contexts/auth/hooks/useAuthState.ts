@@ -17,11 +17,13 @@ export const useAuthState = () => {
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
+        loading: false,
         userProfile: null,
         profile: null,
         expertProfile: null,
         role: null,
         sessionType: 'none',
+        isAuthenticated: false
       }));
       return;
     }
@@ -47,19 +49,23 @@ export const useAuthState = () => {
       setAuthState(prev => ({
         ...prev,
         isLoading: false,
+        loading: false,
         profile: userProfile,
         userProfile,
         expertProfile,
         role,
         sessionType,
-        walletBalance
+        walletBalance,
+        isAuthenticated: true
       }));
       
     } catch (error) {
       console.error('Error fetching user data:', error);
       setAuthState(prev => ({
         ...prev,
-        isLoading: false
+        isLoading: false,
+        loading: false,
+        isAuthenticated: false
       }));
     }
   };
@@ -84,7 +90,7 @@ export const useAuthState = () => {
     userId: string,
     userProfile: UserProfile | null,
     expertProfile: ExpertProfile | null
-  ): Promise<UserRole> => {
+  ): Promise<UserRole | null> => {
     // If there's an approved expert profile, we have an expert role
     if (expertProfile && expertProfile.status === 'approved') {
       return 'expert';

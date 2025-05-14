@@ -1,142 +1,71 @@
 
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/database/unified';
+import { convertUserToUserProfile } from '@/utils/profileConverters';
 
-/**
- * Repository for user profile data access
- * Follows the repository pattern for consistent data access
- */
-export class UserRepository {
+class UserRepository {
   /**
-   * Get user profile by ID
-   * @param id User ID
-   * @returns UserProfile or null if not found
+   * Get a user by ID
    */
   async getUser(id: string): Promise<UserProfile | null> {
-    if (!id) return null;
-    
     try {
-      // First try the users table (primary source)
-      const { data: userData, error: userError } = await supabase
+      const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', id)
-        .maybeSingle();
+        .single();
       
-      if (userData) return userData as UserProfile;
+      if (error) {
+        console.error('Error fetching user:', error);
+        return null;
+      }
       
-      // Fallback to profiles table if not in users table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
-      
-      return profileData as UserProfile;
+      return convertUserToUserProfile(data);
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Repository error in getUser:', error);
       return null;
     }
   }
   
   /**
-   * Update user profile
-   * @param id User ID
-   * @param updates Partial user profile with updates
-   * @returns Success status
+   * Update a user's profile
    */
   async updateUser(id: string, updates: Partial<UserProfile>): Promise<boolean> {
-    if (!id) return false;
-    
     try {
-      // First check which table has the user's profile
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', id)
-        .maybeSingle();
-
-      const table = userData ? 'users' : 'profiles';
-      
-      // Update the appropriate table
       const { error } = await supabase
-        .from(table)
+        .from('users')
         .update(updates)
         .eq('id', id);
-        
+      
       return !error;
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.error('Repository error in updateUser:', error);
       return false;
     }
   }
   
   /**
-   * Get user's wallet balance
-   * @param id User ID
-   * @returns Current wallet balance or 0
+   * Get a user by email
    */
-  async getWalletBalance(id: string): Promise<number> {
-    if (!id) return 0;
-    
+  async getUserByEmail(email: string): Promise<UserProfile | null> {
     try {
-      // Try users table first
-      const { data: userData } = await supabase
+      const { data, error } = await supabase
         .from('users')
-        .select('wallet_balance')
-        .eq('id', id)
-        .maybeSingle();
-        
-      if (userData && userData.wallet_balance !== undefined) {
-        return userData.wallet_balance;
+        .select('*')
+        .eq('email', email)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user by email:', error);
+        return null;
       }
       
-      // Fallback to profiles
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('wallet_balance')
-        .eq('id', id)
-        .maybeSingle();
-        
-      return profileData?.wallet_balance || 0;
+      return convertUserToUserProfile(data);
     } catch (error) {
-      console.error('Error fetching wallet balance:', error);
-      return 0;
-    }
-  }
-  
-  /**
-   * Update user's wallet balance
-   * @param id User ID
-   * @param amount New balance amount
-   * @returns Success status
-   */
-  async updateWalletBalance(id: string, amount: number): Promise<boolean> {
-    if (!id) return false;
-    
-    try {
-      // Check which table has the user
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', id)
-        .maybeSingle();
-        
-      const table = userData ? 'users' : 'profiles';
-      
-      // Update the appropriate table
-      const { error } = await supabase
-        .from(table)
-        .update({ wallet_balance: amount })
-        .eq('id', id);
-        
-      return !error;
-    } catch (error) {
-      console.error('Error updating wallet balance:', error);
-      return false;
+      console.error('Repository error in getUserByEmail:', error);
+      return null;
     }
   }
 }
 
-// Export a singleton instance
 export const userRepository = new UserRepository();
