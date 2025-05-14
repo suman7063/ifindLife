@@ -16,4 +16,21 @@ export interface ExpertCardData {
   averageRating?: number;
   reviewsCount?: number;
   status?: 'online' | 'offline' | 'busy';
+  // Additional fields for backward compatibility
+  imageUrl?: string; // For components using imageUrl instead of profilePicture
+  experience?: number | string;
+  price?: number;
+  waitTime?: string;
+  specialties?: string[];
+  online?: boolean;
+}
+
+export interface ExpertActionsProps {
+  expert: ExpertCardData;
+  onClick?: () => void;
+}
+
+export interface ExpertInfoProps {
+  expert: ExpertCardData;
+  showRating?: boolean;
 }

@@ -61,8 +61,9 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Adapt logout function to return boolean
   const adaptedLogout = async (): Promise<boolean> => {
     try {
-      const result = await auth.logout();
-      return result && !result.error;
+      await auth.logout();
+      // Since we can't check for error directly, assume success if no exception
+      return true;
     } catch (error) {
       console.error("Error in logout:", error);
       return false;

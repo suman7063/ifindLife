@@ -1,54 +1,26 @@
 
-import { Message } from '@/types/appointments';
-import { UserProfile } from '@/types/supabase';
-import { ExpertProfile } from '@/types/supabase/expert';
-import { ExpertProfile as AuthExpertProfile } from '@/contexts/auth/types';
+import { User } from '@supabase/supabase-js';
+import { UserProfile } from '@/types/database/unified';
 
-// Domain entity types
-export type MessagingUser = ExpertProfile | AuthExpertProfile | UserProfile | null;
-
-export interface Conversation {
-  userId: string;
-  userName: string;
-  userAvatar?: string;
-  lastMessage: string;
-  lastMessageTime: string;
-  unreadCount: number;
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  created_at: string;
+  read: boolean;
 }
 
-// Use case interfaces
-export interface MessagingRepository {
-  fetchMessages: (userId: string, partnerId: string) => Promise<Message[]>;
-  fetchConversations: (userId: string) => Promise<Conversation[]>;
-  sendMessage: (senderId: string, receiverId: string, content: string) => Promise<Message | null>;
-  markConversationAsRead: (userId: string, partnerId: string) => Promise<boolean>;
+export interface ChatPartner {
+  id: string;
+  name: string;
+  profile_picture?: string;
+  unread_count: number;
+  last_message?: string;
+  last_message_time?: string;
 }
 
-// Return types for hooks
-export interface UseMessagingReturn {
-  messages: Message[];
-  conversations: Conversation[];
-  loading: boolean;
-  messagesLoading: boolean;
-  conversationsLoading: boolean;
-  error: string | null;
-  fetchMessages: (partnerId: string) => Promise<Message[]>;
-  fetchConversations: () => Promise<Conversation[]>;
-  sendMessage: (receiverId: string, content: string) => Promise<Message | null>;
-  markConversationAsRead: (partnerId: string) => Promise<boolean>;
-}
-
-export interface UseMessagesReturn {
-  messages: Message[];
-  messagesLoading: boolean;
-  fetchMessages: (partnerId: string) => Promise<Message[]>;
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
-  error: string | null;
-}
-
-export interface UseConversationsReturn {
-  conversations: Conversation[];
-  conversationsLoading: boolean;
-  fetchConversations: () => Promise<Conversation[]>;
-  error: string | null;
+export interface MessageFormData {
+  content: string;
+  receiver_id: string;
 }

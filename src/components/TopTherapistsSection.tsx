@@ -1,95 +1,91 @@
 
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ChevronRight } from 'lucide-react';
-import ExpertCard from '@/components/expert-card';
-import { therapistData as defaultTherapistData } from '@/data/homePageData';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import ExpertCard from './expert-card';
+import { ExpertCardData } from './expert-card/types';
+import { Button } from './ui/button';
 
-// Update the interface to include missing properties and ensure id is string
-interface TherapistData {
-  id: string; // Changed to string
-  name: string;
-  experience: number;
-  specialties: string[];
-  rating: number;
-  consultations: number;
-  price: number;
-  waitTime?: string; // Made optional to match ExpertCardProps
-  imageUrl: string;
-  online: boolean;
-  availability?: string;
-  expertise?: string;
-  reviewCount?: number;
+interface TopTherapistsSectionProps {
+  experts?: ExpertCardData[];
 }
 
-const TopTherapistsSection = () => {
-  const [therapists, setTherapists] = useState<TherapistData[]>([]);
+const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [] }) => {
+  const navigate = useNavigate();
 
-  // Load content from localStorage on component mount
-  useEffect(() => {
-    try {
-      // Convert default therapist data IDs to strings
-      const defaultTherapistsWithStringIds = defaultTherapistData.map(therapist => ({
-        ...therapist,
-        id: String(therapist.id) // Convert id to string
-      }));
-      
-      setTherapists(defaultTherapistsWithStringIds as TherapistData[]);
-      
-      // Try to load from localStorage if available
-      const savedContent = localStorage.getItem('ifindlife-content');
-      if (savedContent) {
-        const parsedContent = JSON.parse(savedContent);
-        if (parsedContent.therapists) {
-          // Ensure all IDs are strings
-          const therapistsWithStringIds = parsedContent.therapists.map((therapist: any) => ({
-            ...therapist,
-            id: String(therapist.id) // Convert id to string
-          }));
-          setTherapists(therapistsWithStringIds);
-        }
-      }
-    } catch (error) {
-      console.error('Error loading content from localStorage:', error);
+  // Default experts if none provided
+  const defaultExperts: ExpertCardData[] = experts.length > 0 ? experts : [
+    {
+      id: '1',
+      name: 'Dr. Sarah Johnson',
+      specialization: 'Cognitive Behavioral Therapy',
+      averageRating: 4.9,
+      reviewsCount: 124,
+      verified: true,
+      profilePicture: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      status: 'online',
+      experience: 8,
+      price: 120,
+      waitTime: '2-3 days'
+    },
+    {
+      id: '2',
+      name: 'Dr. Michael Chen',
+      specialization: 'Family Therapy',
+      averageRating: 4.7,
+      reviewsCount: 98,
+      verified: true,
+      profilePicture: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      status: 'offline',
+      experience: 10,
+      price: 135,
+      waitTime: '1 week'
+    },
+    {
+      id: '3',
+      name: 'Dr. Leila Patel',
+      specialization: 'Trauma Therapy',
+      averageRating: 4.8,
+      reviewsCount: 156,
+      verified: true,
+      profilePicture: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      status: 'online',
+      experience: 12,
+      price: 150,
+      waitTime: 'Same day'
     }
-  }, []);
+  ];
+
+  const handleViewExpert = (expertId: string | number) => {
+    navigate(`/experts/${expertId}`);
+  };
 
   return (
-    <section className="py-16 bg-gray-100">
-      <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-2xl font-bold mb-6">Experts Currently Online</h2>
-        <p className="text-gray-600 mb-8 max-w-3xl">
-          Our therapists have helped thousands find clarity through video and voice consultations. Connect now for personalized expert advice.
-        </p>
+    <section className="py-12 bg-gray-50">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Top Therapists</h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Connect with our highly qualified and experienced therapists who are ready to support you on your wellness journey.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {therapists.slice(0, 3).map((therapist) => (
-            <ExpertCard 
-              key={therapist.id}
-              id={therapist.id}
-              name={therapist.name}
-              experience={therapist.experience}
-              specialties={therapist.specialties}
-              rating={therapist.rating}
-              consultations={therapist.consultations || therapist.reviewCount || 0}
-              price={therapist.price}
-              waitTime={therapist.availability || "Available"}
-              imageUrl={therapist.imageUrl}
-              online={true}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {defaultExperts.map((expert) => (
+            <ExpertCard
+              key={expert.id.toString()}
+              expert={expert}
+              onClick={() => handleViewExpert(expert.id)}
+              className="h-full"
             />
           ))}
         </div>
-        
-        <div className="mt-10 text-center">
-          <Button 
-            asChild
-            className="bg-ifind-aqua hover:bg-ifind-aqua/90 text-white"
+
+        <div className="text-center mt-10">
+          <Button
+            onClick={() => navigate('/experts')}
+            className="bg-primary hover:bg-primary/90"
           >
-            <Link to="/experts" className="flex items-center">
-              View All Experts
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
+            View All Therapists
           </Button>
         </div>
       </div>

@@ -29,9 +29,7 @@ export const fetchTestimonials = async (): Promise<Testimonial[]> => {
       throw error;
     }
     
-    return safeDataTransform(data, (item) => 
-      mapDbToTestimonial(dbTypeConverter(item))
-    );
+    return data ? data.map(item => mapDbToTestimonial(dbTypeConverter(item))) : [];
   } catch (error) {
     console.error('Error in fetchTestimonials:', error);
     return [];
@@ -52,7 +50,7 @@ export const fetchTestimonialById = async (id: string): Promise<Testimonial | nu
       return null;
     }
     
-    return safeSingleRecord(data, mapDbToTestimonial);
+    return data ? mapDbToTestimonial(data) : null;
   } catch (error) {
     console.error('Error in fetchTestimonialById:', error);
     return null;
@@ -83,7 +81,7 @@ export const createTestimonial = async (testimonial: Omit<Testimonial, 'id'>): P
       return null;
     }
     
-    return safeSingleRecord(data, mapDbToTestimonial);
+    return data ? mapDbToTestimonial(data) : null;
   } catch (error) {
     console.error('Error in createTestimonial:', error);
     return null;
@@ -117,7 +115,7 @@ export const updateTestimonial = async (id: string, updates: Partial<Testimonial
       return null;
     }
     
-    return safeSingleRecord(data, mapDbToTestimonial);
+    return data ? mapDbToTestimonial(data) : null;
   } catch (error) {
     console.error('Error in updateTestimonial:', error);
     return null;
