@@ -1,55 +1,55 @@
 
 import { useState, useEffect } from 'react';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
-import { fetchServices } from '../services/expertServicesService';
-import { ServiceType } from '../types';
+import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-const useDashboardState = () => {
-  const { currentExpert, loading } = useExpertAuth();
-  const expert = currentExpert; // Map to the properties expected
-  
-  const [services, setServices] = useState<ServiceType[]>([]);
-  const [users, setUsers] = useState<any[]>([]);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [earnings, setEarnings] = useState<any[]>([]);
-  
+export const useDashboardState = () => {
+  const { expert, isAuthenticated, loading, logout } = useExpertAuth();
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
+  const navigate = useNavigate();
+
+  // Rename expert to currentExpert for backwards compatibility
+  const currentExpert = expert;
+
   useEffect(() => {
-    const loadServices = async () => {
-      const servicesData = await fetchServices();
-      setServices(servicesData);
-    };
-    
-    loadServices();
-    
-    // In a real app, these would be API calls
-    // For now, we'll use mock data
-    setUsers([
-      { id: 1, name: 'John Doe', email: 'john@example.com', lastSession: '2023-05-15' },
-      { id: 2, name: 'Jane Smith', email: 'jane@example.com', lastSession: '2023-05-10' },
-      { id: 3, name: 'Bob Johnson', email: 'bob@example.com', lastSession: '2023-05-05' },
-    ]);
-    
-    setAppointments([
-      { id: 1, user: 'John Doe', date: '2023-05-20', time: '10:00 AM', status: 'confirmed' },
-      { id: 2, user: 'Jane Smith', date: '2023-05-22', time: '2:00 PM', status: 'pending' },
-      { id: 3, user: 'Bob Johnson', date: '2023-05-25', time: '11:30 AM', status: 'confirmed' },
-    ]);
-    
-    setEarnings([
-      { id: 1, user: 'John Doe', amount: 50, date: '2023-05-15', service: 'Therapy Session' },
-      { id: 2, user: 'Jane Smith', amount: 35, date: '2023-05-10', service: 'Anxiety Management' },
-      { id: 3, user: 'Bob Johnson', amount: 45, date: '2023-05-05', service: 'Depression Counseling' },
-    ]);
-  }, []);
-  
+    if (!loading && !isAuthenticated) {
+      navigate('/expert-login');
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+  };
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      const success = await logout();
+      
+      if (success) {
+        toast.success('Successfully logged out');
+        navigate('/');
+      } else {
+        toast.error('Failed to log out');
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('An error occurred while logging out');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   return {
+    currentExpert, // Add this for backward compatibility
     expert,
     loading,
-    services,
-    users,
-    appointments,
-    earnings
+    isAuthenticated,
+    activeTab,
+    isLoggingOut,
+    handleTabChange,
+    handleLogout
   };
 };
-
-export default useDashboardState;

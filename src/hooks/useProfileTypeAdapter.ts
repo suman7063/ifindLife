@@ -12,6 +12,14 @@ export const useProfileTypeAdapter = () => {
   const toTypeB = (profile: UserProfileA | null): UserProfileB | null => {
     if (!profile) return null;
     
+    // Handle favorite_programs conversion from string[] to number[]
+    const favoritePrograms = Array.isArray(profile.favorite_programs)
+      ? profile.favorite_programs.map(id => {
+          const numId = Number(id);
+          return isNaN(numId) ? 0 : numId;
+        })
+      : [];
+    
     return {
       id: profile.id,
       name: profile.name,
@@ -29,7 +37,7 @@ export const useProfileTypeAdapter = () => {
       referred_by: profile.referred_by,
       
       // Convert string[] to number[] for favorite_programs
-      favorite_programs: profile.favorite_programs?.map(id => Number(id)) || [],
+      favorite_programs: favoritePrograms,
       
       // Map additional properties
       profilePicture: profile.profile_picture,
@@ -37,6 +45,12 @@ export const useProfileTypeAdapter = () => {
       favoriteExperts: profile.favorite_experts,
       enrolledCourses: profile.enrolled_courses,
       referralCode: profile.referral_code,
+      
+      // Optional related data
+      transactions: profile.transactions,
+      reviews: profile.reviews,
+      reports: profile.reports,
+      referrals: profile.referrals
     };
   };
 
@@ -46,13 +60,25 @@ export const useProfileTypeAdapter = () => {
   const toTypeA = (profile: UserProfileB | null): UserProfileA | null => {
     if (!profile) return null;
     
+    // Make sure all required fields have default values
+    const name = profile.name || '';
+    const email = profile.email || '';
+    const phone = profile.phone || '';
+    const country = profile.country || '';
+    const city = profile.city || '';
+    
+    // Handle favorite_programs conversion from number[] to string[]
+    const favoritePrograms = Array.isArray(profile.favorite_programs)
+      ? profile.favorite_programs.map(id => String(id))
+      : [];
+    
     return {
       id: profile.id,
-      name: profile.name || '',
-      email: profile.email || '',
-      phone: profile.phone || '',
-      country: profile.country || '',
-      city: profile.city || '',
+      name,
+      email,
+      phone,
+      country,
+      city,
       currency: profile.currency || 'USD',
       profile_picture: profile.profile_picture || profile.profilePicture || '',
       wallet_balance: profile.wallet_balance || profile.walletBalance || 0,
@@ -62,15 +88,15 @@ export const useProfileTypeAdapter = () => {
       referral_link: profile.referral_link || '',
       
       // Convert number[] to string[] for favorite_programs
-      favorite_programs: profile.favorite_programs?.map(id => String(id)) || [],
+      favorite_programs: favoritePrograms,
       favorite_experts: profile.favorite_experts || profile.favoriteExperts || [],
       enrolled_courses: profile.enrolled_courses || profile.enrolledCourses || [],
       
       // Add required fields that might be missing
-      reviews: [],
-      reports: [],
-      transactions: [],
-      referrals: []
+      reviews: profile.reviews || [],
+      reports: profile.reports || [],
+      transactions: profile.transactions || [],
+      referrals: profile.referrals || []
     };
   };
 
@@ -83,7 +109,7 @@ export const useProfileTypeAdapter = () => {
     return (profile: UserProfileA | UserProfileB | null, ...args: T): R | null => {
       if (!profile) return null;
       
-      // Ensure profile is of type B
+      // Ensure profile is of type B by checking for presence of favoriteExperts property
       const profileB = 'favoriteExperts' in profile 
         ? profile as UserProfileB 
         : toTypeB(profile as UserProfileA);
@@ -103,7 +129,7 @@ export const useProfileTypeAdapter = () => {
     return (profile: UserProfileA | UserProfileB | null, ...args: T): R | null => {
       if (!profile) return null;
       
-      // Ensure profile is of type A
+      // Ensure profile is of type A by checking for presence of favorite_experts property
       const profileA = 'favorite_experts' in profile
         ? profile as UserProfileA
         : toTypeA(profile as UserProfileB);

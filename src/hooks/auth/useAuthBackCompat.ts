@@ -1,68 +1,72 @@
 
-import { useMemo } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { UserAuthContextType } from '@/contexts/auth/UserAuthContext';
-import { User } from '@supabase/supabase-js';
-import { adaptUserProfile } from '@/utils/userProfileAdapter';
-import { UserProfile } from '@/types/supabase/user';
-import { ExpertProfile } from '@/types/database/unified';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
+import { UserProfile as UserProfileA } from '@/types/supabase/user';
+import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
+import { AuthContextType } from '@/contexts/auth/types';
 
 /**
- * This hook provides backwards compatibility for components
- * that use the old auth hooks
+ * Hook that provides backward compatibility for components expecting 
+ * different UserProfile interfaces
  */
 export const useAuthBackCompat = () => {
   const auth = useAuth();
-  
-  // Create a compatible user auth context for old components
-  const userAuth = useMemo<UserAuthContextType>(() => ({
-    currentUser: adaptUserProfile(auth.profile),
+  const { toTypeA, toTypeB } = useProfileTypeAdapter();
+
+  // Create a compatible profile that should work with both interfaces
+  const adaptedProfile = auth.profile 
+    ? 'favorite_experts' in auth.profile 
+      ? auth.profile as UserProfileA 
+      : toTypeA(auth.profile as UserProfileB)
+    : null;
+
+  // Create a compatible updateProfile function that works with both interfaces
+  const adaptedUpdateProfile = async (updates: Partial<UserProfileA | UserProfileB>): Promise<boolean> => {
+    if (!auth.updateProfile) return false;
+    
+    // Convert the updates to the type expected by auth.updateProfile
+    const adaptedUpdates = 'favorite_programs' in updates && Array.isArray(updates.favorite_programs)
+      ? {
+          ...updates,
+          favorite_programs: updates.favorite_programs.map(id => 
+            typeof id === 'string' ? Number(id) : id
+          )
+        }
+      : updates;
+      
+    return await auth.updateProfile(adaptedUpdates as any);
+  };
+
+  // Create an alternative userAuth object that's compatible with the old interface
+  const userAuth = {
+    currentUser: adaptedProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout,
-    authLoading: auth.isLoading,
     loading: auth.isLoading,
+    authLoading: auth.isLoading,
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile,
+    updateProfile: adaptedUpdateProfile,
     updatePassword: auth.updatePassword || (async () => false),
     addToFavorites: auth.addToFavorites || (async () => false),
     removeFromFavorites: auth.removeFromFavorites || (async () => false),
     rechargeWallet: auth.rechargeWallet || (async () => false),
-    addReview: async (review) => {
-      return auth.addReview ? auth.addReview(review) : false;
-    },
-    reportExpert: async (report) => {
-      return auth.reportExpert ? auth.reportExpert(report) : false;
-    },
-    hasTakenServiceFrom: async (expertId) => {
-      return auth.hasTakenServiceFrom ? auth.hasTakenServiceFrom(expertId) : false;
-    },
-    getExpertShareLink: auth.getExpertShareLink || (() => ''),
-    getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture || (async () => null)
-  }), [auth]);
-
-  // Create a compatible expert auth context
-  const expertAuth = useMemo(() => ({
-    expert: auth.expertProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    loading: auth.isLoading,
-    error: auth.error,
-    login: async (email: string, password: string) => {
-      return auth.login(email, password, 'expert');
-    },
-    logout: auth.logout,
-    user: auth.user as User,
-    updateProfile: (updates: Partial<ExpertProfile>) => {
-      // This is a simplified implementation; the actual method would need to handle expert profile updates
-      return Promise.resolve(false);
-    }
-  }), [auth]);
+    updateProfilePicture: auth.updateProfilePicture || (async () => null),
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async () => false),
+    
+    // Additional methods that might be expected
+    getExpertShareLink: auth.getExpertShareLink || ((id) => ''),
+    getReferralLink: auth.getReferralLink || (() => null),
+    addReview: auth.addReview || (async () => false),
+    reportExpert: auth.reportExpert || (async () => false),
+  };
 
   return {
-    userAuth,
-    expertAuth
+    auth, // original auth context
+    userAuth, // compatible user auth object
+    adaptedProfile, // the adapted profile
+    adaptedUpdateProfile // the adapted update profile function
   };
 };

@@ -1,158 +1,189 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { Message } from '@/types/database/unified';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { toast } from '@/hooks/use-toast';
 
-export interface Message {
-  id: string;
-  content: string;
-  timestamp: Date;
-  isMine: boolean;
-  sender_id: string;
-  receiver_id: string;
-}
-
-export interface Conversation {
-  id: string;
-  name: string;
-  profilePicture?: string;
-  lastMessage?: string;
-  lastMessageTime?: Date;
-  unreadCount?: number;
-}
-
-export const useMessaging = () => {
+export const useMessaging = (recipientId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [currentConversation, setCurrentConversation] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);
+  const { user } = useAuth();
 
-  // Fetch conversations
-  const fetchConversations = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // Function to load messages
+  const fetchMessages = useCallback(async () => {
+    if (!user?.id || !recipientId) {
+      setLoading(false);
+      return;
+    }
 
     try {
-      // Mock data for now - this would be replaced with actual Supabase queries
-      setConversations([
-        {
-          id: '1',
-          name: 'John Doe',
-          profilePicture: 'https://i.pravatar.cc/150?u=john',
-          lastMessage: 'Hello, how can I help you today?',
-          lastMessageTime: new Date(),
-          unreadCount: 2
-        },
-        {
-          id: '2',
-          name: 'Jane Smith',
-          profilePicture: 'https://i.pravatar.cc/150?u=jane',
-          lastMessage: 'Your appointment is confirmed.',
-          lastMessageTime: new Date(Date.now() - 3600000),
-          unreadCount: 0
-        }
-      ]);
+      setLoading(true);
+      
+      // Get messages sent by current user to recipient
+      const { data: sentMessages, error: sentError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('sender_id', user.id)
+        .eq('receiver_id', recipientId)
+        .order('created_at', { ascending: true });
+
+      if (sentError) throw sentError;
+
+      // Get messages received by current user from recipient
+      const { data: receivedMessages, error: receivedError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('sender_id', recipientId)
+        .eq('receiver_id', user.id)
+        .order('created_at', { ascending: true });
+
+      if (receivedError) throw receivedError;
+
+      // Combine and sort all messages by timestamp
+      const allMessages = [...(sentMessages || []), ...(receivedMessages || [])];
+      allMessages.sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+
+      // Add a property to indicate if message was sent by current user
+      const processedMessages = allMessages.map(msg => ({
+        ...msg,
+        isMine: msg.sender_id === user.id,
+        timestamp: new Date(msg.created_at)
+      }));
+
+      setMessages(processedMessages);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch conversations'));
+      console.error('Error fetching messages:', err);
+      setError(err instanceof Error ? err : new Error('Failed to fetch messages'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user, recipientId]);
 
-  // Fetch messages for a conversation
-  const fetchMessages = useCallback(async (conversationId: string) => {
-    setLoading(true);
-    setError(null);
-    setCurrentConversation(conversationId);
-
-    try {
-      // Mock data for now - this would be replaced with actual Supabase queries
-      setTimeout(() => {
-        const mockMessages = [
-          {
-            id: '1',
-            content: 'Hello, how can I help you today?',
-            timestamp: new Date(Date.now() - 86400000),
-            isMine: false,
-            sender_id: conversationId,
-            receiver_id: 'current-user'
-          },
-          {
-            id: '2',
-            content: 'I would like to book an appointment.',
-            timestamp: new Date(Date.now() - 3600000),
-            isMine: true,
-            sender_id: 'current-user',
-            receiver_id: conversationId
-          },
-          {
-            id: '3',
-            content: 'Sure, I have availability next week.',
-            timestamp: new Date(Date.now() - 1800000),
-            isMine: false,
-            sender_id: conversationId,
-            receiver_id: 'current-user'
-          }
-        ];
-        setMessages(mockMessages);
-        setLoading(false);
-      }, 500);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch messages'));
-      setLoading(false);
+  // Send a message to the recipient
+  const sendMessage = useCallback(async (content: string) => {
+    if (!user?.id || !recipientId) {
+      toast.error('Cannot send message: Missing user or recipient');
+      return;
     }
-  }, []);
-
-  // Send a message
-  const sendMessage = useCallback(async (conversationId: string, content: string): Promise<boolean> => {
-    if (!content.trim()) return false;
-    setSending(true);
-    setError(null);
 
     try {
-      // This would be a Supabase insert in a real implementation
       const newMessage = {
-        id: `temp-${Date.now()}`,
+        sender_id: user.id,
+        receiver_id: recipientId,
         content,
-        timestamp: new Date(),
-        isMine: true,
-        sender_id: 'current-user',
-        receiver_id: conversationId
+        read: false,
       };
 
-      setMessages(prev => [...prev, newMessage]);
-      
-      // Update the conversation's last message
-      setConversations(prev => 
-        prev.map(conv => 
-          conv.id === conversationId 
-            ? { ...conv, lastMessage: content, lastMessageTime: new Date() } 
-            : conv
+      const { data, error } = await supabase
+        .from('messages')
+        .insert(newMessage)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Add the new message to the state with the "isMine" property
+      setMessages(prevMessages => [
+        ...prevMessages, 
+        { 
+          ...data, 
+          isMine: true,
+          timestamp: new Date(data.created_at)
+        }
+      ]);
+
+      return data;
+    } catch (err) {
+      console.error('Error sending message:', err);
+      toast.error('Failed to send message. Please try again.');
+      throw err;
+    }
+  }, [user, recipientId]);
+
+  // Mark messages as read
+  const markAsRead = useCallback(async () => {
+    if (!user?.id || !recipientId) return;
+
+    try {
+      const unreadMessages = messages.filter(
+        msg => !msg.read && msg.sender_id === recipientId
+      );
+
+      if (unreadMessages.length === 0) return;
+
+      const { error } = await supabase
+        .from('messages')
+        .update({ read: true })
+        .in('id', unreadMessages.map(msg => msg.id));
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prevMessages =>
+        prevMessages.map(msg =>
+          msg.sender_id === recipientId ? { ...msg, read: true } : msg
         )
       );
-      
-      return true;
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to send message'));
-      return false;
-    } finally {
-      setSending(false);
+      console.error('Error marking messages as read:', err);
     }
-  }, []);
+  }, [user, recipientId, messages]);
+
+  // Set up real-time subscription for new messages
+  useEffect(() => {
+    if (!user?.id || !recipientId) return;
+
+    // Initial fetch
+    fetchMessages();
+
+    // Set up subscription for new messages
+    const subscription = supabase
+      .channel('messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `sender_id=eq.${recipientId},receiver_id=eq.${user.id}`
+        },
+        (payload) => {
+          const newMessage = payload.new as Message;
+          
+          // Add the received message to state
+          setMessages(prevMessages => [
+            ...prevMessages,
+            {
+              ...newMessage,
+              isMine: false,
+              timestamp: new Date(newMessage.created_at)
+            }
+          ]);
+          
+          // Mark it as read if the conversation is open
+          markAsRead();
+        }
+      )
+      .subscribe();
+
+    // Mark messages as read when conversation is opened
+    markAsRead();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user, recipientId, fetchMessages, markAsRead]);
 
   return {
     messages,
-    conversations,
-    currentConversation,
+    sendMessage,
     loading,
-    sending,
     error,
     fetchMessages,
-    fetchConversations,
-    sendMessage,
-    setCurrentConversation
+    markAsRead
   };
 };
-
-export default useMessaging;

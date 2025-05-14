@@ -1,136 +1,134 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
-import { toast } from '@/hooks/use-toast';
-import { normalizeExpertId } from '@/utils/userProfileAdapter';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 interface ExpertReportModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   expertId: string | number;
   expertName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
-const reportReasons = [
-  'Inappropriate behavior',
-  'Misleading information',
-  'Poor service quality',
-  'No-show for appointment',
-  'Other'
-];
-
 const ExpertReportModal: React.FC<ExpertReportModalProps> = ({
-  isOpen,
-  onClose,
   expertId,
-  expertName
+  expertName,
+  open,
+  onOpenChange,
+  onSuccess
 }) => {
   const { reportExpert } = useUserAuth();
-  const [reason, setReason] = useState('');
-  const [details, setDetails] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reason, setReason] = useState<string>('inappropriate-behavior');
+  const [details, setDetails] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
   const handleSubmit = async () => {
     if (!reason) {
-      toast({
-        title: 'Missing information',
-        description: 'Please select a reason for your report',
-        variant: 'destructive'
-      });
+      toast.error('Please select a reason for reporting');
       return;
     }
     
     setIsSubmitting(true);
     
     try {
-      const normalizedExpertId = normalizeExpertId(expertId);
+      // Convert expertId to number if it's a string
+      const numericExpertId = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
+      
       const success = await reportExpert({
-        expertId: normalizedExpertId,
+        expertId: numericExpertId,
         reason,
         details
       });
       
       if (success) {
-        toast({
-          title: 'Report submitted',
-          description: 'Thank you for your feedback. We will review your report.'
-        });
-        onClose();
+        toast.success('Report submitted successfully');
+        onOpenChange(false);
+        if (onSuccess) onSuccess();
       } else {
-        toast({
-          title: 'Failed to submit report',
-          description: 'Please try again later',
-          variant: 'destructive'
-        });
+        toast.error('Failed to submit report');
       }
     } catch (error) {
       console.error('Error submitting report:', error);
-      toast({
-        title: 'Error',
-        description: 'An unexpected error occurred. Please try again.',
-        variant: 'destructive'
-      });
+      toast.error('An error occurred while submitting your report');
     } finally {
       setIsSubmitting(false);
     }
   };
   
-  const resetForm = () => {
-    setReason('');
-    setDetails('');
-  };
-  
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Report {expertName}</DialogTitle>
+          <DialogDescription>
+            Please let us know why you're reporting this expert. All reports are confidential.
+          </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
+        <div className="py-4 space-y-4">
           <div className="space-y-2">
-            <label htmlFor="reason" className="text-sm font-medium">Reason for report</label>
-            <Select value={reason} onValueChange={setReason}>
-              <SelectTrigger id="reason">
-                <SelectValue placeholder="Select a reason" />
-              </SelectTrigger>
-              <SelectContent>
-                {reportReasons.map((r) => (
-                  <SelectItem key={r} value={r}>{r}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Reason for reporting</Label>
+            <RadioGroup value={reason} onValueChange={setReason}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="inappropriate-behavior" id="behavior" />
+                <Label htmlFor="behavior">Inappropriate behavior</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="professional-concerns" id="professional" />
+                <Label htmlFor="professional">Professional concerns</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="misrepresentation" id="misrepresentation" />
+                <Label htmlFor="misrepresentation">Misrepresentation</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="other" id="other" />
+                <Label htmlFor="other">Other</Label>
+              </div>
+            </RadioGroup>
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="details" className="text-sm font-medium">Additional details</label>
+            <Label htmlFor="details">Additional details</Label>
             <Textarea
               id="details"
+              placeholder="Please provide more information about the issue"
               value={details}
               onChange={(e) => setDetails(e.target.value)}
-              placeholder="Please provide more information about your report"
-              rows={5}
+              rows={4}
+              required
             />
           </div>
         </div>
         
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+        <div className="flex justify-end space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting ? 'Submitting...' : 'Submit Report'}
+          <Button 
+            variant="destructive"
+            onClick={handleSubmit}
+            disabled={isSubmitting || !details}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : 'Submit Report'}
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

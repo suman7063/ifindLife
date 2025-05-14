@@ -2,7 +2,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useMessaging } from '@/hooks/useMessaging';
-import { Message } from '@/types/database/unified';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -85,10 +84,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => {
-          // Handle both snake_case and camelCase properties
-          const senderId = message.senderId || message.sender_id;
-          const isOwnMessage = senderId === user?.id;
-          const messageDate = message.createdAt || message.created_at;
+          const isOwnMessage = message.isMine || message.sender_id === user?.id;
           
           return (
             <div
@@ -117,7 +113,9 @@ const ConversationView: React.FC<ConversationViewProps> = ({
                       isOwnMessage ? 'text-right' : ''
                     }`}
                   >
-                    {messageDate && format(new Date(messageDate), 'p')}
+                    {message.timestamp 
+                      ? format(message.timestamp, 'p') 
+                      : format(new Date(message.created_at), 'p')}
                   </div>
                 </div>
               </div>

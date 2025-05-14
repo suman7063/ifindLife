@@ -3,71 +3,80 @@ import React from 'react';
 import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 import { UserProfile as UserProfileA } from '@/types/supabase/user';
 import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
+import { UserProfile } from '@/types/database/unified';
+
+// Type for components that accept any kind of user profile
+type ComponentWithProfile<P = {}> = React.ComponentType<P & { 
+  user?: UserProfileA | UserProfileB | UserProfile | null;
+  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+}>;
 
 /**
- * Higher Order Component to adapt profile types for components that have incompatible type expectations
+ * Higher Order Component to adapt profile types for components expecting specific types
  */
-export const withProfileTypeAdapter = <P extends { currentUser?: UserProfileA | UserProfileB | null }>(
-  Component: React.ComponentType<P>
+export const withProfileTypeAdapter = <P extends { 
+  user?: UserProfileA | UserProfileB | UserProfile | null;
+  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+}>(
+  Component: ComponentWithProfile<P>,
+  targetType: 'A' | 'B' = 'A'
 ) => {
+  const displayName = Component.displayName || Component.name || 'Component';
+  
   const WithProfileTypeAdapter: React.FC<P> = (props) => {
     const { toTypeA, toTypeB } = useProfileTypeAdapter();
     
-    // Detect which type of profile is expected by examining component props
-    const isTypeAExpected = (props as any).expectProfileTypeA;
+    // Create new props with adapted user profile
+    const newProps = { ...props };
     
-    // If no user profile, just pass through
-    if (!props.currentUser) {
-      return <Component {...props} />;
+    // Adapt user property if it exists
+    if (props.user) {
+      if (targetType === 'A' && 'profilePicture' in props.user) {
+        // Convert from B to A
+        newProps.user = toTypeA(props.user as UserProfileB) as any;
+      } else if (targetType === 'B' && 'favorite_experts' in props.user) {
+        // Convert from A to B
+        newProps.user = toTypeB(props.user as UserProfileA) as any;
+      }
     }
     
-    // Adapt the profile type based on component needs
-    const adaptedProps = {...props};
-    if (isTypeAExpected && 'favoriteExperts' in props.currentUser) {
-      // Component expects type A but we have type B
-      adaptedProps.currentUser = toTypeA(props.currentUser as UserProfileB);
-    } else if (!isTypeAExpected && 'favorite_experts' in props.currentUser) {
-      // Component expects type B but we have type A
-      adaptedProps.currentUser = toTypeB(props.currentUser as UserProfileA);
+    // Adapt currentUser property if it exists
+    if (props.currentUser) {
+      if (targetType === 'A' && 'profilePicture' in props.currentUser) {
+        // Convert from B to A
+        newProps.currentUser = toTypeA(props.currentUser as UserProfileB) as any;
+      } else if (targetType === 'B' && 'favorite_experts' in props.currentUser) {
+        // Convert from A to B
+        newProps.currentUser = toTypeB(props.currentUser as UserProfileA) as any;
+      }
     }
     
-    return <Component {...adaptedProps as P} />;
+    return <Component {...newProps as P} />;
   };
-  
-  const displayName = Component.displayName || Component.name || 'Component';
+
   WithProfileTypeAdapter.displayName = `withProfileTypeAdapter(${displayName})`;
   
   return WithProfileTypeAdapter;
 };
 
 /**
- * Helper function to wrap function parameters that require specific profile types
+ * Helper function for creating components that need type B UserProfile
  */
-export const adaptFunctionParams = <T extends unknown[], R>(
-  fn: (...args: T) => R,
-  profileParamIndex = 0,
-  targetType: 'A' | 'B' = 'A'
-) => {
-  return (...args: T): R => {
-    const { toTypeA, toTypeB } = useProfileTypeAdapter();
-    
-    if (!args[profileParamIndex]) {
-      return fn(...args);
-    }
-    
-    const profile = args[profileParamIndex] as UserProfileA | UserProfileB;
-    const newArgs = [...args];
-    
-    if (targetType === 'A' && 'favoriteExperts' in profile) {
-      // Function expects type A but we have type B
-      newArgs[profileParamIndex] = toTypeA(profile as UserProfileB) as any;
-    } else if (targetType === 'B' && 'favorite_experts' in profile) {
-      // Function expects type B but we have type A
-      newArgs[profileParamIndex] = toTypeB(profile as UserProfileA) as any;
-    }
-    
-    return fn(...newArgs as T);
-  };
+export const withTypeB = <P extends { 
+  user?: UserProfileA | UserProfileB | UserProfile | null;
+  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+}>(Component: ComponentWithProfile<P>) => {
+  return withProfileTypeAdapter(Component, 'B');
+};
+
+/**
+ * Helper function for creating components that need type A UserProfile
+ */
+export const withTypeA = <P extends { 
+  user?: UserProfileA | UserProfileB | UserProfile | null;
+  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
+}>(Component: ComponentWithProfile<P>) => {
+  return withProfileTypeAdapter(Component, 'A');
 };
 
 export default withProfileTypeAdapter;
