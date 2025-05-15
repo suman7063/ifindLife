@@ -33,9 +33,6 @@ export const useUserWallet = (
         amount: amount,
         currency: currentUser.currency || 'USD',
         description: 'Wallet recharge',
-        status: 'completed',
-        payment_method: 'online',
-        payment_id: `recharge_${Date.now()}`
       };
 
       const { data: transactionResult, error: transactionError } = await supabase
@@ -65,13 +62,9 @@ export const useUserWallet = (
         user_id: transactionData.user_id,
         amount: transactionData.amount,
         type: transactionData.type,
-        status: transactionData.status,
         date: transactionData.date,
         currency: transactionData.currency,
         description: transactionData.description,
-        created_at: new Date().toISOString(),
-        payment_id: transactionData.payment_id,
-        payment_method: transactionData.payment_method,
         transaction_type: transactionData.type // Set the transaction_type field
       };
 

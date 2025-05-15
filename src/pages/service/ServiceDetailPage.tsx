@@ -16,7 +16,7 @@ const ServiceDetailPage: React.FC = () => {
   return (
     <>
       <Navbar />
-      <ServiceDetail />
+      <ServiceDetail serviceId={serviceId} />
       <Footer />
     </>
   );

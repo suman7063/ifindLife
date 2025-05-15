@@ -1,114 +1,137 @@
 
-import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/types/database/unified';
+import { supabase } from '@/lib/supabase';
 
 export class ExpertRepository {
-  /**
-   * Get an expert by ID
-   */
-  async getExpertById(id: string): Promise<ExpertProfile | null> {
+  async getById(id: string): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('id', id)
         .single();
-      
-      if (error) {
-        console.error('Error fetching expert by ID:', error);
-        return null;
-      }
-      
-      return data as ExpertProfile;
+
+      if (error) throw error;
+      return this.adaptExpertProfile(data);
     } catch (error) {
-      console.error('Repository error in getExpertById:', error);
+      console.error('Error fetching expert by id:', error);
       return null;
     }
   }
 
-  /**
-   * Get an expert by auth ID
-   */
-  async getExpertByAuthId(authId: string): Promise<ExpertProfile | null> {
+  async getByAuthId(authId: string): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', authId)
         .single();
-      
-      if (error && error.code !== 'PGRST116') { // Not found error
-        console.error('Error fetching expert by auth ID:', error);
-        return null;
-      }
-      
-      return data as ExpertProfile;
+
+      if (error) throw error;
+      return this.adaptExpertProfile(data);
     } catch (error) {
-      console.error('Repository error in getExpertByAuthId:', error);
+      console.error('Error fetching expert by auth id:', error);
       return null;
     }
   }
 
-  /**
-   * Update an expert's profile
-   */
-  async updateExpert(id: string, updates: Partial<ExpertProfile>): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update(updates)
-        .eq('id', id);
-      
-      return !error;
-    } catch (error) {
-      console.error('Repository error in updateExpert:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Get all experts
-   */
-  async getAllExperts(): Promise<ExpertProfile[]> {
+  async getAll(): Promise<ExpertProfile[]> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
-        .eq('status', 'approved');
-      
-      if (error) {
-        console.error('Error fetching experts:', error);
-        return [];
-      }
-      
-      return data as ExpertProfile[];
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data.map(this.adaptExpertProfile);
     } catch (error) {
-      console.error('Repository error in getAllExperts:', error);
+      console.error('Error fetching all experts:', error);
       return [];
     }
   }
 
-  /**
-   * Create a new expert
-   */
-  async createExpert(expertData: Omit<ExpertProfile, 'id'>): Promise<ExpertProfile | null> {
+  async update(id: string, profile: Partial<ExpertProfile>): Promise<boolean> {
     try {
+      // Ensure experience is stored as a string in the database
+      const dataToUpdate = {
+        ...profile,
+        experience: profile.experience !== undefined 
+          ? String(profile.experience) 
+          : undefined
+      };
+
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(dataToUpdate)
+        .eq('id', id);
+
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Error updating expert:', error);
+      return false;
+    }
+  }
+
+  async create(profile: Omit<ExpertProfile, 'id'>): Promise<ExpertProfile | null> {
+    try {
+      // Ensure experience is stored as a string in the database
+      const dataToInsert = {
+        ...profile,
+        experience: profile.experience !== undefined 
+          ? String(profile.experience) 
+          : undefined
+      };
+
       const { data, error } = await supabase
         .from('expert_accounts')
-        .insert([expertData])
+        .insert(dataToInsert)
         .select()
         .single();
-      
-      if (error) {
-        console.error('Error creating expert:', error);
-        return null;
-      }
-      
-      return data as ExpertProfile;
+
+      if (error) throw error;
+      return this.adaptExpertProfile(data);
     } catch (error) {
-      console.error('Repository error in createExpert:', error);
+      console.error('Error creating expert:', error);
       return null;
     }
+  }
+
+  // Helper method to adapt DB response to our ExpertProfile type
+  private adaptExpertProfile(data: any): ExpertProfile {
+    if (!data) return {} as ExpertProfile;
+    
+    // Convert experience to number if it can be parsed as a number
+    let experience = data.experience;
+    if (typeof experience === 'string') {
+      const parsed = parseInt(experience, 10);
+      if (!isNaN(parsed)) {
+        experience = parsed;
+      }
+    }
+    
+    return {
+      id: data.id,
+      auth_id: data.auth_id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      address: data.address,
+      city: data.city,
+      state: data.state,
+      country: data.country,
+      specialization: data.specialization,
+      experience: experience,
+      bio: data.bio,
+      certificate_urls: data.certificate_urls,
+      profile_picture: data.profile_picture,
+      selected_services: data.selected_services,
+      average_rating: data.average_rating,
+      reviews_count: data.reviews_count,
+      verified: data.verified,
+      created_at: data.created_at,
+      status: data.status
+    };
   }
 }
 

@@ -4,7 +4,7 @@ import { Container } from '@/components/ui/container';
 import UserProfile from '@/components/user/profile/UserProfile';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { redirect, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const UserProfilePage: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();

@@ -1,107 +1,46 @@
 
-import { UserProfile as UserProfileA } from '@/types/supabase/user';
-import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
+import { UserProfile } from '@/types/database/unified';
 
-/**
- * Hook to handle UserProfile type compatibility issues
- */
 export const useProfileTypeAdapter = () => {
-  /**
-   * Convert UserProfileA to UserProfileB for function parameters that expect UserProfileB
-   */
-  const toTypeB = (profile: UserProfileA | null): UserProfileB | null => {
-    if (!profile) return null;
+  const adaptUserProfile = (data: any): UserProfile => {
+    if (!data) return {} as UserProfile;
     
-    // Handle favorite_programs conversion from string[] to number[]
-    const favoritePrograms = Array.isArray(profile.favorite_programs)
-      ? profile.favorite_programs.map(id => {
-          const numId = Number(id);
-          return isNaN(numId) ? 0 : numId;
-        })
-      : [];
-    
-    return {
-      id: profile.id,
-      name: profile.name,
-      email: profile.email,
-      phone: profile.phone,
-      city: profile.city,
-      country: profile.country,
-      profile_picture: profile.profile_picture,
-      wallet_balance: profile.wallet_balance,
-      currency: profile.currency,
-      created_at: profile.created_at,
-      updated_at: profile.created_at, // Default to created_at if updated_at is not available
-      referral_code: profile.referral_code,
-      referral_link: profile.referral_link,
-      referred_by: profile.referred_by,
+    const profile: UserProfile = {
+      id: data.id || '',
+      name: data.name || '',
+      email: data.email || '',
+      phone: data.phone || '',
+      city: data.city || '',
+      country: data.country || '',
+      profile_picture: data.profile_picture || '',
+      wallet_balance: data.wallet_balance || 0,
+      currency: data.currency || 'USD',
+      created_at: data.created_at || new Date().toISOString(),
+      updated_at: data.updated_at || data.created_at || new Date().toISOString(),
+      referral_code: data.referral_code || '',
+      referral_link: data.referral_link || '',
+      referred_by: data.referred_by || null,
       
-      // Convert string[] to number[] for favorite_programs
-      favorite_programs: favoritePrograms,
-      favorite_experts: profile.favorite_experts,
+      // Collections with empty defaults
+      transactions: data.transactions || [],
+      reviews: data.reviews || [],
+      reports: data.reports || [],
+      favorite_experts: data.favorite_experts || [],
+      favorite_programs: data.favorite_programs || [],
+      enrolled_courses: data.enrolled_courses || [],
+      referrals: data.referrals || [],
       
-      // Map additional properties for alias access
-      profilePicture: profile.profile_picture,
-      walletBalance: profile.wallet_balance,
-      favoriteExperts: profile.favorite_experts,
-      enrolledCourses: profile.enrolled_courses,
-      referralCode: profile.referral_code,
-      
-      // Include the related data
-      transactions: profile.transactions || [],
-      reviews: profile.reviews || [],
-      reports: profile.reports || []
+      // Aliases for camelCase access
+      profilePicture: data.profile_picture || data.profilePicture || '',
+      walletBalance: data.wallet_balance || data.walletBalance || 0,
+      favoriteExperts: data.favorite_experts || data.favoriteExperts || [],
+      referralCode: data.referral_code || data.referralCode || '',
     };
+    
+    return profile;
   };
-
-  /**
-   * Convert UserProfileB to UserProfileA for function parameters that expect UserProfileA
-   */
-  const toTypeA = (profile: UserProfileB | null): UserProfileA | null => {
-    if (!profile) return null;
-    
-    // Make sure all required fields have default values
-    const name = profile.name || '';
-    const email = profile.email || '';
-    const phone = profile.phone || '';
-    const country = profile.country || '';
-    const city = profile.city || '';
-    
-    // Handle favorite_programs conversion from number[] to string[]
-    const favoritePrograms = Array.isArray(profile.favorite_programs)
-      ? profile.favorite_programs.map(id => String(id))
-      : [];
-    
-    return {
-      id: profile.id,
-      name,
-      email,
-      phone,
-      country,
-      city,
-      currency: profile.currency || 'USD',
-      profile_picture: profile.profile_picture || profile.profilePicture || '',
-      wallet_balance: profile.wallet_balance || profile.walletBalance || 0,
-      created_at: profile.created_at || '',
-      referred_by: profile.referred_by || null,
-      referral_code: profile.referral_code || profile.referralCode || '',
-      referral_link: profile.referral_link || '',
-      
-      // Convert number[] to string[] for favorite_programs
-      favorite_programs: favoritePrograms,
-      favorite_experts: Array.isArray(profile.favorite_experts) ? profile.favorite_experts : [],
-      enrolled_courses: profile.enrolled_courses || profile.enrolledCourses || [],
-      
-      // Add required fields that might be missing
-      reviews: profile.reviews || [],
-      reports: profile.reports || [],
-      transactions: profile.transactions || [],
-      referrals: []  // Default to empty array
-    };
-  };
-
+  
   return {
-    toTypeA,
-    toTypeB
+    adaptUserProfile
   };
 };

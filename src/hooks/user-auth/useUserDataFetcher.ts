@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useContext } from 'react';
 import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
 import { ExpertProfile } from '@/types/supabase/expert';
-import { from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserTransaction } from '@/types/supabase/tables';
 
@@ -31,14 +31,14 @@ export const useUserDataFetcher = (): UseUserDataFetcherResult => {
       try {
         setLoading(true);
         const [favoritesData, transactionsData] = await Promise.all([
-          from('user_favorites')
+          supabase
+            .from('user_favorites')
             .select('expert (*)')
-            .eq('user_id', currentUser.id)
-            .returns<{ expert: ExpertProfile }[]>(),
-          from('user_transactions')
+            .eq('user_id', currentUser.id),
+          supabase
+            .from('user_transactions')
             .select('*')
             .eq('user_id', currentUser.id)
-            .returns<UserTransaction[]>()
         ]);
 
         if (favoritesData.error) {
@@ -49,10 +49,10 @@ export const useUserDataFetcher = (): UseUserDataFetcherResult => {
           throw new Error(transactionsData.error.message);
         }
 
-        setFavoriteExperts(favoritesData.data.map(item => item.expert));
+        setFavoriteExperts(favoritesData.data?.map(item => item.expert) || []);
         
         // Transform transaction data to match our UserTransaction interface
-        const formattedTransactions = transactionsData.data.map(item => ({
+        const formattedTransactions = (transactionsData.data || []).map(item => ({
           id: item.id,
           user_id: item.user_id,
           amount: item.amount,
@@ -61,10 +61,6 @@ export const useUserDataFetcher = (): UseUserDataFetcherResult => {
           transaction_type: item.type,
           description: item.description,
           date: item.date,
-          status: item.status || 'completed',
-          created_at: item.created_at || item.date,
-          payment_id: item.payment_id || `temp_${Date.now()}`,
-          payment_method: item.payment_method || 'wallet'
         })) as UserTransaction[];
         
         setTransactions(formattedTransactions);

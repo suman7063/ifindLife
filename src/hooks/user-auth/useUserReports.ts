@@ -48,7 +48,8 @@ export const useUserReports = (
       // Optimistically update the local state
       const adaptedReport: Report = {
         id: newId,
-        expert_id: reportData.expertId, // Using expert_id to match database schema
+        expertId: reportData.expertId, // Using expertId property to match our unified type
+        user_id: currentUser.id,
         reason: reportData.reason,
         details: reportData.details || '',
         date: new Date().toISOString(),

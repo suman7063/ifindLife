@@ -49,6 +49,7 @@ export interface AuthContextType extends AuthState {
   refreshProfile: () => Promise<void>;
   
   // Extended functions for specific user workflows
+  updateProfilePicture?: (file: File) => Promise<string | null>;
   addToFavorites?: (expertId: number) => Promise<boolean>;
   removeFromFavorites?: (expertId: number) => Promise<boolean>;
   rechargeWallet?: (amount: number) => Promise<boolean>;
@@ -57,5 +58,4 @@ export interface AuthContextType extends AuthState {
   hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
   getExpertShareLink?: (expertId: string | number) => string;
   getReferralLink?: () => string | null;
-  updateProfilePicture?: (file: File) => Promise<string | null>;
 }

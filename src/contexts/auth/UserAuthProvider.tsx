@@ -9,28 +9,28 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Create a compatibility layer for the user auth context
   const userAuthValue = {
-    currentUser: auth.profile || auth.userProfile,
+    currentUser: auth.userProfile || auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login, 
     signup: auth.signup,
     logout: auth.logout,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
-    profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
+    profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateProfile, 
     updatePassword: auth.updatePassword || (async () => false),
     
     // Default implementations for extended functionality
-    addToFavorites: async (expertId: number) => false,
-    removeFromFavorites: async (expertId: number) => false,
-    rechargeWallet: async (amount: number) => false,
-    addReview: async (review: NewReview | string, rating?: number, comment?: string) => false,
-    reportExpert: async (report: NewReport | string, reason?: string, details?: string) => false,
-    hasTakenServiceFrom: async (id: string | number) => false,
-    getExpertShareLink: (expertId: string | number) => '',
-    getReferralLink: () => null,
+    addToFavorites: auth.addToFavorites || (async (expertId: number) => false),
+    removeFromFavorites: auth.removeFromFavorites || (async (expertId: number) => false),
+    rechargeWallet: auth.rechargeWallet || (async (amount: number) => false),
+    addReview: auth.addReview || (async (review: NewReview | string, rating?: number, comment?: string) => false),
+    reportExpert: auth.reportExpert || (async (report: NewReport | string, reason?: string, details?: string) => false),
+    hasTakenServiceFrom: auth.hasTakenServiceFrom || (async (id: string | number) => false),
+    getExpertShareLink: auth.getExpertShareLink || ((expertId: string | number) => ''),
+    getReferralLink: auth.getReferralLink || (() => null),
     user: auth.user,
-    updateProfilePicture: async (file: File) => null
+    updateProfilePicture: auth.updateProfilePicture || (async (file: File) => null)
   };
 
   return (

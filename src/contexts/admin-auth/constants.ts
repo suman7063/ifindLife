@@ -5,7 +5,6 @@ export const defaultAdminUsers: AdminUser[] = [
   {
     id: "1",
     username: "IFLsuperadmin",
-    email: "admin@ifindlove.com",
     role: "superadmin",
     permissions: {
       canManageUsers: true,
@@ -18,12 +17,12 @@ export const defaultAdminUsers: AdminUser[] = [
       canApproveExperts: true,
       canManageBlog: true,
       canManageTestimonials: true
-    }
+    },
+    lastLogin: new Date().toISOString()
   },
   {
     id: "2",
     username: "admin",
-    email: "editor@ifindlove.com",
     role: "admin",
     permissions: {
       canManageUsers: false,
@@ -36,6 +35,7 @@ export const defaultAdminUsers: AdminUser[] = [
       canApproveExperts: false,
       canManageBlog: true,
       canManageTestimonials: true
-    }
+    },
+    lastLogin: new Date().toISOString()
   }
 ];

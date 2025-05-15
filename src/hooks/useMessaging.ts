@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Message } from '@/types/database/unified';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 export const useMessaging = (recipientId?: string) => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -47,11 +47,20 @@ export const useMessaging = (recipientId?: string) => {
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
 
-      // Add a property to indicate if message was sent by current user
-      const processedMessages = allMessages.map(msg => ({
-        ...msg,
+      // Convert to our Message type
+      const processedMessages: Message[] = allMessages.map(msg => ({
+        id: msg.id,
+        sender_id: msg.sender_id,
+        receiver_id: msg.receiver_id,
+        content: msg.content,
+        read: msg.read,
+        created_at: msg.created_at,
+        updated_at: msg.updated_at,
         isMine: msg.sender_id === user.id,
-        timestamp: new Date(msg.created_at)
+        timestamp: new Date(msg.created_at),
+        senderId: msg.sender_id,
+        receiverId: msg.receiver_id,
+        isRead: msg.read
       }));
 
       setMessages(processedMessages);
@@ -86,15 +95,18 @@ export const useMessaging = (recipientId?: string) => {
 
       if (error) throw error;
 
-      // Add the new message to the state with the "isMine" property
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        { 
-          ...data, 
-          isMine: true,
-          timestamp: new Date(data.created_at)
-        }
-      ]);
+      // Convert to our Message type
+      const message: Message = {
+        ...data,
+        isMine: true,
+        timestamp: new Date(data.created_at),
+        senderId: data.sender_id,
+        receiverId: data.receiver_id,
+        isRead: data.read
+      };
+
+      // Add the new message to the state
+      setMessages(prevMessages => [...prevMessages, message]);
 
       return data;
     } catch (err) {
@@ -125,7 +137,7 @@ export const useMessaging = (recipientId?: string) => {
       // Update local state
       setMessages(prevMessages =>
         prevMessages.map(msg =>
-          msg.sender_id === recipientId ? { ...msg, read: true } : msg
+          msg.sender_id === recipientId ? { ...msg, read: true, isRead: true } : msg
         )
       );
     } catch (err) {
@@ -152,17 +164,20 @@ export const useMessaging = (recipientId?: string) => {
           filter: `sender_id=eq.${recipientId},receiver_id=eq.${user.id}`
         },
         (payload) => {
-          const newMessage = payload.new as Message;
+          const newMessage = payload.new as any;
+          
+          // Convert to our Message type
+          const message: Message = {
+            ...newMessage,
+            isMine: false,
+            timestamp: new Date(newMessage.created_at),
+            senderId: newMessage.sender_id,
+            receiverId: newMessage.receiver_id,
+            isRead: newMessage.read
+          };
           
           // Add the received message to state
-          setMessages(prevMessages => [
-            ...prevMessages,
-            {
-              ...newMessage,
-              isMine: false,
-              timestamp: new Date(newMessage.created_at)
-            }
-          ]);
+          setMessages(prevMessages => [...prevMessages, message]);
           
           // Mark it as read if the conversation is open
           markAsRead();
