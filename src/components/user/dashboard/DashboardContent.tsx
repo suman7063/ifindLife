@@ -4,7 +4,7 @@ import { UserProfile } from '@/types/database/unified';
 import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
 // Import sub-components
-import WalletSummary from './WalletSummary';
+import WalletSummary from '@/components/dashboard/WalletSummary';
 import RecentActivities from './RecentActivities';
 import EnrolledPrograms from './EnrolledPrograms';
 import FavoriteExperts from './FavoriteExperts';
@@ -58,7 +58,7 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Left column - Wallet summary */}
         <div className="md:col-span-1">
-          <WalletSummary user={adaptedUser} />
+          <WalletSummary user={currentUser} />
         </div>
         
         {/* Right column - Recent activities */}

@@ -2,7 +2,14 @@
 import { supabase } from '@/lib/supabase';
 import { ExpertProfile } from '@/types/database/unified';
 
-export const expertRepository = {
+export interface ExpertRepository {
+  getAll(): Promise<ExpertProfile[]>;
+  getById(id: string): Promise<ExpertProfile | null>;
+  getByAuthId(authId: string): Promise<ExpertProfile | null>;
+  updateExpert(id: string, updates: Partial<ExpertProfile>): Promise<boolean>;
+}
+
+export const expertRepository: ExpertRepository = {
   async getAll(): Promise<ExpertProfile[]> {
     try {
       const { data, error } = await supabase
@@ -51,9 +58,17 @@ export const expertRepository = {
   
   async updateExpert(id: string, updates: Partial<ExpertProfile>): Promise<boolean> {
     try {
+      // Convert number experience to string if needed
+      const updatesWithFormattedExperience = {
+        ...updates,
+        experience: updates.experience !== undefined 
+          ? String(updates.experience) 
+          : undefined
+      };
+      
       const { error } = await supabase
         .from('experts')
-        .update(updates)
+        .update(updatesWithFormattedExperience)
         .eq('id', id);
       
       if (error) throw error;

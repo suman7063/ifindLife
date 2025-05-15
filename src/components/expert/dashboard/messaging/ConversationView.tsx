@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useMessaging } from '@/hooks/useMessaging';
+import { useMessaging } from '@/hooks/messaging';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,9 +22,17 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   userAvatar
 }) => {
   const { user } = useAuth();
-  const { messages, sendMessage, loading } = useMessaging(userId);
+  const messaging = useMessaging();
+  const { messages, loading } = messaging;
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Fetch messages for this conversation when userId changes
+  useEffect(() => {
+    if (userId) {
+      messaging.fetchMessages(userId);
+    }
+  }, [userId, messaging]);
   
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -34,8 +42,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   }, [messages]);
   
   const handleSendMessage = () => {
-    if (newMessage.trim() && user) {
-      sendMessage(newMessage);
+    if (newMessage.trim() && user && userId) {
+      messaging.sendMessage(userId, newMessage);
       setNewMessage('');
     }
   };
@@ -57,33 +65,41 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     );
   }
   
-  if (!messages || messages.length === 0) {
+  if (!userId || !messages || messages.length === 0) {
     return (
       <div className="flex flex-col h-full justify-center items-center p-8">
         <p className="text-muted-foreground text-center">
-          No messages yet. Start a conversation!
+          {!userId ? 'Select a conversation to start messaging' : 'No messages yet. Start a conversation!'}
         </p>
-        <div className="mt-auto w-full">
-          <div className="flex space-x-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type a message..."
-              onKeyPress={handleKeyPress}
-            />
-            <Button onClick={handleSendMessage} size="icon">
-              <Send className="h-4 w-4" />
-            </Button>
+        {userId && (
+          <div className="mt-auto w-full">
+            <div className="flex space-x-2">
+              <Input
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                onKeyPress={handleKeyPress}
+              />
+              <Button onClick={handleSendMessage} size="icon">
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   }
   
+  // Filter messages for the current conversation
+  const conversationMessages = messages.filter(
+    msg => (msg.sender_id === userId && msg.receiver_id === user?.id) || 
+           (msg.sender_id === user?.id && msg.receiver_id === userId)
+  );
+  
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => {
+        {conversationMessages.map((message) => {
           const isOwnMessage = message.isMine || message.sender_id === user?.id;
           
           return (

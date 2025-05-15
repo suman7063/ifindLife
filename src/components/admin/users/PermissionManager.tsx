@@ -137,7 +137,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({
       {!isUserSuperAdmin && currentUserIsSuperAdmin && (
         <div className="flex justify-end space-x-3 pt-4">
           <Button
-            variant="primary"
+            variant="default"
             onClick={handleSave}
             disabled={loading}
           >

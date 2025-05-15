@@ -1,83 +1,84 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { Container } from '@/components/ui/container';
 import ExpertLoginForm from '@/components/expert/auth/ExpertLoginForm';
 import ExpertRegisterForm from '@/components/expert/auth/ExpertRegisterForm';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 
-const ExpertLogin = () => {
-  const [activeTab, setActiveTab] = useState('login');
-  const { isAuthenticated, expertProfile, userProfile, sessionType } = useAuth();
+const ExpertLogin: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const { isAuthenticated, isLoading, role, sessionType } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
-  // Get returnUrl from query parameter
-  const queryParams = new URLSearchParams(location.search);
-  const returnUrl = queryParams.get('returnUrl') || '/expert-dashboard';
-  
+  // Set login origin for role determination
   useEffect(() => {
-    // If logged in as expert, redirect to expert dashboard
-    if (isAuthenticated && expertProfile) {
-      toast.success('Welcome back!');
-      navigate(returnUrl);
-    }
-    // If logged in as user only, show alert or option to continue as user
-    else if (isAuthenticated && userProfile && !expertProfile) {
-      toast.info('You are logged in as a user but not registered as an expert');
-    }
-  }, [isAuthenticated, expertProfile, userProfile, navigate, returnUrl]);
+    sessionStorage.setItem('loginOrigin', 'expert');
+    console.log('ExpertLogin: Setting login origin to expert');
+  }, []);
   
-  const handleRegisterComplete = () => {
-    setActiveTab('login');
-    toast.success('Registration successful! Please log in with your new account');
-  };
+  // Handle redirection if already authenticated
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      console.log('ExpertLogin: Already authenticated as', role, 'with session type', sessionType);
+      
+      if (role === 'user' && (sessionType === 'user' || sessionType === 'dual')) {
+        console.log('Redirecting to user dashboard');
+        navigate('/user-dashboard', { replace: true });
+      } else {
+        console.log('Redirecting to expert dashboard');
+        navigate('/expert-dashboard', { replace: true });
+      }
+    }
+  }, [isAuthenticated, isLoading, role, sessionType, navigate]);
   
-  const handleExpertLoginSuccess = () => {
-    toast.success('Login successful!');
-    navigate(returnUrl);
+  const handleLoginSuccess = () => {
+    navigate('/expert-dashboard');
   };
   
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="absolute top-6 left-6">
-        <Button variant="outline" size="sm" asChild>
-          <Link to="/">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Link>
-        </Button>
+    <>
+      <Navbar />
+      <div className="py-8 md:py-12 bg-gray-50 min-h-[calc(100vh-100px)]">
+        <Container>
+          <div className="max-w-md mx-auto">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center mb-6">
+                  <h1 className="text-2xl font-bold">Expert Portal</h1>
+                  <p className="text-muted-foreground">
+                    Login or register to access your expert dashboard
+                  </p>
+                </div>
+                
+                <Tabs 
+                  value={activeTab} 
+                  onValueChange={(value) => setActiveTab(value as 'login' | 'register')}
+                >
+                  <TabsList className="grid grid-cols-2 w-full mb-6">
+                    <TabsTrigger value="login">Login</TabsTrigger>
+                    <TabsTrigger value="register">Register</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="login">
+                    <ExpertLoginForm />
+                  </TabsContent>
+                  
+                  <TabsContent value="register">
+                    <ExpertRegisterForm />
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+        </Container>
       </div>
-      
-      <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md space-y-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-gray-900">
-            Expert Portal
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Sign in to access your expert dashboard
-          </p>
-        </div>
-        
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="login">Login</TabsTrigger>
-            <TabsTrigger value="register">Register</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="login" className="space-y-4 mt-4">
-            <ExpertLoginForm onLoginSuccess={handleExpertLoginSuccess} />
-          </TabsContent>
-          
-          <TabsContent value="register" className="space-y-4 mt-4">
-            <ExpertRegisterForm onRegisterComplete={handleRegisterComplete} />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+      <Footer />
+    </>
   );
 };
 

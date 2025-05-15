@@ -59,7 +59,7 @@ export const useProfileTypeAdapter = () => {
       created_at: profileB.created_at || profileB.createdAt || new Date().toISOString(),
       referred_by: profileB.referred_by || profileB.referredBy || null,
       referral_code: profileB.referralCode || profileB.referral_code || '',
-      referral_link: profileB.referralLink || profileB.referral_link || '',
+      referral_link: profileB.referral_link || profileB.referralLink || '',
       favorite_experts: Array.isArray(profileB.favoriteExperts) 
         ? profileB.favoriteExperts 
         : (Array.isArray(profileB.favorite_experts) ? profileB.favorite_experts : []),
@@ -90,7 +90,7 @@ export const useProfileTypeAdapter = () => {
       created_at: profileA.created_at || new Date().toISOString(),
       referred_by: profileA.referred_by || null,
       referralCode: profileA.referral_code || '',
-      referralLink: profileA.referral_link || '',
+      referral_link: profileA.referral_link || '',
       favoriteExperts: Array.isArray(profileA.favorite_experts) ? profileA.favorite_experts : [],
       favoritePrograms: Array.isArray(profileA.favorite_programs) 
         ? profileA.favorite_programs.map(Number) 

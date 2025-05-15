@@ -134,8 +134,9 @@ export const useMessaging = () => {
         sender_id: msg.sender_id,
         receiver_id: msg.receiver_id,
         content: msg.content,
-        timestamp: new Date(msg.created_at),
+        created_at: msg.created_at,
         read: msg.read,
+        timestamp: new Date(msg.created_at),
         isMine: msg.sender_id === user.id
       }));
       
@@ -201,8 +202,9 @@ export const useMessaging = () => {
         sender_id: data.sender_id,
         receiver_id: data.receiver_id,
         content: data.content,
-        timestamp: new Date(data.created_at),
+        created_at: data.created_at,
         read: data.read,
+        timestamp: new Date(data.created_at),
         isMine: true
       };
       
@@ -243,8 +245,9 @@ export const useMessaging = () => {
             sender_id: newMessage.sender_id,
             receiver_id: newMessage.receiver_id,
             content: newMessage.content,
-            timestamp: new Date(newMessage.created_at),
+            created_at: newMessage.created_at,
             read: newMessage.read,
+            timestamp: new Date(newMessage.created_at),
             isMine: false
           };
           

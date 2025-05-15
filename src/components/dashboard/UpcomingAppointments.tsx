@@ -17,11 +17,13 @@ interface Appointment {
 interface UpcomingAppointmentsProps {
   appointments: Appointment[];
   loading?: boolean;
+  limit?: number;
 }
 
 const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({
   appointments,
-  loading = false
+  loading = false,
+  limit
 }) => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -37,6 +39,11 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({
         return 'bg-gray-500';
     }
   };
+
+  // Limit the number of appointments shown if specified
+  const displayAppointments = limit 
+    ? appointments.slice(0, limit) 
+    : appointments;
 
   if (loading) {
     return (
@@ -60,13 +67,13 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({
         <CardTitle>Upcoming Appointments</CardTitle>
       </CardHeader>
       <CardContent>
-        {appointments.length === 0 ? (
+        {displayAppointments.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
             <p>No upcoming appointments</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {appointments.map((appointment) => {
+            {displayAppointments.map((appointment) => {
               // Parse the date and time strings
               const appointmentDate = new Date(appointment.appointment_date);
               

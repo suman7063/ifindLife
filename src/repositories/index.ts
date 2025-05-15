@@ -1,6 +1,6 @@
 
 import { userRepository } from './UserRepository';
-import { expertRepository } from './ExpertRepository';
+import { expertRepository } from './expertRepository';
 
 // Export repository instances
 export {
@@ -10,7 +10,7 @@ export {
 
 // Import types
 import { UserRepository } from './UserRepository';
-import { ExpertRepository } from './ExpertRepository';
+import type { ExpertRepository } from './expertRepository';
 
 // Export repository types
 export {

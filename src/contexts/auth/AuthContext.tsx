@@ -25,6 +25,9 @@ export interface AuthContextType {
   removeExpertService: (serviceId: number) => Promise<boolean>;
   role: 'user' | 'expert' | null;
   sessionType: SessionType;
+  profile: UserProfile | null; // Added for backward compatibility
+  walletBalance: number; // Added for backward compatibility
+  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>; // Added for backward compatibility
 }
 
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);

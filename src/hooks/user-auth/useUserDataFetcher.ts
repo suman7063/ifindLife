@@ -8,7 +8,8 @@ import { useAuth } from '@/contexts/auth/AuthContext';
  * A hook to fetch all user-related data
  */
 export const useUserDataFetcher = () => {
-  const { user, userProfile, refreshUserProfile } = useAuth();
+  const auth = useAuth();
+  const { user, userProfile } = auth;
   const [favorites, setFavorites] = useState<ExpertProfile[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
@@ -24,8 +25,12 @@ export const useUserDataFetcher = () => {
       setError(null);
       
       try {
-        // Refresh the user profile first
-        const updatedProfile = await refreshUserProfile();
+        // Use the refresh function if available, otherwise use existing profile
+        let updatedProfile = userProfile;
+        if (auth.refreshUserProfile) {
+          updatedProfile = await auth.refreshUserProfile();
+        }
+        
         if (!updatedProfile) {
           setError('Failed to fetch user profile');
           return;
@@ -43,10 +48,13 @@ export const useUserDataFetcher = () => {
           // Get details for each favorite expert
           const expertIds = favoriteData.map(f => f.expert_id);
           if (expertIds.length > 0) {
+            // Convert expert IDs to strings for the query
+            const expertIdStrings = expertIds.map(id => String(id));
+            
             const { data: expertData } = await supabase
               .from('experts')
               .select('*')
-              .in('id', expertIds);
+              .in('id', expertIdStrings);
               
             if (expertData) {
               setFavorites(expertData as ExpertProfile[]);
@@ -105,7 +113,7 @@ export const useUserDataFetcher = () => {
     } else {
       setLoading(false);
     }
-  }, [user, refreshUserProfile]);
+  }, [user, userProfile, auth]);
   
   return {
     userProfile,
