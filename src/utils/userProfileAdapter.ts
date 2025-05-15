@@ -1,6 +1,6 @@
-
 import { UserProfile as UserProfileA } from '@/types/supabase/user';
 import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
+import { UserTransaction } from '@/types/supabase/tables';
 
 /**
  * Converts UserProfile from one type to another for backward compatibility
@@ -97,5 +97,20 @@ export function adaptReview(review: any): any {
     comment: review.comment || '',
     verified: !!review.verified,
     user_name: review.user_name || ''
+  };
+}
+
+/**
+ * Adapt transaction data for consistency
+ */
+export function adaptTransaction(transaction: any): UserTransaction {
+  return {
+    id: transaction.id || '',
+    user_id: transaction.user_id || '',
+    amount: Number(transaction.amount) || 0,
+    date: transaction.date || transaction.created_at || new Date().toISOString(),
+    type: transaction.type || transaction.transaction_type || 'unknown',
+    currency: transaction.currency || 'USD',
+    description: transaction.description || ''
   };
 }

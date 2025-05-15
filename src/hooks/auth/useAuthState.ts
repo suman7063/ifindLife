@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { AuthState, initialAuthState, UserRole } from '@/contexts/auth/types';
 import { User } from '@supabase/supabase-js';
 import { getUserDisplayName } from '@/utils/profileConverters';
-import { UserProfile } from '@/types/database/unified';
+import { UserProfile } from '@/types/supabase/user';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
@@ -23,7 +23,21 @@ export const useAuthState = () => {
         return null;
       }
       
-      return data as UserProfile;
+      // Ensure profile has all required fields
+      const profile = {
+        ...data,
+        favorite_experts: data.favorite_experts || [],
+        favorite_programs: Array.isArray(data.favorite_programs) 
+          ? data.favorite_programs.map(String) 
+          : [],
+        enrolled_courses: data.enrolled_courses || [],
+        reviews: data.reviews || [],
+        reports: data.reports || [],
+        transactions: data.transactions || [],
+        referrals: data.referrals || []
+      };
+      
+      return profile as UserProfile;
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
       return null;
@@ -85,12 +99,12 @@ export const useAuthState = () => {
       setAuthState({
         user: {
           id: user.id,
-          email: user.email,
+          email: user.email || '',
           role
         },
         session: null, // Will be updated by the auth state listener
-        profile: userProfile,
-        userProfile: userProfile, // Alias for backward compatibility
+        profile: userProfile as UserProfile,
+        userProfile: userProfile as UserProfile,
         expertProfile,
         loading: false,
         isLoading: false,

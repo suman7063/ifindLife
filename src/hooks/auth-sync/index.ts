@@ -1,52 +1,50 @@
+
 import { useEffect } from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuth as useAuthContext } from '@/contexts/auth/AuthContext'; 
+import { UserProfile } from '@/types/supabase/user';
 import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
-import { UserProfile as UserProfileA } from '@/types/supabase/user';
-import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
 
 /**
- * Hook to synchronize authentication state between different parts of the app
+ * Hook to synchronize authentication state with other contexts
+ * It can convert between different user profile types as needed
  */
-export const useAuthSync = () => {
-  const auth = useAuth();
-  const { toTypeA, toTypeB } = useProfileTypeAdapter();
+export function useAuthSync() {
+  const auth = useAuthContext();
+  const { toTypeB } = useProfileTypeAdapter();
   
-  // Access profile with proper type handling
-  const getUserProfile = (): UserProfileA | null => {
-    if (!auth.profile) return null;
-    
-    // If profile already has favorite_experts, assume it's already UserProfileA
-    if ('favorite_experts' in auth.profile) {
-      return auth.profile as UserProfileA;
-    }
-    
-    // Otherwise convert from UserProfileB
-    return toTypeA(auth.profile as UserProfileB);
+  // Access the raw profile for internal use
+  const profile = auth.profile;
+  
+  // Get profile as type B for compatibility with some components
+  const getProfileAsTypeB = () => {
+    if (!profile) return null;
+    return toTypeB(profile);
   };
   
-  // Convert profile for use with APIs that expect UserProfileB
-  const getTypeB = (): UserProfileB | null => {
-    if (!auth.profile) return null;
-    
-    // If profile already has favorite_programs as number[], assume it's already UserProfileB
-    if ('favorite_programs' in auth.profile && 
-        Array.isArray(auth.profile.favorite_programs) && 
-        auth.profile.favorite_programs.length > 0 && 
-        typeof auth.profile.favorite_programs[0] === 'number') {
-      return auth.profile as UserProfileB;
-    }
-    
-    // Otherwise convert from UserProfileA
-    return toTypeB(auth.profile as UserProfileA);
-  };
-  
+  // This effect can be used to sync with global states
+  useEffect(() => {
+    // You can add global state synchronization here if needed
+    console.log('Auth sync - auth state changed:', { 
+      isAuthenticated: auth.isAuthenticated,
+      role: auth.role
+    });
+  }, [auth.isAuthenticated, auth.role]);
+
   return {
-    auth,
-    getUserProfile,
-    getTypeB,
+    // Re-export auth context properties
     isAuthenticated: auth.isAuthenticated,
     isLoading: auth.isLoading,
     user: auth.user,
-    session: auth.session
+    profile,
+    role: auth.role,
+    
+    // Add conversion utilities
+    profileB: getProfileAsTypeB(),
+    getProfileAsTypeB,
+    
+    // Authentication methods
+    login: auth.login,
+    signup: auth.signup,
+    logout: auth.logout
   };
-};
+}

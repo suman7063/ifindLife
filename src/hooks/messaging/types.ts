@@ -1,32 +1,38 @@
 
+export interface MessagingUser {
+  id: string;
+  name: string;
+  profilePicture?: string;
+  isOnline?: boolean;
+  lastSeen?: Date | string;
+}
+
 export interface Message {
-  id: string | number;
+  id: string;
+  content: string;
+  timestamp: Date | string;
+  isRead: boolean;
   senderId: string;
   receiverId: string;
-  content: string;
-  timestamp: Date;
-  isRead: boolean;
-  isMine: boolean;
+  senderName?: string;
+  senderProfilePic?: string;
 }
 
 export interface Conversation {
   id: string;
-  name: string;
-  profilePicture?: string;
+  participantId: string;
+  participantName: string;
+  participantProfilePic?: string;
   lastMessage?: string;
-  lastMessageDate?: string;
-  unreadCount?: number;
-  otherUserId: string; // For backward compatibility
+  lastTimestamp?: Date | string;
+  unreadCount: number;
+  isOnline?: boolean;
 }
 
-export interface MessagingHook {
-  messages: Message[];
+export interface MessagingState {
   conversations: Conversation[];
   currentConversation: string | null;
+  messages: Message[];
   loading: boolean;
-  sending: boolean;
-  fetchMessages: (userId: string) => Promise<void>;
-  sendMessage: (userId: string, content: string) => Promise<boolean>;
-  fetchConversations: () => Promise<void>;
-  setCurrentConversation: (id: string | null) => void;
+  error: string | null;
 }

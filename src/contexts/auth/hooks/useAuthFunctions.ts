@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState, initialAuthState, UserRole } from '../types';
 import { toast } from '@/hooks/use-toast';
-import { UserProfile } from '@/types/database/unified';
+import { UserProfile } from '@/types/supabase/user';
 
 export const useAuthFunctions = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
@@ -87,36 +87,48 @@ export const useAuthFunctions = () => {
       if (expertData) {
         role = 'expert';
       }
-      
-      // Create a standardized user profile with appropriate defaults
-      const profile = userData ? {
-        id: userData.id || '',
-        name: userData.name || '',
-        email: userData.email || '',
-        phone: userData.phone || '',
-        country: userData.country || '',
-        city: userData.city || '',
-        profile_picture: userData.profile_picture || '',
-        wallet_balance: userData.wallet_balance || 0,
-        currency: userData.currency || 'USD',
-        created_at: userData.created_at || '',
-        referred_by: userData.referred_by || null,
-        referral_code: userData.referral_code || '',
-        referral_link: userData.referral_link || '',
+
+      // Ensure userData has all required fields, with safe defaults 
+      const completeUserData = userData ? {
+        ...userData,
         favorite_experts: userData.favorite_experts || [],
-        favorite_programs: userData.favorite_programs?.map(id => String(id)) || [],
+        favorite_programs: userData.favorite_programs || [],
         enrolled_courses: userData.enrolled_courses || [],
         reviews: userData.reviews || [],
         reports: userData.reports || [],
         transactions: userData.transactions || [],
         referrals: userData.referrals || []
+      } : null;
+      
+      // Create a standardized user profile with appropriate defaults
+      const profile: UserProfile | null = completeUserData ? {
+        id: completeUserData.id || '',
+        name: completeUserData.name || '',
+        email: completeUserData.email || '',
+        phone: completeUserData.phone || '',
+        country: completeUserData.country || '',
+        city: completeUserData.city || '',
+        profile_picture: completeUserData.profile_picture || '',
+        wallet_balance: completeUserData.wallet_balance || 0,
+        currency: completeUserData.currency || 'USD',
+        created_at: completeUserData.created_at || '',
+        referred_by: completeUserData.referred_by || null,
+        referral_code: completeUserData.referral_code || '',
+        referral_link: completeUserData.referral_link || '',
+        favorite_experts: completeUserData.favorite_experts || [],
+        favorite_programs: completeUserData.favorite_programs?.map(id => String(id)) || [],
+        enrolled_courses: completeUserData.enrolled_courses || [],
+        reviews: completeUserData.reviews || [],
+        reports: completeUserData.reports || [],
+        transactions: completeUserData.transactions || [],
+        referrals: completeUserData.referrals || []
       } as UserProfile : null;
       
       // Update auth state with all fetched data
       setAuthState({
         user: session.user ? {
           id: session.user.id,
-          email: session.user.email,
+          email: session.user.email || '',
           role
         } : null,
         session,
