@@ -35,6 +35,9 @@ export interface UseMessagesReturn {
   error: Error | null;
   sendMessage: (content: string) => Promise<boolean>;
   markAsRead: (messageId: string) => Promise<boolean>;
+  fetchMessages: (conversationId: string) => Promise<void>;
+  setMessages: (messages: Message[]) => void;
+  messagesLoading?: boolean;
 }
 
 export interface UseConversationsReturn {
@@ -43,11 +46,22 @@ export interface UseConversationsReturn {
   error: Error | null;
   selectedConversation: string | null;
   selectConversation: (conversationId: string) => void;
+  fetchConversations: () => Promise<void>;
+  setCurrentConversation: (conversationId: string) => void;
+  conversationsLoading?: boolean;
 }
 
 export interface MessagingHook {
+  messages: Message[];
+  conversations: Conversation[];
+  currentConversation: string | null;
+  loading: boolean;
+  sending: boolean;
   sendMessage: (receiverId: string, content: string) => Promise<boolean>;
   getMessages: (conversationId: string) => Message[];
   getConversations: () => Conversation[];
   markAsRead: (messageId: string) => Promise<boolean>;
+  fetchMessages: (conversationId: string) => Promise<void>;
+  fetchConversations: () => Promise<void>;
+  setCurrentConversation: (conversationId: string) => void;
 }

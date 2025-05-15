@@ -1,5 +1,5 @@
 
-import { userRepository } from './UserRepository';
+import { userRepository } from './userRepository';
 import { expertRepository } from './expertRepository';
 
 // Export repository instances
@@ -9,7 +9,7 @@ export {
 };
 
 // Import types
-import { UserRepository } from './UserRepository';
+import type { UserRepository } from './userRepository';
 import type { ExpertRepository } from './expertRepository';
 
 // Export repository types

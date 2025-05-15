@@ -1,97 +1,50 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Container } from '@/components/ui/container';
-import { Card, CardContent } from '@/components/ui/card';
+import { ExpertLoginHeader } from '@/components/expert/auth/ExpertLoginHeader';
+import { ExpertLoginContent } from '@/components/expert/auth/ExpertLoginContent';
+import { ExpertLoginTabs } from '@/components/expert/auth/ExpertLoginTabs';
+import { DualSessionAlert } from '@/components/expert/auth/DualSessionAlert';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
-import ExpertLoginForm from '@/components/expert/auth/ExpertLoginForm';
-import ExpertRegisterForm from '@/components/expert/auth/ExpertRegisterForm';
+import { LoadingView } from '@/components/expert/auth/LoadingView';
 
-const ExpertLogin: React.FC = () => {
+const ExpertLogin = () => {
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading, role, expertProfile, sessionType } = useAuth();
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [activeTab, setActiveTab] = useState('login');
-
+  const auth = useAuth();
+  
   useEffect(() => {
-    // Store login origin for correct role determination
-    sessionStorage.setItem('loginOrigin', 'expert');
-
-    // Check if already logged in as expert
-    if (isAuthenticated && !isLoading && role === 'expert') {
+    // Redirect if already authenticated as expert
+    if (auth.isAuthenticated && auth.role === 'expert' && auth.sessionType === 'expert') {
       navigate('/expert-dashboard');
     }
-    
-    // If logged in as user but trying to access expert login
-    if (isAuthenticated && !isLoading && role === 'user' && sessionType === 'user') {
-      // Could redirect or show message about being logged in as user
-    }
-  }, [isAuthenticated, isLoading, role, navigate, sessionType]);
-
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
-    setIsLoggingIn(true);
-    setLoginError(null);
-    
-    try {
-      // Call login with asExpert=true to indicate expert login attempt
-      const success = await auth.login(email, password, true);
-      
-      if (success) {
-        navigate('/expert-dashboard');
-        return true;
-      } else {
-        setLoginError('Login failed. Please check your credentials.');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error during expert login:', error);
-      setLoginError('An error occurred during login.');
-      return false;
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
-  const auth = useAuth();
-
+  }, [auth.isAuthenticated, auth.role, auth.sessionType, navigate]);
+  
+  // Show loading state while authentication state is being determined
+  if (auth.isLoading) {
+    return <LoadingView />;
+  }
+  
+  // Determine if user is in a dual session (both user and expert)
+  const isDualSession = auth.isAuthenticated && !!auth.userProfile && !!auth.expertProfile;
+  
   return (
-    <Container className="py-8 md:py-12">
-      <Card className="border shadow-lg max-w-md mx-auto">
-        <CardContent className="pt-6">
-          <h1 className="text-2xl font-bold text-center mb-6">Expert Portal</h1>
+    <div className="min-h-screen bg-gradient-to-b from-ifind-purple/5 to-ifind-teal/5">
+      <div className="container mx-auto px-4 py-8">
+        <ExpertLoginHeader />
+        
+        <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl mb-8">
+          {isDualSession && <DualSessionAlert />}
           
-          {loginError && (
-            <Alert variant="destructive" className="mb-4">
-              <AlertDescription>{loginError}</AlertDescription>
-            </Alert>
-          )}
-          
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="register">Register</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="login">
-              <ExpertLoginForm 
-                onLogin={handleLogin} 
-                isLoggingIn={isLoggingIn} 
-                loginError={loginError}
-                setActiveTab={setActiveTab}
+          <div className="p-8">
+            <ExpertLoginContent>
+              <ExpertLoginTabs 
+                onLogin={(email, password) => auth.login(email, password, true)}
               />
-            </TabsContent>
-            
-            <TabsContent value="register">
-              <ExpertRegisterForm />
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </Container>
+            </ExpertLoginContent>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

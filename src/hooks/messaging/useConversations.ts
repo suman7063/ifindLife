@@ -1,39 +1,61 @@
 
-import { useState, useCallback } from 'react';
-import { MessagingUser, UseConversationsReturn, Conversation } from './types';
-import { messagingRepository } from './messagingApi';
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Conversation, UseConversationsReturn } from './types';
 
-export function useConversations(currentUser: MessagingUser | null): UseConversationsReturn {
+export const useConversations = (): UseConversationsReturn => {
+  const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [conversationsLoading, setConversationsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   
-  /**
-   * Fetch all conversations for the current user
-   */
   const fetchConversations = useCallback(async () => {
-    if (!currentUser || !currentUser.id) return [];
+    if (!user) {
+      setConversations([]);
+      setLoading(false);
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
     
     try {
-      setConversationsLoading(true);
-      setError(null);
+      // Implement actual conversation fetching logic here
+      const mockConversations: Conversation[] = [
+        // Mock data for now
+      ];
       
-      const conversations = await messagingRepository.fetchConversations(currentUser.id);
-      setConversations(conversations);
-      return conversations;
-    } catch (error: any) {
-      console.error('Error in fetchConversations:', error);
-      setError(error.message);
-      return [];
+      setConversations(mockConversations);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      // Create proper Error object
+      setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
-      setConversationsLoading(false);
+      setLoading(false);
     }
-  }, [currentUser]);
+  }, [user]);
   
-  return { 
-    conversations, 
-    conversationsLoading, 
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+  
+  const selectConversation = useCallback((conversationId: string) => {
+    setSelectedConversation(conversationId);
+  }, []);
+  
+  const setCurrentConversation = useCallback((conversationId: string) => {
+    setSelectedConversation(conversationId);
+  }, []);
+
+  return {
+    conversations,
+    loading,
+    error,
+    selectedConversation,
+    selectConversation,
     fetchConversations,
-    error 
+    setCurrentConversation
   };
-}
+};

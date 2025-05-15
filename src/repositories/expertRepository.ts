@@ -5,7 +5,7 @@ import { ExpertProfile } from '@/types/database/unified';
 export interface ExpertRepository {
   getAll(): Promise<ExpertProfile[]>;
   getById(id: string): Promise<ExpertProfile | null>;
-  getByAuthId(authId: string): Promise<ExpertProfile | null>;
+  getExpertByAuthId(authId: string): Promise<ExpertProfile | null>;
   updateExpert(id: string, updates: Partial<ExpertProfile>): Promise<boolean>;
 }
 
@@ -40,7 +40,7 @@ export const expertRepository: ExpertRepository = {
     }
   },
   
-  async getByAuthId(authId: string): Promise<ExpertProfile | null> {
+  async getExpertByAuthId(authId: string): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
         .from('expert_accounts')
