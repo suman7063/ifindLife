@@ -1,6 +1,12 @@
 
-export { AdminAuthProvider, useAuth } from './AdminAuthContext';
-export type { AdminUser, AdminPermissions, AdminAuthContextType } from './types';
-export { defaultPermissions } from './types';
-export { useAdminAuth } from './useAdminAuth';
-export { useAdminSession } from './useAdminSession';
+// Re-export the components from the admin auth context
+export { AdminAuthContext, useAuth } from './AdminAuthContext';
+export { AdminAuthProvider } from './AdminAuthProvider';
+
+// Re-export the types
+export type { 
+  AdminAuthContextType,
+  AdminUser,
+  AdminPermissions,
+  AdminRole
+} from './types';

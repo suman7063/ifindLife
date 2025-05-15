@@ -2,173 +2,168 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState, initialAuthState, UserRole } from '../types';
-import { convertUserToUserProfile } from '@/utils/profileConverters';
-import { adaptUserProfile } from '@/utils/adaptUserProfile';
 import { User } from '@supabase/supabase-js';
+import { getUserDisplayName } from '@/utils/profileConverters';
+import { UserProfile } from '@/types/supabase/user';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
+  
+  // Fetch user profile data
+  const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching user profile:', error.message);
+        return null;
+      }
+      
+      // Ensure profile has all required fields with default values for arrays
+      const profile: UserProfile = {
+        ...data,
+        favorite_experts: data.favorite_experts || [],
+        favorite_programs: Array.isArray(data.favorite_programs) 
+          ? data.favorite_programs.map(String) 
+          : [],
+        enrolled_courses: data.enrolled_courses || [],
+        reviews: data.reviews || [],
+        reports: data.reports || [],
+        transactions: data.transactions || [],
+        referrals: data.referrals || []
+      };
+      
+      return profile;
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      return null;
+    }
+  }, []);
+  
+  // Fetch expert profile data
+  const fetchExpertProfile = useCallback(async (userId: string): Promise<any | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('experts')
+        .select('*')
+        .eq('auth_id', userId)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
+        console.error('Error fetching expert profile:', error.message);
+      }
+      
+      return data || null;
+    } catch (error) {
+      console.error('Error in fetchExpertProfile:', error);
+      return null;
+    }
+  }, []);
 
-  // Helper function to determine user role from data
-  const determineRole = async (user: User): Promise<UserRole> => {
-    // Check if user has an expert profile
-    const { data: expertProfile } = await supabase
-      .from('expert_accounts')
-      .select('*')
-      .eq('auth_id', user.id)
-      .maybeSingle();
+  // Determine user role based on profiles
+  const determineRole = useCallback((userProfile: UserProfile | null, expertProfile: any | null): UserRole => {
+    // Check if user is an admin
+    const isAdmin = false; // We would need to check an admin table here
     
-    // Check if user has an admin role
-    const { data: adminProfile } = await supabase
-      .from('admin_users')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (adminProfile) return 'admin';
+    if (isAdmin) return 'admin';
     if (expertProfile) return 'expert';
-    return 'user';
-  };
+    if (userProfile) return 'user';
+    return null;
+  }, []);
 
-  // Function to fetch user data, including role and profile
-  const fetchUserData = async (user: User) => {
+  // Function to update auth state with all user data
+  const fetchUserData = useCallback(async (user: User) => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, isLoading: true }));
       
-      // Determine the user's role
-      const role = await determineRole(user);
+      // Fetch user profile
+      const userProfile = await fetchUserProfile(user.id);
       
-      // Fetch user profile data
-      const { data: userProfile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-        
-      // Fetch expert profile if the role is expert
-      const { data: expertProfile } = role === 'expert' ? await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', user.id)
-        .maybeSingle() : { data: null };
+      // Fetch expert profile
+      const expertProfile = await fetchExpertProfile(user.id);
       
-      // Ensure profile has all required fields
-      const completeUserProfile = userProfile ? {
-        ...userProfile,
-        favorite_experts: userProfile.favorite_experts || [],
-        favorite_programs: userProfile.favorite_programs || [],
-        enrolled_courses: userProfile.enrolled_courses || [],
-        reviews: userProfile.reviews || [],
-        reports: userProfile.reports || [],
-        transactions: userProfile.transactions || [],
-        referrals: userProfile.referrals || []
-      } : null;
+      // Determine role
+      const role = determineRole(userProfile, expertProfile);
       
-      // Convert userProfile to standardized format
-      const adaptedProfile = adaptUserProfile(completeUserProfile);
+      // Determine session type
+      let sessionType: 'none' | 'user' | 'expert' | 'dual' = 'none';
+      if (userProfile && expertProfile) sessionType = 'dual';
+      else if (userProfile) sessionType = 'user';
+      else if (expertProfile) sessionType = 'expert';
       
-      // Update auth state with all the data
-      const newState: AuthState = {
+      // Update auth state
+      setAuthState({
         user: {
-          id: user.id, 
+          id: user.id,
           email: user.email || '',
           role
         },
         session: null, // Will be updated by the auth state listener
-        profile: adaptedProfile,
-        userProfile: adaptedProfile,
+        profile: userProfile,
+        userProfile,
         expertProfile,
-        role,
         loading: false,
         isLoading: false,
         error: null,
         isAuthenticated: true,
-        sessionType: expertProfile ? (adaptedProfile ? 'dual' : 'expert') : 'user',
-        walletBalance: adaptedProfile?.wallet_balance || 0
-      };
-      
-      setAuthState(newState);
+        role,
+        sessionType,
+        walletBalance: userProfile?.wallet_balance || 0
+      });
     } catch (error) {
       console.error('Error fetching user data:', error);
-      setAuthState(prev => ({ 
-        ...prev, 
-        loading: false, 
-        isLoading: false, 
-        error: error as Error 
-      }));
+      setAuthState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
     }
-  };
+  }, [fetchUserProfile, fetchExpertProfile, determineRole]);
 
-  // Set up the auth state listener
+  // Initialize auth state on component mount
   useEffect(() => {
-    // First, set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        // Update session state immediately
-        setAuthState(prev => ({
-          ...prev,
-          session,
-          isAuthenticated: !!session,
-          user: session?.user ? {
-            id: session.user.id,
-            email: session.user.email || '',
-            role: prev.role
-          } : null
-        }));
+      async (event, session) => {
+        console.log('Auth state changed:', event);
         
-        // If there's a session, fetch user data
-        if (session?.user) {
-          // Use setTimeout to avoid Supabase auth deadlock
-          setTimeout(() => {
-            fetchUserData(session.user);
-          }, 0);
-        } else {
-          // Clear profiles when no session
+        if (event === 'SIGNED_IN' && session?.user) {
+          // Update session immediately
           setAuthState(prev => ({
             ...prev,
-            profile: null,
-            userProfile: null,
-            expertProfile: null,
-            role: null,
-            isAuthenticated: false,
-            sessionType: 'none',
-            walletBalance: 0
+            session,
+            isAuthenticated: true
           }));
+          
+          // Fetch user data
+          await fetchUserData(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          // Reset auth state
+          setAuthState(initialAuthState);
         }
       }
     );
     
-    // Then, check for existing session
+    // Initial session check
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
+        // Update session immediately
         setAuthState(prev => ({
           ...prev,
           session,
-          isAuthenticated: true,
-          user: {
-            id: session.user.id,
-            email: session.user.email || '',
-            role: prev.role
-          }
+          isAuthenticated: true
         }));
         
         // Fetch user data
         fetchUserData(session.user);
       } else {
-        // No session, clear loading state
-        setAuthState(prev => ({
-          ...prev,
-          loading: false,
-          isLoading: false
-        }));
+        setAuthState(prev => ({ ...prev, loading: false, isLoading: false }));
       }
     });
     
-    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
-
+  }, [fetchUserData]);
+  
   return { authState, setAuthState, fetchUserData };
 };

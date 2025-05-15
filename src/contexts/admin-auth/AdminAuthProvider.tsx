@@ -1,193 +1,141 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AdminUser, AuthContextType, AdminPermissions } from './types';
-import { defaultAdminUsers } from './constants';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { AdminAuthContext } from './AdminAuthContext';
+import { AdminAuthContextType, AdminUser, AdminPermissions } from './types';
 
-// Create context with default values
-const AdminAuthContext = createContext<AuthContextType>({
-  isAuthenticated: false,
-  currentUser: null,
-  login: () => false,
-  logout: () => {},
-  adminUsers: [],
-  addAdmin: () => false,
-  removeAdmin: () => false,
-  isSuperAdmin: false,
-  updateAdminPermissions: () => false,
-  isLoading: true,
-  updateAdminUser: () => false
-});
+// Default permissions object
+const defaultPermissions: AdminPermissions = {
+  manageExperts: false,
+  manageUsers: false,
+  manageServices: false,
+  manageContent: false,
+  manageBilling: false,
+  viewReports: false,
+  manageAdmins: false
+};
 
-// Admin auth provider component
+// Define permission levels for different admin roles
+const rolePermissions: Record<'admin' | 'superadmin', AdminPermissions> = {
+  admin: {
+    manageExperts: true,
+    manageUsers: true,
+    manageServices: true,
+    manageContent: true,
+    manageBilling: false,
+    viewReports: true,
+    manageAdmins: false
+  },
+  superadmin: {
+    manageExperts: true,
+    manageUsers: true,
+    manageServices: true,
+    manageContent: true,
+    manageBilling: true,
+    viewReports: true,
+    manageAdmins: true
+  }
+};
+
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Check local storage for existing session on mount
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
   useEffect(() => {
-    setIsLoading(true);
-    const storedUser = localStorage.getItem('adminUser');
-    if (storedUser) {
+    const checkAdminRole = async () => {
       try {
-        const parsedUser = JSON.parse(storedUser) as AdminUser;
-        setCurrentUser(parsedUser);
+        setLoading(true);
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          setAdminUser(null);
+          return;
+        }
+        
+        const { user } = session;
+        
+        // Check if user is an admin
+        const { data: adminData, error: adminError } = await supabase
+          .from('admin_users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+          
+        if (adminError) {
+          if (adminError.code !== 'PGRST116') { // PGRST116 is "No rows returned"
+            console.error('Error checking admin role:', adminError);
+          }
+          setAdminUser(null);
+          return;
+        }
+        
+        if (adminData && adminData.role) {
+          const role = adminData.role as 'admin' | 'superadmin';
+          const permissions = rolePermissions[role] || defaultPermissions;
+          
+          setAdminUser({
+            id: user.id,
+            email: user.email || '',
+            username: user.email?.split('@')[0] || 'Admin',
+            role,
+            permissions
+          });
+        } else {
+          setAdminUser(null);
+        }
       } catch (error) {
-        console.error('Error parsing stored admin user:', error);
-        localStorage.removeItem('adminUser');
+        console.error('Error in admin auth check:', error);
+        setError(error as Error);
+        setAdminUser(null);
+      } finally {
+        setLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    // Set up auth listener
+    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
+      checkAdminRole();
+    });
+    
+    // Initial check
+    checkAdminRole();
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
   
-  // Simple login function
-  const login = (username: string, password: string): boolean => {
-    // For demo purposes, any non-empty password works
-    if (!username || !password) return false;
-    
-    const user = adminUsers.find(u => u.username === username);
-    if (!user) return false;
-    
-    setCurrentUser(user);
-    
-    // Store in localStorage for persistence
-    localStorage.setItem('adminUser', JSON.stringify(user));
-    
-    return true;
+  // Verify if user has specific permission
+  const hasPermission = (permission: keyof AdminPermissions): boolean => {
+    if (!adminUser) return false;
+    return adminUser.permissions[permission] || false;
   };
   
-  const logout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('adminUser');
-  };
-
-  const isSuperAdmin = currentUser?.role === 'superadmin';
-
-  const addAdmin = (username: string, role: 'admin' | 'superadmin'): boolean => {
-    try {
-      const newAdmin: AdminUser = {
-        id: `${adminUsers.length + 1}`,
-        username,
-        role,
-        permissions: getDefaultPermissions(role)
-      };
-
-      setAdminUsers(prev => [...prev, newAdmin]);
-      return true;
-    } catch (error) {
-      console.error('Error adding admin:', error);
-      return false;
-    }
-  };
-
-  const removeAdmin = (id: string): boolean => {
-    try {
-      setAdminUsers(prev => prev.filter(admin => admin.id !== id));
-      return true;
-    } catch (error) {
-      console.error('Error removing admin:', error);
-      return false;
-    }
-  };
-
-  const updateAdminPermissions = (userId: string, newPermissions: Partial<AdminPermissions>): boolean => {
-    try {
-      setAdminUsers(prev => prev.map(admin => {
-        if (admin.id === userId) {
-          return {
-            ...admin,
-            permissions: { ...admin.permissions, ...newPermissions }
-          };
-        }
-        return admin;
-      }));
-      
-      // Update current user permissions if it's the logged-in user
-      if (currentUser?.id === userId) {
-        setCurrentUser(prev => prev ? {
-          ...prev,
-          permissions: { ...prev.permissions, ...newPermissions }
-        } : null);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating admin permissions:', error);
-      return false;
-    }
-  };
-
-  const updateAdminUser = (id: string, updates: Partial<AdminUser>): boolean => {
-    try {
-      setAdminUsers(prev => prev.map(admin => {
-        if (admin.id === id) {
-          const updatedAdmin = { ...admin, ...updates };
-          
-          // Update current user if it's the logged-in user
-          if (currentUser?.id === id) {
-            setCurrentUser(updatedAdmin);
-            localStorage.setItem('adminUser', JSON.stringify(updatedAdmin));
-          }
-          
-          return updatedAdmin;
-        }
-        return admin;
-      }));
-      
-      return true;
-    } catch (error) {
-      console.error('Error updating admin:', error);
-      return false;
-    }
-  };
-
-  // Default permissions based on role
-  const getDefaultPermissions = (role: 'admin' | 'superadmin'): AdminPermissions => {
-    if (role === 'superadmin') {
-      return {
-        canManageUsers: true,
-        canManageExperts: true,
-        canManagePrograms: true,
-        canManageContent: true,
-        canViewReports: true,
-        canModerate: true
-      };
-    }
-    
-    return {
-      canManageUsers: false,
-      canManageExperts: true,
-      canManagePrograms: true,
-      canManageContent: true,
-      canViewReports: true,
-      canModerate: false
-    };
+  // Verify if user is superadmin
+  const isSuperAdmin = (): boolean => {
+    return adminUser?.role === 'superadmin';
   };
   
+  const adminLogout = async (): Promise<void> => {
+    await supabase.auth.signOut();
+    setAdminUser(null);
+  };
+
+  const contextValue: AdminAuthContextType = {
+    currentUser: adminUser,
+    loading,
+    error,
+    isAuthenticated: !!adminUser,
+    hasPermission,
+    isSuperAdmin,
+    logout: adminLogout
+  };
+
   return (
-    <AdminAuthContext.Provider value={{
-      isAuthenticated: !!currentUser,
-      currentUser,
-      login,
-      logout,
-      adminUsers,
-      addAdmin,
-      removeAdmin,
-      isSuperAdmin,
-      updateAdminPermissions,
-      isLoading,
-      updateAdminUser
-    }}>
+    <AdminAuthContext.Provider value={contextValue}>
       {children}
     </AdminAuthContext.Provider>
   );
-};
-
-// Export the custom hook to use the auth context
-export const useAuth = () => {
-  const context = useContext(AdminAuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AdminAuthProvider');
-  }
-  return context;
 };

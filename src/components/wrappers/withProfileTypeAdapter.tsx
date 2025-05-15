@@ -33,10 +33,18 @@ export const withProfileTypeAdapter = <P extends {
     
     // Adapt user property if it exists
     if (props.user) {
-      if (targetType === 'A' && ('profilePicture' in props.user || 'favorite_programs' in props.user && Array.isArray(props.user.favorite_programs) && props.user.favorite_programs.length > 0 && typeof props.user.favorite_programs[0] === 'number')) {
+      // Determine if the profile has favorite_programs or profilePicture properties
+      const hasFavoritePrograms = 'favorite_programs' in props.user;
+      const hasProfilePicture = 'profilePicture' in props.user;
+      const isFavoriteProgramsNumber = hasFavoritePrograms && 
+        Array.isArray(props.user.favorite_programs) && 
+        props.user.favorite_programs.length > 0 && 
+        typeof props.user.favorite_programs[0] === 'number';
+      
+      if (targetType === 'A' && (hasProfilePicture || isFavoriteProgramsNumber)) {
         // Convert from B to A
         newProps.user = toTypeA(props.user as UserProfileB) as any;
-      } else if (targetType === 'B' && ('favorite_experts' in props.user || 'favorite_programs' in props.user && Array.isArray(props.user.favorite_programs) && props.user.favorite_programs.length > 0 && typeof props.user.favorite_programs[0] === 'string')) {
+      } else if (targetType === 'B' && hasFavoritePrograms && !isFavoriteProgramsNumber) {
         // Convert from A to B
         newProps.user = toTypeB(props.user as UserProfileA) as any;
       }
@@ -44,10 +52,17 @@ export const withProfileTypeAdapter = <P extends {
     
     // Adapt currentUser property if it exists
     if (props.currentUser) {
-      if (targetType === 'A' && ('profilePicture' in props.currentUser || 'favorite_programs' in props.currentUser && Array.isArray(props.currentUser.favorite_programs) && props.currentUser.favorite_programs.length > 0 && typeof props.currentUser.favorite_programs[0] === 'number')) {
+      const hasFavoritePrograms = 'favorite_programs' in props.currentUser;
+      const hasProfilePicture = 'profilePicture' in props.currentUser;
+      const isFavoriteProgramsNumber = hasFavoritePrograms && 
+        Array.isArray(props.currentUser.favorite_programs) && 
+        props.currentUser.favorite_programs.length > 0 && 
+        typeof props.currentUser.favorite_programs[0] === 'number';
+      
+      if (targetType === 'A' && (hasProfilePicture || isFavoriteProgramsNumber)) {
         // Convert from B to A
         newProps.currentUser = toTypeA(props.currentUser as UserProfileB) as any;
-      } else if (targetType === 'B' && ('favorite_experts' in props.currentUser || 'favorite_programs' in props.currentUser && Array.isArray(props.currentUser.favorite_programs) && props.currentUser.favorite_programs.length > 0 && typeof props.currentUser.favorite_programs[0] === 'string')) {
+      } else if (targetType === 'B' && hasFavoritePrograms && !isFavoriteProgramsNumber) {
         // Convert from A to B
         newProps.currentUser = toTypeB(props.currentUser as UserProfileA) as any;
       }
@@ -55,10 +70,17 @@ export const withProfileTypeAdapter = <P extends {
     
     // Adapt profile property if it exists
     if (props.profile) {
-      if (targetType === 'A' && ('profilePicture' in props.profile || 'favorite_programs' in props.profile && Array.isArray(props.profile.favorite_programs) && props.profile.favorite_programs.length > 0 && typeof props.profile.favorite_programs[0] === 'number')) {
+      const hasFavoritePrograms = 'favorite_programs' in props.profile;
+      const hasProfilePicture = 'profilePicture' in props.profile;
+      const isFavoriteProgramsNumber = hasFavoritePrograms && 
+        Array.isArray(props.profile.favorite_programs) && 
+        props.profile.favorite_programs.length > 0 && 
+        typeof props.profile.favorite_programs[0] === 'number';
+      
+      if (targetType === 'A' && (hasProfilePicture || isFavoriteProgramsNumber)) {
         // Convert from B to A
         newProps.profile = toTypeA(props.profile as UserProfileB) as any;
-      } else if (targetType === 'B' && ('favorite_experts' in props.profile || 'favorite_programs' in props.profile && Array.isArray(props.profile.favorite_programs) && props.profile.favorite_programs.length > 0 && typeof props.profile.favorite_programs[0] === 'string')) {
+      } else if (targetType === 'B' && hasFavoritePrograms && !isFavoriteProgramsNumber) {
         // Convert from A to B
         newProps.profile = toTypeB(props.profile as UserProfileA) as any;
       }

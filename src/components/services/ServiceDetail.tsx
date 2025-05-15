@@ -51,8 +51,10 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
       return;
     }
     
-    // Convert expertId to number for the API call if needed
-    const expertIdForApi = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
+    // Convert expertId to number for the API call
+    const expertIdForApi = typeof expertId === 'string' 
+      ? parseInt(expertId, 10) 
+      : expertId;
     
     const success = await toggleExpertFavorite(expertIdForApi);
     if (success) {

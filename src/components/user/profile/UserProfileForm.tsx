@@ -1,111 +1,218 @@
 
 import React, { useState } from 'react';
-import { toast } from 'sonner';
-import { useUserAuth } from '@/contexts/UserAuthContext';
-import ProfilePictureSection from './ProfilePictureSection';
-import PersonalInfoSection from './PersonalInfoSection';
-import LocationSection from './LocationSection';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+import { UserProfile } from '@/types/supabase/user';
 import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
-export interface ProfileFormData {
-  name: string;
-  email: string;
-  phone: string;
-  country: string;
-  city: string;
+const formSchema = z.object({
+  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+  phone: z.string().min(1, { message: 'Please enter your phone number' }),
+  country: z.string().min(1, { message: 'Please select your country' }),
+  city: z.string().min(1, { message: 'Please enter your city' }),
+  currency: z.string().min(1, { message: 'Please select your currency' }),
+});
+
+interface UserProfileFormProps {
+  profile: UserProfile;
+  onComplete: () => void;
 }
 
-const UserProfileForm: React.FC = () => {
-  const { currentUser, updateProfile } = useUserAuth();
-  const [loading, setLoading] = useState(false);
+const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }) => {
+  const { updateProfile } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [formData, setFormData] = useState<ProfileFormData>({
-    name: currentUser?.name || '',
-    email: currentUser?.email || '',
-    phone: currentUser?.phone || '',
-    country: currentUser?.country || '',
-    city: currentUser?.city || '',
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: profile.name || '',
+      email: profile.email || '',
+      phone: profile.phone || '',
+      country: profile.country || '',
+      city: profile.city || '',
+      currency: profile.currency || 'USD',
+    },
   });
-
-  // Update form data when user data changes
-  React.useEffect(() => {
-    if (currentUser) {
-      setFormData({
-        name: currentUser.name || '',
-        email: currentUser.email || '',
-        phone: currentUser.phone || '',
-        country: currentUser.country || '',
-        city: currentUser.city || '',
-      });
-    }
-  }, [currentUser]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCountryChange = (value: string) => {
-    setFormData(prev => ({ ...prev, country: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true);
     
     try {
-      const success = await updateProfile({
-        name: formData.name,
-        phone: formData.phone,
-        country: formData.country,
-        city: formData.city
-      });
+      if (!updateProfile) {
+        toast.error('Profile update function not available');
+        setIsSubmitting(false);
+        return;
+      }
+      
+      const success = await updateProfile(values);
       
       if (success) {
         toast.success('Profile updated successfully');
+        onComplete();
       } else {
         toast.error('Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile. Please try again.');
+      toast.error('An error occurred while updating your profile');
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
-
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <ProfilePictureSection />
-      
-      <div className="space-y-4">
-        <PersonalInfoSection 
-          formData={formData} 
-          handleChange={handleChange} 
-        />
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Full Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="John Doe" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type="email" placeholder="john@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone Number</FormLabel>
+                <FormControl>
+                  <Input placeholder="+1234567890" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="country"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Country</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select your country" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="US">United States</SelectItem>
+                    <SelectItem value="CA">Canada</SelectItem>
+                    <SelectItem value="UK">United Kingdom</SelectItem>
+                    <SelectItem value="AU">Australia</SelectItem>
+                    <SelectItem value="IN">India</SelectItem>
+                    <SelectItem value="SG">Singapore</SelectItem>
+                    <SelectItem value="AE">UAE</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="city"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>City</FormLabel>
+                <FormControl>
+                  <Input placeholder="Your city" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="currency"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Preferred Currency</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select currency" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="USD">US Dollar (USD)</SelectItem>
+                    <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
+                    <SelectItem value="GBP">British Pound (GBP)</SelectItem>
+                    <SelectItem value="EUR">Euro (EUR)</SelectItem>
+                    <SelectItem value="INR">Indian Rupee (INR)</SelectItem>
+                    <SelectItem value="SGD">Singapore Dollar (SGD)</SelectItem>
+                    <SelectItem value="AED">UAE Dirham (AED)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         
-        <LocationSection 
-          formData={formData} 
-          handleChange={handleChange}
-          handleCountryChange={handleCountryChange}
-        />
-      </div>
-      
-      <Button 
-        type="submit" 
-        className="w-full bg-ifind-aqua hover:bg-ifind-teal transition-colors"
-        disabled={loading}
-      >
-        {loading ? (
-          <span className="flex items-center justify-center">
-            <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></span>
-            Updating...
-          </span>
-        ) : (
-          'Update Profile'
-        )}
-      </Button>
-    </form>
+        <div className="flex gap-4 justify-end">
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={onComplete}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            type="submit"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : 'Save Changes'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 };
 

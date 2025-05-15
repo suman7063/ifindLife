@@ -5,4 +5,14 @@ export { AuthProvider } from './AuthProvider';
 export { UserAuthProvider } from './UserAuthProvider';
 
 // Re-export the types
-export type { AuthContextType, UserRole, AuthState, AuthUser } from './types';
+export type { 
+  AuthContextType, 
+  UserRole, 
+  AuthState, 
+  AuthUser 
+} from './types';
+
+// Re-export hooks
+export * from './hooks/useAuthState';
+export * from './hooks/useAuthActions';
+export * from './hooks/useAuthFunctions';

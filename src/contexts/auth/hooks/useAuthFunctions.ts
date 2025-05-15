@@ -1,22 +1,24 @@
 
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { fetchUserProfile } from '@/utils/profileFetcher';
+import { UserRole } from '../types';
+import { UserProfile } from '@/types/supabase/user';
 import { toast } from '@/hooks/use-toast';
-import { UserProfile, UserRole } from '../types';
 
-// Define proper type for auth functions
+// Define proper type for auth functions without excessive nesting
 export interface AuthFunctions {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (email: string, password: string, userData: Record<string, any>) => Promise<boolean>;
   logout: () => Promise<void>;
+  checkSession: () => Promise<{
+    isAuthenticated: boolean;
+    role: UserRole;
+    profile: UserProfile | null;
+  }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   verifyEmail: (token: string) => Promise<boolean>;
-  checkSession: () => Promise<{
-    isAuthenticated: boolean;
-    role: UserRole | null;
-    profile: UserProfile | null;
-  }>;
 }
 
 export const useAuthFunctions = (): AuthFunctions => {
@@ -154,37 +156,31 @@ export const useAuthFunctions = (): AuthFunctions => {
     }
 
     const user = data.session.user;
-    
-    // Fetch user profile
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .maybeSingle();
+    const profile = await fetchUserProfile(user);
 
     // Create a normalized profile object with required properties
-    const completeProfile = userProfile ? {
-      id: userProfile.id,
-      name: userProfile.name || '',
-      email: userProfile.email || user.email || '',
-      phone: userProfile.phone || '',
-      city: userProfile.city || '',
-      country: userProfile.country || '',
-      profile_picture: userProfile.profile_picture || '',
-      wallet_balance: userProfile.wallet_balance || 0,
-      currency: userProfile.currency || 'USD',
-      created_at: userProfile.created_at || new Date().toISOString(),
-      referral_code: userProfile.referral_code || '',
-      referral_link: userProfile.referral_link || '',
-      referred_by: userProfile.referred_by || null,
-      favorite_experts: userProfile.favorite_experts || [],
-      favorite_programs: userProfile.favorite_programs ? userProfile.favorite_programs.map(String) : [],
-      enrolled_courses: userProfile.enrolled_courses || [],
-      reviews: userProfile.reviews || [],
-      reports: userProfile.reports || [],
-      transactions: userProfile.transactions || [],
-      referrals: userProfile.referrals || []
-    } : null;
+    const normalizedProfile: UserProfile = {
+      id: profile?.id || user.id,
+      name: profile?.name || '',
+      email: profile?.email || user.email || '',
+      phone: profile?.phone || '',
+      city: profile?.city || '',
+      country: profile?.country || '',
+      profile_picture: profile?.profile_picture || '',
+      wallet_balance: profile?.wallet_balance || 0,
+      currency: profile?.currency || 'USD',
+      created_at: profile?.created_at || new Date().toISOString(),
+      referral_code: profile?.referral_code || '',
+      referral_link: profile?.referral_link || '',
+      referred_by: profile?.referred_by || null,
+      favorite_experts: profile?.favorite_experts || [],
+      favorite_programs: profile?.favorite_programs?.map(String) || [],
+      enrolled_courses: profile?.enrolled_courses || [],
+      reviews: profile?.reviews || [],
+      reports: profile?.reports || [],
+      transactions: profile?.transactions || [],
+      referrals: profile?.referrals || []
+    };
       
     // Determine user role based on profile data
     let role: UserRole = 'user';
@@ -203,7 +199,7 @@ export const useAuthFunctions = (): AuthFunctions => {
     return {
       isAuthenticated: true,
       role,
-      profile: completeProfile as UserProfile
+      profile: normalizedProfile
     };
   }, []);
 
@@ -218,10 +214,18 @@ export const useAuthFunctions = (): AuthFunctions => {
       
       const userId = userData.user.id;
       
+      // Create a copy of updates that doesn't include arrays (handle those separately)
+      const basicUpdates: Record<string, any> = {};
+      Object.entries(updates).forEach(([key, value]) => {
+        if (!Array.isArray(value)) {
+          basicUpdates[key] = value;
+        }
+      });
+      
       // Update the profile in the database
       const { error } = await supabase
         .from('users')
-        .update(updates)
+        .update(basicUpdates)
         .eq('id', userId);
         
       if (error) {
