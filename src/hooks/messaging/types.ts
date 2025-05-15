@@ -19,6 +19,7 @@ export interface Conversation {
   profilePicture?: string;
   lastMessageDate: string;
   unreadCount?: number;
+  lastMessage?: string; // Adding missing property
 }
 
 // Add the missing types for messaging hooks
@@ -27,6 +28,7 @@ export interface MessagingUser {
   name: string;
   profilePicture?: string;
   isOnline?: boolean;
+  type?: 'user' | 'expert'; // Added type property
 }
 
 export interface UseMessagesReturn {

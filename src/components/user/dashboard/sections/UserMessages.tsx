@@ -1,198 +1,102 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Conversation } from '@/hooks/messaging/types';
+import { useConversations } from '@/hooks/messaging/useConversations';
+import { format } from 'date-fns';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useMessaging } from '@/hooks/messaging/useMessaging';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Conversation, Message } from '@/hooks/messaging/types';
-import { formatDistanceToNow } from 'date-fns';
-import { Loader2, Send } from 'lucide-react';
+const formatMessageDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diff / (1000 * 3600 * 24));
+
+  if (diffDays < 1) {
+    return format(date, 'h:mm a');
+  } else if (diffDays < 7) {
+    return format(date, 'EEE');
+  } else {
+    return format(date, 'MMM d');
+  }
+};
 
 const UserMessages: React.FC = () => {
-  const {
-    messages,
-    conversations,
-    currentConversation,
-    loading,
-    sending,
-    fetchMessages,
-    sendMessage,
-    fetchConversations,
-    setCurrentConversation
-  } = useMessaging();
-  
-  const [messageInput, setMessageInput] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Scroll to bottom when messages change
+  const { user } = useAuth();
+  const { conversations, selectConversation, selectedConversation: selectedConversationId, fetchConversations } = useConversations();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-  
-  // Fetch conversations on mount
-  useEffect(() => {
-    fetchConversations();
+    const loadConversations = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        await fetchConversations();
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error(String(err)));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadConversations();
   }, [fetchConversations]);
-  
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageInput.trim() || !currentConversation) return;
-    
-    const success = await sendMessage(currentConversation, messageInput);
-    if (success) {
-      setMessageInput('');
-    }
-  };
-  
-  const handleSelectConversation = (conversation: Conversation) => {
-    setCurrentConversation(conversation.id);
-    fetchMessages(conversation.id);
-  };
-  
-  // Get initials from name
-  const getInitials = (name: string): string => {
-    return name
-      .split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
-  };
+
+  const conversationItem = (conversation: Conversation) => (
+    <div
+      key={conversation.id}
+      className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer ${
+        selectedConversationId === conversation.id 
+          ? 'bg-ifind-purple/10' 
+          : 'hover:bg-gray-100'
+      }`}
+      onClick={() => selectConversation(conversation.id)}
+    >
+      <Avatar className="h-10 w-10">
+        <AvatarImage 
+          src={conversation.profilePicture || '/placeholder-user.jpg'} 
+          alt={conversation.name} 
+        />
+        <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
+      </Avatar>
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between">
+          <p className="font-medium truncate">{conversation.name}</p>
+          <span className="text-xs text-gray-500">
+            {formatMessageDate(conversation.lastMessageDate)}
+          </span>
+        </div>
+        <p className="text-sm text-gray-500 truncate">
+          {conversation.lastMessage || 'No messages yet'}
+        </p>
+      </div>
+      {conversation.unreadCount && conversation.unreadCount > 0 ? (
+        <Badge variant="default" className="bg-ifind-purple h-5 min-w-[20px] flex items-center justify-center">
+          {conversation.unreadCount}
+        </Badge>
+      ) : null}
+    </div>
+  );
+
+  if (loading) {
+    return <div className="p-4">Loading messages...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-red-500">Error: {error.message}</div>;
+  }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-280px)] min-h-[500px]">
-      {/* Conversations List */}
-      <Card className="md:col-span-1 overflow-hidden flex flex-col">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg">Conversations</CardTitle>
-        </CardHeader>
-        
-        <CardContent className="overflow-y-auto flex-grow p-2">
-          {loading && conversations.length === 0 ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : conversations.length === 0 ? (
-            <div className="text-center text-muted-foreground p-4">
-              No conversations yet.
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {conversations.map((conversation) => (
-                <li key={conversation.id}>
-                  <Button
-                    variant={currentConversation === conversation.id ? "default" : "ghost"}
-                    className={`w-full justify-start px-2 py-2 h-auto ${
-                      currentConversation === conversation.id ? 'bg-primary text-primary-foreground' : ''
-                    }`}
-                    onClick={() => handleSelectConversation(conversation)}
-                  >
-                    <div className="flex items-center w-full">
-                      <Avatar className="h-10 w-10 mr-2">
-                        <AvatarImage src={conversation.profilePicture} alt={conversation.name} />
-                        <AvatarFallback>{getInitials(conversation.name)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 truncate">
-                        <p className="font-medium text-sm text-left truncate">{conversation.name}</p>
-                        {conversation.lastMessage && (
-                          <p className="text-xs truncate text-left opacity-70">
-                            {conversation.lastMessage}
-                          </p>
-                        )}
-                      </div>
-                      {conversation.unreadCount ? (
-                        <span className="ml-auto bg-primary text-primary-foreground text-xs rounded-full h-5 min-w-[1.25rem] flex items-center justify-center">
-                          {conversation.unreadCount}
-                        </span>
-                      ) : null}
-                    </div>
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Messages */}
-      <Card className="md:col-span-2 flex flex-col">
-        {currentConversation ? (
-          <>
-            <CardHeader className="border-b pb-3">
-              <div className="flex items-center">
-                <Avatar className="h-8 w-8 mr-2">
-                  <AvatarImage 
-                    src={conversations.find(c => c.id === currentConversation)?.profilePicture} 
-                    alt={conversations.find(c => c.id === currentConversation)?.name || ''} 
-                  />
-                  <AvatarFallback>
-                    {getInitials(conversations.find(c => c.id === currentConversation)?.name || '')}
-                  </AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-lg">
-                  {conversations.find(c => c.id === currentConversation)?.name || 'Chat'}
-                </CardTitle>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="flex-grow overflow-y-auto p-4 space-y-4">
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  No messages yet. Start the conversation!
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] p-3 rounded-lg ${
-                        message.isMine
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-muted rounded-bl-none'
-                      }`}
-                    >
-                      <p>{message.content}</p>
-                      <p className={`text-xs mt-1 ${message.isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                        {formatDistanceToNow(message.timestamp, { addSuffix: true })}
-                      </p>
-                    </div>
-                  </div>
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </CardContent>
-            
-            <form onSubmit={handleSendMessage} className="p-4 border-t">
-              <div className="flex gap-2">
-                <Textarea
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder="Type your message..."
-                  className="min-h-[60px] flex-grow"
-                  disabled={sending}
-                />
-                <Button type="submit" size="icon" disabled={sending || !messageInput.trim()}>
-                  {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                </Button>
-              </div>
-            </form>
-          </>
+    <div className="bg-white shadow rounded-lg p-4">
+      <h3 className="text-lg font-medium mb-4">Messages</h3>
+      <div className="space-y-3">
+        {conversations.length > 0 ? (
+          conversations.map(conversationItem)
         ) : (
-          <div className="flex items-center justify-center h-full text-muted-foreground p-4 text-center">
-            <div>
-              <p className="mb-2">Select a conversation to view messages</p>
-              <p className="text-sm">Or start a new conversation with an expert</p>
-            </div>
-          </div>
+          <div className="text-gray-500">No conversations yet.</div>
         )}
-      </Card>
+      </div>
     </div>
   );
 };

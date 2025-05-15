@@ -1,91 +1,80 @@
 
-import React, { useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
-import useMessaging from '@/hooks/messaging/useMessaging';
-import { Conversation } from '@/hooks/messaging/types';
+import React from 'react';
+import { Message } from '@/types/database/unified';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Send } from 'lucide-react';
+import { useMessaging } from '@/hooks/messaging/useMessaging'; // Fixed import
 
 interface MessageListProps {
-  onSelectConversation: (userId: string, userName: string) => void;
-  selectedUserId?: string;
+  userId: string;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ 
-  onSelectConversation, 
-  selectedUserId 
-}) => {
-  const { 
-    conversations, 
-    loading,
-    fetchConversations
-  } = useMessaging();
+const MessageList: React.FC<MessageListProps> = ({ userId }) => {
+  const [message, setMessage] = React.useState('');
+  const { messages, sendMessage, loading } = useMessaging();
 
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-40">
-        <Loader2 className="animate-spin h-8 w-8 text-primary" />
-      </div>
-    );
-  }
-
-  if (conversations.length === 0) {
-    return (
-      <Card className="p-6 text-center text-muted-foreground">
-        <p>No conversations yet</p>
-      </Card>
-    );
-  }
+  const handleSendMessage = async () => {
+    if (!message.trim()) return;
+    await sendMessage(userId, message);
+    setMessage('');
+  };
 
   return (
-    <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
-      {conversations.map((conversation) => (
-        <Card 
-          key={conversation.id}
-          className={`p-3 cursor-pointer hover:bg-muted/50 transition-colors ${
-            selectedUserId === conversation.id ? 'bg-muted' : ''
-          }`}
-          onClick={() => onSelectConversation(conversation.id, conversation.name)}
-        >
-          <div className="flex items-center gap-3">
-            <Avatar>
-              <AvatarImage src={conversation.profilePicture} />
-              <AvatarFallback>
-                {conversation.name.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium truncate">{conversation.name}</h4>
-                {conversation.lastMessageDate && (
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {formatDistanceToNow(new Date(conversation.lastMessageDate), { addSuffix: true })}
-                  </span>
-                )}
-              </div>
-              
-              {conversation.lastMessage && (
-                <p className="text-sm text-muted-foreground truncate">
-                  {conversation.lastMessage}
-                </p>
-              )}
-            </div>
-            
-            {(conversation.unreadCount && conversation.unreadCount > 0) && (
-              <Badge variant="default" className="text-xs">
-                {conversation.unreadCount}
-              </Badge>
-            )}
+    <div className="h-full flex flex-col">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {loading ? (
+          <div className="flex justify-center p-4">
+            <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
           </div>
-        </Card>
-      ))}
+        ) : messages.length === 0 ? (
+          <div className="flex justify-center items-center h-full text-gray-500">
+            No messages yet
+          </div>
+        ) : (
+          messages.map((msg: Message) => (
+            <div
+              key={msg.id}
+              className={`max-w-[80%] p-3 rounded-lg ${
+                msg.isMine
+                  ? 'ml-auto bg-primary text-white rounded-br-none'
+                  : 'bg-gray-100 rounded-bl-none'
+              }`}
+            >
+              <p>{msg.content}</p>
+              <div
+                className={`text-xs mt-1 ${
+                  msg.isMine ? 'text-primary-foreground/70' : 'text-gray-500'
+                }`}
+              >
+                {msg.timestamp?.toLocaleTimeString() || new Date(msg.created_at).toLocaleTimeString()}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      <div className="border-t p-4 flex gap-2">
+        <Textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Type your message..."
+          className="min-h-[60px]"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSendMessage();
+            }
+          }}
+        />
+        <Button
+          onClick={handleSendMessage}
+          disabled={!message.trim() || loading}
+          className="self-end"
+        >
+          <Send className="h-4 w-4" />
+        </Button>
+      </div>
     </div>
   );
 };

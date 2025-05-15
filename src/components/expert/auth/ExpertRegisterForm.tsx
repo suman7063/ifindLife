@@ -46,12 +46,16 @@ export const ExpertRegisterForm: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     setIsRegistering(true);
     try {
+      // For backward compatibility, check if registerExpert exists, otherwise use register
+      const registerMethod = auth.registerExpert || auth.register;
+      
       // Use the standard register function but with expert data
-      const success = await auth.registerExpert(data.email, data.password, {
+      const success = await registerMethod(data.email, data.password, {
         name: data.name,
         phone: data.phone,
         specialization: data.specialization,
         experience: data.experience,
+        isExpert: true,  // Flag to indicate this is an expert registration
       });
       
       if (success) {

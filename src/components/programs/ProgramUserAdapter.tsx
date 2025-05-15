@@ -29,11 +29,19 @@ export function withProgramUserAdapter<P extends ProgramComponentProps>(
     let adaptedUser = currentUser;
     
     if (currentUser) {
-      // Detect current type and convert if needed
-      if (targetType === 'A' && 'profilePicture' in currentUser) {
-        adaptedUser = toTypeA(currentUser as UserProfileB);
-      } else if (targetType === 'B' && 'favorite_experts' in currentUser) {
-        adaptedUser = toTypeB(currentUser as UserProfileA);
+      try {
+        // Detect current type and convert if needed
+        if (targetType === 'A' && 'profilePicture' in currentUser) {
+          // Already in format A
+          adaptedUser = currentUser;
+        } else if (targetType === 'A' && 'profile_picture' in currentUser) {
+          // Convert unified to Type A
+          adaptedUser = toTypeA(currentUser as UserProfile);
+        } else if (targetType === 'B' && 'favorite_experts' in currentUser) {
+          adaptedUser = toTypeB(currentUser as UserProfileA);
+        }
+      } catch (error) {
+        console.error("Error adapting user profile in ProgramUserAdapter:", error);
       }
     }
     
