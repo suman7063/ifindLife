@@ -4,7 +4,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
-import { AdminAuthProvider } from '@/contexts/admin-auth'; // Fixed import path
+import { AdminAuthProvider } from '@/contexts/admin-auth';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesContext';
 import { Toaster } from '@/components/ui/toaster';
 import { ToastProvider } from '@radix-ui/react-toast';

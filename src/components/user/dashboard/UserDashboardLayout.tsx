@@ -1,100 +1,57 @@
-import React, { useEffect } from 'react';
-import { UserProfile } from '@/types/supabase/user';
-import { SidebarProvider, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
-import UserDashboardSidebar from './UserDashboardSidebar';
-import Navbar from '@/components/Navbar';
-import { Container } from '@/components/ui/container';
-import { Avatar, AvatarImage, AvatarFallback } from '@radix-ui/react-avatar';
-import { getInitials } from '@/utils/getInitials';
-import { adaptUserProfile } from '@/utils/adaptUserProfile';
 
-interface UserDashboardLayoutProps {
-  user: UserProfile | null;
-  onLogout: () => Promise<boolean>;
-  isLoggingOut: boolean;
+import React from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { UserProfile } from '@/types/supabase/user';
+import { adaptUserProfile } from '@/utils/adaptUserProfile';
+import { getInitials } from '@/utils/getInitials';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+
+export interface UserDashboardLayoutProps {
   children: React.ReactNode;
+  user: UserProfile;
+  onLogout: () => void;
+  isLoggingOut: boolean;
 }
 
 const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
+  children,
   user,
   onLogout,
-  isLoggingOut,
-  children
+  isLoggingOut = false
 }) => {
-  // Add debug logging
-  useEffect(() => {
-    console.log('UserDashboardLayout rendering with user:', user?.id);
-    
-    // Check element dimensions for debugging
-    setTimeout(() => {
-      const contentEl = document.querySelector('.dashboard-content');
-      console.log('Dashboard content element:', contentEl);
-      if (contentEl) {
-        // Cast to HTMLElement to access offsetWidth and offsetHeight
-        const htmlElement = contentEl as HTMLElement;
-        console.log('Dashboard content dimensions:', {
-          width: htmlElement.clientWidth,
-          height: htmlElement.clientHeight,
-          offsetWidth: htmlElement.offsetWidth,
-          offsetHeight: htmlElement.offsetHeight
-        });
-      } else {
-        console.log('Dashboard content element not found');
-      }
-    }, 100);
-  }, [user]);
-  
+  // Ensure the user profile has all required fields
+  const adaptedUser = adaptUserProfile(user);
+  const userName = adaptedUser?.name || 'User';
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      <div className="flex-1 flex w-full mt-24">
-        <SidebarProvider defaultOpen>
-          <div className="grid grid-cols-[250px_1fr] w-full">
-            <UserDashboardSidebar 
-              user={user}
-              onLogout={onLogout}
-              isLoggingOut={isLoggingOut}
-              className="h-[calc(100vh-6rem)] border-r overflow-y-auto"
-            />
-            
-            <SidebarInset className="overflow-y-auto">
-              <main className="p-6 dashboard-content">
-                <div className="md:hidden flex items-center mb-4">
-                  <SidebarTrigger />
-                  <h1 className="text-2xl font-bold ml-2">Overview</h1>
-                </div>
-                
-                <Container>
-                  {children}
-                </Container>
-              </main>
-            </SidebarInset>
+    <div className="container mx-auto py-6 space-y-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b">
+        <div className="flex items-center gap-3">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={adaptedUser?.profile_picture} alt={userName} />
+            <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+          </Avatar>
+          <div>
+            <h1 className="text-2xl font-bold">{userName}</h1>
+            <p className="text-muted-foreground">{adaptedUser?.email}</p>
           </div>
-        </SidebarProvider>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onLogout}
+          disabled={isLoggingOut}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
+        </Button>
       </div>
+
+      {children}
     </div>
   );
 };
 
 export default UserDashboardLayout;
-
-const UserInfo = ({ user }: { user: UserProfile | null }) => {
-  const adaptedUser = user ? adaptUserProfile(user) : null;
-  
-  return (
-    <div className="flex items-center gap-4 py-4">
-      <Avatar className="h-12 w-12">
-        <AvatarImage 
-          src={adaptedUser?.profile_picture || ""}
-          alt={adaptedUser?.name || "User"} 
-        />
-        <AvatarFallback>{getInitials(adaptedUser?.name || "User")}</AvatarFallback>
-      </Avatar>
-      <div>
-        <p className="text-sm font-medium leading-none">{adaptedUser?.name || "User"}</p>
-        <p className="text-xs text-muted-foreground">{adaptedUser?.email || ""}</p>
-      </div>
-    </div>
-  );
-};

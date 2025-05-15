@@ -1,114 +1,87 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { Appointment } from '@/types/appointment';
-import { Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
 
-const ConsultationsSection: React.FC = () => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { UserProfile } from '@/types/supabase/user';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Appointment } from '@/types/appointment';
+
+interface ConsultationsSectionProps {
+  user: UserProfile;
+}
+
+const ConsultationsSection: React.FC<ConsultationsSectionProps> = ({ user }) => {
+  // In a real application, this would come from an API
+  const appointments: Appointment[] = [];
   
-  // useCallback to memoize fetchAppointments
-  const fetchAppointments = useCallback(async () => {
-    try {
-      if (!user) return null;
-      
-      // Simulate fetching appointments from an API
-      const mockAppointments: Appointment[] = [
-        {
-          id: '1',
-          expertName: 'Dr. Wellness',
-          date: new Date().toLocaleDateString(),
-          time: '10:00 AM',
-          status: 'Confirmed',
-        },
-        {
-          id: '2',
-          expertName: 'Sarah Balance',
-          date: new Date(Date.now() + 86400000).toLocaleDateString(),
-          time: '02:00 PM',
-          status: 'Pending',
-        },
-      ];
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      return mockAppointments;
-    } catch (error: any) {
-      console.error('Error fetching appointments:', error);
-      setError('Failed to load your appointments. Please try again later.');
-      return null;
-    }
-  }, [user]);
+  const upcomingAppointments = appointments.filter(
+    app => app.status === 'confirmed' || app.status === 'pending'
+  );
   
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const fetchData = async () => {
-        setIsLoading(true);
-        try {
-          const fetchedAppointments = await fetchAppointments();
-          if (fetchedAppointments) {
-            setAppointments(fetchedAppointments);
-          }
-        } catch (error) {
-          console.error('Error fetching appointments:', error);
-          setError('Failed to load your appointments. Please try again later.');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      fetchData();
-    }
-  }, [isAuthenticated, user, fetchAppointments]);
+  const pastAppointments = appointments.filter(
+    app => app.status === 'completed' || app.status === 'cancelled'
+  );
+
+  const renderAppointmentCard = (appointment: Appointment) => (
+    <Card key={appointment.id} className="mb-4">
+      <CardContent className="p-4">
+        <div className="flex flex-col md:flex-row justify-between">
+          <div>
+            <h3 className="font-medium">{appointment.expert_name}</h3>
+            <p className="text-sm text-gray-500">{appointment.appointment_date}</p>
+            <p className="text-sm text-gray-500">
+              {appointment.start_time} - {appointment.end_time}
+            </p>
+          </div>
+          <div className="mt-2 md:mt-0 text-right">
+            <Badge 
+              className={`
+                ${appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' : ''}
+                ${appointment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
+                ${appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
+                ${appointment.status === 'completed' ? 'bg-blue-100 text-blue-800' : ''}
+              `}
+            >
+              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+            </Badge>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <Card className="col-span-1 md:col-span-2 lg:col-span-3">
+    <Card>
       <CardHeader>
-        <CardTitle>Upcoming Consultations</CardTitle>
+        <CardTitle>Your Consultations</CardTitle>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <div className="text-center py-10 text-red-500">
-            {error}
-          </div>
-        ) : appointments.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {appointments.map((appointment) => (
-              <div key={appointment.id} className="flex items-center justify-between p-4 bg-muted rounded-md">
-                <div>
-                  <p className="font-medium">{appointment.expertName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {appointment.date} at {appointment.time}
-                  </p>
-                </div>
-                <span className="text-sm font-bold">{appointment.status}</span>
+        <Tabs defaultValue="upcoming">
+          <TabsList className="mb-4">
+            <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+            <TabsTrigger value="past">Past</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="upcoming">
+            {upcomingAppointments.length > 0 ? (
+              upcomingAppointments.map(renderAppointmentCard)
+            ) : (
+              <div className="text-center p-6 bg-gray-50 rounded-lg">
+                <p>You don't have any upcoming consultations.</p>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-10">
-            <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No upcoming consultations</h3>
-            <p className="text-muted-foreground mb-4">
-              Schedule a consultation with one of our experts
-            </p>
-            <Button onClick={() => navigate('/experts')} variant="outline">
-              Find an Expert
-            </Button>
-          </div>
-        )}
+            )}
+          </TabsContent>
+          
+          <TabsContent value="past">
+            {pastAppointments.length > 0 ? (
+              pastAppointments.map(renderAppointmentCard)
+            ) : (
+              <div className="text-center p-6 bg-gray-50 rounded-lg">
+                <p>You don't have any past consultations.</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );

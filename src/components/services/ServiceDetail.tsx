@@ -1,179 +1,216 @@
-import React, { useState, useEffect, useCallback } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { useDialog } from '@/hooks/useDialog';
-import { Service } from '@/types/service';
-import { Expert } from '@/types/expert';
-import { from } from '@/lib/supabase';
+import { Card, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Service, Expert } from '@/types/service';
 import BookingDialog from '@/components/booking/BookingDialog';
+import { supabase } from '@/lib/supabase';
 
-interface ServiceDetailProps {
-  service?: Service;
-}
-
-const ServiceDetail: React.FC<ServiceDetailProps> = () => {
-  const { serviceId } = useParams<{ serviceId: string }>();
+const ServiceDetail = () => {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [service, setService] = useState<Service | null>(null);
-  const [experts, setExperts] = useState<Expert[]>([]);
-  const [filteredExperts, setFilteredExperts] = useState<Expert[]>([]);
+  const [relatedExperts, setRelatedExperts] = useState<Expert[]>([]);
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showBookingDialog, setShowBookingDialog] = useState(false);
-  const { DialogComponent, showDialog } = useDialog();
 
-  const fetchService = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await from('services').select('*').eq('id', serviceId).single();
+  // Fetch service data
+  const { data: serviceData, isLoading, error } = useQuery({
+    queryKey: ['service', id],
+    queryFn: async () => {
+      if (!id) throw new Error('Service ID is required');
+      
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (error) throw error;
+      return data as Service;
+    },
+    enabled: !!id
+  });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setService(data as Service);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching service:', err);
-      setError('Failed to load service. Please try again later.');
-      setLoading(false);
-      toast.error('Failed to load service. Please try again later.');
-    }
-  }, [serviceId]);
-
-  const fetchExperts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await from('experts').select('*');
-
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      setExperts(data as Expert[]);
-      setFilteredExperts(data as Expert[]);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching experts:', err);
-      setError('Failed to load experts. Please try again later.');
-      setLoading(false);
-      toast.error('Failed to load experts. Please try again later.');
-    }
-  }, []);
-
+  // Fetch experts for this service
   useEffect(() => {
-    fetchService();
-    fetchExperts();
-  }, [fetchService, fetchExperts]);
-
-  const handleBookingClick = () => {
-    if (!isAuthenticated) {
-      // Store service ID for post-login action
-      sessionStorage.setItem('pendingAction', 'book');
-      sessionStorage.setItem('pendingServiceId', serviceId || '');
-      sessionStorage.setItem('returnPath', window.location.pathname);
-
-      toast.info("Please log in to book a service");
-      navigate('/user-login');
-      return;
+    if (service?.id) {
+      const fetchExperts = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('experts')
+            .select('*')
+            .contains('selected_services', [service.id]);
+            
+          if (error) {
+            console.error('Error fetching experts:', error);
+            return;
+          }
+          
+          if (data && Array.isArray(data)) {
+            setRelatedExperts(data as Expert[]);
+          }
+        } catch (err) {
+          console.error('Error fetching experts:', err);
+        }
+      };
+      
+      fetchExperts();
     }
+  }, [service?.id]);
 
-    // Show booking dialog
-    setShowBookingDialog(true);
-  };
+  // Update service state when data changes
+  useEffect(() => {
+    if (serviceData) {
+      setService(serviceData);
+    }
+  }, [serviceData]);
 
-  const handleBookingComplete = () => {
-    toast.success("Booking completed successfully!");
-    setShowBookingDialog(false);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-48">
-        <Loader2 className="h-8 w-8 animate-spin text-ifind-teal" />
+      <div className="container max-w-4xl mx-auto p-6">
+        <div className="animate-pulse">
+          <div className="h-8 w-3/4 bg-gray-200 rounded mb-4"></div>
+          <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
+          <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
+          <div className="h-4 w-2/3 bg-gray-200 rounded mb-4"></div>
+        </div>
       </div>
     );
   }
 
-  if (error) {
-    return <div className="text-red-500">Error: {error}</div>;
-  }
-
-  if (!service) {
-    return <div>Service not found</div>;
+  if (error || !service) {
+    return (
+      <div className="container max-w-4xl mx-auto p-6">
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-semibold mb-2">Service Not Found</h2>
+          <p className="text-gray-500 mb-4">The service you're looking for doesn't exist or has been removed.</p>
+          <Button variant="outline" onClick={() => navigate('/services')}>
+            Back to Services
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="container py-8 md:py-12">
-      <Card className="border shadow-lg max-w-3xl mx-auto">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-2xl font-bold">{service.name}</CardTitle>
-          <CardDescription>{service.description}</CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          <ScrollArea className="max-h-80">
-            <div className="space-y-4">
-              <h3 className="text-xl font-semibold">About this Service</h3>
-              <p>{service.details}</p>
-
-              <h3 className="text-xl font-semibold">Available Experts</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredExperts.map((expert) => (
-                  <Card key={expert.id} className="border">
-                    <CardContent className="flex flex-col items-center justify-center p-4">
-                      <Avatar className="h-16 w-16 mb-2">
-                        <AvatarImage src={expert.profile_picture} alt={expert.name} />
-                        <AvatarFallback>{expert.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <CardTitle className="text-center">{expert.name}</CardTitle>
-                      <CardDescription className="text-center text-muted-foreground">
-                        {expert.title}
-                      </CardDescription>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="mt-3"
-                        onClick={() => setSelectedExpert(expert)}
-                      >
-                        Select
-                      </Button>
+    <div className="container max-w-4xl mx-auto p-6">
+      <Button variant="outline" className="mb-6" onClick={() => navigate('/services')}>
+        ← Back to Services
+      </Button>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2">
+          <h1 className="text-3xl font-bold mb-4">{service.name}</h1>
+          <p className="text-gray-600 mb-6">{service.description}</p>
+          
+          <h2 className="text-xl font-semibold mb-2">Service Details</h2>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <p className="text-sm text-gray-500">Price (USD)</p>
+              <p className="font-medium">${service.rate_usd}</p>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500">Price (INR)</p>
+              <p className="font-medium">₹{service.rate_inr}</p>
+            </div>
+            {service.duration && (
+              <div>
+                <p className="text-sm text-gray-500">Duration</p>
+                <p className="font-medium">{service.duration} minutes</p>
+              </div>
+            )}
+            {service.category && (
+              <div>
+                <p className="text-sm text-gray-500">Category</p>
+                <p className="font-medium">{service.category}</p>
+              </div>
+            )}
+          </div>
+          
+          <Button 
+            className="w-full mb-8" 
+            onClick={() => setIsBookingOpen(true)}
+          >
+            Book this Service
+          </Button>
+          
+          <Separator className="my-8" />
+          
+          {relatedExperts.length > 0 && (
+            <>
+              <h2 className="text-xl font-semibold mb-4">Available Experts</h2>
+              <div className="grid grid-cols-1 gap-4">
+                {relatedExperts.map((expert) => (
+                  <Card key={expert.id} className="overflow-hidden">
+                    <CardContent className="p-4">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mr-4">
+                          {expert.profile_picture ? (
+                            <img 
+                              src={expert.profile_picture} 
+                              alt={expert.name} 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <span className="text-gray-500">{expert.name.substring(0, 2).toUpperCase()}</span>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-medium">{expert.name}</h3>
+                          <p className="text-sm text-gray-500">{expert.specialization || "Expert"}</p>
+                        </div>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedExpert(expert);
+                            setIsBookingOpen(true);
+                          }}
+                        >
+                          Select
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            </div>
-          </ScrollArea>
-          <div className="mt-6 flex justify-between items-center">
-            <div>
-              <span className="text-lg font-semibold">Price:</span> ${service.price}
-            </div>
-            <Button onClick={handleBookingClick} disabled={!filteredExperts.length}>
-              Book Now
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {showBookingDialog && (
+            </>
+          )}
+        </div>
+        
+        <div className="md:col-span-1">
+          <Card>
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold mb-4">Book this Service</h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Connect with our qualified experts and get the help you need.
+              </p>
+              <Button 
+                className="w-full" 
+                onClick={() => setIsBookingOpen(true)}
+              >
+                Book Now
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+      
+      {isBookingOpen && service && (
         <BookingDialog
-          open={showBookingDialog}
-          onOpenChange={setShowBookingDialog}
-          serviceName={service.name}
-          matchingExperts={filteredExperts}
-          selectedExpert={selectedExpert}
-          setSelectedExpert={setSelectedExpert}
-          onBookingComplete={handleBookingComplete}
+          isOpen={isBookingOpen}
+          onClose={() => {
+            setIsBookingOpen(false);
+            setSelectedExpert(null);
+          }}
+          service={service}
+          expert={selectedExpert || undefined}
         />
       )}
-      <DialogComponent />
     </div>
   );
 };
