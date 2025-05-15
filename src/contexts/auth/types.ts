@@ -3,7 +3,7 @@ import { AuthUser, UserRole } from './AuthContext';
 import { UserProfile } from '@/types/supabase/user';
 import { ExpertProfile } from '@/types/database/unified';
 
-export { AuthUser, UserRole };
+export type { AuthUser, UserRole };
 
 export interface AuthState {
   user: AuthUser | null;

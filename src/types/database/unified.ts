@@ -6,28 +6,28 @@ import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
 // Unified UserProfile type that includes properties from both with proper compatibility
 export interface UserProfile {
   id: string;
-  name: string; // Required in UserProfileA
-  email: string; // Required in UserProfileA
-  phone: string; // Required in UserProfileA
-  city: string; // Required in UserProfileA
-  country: string; // Required in UserProfileA
-  profile_picture: string; // Required in UserProfileA
-  wallet_balance: number; // Required in UserProfileA
-  currency: string; // Required in UserProfileA
-  created_at: string; // Required in UserProfileA
-  updated_at?: string; // Optional
-  referral_code: string; // Required in UserProfileA
-  referral_link: string; // Required in UserProfileA
-  referred_by: string | null; // Can be null in UserProfileA
+  name: string; 
+  email: string;
+  phone: string;
+  city: string;
+  country: string;
+  profile_picture: string;
+  wallet_balance: number;
+  currency: string;
+  created_at: string;
+  updated_at?: string;
+  referral_code: string;
+  referral_link: string;
+  referred_by: string | null;
   
   // Related data with compatibility for both types
-  transactions?: any[];
-  reviews?: any[];
-  reports?: any[];
-  favorite_experts: string[]; // Required in UserProfileA
-  favorite_programs: string[]; // String[] in UserProfileA
-  enrolled_courses: any[]; // Required in UserProfileA
-  referrals?: any[];
+  transactions: any[];
+  reviews: any[];
+  reports: any[];
+  favorite_experts: string[];
+  favorite_programs: string[];
+  enrolled_courses: any[];
+  referrals: any[];
   
   // Aliases for camelCase access (from UserProfileB)
   profilePicture?: string;
@@ -64,7 +64,7 @@ export interface ExpertProfile {
 // Unified message type with both snake_case and camelCase properties
 export interface Message {
   id: string;
-  sender_id: string; // Keep snake_case for database compatibility
+  sender_id: string;
   receiver_id: string;
   content: string;
   read: boolean;

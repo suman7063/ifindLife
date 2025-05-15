@@ -41,7 +41,10 @@ const UserProfileEdit: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <UserProfileForm />
+        <UserProfileForm 
+          profile={currentUser} 
+          onComplete={() => navigate('/user-dashboard')} 
+        />
       </CardContent>
     </Card>
   );

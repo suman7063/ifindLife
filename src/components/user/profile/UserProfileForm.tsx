@@ -1,58 +1,61 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
-import { UserProfile } from '@/types/supabase/user';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { UserProfile } from '@/types/supabase/user';
+import { Card, CardContent } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import countryList from '@/data/countries.json';
 
-const formSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  phone: z.string().min(1, { message: 'Please enter your phone number' }),
-  country: z.string().min(1, { message: 'Please select your country' }),
-  city: z.string().min(1, { message: 'Please enter your city' }),
-  currency: z.string().min(1, { message: 'Please select your currency' }),
-});
+export interface ProfileFormData {
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  city: string;
+  currency: string;
+}
 
-interface UserProfileFormProps {
+export interface UserProfileFormProps {
   profile: UserProfile;
   onComplete: () => void;
 }
+
+const formSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(5, 'Phone number is too short'),
+  country: z.string().min(1, 'Country is required'),
+  city: z.string().min(1, 'City is required'),
+  currency: z.string().default('USD'),
+});
 
 const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }) => {
   const { updateProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const form = useForm<z.infer<typeof formSchema>>({
+  const form = useForm<ProfileFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: profile.name || '',
-      email: profile.email || '',
-      phone: profile.phone || '',
-      country: profile.country || '',
-      city: profile.city || '',
-      currency: profile.currency || 'USD',
+      name: profile?.name || '',
+      email: profile?.email || '',
+      phone: profile?.phone || '',
+      country: profile?.country || '',
+      city: profile?.city || '',
+      currency: profile?.currency || 'USD',
     },
   });
-  
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    setIsSubmitting(true);
-    
+
+  const onSubmit = async (data: ProfileFormData) => {
     try {
-      if (!updateProfile) {
-        toast.error('Profile update function not available');
-        setIsSubmitting(false);
-        return;
-      }
-      
-      const success = await updateProfile(values);
+      setIsSubmitting(true);
+      const success = await updateProfile(data);
       
       if (success) {
         toast.success('Profile updated successfully');
@@ -62,16 +65,16 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('An error occurred while updating your profile');
+      toast.error('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);
     }
   };
-  
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FormField
             control={form.control}
             name="name"
@@ -79,7 +82,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
               <FormItem>
                 <FormLabel>Full Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="John Doe" {...field} />
+                  <Input {...field} placeholder="John Doe" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -93,7 +96,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input type="email" placeholder="john@example.com" {...field} />
+                  <Input {...field} type="email" placeholder="john@example.com" readOnly />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -107,7 +110,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
               <FormItem>
                 <FormLabel>Phone Number</FormLabel>
                 <FormControl>
-                  <Input placeholder="+1234567890" {...field} />
+                  <Input {...field} placeholder="+1 123 456 7890" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -126,18 +129,15 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select your country" />
+                      <SelectValue placeholder="Select a country" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="US">United States</SelectItem>
-                    <SelectItem value="CA">Canada</SelectItem>
-                    <SelectItem value="UK">United Kingdom</SelectItem>
-                    <SelectItem value="AU">Australia</SelectItem>
-                    <SelectItem value="IN">India</SelectItem>
-                    <SelectItem value="SG">Singapore</SelectItem>
-                    <SelectItem value="AE">UAE</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
+                    {countryList.map(country => (
+                      <SelectItem key={country.code} value={country.name}>
+                        {country.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -152,7 +152,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
               <FormItem>
                 <FormLabel>City</FormLabel>
                 <FormControl>
-                  <Input placeholder="Your city" {...field} />
+                  <Input {...field} placeholder="New York" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -175,13 +175,10 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="USD">US Dollar (USD)</SelectItem>
-                    <SelectItem value="CAD">Canadian Dollar (CAD)</SelectItem>
-                    <SelectItem value="GBP">British Pound (GBP)</SelectItem>
-                    <SelectItem value="EUR">Euro (EUR)</SelectItem>
-                    <SelectItem value="INR">Indian Rupee (INR)</SelectItem>
-                    <SelectItem value="SGD">Singapore Dollar (SGD)</SelectItem>
-                    <SelectItem value="AED">UAE Dirham (AED)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="INR">INR (₹)</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -190,25 +187,19 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ profile, onComplete }
           />
         </div>
         
-        <div className="flex gap-4 justify-end">
+        <div className="flex justify-end space-x-2">
           <Button 
-            type="button"
-            variant="outline"
+            type="button" 
+            variant="outline" 
             onClick={onComplete}
-            disabled={isSubmitting}
           >
             Cancel
           </Button>
           <Button 
-            type="submit"
+            type="submit" 
             disabled={isSubmitting}
           >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : 'Save Changes'}
+            {isSubmitting ? 'Updating...' : 'Update Profile'}
           </Button>
         </div>
       </form>

@@ -17,6 +17,11 @@ const AdminAuthContext = createContext<AdminAuthContextType>({
   updateAdminPermissions: () => false,
   isLoading: true,
   updateAdminUser: () => false,
+  hasPermission: () => false,
+  getAdminById: () => null,
+  updateAdminRole: () => false,
+  error: null,
+  permissions: {}
 });
 
 // Admin auth provider component
@@ -50,6 +55,24 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Check if current user is a super admin
   const isSuperAdmin = currentUser?.role === 'superadmin';
+  
+  // Permissions handling
+  const hasPermission = (permission: string): boolean => {
+    if (!currentUser) return false;
+    return isSuperAdmin || !!currentUser.permissions[permission];
+  };
+  
+  // Get admin by ID
+  const getAdminById = (id: string) => {
+    return adminUsers.find(admin => admin.id === id) || null;
+  };
+  
+  // Update admin role
+  const updateAdminRole = (id: string, role: string): boolean => {
+    if (!isSuperAdmin) return false;
+    // Implementation would go here
+    return true;
+  };
 
   return (
     <AdminAuthContext.Provider
@@ -64,7 +87,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         currentUser,
         updateAdminPermissions,
         isLoading,
-        updateAdminUser
+        updateAdminUser,
+        hasPermission,
+        getAdminById,
+        updateAdminRole,
+        error: null,
+        permissions: currentUser?.permissions || {}
       }}
     >
       {children}

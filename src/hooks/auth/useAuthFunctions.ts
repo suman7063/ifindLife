@@ -2,7 +2,8 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { fetchUserProfile } from '@/utils/profileFetcher';
-import { AuthState, UserProfile, UserRole } from '@/contexts/auth/types';
+import { UserRole } from '@/contexts/auth/types';
+import { UserProfile } from '@/types/supabase/user';
 import { toast } from '@/hooks/use-toast';
 
 // Define proper type for auth functions without excessive nesting

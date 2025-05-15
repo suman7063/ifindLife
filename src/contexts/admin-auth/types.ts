@@ -2,6 +2,7 @@
 import { User } from '@supabase/supabase-js';
 
 export type AdminPermission = string;
+export type AdminRole = 'admin' | 'superadmin' | 'content' | 'support' | 'editor';
 
 export interface AdminPermissions {
   canManageUsers?: boolean;
@@ -61,6 +62,10 @@ export interface AdminAuthContextType extends AdminAuthState {
   isSuperAdmin: boolean;
   updateAdminPermissions: (userId: string, newPermissions: Partial<AdminPermissions>) => boolean;
   updateAdminUser: (id: string, updates: Partial<AdminUser>) => boolean;
+  hasPermission: (permission: string) => boolean;
+  getAdminById: (id: string) => AdminUser | null;
+  updateAdminRole: (id: string, role: string) => boolean;
+  permissions: AdminPermissions;
 }
 
 export const initialAdminAuthState: AdminAuthState = {

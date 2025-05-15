@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState } from '../types';
@@ -104,15 +103,7 @@ export const useAuthActions = (
         wallet_balance: 0,
         referral_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
         referred_by: null,
-        referral_link: `/signup?ref=${Math.random().toString(36).substring(2, 10).toUpperCase()}`,
-        // Initialize arrays to avoid null issues
-        favorite_experts: [],
-        favorite_programs: [],
-        enrolled_courses: [],
-        reviews: [],
-        reports: [],
-        transactions: [],
-        referrals: []
+        referral_link: `/signup?ref=${Math.random().toString(36).substring(2, 10).toUpperCase()}`
       };
       
       // If referral code was provided, look up the referrer
@@ -131,7 +122,7 @@ export const useAuthActions = (
       // Insert the new user profile
       const { error: insertError } = await supabase
         .from('users')
-        .insert([newUser]);
+        .insert(newUser);
         
       if (insertError) {
         console.error('Error creating user profile:', insertError);
