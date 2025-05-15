@@ -47,7 +47,7 @@ export const useUserReviews = (
       // Optimistically update the local state
       const adaptedReview: Review = {
         id: newId,
-        expertId: reviewData.expertId, // Using expertId property to match our unified type
+        expert_id: reviewData.expertId, // Using expert_id property to match our unified type
         user_id: currentUser.id,
         rating: reviewData.rating,
         comment: reviewData.comment,

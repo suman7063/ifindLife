@@ -1,107 +1,84 @@
 
-import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
-
-/**
- * Check if user has any permissions
- * @param user Admin user object
- * @returns boolean indicating if the user has any permissions
- */
-export const hasAnyPermission = (user: AdminUser | null): boolean => {
-  if (!user || !user.permissions) {
-    return false;
-  }
-  return Object.values(user.permissions).some(val => val === true);
-};
-
-/**
- * Check if user has a specific permission
- * @param user Admin user object
- * @param permission Permission to check
- * @returns boolean indicating if the user has the specified permission
- */
-export const hasPermission = (user: AdminUser | null, permission: string): boolean => {
-  if (!user || !user.permissions) {
-    return false;
-  }
-  
-  // Super admins have all permissions
-  if (user.role === 'super_admin') {
-    return true;
-  }
-  
-  // Convert the permissions object to a Record<string, boolean>
-  const permissionsRecord = user.permissions as Record<string, boolean>;
-  
-  // Check if the permission exists in the user's permissions object
-  return !!permissionsRecord[permission];
-};
+import { AdminUser, AdminRole, AdminPermissions } from '@/contexts/admin-auth/types';
 
 /**
  * Check if the user is a super admin
- * @param user Admin user object
- * @returns boolean indicating if the user is a super admin
  */
 export const isSuperAdmin = (user: AdminUser | null): boolean => {
-  if (!user) {
-    return false;
-  }
-  return user.role === 'super_admin';
+  return user?.role === 'superadmin' || user?.role === 'super_admin';
 };
 
 /**
- * Get a list of permissions that the user has
- * @param user Admin user object
- * @returns array of permission names that the user has
+ * Check if the user has a specific permission
+ */
+export const hasPermission = (user: AdminUser | null, permission: string): boolean {
+  // Super admins have all permissions
+  if (isSuperAdmin(user)) return true;
+  
+  // Check if the user has the specific permission
+  if (!user?.permissions) return false;
+  return Boolean(user.permissions[permission]);
+};
+
+/**
+ * Check if the user has any of the specified permissions
+ */
+export const hasAnyPermission = (user: AdminUser | null, permissions?: string[]): boolean {
+  // Super admins have all permissions
+  if (isSuperAdmin(user)) return true;
+  
+  // Without specific permissions, check if user has any permissions
+  if (!permissions || permissions.length === 0) {
+    return user?.permissions ? Object.values(user.permissions).some(p => p) : false;
+  }
+  
+  // Check if the user has any of the specified permissions
+  if (!user?.permissions) return false;
+  return permissions.some(p => hasPermission(user, p));
+};
+
+/**
+ * Check if the user has all the specified permissions
+ */
+export const hasAllPermissions = (user: AdminUser | null, permissions: string[]): boolean {
+  // Super admins have all permissions
+  if (isSuperAdmin(user)) return true;
+  
+  // Check if the user has all the specified permissions
+  if (!user?.permissions) return false;
+  return permissions.every(p => hasPermission(user, p));
+};
+
+/**
+ * Get all permissions available to a user
  */
 export const getUserPermissions = (user: AdminUser | null): string[] => {
-  if (!user || !user.permissions) {
-    return [];
+  if (!user) return [];
+  
+  // Super admins have all permissions
+  if (isSuperAdmin(user)) {
+    return Object.keys(defaultPermissionSet);
   }
   
-  // If user is superadmin, return all permissions
-  if (user.role === 'super_admin') {
-    return Object.keys(user.permissions);
-  }
-  
-  // Convert the permissions object to a Record<string, boolean>
-  const permissionsRecord = user.permissions as Record<string, boolean>;
-  
-  // Return only the permissions that are set to true
-  return Object.entries(permissionsRecord)
-    .filter(([_, value]) => value === true)
-    .map(([key, _]) => key);
+  // Return the permissions that the user has
+  if (!user.permissions) return [];
+  return Object.entries(user.permissions)
+    .filter(([_, hasPermission]) => hasPermission)
+    .map(([permission, _]) => permission);
 };
 
 /**
- * Check if current user can manage another admin user
- * @param currentUser Current admin user
- * @param targetUser Target admin user to manage
- * @returns boolean indicating if currentUser can manage targetUser
+ * Default permission set for initializing new admin users
  */
-export const canManageUser = (currentUser: AdminUser | null, targetUser: AdminUser): boolean => {
-  // Only super admins can manage other users
-  if (!isSuperAdmin(currentUser)) {
-    return false;
-  }
-  
-  // Super admins can manage all users except other super admins
-  if (targetUser.role === 'super_admin') {
-    return false; // Cannot manage another super admin
-  }
-  
-  return true;
-};
-
-/**
- * Format permission name to a more readable format
- * @param permission Permission name in camelCase
- * @returns Formatted permission name
- */
-export const formatPermissionName = (permission: string): string => {
-  // Convert camelCase to words with spaces and capitalize first letter
-  const formatted = permission
-    .replace(/([A-Z])/g, ' $1') // Add space before capital letters
-    .replace(/^./, str => str.toUpperCase()); // Capitalize first letter
-  
-  return formatted;
+export const defaultPermissionSet: AdminPermissions = {
+  canManageUsers: false,
+  canManageExperts: false,
+  canManageContent: false,
+  canManageServices: false,
+  canManagePrograms: false,
+  canViewAnalytics: false,
+  canDeleteContent: false,
+  canApproveExperts: false,
+  canManageBlog: false,
+  canManageTestimonials: false
 };

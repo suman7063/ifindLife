@@ -1,7 +1,7 @@
 
 import { Session } from '@supabase/supabase-js';
 
-export type AdminRole = 'admin' | 'super_admin' | 'content_editor' | 'support';
+export type AdminRole = 'admin' | 'super_admin' | 'content_editor' | 'support' | 'superadmin';
 
 export interface AdminPermissions {
   canManageUsers?: boolean;
@@ -60,4 +60,5 @@ export interface AdminAuthContextType extends AdminAuthState {
   updateAdminRole: (userId: string, role: string) => boolean;
   permissions: AdminPermissions;
   isLoading?: boolean;
+  sessionType?: 'none' | 'user' | 'expert' | 'dual';
 }

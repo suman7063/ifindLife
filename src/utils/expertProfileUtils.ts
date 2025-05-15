@@ -19,10 +19,16 @@ export const updateExpertProfile = async (
 
     const table = expertData ? 'expert_accounts' : 'experts';
     
+    // Handle experience type - convert to string if needed
+    const processedUpdates = {
+      ...updates,
+      experience: updates.experience !== undefined ? String(updates.experience) : undefined
+    };
+    
     // Update the appropriate table
     const { error } = await supabase
       .from(table)
-      .update(updates)
+      .update(processedUpdates)
       .eq('id', expertId);
       
     return !error;

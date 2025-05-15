@@ -7,7 +7,7 @@ import AdminContentLoader from '@/components/admin/dashboard/AdminContentLoader'
 import AdminAccessRestricted from '@/components/admin/dashboard/AdminAccessRestricted';
 import AdminRoutes from '@/components/admin/dashboard/AdminRoutes';
 import { useAdminContent } from '@/components/admin/hooks/useAdminContent';
-import { hasAnyPermission } from '@/components/admin/utils/permissionUtils';
+import { hasAnyPermission, isSuperAdmin } from '@/components/admin/utils/permissionUtils';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { AlertCircle, RefreshCw } from 'lucide-react';
@@ -128,7 +128,7 @@ const Admin = () => {
         <AdminContentLoader retryCount={retryCount} />
       ) : (
         <AdminRoutes
-          isSuperAdmin={currentUser?.role === 'superadmin'}
+          isSuperAdmin={isSuperAdmin(currentUser)}
           loading={loading}
           experts={experts}
           setExperts={setExperts}

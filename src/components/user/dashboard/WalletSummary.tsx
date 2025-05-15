@@ -2,32 +2,72 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UserProfile } from '@/types/database/unified';
+import { formatCurrency } from '@/utils/formatters';
 
-interface WalletSummaryProps {
-  user: UserProfile | null;
+export interface WalletSummaryProps {
+  userProfile: UserProfile | null;
+  loading?: boolean;
+  showTransactions?: boolean;
 }
 
-const WalletSummary: React.FC<WalletSummaryProps> = ({ user }) => {
-  const walletBalance = user?.wallet_balance || 0;
-  const currency = user?.currency || 'USD';
-  
+const WalletSummary: React.FC<WalletSummaryProps> = ({ 
+  userProfile, 
+  loading = false,
+  showTransactions = false
+}) => {
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Wallet Balance</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="animate-pulse h-10 bg-gray-200 rounded w-1/2 mb-4"></div>
+          {showTransactions && (
+            <div className="space-y-2 mt-4">
+              <div className="animate-pulse h-6 bg-gray-200 rounded"></div>
+              <div className="animate-pulse h-6 bg-gray-200 rounded"></div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currency = userProfile?.currency || 'USD';
+  const balance = userProfile?.wallet_balance || 0;
+  const formattedBalance = formatCurrency(balance, currency);
+
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium">Wallet Balance</CardTitle>
+      <CardHeader>
+        <CardTitle>Wallet Balance</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col space-y-2">
-          <div className="text-3xl font-bold">
-            {currency === 'USD' ? '$' : '₹'}{walletBalance.toFixed(2)}
+        <div className="text-3xl font-bold">{formattedBalance}</div>
+        
+        {showTransactions && userProfile?.transactions && userProfile.transactions.length > 0 ? (
+          <div className="mt-4 space-y-3">
+            <h4 className="text-sm font-medium">Recent Transactions</h4>
+            
+            <div className="space-y-2">
+              {userProfile.transactions.slice(0, 5).map((transaction) => (
+                <div key={transaction.id} className="flex justify-between items-center text-sm border-b pb-2">
+                  <div>
+                    <span className="font-medium">{transaction.type}</span>
+                    <p className="text-xs text-muted-foreground">{transaction.date}</p>
+                  </div>
+                  <span className={transaction.type === 'credit' ? 'text-green-600' : 'text-red-600'}>
+                    {transaction.type === 'credit' ? '+' : '-'}
+                    {formatCurrency(transaction.amount, transaction.currency)}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Available for bookings and services
-          </p>
-          <button className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm">
-            Recharge Wallet
-          </button>
-        </div>
+        ) : showTransactions ? (
+          <p className="text-sm text-muted-foreground mt-4">No transactions yet</p>
+        ) : null}
       </CardContent>
     </Card>
   );

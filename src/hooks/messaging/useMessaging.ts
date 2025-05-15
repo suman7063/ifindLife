@@ -6,7 +6,7 @@ import { useConversations } from './useConversations';
 import { useMessages } from './useMessages';
 import { messagingRepository } from './messagingApi';
 
-export default function useMessaging(): MessagingHook {
+export function useMessaging(): MessagingHook {
   const { user } = useAuth();
   const [currentConversation, setCurrentConversation] = useState<string | undefined>(undefined);
   const [sending, setSending] = useState(false);
@@ -21,14 +21,26 @@ export default function useMessaging(): MessagingHook {
   const { 
     conversations, 
     conversationsLoading: loading,
-    fetchConversations 
+    fetchConversations: fetchConversationsInternal,
+    error: conversationsError
   } = useConversations(messagingUser);
   
   const { 
     messages, 
     messagesLoading,
-    fetchMessages
+    fetchMessages: fetchMessagesInternal,
+    setMessages,
+    error: messagesError
   } = useMessages(messagingUser);
+  
+  // Create wrappers with the correct return types
+  const fetchConversations = useCallback(async (): Promise<void> => {
+    await fetchConversationsInternal();
+  }, [fetchConversationsInternal]);
+  
+  const fetchMessages = useCallback(async (conversationId: string): Promise<void> => {
+    await fetchMessagesInternal(conversationId);
+  }, [fetchMessagesInternal]);
   
   // Fetch conversations on mount or when user changes
   useEffect(() => {
@@ -70,3 +82,6 @@ export default function useMessaging(): MessagingHook {
     setCurrentConversation
   };
 }
+
+// Default export to support both named and default import
+export default useMessaging;

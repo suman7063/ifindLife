@@ -1,84 +1,118 @@
 
 import { useState, useEffect } from 'react';
-import { useContext } from 'react';
-import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
-import { ExpertProfile } from '@/types/supabase/expert';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { UserTransaction } from '@/types/supabase/tables';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
-interface UseUserDataFetcherResult {
-  favoriteExperts: ExpertProfile[];
-  transactions: UserTransaction[];
-  loading: boolean;
-  error: Error | null;
-}
-
-export const useUserDataFetcher = (): UseUserDataFetcherResult => {
-  const [favoriteExperts, setFavoriteExperts] = useState<ExpertProfile[]>([]);
-  const [transactions, setTransactions] = useState<UserTransaction[]>([]);
+/**
+ * A hook to fetch all user-related data
+ */
+export const useUserDataFetcher = () => {
+  const { user, userProfile, refreshUserProfile } = useAuth();
+  const [favorites, setFavorites] = useState<ExpertProfile[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { currentUser } = useContext(UserAuthContext);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!currentUser) {
-        setLoading(false);
-        return;
-      }
-
+    const fetchUserData = async () => {
+      if (!user) return;
+      
+      setLoading(true);
+      setError(null);
+      
       try {
-        setLoading(true);
-        const [favoritesData, transactionsData] = await Promise.all([
-          supabase
-            .from('user_favorites')
-            .select('expert (*)')
-            .eq('user_id', currentUser.id),
-          supabase
-            .from('user_transactions')
-            .select('*')
-            .eq('user_id', currentUser.id)
-        ]);
-
-        if (favoritesData.error) {
-          throw new Error(favoritesData.error.message);
+        // Refresh the user profile first
+        const updatedProfile = await refreshUserProfile();
+        if (!updatedProfile) {
+          setError('Failed to fetch user profile');
+          return;
         }
-
-        if (transactionsData.error) {
-          throw new Error(transactionsData.error.message);
+        
+        // Fetch favorite experts
+        const { data: favoriteData, error: favoriteError } = await supabase
+          .from('user_favorites')
+          .select('expert_id')
+          .eq('user_id', user.id);
+          
+        if (favoriteError) {
+          console.error('Error fetching favorites:', favoriteError);
+        } else if (favoriteData) {
+          // Get details for each favorite expert
+          const expertIds = favoriteData.map(f => f.expert_id);
+          if (expertIds.length > 0) {
+            const { data: expertData } = await supabase
+              .from('experts')
+              .select('*')
+              .in('id', expertIds);
+              
+            if (expertData) {
+              setFavorites(expertData as ExpertProfile[]);
+            }
+          }
         }
-
-        setFavoriteExperts(favoritesData.data?.map(item => item.expert) || []);
         
-        // Transform transaction data to match our UserTransaction interface
-        const formattedTransactions = (transactionsData.data || []).map(item => ({
-          id: item.id,
-          user_id: item.user_id,
-          amount: item.amount,
-          currency: item.currency || 'USD',
-          type: item.type as 'credit' | 'debit',
-          transaction_type: item.type,
-          description: item.description,
-          date: item.date,
-        })) as UserTransaction[];
+        // Fetch transactions
+        const { data: transData, error: transError } = await supabase
+          .from('user_transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false });
+          
+        if (transError) {
+          console.error('Error fetching transactions:', transError);
+        } else {
+          setTransactions(transData || []);
+        }
         
-        setTransactions(formattedTransactions);
-        setError(null);
-      } catch (err: any) {
-        setError(err instanceof Error ? err : new Error('Failed to fetch data'));
-        toast.error('Failed to load user data. Please try again later.');
+        // Fetch enrolled courses
+        const { data: coursesData, error: coursesError } = await supabase
+          .from('user_courses')
+          .select('*')
+          .eq('user_id', user.id);
+          
+        if (coursesError) {
+          console.error('Error fetching courses:', coursesError);
+        } else {
+          setEnrolledCourses(coursesData || []);
+        }
+        
+        // Fetch upcoming appointments
+        const { data: appData, error: appError } = await supabase
+          .from('appointments')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('appointment_date', { ascending: true });
+          
+        if (appError) {
+          console.error('Error fetching appointments:', appError);
+        } else {
+          setAppointments(appData || []);
+        }
+        
+      } catch (err) {
+        console.error('Error in useUserDataFetcher:', err);
+        setError('Failed to load user data');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchData();
-  }, [currentUser]);
-
+    
+    if (user) {
+      fetchUserData();
+    } else {
+      setLoading(false);
+    }
+  }, [user, refreshUserProfile]);
+  
   return {
-    favoriteExperts,
+    userProfile,
+    favorites,
     transactions,
+    enrolledCourses,
+    appointments,
     loading,
     error
   };

@@ -36,13 +36,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import PermissionManager from './PermissionManager';
 import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
+import { isSuperAdmin } from '@/components/admin/utils/permissionUtils';
 
 const AdminUsersManager: React.FC = () => {
   const { 
     adminUsers, 
     addAdmin, 
     removeAdmin, 
-    isSuperAdmin, 
+    isSuperAdmin: currentUserIsSuperAdmin, 
     currentUser,
     updateAdminPermissions
   } = useAuth();
@@ -103,7 +104,7 @@ const AdminUsersManager: React.FC = () => {
 
   // Cannot delete self or superadmin accounts
   const canDeleteUser = (user: AdminUser): boolean => {
-    return !!isSuperAdmin && user.username !== 'IFLsuperadmin' && 
+    return !!currentUserIsSuperAdmin && !isSuperAdmin(user) && 
            user.username !== 'admin' && currentUser?.id !== user.id;
   };
 
@@ -111,7 +112,7 @@ const AdminUsersManager: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Admin Users</h2>
-        {isSuperAdmin && (
+        {currentUserIsSuperAdmin && (
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> Add Admin
           </Button>
@@ -140,22 +141,22 @@ const AdminUsersManager: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Badge 
-                      variant={user.role === 'superadmin' ? 'default' : 'secondary'}
+                      variant={isSuperAdmin(user) ? 'default' : 'secondary'}
                     >
-                      {user.role === 'superadmin' ? 'Super Admin' : 'Admin'}
+                      {isSuperAdmin(user) ? 'Super Admin' : 'Admin'}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    {user.role === 'superadmin' ? (
+                    {isSuperAdmin(user) ? (
                       <span className="text-xs text-muted-foreground">All permissions</span>
                     ) : (
                       <div className="flex flex-wrap gap-1">
-                        {Object.entries(user.permissions).filter(([_, v]) => v).slice(0, 3).map(([key]) => (
+                        {user.permissions && Object.entries(user.permissions).filter(([_, v]) => v).slice(0, 3).map(([key]) => (
                           <Badge key={key} variant="outline" className="text-xs">
                             {key}
                           </Badge>
                         ))}
-                        {Object.entries(user.permissions).filter(([_, v]) => v).length > 3 && (
+                        {user.permissions && Object.entries(user.permissions).filter(([_, v]) => v).length > 3 && (
                           <Badge variant="outline" className="text-xs">
                             +{Object.entries(user.permissions).filter(([_, v]) => v).length - 3} more
                           </Badge>
@@ -260,7 +261,7 @@ const AdminUsersManager: React.FC = () => {
             <PermissionManager 
               user={selectedUser}
               onSave={handleUpdatePermissions}
-              isSuperAdmin={isSuperAdmin}
+              isSuperAdmin={currentUserIsSuperAdmin}
             />
           )}
         </DialogContent>

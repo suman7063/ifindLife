@@ -1,205 +1,255 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
-import { UserProfile } from '@/types/database/unified';
-import { ExpertProfile } from '@/types/database/unified';
-import { adaptUserProfile } from '@/utils/userProfileAdapter';
+import { Session, User } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
-interface AuthState {
+export type SessionType = 'none' | 'user' | 'expert' | 'dual';
+
+// Define the hook return type explicitly to avoid recursive type issues
+export interface UseSingleSourceOfTruthReturn {
+  // Auth state
   user: User | null;
+  session: Session | null;
+  isAuthenticated: boolean;
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
-  isAuthenticated: boolean;
-  role: 'user' | 'expert' | 'admin' | null;
-  loading: boolean;
+  
+  // Loading states
+  isLoading: boolean;
+  isUserLoading: boolean;
+  isExpertLoading: boolean;
+  
+  // Error states
   error: Error | null;
+  userError: Error | null;
+  expertError: Error | null;
+  
+  // Session type
+  sessionType: SessionType;
+  
+  // Auth methods
+  initiateAuth: () => Promise<void>;
+  refreshUserProfile: () => Promise<UserProfile | null>;
+  refreshExpertProfile: () => Promise<ExpertProfile | null>;
+  setUserProfileData: (data: UserProfile | null) => void;
+  setExpertProfileData: (data: ExpertProfile | null) => void;
 }
 
-/**
- * Central hook for managing authentication state
- * This hook provides a single source of truth for auth data
- */
-export const useSingleSourceOfTruth = () => {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    userProfile: null,
-    expertProfile: null,
-    isAuthenticated: false,
-    role: null,
-    loading: true,
-    error: null
-  });
-
+export const useSingleSourceOfTruth = (): UseSingleSourceOfTruthReturn => {
+  // Auth state
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  
+  // Profile state
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
+  
+  // Loading states
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isUserLoading, setIsUserLoading] = useState<boolean>(false);
+  const [isExpertLoading, setIsExpertLoading] = useState<boolean>(false);
+  
+  // Error states
+  const [error, setError] = useState<Error | null>(null);
+  const [userError, setUserError] = useState<Error | null>(null);
+  const [expertError, setExpertError] = useState<Error | null>(null);
+  
+  // Session type state
+  const [sessionType, setSessionType] = useState<SessionType>('none');
+  
+  // Public method to set user profile data
+  const setUserProfileData = (data: UserProfile | null) => {
+    setUserProfile(data);
+  };
+  
+  // Public method to set expert profile data
+  const setExpertProfileData = (data: ExpertProfile | null) => {
+    setExpertProfile(data);
+  };
+  
   // Fetch user profile
   const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
     try {
-      // First check the users table
-      const { data: userData, error: userError } = await supabase
+      setIsUserLoading(true);
+      const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
-        .maybeSingle();
-      
-      if (!userError && userData) {
-        return adaptUserProfile(userData);
+        .single();
+        
+      if (error) {
+        // Try profiles table as fallback
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+          
+        if (profileError) {
+          console.error('Error fetching user profile:', profileError);
+          setUserError(profileError);
+          return null;
+        }
+        
+        setUserProfile(profileData as UserProfile);
+        return profileData as UserProfile;
       }
       
-      // If not found, check the profiles table
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-      
-      if (!profileError && profileData) {
-        return adaptUserProfile(profileData);
-      }
-      
-      return null;
+      setUserProfile(data as UserProfile);
+      return data as UserProfile;
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Error in fetchUserProfile:', error);
+      setUserError(error instanceof Error ? error : new Error(String(error)));
       return null;
+    } finally {
+      setIsUserLoading(false);
     }
   }, []);
   
   // Fetch expert profile
   const fetchExpertProfile = useCallback(async (userId: string): Promise<ExpertProfile | null> => {
     try {
-      // First check expert_accounts table
-      const { data: accountData, error: accountError } = await supabase
+      setIsExpertLoading(true);
+      const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
-        .maybeSingle();
-      
-      if (!accountError && accountData) {
-        return accountData as unknown as ExpertProfile;
+        .single();
+        
+      if (error) {
+        console.error('Error fetching expert profile:', error);
+        setExpertError(error);
+        return null;
       }
       
-      // If not found, check experts table
-      const { data: expertData, error: expertError } = await supabase
-        .from('experts')
-        .select('*')
-        .eq('auth_id', userId)
-        .maybeSingle();
-      
-      if (!expertError && expertData) {
-        return expertData as unknown as ExpertProfile;
+      if (!data) {
+        return null;
       }
       
-      return null;
+      setExpertProfile(data as ExpertProfile);
+      return data as ExpertProfile;
     } catch (error) {
-      console.error('Error fetching expert profile:', error);
+      console.error('Error in fetchExpertProfile:', error);
+      setExpertError(error instanceof Error ? error : new Error(String(error)));
       return null;
+    } finally {
+      setIsExpertLoading(false);
     }
   }, []);
   
-  // Determine user role based on profiles
-  const determineRole = useCallback((
-    userProfile: UserProfile | null, 
-    expertProfile: ExpertProfile | null
-  ): 'user' | 'expert' | 'admin' | null => {
-    // Check if user has admin privileges
-    if (userProfile?.email?.endsWith('@ifindlife.com') || 
-        userProfile?.email?.includes('admin')) {
-      return 'admin';
-    }
-    
-    if (expertProfile) {
-      return 'expert';
-    }
-    
-    if (userProfile) {
-      return 'user';
-    }
-    
-    return null;
-  }, []);
-
-  // Function to update auth state on login/logout
-  const updateAuthState = useCallback(async (user: User | null) => {
-    try {
-      if (!user) {
-        // User is logged out
-        setAuthState({
-          user: null,
-          userProfile: null,
-          expertProfile: null,
-          isAuthenticated: false,
-          role: null,
-          loading: false,
-          error: null
-        });
-        return;
-      }
-      
-      // Fetch profiles
-      const [userProfile, expertProfile] = await Promise.all([
-        fetchUserProfile(user.id),
-        fetchExpertProfile(user.id)
-      ]);
-      
-      // Determine role
-      const role = determineRole(userProfile, expertProfile);
-      
-      // Update state
-      setAuthState({
-        user,
-        userProfile,
-        expertProfile,
-        isAuthenticated: true,
-        role,
-        loading: false,
-        error: null
-      });
-    } catch (error) {
-      console.error('Error updating auth state:', error);
-      setAuthState(prev => ({
-        ...prev,
-        loading: false,
-        error: error as Error
-      }));
-    }
-  }, [fetchUserProfile, fetchExpertProfile, determineRole]);
-
-  // Set up auth state listener
+  // Refresh user profile (public method)
+  const refreshUserProfile = useCallback(async (): Promise<UserProfile | null> => {
+    if (!user) return null;
+    return await fetchUserProfile(user.id);
+  }, [user, fetchUserProfile]);
+  
+  // Refresh expert profile (public method)
+  const refreshExpertProfile = useCallback(async (): Promise<ExpertProfile | null> => {
+    if (!user) return null;
+    return await fetchExpertProfile(user.id);
+  }, [user, fetchExpertProfile]);
+  
+  // Determine session type based on profiles
   useEffect(() => {
-    setAuthState(prev => ({ ...prev, loading: true }));
-    
-    // FIRST: Set up the auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state changed:', event);
-        
-        if (session?.user) {
-          updateAuthState(session.user);
-        } else {
-          updateAuthState(null);
+    if (!isAuthenticated) {
+      setSessionType('none');
+    } else if (userProfile && expertProfile) {
+      setSessionType('dual');
+    } else if (userProfile) {
+      setSessionType('user');
+    } else if (expertProfile) {
+      setSessionType('expert');
+    } else {
+      setSessionType('none');
+    }
+  }, [isAuthenticated, userProfile, expertProfile]);
+  
+  // Initial auth check and setup auth state listener
+  const initiateAuth = useCallback(async (): Promise<void> => {
+    try {
+      setIsLoading(true);
+      
+      // Set up auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, newSession) => {
+          console.log('Auth state changed:', event, newSession?.user?.id);
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          setIsAuthenticated(!!newSession?.user);
+          
+          // If signed in, fetch profiles
+          if (newSession?.user) {
+            await Promise.all([
+              fetchUserProfile(newSession.user.id),
+              fetchExpertProfile(newSession.user.id)
+            ]);
+          } else {
+            // Clear profiles on sign out
+            setUserProfile(null);
+            setExpertProfile(null);
+          }
         }
+      );
+      
+      // Get current session
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+      setIsAuthenticated(!!currentSession?.user);
+      
+      // If already signed in, fetch profiles
+      if (currentSession?.user) {
+        await Promise.all([
+          fetchUserProfile(currentSession.user.id),
+          fetchExpertProfile(currentSession.user.id)
+        ]);
       }
-    );
-    
-    // SECOND: Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        updateAuthState(session.user);
-      } else {
-        setAuthState(prev => ({ ...prev, loading: false }));
-      }
-    });
-    
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [updateAuthState]);
+      
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch (error) {
+      console.error('Error in initAuth:', error);
+      setError(error instanceof Error ? error : new Error(String(error)));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchUserProfile, fetchExpertProfile]);
+  
+  // Call initiateAuth on mount
+  useEffect(() => {
+    initiateAuth();
+  }, [initiateAuth]);
   
   return {
-    ...authState,
-    refreshState: () => {
-      if (authState.user) {
-        updateAuthState(authState.user);
-      }
-    }
+    // Auth state
+    user,
+    session,
+    isAuthenticated,
+    userProfile,
+    expertProfile,
+    
+    // Loading states
+    isLoading,
+    isUserLoading,
+    isExpertLoading,
+    
+    // Error states
+    error,
+    userError,
+    expertError,
+    
+    // Session type
+    sessionType,
+    
+    // Methods
+    initiateAuth,
+    refreshUserProfile,
+    refreshExpertProfile,
+    setUserProfileData,
+    setExpertProfileData
   };
 };

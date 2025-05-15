@@ -1,204 +1,309 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Message } from '@/types/database/unified';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { Message, Conversation } from './messaging/types';
 
-export const useMessaging = (recipientId?: string) => {
+export const useMessaging = () => {
+  const { user, isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { user } = useAuth();
+  const [sending, setSending] = useState<boolean>(false);
 
-  // Function to load messages
-  const fetchMessages = useCallback(async () => {
-    if (!user?.id || !recipientId) {
-      setLoading(false);
-      return;
-    }
-
+  // Fetch conversations (recipients) for the current user
+  const fetchConversations = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+    
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      // Get messages sent by current user to recipient
+      // Get unique conversation partners (people user has messaged with)
       const { data: sentMessages, error: sentError } = await supabase
         .from('messages')
-        .select('*')
+        .select('receiver_id, created_at')
         .eq('sender_id', user.id)
-        .eq('receiver_id', recipientId)
-        .order('created_at', { ascending: true });
-
-      if (sentError) throw sentError;
-
-      // Get messages received by current user from recipient
+        .order('created_at', { ascending: false });
+        
       const { data: receivedMessages, error: receivedError } = await supabase
         .from('messages')
-        .select('*')
-        .eq('sender_id', recipientId)
+        .select('sender_id, created_at')
         .eq('receiver_id', user.id)
-        .order('created_at', { ascending: true });
-
-      if (receivedError) throw receivedError;
-
-      // Combine and sort all messages by timestamp
-      const allMessages = [...(sentMessages || []), ...(receivedMessages || [])];
-      allMessages.sort((a, b) => 
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        .order('created_at', { ascending: false });
+        
+      if (sentError || receivedError) {
+        console.error('Error fetching conversations:', sentError || receivedError);
+        toast.error('Failed to load conversations');
+        return;
+      }
+      
+      // Combine and find unique conversation partners
+      const conversationPartners = new Map<string, { lastMessageDate: string }>();
+      
+      sentMessages?.forEach(msg => {
+        if (!conversationPartners.has(msg.receiver_id)) {
+          conversationPartners.set(msg.receiver_id, { 
+            lastMessageDate: msg.created_at 
+          });
+        } else {
+          const existing = conversationPartners.get(msg.receiver_id);
+          if (existing && new Date(msg.created_at) > new Date(existing.lastMessageDate)) {
+            existing.lastMessageDate = msg.created_at;
+          }
+        }
+      });
+      
+      receivedMessages?.forEach(msg => {
+        if (!conversationPartners.has(msg.sender_id)) {
+          conversationPartners.set(msg.sender_id, { 
+            lastMessageDate: msg.created_at 
+          });
+        } else {
+          const existing = conversationPartners.get(msg.sender_id);
+          if (existing && new Date(msg.created_at) > new Date(existing.lastMessageDate)) {
+            existing.lastMessageDate = msg.created_at;
+          }
+        }
+      });
+      
+      // Get user details for each conversation partner
+      const conversationList: Conversation[] = [];
+      
+      for (const [partnerId, data] of conversationPartners.entries()) {
+        // Fetch user profile
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('name, profile_picture')
+          .eq('id', partnerId)
+          .single();
+          
+        if (!userError && userData) {
+          conversationList.push({
+            id: partnerId,
+            name: userData.name || 'Unknown User',
+            profilePicture: userData.profile_picture || '',
+            lastMessageDate: data.lastMessageDate
+          });
+        }
+      }
+      
+      // Sort by most recent message
+      conversationList.sort((a, b) => 
+        new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime()
       );
+      
+      setConversations(conversationList);
+    } catch (error) {
+      console.error('Error in fetchConversations:', error);
+      toast.error('An error occurred while loading conversations');
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated, user]);
 
-      // Convert to our Message type
-      const processedMessages: Message[] = allMessages.map(msg => ({
+  // Fetch messages for a specific conversation
+  const fetchMessages = useCallback(async (recipientId: string) => {
+    if (!isAuthenticated || !user) return;
+    
+    setLoading(true);
+    try {
+      // Get messages where current user is either sender or receiver
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .or(`sender_id.eq.${recipientId},receiver_id.eq.${recipientId}`)
+        .order('created_at', { ascending: true });
+        
+      if (error) {
+        console.error('Error fetching messages:', error);
+        toast.error('Failed to load messages');
+        return;
+      }
+      
+      // Filter to only include messages between these two users
+      const filteredMessages = data.filter(msg =>
+        (msg.sender_id === user.id && msg.receiver_id === recipientId) ||
+        (msg.sender_id === recipientId && msg.receiver_id === user.id)
+      );
+      
+      // Transform to our Message type
+      const formattedMessages: Message[] = filteredMessages.map(msg => ({
         id: msg.id,
         sender_id: msg.sender_id,
         receiver_id: msg.receiver_id,
         content: msg.content,
-        read: msg.read,
-        created_at: msg.created_at,
-        updated_at: msg.updated_at,
-        isMine: msg.sender_id === user.id,
         timestamp: new Date(msg.created_at),
-        senderId: msg.sender_id,
-        receiverId: msg.receiver_id,
-        isRead: msg.read
+        read: msg.read,
+        isMine: msg.sender_id === user.id
       }));
-
-      setMessages(processedMessages);
-    } catch (err) {
-      console.error('Error fetching messages:', err);
-      setError(err instanceof Error ? err : new Error('Failed to fetch messages'));
+      
+      setMessages(formattedMessages);
+      setSelectedConversation(recipientId);
+      
+      // Mark received messages as read
+      const unreadMessageIds = filteredMessages
+        .filter(msg => msg.receiver_id === user.id && !msg.read)
+        .map(msg => msg.id);
+        
+      if (unreadMessageIds.length > 0) {
+        await supabase
+          .from('messages')
+          .update({ read: true })
+          .in('id', unreadMessageIds);
+      }
+    } catch (error) {
+      console.error('Error in fetchMessages:', error);
+      toast.error('An error occurred while loading messages');
     } finally {
       setLoading(false);
     }
-  }, [user, recipientId]);
+  }, [isAuthenticated, user]);
 
-  // Send a message to the recipient
-  const sendMessage = useCallback(async (content: string) => {
-    if (!user?.id || !recipientId) {
-      toast.error('Cannot send message: Missing user or recipient');
-      return;
+  // Send a message
+  const sendMessage = useCallback(async (recipientId: string, content: string) => {
+    if (!isAuthenticated || !user) {
+      toast.error('You must be logged in to send messages');
+      return false;
     }
-
+    
+    if (!content.trim()) {
+      toast.error('Message cannot be empty');
+      return false;
+    }
+    
+    setSending(true);
     try {
       const newMessage = {
         sender_id: user.id,
         receiver_id: recipientId,
-        content,
+        content: content.trim(),
         read: false,
+        created_at: new Date().toISOString()
       };
-
+      
       const { data, error } = await supabase
         .from('messages')
         .insert(newMessage)
         .select()
         .single();
-
-      if (error) throw error;
-
-      // Convert to our Message type
-      const message: Message = {
-        ...data,
-        isMine: true,
-        timestamp: new Date(data.created_at),
-        senderId: data.sender_id,
-        receiverId: data.receiver_id,
-        isRead: data.read
-      };
-
+        
+      if (error) {
+        console.error('Error sending message:', error);
+        toast.error('Failed to send message');
+        return false;
+      }
+      
       // Add the new message to the state
-      setMessages(prevMessages => [...prevMessages, message]);
-
-      return data;
-    } catch (err) {
-      console.error('Error sending message:', err);
-      toast.error('Failed to send message. Please try again.');
-      throw err;
+      const formattedMessage: Message = {
+        id: data.id,
+        sender_id: data.sender_id,
+        receiver_id: data.receiver_id,
+        content: data.content,
+        timestamp: new Date(data.created_at),
+        read: data.read,
+        isMine: true
+      };
+      
+      setMessages(prev => [...prev, formattedMessage]);
+      
+      // Update the conversation list
+      await fetchConversations();
+      
+      return true;
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+      toast.error('An error occurred while sending the message');
+      return false;
+    } finally {
+      setSending(false);
     }
-  }, [user, recipientId]);
+  }, [isAuthenticated, user, fetchConversations]);
 
-  // Mark messages as read
-  const markAsRead = useCallback(async () => {
-    if (!user?.id || !recipientId) return;
-
-    try {
-      const unreadMessages = messages.filter(
-        msg => !msg.read && msg.sender_id === recipientId
-      );
-
-      if (unreadMessages.length === 0) return;
-
-      const { error } = await supabase
-        .from('messages')
-        .update({ read: true })
-        .in('id', unreadMessages.map(msg => msg.id));
-
-      if (error) throw error;
-
-      // Update local state
-      setMessages(prevMessages =>
-        prevMessages.map(msg =>
-          msg.sender_id === recipientId ? { ...msg, read: true, isRead: true } : msg
-        )
-      );
-    } catch (err) {
-      console.error('Error marking messages as read:', err);
-    }
-  }, [user, recipientId, messages]);
-
-  // Set up real-time subscription for new messages
+  // Subscribe to new messages
   useEffect(() => {
-    if (!user?.id || !recipientId) return;
-
-    // Initial fetch
-    fetchMessages();
-
-    // Set up subscription for new messages
+    if (!isAuthenticated || !user) return;
+    
     const subscription = supabase
-      .channel('messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `sender_id=eq.${recipientId},receiver_id=eq.${user.id}`
-        },
-        (payload) => {
-          const newMessage = payload.new as any;
-          
-          // Convert to our Message type
-          const message: Message = {
-            ...newMessage,
-            isMine: false,
+      .channel('messages-channel')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages',
+        filter: `receiver_id=eq.${user.id}`
+      }, async (payload) => {
+        // A new message has arrived for the user
+        const newMessage = payload.new;
+        
+        // Add to messages if from current conversation
+        if (selectedConversation === newMessage.sender_id) {
+          const formattedMessage: Message = {
+            id: newMessage.id,
+            sender_id: newMessage.sender_id,
+            receiver_id: newMessage.receiver_id,
+            content: newMessage.content,
             timestamp: new Date(newMessage.created_at),
-            senderId: newMessage.sender_id,
-            receiverId: newMessage.receiver_id,
-            isRead: newMessage.read
+            read: newMessage.read,
+            isMine: false
           };
           
-          // Add the received message to state
-          setMessages(prevMessages => [...prevMessages, message]);
+          setMessages(prev => [...prev, formattedMessage]);
           
-          // Mark it as read if the conversation is open
-          markAsRead();
+          // Mark as read since user is currently viewing this conversation
+          await supabase
+            .from('messages')
+            .update({ read: true })
+            .eq('id', newMessage.id);
         }
-      )
+        
+        // Refresh conversations to update order/unread status
+        fetchConversations();
+        
+        // Notify user if not in current conversation
+        if (selectedConversation !== newMessage.sender_id) {
+          // Get sender name
+          const { data: senderData } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', newMessage.sender_id)
+            .single();
+            
+          const senderName = senderData?.name || 'Someone';
+          
+          toast(`New message from ${senderName}`, {
+            description: newMessage.content.substring(0, 50) + (newMessage.content.length > 50 ? '...' : ''),
+            action: {
+              label: 'View',
+              onClick: () => fetchMessages(newMessage.sender_id),
+            },
+          });
+        }
+      })
       .subscribe();
-
-    // Mark messages as read when conversation is opened
-    markAsRead();
-
+      
     return () => {
       subscription.unsubscribe();
     };
-  }, [user, recipientId, fetchMessages, markAsRead]);
+  }, [isAuthenticated, user, selectedConversation, fetchConversations, fetchMessages]);
+
+  // Load conversations initially
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchConversations();
+    }
+  }, [isAuthenticated, user, fetchConversations]);
 
   return {
     messages,
-    sendMessage,
+    conversations,
+    selectedConversation,
     loading,
-    error,
+    sending,
     fetchMessages,
-    markAsRead
+    sendMessage,
+    fetchConversations
   };
 };
+
+export default useMessaging;

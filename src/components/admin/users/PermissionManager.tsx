@@ -1,173 +1,161 @@
 
 import React, { useState } from 'react';
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
-import { Separator } from '@/components/ui/separator';
-import { Save } from 'lucide-react';
+import { defaultPermissionSet } from '@/components/admin/utils/permissionUtils';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { isSuperAdmin } from '@/components/admin/utils/permissionUtils';
+import { toast } from 'sonner';
 
 interface PermissionManagerProps {
   user: AdminUser;
-  onSave: (username: string, permissions: AdminPermissions) => void;
+  onSave: (userId: string, permissions: AdminPermissions) => void;
   isSuperAdmin: boolean;
 }
 
-interface PermissionGroupProps {
-  title: string;
-  permissions: string[];
-  currentPermissions: AdminPermissions;
-  onChange: (key: string, value: boolean) => void;
-  disabled?: boolean;
-}
-
-const PermissionGroup: React.FC<PermissionGroupProps> = ({ 
-  title, 
-  permissions, 
-  currentPermissions, 
-  onChange,
-  disabled = false
+const PermissionManager: React.FC<PermissionManagerProps> = ({
+  user,
+  onSave,
+  isSuperAdmin: currentUserIsSuperAdmin
 }) => {
+  const [permissions, setPermissions] = useState<AdminPermissions>(
+    user.permissions || { ...defaultPermissionSet }
+  );
+  
+  const [loading, setLoading] = useState(false);
+  
+  // Group permissions by category
+  const permissionGroups = {
+    'User Management': ['canManageUsers'],
+    'Expert Management': ['canManageExperts', 'canApproveExperts'],
+    'Content Management': ['canManageContent', 'canDeleteContent', 'canManageBlog', 'canManageTestimonials'],
+    'Service Management': ['canManageServices', 'canManagePrograms'],
+    'Analytics': ['canViewAnalytics']
+  };
+  
+  const handleTogglePermission = (key: string) => {
+    setPermissions(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+  
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      
+      // Don't allow editing permissions for super admins
+      if (isSuperAdmin(user)) {
+        toast.error("Super admin permissions cannot be modified");
+        return;
+      }
+      
+      // Can only modify permissions if current user is super admin
+      if (!currentUserIsSuperAdmin) {
+        toast.error("Only super admins can modify permissions");
+        return;
+      }
+      
+      onSave(user.id, permissions);
+      toast.success("Permissions updated successfully");
+    } catch (error) {
+      console.error('Error saving permissions:', error);
+      toast.error("Failed to update permissions");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleSelectAll = () => {
+    const newPermissions = { ...permissions };
+    Object.keys(defaultPermissionSet).forEach(key => {
+      newPermissions[key] = true;
+    });
+    setPermissions(newPermissions);
+  };
+  
+  const handleSelectNone = () => {
+    const newPermissions = { ...permissions };
+    Object.keys(defaultPermissionSet).forEach(key => {
+      newPermissions[key] = false;
+    });
+    setPermissions(newPermissions);
+  };
+  
+  // If user is super admin, show all permissions as enabled and read-only
+  const isUserSuperAdmin = user.role === 'superadmin' || user.role === 'super_admin';
+  
   return (
-    <div className="space-y-2 mb-4">
-      <h3 className="font-medium text-sm text-muted-foreground">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-        {permissions.map((permission) => (
-          <div key={permission} className="flex items-center space-x-2">
-            <Checkbox 
-              id={`permission-${permission}`}
-              checked={!!currentPermissions[permission]} 
-              onCheckedChange={(checked) => onChange(permission, !!checked)}
-              disabled={disabled}
-            />
-            <label 
-              htmlFor={`permission-${permission}`}
-              className={`text-sm ${disabled ? 'text-muted-foreground' : ''}`}
-            >
-              {permission.charAt(0).toUpperCase() + permission.slice(1)}
-            </label>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-medium">
+            Permissions for {user.username || user.email}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {isUserSuperAdmin 
+              ? "Super admins have all permissions by default" 
+              : "Configure what this admin user can access and modify"}
+          </p>
+        </div>
+        
+        {!isUserSuperAdmin && currentUserIsSuperAdmin && (
+          <div className="space-x-2">
+            <Button variant="outline" size="sm" onClick={handleSelectAll}>
+              Select All
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleSelectNone}>
+              Select None
+            </Button>
+          </div>
+        )}
+      </div>
+      
+      <div className="grid md:grid-cols-2 gap-6">
+        {Object.entries(permissionGroups).map(([groupName, permissionKeys]) => (
+          <div key={groupName} className="space-y-3">
+            <h4 className="font-medium">{groupName}</h4>
+            
+            {permissionKeys.map(key => (
+              <div key={key} className="flex items-center justify-between space-x-3 py-1">
+                <Label htmlFor={key} className="flex-1 cursor-pointer">
+                  {formatPermissionName(key)}
+                </Label>
+                <Switch
+                  id={key}
+                  checked={isUserSuperAdmin ? true : Boolean(permissions[key])}
+                  onCheckedChange={() => handleTogglePermission(key)}
+                  disabled={isUserSuperAdmin || !currentUserIsSuperAdmin || loading}
+                />
+              </div>
+            ))}
           </div>
         ))}
       </div>
+      
+      {!isUserSuperAdmin && currentUserIsSuperAdmin && (
+        <div className="flex justify-end space-x-3 pt-4">
+          <Button
+            variant="primary"
+            onClick={handleSave}
+            disabled={loading}
+          >
+            Save Permissions
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
 
-const PermissionManager: React.FC<PermissionManagerProps> = ({ user, onSave, isSuperAdmin }) => {
-  const [permissions, setPermissions] = useState<AdminPermissions>({ ...user.permissions });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Group permissions by category
-  const contentPermissions = ['herosection', 'testimonials', 'blog'];
-  const userPermissions = ['experts', 'expertApprovals'];
-  const programPermissions = ['programs', 'sessions'];
-  const communicationPermissions = ['contact', 'referrals'];
-  const systemPermissions = ['settings', 'services'];
-
-  const handlePermissionChange = (key: string, value: boolean) => {
-    setPermissions((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
-
-  const handleSave = async () => {
-    try {
-      setIsSubmitting(true);
-      onSave(user.id, permissions);
-      toast.success(`Permissions updated for ${user.username}`);
-    } catch (error) {
-      toast.error('Failed to update permissions');
-      console.error('Error updating permissions:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Check if this is a superadmin (cannot edit their own permissions)
-  const isSuperAdminUser = user.role === 'superadmin';
-  const isDisabled = isSuperAdminUser || isSubmitting;
-
-  return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex flex-row justify-between items-center">
-          <div>
-            Permissions for <span className="font-bold">{user.username}</span>
-            {isSuperAdminUser && (
-              <span className="ml-2 text-sm text-ifind-teal">(Super Admin)</span>
-            )}
-          </div>
-          <Button 
-            onClick={handleSave} 
-            size="sm" 
-            variant="outline" 
-            disabled={isDisabled}
-            className="flex items-center gap-1"
-          >
-            <Save className="h-4 w-4" />
-            <span>Save Changes</span>
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isSuperAdminUser && (
-          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
-            Super admin users have all permissions by default and cannot be modified.
-          </div>
-        )}
-        
-        <PermissionGroup 
-          title="Content Management" 
-          permissions={contentPermissions}
-          currentPermissions={permissions}
-          onChange={handlePermissionChange}
-          disabled={isDisabled}
-        />
-        
-        <Separator className="my-4" />
-        
-        <PermissionGroup 
-          title="User Management" 
-          permissions={userPermissions}
-          currentPermissions={permissions}
-          onChange={handlePermissionChange}
-          disabled={isDisabled}
-        />
-        
-        <Separator className="my-4" />
-        
-        <PermissionGroup 
-          title="Program Management" 
-          permissions={programPermissions}
-          currentPermissions={permissions}
-          onChange={handlePermissionChange}
-          disabled={isDisabled}
-        />
-        
-        <Separator className="my-4" />
-        
-        <PermissionGroup 
-          title="Communication" 
-          permissions={communicationPermissions}
-          currentPermissions={permissions}
-          onChange={handlePermissionChange}
-          disabled={isDisabled}
-        />
-        
-        <Separator className="my-4" />
-        
-        <PermissionGroup 
-          title="System" 
-          permissions={systemPermissions}
-          currentPermissions={permissions}
-          onChange={handlePermissionChange}
-          disabled={isDisabled}
-        />
-      </CardContent>
-    </Card>
-  );
+// Helper function to format permission name for display
+const formatPermissionName = (key: string): string => {
+  // Remove 'can' prefix and add spaces before capital letters
+  return key
+    .replace(/^can/, '')
+    .replace(/([A-Z])/g, ' $1')
+    .trim();
 };
 
 export default PermissionManager;

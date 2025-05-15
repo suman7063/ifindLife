@@ -8,7 +8,7 @@ export const useUserReports = (
   currentUser: UserProfile | null,
   setCurrentUser: React.Dispatch<React.SetStateAction<UserProfile | null>>
 ) => {
-  const addReport = async (reportData: NewReport): Promise<boolean> => {
+  const reportExpert = async (reportData: NewReport): Promise<boolean> => {
     if (!currentUser) {
       toast.error('Please log in to report an expert');
       return false;
@@ -30,13 +30,11 @@ export const useUserReports = (
 
       if (error) throw error;
 
-      // Create a safer way to get the ID
+      // Get report ID or create a temporary one
       let newId = `temp_${Date.now()}`;
       
       if (data) {
-        // Ensure data is an array
         const dataArray = Array.isArray(data) ? data : [];
-        // Check if array has items and first item has an id
         if (dataArray.length > 0 && typeof dataArray[0] === 'object') {
           const firstItem = dataArray[0] as Record<string, any>;
           if ('id' in firstItem) {
@@ -48,17 +46,17 @@ export const useUserReports = (
       // Optimistically update the local state
       const adaptedReport: Report = {
         id: newId,
-        expertId: reportData.expertId, // Using expertId property to match our unified type
+        expert_id: parseInt(String(reportData.expertId), 10), // Using expert_id property
         user_id: currentUser.id,
         reason: reportData.reason,
-        details: reportData.details || '',
+        details: reportData.details,
         date: new Date().toISOString(),
         status: 'pending'
       };
 
       const updatedUser = {
         ...currentUser,
-        reports: [...(currentUser.reports || []), adaptedReport],
+        reports: [...(currentUser.reports || []), adaptedReport]
       };
       setCurrentUser(updatedUser);
 
@@ -71,6 +69,6 @@ export const useUserReports = (
   };
 
   return {
-    addReport
+    reportExpert
   };
 };
