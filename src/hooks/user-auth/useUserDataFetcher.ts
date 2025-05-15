@@ -27,8 +27,9 @@ export const useUserDataFetcher = () => {
       try {
         // Use the refresh function if available, otherwise use existing profile
         let updatedProfile = userProfile;
-        if (auth.refreshUserProfile) {
-          updatedProfile = await auth.refreshUserProfile();
+        if (auth.refreshProfile) {
+          await auth.refreshProfile();
+          updatedProfile = auth.userProfile;
         }
         
         if (!updatedProfile) {

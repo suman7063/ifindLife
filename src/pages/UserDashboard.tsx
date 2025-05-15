@@ -1,98 +1,194 @@
 
 import React, { useState, useEffect } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
-import ProfileSettings from '@/components/user/dashboard/ProfileSettings';
-import EnrolledPrograms from '@/components/dashboard/EnrolledPrograms';
-import UpcomingAppointments from '@/components/dashboard/UpcomingAppointments';
-import FavoriteExperts from '@/components/dashboard/FavoriteExperts';
-import RecentActivities from '@/components/dashboard/RecentActivities';
-import WalletSummary from '@/components/dashboard/WalletSummary';
-import { toast } from 'sonner';
 import { Container } from '@/components/ui/container';
-import { Helmet } from 'react-helmet-async';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import UpcomingAppointments from '@/components/dashboard/UpcomingAppointments';
+import WalletSummary from '@/components/dashboard/WalletSummary';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useUserDataFetcher } from '@/hooks/user-auth/useUserDataFetcher';
 
 const UserDashboard: React.FC = () => {
-  const { isAuthenticated, isLoading, userProfile } = useAuth();
   const navigate = useNavigate();
-  const [redirectAttempted, setRedirectAttempted] = useState(false);
+  const { isAuthenticated, isLoading } = useAuth();
+  const { 
+    userProfile,
+    appointments,
+    transactions,
+    favorites,
+    enrolledCourses,
+    loading: dataLoading
+  } = useUserDataFetcher();
   
+  // Check if user is authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated && !redirectAttempted) {
-      setRedirectAttempted(true);
-      toast.error('Please log in to access your dashboard');
+    if (!isLoading && !isAuthenticated) {
       navigate('/user-login');
     }
-  }, [isAuthenticated, isLoading, navigate, redirectAttempted]);
+  }, [isAuthenticated, isLoading, navigate]);
   
-  if (isLoading) {
+  if (isLoading || !userProfile) {
     return (
-      <Container className="min-h-screen py-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-64 bg-gray-200 rounded mb-4"></div>
-        </div>
-      </Container>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <Container className="py-8 flex-1">
+          <div className="animate-pulse space-y-6">
+            <div className="h-10 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+            <div className="h-64 bg-gray-200 rounded"></div>
+          </div>
+        </Container>
+        <Footer />
+      </div>
     );
   }
   
-  if (!isAuthenticated || !userProfile) {
-    return null;
-  }
-  
   return (
-    <>
-      <Helmet>
-        <title>User Dashboard | IFindLife</title>
-      </Helmet>
-      
-      <DashboardLayout>
-        <div className="container p-4 mx-auto">
-          <h1 className="text-3xl font-bold mb-6">Welcome, {userProfile.name}</h1>
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <Container className="py-8 flex-1">
+        <h1 className="text-3xl font-bold mb-6">Welcome, {userProfile?.name}</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="md:col-span-2">
+            <UpcomingAppointments 
+              appointments={appointments || []} 
+              loading={dataLoading} 
+              limit={3}
+            />
+          </div>
           
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="mb-8">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="appointments">Appointments</TabsTrigger>
-              <TabsTrigger value="favorites">Favorites</TabsTrigger>
-              <TabsTrigger value="programs">Programs</TabsTrigger>
-              <TabsTrigger value="wallet">Wallet</TabsTrigger>
-              <TabsTrigger value="settings">Settings</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="overview">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <WalletSummary />
-                <UpcomingAppointments limit={3} />
-                <RecentActivities />
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="appointments">
-              <UpcomingAppointments />
-            </TabsContent>
-            
-            <TabsContent value="favorites">
-              <FavoriteExperts />
-            </TabsContent>
-            
-            <TabsContent value="programs">
-              <EnrolledPrograms />
-            </TabsContent>
-            
-            <TabsContent value="wallet">
-              <WalletSummary showTransactions />
-            </TabsContent>
-            
-            <TabsContent value="settings">
-              {userProfile && <ProfileSettings user={userProfile} />}
-            </TabsContent>
-          </Tabs>
+          <div>
+            <WalletSummary showTransactions={true} />
+          </div>
         </div>
-      </DashboardLayout>
-    </>
+        
+        <Tabs defaultValue="appointments">
+          <TabsList>
+            <TabsTrigger value="appointments">Appointments</TabsTrigger>
+            <TabsTrigger value="favorites">Favorites</TabsTrigger>
+            <TabsTrigger value="courses">My Courses</TabsTrigger>
+            <TabsTrigger value="transactions">Transactions</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="appointments" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>All Appointments</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <UpcomingAppointments 
+                  appointments={appointments || []} 
+                  loading={dataLoading} 
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="favorites" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Favorite Experts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {favorites && favorites.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Favorite Experts would be displayed here */}
+                    {favorites.map(expert => (
+                      <div key={expert.id} className="border rounded p-4">
+                        <p className="font-medium">{expert.name}</p>
+                        <p className="text-sm text-muted-foreground">{expert.specialization}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <p>You haven't added any experts to favorites yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="courses" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>My Courses</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {enrolledCourses && enrolledCourses.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {/* Enrolled courses would be displayed here */}
+                    {enrolledCourses.map(course => (
+                      <div key={course.id} className="border rounded p-4">
+                        <p className="font-medium">{course.title}</p>
+                        <div className="mt-2">
+                          <div className="w-full bg-gray-200 rounded-full h-2.5">
+                            <div 
+                              className="bg-primary h-2.5 rounded-full" 
+                              style={{ width: `${course.progress}%` }}
+                            ></div>
+                          </div>
+                          <p className="text-xs text-right mt-1">{course.progress}% complete</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <p>You haven't enrolled in any courses yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="transactions" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Transaction History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {transactions && transactions.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2">Date</th>
+                          <th className="text-left py-2">Description</th>
+                          <th className="text-left py-2">Type</th>
+                          <th className="text-right py-2">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transactions.map(transaction => (
+                          <tr key={transaction.id} className="border-b">
+                            <td className="py-2">{transaction.date}</td>
+                            <td className="py-2">{transaction.description}</td>
+                            <td className="py-2">{transaction.type}</td>
+                            <td className={`py-2 text-right ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {transaction.amount > 0 ? '+' : ''}{transaction.amount} {transaction.currency}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <p>No transaction history available</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </Container>
+      <Footer />
+    </div>
   );
 };
 

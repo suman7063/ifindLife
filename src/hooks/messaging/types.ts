@@ -20,3 +20,34 @@ export interface Conversation {
   lastMessageDate: string;
   unreadCount?: number;
 }
+
+// Add the missing types for messaging hooks
+export interface MessagingUser {
+  id: string;
+  name: string;
+  profilePicture?: string;
+  isOnline?: boolean;
+}
+
+export interface UseMessagesReturn {
+  messages: Message[];
+  loading: boolean;
+  error: Error | null;
+  sendMessage: (content: string) => Promise<boolean>;
+  markAsRead: (messageId: string) => Promise<boolean>;
+}
+
+export interface UseConversationsReturn {
+  conversations: Conversation[];
+  loading: boolean;
+  error: Error | null;
+  selectedConversation: string | null;
+  selectConversation: (conversationId: string) => void;
+}
+
+export interface MessagingHook {
+  sendMessage: (receiverId: string, content: string) => Promise<boolean>;
+  getMessages: (conversationId: string) => Message[];
+  getConversations: () => Conversation[];
+  markAsRead: (messageId: string) => Promise<boolean>;
+}

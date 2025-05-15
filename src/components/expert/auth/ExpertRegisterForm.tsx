@@ -28,7 +28,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export const ExpertRegisterForm: React.FC = () => {
-  const { registerExpert } = useAuth();
+  const auth = useAuth();
   const [isRegistering, setIsRegistering] = useState(false);
   
   const form = useForm<FormValues>({
@@ -46,7 +46,8 @@ export const ExpertRegisterForm: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     setIsRegistering(true);
     try {
-      const success = await registerExpert(data.email, data.password, {
+      // Use the standard register function but with expert data
+      const success = await auth.registerExpert(data.email, data.password, {
         name: data.name,
         phone: data.phone,
         specialization: data.specialization,

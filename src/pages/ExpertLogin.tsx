@@ -1,84 +1,97 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
+import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
 import ExpertLoginForm from '@/components/expert/auth/ExpertLoginForm';
 import ExpertRegisterForm from '@/components/expert/auth/ExpertRegisterForm';
-import { Card, CardContent } from '@/components/ui/card';
 
 const ExpertLogin: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
-  const { isAuthenticated, isLoading, role, sessionType } = useAuth();
   const navigate = useNavigate();
-  
-  // Set login origin for role determination
+  const { isAuthenticated, isLoading, role, expertProfile, sessionType } = useAuth();
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
+
   useEffect(() => {
+    // Store login origin for correct role determination
     sessionStorage.setItem('loginOrigin', 'expert');
-    console.log('ExpertLogin: Setting login origin to expert');
-  }, []);
-  
-  // Handle redirection if already authenticated
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      console.log('ExpertLogin: Already authenticated as', role, 'with session type', sessionType);
-      
-      if (role === 'user' && (sessionType === 'user' || sessionType === 'dual')) {
-        console.log('Redirecting to user dashboard');
-        navigate('/user-dashboard', { replace: true });
-      } else {
-        console.log('Redirecting to expert dashboard');
-        navigate('/expert-dashboard', { replace: true });
-      }
+
+    // Check if already logged in as expert
+    if (isAuthenticated && !isLoading && role === 'expert') {
+      navigate('/expert-dashboard');
     }
-  }, [isAuthenticated, isLoading, role, sessionType, navigate]);
-  
-  const handleLoginSuccess = () => {
-    navigate('/expert-dashboard');
+    
+    // If logged in as user but trying to access expert login
+    if (isAuthenticated && !isLoading && role === 'user' && sessionType === 'user') {
+      // Could redirect or show message about being logged in as user
+    }
+  }, [isAuthenticated, isLoading, role, navigate, sessionType]);
+
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
+    setIsLoggingIn(true);
+    setLoginError(null);
+    
+    try {
+      // Call login with asExpert=true to indicate expert login attempt
+      const success = await auth.login(email, password, true);
+      
+      if (success) {
+        navigate('/expert-dashboard');
+        return true;
+      } else {
+        setLoginError('Login failed. Please check your credentials.');
+        return false;
+      }
+    } catch (error) {
+      console.error('Error during expert login:', error);
+      setLoginError('An error occurred during login.');
+      return false;
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
-  
+
+  const auth = useAuth();
+
   return (
-    <>
-      <Navbar />
-      <div className="py-8 md:py-12 bg-gray-50 min-h-[calc(100vh-100px)]">
-        <Container>
-          <div className="max-w-md mx-auto">
-            <Card>
-              <CardContent className="p-6">
-                <div className="text-center mb-6">
-                  <h1 className="text-2xl font-bold">Expert Portal</h1>
-                  <p className="text-muted-foreground">
-                    Login or register to access your expert dashboard
-                  </p>
-                </div>
-                
-                <Tabs 
-                  value={activeTab} 
-                  onValueChange={(value) => setActiveTab(value as 'login' | 'register')}
-                >
-                  <TabsList className="grid grid-cols-2 w-full mb-6">
-                    <TabsTrigger value="login">Login</TabsTrigger>
-                    <TabsTrigger value="register">Register</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="login">
-                    <ExpertLoginForm />
-                  </TabsContent>
-                  
-                  <TabsContent value="register">
-                    <ExpertRegisterForm />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
-        </Container>
-      </div>
-      <Footer />
-    </>
+    <Container className="py-8 md:py-12">
+      <Card className="border shadow-lg max-w-md mx-auto">
+        <CardContent className="pt-6">
+          <h1 className="text-2xl font-bold text-center mb-6">Expert Portal</h1>
+          
+          {loginError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>{loginError}</AlertDescription>
+            </Alert>
+          )}
+          
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="register">Register</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="login">
+              <ExpertLoginForm 
+                onLogin={handleLogin} 
+                isLoggingIn={isLoggingIn} 
+                loginError={loginError}
+                setActiveTab={setActiveTab}
+              />
+            </TabsContent>
+            
+            <TabsContent value="register">
+              <ExpertRegisterForm />
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </Container>
   );
 };
 

@@ -19,6 +19,7 @@ export interface AuthContextType {
   registerExpert: (email: string, password: string, expertData: any) => Promise<boolean>;
   refreshUserProfile: () => Promise<UserProfile | null>;
   refreshExpertProfile: () => Promise<ExpertProfile | null>;
+  refreshProfile: () => Promise<void>; // For backward compatibility
   updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
   addExpertService: (serviceId: number, price: number) => Promise<boolean>;

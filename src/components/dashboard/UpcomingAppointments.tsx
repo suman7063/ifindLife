@@ -21,7 +21,7 @@ interface UpcomingAppointmentsProps {
 }
 
 const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({
-  appointments,
+  appointments = [],
   loading = false,
   limit
 }) => {

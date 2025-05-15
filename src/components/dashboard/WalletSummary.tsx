@@ -8,9 +8,10 @@ import { formatCurrency } from '@/utils/formatters';
 interface WalletSummaryProps {
   className?: string;
   user?: UserProfile;
+  showTransactions?: boolean;
 }
 
-const WalletSummary: React.FC<WalletSummaryProps> = ({ className, user }) => {
+const WalletSummary: React.FC<WalletSummaryProps> = ({ className, user, showTransactions }) => {
   const auth = useAuth();
   const userProfile = user || auth.userProfile;
   const walletBalance = userProfile?.wallet_balance || 0;
@@ -29,6 +30,22 @@ const WalletSummary: React.FC<WalletSummaryProps> = ({ className, user }) => {
           <p className="text-sm text-muted-foreground">
             Available balance in your account
           </p>
+          
+          {showTransactions && userProfile?.transactions && userProfile.transactions.length > 0 && (
+            <div className="mt-4">
+              <h4 className="font-medium mb-2">Recent Transactions</h4>
+              <div className="space-y-2">
+                {userProfile.transactions.slice(0, 3).map(transaction => (
+                  <div key={transaction.id} className="flex justify-between text-sm">
+                    <span>{transaction.description}</span>
+                    <span className={transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}>
+                      {formatCurrency(transaction.amount, currency)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

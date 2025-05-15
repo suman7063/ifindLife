@@ -92,7 +92,8 @@ export const useProfileTypeAdapter = () => {
       referralCode: profileA.referral_code || '',
       referral_link: profileA.referral_link || '',
       favoriteExperts: Array.isArray(profileA.favorite_experts) ? profileA.favorite_experts : [],
-      favoritePrograms: Array.isArray(profileA.favorite_programs) 
+      // Fixed - use favorite_programs instead of favoritePrograms
+      favorite_programs: Array.isArray(profileA.favorite_programs) 
         ? profileA.favorite_programs.map(Number) 
         : [],
       enrolledCourses: profileA.enrolled_courses || [],
