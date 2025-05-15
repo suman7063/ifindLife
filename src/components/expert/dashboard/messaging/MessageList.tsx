@@ -8,9 +8,11 @@ import { useMessaging } from '@/hooks/messaging/useMessaging'; // Fixed import
 
 interface MessageListProps {
   userId: string;
+  onSelectConversation?: (userId: string, userName: string) => void;
+  selectedUserId?: string;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ userId }) => {
+const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation, selectedUserId }) => {
   const [message, setMessage] = React.useState('');
   const { messages, sendMessage, loading } = useMessaging();
 

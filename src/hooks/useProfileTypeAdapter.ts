@@ -1,78 +1,66 @@
 
-import { useMemo } from 'react';
+import { useCallback } from 'react';
 import { UserProfile } from '@/types/database/unified';
-import { UserProfile as UserProfileSupabase } from '@/types/supabase/userProfile';
 
 /**
- * This hook provides adapter functions to convert between different profile types
+ * Hook to provide adapters for converting between different user profile formats
  */
 export const useProfileTypeAdapter = () => {
-  // Convert from database type (snake_case) to UI type (camelCase)
-  const toTypeA = useMemo(() => (profile: UserProfile | null) => {
+  // Convert from unified type to specific format
+  const toTypeA = useCallback((profile: UserProfile | null): any => {
     if (!profile) return null;
     
-    // Create a camelCase version of the profile for UI components
     return {
       id: profile.id,
-      name: profile.name,
-      email: profile.email,
-      phone: profile.phone,
-      country: profile.country,
-      city: profile.city,
-      currency: profile.currency,
-      profilePicture: profile.profile_picture,
-      walletBalance: profile.wallet_balance,
-      created_at: profile.created_at,
-      referred_by: profile.referred_by,
-      referralCode: profile.referral_code,
-      referral_link: profile.referral_link,
-      favoriteExperts: profile.favorite_experts,
-      favorite_experts: profile.favorite_experts,
-      favorite_programs: profile.favorite_programs, // Add this field
-      reports: profile.reports || [], // Add this field
-      wallet_balance: profile.wallet_balance,
-      profile_picture: profile.profile_picture,
-      referral_code: profile.referral_code,
-      enrolledCourses: profile.enrolled_courses,
-      enrolled_courses: profile.enrolled_courses,
-      transactions: profile.transactions || [],
-      appointments: profile.appointments,
+      name: profile.name || '',
+      email: profile.email || '',
+      phone: profile.phone || '',
+      city: profile.city || '',
+      country: profile.country || '',
+      profilePicture: profile.profile_picture || '',
+      walletBalance: profile.wallet_balance || 0,
+      currency: profile.currency || 'USD',
+      createdAt: profile.created_at || new Date().toISOString(),
+      referralCode: profile.referral_code || '',
+      referralLink: profile.referral_link || '',
+      referredBy: profile.referred_by || null,
+      favoriteExperts: profile.favorite_experts || [],
+      favoritePrograms: profile.favorite_programs || [],
+      enrolledCourses: profile.enrolled_courses || [],
       reviews: profile.reviews || [],
+      reports: profile.reports || [],
+      transactions: profile.transactions || [],
       referrals: profile.referrals || []
     };
   }, []);
   
-  // Convert from UI type (camelCase) to database type (snake_case)
-  const toTypeB = useMemo(() => (profile: UserProfileSupabase | any) => {
+  // Convert to unified type from type B
+  const toTypeB = useCallback((profile: UserProfile | null): any => {
     if (!profile) return null;
     
-    // Create a snake_case version of the profile for database operations
     return {
       id: profile.id,
-      name: profile.name,
-      email: profile.email,
-      phone: profile.phone,
-      country: profile.country,
-      city: profile.city,
-      currency: profile.currency,
-      profile_picture: profile.profilePicture || profile.profile_picture,
-      wallet_balance: profile.walletBalance || profile.wallet_balance,
-      created_at: profile.created_at,
-      referred_by: profile.referred_by,
-      referral_code: profile.referralCode || profile.referral_code,
-      referral_link: profile.referral_link,
-      favorite_experts: profile.favoriteExperts || profile.favorite_experts,
-      favorite_programs: profile.favorite_programs || [], // Add missing property
-      enrolled_courses: profile.enrolledCourses || profile.enrolled_courses,
-      transactions: profile.transactions || [],
-      reports: profile.reports || [], // Add missing property
-      appointments: profile.appointments,
+      name: profile.name || '',
+      email: profile.email || '',
+      phone: profile.phone || '',
+      city: profile.city || '',
+      country: profile.country || '',
+      profile_picture: profile.profile_picture || '',
+      wallet_balance: profile.wallet_balance || 0,
+      currency: profile.currency || 'USD',
+      created_at: profile.created_at || new Date().toISOString(),
+      referral_code: profile.referral_code || '',
+      referral_link: profile.referral_link || '',
+      referred_by: profile.referred_by || null,
+      favorite_experts: profile.favorite_experts || [],
+      favorite_programs: profile.favorite_programs || [],
+      enrolled_courses: profile.enrolled_courses || [],
       reviews: profile.reviews || [],
+      reports: profile.reports || [],
+      transactions: profile.transactions || [],
       referrals: profile.referrals || []
     };
   }, []);
   
   return { toTypeA, toTypeB };
 };
-
-export default useProfileTypeAdapter;

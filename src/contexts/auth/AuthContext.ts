@@ -5,6 +5,7 @@ import { UserProfile, ExpertProfile } from '@/types/database/unified';
 import { NewReview, NewReport } from '@/types/supabase/tables';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
+export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
 export interface AuthUser {
   id: string;
@@ -29,6 +30,10 @@ export interface AuthContextType {
   error: Error | null;
   walletBalance: number;
   profile: UserProfile | null; // For backward compatibility
+  sessionType: SessionType;
+  
+  // Expert-specific functions
+  registerExpert?: (email: string, password: string, expertData: any) => Promise<boolean>;
   
   // Extended methods for user interactions
   updateProfilePicture?: (file: File) => Promise<string | null>;
@@ -58,7 +63,8 @@ export const AuthContext = createContext<AuthContextType>({
   session: null,
   error: null,
   walletBalance: 0,
-  profile: null
+  profile: null,
+  sessionType: 'none'
 });
 
 export const useAuth = () => {

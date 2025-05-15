@@ -1,49 +1,57 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ExpertLoginHeader } from '@/components/expert/auth/ExpertLoginHeader';
-import { ExpertLoginContent } from '@/components/expert/auth/ExpertLoginContent';
-import { ExpertLoginTabs } from '@/components/expert/auth/ExpertLoginTabs';
-import { DualSessionAlert } from '@/components/expert/auth/DualSessionAlert';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { LoadingView } from '@/components/expert/auth/LoadingView';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import ExpertLoginHeader from '@/components/expert/auth/ExpertLoginHeader';
+import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
+import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
+import DualSessionAlert from '@/components/expert/auth/DualSessionAlert';
+import { Container } from '@/components/ui/container';
+import LoadingView from '@/components/expert/auth/LoadingView';
 
-const ExpertLogin = () => {
+const ExpertLogin: React.FC = () => {
+  const { isAuthenticated, isLoading, role, sessionType } = useAuth();
+  const [activeTab, setActiveTab] = useState('login');
   const navigate = useNavigate();
-  const auth = useAuth();
   
+  // Handle redirect for authenticated users
   useEffect(() => {
-    // Redirect if already authenticated as expert
-    if (auth.isAuthenticated && auth.role === 'expert' && auth.sessionType === 'expert') {
-      navigate('/expert-dashboard');
+    if (isAuthenticated && !isLoading) {
+      if (sessionType === 'expert' || role === 'expert') {
+        console.log('Already authenticated as expert, redirecting to expert dashboard');
+        navigate('/expert-dashboard');
+      } else if (sessionType === 'user' || role === 'user') {
+        console.log('Already authenticated as user, redirecting to user dashboard');
+        navigate('/user-dashboard');
+      }
     }
-  }, [auth.isAuthenticated, auth.role, auth.sessionType, navigate]);
+  }, [isAuthenticated, isLoading, sessionType, role, navigate]);
   
-  // Show loading state while authentication state is being determined
-  if (auth.isLoading) {
-    return <LoadingView />;
+  if (isLoading) {
+    return <LoadingView message="Checking authentication status..." />;
   }
   
-  // Determine if user is in a dual session (both user and expert)
-  const isDualSession = auth.isAuthenticated && !!auth.userProfile && !!auth.expertProfile;
-  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-ifind-purple/5 to-ifind-teal/5">
-      <div className="container mx-auto px-4 py-8">
-        <ExpertLoginHeader />
-        
-        <div className="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl mb-8">
-          {isDualSession && <DualSessionAlert />}
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex flex-col">
+        <div className="container mx-auto px-4 py-8 flex-grow flex flex-col items-center justify-center">
+          <ExpertLoginHeader />
           
-          <div className="p-8">
-            <ExpertLoginContent>
-              <ExpertLoginTabs 
-                onLogin={(email, password) => auth.login(email, password, true)}
-              />
-            </ExpertLoginContent>
+          {/* Show dual session alert if needed */}
+          <DualSessionAlert />
+          
+          <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
+            <ExpertLoginTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            <div className="p-6">
+              <ExpertLoginContent activeTab={activeTab} setActiveTab={setActiveTab} />
+            </div>
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

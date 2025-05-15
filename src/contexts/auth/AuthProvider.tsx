@@ -1,9 +1,6 @@
 
-import React, { useState, useEffect, ReactNode } from 'react';
-import { Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import React, { ReactNode } from 'react';
 import { AuthContext } from './AuthContext';
-import { AuthState, initialAuthState } from './types';
 import { useAuthState } from './hooks/useAuthState';
 import { useAuthActions } from './hooks/useAuthActions';
 
@@ -12,25 +9,16 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [state, setState] = useState<AuthState>(initialAuthState);
+  // Get state from hook
+  const state = useAuthState();
   
-  const { 
-    login, 
-    signup, 
-    logout, 
-    updateProfile, 
-    updatePassword,
-    refreshProfile
-  } = useAuthActions(state, setState);
-
+  // Get actions from hook
+  const actions = useAuthActions(state, () => {});
+  
+  // Combine state and actions
   const value = {
     ...state,
-    login,
-    signup,
-    logout,
-    updateProfile,
-    updatePassword,
-    refreshProfile
+    ...actions
   };
 
   return (

@@ -1,34 +1,43 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { toast } from 'sonner';
+import { SessionType } from '@/contexts/auth/AuthContext';
+import { ExpertProfile, UserProfile } from '@/types/database/unified';
 
 /**
- * This hook centralizes and synchronizes auth state across the application
+ * Hook to provide a single source of truth for authentication state
+ * This helps components get the correct user or expert profile based on the current session type
  */
 export const useSingleSourceOfTruth = () => {
   const auth = useAuth();
-
-  // Log authentication state changes
+  const [sessionType, setSessionType] = useState<SessionType>('none');
+  const [currentProfile, setCurrentProfile] = useState<UserProfile | ExpertProfile | null>(null);
+  
   useEffect(() => {
-    console.log('Auth state changed:', {
-      isAuthenticated: auth.isAuthenticated,
-      role: auth.role,
-      sessionType: auth.sessionType,
-      userProfile: auth.userProfile ? true : false,
-      expertProfile: auth.expertProfile ? true : false,
-    });
+    // Get the session type from auth
+    if (auth.sessionType) {
+      setSessionType(auth.sessionType);
+    }
     
-    // We're returning a cleanup function, not a void function
-    return () => {
-      console.log('Auth state cleanup');
-    };
-  }, [auth.isAuthenticated, auth.role, auth.sessionType]);
-
+    // Set the current profile based on session type
+    if (auth.sessionType === 'user') {
+      setCurrentProfile(auth.userProfile);
+    } else if (auth.sessionType === 'expert') {
+      setCurrentProfile(auth.expertProfile);
+    } else if (auth.sessionType === 'dual') {
+      // In dual mode, default to user profile unless otherwise specified
+      setCurrentProfile(auth.userProfile);
+    } else {
+      setCurrentProfile(null);
+    }
+  }, [auth.userProfile, auth.expertProfile, auth.sessionType]);
+  
   return {
-    ...auth,
-    // Any additional synchronized state or functions
+    sessionType,
+    currentProfile,
+    userProfile: auth.userProfile,
+    expertProfile: auth.expertProfile,
+    isAuthenticated: auth.isAuthenticated,
+    isLoading: auth.isLoading
   };
 };
-
-export default useSingleSourceOfTruth;

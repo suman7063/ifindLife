@@ -9,7 +9,8 @@ export type {
   AuthContextType, 
   UserRole, 
   AuthState, 
-  AuthUser 
+  AuthUser,
+  SessionType
 } from './types';
 
 // Re-export hooks

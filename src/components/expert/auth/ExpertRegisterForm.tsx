@@ -46,24 +46,26 @@ export const ExpertRegisterForm: React.FC = () => {
   const onSubmit = async (data: FormValues) => {
     setIsRegistering(true);
     try {
-      // For backward compatibility, check if registerExpert exists, otherwise use register
-      const registerMethod = auth.registerExpert || auth.register;
-      
-      // Use the standard register function but with expert data
-      const success = await registerMethod(data.email, data.password, {
-        name: data.name,
-        phone: data.phone,
-        specialization: data.specialization,
-        experience: data.experience,
-        isExpert: true,  // Flag to indicate this is an expert registration
-      });
-      
-      if (success) {
-        toast.success('Registration successful!');
-        // Redirect is handled by the auth provider
+      // For backward compatibility, check if registerExpert exists, otherwise use signup
+      if (auth.registerExpert) {
+        await auth.registerExpert(data.email, data.password, {
+          name: data.name,
+          phone: data.phone,
+          specialization: data.specialization,
+          experience: data.experience,
+        });
       } else {
-        toast.error('Registration failed. Please try again.');
+        await auth.signup(data.email, data.password, {
+          name: data.name,
+          phone: data.phone,
+          specialization: data.specialization,
+          experience: data.experience,
+          isExpert: true,  // Flag to indicate this is an expert registration
+        });
       }
+      
+      toast.success('Registration successful!');
+      // Redirect is handled by the auth provider
     } catch (error) {
       console.error('Expert registration error:', error);
       toast.error('An error occurred during registration');
