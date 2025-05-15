@@ -11,7 +11,7 @@ export const isSuperAdmin = (user: AdminUser | null): boolean => {
 /**
  * Check if the user has a specific permission
  */
-export const hasPermission = (user: AdminUser | null, permission: string): boolean {
+export const hasPermission = (user: AdminUser | null, permission: string): boolean => {
   // Super admins have all permissions
   if (isSuperAdmin(user)) return true;
   
@@ -23,13 +23,13 @@ export const hasPermission = (user: AdminUser | null, permission: string): boole
 /**
  * Check if the user has any of the specified permissions
  */
-export const hasAnyPermission = (user: AdminUser | null, permissions?: string[]): boolean {
+export const hasAnyPermission = (user: AdminUser | null, permissions?: string[]): boolean => {
   // Super admins have all permissions
   if (isSuperAdmin(user)) return true;
   
   // Without specific permissions, check if user has any permissions
   if (!permissions || permissions.length === 0) {
-    return user?.permissions ? Object.values(user.permissions).some(p => p) : false;
+    return user?.permissions ? Object.values(user.permissions).some(p => Boolean(p)) : false;
   }
   
   // Check if the user has any of the specified permissions
@@ -40,7 +40,7 @@ export const hasAnyPermission = (user: AdminUser | null, permissions?: string[])
 /**
  * Check if the user has all the specified permissions
  */
-export const hasAllPermissions = (user: AdminUser | null, permissions: string[]): boolean {
+export const hasAllPermissions = (user: AdminUser | null, permissions: string[]): boolean => {
   // Super admins have all permissions
   if (isSuperAdmin(user)) return true;
   
@@ -63,7 +63,7 @@ export const getUserPermissions = (user: AdminUser | null): string[] => {
   // Return the permissions that the user has
   if (!user.permissions) return [];
   return Object.entries(user.permissions)
-    .filter(([_, hasPermission]) => hasPermission)
+    .filter(([_, hasPermission]) => Boolean(hasPermission))
     .map(([permission, _]) => permission);
 };
 
