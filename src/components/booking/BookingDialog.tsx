@@ -15,7 +15,7 @@ interface BookingDialogProps {
 }
 
 export function BookingDialog({ isOpen, onClose, service, expert }: BookingDialogProps) {
-  const { isAuthenticated, profile } = useAuth();
+  const { isAuthenticated, userProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(undefined);

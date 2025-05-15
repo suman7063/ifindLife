@@ -1,41 +1,32 @@
 
-import { Message } from '@/types/database/unified';
-
 export interface Conversation {
   id: string;
-  participantId: string;
-  participantName: string;
-  participantImage?: string;
+  name: string;
+  profilePicture?: string;
   lastMessage?: string;
-  unreadCount: number;
-  lastMessageTime?: Date;
-  isOnline?: boolean;
-  lastSeen?: Date;
+  lastMessageDate?: string;
+  unreadCount?: number;
 }
 
-export interface UseMessagesReturn {
-  messages: Message[];
-  loading: boolean;
-  error: Error | null;
-  sendMessage: (content: string) => Promise<any>;
-  fetchMessages: () => Promise<void>;
-  markAsRead: () => Promise<void>;
-}
-
-export interface UseConversationsReturn {
-  conversations: Conversation[];
-  loading: boolean;
-  error: Error | null;
-  fetchConversations: () => Promise<void>;
+export interface Message {
+  id: string;
+  content: string;
+  timestamp: Date;
+  isMine: boolean;
+  sender_id: string;
+  receiver_id: string;
+  created_at: string;
+  read: boolean;
 }
 
 export interface MessagingHook {
-  messages: Message[];
   conversations: Conversation[];
+  messages: Message[];
   loading: boolean;
-  error: Error | null;
-  sendMessage: (recipientId: string, content: string) => Promise<any>;
-  markAsRead: (recipientId: string) => Promise<void>;
-  currentRecipient: string | null;
-  setCurrentRecipient: (id: string | null) => void;
+  sending?: boolean;
+  currentConversation?: string;
+  fetchConversations: () => Promise<void>;
+  fetchMessages: (conversationId: string) => Promise<void>;
+  sendMessage: (receiverId: string, content: string) => Promise<boolean>;
+  setCurrentConversation: (conversationId: string) => void;
 }

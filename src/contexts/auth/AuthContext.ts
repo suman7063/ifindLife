@@ -1,6 +1,8 @@
+
 import { createContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { NewReview, NewReport } from '@/types/supabase/tables';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 
@@ -26,6 +28,18 @@ export interface AuthContextType {
   session: Session | null;
   error: Error | null;
   walletBalance: number;
+  profile: UserProfile | null; // For backward compatibility
+  
+  // Extended methods for user interactions
+  updateProfilePicture?: (file: File) => Promise<string | null>;
+  addToFavorites?: (expertId: number) => Promise<boolean>;
+  removeFromFavorites?: (expertId: number) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  addReview?: (review: NewReview | any) => Promise<boolean>;
+  reportExpert?: (report: NewReport | any) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink?: (expertId: string | number) => string;
+  getReferralLink?: () => string | null;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -43,7 +57,8 @@ export const AuthContext = createContext<AuthContextType>({
   refreshProfile: async () => {},
   session: null,
   error: null,
-  walletBalance: 0
+  walletBalance: 0,
+  profile: null
 });
 
 export const useAuth = () => {

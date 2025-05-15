@@ -1,4 +1,6 @@
 
+import { UserProfile as UserProfileA } from '@/types/supabase/user';
+import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
 import { UserProfile } from '@/types/database/unified';
 
 export const useProfileTypeAdapter = () => {
@@ -40,7 +42,70 @@ export const useProfileTypeAdapter = () => {
     return profile;
   };
   
+  // Type conversion helpers from one schema to another
+  const toTypeA = (profileB: UserProfileB | any): UserProfileA => {
+    if (!profileB) return {} as UserProfileA;
+    
+    return {
+      id: profileB.id || '',
+      name: profileB.name || '',
+      email: profileB.email || '',
+      phone: profileB.phone || '',
+      country: profileB.country || '',
+      city: profileB.city || '',
+      currency: profileB.currency || 'USD',
+      profile_picture: profileB.profilePicture || profileB.profile_picture || '',
+      wallet_balance: profileB.walletBalance || profileB.wallet_balance || 0,
+      created_at: profileB.created_at || profileB.createdAt || new Date().toISOString(),
+      referred_by: profileB.referred_by || profileB.referredBy || null,
+      referral_code: profileB.referralCode || profileB.referral_code || '',
+      referral_link: profileB.referralLink || profileB.referral_link || '',
+      favorite_experts: Array.isArray(profileB.favoriteExperts) 
+        ? profileB.favoriteExperts 
+        : (Array.isArray(profileB.favorite_experts) ? profileB.favorite_experts : []),
+      favorite_programs: Array.isArray(profileB.favoritePrograms) 
+        ? profileB.favoritePrograms.map(String) 
+        : (Array.isArray(profileB.favorite_programs) ? profileB.favorite_programs.map(String) : []),
+      enrolled_courses: profileB.enrolledCourses || profileB.enrolled_courses || [],
+      reviews: profileB.reviews || [],
+      reports: profileB.reports || [],
+      transactions: profileB.transactions || [],
+      referrals: profileB.referrals || []
+    };
+  };
+  
+  const toTypeB = (profileA: UserProfileA | any): UserProfileB => {
+    if (!profileA) return {} as UserProfileB;
+    
+    return {
+      id: profileA.id || '',
+      name: profileA.name || '',
+      email: profileA.email || '',
+      phone: profileA.phone || '',
+      country: profileA.country || '',
+      city: profileA.city || '',
+      currency: profileA.currency || 'USD',
+      profilePicture: profileA.profile_picture || '',
+      walletBalance: profileA.wallet_balance || 0,
+      createdAt: profileA.created_at || new Date().toISOString(),
+      referredBy: profileA.referred_by || null,
+      referralCode: profileA.referral_code || '',
+      referralLink: profileA.referral_link || '',
+      favoriteExperts: Array.isArray(profileA.favorite_experts) ? profileA.favorite_experts : [],
+      favoritePrograms: Array.isArray(profileA.favorite_programs) 
+        ? profileA.favorite_programs.map(Number) 
+        : [],
+      enrolledCourses: profileA.enrolled_courses || [],
+      reviews: profileA.reviews || [],
+      reports: profileA.reports || [],
+      transactions: profileA.transactions || [],
+      referrals: profileA.referrals || []
+    };
+  };
+  
   return {
-    adaptUserProfile
+    adaptUserProfile,
+    toTypeA,
+    toTypeB
   };
 };
