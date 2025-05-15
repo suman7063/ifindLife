@@ -51,22 +51,22 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
       return;
     }
     
-    // Convert expertId to number for the API call
-    const expertIdForApi = typeof expertId === 'string' 
+    // Ensure expertId is a number for the toggle function
+    const numericExpertId = typeof expertId === 'string' 
       ? parseInt(expertId, 10) 
       : expertId;
-    
-    // Ensure expertIdForApi is a number before calling toggleExpertFavorite
-    if (!isNaN(Number(expertIdForApi))) {
-      const success = await toggleExpertFavorite(Number(expertIdForApi));
-      if (success) {
-        setIsFavorite(!isFavorite);
-        toast.success(isFavorite ? 'Expert removed from favorites' : 'Expert added to favorites');
-      } else {
-        toast.error('Failed to update favorites');
-      }
-    } else {
+      
+    if (isNaN(Number(numericExpertId))) {
       toast.error('Invalid expert ID');
+      return;
+    }
+
+    const success = await toggleExpertFavorite(Number(numericExpertId));
+    if (success) {
+      setIsFavorite(!isFavorite);
+      toast.success(isFavorite ? 'Expert removed from favorites' : 'Expert added to favorites');
+    } else {
+      toast.error('Failed to update favorites');
     }
   };
   

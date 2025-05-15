@@ -1,64 +1,52 @@
-
-import { createContext, useContext } from 'react';
-import { User } from '@supabase/supabase-js';
-import { UserProfile } from '@/types/supabase/user';
-import { ExpertProfile } from '@/types/database/unified';
+import { createContext } from 'react';
+import { Session } from '@supabase/supabase-js';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 
-// Define a simpler User type for our context
 export interface AuthUser {
   id: string;
-  email: string | null;
+  email: string;
   role: UserRole;
 }
 
 export interface AuthContextType {
   user: AuthUser | null;
-  session: any | null;
-  profile: UserProfile | null;
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
-  loading: boolean;
-  isLoading: boolean;
-  error: Error | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   role: UserRole;
-  sessionType: 'none' | 'user' | 'expert' | 'dual';
-  walletBalance: number;
-  
-  login: (email: string, password: string, loginAs?: 'user' | 'expert') => Promise<boolean>;
-  signup: (email: string, password: string, userData?: any, referralCode?: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  
-  signIn: (email: string, password: string, loginAs?: 'user' | 'expert') => Promise<boolean>;
-  signUp: (email: string, password: string, userData?: any, referralCode?: string) => Promise<boolean>;
-  signOut: () => Promise<boolean>;
-  
-  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
-  updateProfilePicture?: (file: File) => Promise<string | null>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
-  
-  addToFavorites?: (expertId: number) => Promise<boolean>;
-  removeFromFavorites?: (expertId: number) => Promise<boolean>;
-  rechargeWallet?: (amount: number) => Promise<boolean>;
-  addReview?: (review: any) => Promise<boolean>;
-  reportExpert?: (report: any) => Promise<boolean>;
-  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
-  getExpertShareLink?: (expertId: string | number) => string;
-  getReferralLink?: () => string | null;
-  
-  clearSession: () => void;
+  refreshProfile: () => Promise<void>;
+  session: Session | null;
+  error: Error | null;
+  walletBalance: number;
 }
 
-export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  userProfile: null,
+  expertProfile: null,
+  isAuthenticated: false,
+  isLoading: true,
+  role: null,
+  login: async () => false,
+  signup: async () => false,
+  logout: async () => false,
+  updateProfile: async () => false,
+  updatePassword: async () => false,
+  refreshProfile: async () => {},
+  session: null,
+  error: null,
+  walletBalance: 0
+});
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  return context;
+  // This is just a placeholder. The real hook will be imported separately
+  return {} as AuthContextType;
 };

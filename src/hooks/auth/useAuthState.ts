@@ -1,168 +1,109 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect } from 'react';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { AuthState, initialAuthState, UserRole } from '@/contexts/auth/types';
-import { User } from '@supabase/supabase-js';
-import { getUserDisplayName } from '@/utils/profileConverters';
-import { UserProfile } from '@/types/supabase/user';
+import { UserRole } from '@/contexts/auth/types';
+import { AuthState, initialAuthState } from '@/contexts/auth/types';
+import { userRepository } from '@/repositories';
+import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
 export const useAuthState = () => {
-  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
-  
-  // Fetch user profile data
-  const fetchUserProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
+  const [state, setState] = useState<AuthState>(initialAuthState);
+
+  const getProfileByUserId = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      const userProfile = await userRepository.getUser(userId);
       
-      if (error) {
-        console.error('Error fetching user profile:', error.message);
+      if (!userProfile) {
+        console.error('User profile not found', userId);
         return null;
       }
       
-      // Ensure profile has all required fields
-      const profile = {
-        ...data,
-        favorite_experts: data.favorite_experts || [],
-        favorite_programs: Array.isArray(data.favorite_programs) 
-          ? data.favorite_programs.map(String) 
-          : [],
-        enrolled_courses: data.enrolled_courses || [],
-        reviews: data.reviews || [],
-        reports: data.reports || [],
-        transactions: data.transactions || [],
-        referrals: data.referrals || []
-      };
+      // Use adapter to ensure consistent shape of data
+      const adaptedProfile = adaptUserProfile(userProfile);
       
-      return profile as UserProfile;
+      return adaptedProfile;
     } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
+      console.error('Error fetching user profile:', error);
       return null;
     }
-  }, []);
-  
-  // Fetch expert profile data
-  const fetchExpertProfile = useCallback(async (userId: string): Promise<any | null> => {
-    try {
-      const { data, error } = await supabase
-        .from('experts')
-        .select('*')
-        .eq('auth_id', userId)
-        .single();
-      
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" which is fine
-        console.error('Error fetching expert profile:', error.message);
-      }
-      
-      return data || null;
-    } catch (error) {
-      console.error('Error in fetchExpertProfile:', error);
-      return null;
+  };
+
+  const handleSessionChange = async (session: Session | null) => {
+    if (!session || !session.user) {
+      setState({
+        ...initialAuthState,
+        loading: false,
+        isLoading: false
+      });
+      return;
     }
-  }, []);
 
-  // Determine user role based on profiles
-  const determineRole = useCallback((userProfile: UserProfile | null, expertProfile: any | null): UserRole => {
-    // Check if user is an admin
-    const isAdmin = false; // We would need to check an admin table here
-    
-    if (isAdmin) return 'admin';
-    if (expertProfile) return 'expert';
-    if (userProfile) return 'user';
-    return null;
-  }, []);
-
-  // Function to update auth state with all user data
-  const fetchUserData = useCallback(async (user: User) => {
     try {
-      setAuthState(prev => ({ ...prev, loading: true, isLoading: true }));
+      setState(prev => ({ ...prev, loading: true, isLoading: true }));
       
       // Fetch user profile
-      const userProfile = await fetchUserProfile(user.id);
+      const profile = await getProfileByUserId(session.user.id);
       
-      // Fetch expert profile
-      const expertProfile = await fetchExpertProfile(user.id);
+      // Set role based on session claims or default to 'user'
+      let role = session.user?.app_metadata?.role as UserRole || 'user';
       
-      // Determine role
-      const role = determineRole(userProfile, expertProfile);
-      
-      // Determine session type
-      let sessionType: 'none' | 'user' | 'expert' | 'dual' = 'none';
-      if (userProfile && expertProfile) sessionType = 'dual';
-      else if (userProfile) sessionType = 'user';
-      else if (expertProfile) sessionType = 'expert';
-      
-      // Update auth state
-      setAuthState({
+      // Set authentication state based on fetched data
+      setState({
         user: {
-          id: user.id,
-          email: user.email || '',
+          id: session.user.id,
+          email: session.user.email || '',
           role
         },
-        session: null, // Will be updated by the auth state listener
-        profile: userProfile as UserProfile,
-        userProfile: userProfile as UserProfile,
-        expertProfile,
+        session,
+        profile,
+        userProfile: profile,
+        expertProfile: null, // Will be populated if needed
         loading: false,
         isLoading: false,
         error: null,
-        isAuthenticated: true,
+        isAuthenticated: !!profile,
         role,
-        sessionType,
-        walletBalance: userProfile?.wallet_balance || 0
+        sessionType: 'user',
+        walletBalance: profile?.wallet_balance || 0
       });
     } catch (error) {
-      console.error('Error fetching user data:', error);
-      setAuthState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
+      console.error('Error in session handling:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        isLoading: false,
+        error: error as Error
+      }));
     }
-  }, [fetchUserProfile, fetchExpertProfile, determineRole]);
+  };
 
-  // Initialize auth state on component mount
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event);
+    const initializeAuth = async () => {
+      try {
+        const { data } = await supabase.auth.getSession();
+        await handleSessionChange(data.session);
         
-        if (event === 'SIGNED_IN' && session?.user) {
-          // Update session immediately
-          setAuthState(prev => ({
-            ...prev,
-            session,
-            isAuthenticated: true
-          }));
-          
-          // Fetch user data
-          await fetchUserData(session.user);
-        } else if (event === 'SIGNED_OUT') {
-          // Reset auth state
-          setAuthState(initialAuthState);
-        }
-      }
-    );
-    
-    // Initial session check
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        // Update session immediately
-        setAuthState(prev => ({
+        const { data: authListener } = supabase.auth.onAuthStateChange((_, session) => {
+          handleSessionChange(session);
+        });
+
+        return () => {
+          authListener.subscription.unsubscribe();
+        };
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        setState(prev => ({
           ...prev,
-          session,
-          isAuthenticated: true
+          loading: false,
+          isLoading: false,
+          error: error as Error
         }));
-        
-        // Fetch user data
-        fetchUserData(session.user);
-      } else {
-        setAuthState(prev => ({ ...prev, loading: false, isLoading: false }));
       }
-    });
-    
-    return () => {
-      subscription.unsubscribe();
     };
-  }, [fetchUserData]);
-  
-  return { authState, setAuthState, fetchUserData };
+
+    initializeAuth();
+  }, []);
+
+  return state;
 };

@@ -1,80 +1,47 @@
 
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useContext } from 'react';
+import { AuthContext, AuthContextType } from '@/contexts/auth/AuthContext';
+import { User } from '@supabase/supabase-js';
 import { UserProfile } from '@/types/database/unified';
+import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
-/**
- * Provides backward compatibility for components using
- * the old auth hook interfaces
- */
-export const useAuthBackCompat = () => {
-  const auth = useAuth();
+// This hook provides a backward-compatible interface for components 
+// that expect the old UserAuthContext structure
+export function useAuthBackCompat() {
+  const auth = useContext(AuthContext);
   
-  // Backward compatible user auth
-  const userAuth = {
-    currentUser: auth.userProfile,
+  // Ensure we have a properly formatted profile object
+  const profile = auth.userProfile ? adaptUserProfile(auth.userProfile) : null;
+  
+  // Map current auth context to the old UserAuthContext structure
+  const backCompatContext = {
+    currentUser: profile,
     isAuthenticated: auth.isAuthenticated,
     login: auth.login,
     signup: auth.signup,
     logout: auth.logout,
     authLoading: auth.isLoading,
     loading: auth.isLoading,
-    profileNotFound: !auth.userProfile && !auth.isLoading,
+    profileNotFound: !profile && !auth.isLoading,
     updateProfile: auth.updateProfile,
     updatePassword: auth.updatePassword,
-    user: auth.user,
-    // Add missing methods with warning logs
-    addToFavorites: async (expertId: number) => {
-      console.warn('addToFavorites is not implemented in new auth system');
-      return false;
+    user: auth.session?.user as User | null,
+    refreshProfile: async () => {
+      if (auth.refreshProfile) {
+        await auth.refreshProfile();
+      }
     },
-    removeFromFavorites: async (expertId: number) => {
-      console.warn('removeFromFavorites is not implemented in new auth system');
-      return false;
-    },
-    rechargeWallet: async (amount: number) => {
-      console.warn('rechargeWallet is not implemented in new auth system');
-      return false;
-    },
-    addReview: async (review: any) => {
-      console.warn('addReview is not implemented in new auth system');
-      return false;
-    },
-    reportExpert: async (report: any) => {
-      console.warn('reportExpert is not implemented in new auth system');
-      return false;
-    },
-    hasTakenServiceFrom: (expertId: number) => {
-      console.warn('hasTakenServiceFrom is not implemented in new auth system');
-      return false;
-    },
-    getExpertShareLink: (expertId: number) => {
-      console.warn('getExpertShareLink is not implemented in new auth system');
-      return '';
-    },
-    getReferralLink: () => {
-      console.warn('getReferralLink is not implemented in new auth system');
-      return '';
-    },
-    refreshProfile: auth.refreshProfile,
-    updateProfilePicture: async (file: File) => {
-      console.warn('updateProfilePicture is not implemented in new auth system');
-      return null;
-    }
+    
+    // These methods will be implemented later as needed
+    addToFavorites: async (expertId: number) => false,
+    removeFromFavorites: async (expertId: number) => false,
+    rechargeWallet: async (amount: number) => false,
+    addReview: async (review: any) => false,
+    reportExpert: async (report: any) => false,
+    getExpertShareLink: (expertId: number) => ``,
+    hasTakenServiceFrom: (expertId: number) => false,
+    getReferralLink: () => ``
   };
   
-  // Backward compatible expert auth
-  const expertAuth = {
-    currentExpert: auth.expertProfile,
-    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
-    loading: auth.isLoading,
-    error: auth.error?.message || null,
-    initialized: true,
-    user: auth.user
-  };
-  
-  return {
-    userAuth,
-    expertAuth,
-    unifiedAuth: auth
-  };
-};
+  return backCompatContext;
+}

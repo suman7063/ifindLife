@@ -1,185 +1,213 @@
+
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AuthState } from '../types';
-import { toast } from '@/hooks/use-toast';
-import { UserProfile } from '@/types/supabase/user';
+import { AuthState } from '@/contexts/auth/types';
+import { UserProfile } from '@/types/database/unified';
+import { userRepository } from '@/repositories';
 
-export const useAuthActions = (
-  setAuthState: React.Dispatch<React.SetStateAction<AuthState>>
-) => {
-  // Define login functionality
-  const login = useCallback(async (
-    email: string, 
-    password: string, 
-    loginAs?: 'user' | 'expert'
-  ): Promise<boolean> => {
+export const useAuthActions = (state: AuthState, setState: React.Dispatch<React.SetStateAction<AuthState>>) => {
+  const refreshProfile = useCallback(async () => {
+    if (!state.user?.id) return;
+
     try {
+      const profile = await userRepository.getUser(state.user.id);
+      
+      if (profile) {
+        setState(prev => ({
+          ...prev,
+          profile,
+          userProfile: profile,
+          isAuthenticated: true,
+          walletBalance: profile.wallet_balance || 0
+        }));
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
+  }, [state.user?.id, setState]);
+
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    try {
+      setState(prev => ({ ...prev, loading: true, isLoading: true, error: null }));
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error) {
-        console.error('Login error:', error.message);
-        toast({
-          title: 'Login failed',
-          description: error.message,
-          variant: 'destructive'
-        });
-        return false;
-      }
+      if (error) throw error;
 
-      toast({
-        title: 'Login successful',
-        description: 'Welcome back!'
-      });
-      return true;
+      return !!data.session;
     } catch (error) {
-      console.error('Error during login:', error);
-      toast({
-        title: 'Login failed',
-        description: 'An unexpected error occurred',
-        variant: 'destructive'
-      });
+      console.error('Login error:', error);
+      setState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
       return false;
+    } finally {
+      setState(prev => ({ ...prev, loading: false, isLoading: false }));
     }
-  }, []);
+  }, [setState]);
 
-  // Define signup functionality
-  const signup = useCallback(async (
-    email: string, 
-    password: string, 
-    userData: any = {}, 
-    referralCode?: string
-  ): Promise<boolean> => {
+  const signup = useCallback(async (email: string, password: string, userData: Partial<UserProfile>, referralCode?: string): Promise<boolean> => {
     try {
-      // First, check if the email is already in use
-      const { count, error: countError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true })
-        .eq('email', email);
-        
-      if (countError) {
-        throw new Error(countError.message);
-      }
-      
-      if (count && count > 0) {
-        toast({
-          title: 'Signup failed',
-          description: 'Email is already in use',
-          variant: 'destructive'
-        });
-        return false;
-      }
-      
-      // Create the auth user
-      const { data, error } = await supabase.auth.signUp({
+      setState(prev => ({ ...prev, loading: true, isLoading: true, error: null }));
+
+      // First, create the auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            name: userData.name || '',
-            phone: userData.phone || '',
-            country: userData.country || '',
-            city: userData.city || ''
+            name: userData.name,
+            phone: userData.phone,
+            country: userData.country,
+            city: userData.city,
           }
         }
       });
-      
-      if (error || !data.user) {
-        throw error || new Error('Signup failed');
+
+      if (authError) throw authError;
+
+      if (!authData.user) {
+        throw new Error('Failed to create user');
       }
 
-      // Create user profile with additional fields
-      const newUser: Partial<UserProfile> = {
-        id: data.user.id,
-        name: userData.name || '',
-        email: email,
-        phone: userData.phone || '',
-        country: userData.country || '',
-        city: userData.city || '',
-        profile_picture: userData.profile_picture || '',
-        currency: userData.currency || 'USD',
-        wallet_balance: 0,
-        referral_code: Math.random().toString(36).substring(2, 10).toUpperCase(),
-        referred_by: null,
-        referral_link: `/signup?ref=${Math.random().toString(36).substring(2, 10).toUpperCase()}`
-      };
+      // The user row should be created automatically by our database trigger
+      // Check if the user profile exists
+      const userProfile = await userRepository.getUser(authData.user.id);
       
-      // If referral code was provided, look up the referrer
+      if (!userProfile) {
+        // If for some reason the trigger didn't work, create the profile manually
+        const profileData: Partial<UserProfile> = {
+          id: authData.user.id,
+          name: userData.name,
+          email: userData.email,
+          phone: userData.phone,
+          country: userData.country,
+          city: userData.city,
+          currency: userData.currency || 'USD',
+          wallet_balance: 0
+        };
+
+        // Insert the profile manually
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([profileData]);
+
+        if (profileError) throw profileError;
+      }
+
+      // Handle referral if a code was provided
       if (referralCode) {
-        const { data: referrerData } = await supabase
+        const { data: referrerData, error: referrerError } = await supabase
           .from('users')
           .select('id')
           .eq('referral_code', referralCode)
           .single();
-          
-        if (referrerData) {
-          newUser.referred_by = referrerData.id;
+
+        if (!referrerError && referrerData) {
+          // Create a referral record
+          await supabase.from('referrals').insert([{
+            referrer_id: referrerData.id,
+            referred_id: authData.user.id,
+            referral_code: referralCode,
+            status: 'pending'
+          }]);
+
+          // Update the user's referred_by field
+          await supabase
+            .from('users')
+            .update({ referred_by: referrerData.id })
+            .eq('id', authData.user.id);
         }
       }
-      
-      // Insert the new user profile
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert(newUser);
-        
-      if (insertError) {
-        console.error('Error creating user profile:', insertError);
-        // Continue anyway since the auth account was created
-      }
 
-      toast({
-        title: 'Signup successful',
-        description: 'Your account has been created successfully'
-      });
       return true;
-    } catch (error: any) {
-      console.error('Error during signup:', error);
-      toast({
-        title: 'Signup failed',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive'
-      });
+    } catch (error) {
+      console.error('Signup error:', error);
+      setState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
       return false;
+    } finally {
+      setState(prev => ({ ...prev, loading: false, isLoading: false }));
     }
-  }, []);
+  }, [setState]);
 
-  // Define logout functionality
   const logout = useCallback(async (): Promise<boolean> => {
     try {
+      setState(prev => ({ ...prev, loading: true, isLoading: true }));
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
       
-      // Reset auth state to initial
-      setAuthState(prevState => ({
-        ...prevState,
-        user: null,
-        profile: null,
-        userProfile: null,
-        expertProfile: null,
-        isAuthenticated: false,
-        role: null,
-        sessionType: 'none',
-        walletBalance: 0
-      }));
-      
-      toast({
-        title: 'Logged out',
-        description: 'You have been logged out successfully'
+      setState({
+        ...initialAuthState,
+        loading: false,
+        isLoading: false
       });
+      
       return true;
     } catch (error) {
-      console.error('Error during logout:', error);
-      toast({
-        title: 'Logout failed',
-        description: 'An unexpected error occurred',
-        variant: 'destructive'
-      });
+      console.error('Logout error:', error);
+      setState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
       return false;
     }
-  }, [setAuthState]);
+  }, [setState]);
 
-  return { login, signup, logout };
+  const updateProfile = useCallback(async (updates: Partial<UserProfile>): Promise<boolean> => {
+    if (!state.user?.id) return false;
+    
+    try {
+      setState(prev => ({ ...prev, loading: true, isLoading: true }));
+      
+      // First check if the profile exists
+      const profile = await userRepository.getUser(state.user!.id);
+      
+      if (!profile) {
+        throw new Error('Profile not found');
+      }
+
+      // Use repository to update user profile
+      const success = await userRepository.updateUser(state.user.id, updates);
+      
+      if (!success) {
+        throw new Error('Failed to update profile');
+      }
+
+      // Refresh profile data
+      await refreshProfile();
+      
+      return true;
+    } catch (error) {
+      console.error('Profile update error:', error);
+      setState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
+      return false;
+    } finally {
+      setState(prev => ({ ...prev, loading: false, isLoading: false }));
+    }
+  }, [state.user?.id, setState, refreshProfile]);
+
+  const updatePassword = useCallback(async (password: string): Promise<boolean> => {
+    try {
+      setState(prev => ({ ...prev, loading: true, isLoading: true }));
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error('Password update error:', error);
+      setState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
+      return false;
+    } finally {
+      setState(prev => ({ ...prev, loading: false, isLoading: false }));
+    }
+  }, [setState]);
+
+  return {
+    login,
+    signup,
+    logout,
+    updateProfile,
+    updatePassword,
+    refreshProfile
+  };
 };

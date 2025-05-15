@@ -1,141 +1,158 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { AdminAuthContext } from './AdminAuthContext';
-import { AdminAuthContextType, AdminUser, AdminPermissions } from './types';
+import { AdminAuthContext, AdminRole, AdminUser } from './AdminAuthContext';
+import { toast } from 'sonner';
 
-// Default permissions object
-const defaultPermissions: AdminPermissions = {
-  manageExperts: false,
-  manageUsers: false,
-  manageServices: false,
-  manageContent: false,
-  manageBilling: false,
-  viewReports: false,
-  manageAdmins: false
-};
+interface AdminAuthProviderProps {
+  children: ReactNode;
+}
 
-// Define permission levels for different admin roles
-const rolePermissions: Record<string, AdminPermissions> = {
-  admin: {
-    manageExperts: true,
-    manageUsers: true,
-    manageServices: true,
-    manageContent: true,
-    manageBilling: false,
-    viewReports: true,
-    manageAdmins: false
-  },
-  superadmin: {
-    manageExperts: true,
-    manageUsers: true,
-    manageServices: true,
-    manageContent: true,
-    manageBilling: true,
-    viewReports: true,
-    manageAdmins: true
-  }
-};
-
-export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
-  const [loading, setLoading] = useState(true);
+export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }) => {
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+
+  const fetchAdminUser = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        const adminUser: AdminUser = {
+          id: data.id,
+          email: (await supabase.auth.getUser()).data.user?.email || '',
+          role: data.role as AdminRole,
+          created_at: data.created_at
+        };
+        setCurrentUser(adminUser);
+        setIsAuthenticated(true);
+      } else {
+        // User exists but not in admin_users table
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+      }
+    } catch (error: any) {
+      console.error('Error fetching admin user:', error);
+      setError(error);
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+    }
+  };
 
   useEffect(() => {
-    const checkAdminRole = async () => {
+    const initAuth = async () => {
       try {
-        setLoading(true);
+        setIsLoading(true);
         
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session);
         
-        if (!session) {
-          setAdminUser(null);
-          return;
-        }
-        
-        const { user } = session;
-        
-        // Check if user is an admin
-        const { data: adminData, error: adminError } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-          
-        if (adminError) {
-          if (adminError.code !== 'PGRST116') { // PGRST116 is "No rows returned"
-            console.error('Error checking admin role:', adminError);
-          }
-          setAdminUser(null);
-          return;
-        }
-        
-        if (adminData && adminData.role) {
-          const role = adminData.role;
-          const permissions = rolePermissions[role] || defaultPermissions;
-          
-          setAdminUser({
-            id: user.id,
-            email: user.email || '',
-            username: user.email?.split('@')[0] || 'Admin',
-            role,
-            permissions
-          });
+        if (data.session?.user) {
+          await fetchAdminUser(data.session.user.id);
         } else {
-          setAdminUser(null);
+          setIsAuthenticated(false);
+          setCurrentUser(null);
         }
-      } catch (error) {
-        console.error('Error in admin auth check:', error);
-        setError(error as Error);
-        setAdminUser(null);
+        
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+          setSession(session);
+          
+          if (event === 'SIGNED_IN' && session?.user) {
+            await fetchAdminUser(session.user.id);
+          } else if (event === 'SIGNED_OUT') {
+            setIsAuthenticated(false);
+            setCurrentUser(null);
+          }
+        });
+
+        return () => {
+          authListener.subscription.unsubscribe();
+        };
+      } catch (error: any) {
+        console.error('Error in admin auth:', error);
+        setError(error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
-    // Set up auth listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(() => {
-      checkAdminRole();
-    });
-    
-    // Initial check
-    checkAdminRole();
-    
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
+    initAuth();
   }, []);
-  
-  // Verify if user has specific permission
-  const hasPermission = (permission: keyof AdminPermissions): boolean => {
-    if (!adminUser) return false;
-    return adminUser.permissions[permission] || false;
-  };
-  
-  // Verify if user is superadmin
-  const isSuperAdmin = (): boolean => {
-    return adminUser?.role === 'superadmin';
-  };
-  
-  const adminLogout = async (): Promise<void> => {
-    await supabase.auth.signOut();
-    setAdminUser(null);
+
+  const login = async (email: string, password: string): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      if (data?.user) {
+        await fetchAdminUser(data.user.id);
+        toast.success('Successfully logged in');
+        return true;
+      }
+      
+      return false;
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setError(error);
+      toast.error(error.message || 'Failed to login');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const contextValue: AdminAuthContextType = {
-    currentUser: adminUser,
-    loading,
-    error,
-    isAuthenticated: !!adminUser,
-    hasPermission,
-    isSuperAdmin,
-    logout: adminLogout,
-    isLoading: loading
+  const logout = async (): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
+      setIsAuthenticated(false);
+      setCurrentUser(null);
+      toast.success('Successfully logged out');
+      return true;
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      setError(error);
+      toast.error(error.message || 'Failed to logout');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Compute isSuperAdmin based on user role
+  const isSuperAdmin: boolean = currentUser?.role === 'superadmin';
 
   return (
-    <AdminAuthContext.Provider value={contextValue}>
+    <AdminAuthContext.Provider
+      value={{
+        isAuthenticated,
+        isLoading,
+        currentUser,
+        error,
+        login,
+        logout,
+        isSuperAdmin
+      }}
+    >
       {children}
     </AdminAuthContext.Provider>
   );

@@ -1,26 +1,36 @@
 
-import React, { createContext, useContext } from 'react';
-import { AdminUser, AdminAuthContextType, AdminPermissions } from './types';
+import { createContext } from 'react';
 
-// Create context with default values
-const AdminAuthContext = createContext<AdminAuthContextType>({
-  currentUser: null,
+export type AdminRole = 'admin' | 'superadmin';
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: AdminRole;
+  created_at: string;
+}
+
+export interface AdminAuthContextType {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  currentUser: AdminUser | null;
+  error: Error | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  isSuperAdmin: boolean;
+}
+
+export const AdminAuthContext = createContext<AdminAuthContextType>({
   isAuthenticated: false,
-  loading: true,
-  error: null,
   isLoading: true,
-  hasPermission: () => false,
-  isSuperAdmin: () => false,
-  logout: async () => {}
+  currentUser: null,
+  error: null,
+  login: async () => false,
+  logout: async () => false,
+  isSuperAdmin: false
 });
 
-// Custom hook to use the auth context
-export const useAuth = () => {
-  const context = useContext(AdminAuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AdminAuthProvider');
-  }
-  return context;
+export const useAdminAuth = () => {
+  // This is just a placeholder - the actual hook will be imported from useAdminAuth.ts
+  return {} as AdminAuthContextType;
 };
-
-export { AdminAuthContext };
