@@ -85,7 +85,6 @@ export const useProfileTypeAdapter = () => {
       profile_picture: profile.profile_picture || profile.profilePicture || profile.avatar_url || '',
       wallet_balance: profile.wallet_balance || profile.walletBalance || 0,
       created_at: profile.created_at || '',
-      updated_at: profile.updated_at || '',
       referred_by: profile.referred_by || null,
       referral_code: profile.referral_code || profile.referralCode || '',
       referral_link: profile.referral_link || '',

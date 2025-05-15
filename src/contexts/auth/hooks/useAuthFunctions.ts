@@ -3,7 +3,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState, initialAuthState, UserRole, UpdateProfileParams } from '@/contexts/auth/types';
 import { toast } from '@/hooks/use-toast';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 
 export const useAuthFunctions = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
@@ -91,7 +91,7 @@ export const useAuthFunctions = () => {
         session,
         profile,
         userProfile: profile,
-        expertProfile: expertData,
+        expertProfile: expertData || null,
         loading: false,
         isLoading: false,
         error: null,

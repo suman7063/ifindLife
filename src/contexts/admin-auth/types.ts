@@ -1,63 +1,11 @@
 
-export interface AdminPermissions {
-  [key: string]: boolean;
-}
+// Re-export types from AdminAuthContext to avoid circular dependencies
+import { AdminPermissions, AdminUser } from './AdminAuthContext';
 
-export const defaultPermissions: AdminPermissions = {
-  experts: true,
-  expertApprovals: false,
-  services: true,
-  testimonials: true,
-  blog: true,
-  programs: true,
-  sessions: true,
-  referrals: false,
-  contact: true,
-  settings: false,
-  analytics: true,
-  reports: false,
-  users: false,
-  content: true
-};
+export type { AdminPermissions, AdminUser };
 
-export const superAdminPermissions: AdminPermissions = {
-  experts: true,
-  expertApprovals: true,
-  services: true,
-  testimonials: true,
-  blog: true,
-  programs: true,
-  sessions: true,
-  referrals: true,
-  contact: true,
-  settings: true,
-  analytics: true,
-  reports: true,
-  users: true,
-  content: true
-};
-
-export type AdminRole = 'superadmin' | 'admin';
-
-export interface AdminUser {
-  username: string;
-  password: string;
-  role: AdminRole;
-  permissions: AdminPermissions;
-  lastLogin?: string;
-  createdAt?: string;
-}
-
-export interface AuthContextType {
-  isAuthenticated: boolean;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
-  adminUsers: AdminUser[];
-  addAdmin: (username: string, password: string, permissions?: AdminPermissions) => void;
-  removeAdmin: (username: string) => void;
-  isSuperAdmin: boolean;
-  currentUser: AdminUser | null;
-  updateAdminPermissions: (username: string, permissions: AdminPermissions) => void;
-  isLoading: boolean;
-  updateAdminUser: (username: string, userData: Partial<AdminUser>) => void;
+export interface AdminSession {
+  id: string;
+  created_at: string;
+  expires_at: string;
 }

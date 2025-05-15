@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { Program } from '@/types/programs';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/database/unified';
 import ProgramsPagination from './ProgramsPagination';
 import EmptyState from './EmptyState';
 import ProgramGrid from './ProgramGrid';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
 interface FilteredProgramsGridProps {
   filteredPrograms: Program[];
@@ -21,6 +22,7 @@ const FilteredProgramsGrid: React.FC<FilteredProgramsGridProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [paginatedPrograms, setPaginatedPrograms] = useState<Program[]>([]);
+  const { toTypeA } = useProfileTypeAdapter();
   const programsPerPage = 6; // Show 6 programs per page (2 rows of 3)
   
   const totalPages = Math.ceil(filteredPrograms.length / programsPerPage);
@@ -44,6 +46,9 @@ const FilteredProgramsGrid: React.FC<FilteredProgramsGridProps> = ({
     setCurrentPage(page);
   };
 
+  // Adapt the user profile to type A as required by ProgramGrid
+  const adaptedUser = currentUser ? toTypeA(currentUser as any) : null;
+
   if (filteredPrograms.length === 0) {
     return <EmptyState selectedCategory={selectedCategory} />;
   }
@@ -52,7 +57,7 @@ const FilteredProgramsGrid: React.FC<FilteredProgramsGridProps> = ({
     <div>
       <ProgramGrid 
         programs={paginatedPrograms}
-        currentUser={currentUser}
+        currentUser={adaptedUser}
         isAuthenticated={isAuthenticated}
       />
       

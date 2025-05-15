@@ -1,9 +1,10 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { User } from '@supabase/supabase-js';
 import { AuthState, initialAuthState, UserRole } from '../types';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
+import { UserProfile } from '@/types/database/unified';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
@@ -55,23 +56,26 @@ export const useAuthState = () => {
       const convertedProfile = convertUserToUserProfile(userProfile);
       
       // Update auth state with all the data
-      setAuthState(prev => ({
-        ...prev,
+      const newState: AuthState = {
         user: {
           id: user.id, 
           email: user.email,
           role
         },
-        profile: convertedProfile,
-        userProfile: convertedProfile,
+        session: null, // Will be updated by the auth state listener
+        profile: convertedProfile as UserProfile,
+        userProfile: convertedProfile as UserProfile,
         expertProfile,
         role,
         loading: false,
         isLoading: false,
+        error: null,
         isAuthenticated: true,
         sessionType: expertProfile ? (userProfile ? 'dual' : 'expert') : 'user',
         walletBalance: userProfile?.wallet_balance || 0
-      }));
+      };
+      
+      setAuthState(newState);
     } catch (error) {
       console.error('Error fetching user data:', error);
       setAuthState(prev => ({ 
@@ -87,7 +91,7 @@ export const useAuthState = () => {
   useEffect(() => {
     // First, set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         // Update session state immediately
         setAuthState(prev => ({
           ...prev,

@@ -1,33 +1,20 @@
 
-import React from 'react';
+import { createContext, useContext } from 'react';
+
+export interface AdminPermissions {
+  canManageUsers: boolean;
+  canManageExperts: boolean;
+  canManagePrograms: boolean;
+  canManageContent: boolean;
+  canViewReports: boolean;
+  canModerate: boolean;
+}
 
 export interface AdminUser {
   id: string;
-  username?: string;
+  username: string;
   role: 'admin' | 'superadmin';
   permissions: AdminPermissions;
-  lastLogin?: string;
-  createdAt?: string;
-}
-
-export interface AdminPermissions {
-  [key: string]: boolean;
-  experts?: boolean;
-  expertApprovals?: boolean;
-  services?: boolean;
-  herosection?: boolean;
-  testimonials?: boolean;
-  blog?: boolean;
-  programs?: boolean;
-  sessions?: boolean;
-  referrals?: boolean;
-  contact?: boolean;
-  adminUsers?: boolean;
-  settings?: boolean;
-  analytics?: boolean;
-  reports?: boolean;
-  users?: boolean;
-  content?: boolean;
 }
 
 export interface AdminAuthContextType {
@@ -38,15 +25,15 @@ export interface AdminAuthContextType {
   adminUsers: AdminUser[];
   permissions: AdminPermissions | null;
   hasPermission: (permission: keyof AdminPermissions) => boolean;
-  isSuperAdmin: boolean;
-  addAdmin: (username: string, password: string, permissions?: AdminPermissions) => void;
-  removeAdmin: (username: string) => void;
-  updateAdminPermissions: (username: string, permissions: AdminPermissions) => void;
-  isLoading: boolean;
-  updateAdminUser: (username: string, userData: Partial<AdminUser>) => void;
+  isSuperAdmin: () => boolean;
+  addAdmin: (username: string, role: 'admin' | 'superadmin') => boolean;
+  removeAdmin: (id: string) => boolean;
+  updateAdminPermissions: (userId: string, permissions: Partial<AdminPermissions>) => boolean;
+  getAdminById: (id: string) => AdminUser | null;
+  updateAdminRole: (id: string, role: 'admin' | 'superadmin') => boolean;
 }
 
-export const AdminAuthContext = React.createContext<AdminAuthContextType>({
+export const AdminAuthContext = createContext<AdminAuthContextType>({
   currentUser: null,
   isAuthenticated: false,
   login: () => false,
@@ -54,10 +41,12 @@ export const AdminAuthContext = React.createContext<AdminAuthContextType>({
   adminUsers: [],
   permissions: null,
   hasPermission: () => false,
-  isSuperAdmin: false,
-  addAdmin: () => {},
-  removeAdmin: () => {},
-  updateAdminPermissions: () => {},
-  isLoading: true,
-  updateAdminUser: () => {}
+  isSuperAdmin: () => false,
+  addAdmin: () => false,
+  removeAdmin: () => false,
+  updateAdminPermissions: () => false,
+  getAdminById: () => null,
+  updateAdminRole: () => false
 });
+
+export const useAdminAuth = () => useContext(AdminAuthContext);

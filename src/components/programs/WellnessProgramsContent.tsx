@@ -1,10 +1,11 @@
 
 import React from 'react';
 import { Program } from '@/types/programs';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/database/unified';
 import { Loader2 } from 'lucide-react';
 import ProgramCategories from '@/components/programs/ProgramCategories';
 import FilteredProgramsGrid from '@/components/programs/FilteredProgramsGrid';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
 interface WellnessProgramsContentProps {
   isLoading: boolean;
@@ -23,6 +24,11 @@ const WellnessProgramsContent: React.FC<WellnessProgramsContentProps> = ({
   currentUser,
   isAuthenticated
 }) => {
+  const { toTypeA } = useProfileTypeAdapter();
+  
+  // Adapt the user profile to type A as required by other components
+  const adaptedUser = currentUser ? toTypeA(currentUser as any) : null;
+  
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -46,7 +52,7 @@ const WellnessProgramsContent: React.FC<WellnessProgramsContentProps> = ({
         <div className="space-y-10">
           <ProgramCategories 
             programsByCategory={programsByCategory()}
-            currentUser={currentUser}
+            currentUser={adaptedUser}
             isAuthenticated={isAuthenticated}
           />
         </div>

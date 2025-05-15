@@ -1,85 +1,80 @@
 
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2 } from 'lucide-react';
-import WalletSection from './WalletSection';
-import UserStatsSummary from './UserStatsSummary';
-import FavoritesList from './FavoritesList';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/database/unified';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
+
+// Import sub-components
+import WalletSummary from './WalletSummary';
+import RecentActivities from './RecentActivities';
+import EnrolledPrograms from './EnrolledPrograms';
+import FavoriteExperts from './FavoriteExperts';
 
 interface DashboardContentProps {
-  user: UserProfile | null;
-  isLoading: boolean;
-  onRecharge: () => void;
+  currentUser: UserProfile | null;
+  loading?: boolean;
+  children?: React.ReactNode;
 }
 
-const DashboardContent: React.FC<DashboardContentProps> = ({
-  user,
-  isLoading,
-  onRecharge
+const DashboardContent: React.FC<DashboardContentProps> = ({ 
+  currentUser, 
+  loading = false,
+  children 
 }) => {
-  console.log('Rendering DashboardContent with user:', user?.id, 'isLoading:', isLoading);
+  const { toTypeA } = useProfileTypeAdapter();
+  
+  // Convert user profile to type A to ensure compatibility
+  const adaptedUser = currentUser ? toTypeA(currentUser as any) : null;
+  
+  if (loading) {
+    return (
+      <div className="p-8 flex justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="p-8 text-center">
+        <h3 className="text-xl font-medium text-gray-700">User profile not found</h3>
+        <p className="text-gray-500 mt-2">Please login to view your dashboard.</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="mt-6">
-      <UserStatsSummary user={user} />
-      
-      <Tabs defaultValue="wallet" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="wallet">Wallet</TabsTrigger>
-          <TabsTrigger value="purchases">Your Purchases</TabsTrigger>
-          <TabsTrigger value="favorites">Favorites</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="wallet" className="mt-6">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <WalletSection user={user} onRecharge={onRecharge} />
-          )}
-        </TabsContent>
-        
-        <TabsContent value="purchases" className="mt-6">
-          <EmptyStateSection 
-            title="Your Purchases"
-            message="You haven't made any purchases yet."
-            description="Explore our services and programs to get started."
-          />
-        </TabsContent>
-        
-        <TabsContent value="favorites" className="mt-6">
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold">Your Favorite Experts</h2>
-            <FavoritesList type="experts" />
-            
-            <h2 className="text-xl font-bold mt-8">Your Favorite Programs</h2>
-            <FavoritesList type="programs" />
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-interface EmptyStateSectionProps {
-  title: string;
-  message: string;
-  description: string;
-}
-
-const EmptyStateSection: React.FC<EmptyStateSectionProps> = ({ title, message, description }) => {
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">{title}</h2>
-      
-      <div className="bg-muted p-8 rounded-md text-center">
-        <p>{message}</p>
-        <p className="text-muted-foreground mt-2">
-          {description}
+    <div className="p-4 md:p-6 space-y-6">
+      {/* Welcome message */}
+      <div className="bg-gradient-to-r from-ifind-purple to-ifind-teal p-6 rounded-lg text-white">
+        <h2 className="text-2xl font-semibold">
+          Welcome back, {adaptedUser?.name || 'User'}!
+        </h2>
+        <p className="mt-2">
+          Here's an overview of your activities and favorites.
         </p>
       </div>
+      
+      {/* Main dashboard content */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Left column - Wallet summary */}
+        <div className="md:col-span-1">
+          <WalletSummary user={adaptedUser} />
+        </div>
+        
+        {/* Right column - Recent activities */}
+        <div className="md:col-span-2">
+          <RecentActivities user={adaptedUser} />
+        </div>
+      </div>
+      
+      {/* Programs and experts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <EnrolledPrograms user={adaptedUser} />
+        <FavoriteExperts user={adaptedUser} />
+      </div>
+      
+      {/* Additional content */}
+      {children}
     </div>
   );
 };

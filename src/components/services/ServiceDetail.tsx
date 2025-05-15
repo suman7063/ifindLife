@@ -1,216 +1,90 @@
 
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Service, Expert } from '@/types/service';
-import BookingDialog from '@/components/booking/BookingDialog';
-import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 
-const ServiceDetail = () => {
-  const { id } = useParams();
+interface ServiceDetailProps {
+  serviceId: number;
+  image: string;
+  title: string;
+  description: string;
+  price: number;
+  expertId: string | number;
+  expertName: string;
+}
+
+const ServiceDetail: React.FC<ServiceDetailProps> = ({
+  serviceId,
+  image,
+  title,
+  description,
+  price,
+  expertId,
+  expertName
+}) => {
   const navigate = useNavigate();
-  const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [service, setService] = useState<Service | null>(null);
-  const [relatedExperts, setRelatedExperts] = useState<Expert[]>([]);
-  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
-
-  // Fetch service data
-  const { data: serviceData, isLoading, error } = useQuery({
-    queryKey: ['service', id],
-    queryFn: async () => {
-      if (!id) throw new Error('Service ID is required');
-      
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
-      if (error) throw error;
-      return data as Service;
-    },
-    enabled: !!id
-  });
-
-  // Fetch experts for this service
-  useEffect(() => {
-    if (service?.id) {
-      const fetchExperts = async () => {
-        try {
-          const { data, error } = await supabase
-            .from('experts')
-            .select('*')
-            .contains('selected_services', [service.id]);
-            
-          if (error) {
-            console.error('Error fetching experts:', error);
-            return;
-          }
-          
-          if (data && Array.isArray(data)) {
-            setRelatedExperts(data as Expert[]);
-          }
-        } catch (err) {
-          console.error('Error fetching experts:', err);
-        }
-      };
-      
-      fetchExperts();
+  const { isAuthenticated } = useAuth();
+  const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
+  const [isFavorite, setIsFavorite] = useState(isExpertFavorite(String(expertId)));
+  
+  const handleBookService = () => {
+    if (!isAuthenticated) {
+      toast.info('Please login to book services');
+      navigate('/user-login');
+      return;
     }
-  }, [service?.id]);
-
-  // Update service state when data changes
-  useEffect(() => {
-    if (serviceData) {
-      setService(serviceData);
+    
+    navigate(`/book-service/${serviceId}`);
+  };
+  
+  const handleToggleFavorite = async () => {
+    if (!isAuthenticated) {
+      toast.info('Please login to add experts to favorites');
+      navigate('/user-login');
+      return;
     }
-  }, [serviceData]);
-
-  if (isLoading) {
-    return (
-      <div className="container max-w-4xl mx-auto p-6">
-        <div className="animate-pulse">
-          <div className="h-8 w-3/4 bg-gray-200 rounded mb-4"></div>
-          <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
-          <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
-          <div className="h-4 w-2/3 bg-gray-200 rounded mb-4"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !service) {
-    return (
-      <div className="container max-w-4xl mx-auto p-6">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-semibold mb-2">Service Not Found</h2>
-          <p className="text-gray-500 mb-4">The service you're looking for doesn't exist or has been removed.</p>
-          <Button variant="outline" onClick={() => navigate('/services')}>
-            Back to Services
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
+    
+    // Convert expertId to string to ensure compatibility
+    const success = await toggleExpertFavorite(String(expertId));
+    if (success) {
+      setIsFavorite(!isFavorite);
+      toast.success(isFavorite ? 'Expert removed from favorites' : 'Expert added to favorites');
+    } else {
+      toast.error('Failed to update favorites');
+    }
+  };
+  
   return (
-    <div className="container max-w-4xl mx-auto p-6">
-      <Button variant="outline" className="mb-6" onClick={() => navigate('/services')}>
-        ← Back to Services
-      </Button>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
-          <h1 className="text-3xl font-bold mb-4">{service.name}</h1>
-          <p className="text-gray-600 mb-6">{service.description}</p>
-          
-          <h2 className="text-xl font-semibold mb-2">Service Details</h2>
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <div>
-              <p className="text-sm text-gray-500">Price (USD)</p>
-              <p className="font-medium">${service.rate_usd}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Price (INR)</p>
-              <p className="font-medium">₹{service.rate_inr}</p>
-            </div>
-            {service.duration && (
-              <div>
-                <p className="text-sm text-gray-500">Duration</p>
-                <p className="font-medium">{service.duration} minutes</p>
-              </div>
-            )}
-            {service.category && (
-              <div>
-                <p className="text-sm text-gray-500">Category</p>
-                <p className="font-medium">{service.category}</p>
-              </div>
-            )}
-          </div>
-          
-          <Button 
-            className="w-full mb-8" 
-            onClick={() => setIsBookingOpen(true)}
-          >
-            Book this Service
-          </Button>
-          
-          <Separator className="my-8" />
-          
-          {relatedExperts.length > 0 && (
-            <>
-              <h2 className="text-xl font-semibold mb-4">Available Experts</h2>
-              <div className="grid grid-cols-1 gap-4">
-                {relatedExperts.map((expert) => (
-                  <Card key={expert.id} className="overflow-hidden">
-                    <CardContent className="p-4">
-                      <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden mr-4">
-                          {expert.profile_picture ? (
-                            <img 
-                              src={expert.profile_picture} 
-                              alt={expert.name} 
-                              className="w-full h-full object-cover" 
-                            />
-                          ) : (
-                            <span className="text-gray-500">{expert.name.substring(0, 2).toUpperCase()}</span>
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-medium">{expert.name}</h3>
-                          <p className="text-sm text-gray-500">{expert.specialization || "Expert"}</p>
-                        </div>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedExpert(expert);
-                            setIsBookingOpen(true);
-                          }}
-                        >
-                          Select
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-        
-        <div className="md:col-span-1">
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Book this Service</h3>
-              <p className="text-sm text-gray-500 mb-4">
-                Connect with our qualified experts and get the help you need.
-              </p>
-              <Button 
-                className="w-full" 
-                onClick={() => setIsBookingOpen(true)}
-              >
-                Book Now
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+    <div className="border rounded-lg shadow-sm overflow-hidden">
+      <div className="aspect-video w-full">
+        <img src={image} alt={title} className="w-full h-full object-cover" />
       </div>
       
-      {isBookingOpen && service && (
-        <BookingDialog
-          isOpen={isBookingOpen}
-          onClose={() => {
-            setIsBookingOpen(false);
-            setSelectedExpert(null);
-          }}
-          service={service}
-          expert={selectedExpert || undefined}
-        />
-      )}
+      <div className="p-6">
+        <h3 className="text-2xl font-semibold">{title}</h3>
+        <p className="text-lg text-muted-foreground mb-2">By {expertName}</p>
+        <p className="mb-6">{description}</p>
+        
+        <div className="flex justify-between items-center">
+          <div className="text-xl font-semibold">${price}</div>
+          
+          <div className="space-x-2">
+            <Button
+              variant="outline"
+              onClick={handleToggleFavorite}
+            >
+              {isFavorite ? 'Remove From Favorites' : 'Add To Favorites'}
+            </Button>
+            
+            <Button onClick={handleBookService}>
+              Book Service
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
