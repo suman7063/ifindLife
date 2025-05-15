@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { fetchUserProfile } from '@/utils/profileFetcher';
@@ -7,7 +8,7 @@ import { toast } from '@/hooks/use-toast';
 // Define proper type for auth functions without excessive nesting
 export interface AuthFunctions {
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: Record<string, string>) => Promise<boolean>;
+  signup: (email: string, password: string, userData: Record<string, any>) => Promise<boolean>;
   logout: () => Promise<void>;
   checkSession: () => Promise<{
     isAuthenticated: boolean;
@@ -15,6 +16,7 @@ export interface AuthFunctions {
     profile: UserProfile | null;
   }>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
   verifyEmail: (token: string) => Promise<boolean>;
 }
 
@@ -68,7 +70,7 @@ export const useAuthFunctions = (): AuthFunctions => {
   const signup = useCallback(async (
     email: string, 
     password: string,
-    userData: Record<string, string>
+    userData: Record<string, any>
   ): Promise<boolean> => {
     try {
       // Check if email already exists
@@ -155,6 +157,30 @@ export const useAuthFunctions = (): AuthFunctions => {
     const user = data.session.user;
     const profile = await fetchUserProfile(user);
 
+    // Create a normalized profile object with required properties
+    const normalizedProfile: UserProfile = {
+      id: profile?.id || user.id,
+      name: profile?.name || '',
+      email: profile?.email || user.email || '',
+      phone: profile?.phone || '',
+      city: profile?.city || '',
+      country: profile?.country || '',
+      profile_picture: profile?.profile_picture || '',
+      wallet_balance: profile?.wallet_balance || 0,
+      currency: profile?.currency || 'USD',
+      created_at: profile?.created_at || new Date().toISOString(),
+      referral_code: profile?.referral_code || '',
+      referral_link: profile?.referral_link || '',
+      referred_by: profile?.referred_by || null,
+      favorite_experts: profile?.favorite_experts || [],
+      favorite_programs: profile?.favorite_programs?.map(String) || [],
+      enrolled_courses: profile?.enrolled_courses || [],
+      reviews: [],
+      reports: [],
+      transactions: [],
+      referrals: []
+    };
+      
     // Determine user role based on profile data
     let role: UserRole = 'user';
     
@@ -172,7 +198,7 @@ export const useAuthFunctions = (): AuthFunctions => {
     return {
       isAuthenticated: true,
       role,
-      profile
+      profile: normalizedProfile
     };
   }, []);
 
@@ -219,6 +245,37 @@ export const useAuthFunctions = (): AuthFunctions => {
     }
   }, []);
 
+  // Define password update functionality
+  const updatePassword = useCallback(async (password: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      
+      if (error) {
+        console.error('Error updating password:', error);
+        toast({
+          title: 'Password update failed',
+          description: error.message,
+          variant: 'destructive'
+        });
+        return false;
+      }
+
+      toast({
+        title: 'Password updated',
+        description: 'Your password has been updated successfully'
+      });
+      return true;
+    } catch (error: any) {
+      console.error('Error in updatePassword:', error);
+      toast({
+        title: 'Password update failed',
+        description: error.message || 'An unexpected error occurred',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  }, []);
+
   // Define email verification functionality
   const verifyEmail = useCallback(async (token: string): Promise<boolean> => {
     try {
@@ -237,6 +294,7 @@ export const useAuthFunctions = (): AuthFunctions => {
     logout,
     checkSession,
     updateProfile,
+    updatePassword,
     verifyEmail
   };
 };

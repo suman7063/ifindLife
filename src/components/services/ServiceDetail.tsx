@@ -28,7 +28,11 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
-  const [isFavorite, setIsFavorite] = useState(isExpertFavorite(String(expertId)));
+  
+  // Convert expertId to string for consistent handling
+  const expertIdString = String(expertId);
+  
+  const [isFavorite, setIsFavorite] = useState(isExpertFavorite(expertIdString));
   
   const handleBookService = () => {
     if (!isAuthenticated) {
@@ -47,8 +51,8 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
       return;
     }
     
-    // Convert expertId to string to ensure compatibility
-    const success = await toggleExpertFavorite(String(expertId));
+    // Use the string version of expertId
+    const success = await toggleExpertFavorite(expertIdString);
     if (success) {
       setIsFavorite(!isFavorite);
       toast.success(isFavorite ? 'Expert removed from favorites' : 'Expert added to favorites');

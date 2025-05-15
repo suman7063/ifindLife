@@ -10,8 +10,9 @@ import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { authState, setAuthState } = useAuthState();
-  const { login, signup, logout, updatePassword } = useAuthActions(setAuthState);
+  const { login, signup, logout } = useAuthActions(setAuthState);
   const { toTypeB } = useProfileTypeAdapter();
+  const { updatePassword } = useAuthFunctions();
 
   // Function to update user profile
   const updateProfile = async (updates: any) => {

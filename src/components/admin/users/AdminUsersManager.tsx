@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AdminUser, useAuth } from '@/contexts/admin-auth';
+import { useAuth } from '@/contexts/admin-auth';
 import { Plus, Trash2, Edit, Shield } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
@@ -35,6 +35,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import PermissionManager from './PermissionManager';
+import { AdminUser, AdminPermissions } from '@/contexts/admin-auth';
 
 const AdminUsersManager: React.FC = () => {
   const { 
@@ -96,13 +97,13 @@ const AdminUsersManager: React.FC = () => {
     setViewingPermissions(true);
   };
 
-  const handleUpdatePermissions = (username: string, permissions: Record<string, boolean>) => {
+  const handleUpdatePermissions = (username: string, permissions: AdminPermissions) => {
     updateAdminPermissions(username, permissions);
   };
 
   // Cannot delete self or superadmin accounts
   const canDeleteUser = (user: AdminUser): boolean => {
-    return isSuperAdmin && user.username !== 'IFLsuperadmin' && 
+    return !!isSuperAdmin && user.username !== 'IFLsuperadmin' && 
            user.username !== 'admin' && currentUser?.username !== user.username;
   };
 

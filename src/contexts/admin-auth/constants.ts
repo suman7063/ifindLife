@@ -1,17 +1,17 @@
 
-import { AdminUser, defaultPermissions, superAdminPermissions } from './types';
+import { AdminUser } from './AdminAuthContext';
+import { defaultPermissions, superAdminPermissions } from './types';
 
-export const defaultAdminUsers: AdminUser[] = [
+// Define default admin users for development
+export const defaultAdminUsers: Omit<AdminUser, 'id'>[] = [
   {
     username: 'admin',
-    password: 'admin123',
     role: 'admin',
     permissions: defaultPermissions,
     createdAt: new Date().toISOString(),
   },
   {
     username: 'IFLsuperadmin',
-    password: 'Freesoul@99IFL',
     role: 'superadmin',
     permissions: superAdminPermissions,
     createdAt: new Date().toISOString(),
