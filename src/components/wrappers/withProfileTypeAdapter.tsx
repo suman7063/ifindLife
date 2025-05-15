@@ -1,119 +1,68 @@
 
-import React from 'react';
-import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
-import { UserProfile as UserProfileA } from '@/types/supabase/user';
-import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
-import { UserProfile } from '@/types/database/unified';
+import React, { ComponentType } from 'react';
+import { UserProfile as UnifiedUserProfile } from '@/types/database/unified';
+import { UserProfile as SupabaseUserProfile } from '@/types/supabase/userProfile';
 
-// Type for components that accept any kind of user profile
-type ComponentWithProfile<P = {}> = React.ComponentType<P & { 
-  user?: UserProfileA | UserProfileB | UserProfile | null;
-  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
-  profile?: UserProfileA | UserProfileB | UserProfile | null;
-}>;
-
-/**
- * Higher Order Component to adapt profile types for components expecting specific types
- */
-export const withProfileTypeAdapter = <P extends { 
-  user?: UserProfileA | UserProfileB | UserProfile | null;
-  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
-  profile?: UserProfileA | UserProfileB | UserProfile | null;
-}>(
-  Component: ComponentWithProfile<P>,
-  targetType: 'A' | 'B' = 'A'
-) => {
-  const displayName = Component.displayName || Component.name || 'Component';
+// This is an adapter function that makes sure all required fields are present
+// when adapting from a Supabase API profile to our unified schema
+const adaptUserProfile = (profile: SupabaseUserProfile | null): UnifiedUserProfile | null => {
+  if (!profile) return null;
   
-  const WithProfileTypeAdapter: React.FC<P> = (props) => {
-    const { toTypeA, toTypeB } = useProfileTypeAdapter();
+  // Create a default transactions array if it's missing
+  const transactions = profile.transactions || [];
+  
+  return {
+    ...profile,
+    transactions, // Ensure transactions is always defined
+    // Add any other required fields with default values if they're missing
+    reviews: profile.reviews || [],
+    reports: profile.reports || [],
+    enrollments: profile.enrollments || [],
+    favorite_experts: profile.favorite_experts || [],
+    favorite_programs: profile.favorite_programs || [],
+    enrolled_courses: profile.enrolled_courses || [],
+    referrals: profile.referrals || [],
+  } as UnifiedUserProfile;
+};
+
+// HOC to adapt profiles from one format to another
+export function withProfileTypeAdapter<P extends object>(
+  WrappedComponent: ComponentType<P>,
+  profileKey: keyof P = 'profile' as keyof P,
+  profilesKey: keyof P = 'profiles' as keyof P,
+  userProfileKey: keyof P = 'userProfile' as keyof P,
+  currentUserKey: keyof P = 'currentUser' as keyof P,
+  expertProfileKey: keyof P = 'expertProfile' as keyof P,
+  currentExpertKey: keyof P = 'currentExpert' as keyof P
+) {
+  return (props: P) => {
+    // Create adaptedProps as a copy of props
+    const adaptedProps = { ...props } as any;
     
-    // Create new props with adapted user profile
-    const newProps = { ...props };
-    
-    // Adapt user property if it exists
-    if (props.user) {
-      // Determine if the profile has favorite_programs or profilePicture properties
-      const hasFavoritePrograms = 'favorite_programs' in props.user;
-      const hasProfilePicture = 'profilePicture' in props.user;
-      const isFavoriteProgramsNumber = hasFavoritePrograms && 
-        Array.isArray(props.user.favorite_programs) && 
-        props.user.favorite_programs.length > 0 && 
-        typeof props.user.favorite_programs[0] === 'number';
-      
-      if (targetType === 'A' && (hasProfilePicture || isFavoriteProgramsNumber)) {
-        // Convert from B to A
-        newProps.user = toTypeA(props.user as UserProfileB) as any;
-      } else if (targetType === 'B' && hasFavoritePrograms && !isFavoriteProgramsNumber) {
-        // Convert from A to B
-        newProps.user = toTypeB(props.user as UserProfileA) as any;
-      }
+    // Adapt single profile if it exists under profileKey
+    if (props[profileKey] && typeof props[profileKey] === 'object') {
+      adaptedProps[profileKey] = adaptUserProfile(props[profileKey] as unknown as SupabaseUserProfile);
     }
     
-    // Adapt currentUser property if it exists
-    if (props.currentUser) {
-      const hasFavoritePrograms = 'favorite_programs' in props.currentUser;
-      const hasProfilePicture = 'profilePicture' in props.currentUser;
-      const isFavoriteProgramsNumber = hasFavoritePrograms && 
-        Array.isArray(props.currentUser.favorite_programs) && 
-        props.currentUser.favorite_programs.length > 0 && 
-        typeof props.currentUser.favorite_programs[0] === 'number';
-      
-      if (targetType === 'A' && (hasProfilePicture || isFavoriteProgramsNumber)) {
-        // Convert from B to A
-        newProps.currentUser = toTypeA(props.currentUser as UserProfileB) as any;
-      } else if (targetType === 'B' && hasFavoritePrograms && !isFavoriteProgramsNumber) {
-        // Convert from A to B
-        newProps.currentUser = toTypeB(props.currentUser as UserProfileA) as any;
-      }
+    // Adapt user profile if it exists
+    if (props[userProfileKey] && typeof props[userProfileKey] === 'object') {
+      adaptedProps[userProfileKey] = adaptUserProfile(props[userProfileKey] as unknown as SupabaseUserProfile);
     }
     
-    // Adapt profile property if it exists
-    if (props.profile) {
-      const hasFavoritePrograms = 'favorite_programs' in props.profile;
-      const hasProfilePicture = 'profilePicture' in props.profile;
-      const isFavoriteProgramsNumber = hasFavoritePrograms && 
-        Array.isArray(props.profile.favorite_programs) && 
-        props.profile.favorite_programs.length > 0 && 
-        typeof props.profile.favorite_programs[0] === 'number';
-      
-      if (targetType === 'A' && (hasProfilePicture || isFavoriteProgramsNumber)) {
-        // Convert from B to A
-        newProps.profile = toTypeA(props.profile as UserProfileB) as any;
-      } else if (targetType === 'B' && hasFavoritePrograms && !isFavoriteProgramsNumber) {
-        // Convert from A to B
-        newProps.profile = toTypeB(props.profile as UserProfileA) as any;
-      }
+    // Adapt current user if it exists
+    if (props[currentUserKey] && typeof props[currentUserKey] === 'object') {
+      adaptedProps[currentUserKey] = adaptUserProfile(props[currentUserKey] as unknown as SupabaseUserProfile);
     }
     
-    return <Component {...newProps as P} />;
+    // Adapt array of profiles if it exists
+    if (Array.isArray(props[profilesKey])) {
+      adaptedProps[profilesKey] = (props[profilesKey] as unknown as SupabaseUserProfile[]).map(
+        profile => adaptUserProfile(profile)
+      ).filter(Boolean);
+    }
+    
+    return <WrappedComponent {...adaptedProps} />;
   };
-
-  WithProfileTypeAdapter.displayName = `withProfileTypeAdapter(${displayName})`;
-  
-  return WithProfileTypeAdapter;
-};
-
-/**
- * Helper function for creating components that need type B UserProfile
- */
-export const withTypeB = <P extends { 
-  user?: UserProfileA | UserProfileB | UserProfile | null;
-  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
-  profile?: UserProfileA | UserProfileB | UserProfile | null;
-}>(Component: ComponentWithProfile<P>) => {
-  return withProfileTypeAdapter(Component, 'B');
-};
-
-/**
- * Helper function for creating components that need type A UserProfile
- */
-export const withTypeA = <P extends { 
-  user?: UserProfileA | UserProfileB | UserProfile | null;
-  currentUser?: UserProfileA | UserProfileB | UserProfile | null;
-  profile?: UserProfileA | UserProfileB | UserProfile | null;
-}>(Component: ComponentWithProfile<P>) => {
-  return withProfileTypeAdapter(Component, 'A');
-};
+}
 
 export default withProfileTypeAdapter;

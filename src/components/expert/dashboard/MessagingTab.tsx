@@ -1,38 +1,46 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import MessageList from '@/components/messaging/MessageList';
+import MessageThread from '@/components/messaging/MessageThread';
+import { useMessaging } from '@/hooks/messaging';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import MessageList from './messaging/MessageList';
-import ConversationView from './messaging/ConversationView';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 const MessagingTab: React.FC = () => {
-  const [selectedUser, setSelectedUser] = useState<{id: string, name: string} | null>(null);
-  
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
+  const { getConversations, getMessages, sendMessage } = useMessaging();
+  const { expertProfile } = useAuth();
+
   const handleSelectConversation = (userId: string, userName: string) => {
-    setSelectedUser({ id: userId, name: userName });
+    setSelectedUserId(userId);
+    setSelectedUserName(userName);
   };
-  
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Messages</h2>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1 space-y-4">
-          <h3 className="text-lg font-medium">Conversations</h3>
+    <div className="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 className="text-2xl font-bold mb-6">Messages</h2>
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="md:w-1/3">
           <MessageList 
             onSelectConversation={handleSelectConversation}
-            selectedUserId={selectedUser?.id}
+            selectedUserId={selectedUserId}
+            userId={expertProfile?.auth_id || ''} 
           />
         </div>
-        
-        <div className="md:col-span-2">
-          <ConversationView 
-            userId={selectedUser?.id || ''} 
-            userName={selectedUser?.name || ''} 
-          />
+        <div className="md:w-2/3">
+          {selectedUserId ? (
+            <MessageThread
+              userId={expertProfile?.auth_id || ''}
+              recipientId={selectedUserId}
+              recipientName={selectedUserName}
+              onSendMessage={(message) => sendMessage(expertProfile?.auth_id || '', selectedUserId, message)}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">
+              <p className="text-gray-500">Select a conversation to start messaging</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -2,7 +2,7 @@
 import { useState, useCallback, Dispatch, SetStateAction } from 'react';
 import { supabase } from '@/lib/supabase';
 import { userRepository, expertRepository } from '@/repositories';
-import { AuthState } from '../types';
+import { AuthState, SessionType } from '../types';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 import { toast } from 'sonner';
 
@@ -179,7 +179,7 @@ export const useAuthActions = (
         userProfile: null,
         expertProfile: null,
         isAuthenticated: false,
-        sessionType: 'none',
+        sessionType: 'none' as SessionType,
         role: null,
         loading: false,
         isLoading: false
@@ -308,7 +308,7 @@ export const useAuthActions = (
       ]);
       
       // Determine session type based on profiles
-      let sessionType = 'none';
+      let sessionType: SessionType = 'none';
       if (userProfile && expertProfile) sessionType = 'dual';
       else if (userProfile) sessionType = 'user';
       else if (expertProfile) sessionType = 'expert';

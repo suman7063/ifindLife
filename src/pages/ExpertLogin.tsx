@@ -9,13 +9,21 @@ import ExpertLoginContent from '@/components/expert/auth/ExpertLoginContent';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import DualSessionAlert from '@/components/expert/auth/DualSessionAlert';
 import { Container } from '@/components/ui/container';
-import LoadingView from '@/components/expert/auth/LoadingView';
+import LoadingView from '@/components/LoadingView';
 
 const ExpertLogin: React.FC = () => {
   const { isAuthenticated, isLoading, role, sessionType } = useAuth();
   const [activeTab, setActiveTab] = useState('login');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const navigate = useNavigate();
   
+  const handleLogin = async (email: string, password: string) => {
+    setIsLoggingIn(true);
+    // Add your login logic here
+    setIsLoggingIn(false);
+  };
+
   // Handle redirect for authenticated users
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -41,12 +49,24 @@ const ExpertLogin: React.FC = () => {
           <ExpertLoginHeader />
           
           {/* Show dual session alert if needed */}
-          <DualSessionAlert />
+          <DualSessionAlert isLoggingOut={false} onLogout={() => {}} />
           
           <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
-            <ExpertLoginTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+            <ExpertLoginTabs 
+              activeTab={activeTab} 
+              setActiveTab={setActiveTab}
+              onLogin={handleLogin}
+              isLoggingIn={isLoggingIn}
+              loginError={loginError}
+            />
             <div className="p-6">
-              <ExpertLoginContent activeTab={activeTab} setActiveTab={setActiveTab} />
+              <ExpertLoginContent 
+                activeTab={activeTab} 
+                setActiveTab={setActiveTab}
+                onLogin={handleLogin}
+                isLoggingIn={isLoggingIn}
+                loginError={loginError}
+              />
             </div>
           </div>
         </div>

@@ -1,104 +1,69 @@
 
-import { useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { userRepository } from '@/repositories/userRepository';
+import { expertRepository } from '@/repositories/expertRepository';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
-import { userRepository } from '@/repositories/UserRepository';
-import { expertRepository } from '@/repositories/ExpertRepository';
 import { toast } from 'sonner';
 
 export const useProfileFunctions = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  
-  /**
-   * Get user profile by ID
-   */
-  const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-    if (!userId) return null;
-    
+  const refreshUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       return await userRepository.getUser(userId);
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Error refreshing user profile:', error);
+      toast.error('Failed to refresh user profile');
       return null;
     }
   };
   
-  /**
-   * Get expert profile by user ID
-   */
-  const getExpertProfile = async (userId: string): Promise<ExpertProfile | null> => {
-    if (!userId) return null;
-    
+  const refreshExpertProfile = async (userId: string): Promise<ExpertProfile | null> => {
     try {
       return await expertRepository.getExpertByAuthId(userId);
     } catch (error) {
-      console.error('Error fetching expert profile:', error);
+      console.error('Error refreshing expert profile:', error);
+      toast.error('Failed to refresh expert profile');
       return null;
     }
   };
   
-  /**
-   * Update user profile
-   */
   const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<boolean> => {
-    if (!userId) {
-      toast.error('User ID is required to update profile');
-      return false;
-    }
-    
-    setIsLoading(true);
     try {
       const success = await userRepository.updateUser(userId, updates);
       
       if (success) {
         toast.success('Profile updated successfully');
-        return true;
       } else {
         toast.error('Failed to update profile');
-        return false;
       }
+      
+      return success;
     } catch (error) {
       console.error('Error updating user profile:', error);
       toast.error('An error occurred while updating your profile');
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
   
-  /**
-   * Update expert profile
-   */
-  const updateExpertProfile = async (expertId: string, updates: Partial<ExpertProfile>): Promise<boolean> => {
-    if (!expertId) {
-      toast.error('Expert ID is required to update profile');
-      return false;
-    }
-    
-    setIsLoading(true);
+  const updateExpertProfile = async (id: string, updates: Partial<ExpertProfile>): Promise<boolean> => {
     try {
-      const success = await expertRepository.updateExpert(expertId, updates);
+      const success = await expertRepository.updateExpert(id, updates);
       
       if (success) {
         toast.success('Expert profile updated successfully');
-        return true;
       } else {
         toast.error('Failed to update expert profile');
-        return false;
       }
+      
+      return success;
     } catch (error) {
       console.error('Error updating expert profile:', error);
-      toast.error('An error occurred while updating your expert profile');
+      toast.error('An error occurred while updating your profile');
       return false;
-    } finally {
-      setIsLoading(false);
     }
   };
   
   return {
-    isLoading,
-    getUserProfile,
-    getExpertProfile,
+    refreshUserProfile,
+    refreshExpertProfile,
     updateUserProfile,
     updateExpertProfile
   };
