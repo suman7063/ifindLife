@@ -51,8 +51,10 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
       return;
     }
     
-    // Use the string version of expertId
-    const success = await toggleExpertFavorite(expertIdString);
+    // Convert expertId to number for the API call if needed
+    const expertIdForApi = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
+    
+    const success = await toggleExpertFavorite(expertIdForApi);
     if (success) {
       setIsFavorite(!isFavorite);
       toast.success(isFavorite ? 'Expert removed from favorites' : 'Expert added to favorites');

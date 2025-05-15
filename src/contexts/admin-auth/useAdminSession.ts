@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { AdminUser } from './types';
+import { AdminUser, initialAdminAuthState } from './types';
 import { defaultAdminUsers } from './constants';
 
 export const useAdminSession = () => {
@@ -8,84 +8,47 @@ export const useAdminSession = () => {
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Check for existing admin session on component mount
+  const [error, setError] = useState<Error | null>(null);
+
+  // Initialize session state from local storage on mount
   useEffect(() => {
     try {
-      console.log('AuthProvider: Checking for existing admin session');
-      
-      // Load admin users from localStorage or use defaults
-      const storedAdminUsers = localStorage.getItem('admin-users');
-      if (storedAdminUsers) {
-        try {
-          const parsedAdminUsers = JSON.parse(storedAdminUsers);
-          console.log('AuthProvider: Loaded stored admin users:', parsedAdminUsers.length);
-          setAdminUsers(parsedAdminUsers);
-        } catch (error) {
-          console.error('Error parsing stored admin users:', error);
-          localStorage.setItem('admin-users', JSON.stringify(defaultAdminUsers));
-        }
-      } else {
-        console.log('AuthProvider: No stored admin users, saving defaults');
-        localStorage.setItem('admin-users', JSON.stringify(defaultAdminUsers));
-      }
-      
-      // First check for the stored user object which has more data
-      const storedUser = localStorage.getItem('admin-user');
+      setIsLoading(true);
+
+      // Check if there's a stored admin session
+      const storedUser = localStorage.getItem('adminUser');
       if (storedUser) {
         try {
-          const parsedUser = JSON.parse(storedUser);
-          console.log('AuthProvider: Found stored user data:', parsedUser.username);
-          setCurrentUser(parsedUser);
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return;
-        } catch (error) {
-          console.error('Error parsing stored admin user:', error);
-          localStorage.removeItem('admin-user');
-        }
-      }
-      
-      // Fall back to the older session storage method
-      const adminSession = localStorage.getItem('admin_session');
-      const adminUsername = localStorage.getItem('admin_username');
-      
-      console.log('AuthProvider session check:', { adminSession, adminUsername });
-      
-      if (adminSession === 'true' && adminUsername) {
-        // Find the user in adminUsers
-        const foundUser = adminUsers.find(user => user.username.toLowerCase() === adminUsername.toLowerCase());
-        
-        if (foundUser) {
-          console.log('AuthProvider: Found authenticated user:', foundUser);
-          setIsAuthenticated(true);
-          setCurrentUser(foundUser);
+          const parsedUser = JSON.parse(storedUser) as AdminUser;
           
-          // Update to new storage format
-          localStorage.setItem('admin-user', JSON.stringify(foundUser));
-        } else {
-          console.log('AuthProvider: No matching user found, clearing session');
-          localStorage.removeItem('admin_session');
-          localStorage.removeItem('admin_username');
+          // Find the user in the admin users list to get the latest permissions
+          const userWithLatestData = adminUsers.find(u => u.id === parsedUser.id) || parsedUser;
+          
+          setCurrentUser(userWithLatestData);
+          setIsAuthenticated(true);
+          console.log('Admin session restored for:', userWithLatestData.username);
+        } catch (e) {
+          console.error('Error parsing stored admin user:', e);
+          localStorage.removeItem('adminUser');
+          setError(new Error('Invalid stored session'));
         }
-      } else {
-        console.log('AuthProvider: No active admin session found');
       }
-      
-      setIsLoading(false);
-    } catch (err) {
-      console.error('Error checking admin session:', err);
+    } catch (e) {
+      console.error('Error initializing admin session:', e);
+      setError(e instanceof Error ? e : new Error('Unknown error'));
+    } finally {
       setIsLoading(false);
     }
   }, []);
 
   return {
-    isAuthenticated, 
+    isAuthenticated,
     setIsAuthenticated,
     adminUsers,
     setAdminUsers,
     currentUser,
     setCurrentUser,
-    isLoading
+    isLoading,
+    error
   };
 };

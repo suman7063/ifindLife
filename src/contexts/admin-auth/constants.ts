@@ -1,32 +1,41 @@
 
-import { AdminUser } from './types';
+import { AdminUser, AdminPermissions } from './types';
 
-// Mock admin users for development with proper permissions
 export const defaultAdminUsers: AdminUser[] = [
-  { 
-    id: '1', 
-    username: 'admin', 
-    role: 'admin',
-    permissions: {
-      canManageUsers: false,
-      canManageExperts: true,
-      canManagePrograms: true,
-      canManageContent: true,
-      canViewReports: true,
-      canModerate: false
-    }
-  },
-  { 
-    id: '2', 
-    username: 'superadmin', 
-    role: 'superadmin',
+  {
+    id: "1",
+    username: "IFLsuperadmin",
+    email: "admin@ifindlove.com",
+    role: "superadmin",
     permissions: {
       canManageUsers: true,
       canManageExperts: true,
-      canManagePrograms: true,
       canManageContent: true,
-      canViewReports: true,
-      canModerate: true
+      canManageServices: true,
+      canManagePrograms: true,
+      canViewAnalytics: true,
+      canDeleteContent: true,
+      canApproveExperts: true,
+      canManageBlog: true,
+      canManageTestimonials: true
     }
   },
+  {
+    id: "2",
+    username: "admin",
+    email: "editor@ifindlove.com",
+    role: "admin",
+    permissions: {
+      canManageUsers: false,
+      canManageExperts: true,
+      canManageContent: true,
+      canManageServices: false,
+      canManagePrograms: true,
+      canViewAnalytics: true,
+      canDeleteContent: false,
+      canApproveExperts: false,
+      canManageBlog: true,
+      canManageTestimonials: true
+    }
+  }
 ];

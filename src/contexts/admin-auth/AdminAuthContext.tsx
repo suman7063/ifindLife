@@ -1,22 +1,22 @@
 
 import React, { createContext, useContext } from 'react';
-import { AdminUser, AuthContextType } from './types';
+import { AdminUser, AdminAuthContextType } from './types';
 import { useAdminAuth } from './useAdminAuth';
 import { useAdminSession } from './useAdminSession';
 
 // Create context with default values
-const AdminAuthContext = createContext<AuthContextType>({
+const AdminAuthContext = createContext<AdminAuthContextType>({
   isAuthenticated: false,
   login: () => false,
   logout: () => {},
   adminUsers: [],
-  addAdmin: () => {},
-  removeAdmin: () => {},
+  addAdmin: () => false,
+  removeAdmin: () => false,
   isSuperAdmin: false,
   currentUser: null,
-  updateAdminPermissions: () => {},
+  updateAdminPermissions: () => false,
   isLoading: true,
-  updateAdminUser: () => {},
+  updateAdminUser: () => false,
 });
 
 // Admin auth provider component

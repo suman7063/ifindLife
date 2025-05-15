@@ -35,7 +35,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import PermissionManager from './PermissionManager';
-import { AdminUser, AdminPermissions } from '@/contexts/admin-auth';
+import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
 
 const AdminUsersManager: React.FC = () => {
   const { 
@@ -62,7 +62,7 @@ const AdminUsersManager: React.FC = () => {
     }
     
     try {
-      addAdmin(newUsername, newPassword);
+      addAdmin(newUsername, 'admin');
       setNewUsername('');
       setNewPassword('');
       setIsAddDialogOpen(false);
@@ -73,8 +73,8 @@ const AdminUsersManager: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = (username: string) => {
-    setUserToDelete(username);
+  const handleDeleteUser = (id: string) => {
+    setUserToDelete(id);
     setDeleteConfirmOpen(true);
   };
 
@@ -85,7 +85,7 @@ const AdminUsersManager: React.FC = () => {
       removeAdmin(userToDelete);
       setDeleteConfirmOpen(false);
       setUserToDelete(null);
-      toast.success(`Admin user '${userToDelete}' removed successfully`);
+      toast.success(`Admin user removed successfully`);
     } catch (error) {
       toast.error('Failed to remove admin user');
       console.error('Error removing admin:', error);
@@ -97,14 +97,14 @@ const AdminUsersManager: React.FC = () => {
     setViewingPermissions(true);
   };
 
-  const handleUpdatePermissions = (username: string, permissions: AdminPermissions) => {
-    updateAdminPermissions(username, permissions);
+  const handleUpdatePermissions = (userId: string, permissions: AdminPermissions) => {
+    updateAdminPermissions(userId, permissions);
   };
 
   // Cannot delete self or superadmin accounts
   const canDeleteUser = (user: AdminUser): boolean => {
     return !!isSuperAdmin && user.username !== 'IFLsuperadmin' && 
-           user.username !== 'admin' && currentUser?.username !== user.username;
+           user.username !== 'admin' && currentUser?.id !== user.id;
   };
 
   return (
@@ -131,10 +131,10 @@ const AdminUsersManager: React.FC = () => {
             </TableHeader>
             <TableBody>
               {adminUsers.map((user) => (
-                <TableRow key={user.username}>
+                <TableRow key={user.id}>
                   <TableCell className="font-medium">
                     {user.username}
-                    {currentUser?.username === user.username && (
+                    {currentUser?.id === user.id && (
                       <Badge variant="outline" className="ml-2">You</Badge>
                     )}
                   </TableCell>
@@ -176,7 +176,7 @@ const AdminUsersManager: React.FC = () => {
                         <Button 
                           variant="destructive" 
                           size="icon"
-                          onClick={() => handleDeleteUser(user.username)}
+                          onClick={() => handleDeleteUser(user.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -233,7 +233,7 @@ const AdminUsersManager: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove the admin user {userToDelete}.
+              This will permanently remove this admin user.
               This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>

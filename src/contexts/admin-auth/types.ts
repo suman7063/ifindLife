@@ -1,17 +1,21 @@
 
 import { User } from '@supabase/supabase-js';
 
-export type AdminPermission = 
-  | 'manage_users' 
-  | 'manage_experts' 
-  | 'manage_content'
-  | 'manage_services'
-  | 'manage_programs'
-  | 'view_analytics'
-  | 'delete_content'
-  | 'approve_experts'
-  | 'manage_blog'
-  | 'manage_testimonials';
+export type AdminPermission = string;
+
+export interface AdminPermissions {
+  canManageUsers?: boolean;
+  canManageExperts?: boolean;
+  canManageContent?: boolean;
+  canManageServices?: boolean;
+  canManagePrograms?: boolean;
+  canViewAnalytics?: boolean;
+  canDeleteContent?: boolean;
+  canApproveExperts?: boolean;
+  canManageBlog?: boolean;
+  canManageTestimonials?: boolean;
+  [key: string]: boolean | undefined;
+}
 
 export const defaultPermissions: Record<string, AdminPermission[]> = {
   'superadmin': [
@@ -33,9 +37,10 @@ export const defaultPermissions: Record<string, AdminPermission[]> = {
 
 export interface AdminUser {
   id: string;
+  username: string;
   email: string | null;
   role: string;
-  permissions: AdminPermission[];
+  permissions: AdminPermissions;
   name?: string;
   createdAt?: string;
 }
@@ -48,9 +53,14 @@ export interface AdminAuthState {
 }
 
 export interface AdminAuthContextType extends AdminAuthState {
-  login: (email: string, password: string) => Promise<boolean>;
-  logout: () => Promise<void>;
-  updateProfile?: (updates: Partial<AdminUser>) => Promise<boolean>;
+  login: (username: string, password: string) => boolean;
+  logout: () => void;
+  adminUsers: AdminUser[];
+  addAdmin: (username: string, role: 'admin' | 'superadmin') => boolean;
+  removeAdmin: (id: string) => boolean;
+  isSuperAdmin: boolean;
+  updateAdminPermissions: (userId: string, newPermissions: Partial<AdminPermissions>) => boolean;
+  updateAdminUser: (id: string, updates: Partial<AdminUser>) => boolean;
 }
 
 export const initialAdminAuthState: AdminAuthState = {

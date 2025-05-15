@@ -6,8 +6,15 @@ import { ExpertProfile } from '@/types/database/unified';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 
+// Define a simpler User type for our context
+export interface AuthUser {
+  id: string;
+  email: string | null;
+  role: UserRole;
+}
+
 export interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   session: any | null;
   profile: UserProfile | null;
   userProfile: UserProfile | null;
@@ -30,7 +37,7 @@ export interface AuthContextType {
   
   updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updateProfilePicture?: (file: File) => Promise<string | null>;
-  updatePassword: (password: string) => Promise<boolean>;  // Added this missing method
+  updatePassword: (password: string) => Promise<boolean>;
   
   addToFavorites?: (expertId: number) => Promise<boolean>;
   removeFromFavorites?: (expertId: number) => Promise<boolean>;

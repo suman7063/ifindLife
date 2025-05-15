@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { AdminUser, AdminPermissions } from '@/contexts/admin-auth';
+import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
 import { Separator } from '@/components/ui/separator';
 import { Save } from 'lucide-react';
 
@@ -75,7 +75,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({ user, onSave, isS
   const handleSave = async () => {
     try {
       setIsSubmitting(true);
-      onSave(user.username, permissions);
+      onSave(user.id, permissions);
       toast.success(`Permissions updated for ${user.username}`);
     } catch (error) {
       toast.error('Failed to update permissions');

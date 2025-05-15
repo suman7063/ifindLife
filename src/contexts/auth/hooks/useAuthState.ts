@@ -1,10 +1,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
 import { AuthState, initialAuthState, UserRole } from '../types';
 import { convertUserToUserProfile } from '@/utils/profileConverters';
-import { UserProfile } from '@/types/database/unified';
+import { adaptUserProfile } from '@/utils/adaptUserProfile';
+import { User } from '@supabase/supabase-js';
 
 export const useAuthState = () => {
   const [authState, setAuthState] = useState<AuthState>(initialAuthState);
@@ -16,14 +16,14 @@ export const useAuthState = () => {
       .from('expert_accounts')
       .select('*')
       .eq('auth_id', user.id)
-      .single();
+      .maybeSingle();
     
     // Check if user has an admin role
     const { data: adminProfile } = await supabase
       .from('admin_users')
       .select('*')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (adminProfile) return 'admin';
     if (expertProfile) return 'expert';
@@ -43,36 +43,48 @@ export const useAuthState = () => {
         .from('users')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
         
       // Fetch expert profile if the role is expert
       const { data: expertProfile } = role === 'expert' ? await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', user.id)
-        .single() : { data: null };
+        .maybeSingle() : { data: null };
       
-      // Convert userProfile to standardized UserProfile format
-      const convertedProfile = convertUserToUserProfile(userProfile);
+      // Ensure profile has all required fields
+      const completeUserProfile = userProfile ? {
+        ...userProfile,
+        favorite_experts: userProfile.favorite_experts || [],
+        favorite_programs: userProfile.favorite_programs || [],
+        enrolled_courses: userProfile.enrolled_courses || [],
+        reviews: userProfile.reviews || [],
+        reports: userProfile.reports || [],
+        transactions: userProfile.transactions || [],
+        referrals: userProfile.referrals || []
+      } : null;
+      
+      // Convert userProfile to standardized format
+      const adaptedProfile = adaptUserProfile(completeUserProfile);
       
       // Update auth state with all the data
       const newState: AuthState = {
         user: {
           id: user.id, 
-          email: user.email,
+          email: user.email || '',
           role
         },
         session: null, // Will be updated by the auth state listener
-        profile: convertedProfile as UserProfile,
-        userProfile: convertedProfile as UserProfile,
+        profile: adaptedProfile,
+        userProfile: adaptedProfile,
         expertProfile,
         role,
         loading: false,
         isLoading: false,
         error: null,
         isAuthenticated: true,
-        sessionType: expertProfile ? (userProfile ? 'dual' : 'expert') : 'user',
-        walletBalance: userProfile?.wallet_balance || 0
+        sessionType: expertProfile ? (adaptedProfile ? 'dual' : 'expert') : 'user',
+        walletBalance: adaptedProfile?.wallet_balance || 0
       };
       
       setAuthState(newState);
@@ -99,7 +111,7 @@ export const useAuthState = () => {
           isAuthenticated: !!session,
           user: session?.user ? {
             id: session.user.id,
-            email: session.user.email,
+            email: session.user.email || '',
             role: prev.role
           } : null
         }));
@@ -135,7 +147,7 @@ export const useAuthState = () => {
           isAuthenticated: true,
           user: {
             id: session.user.id,
-            email: session.user.email,
+            email: session.user.email || '',
             role: prev.role
           }
         }));

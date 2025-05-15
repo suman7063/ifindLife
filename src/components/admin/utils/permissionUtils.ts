@@ -1,11 +1,5 @@
 
-import { AdminPermissions } from '@/contexts/admin-auth/types';
-
-interface AdminUser {
-  role?: string;
-  permissions?: AdminPermissions | Record<string, boolean>;
-  username?: string;
-}
+import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
 
 /**
  * Check if user has any permissions
@@ -111,4 +105,3 @@ export const formatPermissionName = (permission: string): string => {
   
   return formatted;
 };
-
