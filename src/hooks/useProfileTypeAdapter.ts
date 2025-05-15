@@ -31,28 +31,26 @@ export const useProfileTypeAdapter = () => {
       wallet_balance: profile.wallet_balance,
       currency: profile.currency,
       created_at: profile.created_at,
-      updated_at: profile.updated_at || profile.created_at,
+      updated_at: profile.created_at, // Default to created_at if updated_at is not available
       referral_code: profile.referral_code,
       referral_link: profile.referral_link,
       referred_by: profile.referred_by,
-      avatar_url: profile.profile_picture,
       
       // Convert string[] to number[] for favorite_programs
       favorite_programs: favoritePrograms,
-      favorite_experts: profile.favorite_experts?.map(id => id) || [],
+      favorite_experts: profile.favorite_experts,
       
-      // Map additional properties
+      // Map additional properties for alias access
       profilePicture: profile.profile_picture,
       walletBalance: profile.wallet_balance,
       favoriteExperts: profile.favorite_experts,
       enrolledCourses: profile.enrolled_courses,
       referralCode: profile.referral_code,
       
-      // Optional related data
-      transactions: profile.transactions,
-      reviews: profile.reviews,
-      reports: profile.reports,
-      referrals: profile.referrals
+      // Include the related data
+      transactions: profile.transactions || [],
+      reviews: profile.reviews || [],
+      reports: profile.reports || []
     };
   };
 
@@ -82,7 +80,7 @@ export const useProfileTypeAdapter = () => {
       country,
       city,
       currency: profile.currency || 'USD',
-      profile_picture: profile.profile_picture || profile.profilePicture || profile.avatar_url || '',
+      profile_picture: profile.profile_picture || profile.profilePicture || '',
       wallet_balance: profile.wallet_balance || profile.walletBalance || 0,
       created_at: profile.created_at || '',
       referred_by: profile.referred_by || null,
@@ -91,61 +89,19 @@ export const useProfileTypeAdapter = () => {
       
       // Convert number[] to string[] for favorite_programs
       favorite_programs: favoritePrograms,
-      favorite_experts: profile.favorite_experts || profile.favoriteExperts || [],
+      favorite_experts: Array.isArray(profile.favorite_experts) ? profile.favorite_experts : [],
       enrolled_courses: profile.enrolled_courses || profile.enrolledCourses || [],
       
       // Add required fields that might be missing
       reviews: profile.reviews || [],
       reports: profile.reports || [],
       transactions: profile.transactions || [],
-      referrals: profile.referrals || []
-    };
-  };
-
-  /**
-   * Function to wrap API calls that require UserProfileB as input
-   */
-  const withTypeB = <T extends unknown[], R>(
-    fn: (profile: UserProfileB, ...args: T) => R
-  ) => {
-    return (profile: UserProfileA | UserProfileB | null, ...args: T): R | null => {
-      if (!profile) return null;
-      
-      // Ensure profile is of type B by checking for presence of favoriteExperts property
-      const profileB = 'favoriteExperts' in profile 
-        ? profile as UserProfileB 
-        : toTypeB(profile as UserProfileA);
-      
-      if (!profileB) return null;
-      
-      return fn(profileB, ...args);
-    };
-  };
-
-  /**
-   * Function to wrap API calls that require UserProfileA as input
-   */
-  const withTypeA = <T extends unknown[], R>(
-    fn: (profile: UserProfileA, ...args: T) => R
-  ) => {
-    return (profile: UserProfileA | UserProfileB | null, ...args: T): R | null => {
-      if (!profile) return null;
-      
-      // Ensure profile is of type A by checking for presence of favorite_experts property
-      const profileA = 'favorite_experts' in profile
-        ? profile as UserProfileA
-        : toTypeA(profile as UserProfileB);
-      
-      if (!profileA) return null;
-      
-      return fn(profileA, ...args);
+      referrals: []  // Default to empty array
     };
   };
 
   return {
     toTypeA,
-    toTypeB,
-    withTypeA,
-    withTypeB
+    toTypeB
   };
 };

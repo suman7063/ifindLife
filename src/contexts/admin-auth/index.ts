@@ -1,4 +1,7 @@
 
-// Export admin auth context types and hooks
-export { AdminAuthContext, useAuth } from './AdminAuthContext';
-export type { AdminUser, AdminPermissions } from './AdminAuthContext';
+export * from './AdminAuthContext';
+export * from './AdminAuthProvider';
+export * from './types';
+
+// Re-export the auth hook for convenience
+export { useAuth } from './AdminAuthContext';

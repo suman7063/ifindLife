@@ -1,81 +1,46 @@
 
-import React, { useState, useEffect } from 'react';
-import { AdminAuthContext, AdminUser, AdminPermissions } from './AdminAuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { AdminUser, AuthContextType, AdminPermissions } from './types';
+import { defaultAdminUsers } from './constants';
 
-// Mock admin users for development with proper permissions
-const mockAdminUsers: AdminUser[] = [
-  { 
-    id: '1', 
-    username: 'admin', 
-    role: 'admin',
-    permissions: {
-      canManageUsers: false,
-      canManageExperts: true,
-      canManagePrograms: true,
-      canManageContent: true,
-      canViewReports: true,
-      canModerate: false
-    }
-  },
-  { 
-    id: '2', 
-    username: 'superadmin', 
-    role: 'superadmin',
-    permissions: {
-      canManageUsers: true,
-      canManageExperts: true,
-      canManagePrograms: true,
-      canManageContent: true,
-      canViewReports: true,
-      canModerate: true
-    }
-  },
-];
+// Create context with default values
+const AdminAuthContext = createContext<AuthContextType>({
+  isAuthenticated: false,
+  currentUser: null,
+  login: () => false,
+  logout: () => {},
+  adminUsers: [],
+  addAdmin: () => false,
+  removeAdmin: () => false,
+  isSuperAdmin: false,
+  updateAdminPermissions: () => false,
+  isLoading: true,
+  updateAdminUser: () => false
+});
 
-// Default permissions based on role
-const getDefaultPermissions = (role: 'admin' | 'superadmin'): AdminPermissions => {
-  if (role === 'superadmin') {
-    return {
-      canManageUsers: true,
-      canManageExperts: true,
-      canManagePrograms: true,
-      canManageContent: true,
-      canViewReports: true,
-      canModerate: true
-    };
-  }
-  
-  return {
-    canManageUsers: false,
-    canManageExperts: true,
-    canManagePrograms: true,
-    canManageContent: true,
-    canViewReports: true,
-    canModerate: false
-  };
-};
-
+// Admin auth provider component
 export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [permissions, setPermissions] = useState<AdminPermissions | null>(null);
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
+  const [isLoading, setIsLoading] = useState(true);
   
   // Check local storage for existing session on mount
   useEffect(() => {
+    setIsLoading(true);
     const storedUser = localStorage.getItem('adminUser');
     if (storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser) as AdminUser;
         setCurrentUser(parsedUser);
-        setPermissions(parsedUser.permissions);
       } catch (error) {
         console.error('Error parsing stored admin user:', error);
         localStorage.removeItem('adminUser');
       }
     }
+    setIsLoading(false);
   }, []);
   
-  // Simple mock login function
+  // Simple login function
   const login = (username: string, password: string): boolean => {
     // For demo purposes, any non-empty password works
     if (!username || !password) return false;
@@ -84,7 +49,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!user) return false;
     
     setCurrentUser(user);
-    setPermissions(user.permissions);
     
     // Store in localStorage for persistence
     localStorage.setItem('adminUser', JSON.stringify(user));
@@ -94,18 +58,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   
   const logout = () => {
     setCurrentUser(null);
-    setPermissions(null);
     localStorage.removeItem('adminUser');
   };
-  
-  const hasPermission = (permission: keyof AdminPermissions): boolean => {
-    if (!permissions) return false;
-    return permissions[permission];
-  };
 
-  const isSuperAdmin = (): boolean => {
-    return currentUser?.role === 'superadmin';
-  };
+  const isSuperAdmin = currentUser?.role === 'superadmin';
 
   const addAdmin = (username: string, role: 'admin' | 'superadmin'): boolean => {
     try {
@@ -148,7 +104,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Update current user permissions if it's the logged-in user
       if (currentUser?.id === userId) {
-        setPermissions(prev => prev ? { ...prev, ...newPermissions } : null);
+        setCurrentUser(prev => prev ? {
+          ...prev,
+          permissions: { ...prev.permissions, ...newPermissions }
+        } : null);
       }
       
       return true;
@@ -158,24 +117,15 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const getAdminById = (id: string): AdminUser | null => {
-    return adminUsers.find(admin => admin.id === id) || null;
-  };
-
-  const updateAdminRole = (id: string, role: 'admin' | 'superadmin'): boolean => {
+  const updateAdminUser = (id: string, updates: Partial<AdminUser>): boolean => {
     try {
       setAdminUsers(prev => prev.map(admin => {
         if (admin.id === id) {
-          const updatedAdmin = {
-            ...admin,
-            role,
-            permissions: getDefaultPermissions(role)
-          };
+          const updatedAdmin = { ...admin, ...updates };
           
           // Update current user if it's the logged-in user
           if (currentUser?.id === id) {
             setCurrentUser(updatedAdmin);
-            setPermissions(updatedAdmin.permissions);
             localStorage.setItem('adminUser', JSON.stringify(updatedAdmin));
           }
           
@@ -186,28 +136,58 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       return true;
     } catch (error) {
-      console.error('Error updating admin role:', error);
+      console.error('Error updating admin:', error);
       return false;
     }
+  };
+
+  // Default permissions based on role
+  const getDefaultPermissions = (role: 'admin' | 'superadmin'): AdminPermissions => {
+    if (role === 'superadmin') {
+      return {
+        canManageUsers: true,
+        canManageExperts: true,
+        canManagePrograms: true,
+        canManageContent: true,
+        canViewReports: true,
+        canModerate: true
+      };
+    }
+    
+    return {
+      canManageUsers: false,
+      canManageExperts: true,
+      canManagePrograms: true,
+      canManageContent: true,
+      canViewReports: true,
+      canModerate: false
+    };
   };
   
   return (
     <AdminAuthContext.Provider value={{
-      currentUser,
       isAuthenticated: !!currentUser,
+      currentUser,
       login,
       logout,
       adminUsers,
-      permissions,
-      hasPermission,
-      isSuperAdmin,
       addAdmin,
       removeAdmin,
+      isSuperAdmin,
       updateAdminPermissions,
-      getAdminById,
-      updateAdminRole
+      isLoading,
+      updateAdminUser
     }}>
       {children}
     </AdminAuthContext.Provider>
   );
+};
+
+// Export the custom hook to use the auth context
+export const useAuth = () => {
+  const context = useContext(AdminAuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AdminAuthProvider');
+  }
+  return context;
 };

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -128,14 +127,14 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             referred_by: rawProfileData.referred_by || '',
             referral_link: rawProfileData.referral_link || '',
             
-            // Use type assertions for the array properties
+            // Convert any numeric favorite_programs to strings for consistency
             favorite_experts: (rawProfileData.favorite_experts || []) as string[],
-            favorite_programs: (rawProfileData.favorite_programs || []) as number[],
+            favorite_programs: (rawProfileData.favorite_programs || []).map((id: number | string) => String(id)),
             enrolled_courses: (rawProfileData.enrolled_courses || []) as Course[],
             transactions: (rawProfileData.transactions || []) as UserTransaction[],
             reviews: (rawProfileData.reviews || []) as Review[],
             reports: (rawProfileData.reports || []) as Report[],
-            referrals: (rawProfileData.referrals || []) as Referral[]
+            referrals: (rawProfileData.referrals || []) as any[]
           };
           
           console.log('Enhanced profile created:', {

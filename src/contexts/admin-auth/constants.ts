@@ -1,19 +1,32 @@
 
-import { AdminUser } from './AdminAuthContext';
-import { defaultPermissions, superAdminPermissions } from './types';
+import { AdminUser } from './types';
 
-// Define default admin users for development
-export const defaultAdminUsers: Omit<AdminUser, 'id'>[] = [
-  {
-    username: 'admin',
+// Mock admin users for development with proper permissions
+export const defaultAdminUsers: AdminUser[] = [
+  { 
+    id: '1', 
+    username: 'admin', 
     role: 'admin',
-    permissions: defaultPermissions,
-    createdAt: new Date().toISOString(),
+    permissions: {
+      canManageUsers: false,
+      canManageExperts: true,
+      canManagePrograms: true,
+      canManageContent: true,
+      canViewReports: true,
+      canModerate: false
+    }
   },
-  {
-    username: 'IFLsuperadmin',
+  { 
+    id: '2', 
+    username: 'superadmin', 
     role: 'superadmin',
-    permissions: superAdminPermissions,
-    createdAt: new Date().toISOString(),
-  }
+    permissions: {
+      canManageUsers: true,
+      canManageExperts: true,
+      canManagePrograms: true,
+      canManageContent: true,
+      canViewReports: true,
+      canModerate: true
+    }
+  },
 ];

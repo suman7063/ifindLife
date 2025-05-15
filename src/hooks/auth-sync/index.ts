@@ -1,67 +1,52 @@
+import { useEffect } from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
+import { UserProfile as UserProfileA } from '@/types/supabase/user';
+import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
 
-import { useState, useCallback } from 'react';
-import { useContext } from 'react';
-import { UserAuthContext } from '@/contexts/auth/UserAuthContext';
-import { useExpertAuth } from '@/hooks/expert-auth';
-import { useAuthCheckEffect } from './useAuthCheckEffect';
-import { useAuthLogoutMethods } from './useAuthLogoutMethods';
-import { SessionType, UseAuthSynchronizationReturn } from './types';
-
-export const useAuthSynchronization = (): UseAuthSynchronizationReturn => {
-  const [sessionType, setSessionType] = useState<SessionType>('none');
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
-  const [isExpertAuthenticated, setIsExpertAuthenticated] = useState(false);
-  const [hasDualSessions, setHasDualSessions] = useState(false);
-
-  const userAuth = useContext(UserAuthContext);
-  const { currentUser, isAuthenticated, logout } = userAuth;
-  const { 
-    currentExpert, 
-    isAuthenticated: expertIsAuthenticated, 
-    logout: expertLogoutFn 
-  } = useExpertAuth();
-
-  // Use the auth check effect
-  const authState = useAuthCheckEffect(
-    currentUser,
-    currentExpert,
-    isAuthenticated,
-    expertIsAuthenticated
-  );
+/**
+ * Hook to synchronize authentication state between different parts of the app
+ */
+export const useAuthSync = () => {
+  const auth = useAuth();
+  const { toTypeA, toTypeB } = useProfileTypeAdapter();
   
-  // Use auth logout methods
-  const { userLogout, expertLogout, fullLogout } = useAuthLogoutMethods(
-    sessionType,
-    setIsUserAuthenticated,
-    setIsExpertAuthenticated,
-    setSessionType,
-    setHasDualSessions,
-    setIsLoggingOut
-  );
-
-  const handleSetIsLoggingOut = useCallback((value: boolean) => {
-    setIsLoggingOut(value);
-  }, []);
+  // Access profile with proper type handling
+  const getUserProfile = (): UserProfileA | null => {
+    if (!auth.profile) return null;
+    
+    // If profile already has favorite_experts, assume it's already UserProfileA
+    if ('favorite_experts' in auth.profile) {
+      return auth.profile as UserProfileA;
+    }
+    
+    // Otherwise convert from UserProfileB
+    return toTypeA(auth.profile as UserProfileB);
+  };
+  
+  // Convert profile for use with APIs that expect UserProfileB
+  const getTypeB = (): UserProfileB | null => {
+    if (!auth.profile) return null;
+    
+    // If profile already has favorite_programs as number[], assume it's already UserProfileB
+    if ('favorite_programs' in auth.profile && 
+        Array.isArray(auth.profile.favorite_programs) && 
+        auth.profile.favorite_programs.length > 0 && 
+        typeof auth.profile.favorite_programs[0] === 'number') {
+      return auth.profile as UserProfileB;
+    }
+    
+    // Otherwise convert from UserProfileA
+    return toTypeB(auth.profile as UserProfileA);
+  };
   
   return {
-    // Combine state from auth check effect
-    ...authState,
-    // Add user and expert authentication state
-    isUserAuthenticated: authState.isUserAuthenticated,
-    isExpertAuthenticated: authState.isExpertAuthenticated,
-    currentUser,
-    currentExpert,
-    isAuthenticated: authState.isUserAuthenticated,
-    isAuthLoading: authState.isSynchronizing,
-    // Logout methods
-    userLogout,
-    expertLogout,
-    fullLogout,
-    // Logging out state handler
-    isLoggingOut,
-    setIsLoggingOut: handleSetIsLoggingOut
+    auth,
+    getUserProfile,
+    getTypeB,
+    isAuthenticated: auth.isAuthenticated,
+    isLoading: auth.isLoading,
+    user: auth.user,
+    session: auth.session
   };
 };
-
-export * from './types';
