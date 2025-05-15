@@ -1,8 +1,8 @@
 
+// Export repository instances
 import { userRepository } from './userRepository';
 import { expertRepository } from './expertRepository';
 
-// Export repository instances
 export {
   userRepository,
   expertRepository

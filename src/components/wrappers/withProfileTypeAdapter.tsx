@@ -17,11 +17,10 @@ const adaptUserProfile = (profile: SupabaseUserProfile | null): UnifiedUserProfi
     // Add any other required fields with default values if they're missing
     reviews: profile.reviews || [],
     reports: profile.reports || [],
-    enrollments: profile.enrollments || [],
     favorite_experts: profile.favorite_experts || [],
     favorite_programs: profile.favorite_programs || [],
     enrolled_courses: profile.enrolled_courses || [],
-    referrals: profile.referrals || [],
+    referrals: profile.referrals || []
   } as UnifiedUserProfile;
 };
 

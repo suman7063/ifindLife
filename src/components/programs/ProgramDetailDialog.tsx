@@ -111,4 +111,4 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
   );
 };
 
-export default withProfileTypeAdapter(ProgramDetailDialog, 'A');
+export default withProfileTypeAdapter(ProgramDetailDialog);

@@ -3,18 +3,22 @@ import React, { useState, useEffect } from 'react';
 import MessageList from '@/components/messaging/MessageList';
 import MessageThread from '@/components/messaging/MessageThread';
 import { useMessaging } from '@/hooks/messaging';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 const MessagingTab: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [selectedUserName, setSelectedUserName] = useState<string>('');
-  const { getConversations, getMessages, sendMessage } = useMessaging();
+  const { sendMessage } = useMessaging();
   const { expertProfile } = useAuth();
 
   const handleSelectConversation = (userId: string, userName: string) => {
     setSelectedUserId(userId);
     setSelectedUserName(userName);
+  };
+
+  const handleSendMessage = async (message: string) => {
+    if (!expertProfile?.auth_id) return;
+    await sendMessage(expertProfile.auth_id, selectedUserId, message);
   };
 
   return (
@@ -34,7 +38,7 @@ const MessagingTab: React.FC = () => {
               userId={expertProfile?.auth_id || ''}
               recipientId={selectedUserId}
               recipientName={selectedUserName}
-              onSendMessage={(message) => sendMessage(expertProfile?.auth_id || '', selectedUserId, message)}
+              onSendMessage={handleSendMessage}
             />
           ) : (
             <div className="flex items-center justify-center h-64 bg-gray-50 rounded-lg">

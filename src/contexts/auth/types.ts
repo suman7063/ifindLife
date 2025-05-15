@@ -1,8 +1,9 @@
 
-import { Session } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
+export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
 export interface AuthUser {
   id: string;
@@ -12,50 +13,32 @@ export interface AuthUser {
 
 export interface AuthState {
   user: AuthUser | null;
-  session: Session | null;
-  profile: UserProfile | null;
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
-  loading: boolean;
-  isLoading: boolean;
-  error: Error | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   role: UserRole;
-  sessionType: 'none' | 'user' | 'expert' | 'dual';
+  session: Session | null;
+  error: Error | null;
+  profile: UserProfile | null; // For backward compatibility
   walletBalance: number;
+  sessionType: SessionType;
 }
 
-export const initialAuthState: AuthState = {
-  user: null,
-  session: null,
-  profile: null,
-  userProfile: null,
-  expertProfile: null,
-  loading: true,
-  isLoading: true,
-  error: null,
-  isAuthenticated: false,
-  role: null,
-  sessionType: 'none',
-  walletBalance: 0
-};
-
-export interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<boolean>;
+export interface AuthActions {
+  login: (email: string, password: string, asExpert?: boolean) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
+  registerExpert: (email: string, password: string, expertData: any) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   refreshProfile: () => Promise<void>;
-  
-  // Extended functions for specific user workflows
-  updateProfilePicture?: (file: File) => Promise<string | null>;
-  addToFavorites?: (expertId: number) => Promise<boolean>;
-  removeFromFavorites?: (expertId: number) => Promise<boolean>;
-  rechargeWallet?: (amount: number) => Promise<boolean>;
-  addReview?: (review: any) => Promise<boolean>;
-  reportExpert?: (report: any) => Promise<boolean>;
-  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
-  getExpertShareLink?: (expertId: string | number) => string;
-  getReferralLink?: () => string | null;
+  refreshUserProfile: () => Promise<UserProfile | null>;
+  refreshExpertProfile: () => Promise<ExpertProfile | null>;
+  updateUserProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
+  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
+  addExpertService: (serviceId: number, price: number) => Promise<boolean>;
+  removeExpertService: (serviceId: number) => Promise<boolean>;
 }
+
+export interface AuthContextType extends AuthState, AuthActions {}

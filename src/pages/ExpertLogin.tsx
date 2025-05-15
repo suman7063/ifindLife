@@ -12,16 +12,38 @@ import { Container } from '@/components/ui/container';
 import LoadingView from '@/components/LoadingView';
 
 const ExpertLogin: React.FC = () => {
-  const { isAuthenticated, isLoading, role, sessionType } = useAuth();
+  const { isAuthenticated, isLoading, role, sessionType, login, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('login');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   
-  const handleLogin = async (email: string, password: string) => {
+  const handleLogin = async (email: string, password: string): Promise<boolean> => {
     setIsLoggingIn(true);
-    // Add your login logic here
-    setIsLoggingIn(false);
+    try {
+      const success = await login(email, password, true);
+      if (!success) {
+        setLoginError('Invalid email or password');
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('An error occurred during login');
+      return false;
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+  
+  const handleLogout = async (): Promise<boolean> => {
+    setIsLoggingOut(true);
+    try {
+      return await logout();
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   // Handle redirect for authenticated users
@@ -49,15 +71,14 @@ const ExpertLogin: React.FC = () => {
           <ExpertLoginHeader />
           
           {/* Show dual session alert if needed */}
-          <DualSessionAlert isLoggingOut={false} onLogout={() => {}} />
+          {(sessionType === 'user' || role === 'user') && (
+            <DualSessionAlert isLoggingOut={isLoggingOut} onLogout={handleLogout} />
+          )}
           
           <div className="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
             <ExpertLoginTabs 
               activeTab={activeTab} 
               setActiveTab={setActiveTab}
-              onLogin={handleLogin}
-              isLoggingIn={isLoggingIn}
-              loginError={loginError}
             />
             <div className="p-6">
               <ExpertLoginContent 
