@@ -1,95 +1,97 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { toast } from 'sonner';
 
 export const useUserFavorites = () => {
-  const { userProfile, isAuthenticated } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const { user, isAuthenticated } = useAuth();
+  const [favoriteExperts, setFavoriteExperts] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Convert string IDs to numbers if needed
-  const userFavorites = userProfile?.favorite_experts?.map(id => 
-    typeof id === 'string' ? parseInt(id, 10) : id
-  ).filter(id => !isNaN(Number(id))) || [];
-  
-  // Add expert to favorites
-  const addToFavorites = useCallback(async (expertId: number): Promise<boolean> => {
-    if (!isAuthenticated || !userProfile) {
-      toast.error('You must be logged in to add favorites');
-      return false;
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      fetchFavorites();
+    } else {
+      setFavoriteExperts([]);
+      setLoading(false);
     }
+  }, [isAuthenticated, user]);
+  
+  const fetchFavorites = async () => {
+    if (!user?.id) return;
     
-    setLoading(true);
     try {
-      // Add to user_favorites table
+      setLoading(true);
+      
+      const { data, error } = await supabase
+        .from('user_favorites')
+        .select('expert_id')
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      const expertIds = data.map(item => item.expert_id);
+      setFavoriteExperts(expertIds);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const addFavorite = async (expertId: number): Promise<boolean> => {
+    if (!user?.id) return false;
+    
+    try {
       const { error } = await supabase
         .from('user_favorites')
         .insert({
-          user_id: userProfile.id,
+          user_id: user.id,
           expert_id: expertId
         });
+        
+      if (error) throw error;
       
-      if (error) {
-        console.error('Error adding to favorites:', error);
-        toast.error('Failed to add to favorites');
-        return false;
-      }
-      
-      // Update local state
-      setFavorites(prev => [...prev, expertId]);
-      toast.success('Added to favorites');
+      setFavoriteExperts(prev => [...prev, expertId]);
       return true;
     } catch (error) {
-      console.error('Error adding to favorites:', error);
-      toast.error('An unexpected error occurred');
+      console.error('Error adding favorite:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [isAuthenticated, userProfile]);
+  };
   
-  // Remove expert from favorites
-  const removeFromFavorites = useCallback(async (expertId: number): Promise<boolean> => {
-    if (!isAuthenticated || !userProfile) {
-      toast.error('You must be logged in to manage favorites');
-      return false;
-    }
+  const removeFavorite = async (expertId: number): Promise<boolean> => {
+    if (!user?.id) return false;
     
-    setLoading(true);
     try {
-      // Remove from user_favorites table
       const { error } = await supabase
         .from('user_favorites')
         .delete()
-        .eq('user_id', userProfile.id)
-        .eq('expert_id', expertId);
+        .match({
+          user_id: user.id,
+          expert_id: expertId
+        });
+        
+      if (error) throw error;
       
-      if (error) {
-        console.error('Error removing from favorites:', error);
-        toast.error('Failed to remove from favorites');
-        return false;
-      }
-      
-      // Update local state
-      setFavorites(prev => prev.filter(id => id !== expertId));
-      toast.success('Removed from favorites');
+      setFavoriteExperts(prev => prev.filter(id => id !== expertId));
       return true;
     } catch (error) {
-      console.error('Error removing from favorites:', error);
-      toast.error('An unexpected error occurred');
+      console.error('Error removing favorite:', error);
       return false;
-    } finally {
-      setLoading(false);
     }
-  }, [isAuthenticated, userProfile]);
+  };
+  
+  const isFavorite = (expertId: number): boolean => {
+    return favoriteExperts.includes(expertId);
+  };
   
   return {
-    favorites: userFavorites,
-    addToFavorites,
-    removeFromFavorites,
+    favoriteExperts,
     loading,
-    isInFavorites: (expertId: number) => userFavorites.includes(expertId)
+    isFavorite,
+    addFavorite,
+    removeFavorite,
+    refreshFavorites: fetchFavorites
   };
 };

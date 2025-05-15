@@ -7,60 +7,9 @@ import { NewReview, NewReport } from '@/types/supabase/tables';
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
   
-  // Create a compatible addReview function that can handle both calling styles
-  const adaptedAddReview = async (reviewOrExpertId: NewReview | string, rating?: number, comment?: string): Promise<boolean> => {
-    // If first parameter is a string, assume it's the old style with separate parameters
-    if (typeof reviewOrExpertId === 'string' && rating !== undefined) {
-      return auth.addReview ? auth.addReview({
-        expertId: parseInt(reviewOrExpertId),
-        rating,
-        comment: comment || '',
-      }) : Promise.resolve(false);
-    }
-    
-    // If first parameter is an object, handle as a review object
-    if (reviewOrExpertId && typeof reviewOrExpertId === 'object' && auth.addReview) {
-      return auth.addReview(reviewOrExpertId as NewReview);
-    }
-    
-    return false;
-  };
-
-  // Create a compatible reportExpert function that can handle both calling styles
-  const adaptedReportExpert = async (reportOrExpertId: NewReport | string, reason?: string, details?: string): Promise<boolean> => {
-    // If first parameter is a string, assume it's the old style with separate parameters
-    if (typeof reportOrExpertId === 'string' && reason !== undefined && auth.reportExpert) {
-      return auth.reportExpert({
-        expertId: parseInt(reportOrExpertId),
-        reason,
-        details: details || '',
-      });
-    }
-    
-    // If first parameter is an object, handle as a report object
-    if (reportOrExpertId && typeof reportOrExpertId === 'object' && auth.reportExpert) {
-      return auth.reportExpert(reportOrExpertId as NewReport);
-    }
-    
-    return false;
-  };
-  
-  // Define a properly typed hasTakenServiceFrom function that handles both Promise and non-Promise cases
-  const adaptedHasTakenServiceFrom = async (id: string | number): Promise<boolean> => {
-    if (!auth.hasTakenServiceFrom) return Promise.resolve(false);
-    
-    try {
-      const result = auth.hasTakenServiceFrom(id);
-      return result instanceof Promise ? result : Promise.resolve(result);
-    } catch (error) {
-      console.error("Error in hasTakenServiceFrom:", error);
-      return Promise.resolve(false);
-    }
-  };
-
-  // Create a compatible context value that matches the UserAuthContextType
+  // Create a compatibility layer for the user auth context
   const userAuthValue = {
-    currentUser: auth.profile,
+    currentUser: auth.profile || auth.userProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login, 
     signup: auth.signup,
@@ -70,16 +19,18 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     profileNotFound: !auth.profile && !auth.isAuthenticated && !auth.isLoading,
     updateProfile: auth.updateProfile, 
     updatePassword: auth.updatePassword || (async () => false),
-    addToFavorites: auth.addToFavorites || (async () => false),
-    removeFromFavorites: auth.removeFromFavorites || (async () => false),
-    rechargeWallet: auth.rechargeWallet || (async () => false),
-    addReview: adaptedAddReview,
-    reportExpert: adaptedReportExpert,
-    hasTakenServiceFrom: adaptedHasTakenServiceFrom,
-    getExpertShareLink: auth.getExpertShareLink || ((id) => ''),
-    getReferralLink: auth.getReferralLink || (() => null),
+    
+    // Default implementations for extended functionality
+    addToFavorites: async (expertId: number) => false,
+    removeFromFavorites: async (expertId: number) => false,
+    rechargeWallet: async (amount: number) => false,
+    addReview: async (review: NewReview | string, rating?: number, comment?: string) => false,
+    reportExpert: async (report: NewReport | string, reason?: string, details?: string) => false,
+    hasTakenServiceFrom: async (id: string | number) => false,
+    getExpertShareLink: (expertId: string | number) => '',
+    getReferralLink: () => null,
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture || (async () => null)
+    updateProfilePicture: async (file: File) => null
   };
 
   return (

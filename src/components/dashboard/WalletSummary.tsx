@@ -8,7 +8,7 @@ interface WalletSummaryProps {
 }
 
 const WalletSummary: React.FC<WalletSummaryProps> = ({ className }) => {
-  const { profile } = useAuth();
+  const { userProfile, walletBalance } = useAuth();
   
   return (
     <Card className={className}>
@@ -18,7 +18,7 @@ const WalletSummary: React.FC<WalletSummaryProps> = ({ className }) => {
       <CardContent>
         <div className="flex flex-col gap-2">
           <div className="text-3xl font-bold">
-            {profile?.currency || '$'} {profile?.wallet_balance?.toFixed(2) || '0.00'}
+            {userProfile?.currency || '$'} {walletBalance?.toFixed(2) || '0.00'}
           </div>
           <p className="text-sm text-muted-foreground">
             Available balance in your account

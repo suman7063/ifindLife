@@ -1,38 +1,18 @@
 
-import { UserRole } from './AuthContext';
-import { UserProfile } from '@/types/database/unified';
-import { ExpertProfile } from '@/types/database/unified';
-import { Session, User } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
-export type { UserRole };
+export type UserRole = 'user' | 'expert' | 'admin' | null;
 
 export interface AuthUser {
   id: string;
   email: string;
-  role: UserRole | null;
-}
-
-export interface AuthContextType {
-  user: AuthUser | null;
-  userProfile: UserProfile | null;
-  expertProfile: ExpertProfile | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  role: UserRole | null;
-  login: (email: string, password: string) => Promise<boolean>;
-  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
-  updatePassword: (password: string) => Promise<boolean>;
-  refreshProfile: () => Promise<void>;
-  session: Session | null;
-  error: Error | null;
-  walletBalance: number;
+  role: UserRole;
 }
 
 export interface AuthState {
   user: AuthUser | null;
-  session: any | null;
+  session: Session | null;
   profile: UserProfile | null;
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
@@ -59,3 +39,23 @@ export const initialAuthState: AuthState = {
   sessionType: 'none',
   walletBalance: 0
 };
+
+export interface AuthContextType extends AuthState {
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
+  refreshProfile: () => Promise<void>;
+  
+  // Extended functions for specific user workflows
+  addToFavorites?: (expertId: number) => Promise<boolean>;
+  removeFromFavorites?: (expertId: number) => Promise<boolean>;
+  rechargeWallet?: (amount: number) => Promise<boolean>;
+  addReview?: (review: any) => Promise<boolean>;
+  reportExpert?: (report: any) => Promise<boolean>;
+  hasTakenServiceFrom?: (expertId: string | number) => Promise<boolean>;
+  getExpertShareLink?: (expertId: string | number) => string;
+  getReferralLink?: () => string | null;
+  updateProfilePicture?: (file: File) => Promise<string | null>;
+}

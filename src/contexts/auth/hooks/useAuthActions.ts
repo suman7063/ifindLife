@@ -3,22 +3,43 @@ import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState } from '@/contexts/auth/types';
 import { UserProfile } from '@/types/database/unified';
-import { userRepository } from '@/repositories';
+import { toast } from 'sonner';
 
 export const useAuthActions = (state: AuthState, setState: React.Dispatch<React.SetStateAction<AuthState>>) => {
   const refreshProfile = useCallback(async () => {
     if (!state.user?.id) return;
 
     try {
-      const profile = await userRepository.getUser(state.user.id);
-      
-      if (profile) {
+      // First check which table has the user's profile
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', state.user.id)
+        .maybeSingle();
+
+      if (!userError && userData) {
         setState(prev => ({
           ...prev,
-          profile,
-          userProfile: profile,
-          isAuthenticated: true,
-          walletBalance: profile.wallet_balance || 0
+          profile: userData as UserProfile,
+          userProfile: userData as UserProfile,
+          walletBalance: userData.wallet_balance || 0
+        }));
+        return;
+      }
+      
+      // If not found in users, try profiles table
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', state.user.id)
+        .maybeSingle();
+        
+      if (!profileError && profileData) {
+        setState(prev => ({
+          ...prev,
+          profile: profileData as UserProfile,
+          userProfile: profileData as UserProfile,
+          walletBalance: profileData.wallet_balance || 0
         }));
       }
     } catch (error) {
@@ -71,30 +92,20 @@ export const useAuthActions = (state: AuthState, setState: React.Dispatch<React.
         throw new Error('Failed to create user');
       }
 
-      // The user row should be created automatically by our database trigger
-      // Check if the user profile exists
-      const userProfile = await userRepository.getUser(authData.user.id);
-      
-      if (!userProfile) {
-        // If for some reason the trigger didn't work, create the profile manually
-        const profileData: Partial<UserProfile> = {
-          id: authData.user.id,
-          name: userData.name,
-          email: userData.email,
-          phone: userData.phone,
-          country: userData.country,
-          city: userData.city,
-          currency: userData.currency || 'USD',
-          wallet_balance: 0
-        };
+      // Create a single profile object with the ID
+      const profileData = {
+        id: authData.user.id,
+        ...userData,
+        currency: userData.currency || 'USD',
+        wallet_balance: 0
+      };
 
-        // Insert the profile manually
-        const { error: profileError } = await supabase
-          .from('users')
-          .insert([profileData]);
+      // Insert the profile
+      const { error: profileError } = await supabase
+        .from('users')
+        .insert(profileData);
 
-        if (profileError) throw profileError;
-      }
+      if (profileError) throw profileError;
 
       // Handle referral if a code was provided
       if (referralCode) {
@@ -106,12 +117,12 @@ export const useAuthActions = (state: AuthState, setState: React.Dispatch<React.
 
         if (!referrerError && referrerData) {
           // Create a referral record
-          await supabase.from('referrals').insert([{
+          await supabase.from('referrals').insert({
             referrer_id: referrerData.id,
             referred_id: authData.user.id,
             referral_code: referralCode,
             status: 'pending'
-          }]);
+          });
 
           // Update the user's referred_by field
           await supabase
@@ -158,23 +169,38 @@ export const useAuthActions = (state: AuthState, setState: React.Dispatch<React.
     try {
       setState(prev => ({ ...prev, loading: true, isLoading: true }));
       
-      // First check if the profile exists
-      const profile = await userRepository.getUser(state.user!.id);
+      // Check which table has the user's profile
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', state.user.id)
+        .maybeSingle();
       
-      if (!profile) {
-        throw new Error('Profile not found');
-      }
-
-      // Use repository to update user profile
-      const success = await userRepository.updateUser(state.user.id, updates);
+      // Determine the table to update
+      const table = userData ? 'users' : 'profiles';
       
-      if (!success) {
-        throw new Error('Failed to update profile');
+      // Ensure we have an ID in the updates
+      const updatesWithId = {
+        ...updates,
+        id: state.user.id
+      };
+      
+      // Update the appropriate table
+      const { error } = await supabase
+        .from(table)
+        .update(updatesWithId)
+        .eq('id', state.user.id);
+        
+      if (error) {
+        console.error('Error updating profile:', error);
+        toast.error(`Failed to update profile: ${error.message}`);
+        return false;
       }
-
+      
       // Refresh profile data
       await refreshProfile();
       
+      toast.success('Profile updated successfully');
       return true;
     } catch (error) {
       console.error('Profile update error:', error);
@@ -192,10 +218,12 @@ export const useAuthActions = (state: AuthState, setState: React.Dispatch<React.
       
       if (error) throw error;
       
+      toast.success('Password updated successfully');
       return true;
     } catch (error) {
       console.error('Password update error:', error);
       setState(prev => ({ ...prev, loading: false, isLoading: false, error: error as Error }));
+      toast.error('Failed to update password');
       return false;
     } finally {
       setState(prev => ({ ...prev, loading: false, isLoading: false }));

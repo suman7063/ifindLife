@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { AdminAuthContext, AdminRole, AdminUser } from './AdminAuthContext';
+import { AdminAuthContext } from './AdminAuthContext';
+import { AdminUser, AdminRole, AdminPermissions } from './types';
 import { toast } from 'sonner';
 
 interface AdminAuthProviderProps {
@@ -27,11 +28,19 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       if (error) throw error;
 
       if (data) {
+        // Default permissions for admin users
+        const defaultPermissions: AdminPermissions = {
+          canManageUsers: true,
+          canManageExperts: true,
+          canManageContent: true
+        };
+
         const adminUser: AdminUser = {
           id: data.id,
-          email: (await supabase.auth.getUser()).data.user?.email || '',
+          username: (await supabase.auth.getUser()).data.user?.email?.split('@')[0] || 'admin',
           role: data.role as AdminRole,
-          created_at: data.created_at
+          permissions: defaultPermissions,
+          createdAt: data.created_at
         };
         setCurrentUser(adminUser);
         setIsAuthenticated(true);
@@ -139,7 +148,17 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
   };
 
   // Compute isSuperAdmin based on user role
-  const isSuperAdmin: boolean = currentUser?.role === 'superadmin';
+  const isSuperAdmin = currentUser?.role === 'superadmin';
+
+  // Create the mock functionality for admin users management
+  const adminUsers = currentUser ? [currentUser] : [];
+  const addAdmin = () => true;
+  const removeAdmin = () => true;
+  const updateAdminPermissions = () => true;
+  const hasPermission = () => true;
+  const getAdminById = () => null;
+  const updateAdminRole = () => true;
+  const permissions = currentUser?.permissions || {};
 
   return (
     <AdminAuthContext.Provider
@@ -150,7 +169,16 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         error,
         login,
         logout,
-        isSuperAdmin
+        isSuperAdmin,
+        // Mock admin functionality for backward compatibility
+        adminUsers,
+        addAdmin,
+        removeAdmin,
+        updateAdminPermissions,
+        hasPermission,
+        getAdminById,
+        updateAdminRole,
+        permissions
       }}
     >
       {children}
