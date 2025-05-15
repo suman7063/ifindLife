@@ -18,7 +18,7 @@ export function useConversations(currentUser: MessagingUser | null): UseConversa
       setConversationsLoading(true);
       setError(null);
       
-      const conversations = await messagingRepository.getConversations(currentUser.id);
+      const conversations = await messagingRepository.fetchConversations(currentUser.id);
       setConversations(conversations);
       return conversations;
     } catch (error: any) {

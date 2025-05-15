@@ -6,6 +6,7 @@ export interface Conversation {
   lastMessage?: string;
   lastMessageDate?: string;
   unreadCount?: number;
+  participantId?: string;
 }
 
 export interface Message {
@@ -29,4 +30,25 @@ export interface MessagingHook {
   fetchMessages: (conversationId: string) => Promise<void>;
   sendMessage: (receiverId: string, content: string) => Promise<boolean>;
   setCurrentConversation: (conversationId: string) => void;
+}
+
+export interface MessagingUser {
+  id: string;
+  name?: string;
+  email?: string;
+}
+
+export interface UseConversationsReturn {
+  conversations: Conversation[];
+  conversationsLoading: boolean;
+  fetchConversations: () => Promise<Conversation[]>;
+  error: string | null;
+}
+
+export interface UseMessagesReturn {
+  messages: Message[];
+  messagesLoading: boolean;
+  fetchMessages: (partnerId: string) => Promise<Message[]>;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  error: string | null;
 }

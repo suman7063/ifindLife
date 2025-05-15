@@ -16,6 +16,18 @@ export interface NewReview {
   comment?: string;
 }
 
+export interface UserReview {
+  id: string;
+  user_id: string;
+  expert_id: string | number;
+  rating: number;
+  comment?: string;
+  date: string;
+  verified?: boolean;
+  user_name?: string;
+  expert_name?: string;
+}
+
 export interface NewReport {
   expertId: string | number;
   reason: string;

@@ -25,7 +25,7 @@ export const hasPermission = (user: AdminUser | null, permission: string): boole
   }
   
   // Super admins have all permissions
-  if (user.role === 'superadmin') {
+  if (user.role === 'super_admin') {
     return true;
   }
   
@@ -45,7 +45,7 @@ export const isSuperAdmin = (user: AdminUser | null): boolean => {
   if (!user) {
     return false;
   }
-  return user.role === 'superadmin';
+  return user.role === 'super_admin';
 };
 
 /**
@@ -59,7 +59,7 @@ export const getUserPermissions = (user: AdminUser | null): string[] => {
   }
   
   // If user is superadmin, return all permissions
-  if (user.role === 'superadmin') {
+  if (user.role === 'super_admin') {
     return Object.keys(user.permissions);
   }
   
@@ -85,7 +85,7 @@ export const canManageUser = (currentUser: AdminUser | null, targetUser: AdminUs
   }
   
   // Super admins can manage all users except other super admins
-  if (targetUser.role === 'superadmin') {
+  if (targetUser.role === 'super_admin') {
     return false; // Cannot manage another super admin
   }
   

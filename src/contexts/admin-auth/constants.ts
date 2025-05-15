@@ -1,11 +1,12 @@
 
-import { AdminUser, AdminPermissions } from './types';
+import { AdminUser, AdminRole, AdminPermissions } from './types';
 
 export const defaultAdminUsers: AdminUser[] = [
   {
     id: "1",
+    email: "superadmin@ifindlife.com",
+    role: "super_admin",
     username: "IFLsuperadmin",
-    role: "superadmin",
     permissions: {
       canManageUsers: true,
       canManageExperts: true,
@@ -22,8 +23,9 @@ export const defaultAdminUsers: AdminUser[] = [
   },
   {
     id: "2",
-    username: "admin",
+    email: "admin@ifindlife.com",
     role: "admin",
+    username: "admin",
     permissions: {
       canManageUsers: false,
       canManageExperts: true,

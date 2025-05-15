@@ -1,7 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { Message } from '@/types/appointments';
-import { MessagingUser, UseMessagesReturn } from './types';
+import { Message, MessagingUser, UseMessagesReturn } from './types';
 import { messagingRepository } from './messagingApi';
 
 export function useMessages(currentUser: MessagingUser | null): UseMessagesReturn {
@@ -19,13 +18,13 @@ export function useMessages(currentUser: MessagingUser | null): UseMessagesRetur
       setMessagesLoading(true);
       setError(null);
       
-      const fetchedMessages = await messagingRepository.getMessages(currentUser.id, partnerId);
+      const fetchedMessages = await messagingRepository.fetchMessages(currentUser.id, partnerId);
       // Ensure all required fields are present for compatibility
       const compatibleMessages = fetchedMessages.map(msg => ({
         ...msg,
         created_at: msg.created_at || new Date().toISOString(),
         read: msg.read || false
-      })) as Message[];
+      }));
       
       setMessages(compatibleMessages);
       return compatibleMessages;
