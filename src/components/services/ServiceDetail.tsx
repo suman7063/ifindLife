@@ -56,12 +56,17 @@ const ServiceDetail: React.FC<ServiceDetailProps> = ({
       ? parseInt(expertId, 10) 
       : expertId;
     
-    const success = await toggleExpertFavorite(expertIdForApi);
-    if (success) {
-      setIsFavorite(!isFavorite);
-      toast.success(isFavorite ? 'Expert removed from favorites' : 'Expert added to favorites');
+    // Ensure expertIdForApi is a number before calling toggleExpertFavorite
+    if (!isNaN(Number(expertIdForApi))) {
+      const success = await toggleExpertFavorite(Number(expertIdForApi));
+      if (success) {
+        setIsFavorite(!isFavorite);
+        toast.success(isFavorite ? 'Expert removed from favorites' : 'Expert added to favorites');
+      } else {
+        toast.error('Failed to update favorites');
+      }
     } else {
-      toast.error('Failed to update favorites');
+      toast.error('Invalid expert ID');
     }
   };
   

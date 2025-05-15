@@ -16,7 +16,7 @@ const defaultPermissions: AdminPermissions = {
 };
 
 // Define permission levels for different admin roles
-const rolePermissions: Record<'admin' | 'superadmin', AdminPermissions> = {
+const rolePermissions: Record<string, AdminPermissions> = {
   admin: {
     manageExperts: true,
     manageUsers: true,
@@ -72,7 +72,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         }
         
         if (adminData && adminData.role) {
-          const role = adminData.role as 'admin' | 'superadmin';
+          const role = adminData.role;
           const permissions = rolePermissions[role] || defaultPermissions;
           
           setAdminUser({
@@ -130,7 +130,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     isAuthenticated: !!adminUser,
     hasPermission,
     isSuperAdmin,
-    logout: adminLogout
+    logout: adminLogout,
+    isLoading: loading
   };
 
   return (

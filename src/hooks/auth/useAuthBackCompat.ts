@@ -1,88 +1,80 @@
 
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useEffect, useState } from 'react';
-import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
-import { UserProfile as UserProfileA } from '@/types/supabase/user';
-import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
+import { UserProfile } from '@/types/database/unified';
 
 /**
- * This hook provides backward compatibility for components using the old auth context
+ * Provides backward compatibility for components using
+ * the old auth hook interfaces
  */
 export const useAuthBackCompat = () => {
   const auth = useAuth();
-  const { toTypeA, toTypeB } = useProfileTypeAdapter();
   
-  const [userProfileType, setUserProfileType] = useState<'A' | 'B' | null>(null);
-  const [processedProfile, setProcessedProfile] = useState<UserProfileA | UserProfileB | null>(null);
-  
-  // Process profile when it changes to determine its type and convert if needed
-  useEffect(() => {
-    if (!auth.userProfile) {
-      setProcessedProfile(null);
-      setUserProfileType(null);
-      return;
-    }
-    
-    // Check if it's type A (has favorite_experts property)
-    if ('favorite_experts' in auth.userProfile) {
-      setUserProfileType('A');
-      setProcessedProfile(auth.userProfile);
-    }
-    // Check if it's type B (has favoriteExperts property)
-    else if ('favoriteExperts' in auth.userProfile) {
-      setUserProfileType('B');
-      setProcessedProfile(auth.userProfile);
-    }
-    // If unknown, assume it's type A and try to convert it
-    else {
-      setUserProfileType('A');
-      setProcessedProfile(toTypeA(auth.userProfile as any));
-    }
-  }, [auth.userProfile]);
-  
-  // Prepare the user auth object that matches the old interface
+  // Backward compatible user auth
   const userAuth = {
-    currentUser: processedProfile,
+    currentUser: auth.userProfile,
     isAuthenticated: auth.isAuthenticated,
-    loading: auth.loading || auth.isLoading,
+    login: auth.login,
+    signup: auth.signup,
+    logout: auth.logout,
     authLoading: auth.isLoading,
-    login: auth.signIn,
-    signup: auth.signUp,
-    logout: auth.signOut,
-    updateProfile: (updates: Partial<UserProfileA | UserProfileB>) => {
-      // Determine which type the updates are and convert if necessary
-      if (userProfileType === 'A' && 'favoriteExperts' in updates) {
-        // Convert type B updates to type A
-        return auth.updateProfile(toTypeA(updates as UserProfileB) as any);
-      } else if (userProfileType === 'B' && 'favorite_experts' in updates) {
-        // Convert type A updates to type B
-        return auth.updateProfile(toTypeB(updates as UserProfileA) as any);
-      }
-      // No conversion needed
-      return auth.updateProfile(updates as any);
-    },
-    updatePassword: (password: string) => {
-      // This functionality needs to be implemented in AuthContext
-      console.warn('updatePassword is not fully implemented');
-      return Promise.resolve(false);
-    },
-    profileNotFound: false, // Default value
-    addToFavorites: () => Promise.resolve(false),
-    removeFromFavorites: () => Promise.resolve(false),
-    rechargeWallet: () => Promise.resolve(false),
-    addReview: () => Promise.resolve(false),
-    reportExpert: () => Promise.resolve(false),
-    hasTakenServiceFrom: () => Promise.resolve(false),
-    getExpertShareLink: () => '',
-    getReferralLink: () => null,
+    loading: auth.isLoading,
+    profileNotFound: !auth.userProfile && !auth.isLoading,
+    updateProfile: auth.updateProfile,
+    updatePassword: auth.updatePassword,
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture
+    // Add missing methods with warning logs
+    addToFavorites: async (expertId: number) => {
+      console.warn('addToFavorites is not implemented in new auth system');
+      return false;
+    },
+    removeFromFavorites: async (expertId: number) => {
+      console.warn('removeFromFavorites is not implemented in new auth system');
+      return false;
+    },
+    rechargeWallet: async (amount: number) => {
+      console.warn('rechargeWallet is not implemented in new auth system');
+      return false;
+    },
+    addReview: async (review: any) => {
+      console.warn('addReview is not implemented in new auth system');
+      return false;
+    },
+    reportExpert: async (report: any) => {
+      console.warn('reportExpert is not implemented in new auth system');
+      return false;
+    },
+    hasTakenServiceFrom: (expertId: number) => {
+      console.warn('hasTakenServiceFrom is not implemented in new auth system');
+      return false;
+    },
+    getExpertShareLink: (expertId: number) => {
+      console.warn('getExpertShareLink is not implemented in new auth system');
+      return '';
+    },
+    getReferralLink: () => {
+      console.warn('getReferralLink is not implemented in new auth system');
+      return '';
+    },
+    refreshProfile: auth.refreshProfile,
+    updateProfilePicture: async (file: File) => {
+      console.warn('updateProfilePicture is not implemented in new auth system');
+      return null;
+    }
+  };
+  
+  // Backward compatible expert auth
+  const expertAuth = {
+    currentExpert: auth.expertProfile,
+    isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
+    loading: auth.isLoading,
+    error: auth.error?.message || null,
+    initialized: true,
+    user: auth.user
   };
   
   return {
     userAuth,
-    auth,
-    processedProfile,
-    userProfileType
+    expertAuth,
+    unifiedAuth: auth
   };
 };

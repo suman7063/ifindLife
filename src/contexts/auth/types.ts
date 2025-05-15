@@ -1,9 +1,34 @@
 
-import { AuthUser, UserRole } from './AuthContext';
-import { UserProfile } from '@/types/supabase/user';
+import { UserRole } from './AuthContext';
+import { UserProfile } from '@/types/database/unified';
 import { ExpertProfile } from '@/types/database/unified';
+import { Session, User } from '@supabase/supabase-js';
 
-export type { AuthUser, UserRole };
+export type { UserRole };
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: UserRole | null;
+}
+
+export interface AuthContextType {
+  user: AuthUser | null;
+  userProfile: UserProfile | null;
+  expertProfile: ExpertProfile | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  role: UserRole | null;
+  login: (email: string, password: string) => Promise<boolean>;
+  signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
+  updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updatePassword: (password: string) => Promise<boolean>;
+  refreshProfile: () => Promise<void>;
+  session: Session | null;
+  error: Error | null;
+  walletBalance: number;
+}
 
 export interface AuthState {
   user: AuthUser | null;
