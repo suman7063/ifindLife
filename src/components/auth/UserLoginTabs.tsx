@@ -8,17 +8,16 @@ import { ReferralSettings } from '@/types/supabase';
 
 interface UserLoginTabsProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
+  isLoggingIn?: boolean;  // Add this prop
 }
 
-const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
+const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = false }) => {
   const [activeTab, setActiveTab] = useState('login');
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
   
   // Wrapper for the login function to handle loading state
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
-    setIsLoggingIn(true);
     try {
       const success = await onLogin(email, password);
       if (!success) {
@@ -28,8 +27,6 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     } catch (error) {
       setLoginError('An unexpected error occurred.');
       return false;
-    } finally {
-      setIsLoggingIn(false);
     }
   };
   
