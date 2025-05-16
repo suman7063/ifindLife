@@ -19,14 +19,19 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     isChecking: boolean;
     isAuthenticated: boolean;
     role?: UserRole;
+    checkAttempted: boolean;
   }>({
     isChecking: true,
-    isAuthenticated: false
+    isAuthenticated: false,
+    checkAttempted: false
   });
   
   const location = useLocation();
   
   useEffect(() => {
+    // Prevent multiple check attempts
+    if (authState.checkAttempted) return;
+    
     const checkAuth = async () => {
       try {
         console.log('ProtectedRoute: Checking authentication...');
@@ -37,19 +42,21 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         setAuthState({
           isChecking: false,
           isAuthenticated: result.isAuthenticated,
-          role: result.role
+          role: result.role,
+          checkAttempted: true
         });
       } catch (error) {
         console.error('ProtectedRoute: Error checking authentication:', error);
         setAuthState({
           isChecking: false,
-          isAuthenticated: false
+          isAuthenticated: false,
+          checkAttempted: true
         });
       }
     };
     
     checkAuth();
-  }, []);
+  }, [authState.checkAttempted]);
   
   // Show loading while checking
   if (authState.isChecking) {

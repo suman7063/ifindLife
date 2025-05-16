@@ -22,10 +22,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<UserRole | null>(null);
   const [isChecking, setIsChecking] = useState(true);
+  const [checkAttempted, setCheckAttempted] = useState(false);
   const location = useLocation();
 
-  // Direct check with Supabase
+  // Direct check with Supabase - only run once
   useEffect(() => {
+    if (checkAttempted) return;
+    
     const checkAuth = async () => {
       try {
         console.log('ProtectedRoute: Direct auth check with Supabase...');
@@ -48,11 +51,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       } finally {
         setDirectAuthChecked(true);
         setIsChecking(false);
+        setCheckAttempted(true);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [checkAttempted]);
 
   // Use either context auth or direct auth check
   const authResolved = directAuthChecked;
