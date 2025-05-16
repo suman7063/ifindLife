@@ -1,6 +1,5 @@
 
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { UserAuthProvider } from '@/contexts/auth/UserAuthProvider';
@@ -15,13 +14,11 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <Router>
-      <AuthProvider>
-        <UserAuthProvider>
-          <AppRoutes />
-        </UserAuthProvider>
-      </AuthProvider>
-    </Router>
+    <AuthProvider>
+      <UserAuthProvider>
+        <AppRoutes />
+      </UserAuthProvider>
+    </AuthProvider>
   );
 };
 
