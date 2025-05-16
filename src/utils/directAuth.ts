@@ -25,7 +25,7 @@ export async function directUserLogin(email: string, password: string): Promise<
       return { success: false, error: { message: 'Authentication failed. Please try again.' } };
     }
     
-    console.log('Login successful, session established');
+    console.log('Login successful, session established:', !!data.session);
     
     // Store session type for role determination
     localStorage.setItem('sessionType', 'user');

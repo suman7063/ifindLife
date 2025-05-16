@@ -16,12 +16,13 @@ export const useAuthState = (): AuthState => {
       console.log('useAuthState: Setting default sessionType as user');
     }
 
-    // Set up subscription to auth changes
+    // First, define the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
         
         if (event === 'SIGNED_OUT') {
+          console.log('Auth event: User signed out');
           localStorage.removeItem('sessionType');
           setState({
             ...initialAuthState,
@@ -31,6 +32,7 @@ export const useAuthState = (): AuthState => {
         }
         
         if (session) {
+          console.log('Auth event: Session available');
           // Process user data from session
           const sessionType = localStorage.getItem('sessionType') || 'user';
           
@@ -85,6 +87,7 @@ export const useAuthState = (): AuthState => {
             }));
           }
         } else {
+          console.log('Auth event: No session available');
           setState({
             ...initialAuthState,
             isLoading: false
@@ -93,25 +96,32 @@ export const useAuthState = (): AuthState => {
       }
     );
     
-    // Initial auth check
+    // Then perform initial auth check
     const checkAuth = async () => {
       try {
+        console.log('useAuthState: Initial auth check');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          throw error;
+          console.error('Initial auth check error:', error);
+          setState({
+            ...initialAuthState,
+            error,
+            isLoading: false
+          });
+          return;
         }
         
         if (data.session) {
-          console.log('Initial auth check found session:', data.session.user.id);
+          console.log('Initial auth check: Session found');
+          // The session will be handled by the onAuthStateChange listener
         } else {
-          console.log('Initial auth check: No active session');
+          console.log('Initial auth check: No session found');
           setState({
             ...initialAuthState,
             isLoading: false
           });
         }
-        // The session will be handled by the onAuthStateChange listener
       } catch (error) {
         console.error('Error checking auth:', error);
         setState({
@@ -122,8 +132,10 @@ export const useAuthState = (): AuthState => {
       }
     };
     
+    // Run initial check
     checkAuth();
     
+    // Cleanup function to unsubscribe
     return () => {
       subscription.unsubscribe();
     };

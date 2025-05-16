@@ -54,12 +54,12 @@ const UserLoginContent: React.FC = () => {
       
       toast.success("Login successful!");
       
-      // Handle redirect using React Router for better SPA experience
+      // Allow time for the authentication state to update
       setTimeout(() => {
         const redirectPath = getRedirectPath();
         console.log("Login successful, redirecting to:", redirectPath);
         navigate(redirectPath, { replace: true });
-      }, 100);
+      }, 1000);
       
       return true;
     } catch (error) {

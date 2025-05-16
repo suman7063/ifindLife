@@ -1,56 +1,57 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import UserLoginHeader from '@/components/auth/UserLoginHeader';
 import UserLoginContent from '@/components/auth/UserLoginContent';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { Container } from '@/components/ui/container';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
-import { checkAuthStatus, getRedirectPath } from '@/utils/directAuth';
+import { getRedirectPath } from '@/utils/directAuth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { isLoading: contextLoading } = useAuth();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
-  const [localLoading, setLocalLoading] = useState(true);
-  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   
-  // Check for authenticated session without relying on context
+  // Set login origin to 'user' to ensure correct role determination
   useEffect(() => {
-    const verifySession = async () => {
-      setLocalLoading(true);
-      
+    sessionStorage.setItem('loginOrigin', 'user');
+    console.log('Login: Setting login origin to user');
+  }, []);
+
+  // Check if already authenticated
+  useEffect(() => {
+    const checkSession = async () => {
       try {
-        console.log("Login page: Verifying authentication status");
-        const { isAuthenticated } = await checkAuthStatus();
+        setIsLoading(true);
+        const { data } = await supabase.auth.getSession();
         
-        if (isAuthenticated) {
-          console.log("Login page: User is authenticated, handling redirect");
+        if (data.session) {
+          console.log('Login: User already has an active session');
+          setIsAuthenticated(true);
           
-          // Add a small delay to ensure auth state is fully processed
+          // Add a small delay to ensure auth state is fully processed before redirect
           setTimeout(() => {
-            // Handle redirect using React Router
             const redirectPath = getRedirectPath();
-            console.log("Login page: Redirecting to", redirectPath);
+            console.log('Login: Redirecting to', redirectPath);
             navigate(redirectPath, { replace: true });
           }, 500);
         } else {
-          console.log("Login page: User is not authenticated, showing login form");
+          console.log('Login: No active session found');
+          setIsAuthenticated(false);
         }
-        
-        setAuthCheckCompleted(true);
-        setLocalLoading(false);
       } catch (error) {
-        console.error("Error checking authentication status:", error);
-        setAuthCheckCompleted(true);
-        setLocalLoading(false);
+        console.error('Error checking session:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
       }
     };
     
-    verifySession();
+    checkSession();
   }, [navigate]);
   
   // Check for pending actions in session storage
@@ -68,9 +69,13 @@ const Login: React.FC = () => {
     }
   }, []);
   
-  // Avoid showing loading screen unless necessary
-  if (localLoading && !authCheckCompleted) {
+  if (isLoading) {
     return <LoadingScreen message="Checking authentication status..." />;
+  }
+
+  // If already authenticated, don't render the login form
+  if (isAuthenticated) {
+    return <LoadingScreen message="Redirecting..." />;
   }
   
   return (
