@@ -1,7 +1,11 @@
 
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
 
+/**
+ * Direct user login function that handles authentication and redirection
+ */
 export async function directUserLogin(email: string, password: string): Promise<{ success: boolean; data?: any; error?: any }> {
   try {
     console.log('Attempting direct user login for:', email);
@@ -26,42 +30,7 @@ export async function directUserLogin(email: string, password: string): Promise<
     // Store session type for role determination
     localStorage.setItem('sessionType', 'user');
     
-    // Force redirect with a slight delay to ensure session is fully established
-    setTimeout(() => {
-      // Check for pending actions first
-      const pendingActionStr = sessionStorage.getItem('pendingAction');
-      if (pendingActionStr) {
-        try {
-          const pendingAction = JSON.parse(pendingActionStr);
-          sessionStorage.removeItem('pendingAction');
-          
-          if (pendingAction.type === 'book' && pendingAction.id) {
-            console.log('Force redirecting to booking page:', pendingAction.id);
-            window.location.href = `/experts/${pendingAction.id}?book=true`;
-            return;
-          }
-          
-          if (pendingAction.type === 'call' && pendingAction.id) {
-            console.log('Force redirecting to call page:', pendingAction.id);
-            window.location.href = `/experts/${pendingAction.id}?call=true`;
-            return;
-          }
-          
-          if (pendingAction.path) {
-            console.log('Force redirecting to path:', pendingAction.path);
-            window.location.href = pendingAction.path;
-            return;
-          }
-        } catch (error) {
-          console.error('Error handling pending action, redirecting to dashboard:', error);
-        }
-      }
-      
-      // Default redirect to user dashboard
-      console.log('Force redirecting to user dashboard');
-      window.location.href = '/user-dashboard';
-    }, 100);
-    
+    // Success - redirection will be handled by the component
     return { success: true, data };
   } catch (err) {
     console.error('Exception during direct login:', err);
@@ -69,53 +38,9 @@ export async function directUserLogin(email: string, password: string): Promise<
   }
 }
 
-export function redirectAfterLogin(role?: string) {
-  console.log('Redirecting after login, role:', role);
-  
-  // Check for pending actions that need to be handled
-  const pendingActionStr = sessionStorage.getItem('pendingAction');
-  
-  if (pendingActionStr) {
-    try {
-      const pendingAction = JSON.parse(pendingActionStr);
-      sessionStorage.removeItem('pendingAction');
-      
-      if (pendingAction.type === 'book' && pendingAction.id) {
-        console.log('Redirecting to booking page with expert ID:', pendingAction.id);
-        window.location.href = `/experts/${pendingAction.id}?book=true`;
-        return;
-      }
-      
-      if (pendingAction.type === 'call' && pendingAction.id) {
-        console.log('Redirecting to call page with expert ID:', pendingAction.id);
-        window.location.href = `/experts/${pendingAction.id}?call=true`;
-        return;
-      }
-      
-      if (pendingAction.path) {
-        console.log('Redirecting to pending action path:', pendingAction.path);
-        window.location.href = pendingAction.path;
-        return;
-      }
-    } catch (error) {
-      console.error('Error handling pending action:', error);
-    }
-  }
-  
-  // Default redirects based on role - FIXED PATHS TO MATCH ROUTE CONFIGURATION
-  console.log('No pending actions, using default redirect for role:', role);
-  if (role === 'expert') {
-    // Using direct URL assignment for more reliable redirect
-    window.location.href = '/expert-dashboard';
-  } else if (role === 'admin') {
-    // Using direct URL assignment for more reliable redirect
-    window.location.href = '/admin';
-  } else {
-    // Using direct URL assignment for more reliable redirect
-    window.location.href = '/user-dashboard';
-  }
-}
-
+/**
+ * Checks current authentication status
+ */
 export async function checkAuthStatus() {
   try {
     const { data } = await supabase.auth.getSession();
@@ -131,5 +56,44 @@ export async function checkAuthStatus() {
       session: null,
       user: null
     };
+  }
+}
+
+/**
+ * Gets the appropriate redirect URL based on session type and pending actions
+ */
+export function getRedirectPath(): string {
+  // Check for pending actions
+  const pendingActionStr = sessionStorage.getItem('pendingAction');
+  if (pendingActionStr) {
+    try {
+      const pendingAction = JSON.parse(pendingActionStr) as PendingAction;
+      sessionStorage.removeItem('pendingAction');
+      
+      if (pendingAction.type === 'book' && pendingAction.id) {
+        return `/experts/${pendingAction.id}?book=true`;
+      }
+      
+      if (pendingAction.type === 'call' && pendingAction.id) {
+        return `/experts/${pendingAction.id}?call=true`;
+      }
+      
+      if (pendingAction.path) {
+        return pendingAction.path;
+      }
+    } catch (error) {
+      console.error('Error handling pending action:', error);
+    }
+  }
+  
+  // Default redirects based on role
+  const sessionType = localStorage.getItem('sessionType') || 'user';
+  
+  if (sessionType === 'expert') {
+    return '/expert-dashboard';
+  } else if (sessionType === 'admin') {
+    return '/admin';
+  } else {
+    return '/user-dashboard';
   }
 }

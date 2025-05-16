@@ -3,19 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
-import { directUserLogin } from '@/utils/directAuth';
+import { directUserLogin, getRedirectPath } from '@/utils/directAuth';
 
 const UserLoginContent: React.FC = () => {
   const navigate = useNavigate();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
-  
-  // Use the unified auth context as a fallback
-  const auth = useAuth();
   
   // Check for pending actions in sessionStorage
   useEffect(() => {
@@ -57,9 +53,11 @@ const UserLoginContent: React.FC = () => {
       
       toast.success("Login successful!");
       
-      // The redirect is handled in the directUserLogin function
-      return true;
+      // Handle redirect using React Router for better SPA experience
+      const redirectPath = getRedirectPath();
+      navigate(redirectPath, { replace: true });
       
+      return true;
     } catch (error) {
       console.error("Login error:", error);
       setLoginError("An error occurred during login. Please try again.");

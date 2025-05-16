@@ -8,12 +8,12 @@ import LoadingScreen from '@/components/auth/LoadingScreen';
 import { Container } from '@/components/ui/container';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
-import { checkAuthStatus } from '@/utils/directAuth';
+import { checkAuthStatus, getRedirectPath } from '@/utils/directAuth';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isLoading: contextLoading } = useAuth();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
   
@@ -24,31 +24,21 @@ const Login: React.FC = () => {
       
       try {
         console.log("Login page: Verifying authentication status");
-        const { isAuthenticated, session } = await checkAuthStatus();
+        const { isAuthenticated } = await checkAuthStatus();
         
-        if (isAuthenticated && session) {
+        if (isAuthenticated) {
           console.log("Login page: User is authenticated, handling redirect");
           
-          // Check for session type to determine the dashboard
-          const sessionType = localStorage.getItem('sessionType');
-          
-          // Force immediate redirect based on session type
-          console.log("Login page: Force redirecting based on session type:", sessionType);
-          
-          if (sessionType === 'expert') {
-            window.location.href = '/expert-dashboard';
-          } else if (sessionType === 'admin') {
-            window.location.href = '/admin';
-          } else {
-            window.location.href = '/user-dashboard';
-          }
+          // Handle redirect using React Router
+          const redirectPath = getRedirectPath();
+          navigate(redirectPath, { replace: true });
           return;
         } else {
           console.log("Login page: User is not authenticated, showing login form");
+          setLocalLoading(false);
         }
       } catch (error) {
         console.error("Error checking authentication status:", error);
-      } finally {
         setLocalLoading(false);
       }
     };
@@ -71,8 +61,8 @@ const Login: React.FC = () => {
     }
   }, []);
   
-  // Use the context for loading state, but don't rely on it for authentication
-  if (isLoading || localLoading) {
+  // Avoid showing loading screen unless necessary
+  if (localLoading) {
     return <LoadingScreen message="Checking authentication status..." />;
   }
   
