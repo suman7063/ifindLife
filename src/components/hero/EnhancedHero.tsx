@@ -97,9 +97,10 @@ const EnhancedHero: React.FC = () => {
           </div>
         ))}
         
-        {/* Headline - positioned to match screenshot */}
+        {/* Headline - positioned to match the website */}
         <div 
-          className={`absolute inset-0 flex flex-col justify-start ${isMobile ? 'pt-[180px]' : 'pt-[200px]'} px-6 sm:px-12 lg:px-[60px]`}
+          className="absolute inset-0 flex flex-col justify-start items-start"
+          style={{paddingTop: isMobile ? '180px' : '200px', paddingLeft: isMobile ? '24px' : '60px'}}
         >
           <h1 
             className="text-white font-bold"
@@ -109,7 +110,8 @@ const EnhancedHero: React.FC = () => {
               lineHeight: isMobile ? '64px' : '108px',
               fontWeight: 700,
               color: '#FFFFFF',
-              maxWidth: '540px'
+              maxWidth: '540px',
+              textAlign: 'left'
             }}
           >
             You Are<br />

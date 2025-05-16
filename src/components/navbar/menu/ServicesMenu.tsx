@@ -19,7 +19,7 @@ const ServicesMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/services" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium text-left"
               >
                 All Services
               </Link>
@@ -29,7 +29,7 @@ const ServicesMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/services/mindful-listening" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Heart2Heart Listening Sessions
               </Link>
@@ -39,7 +39,7 @@ const ServicesMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/services/therapy-sessions" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Therapy Sessions
               </Link>
@@ -49,7 +49,7 @@ const ServicesMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/services/guided-meditations" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Guided Meditations
               </Link>
@@ -59,7 +59,7 @@ const ServicesMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/services/offline-retreats" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Offline Retreats
               </Link>
@@ -69,7 +69,7 @@ const ServicesMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/services/life-coaching" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Life Coaching
               </Link>

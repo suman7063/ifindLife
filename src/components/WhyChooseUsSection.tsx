@@ -38,8 +38,8 @@ const WhyChooseUsSection = () => {
       <div className="absolute inset-0 bg-gray-800/20"></div>
       
       <Container className="relative z-10">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4 text-gray-800">Why Choose Us</h2>
+        <div className="mb-12">
+          <h2 className="text-4xl font-bold mb-4 text-gray-800 text-left">Why Choose Us</h2>
         </div>
         
         <div className="max-w-5xl mx-auto">
@@ -51,9 +51,9 @@ const WhyChooseUsSection = () => {
               >
                 <div className="flex items-center mb-3">
                   <CheckCircle className="h-6 w-6 text-ifind-teal mr-3 flex-shrink-0" />
-                  <h3 className="text-lg font-medium text-gray-800">{benefit.title}</h3>
+                  <h3 className="text-lg font-medium text-gray-800 text-left">{benefit.title}</h3>
                 </div>
-                <p className="text-gray-600 mt-2">{benefit.description}</p>
+                <p className="text-gray-600 mt-2 text-left">{benefit.description}</p>
               </div>
             ))}
           </div>

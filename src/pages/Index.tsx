@@ -45,29 +45,29 @@ const Index = () => {
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Section 2: Top IFL Experts */}
+        {/* Section 2: What We Do */}
+        <WhatWeDoSection />
+        
+        {/* Section 3: Services Section */}
+        <ServicesSection />
+
+        {/* Section 4: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
-        
-        {/* Section 3: What We Do */}
-        <WhatWeDoSection />
-        
-        {/* Section 4: Services Section - IFL Programs for Individuals and Programs for Organizations */}
-        <ServicesSection />
         
         {/* Section 5: Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 6: Testimonials */}
+        {/* Section 6: Join Our Mindfulness Community */}
+        <MindfulnessCommunitySection />
+        
+        {/* Section 7: Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
-        
-        {/* Section 7: Join Our Mindfulness Community */}
-        <MindfulnessCommunitySection />
         
         {/* Section 8: Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>

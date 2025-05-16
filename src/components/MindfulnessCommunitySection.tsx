@@ -28,7 +28,7 @@ const MindfulnessCommunitySection = () => {
 
   return (
     <section className="py-16 bg-white">
-      <Container>
+      <div className="container mx-auto px-6 sm:px-12">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Our Mindfulness Community</h2>
           <p className="text-gray-600 max-w-3xl mx-auto">
@@ -54,8 +54,8 @@ const MindfulnessCommunitySection = () => {
               <div className="flex items-start gap-4 mb-4">
                 <Mail className="text-ifind-purple mt-1" />
                 <div>
-                  <h3 className="text-xl font-bold mb-2">Daily Activities Newsletter</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-xl font-bold mb-2 text-left">Daily Activities Newsletter</h3>
+                  <p className="text-gray-600 mb-4 text-left">
                     Join our email list to receive daily mindfulness practices and activities directly to
                     your inbox. Start your day with intention and clarity.
                   </p>
@@ -79,8 +79,8 @@ const MindfulnessCommunitySection = () => {
               <div className="flex items-start gap-4 mb-4">
                 <MessageSquare className="text-ifind-aqua mt-1" />
                 <div>
-                  <h3 className="text-xl font-bold mb-2">Join WhatsApp Community</h3>
-                  <p className="text-gray-600 mb-4">
+                  <h3 className="text-xl font-bold mb-2 text-left">Join WhatsApp Community</h3>
+                  <p className="text-gray-600 mb-4 text-left">
                     Connect with like-minded individuals in our WhatsApp group. Share experiences, get
                     instant support, and participate in group activities.
                   </p>
@@ -100,7 +100,7 @@ const MindfulnessCommunitySection = () => {
             </div>
           </div>
         </div>
-      </Container>
+      </div>
     </section>
   );
 };
