@@ -68,7 +68,7 @@ const EnhancedHero: React.FC = () => {
   );
 
   return (
-    <div className="relative h-screen">
+    <div className="relative h-screen w-full">
       {/* Hero image/slider */}
       <div className="relative w-full h-full overflow-hidden">
         {sliderImages.map((image, index) => (
@@ -97,21 +97,20 @@ const EnhancedHero: React.FC = () => {
           </div>
         ))}
         
-        {/* Headline - positioned to match the website */}
+        {/* Headline - positioned correctly */}
         <div 
           className="absolute inset-0 flex flex-col justify-start items-start"
           style={{paddingTop: isMobile ? '180px' : '200px', paddingLeft: isMobile ? '24px' : '60px'}}
         >
           <h1 
-            className="text-white font-bold"
+            className="text-white font-bold text-left"
             style={{
               fontFamily: 'Roboto, sans-serif',
               fontSize: isMobile ? '58px' : '96px',
               lineHeight: isMobile ? '64px' : '108px',
               fontWeight: 700,
               color: '#FFFFFF',
-              maxWidth: '540px',
-              textAlign: 'left'
+              maxWidth: '540px'
             }}
           >
             You Are<br />

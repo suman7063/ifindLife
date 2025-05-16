@@ -45,12 +45,12 @@ const Index = () => {
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Section 2: What We Do */}
-        <WhatWeDoSection />
-        
-        {/* Section 3: Services Section */}
+        {/* Section 2: Services Section */}
         <ServicesSection />
 
+        {/* Section 3: What We Do */}
+        <WhatWeDoSection />
+        
         {/* Section 4: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
@@ -61,13 +61,13 @@ const Index = () => {
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 6: Join Our Mindfulness Community */}
-        <MindfulnessCommunitySection />
-        
-        {/* Section 7: Testimonials */}
+        {/* Section 6: Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
+        
+        {/* Section 7: Join Our Mindfulness Community */}
+        <MindfulnessCommunitySection />
         
         {/* Section 8: Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>

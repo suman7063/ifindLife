@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
-import { Mail, Users, MessageSquare } from 'lucide-react';
+import { Mail, Users, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 const MindfulnessCommunitySection = () => {
@@ -41,7 +41,7 @@ const MindfulnessCommunitySection = () => {
           {/* Left side - Community image */}
           <div className="rounded-lg overflow-hidden h-[400px]">
             <img 
-              src="/lovable-uploads/b02ac0f0-8902-4717-b37e-cda221c75fe1.png" 
+              src="/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
               alt="Mindfulness Community" 
               className="w-full h-full object-cover"
             />
@@ -77,7 +77,7 @@ const MindfulnessCommunitySection = () => {
             {/* WhatsApp community */}
             <div className="bg-gray-50 p-6 rounded-lg">
               <div className="flex items-start gap-4 mb-4">
-                <MessageSquare className="text-ifind-aqua mt-1" />
+                <MessageCircle className="text-ifind-aqua mt-1" />
                 <div>
                   <h3 className="text-xl font-bold mb-2 text-left">Join WhatsApp Community</h3>
                   <p className="text-gray-600 mb-4 text-left">
@@ -88,7 +88,7 @@ const MindfulnessCommunitySection = () => {
                     onClick={handleJoinWhatsApp} 
                     className="w-full bg-green-500 hover:bg-green-600"
                   >
-                    <MessageSquare className="mr-2 h-5 w-5" /> Join WhatsApp Group
+                    <MessageCircle className="mr-2 h-5 w-5" /> Join WhatsApp Group
                   </Button>
                 </div>
               </div>
