@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { supabase } from '@/lib/supabase';
+import { authenticate } from '@/modules/authentication';
 import { toast } from 'sonner';
 import ProfileSettings from '@/components/user-dashboard/ProfileSettings';
 import ConsultationsSection from '@/components/user-dashboard/ConsultationsSection';
@@ -23,24 +23,24 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
-      console.log('Logging out...');
+      console.log('UserDashboardContent: Logging out...');
       
-      const { error } = await supabase.auth.signOut();
+      const result = await authenticate.logout();
       
-      if (error) {
-        console.error('Logout error:', error);
+      if (!result.success) {
+        console.error('UserDashboardContent: Logout error:', result.error);
         toast.error('Failed to logout');
-        setIsLoggingOut(false);
         return;
       }
       
-      localStorage.removeItem('sessionType');
       toast.success('Logged out successfully');
       
+      // Navigate to login page
       navigate('/user-login', { replace: true });
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('UserDashboardContent: Logout error:', error);
       toast.error('An error occurred during logout');
+    } finally {
       setIsLoggingOut(false);
     }
   };

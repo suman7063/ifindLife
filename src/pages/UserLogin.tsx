@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { authenticate, navigation } from '@/modules/authentication';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,16 +21,15 @@ const UserLogin: React.FC = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        console.log('Checking for existing session...');
-        const { data } = await supabase.auth.getSession();
+        console.log('UserLogin: Checking for existing session...');
+        const result = await authenticate.checkSession();
         
-        if (data.session) {
-          console.log('Existing session found, redirecting to dashboard');
-          localStorage.setItem('sessionType', 'user');
+        if (result.isAuthenticated) {
+          console.log('UserLogin: Existing session found, redirecting to dashboard');
           navigate('/user-dashboard', { replace: true });
         }
       } catch (error) {
-        console.error('Error checking session:', error);
+        console.error('UserLogin: Error checking session:', error);
       } finally {
         setIsCheckingAuth(false);
       }
@@ -50,38 +49,27 @@ const UserLogin: React.FC = () => {
     
     try {
       setIsLoading(true);
-      console.log('Attempting login with:', email);
+      console.log('UserLogin: Attempting login with:', email);
       
-      // Store login origin for role determination
-      localStorage.setItem('sessionType', 'user');
+      const result = await authenticate.userLogin(email, password);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        console.error('Login error:', error.message);
-        toast.error(error.message);
-        setIsLoading(false);
-        return;
-      }
-      
-      if (!data.session) {
-        toast.error('Login failed - no session created');
-        setIsLoading(false);
+      if (!result.success) {
+        const errorMessage = result.error?.message || 'Login failed';
+        console.error('UserLogin: Login error:', errorMessage);
+        toast.error(errorMessage);
         return;
       }
       
       toast.success('Login successful!');
-      console.log('Login successful, redirecting to dashboard...');
+      console.log('UserLogin: Login successful, redirecting to dashboard...');
       
-      // Redirect to dashboard immediately
+      // Navigate to dashboard
       navigate('/user-dashboard', { replace: true });
       
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('UserLogin: Login error:', error);
       toast.error('An unexpected error occurred');
+    } finally {
       setIsLoading(false);
     }
   };

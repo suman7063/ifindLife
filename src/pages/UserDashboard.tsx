@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authenticate } from '@/modules/authentication';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import LoadingScreen from '@/components/auth/LoadingScreen';
@@ -16,18 +17,26 @@ const UserDashboard: React.FC = () => {
     const checkAuth = async () => {
       try {
         console.log('UserDashboard: Checking authentication...');
-        const { data, error } = await supabase.auth.getSession();
+        const authResult = await authenticate.checkSession();
         
-        if (error) {
-          throw error;
+        if (!authResult.isAuthenticated) {
+          console.log('UserDashboard: Not authenticated, redirecting to login');
+          navigate('/user-login', { replace: true });
+          return;
         }
+        
+        if (authResult.role !== 'user') {
+          console.log(`UserDashboard: Incorrect role (${authResult.role}), redirecting`);
+          navigate('/user-login', { replace: true });
+          return;
+        }
+        
+        // Get user data from Supabase session
+        const { data } = await supabase.auth.getSession();
         
         if (data.session) {
           console.log('UserDashboard: Session found, setting user');
           setUser(data.session.user);
-          
-          // Ensure session type is set
-          localStorage.setItem('sessionType', 'user');
         } else {
           console.log('UserDashboard: No session found, redirecting to login');
           navigate('/user-login', { replace: true });
@@ -48,11 +57,11 @@ const UserDashboard: React.FC = () => {
       (event, session) => {
         console.log('UserDashboard: Auth state changed:', event);
         
-        if (session) {
-          setUser(session.user);
-        } else {
+        if (event === 'SIGNED_OUT') {
           setUser(null);
           navigate('/user-login', { replace: true });
+        } else if (session) {
+          setUser(session.user);
         }
       }
     );
