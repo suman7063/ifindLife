@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
+import { directUserLogin, redirectAfterLogin } from '@/utils/directAuth';
 
 const UserLoginContent: React.FC = () => {
   const navigate = useNavigate();
@@ -13,37 +14,8 @@ const UserLoginContent: React.FC = () => {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   
-  // Use the unified auth context
+  // Use the unified auth context as a fallback
   const auth = useAuth();
-  
-  // Detailed inspection logs
-  useEffect(() => {
-    console.log('UserLoginContent: Auth context check:', {
-      authAvailable: !!auth,
-      loginAvailable: !!auth?.login,
-      loginType: typeof auth?.login,
-      authKeys: auth ? Object.keys(auth) : []
-    });
-    
-    // Log more detailed structure
-    console.log('Auth object keys:', Object.keys(auth || {}));
-    console.log('Auth object structure:', JSON.stringify(auth, (key, value) => 
-      typeof value === 'function' ? 'FUNCTION' : value, 2));
-    
-    // Check if login function exists
-    if (typeof auth?.login !== 'function') {
-      console.warn('Login function is not available in auth context');
-      
-      // Find any function in auth object that might be used for login
-      if (auth) {
-        const authFunctions = Object.entries(auth)
-          .filter(([_, val]) => typeof val === 'function')
-          .map(([key, _]) => key);
-        
-        console.log('All functions in auth object:', authFunctions);
-      }
-    }
-  }, [auth]);
   
   // Check for pending actions in sessionStorage
   useEffect(() => {
@@ -70,74 +42,31 @@ const UserLoginContent: React.FC = () => {
     setLoginError(null);
     
     try {
-      console.log("Attempting user login with:", email);
-      console.log("Auth object available:", auth);
+      console.log("Attempting user login with direct method:", email);
       
-      if (!auth) {
-        console.error("Auth context is not available");
-        setLoginError("Authentication system is not available. Please try again later.");
+      // Use direct login method instead of context
+      const result = await directUserLogin(email, password);
+      
+      if (!result.success) {
+        const errorMessage = result.error?.message || 'Login failed. Please check your credentials.';
+        setLoginError(errorMessage);
+        toast.error(errorMessage);
         return false;
       }
       
-      // Check if login function exists directly in auth object
-      let loginFunction = auth.login;
+      toast.success("Login successful!");
       
-      // If not, look for it in another property
-      if (typeof loginFunction !== 'function') {
-        console.warn("Direct login function not available, checking for alternatives");
-        
-        // Try to find any function that might be the login function
-        const authFunctions = Object.entries(auth)
-          .filter(([_, val]) => typeof val === 'function')
-          .map(([key, val]) => ({ key, val }));
-          
-        console.log("Available functions:", authFunctions.map(f => f.key));
-        
-        // Try to use any function with "login" in its name
-        const loginFunctions = authFunctions.filter(f => 
-          f.key.toLowerCase().includes('login') || 
-          f.key.toLowerCase().includes('signin')
-        );
-        
-        if (loginFunctions.length > 0) {
-          console.log("Found potential login function:", loginFunctions[0].key);
-          loginFunction = loginFunctions[0].val;
-        }
+      // Check if auth context is available for role determination
+      let role = 'user'; // Default role
+      
+      if (auth && auth.role) {
+        role = auth.role;
       }
       
-      if (typeof loginFunction !== 'function') {
-        console.error("Login function is not available:", typeof loginFunction);
-        console.error("Auth keys available:", Object.keys(auth));
-        setLoginError("Login functionality is not available. Please try again later.");
-        return false;
-      }
+      // Handle redirect based on role
+      redirectAfterLogin(role);
+      return true;
       
-      // Call the login function from auth context
-      const success = await loginFunction(email, password);
-      
-      if (success) {
-        toast.success("Login successful!");
-        
-        // Handle redirect based on pending action or role
-        if (pendingAction) {
-          // Let the auth journey preservation hook handle the redirect
-          return true;
-        } else {
-          // Redirect to the appropriate dashboard based on role
-          if (auth.role === 'user') {
-            navigate('/user-dashboard');
-          } else if (auth.role === 'expert') {
-            navigate('/expert-dashboard');
-          } else if (auth.role === 'admin') {
-            navigate('/admin');
-          }
-        }
-        return true;
-      } else {
-        setLoginError("Login failed. Please check your credentials.");
-        toast.error("Login failed. Please check your credentials.");
-        return false;
-      }
     } catch (error) {
       console.error("Login error:", error);
       setLoginError("An error occurred during login. Please try again.");

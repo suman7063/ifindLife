@@ -1,0 +1,74 @@
+
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+
+export async function directUserLogin(email: string, password: string): Promise<{ success: boolean; data?: any; error?: any }> {
+  try {
+    console.log('Attempting direct user login for:', email);
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email, 
+      password
+    });
+    
+    if (error) {
+      console.error('Direct login error:', error);
+      return { success: false, error };
+    }
+    
+    if (!data.session) {
+      console.error('No session returned from Supabase');
+      return { success: false, error: { message: 'Authentication failed. Please try again.' } };
+    }
+    
+    console.log('Login successful, session established');
+    
+    // Store session type for role determination
+    localStorage.setItem('sessionType', 'user');
+    
+    return { success: true, data };
+  } catch (err) {
+    console.error('Exception during direct login:', err);
+    return { success: false, error: err };
+  }
+}
+
+export function redirectAfterLogin(role?: string) {
+  console.log('Redirecting after login, role:', role);
+  
+  // Check for pending actions that need to be handled
+  const pendingActionStr = sessionStorage.getItem('pendingAction');
+  
+  if (pendingActionStr) {
+    try {
+      const pendingAction = JSON.parse(pendingActionStr);
+      sessionStorage.removeItem('pendingAction');
+      
+      if (pendingAction.type === 'book' && pendingAction.id) {
+        window.location.href = `/experts/${pendingAction.id}?book=true`;
+        return;
+      }
+      
+      if (pendingAction.type === 'call' && pendingAction.id) {
+        window.location.href = `/experts/${pendingAction.id}?call=true`;
+        return;
+      }
+      
+      if (pendingAction.path) {
+        window.location.href = pendingAction.path;
+        return;
+      }
+    } catch (error) {
+      console.error('Error handling pending action:', error);
+    }
+  }
+  
+  // Default redirects based on role
+  if (role === 'expert') {
+    window.location.href = '/expert-dashboard';
+  } else if (role === 'admin') {
+    window.location.href = '/admin';
+  } else {
+    window.location.href = '/user-dashboard';
+  }
+}
