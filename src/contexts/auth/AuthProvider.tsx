@@ -30,7 +30,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated: value.isAuthenticated,
     isLoading: value.isLoading,
     role: value.role,
-    hasLogin: !!value.login
+    hasLogin: !!value.login,
+    loginType: typeof value.login
   });
 
   return (

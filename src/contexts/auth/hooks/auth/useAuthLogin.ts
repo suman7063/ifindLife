@@ -2,7 +2,7 @@
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { LoginOptions } from '../../types';
+import { LoginOptions } from '@/contexts/auth/types';
 
 export const useAuthLogin = (state: any, onActionComplete: () => void) => {
   const login = useCallback(async (
@@ -10,6 +10,8 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
     password: string, 
     options?: LoginOptions
   ): Promise<boolean> => {
+    console.log('Login function called with email:', email);
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -28,6 +30,7 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
         localStorage.setItem('sessionType', 'user');
       }
       
+      console.log('Login successful, calling onActionComplete');
       onActionComplete();
       return true;
     } catch (error) {
@@ -36,6 +39,9 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
       return false;
     }
   }, [onActionComplete]);
+
+  // Log at hook level to verify login function is created
+  console.log('useAuthLogin hook: created login function of type:', typeof login);
 
   return { login };
 };

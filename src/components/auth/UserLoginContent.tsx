@@ -16,6 +16,15 @@ const UserLoginContent: React.FC = () => {
   // Use the unified auth context
   const auth = useAuth();
   
+  // Check for auth context validity
+  useEffect(() => {
+    console.log('UserLoginContent: Auth context check:', {
+      authAvailable: !!auth,
+      loginAvailable: !!auth?.login,
+      loginType: typeof auth?.login
+    });
+  }, [auth]);
+  
   // Check for pending actions in sessionStorage
   useEffect(() => {
     const pendingActionStr = sessionStorage.getItem('pendingAction');
@@ -30,7 +39,7 @@ const UserLoginContent: React.FC = () => {
     }
   }, []);
   
-  // CRITICAL FIX: Set login origin to 'user' to ensure correct role determination
+  // Set login origin to 'user' to ensure correct role determination
   useEffect(() => {
     sessionStorage.setItem('loginOrigin', 'user');
     console.log('UserLoginContent: Setting login origin to user');
@@ -44,15 +53,15 @@ const UserLoginContent: React.FC = () => {
       console.log("Attempting user login with:", email);
       console.log("Auth object available:", auth);
       
-      if (!auth || !auth.login || typeof auth.login !== 'function') {
-        console.error("Login function is not available:", auth?.login);
+      if (!auth || typeof auth.login !== 'function') {
+        console.error("Login function is not available:", typeof auth?.login);
         toast.error("Login functionality is not available");
         setLoginError("Login functionality is not available. Please try again later.");
         setIsLoggingIn(false);
         return false;
       }
       
-      // Note: Use 'user' role to explicitly indicate this is a user login
+      // Call the login function from auth context
       const success = await auth.login(email, password);
       
       if (success) {

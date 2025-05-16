@@ -1,11 +1,20 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
 import { NewReview, NewReport } from '@/types/supabase/tables';
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
+  
+  // Log auth context in UserAuthProvider
+  useEffect(() => {
+    console.log('UserAuthProvider: auth context check:', {
+      authAvailable: !!auth,
+      loginAvailable: !!auth.login,
+      loginType: typeof auth.login
+    });
+  }, [auth]);
   
   // Create a compatibility layer for the user auth context
   const userAuthValue = {

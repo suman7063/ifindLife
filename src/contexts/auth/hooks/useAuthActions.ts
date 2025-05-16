@@ -25,6 +25,9 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
   const { registerExpert } = useExpertRegistration(onActionComplete);
   const { addExpertService, removeExpertService } = useExpertServices(state);
 
+  // Log the login function to verify it exists and is being properly returned
+  console.log('useAuthActions: login function type:', typeof login);
+
   // Return all the functions from the modular hooks
   return {
     login,

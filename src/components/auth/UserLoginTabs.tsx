@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
@@ -17,12 +17,15 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   // Use the unified auth context
   const auth = useAuth();
   
-  // Log auth context availability
-  console.log('UserLoginTabs: Auth context available:', {
-    authExists: !!auth,
-    loginExists: !!auth?.login,
-    signupExists: !!auth?.signup
-  });
+  // Log auth context availability in more detail
+  useEffect(() => {
+    console.log('UserLoginTabs: Auth context available:', {
+      authExists: !!auth,
+      loginExists: !!auth?.login,
+      loginType: typeof auth?.login,
+      authKeys: auth ? Object.keys(auth) : []
+    });
+  }, [auth]);
   
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
@@ -30,7 +33,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
       if (onLogin) {
         console.log('UserLoginTabs: Using provided onLogin function');
         return await onLogin(email, password);
-      } else if (auth && auth.login) {
+      } else if (auth && typeof auth.login === 'function') {
         console.log('UserLoginTabs: Using auth.login from context');
         return await auth.login(email, password);
       } else {
