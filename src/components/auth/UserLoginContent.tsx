@@ -21,7 +21,8 @@ const UserLoginContent: React.FC = () => {
     console.log('UserLoginContent: Auth context check:', {
       authAvailable: !!auth,
       loginAvailable: !!auth?.login,
-      loginType: typeof auth?.login
+      loginType: typeof auth?.login,
+      authKeysAvailable: auth ? Object.keys(auth) : []
     });
   }, [auth]);
   
@@ -53,11 +54,16 @@ const UserLoginContent: React.FC = () => {
       console.log("Attempting user login with:", email);
       console.log("Auth object available:", auth);
       
-      if (!auth || typeof auth.login !== 'function') {
+      if (!auth) {
+        console.error("Auth context is not available");
+        setLoginError("Authentication system is not available. Please try again later.");
+        return false;
+      }
+      
+      if (typeof auth.login !== 'function') {
         console.error("Login function is not available:", typeof auth?.login);
-        toast.error("Login functionality is not available");
+        console.error("Auth keys available:", Object.keys(auth));
         setLoginError("Login functionality is not available. Please try again later.");
-        setIsLoggingIn(false);
         return false;
       }
       
@@ -85,14 +91,12 @@ const UserLoginContent: React.FC = () => {
       } else {
         setLoginError("Login failed. Please check your credentials.");
         toast.error("Login failed. Please check your credentials.");
-        setIsLoggingIn(false);
         return false;
       }
     } catch (error) {
       console.error("Login error:", error);
       setLoginError("An error occurred during login. Please try again.");
       toast.error("An error occurred during login. Please try again.");
-      setIsLoggingIn(false);
       return false;
     } finally {
       setIsLoggingIn(false);

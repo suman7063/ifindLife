@@ -28,6 +28,13 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   }, [auth]);
   
   const handleLogin = async (email: string, password: string) => {
+    console.log('UserLoginTabs: Login function check:', {
+      onLoginProvided: !!onLogin,
+      onLoginType: typeof onLogin,
+      authLoginExists: !!auth?.login,
+      authLoginType: typeof auth?.login
+    });
+    
     setIsLoading(true);
     try {
       if (onLogin) {

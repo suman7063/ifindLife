@@ -27,9 +27,16 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
 
   // Log the login function to verify it exists and is being properly returned
   console.log('useAuthActions: login function type:', typeof login);
+  
+  if (!login || typeof login !== 'function') {
+    console.error('useAuthActions: login function is missing or not a function!', {
+      loginExists: !!login,
+      loginType: typeof login
+    });
+  }
 
   // Return all the functions from the modular hooks
-  return {
+  const actions = {
     login,
     signup,
     registerExpert,
@@ -44,4 +51,9 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
     addExpertService,
     removeExpertService
   };
+  
+  // Verify all required actions exist
+  console.log('useAuthActions: returning actions with keys:', Object.keys(actions));
+
+  return actions;
 };
