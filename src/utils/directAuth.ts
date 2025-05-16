@@ -72,3 +72,21 @@ export function redirectAfterLogin(role?: string) {
     window.location.href = '/user-dashboard';
   }
 }
+
+export async function checkAuthStatus() {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return {
+      isAuthenticated: !!data.session,
+      session: data.session,
+      user: data.session?.user
+    };
+  } catch (err) {
+    console.error('Auth check error:', err);
+    return {
+      isAuthenticated: false,
+      session: null,
+      user: null
+    };
+  }
+}
