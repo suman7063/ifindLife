@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { defaultSessions } from '@/components/admin/sessions/defaultSessions';
 
-const IssueSessions: React.FC = () => {
+const HomepageIssueSessions: React.FC = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -137,4 +137,4 @@ const IssueSessions: React.FC = () => {
   );
 };
 
-export default IssueSessions;
+export default HomepageIssueSessions;

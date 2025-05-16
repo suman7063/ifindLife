@@ -48,7 +48,9 @@ const Index = () => {
         <EnhancedHero />
         
         {/* Section 2: Introduction Section - Full Width */}
-        <IntroductionSection />
+        <div className="full-width-section">
+          <IntroductionSection />
+        </div>
         
         {/* Section 3: Services Section */}
         <ServicesSection />

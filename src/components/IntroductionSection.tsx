@@ -3,10 +3,10 @@ import React from 'react';
 
 const IntroductionSection = () => {
   return (
-    <section className="py-20 bg-white w-full">
+    <section className="py-20 w-full bg-white">
       <div className="max-w-7xl mx-auto px-4">
         <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-ifind-aqua to-ifind-purple">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-ifind-aqua to-ifind-purple whitespace-nowrap">
             Welcome to Your Mental Wellness Journey
           </h2>
           <p className="text-lg text-gray-700 leading-relaxed">
