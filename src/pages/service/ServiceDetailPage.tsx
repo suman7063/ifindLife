@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import ServiceDetail from '@/components/services/ServiceDetail';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { servicesData } from '@/components/services/detail/servicesData';

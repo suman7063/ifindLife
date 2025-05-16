@@ -31,7 +31,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                 <NavigationMenuLink 
                   asChild
                   className={cn(
-                    "block w-full p-2 text-sm rounded-md text-left", // Add text-left here
+                    "block w-full p-2 text-sm rounded-md text-left", 
                     hasExpertProfile 
                       ? "text-muted cursor-not-allowed" 
                       : "hover:bg-accent"
@@ -45,7 +45,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
                 <NavigationMenuLink 
                   asChild
                   className={cn(
-                    "block w-full p-2 text-sm rounded-md text-left", // Add text-left here
+                    "block w-full p-2 text-sm rounded-md text-left", 
                     isAuthenticated 
                       ? "text-muted cursor-not-allowed" 
                       : "hover:bg-accent"

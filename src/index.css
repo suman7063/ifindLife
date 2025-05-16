@@ -106,6 +106,26 @@
     @apply text-left;
   }
 
+  /* Apply text justification to all main content outside homepage */
+  main:not(.home-page) p {
+    @apply text-justify;
+  }
+  
+  /* Left align all headings except on homepage */
+  main:not(.home-page) h1:not(.page-heading),
+  main:not(.home-page) h2:not(.page-heading),
+  main:not(.home-page) h3:not(.page-heading),
+  main:not(.home-page) h4:not(.page-heading),
+  main:not(.home-page) h5:not(.page-heading),
+  main:not(.home-page) h6:not(.page-heading) {
+    @apply text-left;
+  }
+
+  /* Navigation menu item alignment */
+  .navigation-menu-item {
+    @apply text-left w-full;
+  }
+
   .bg-pattern {
     position: relative;
   }
@@ -163,5 +183,10 @@
   /* Full width container without gutters */
   .container-full {
     @apply w-full max-w-none px-0;
+  }
+  
+  /* Container with no side padding for full width sections */
+  .container-no-padding {
+    @apply container mx-auto px-0;
   }
 }

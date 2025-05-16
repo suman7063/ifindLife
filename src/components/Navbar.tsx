@@ -143,7 +143,7 @@ const Navbar = () => {
   return (
     <>
       {hasDualSessions && (
-        <Alert variant="destructive" className="rounded-none">
+        <Alert variant="destructive" className="rounded-none w-full">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Warning: Multiple Sessions</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
@@ -161,7 +161,7 @@ const Navbar = () => {
         </Alert>
       )}
       <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
-        <div className="w-full px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
+        <div className="container-fluid px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
           <Link to="/" className="flex items-center">
             <img 
               src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
