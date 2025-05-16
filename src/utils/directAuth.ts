@@ -45,16 +45,19 @@ export function redirectAfterLogin(role?: string) {
       sessionStorage.removeItem('pendingAction');
       
       if (pendingAction.type === 'book' && pendingAction.id) {
+        console.log('Redirecting to booking page with expert ID:', pendingAction.id);
         window.location.href = `/experts/${pendingAction.id}?book=true`;
         return;
       }
       
       if (pendingAction.type === 'call' && pendingAction.id) {
+        console.log('Redirecting to call page with expert ID:', pendingAction.id);
         window.location.href = `/experts/${pendingAction.id}?call=true`;
         return;
       }
       
       if (pendingAction.path) {
+        console.log('Redirecting to pending action path:', pendingAction.path);
         window.location.href = pendingAction.path;
         return;
       }
@@ -63,13 +66,17 @@ export function redirectAfterLogin(role?: string) {
     }
   }
   
-  // Default redirects based on role
+  // Default redirects based on role - FIXED PATHS TO MATCH ROUTE CONFIGURATION
+  console.log('No pending actions, using default redirect for role:', role);
   if (role === 'expert') {
-    window.location.href = '/expert-dashboard';
+    // Using replace for more reliable redirect
+    window.location.replace('/expert-dashboard');
   } else if (role === 'admin') {
-    window.location.href = '/admin';
+    // Using replace for more reliable redirect
+    window.location.replace('/admin');
   } else {
-    window.location.href = '/user-dashboard';
+    // Using replace for more reliable redirect 
+    window.location.replace('/user-dashboard');
   }
 }
 

@@ -51,6 +51,7 @@ const UserLoginContent: React.FC = () => {
         const errorMessage = result.error?.message || 'Login failed. Please check your credentials.';
         setLoginError(errorMessage);
         toast.error(errorMessage);
+        setIsLoggingIn(false);
         return false;
       }
       
@@ -63,17 +64,21 @@ const UserLoginContent: React.FC = () => {
         role = auth.role;
       }
       
-      // Handle redirect based on role
-      redirectAfterLogin(role);
+      console.log("Login successful, redirecting with role:", role);
+      
+      // Handle redirect based on role - using setTimeout for more reliable redirect
+      setTimeout(() => {
+        redirectAfterLogin(role);
+      }, 100);
+      
       return true;
       
     } catch (error) {
       console.error("Login error:", error);
       setLoginError("An error occurred during login. Please try again.");
       toast.error("An error occurred during login. Please try again.");
-      return false;
-    } finally {
       setIsLoggingIn(false);
+      return false;
     }
   };
 
