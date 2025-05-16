@@ -1,116 +1,66 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
-import ProfileSettings from './ProfileSettings';
-import ConsultationsSection from './ConsultationsSection';
-import FavoritesSection from './FavoritesSection';
-import WalletSection from './WalletSection';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
+import ProfileSettings from '@/components/user-dashboard/ProfileSettings';
+import ConsultationsSection from '@/components/user-dashboard/ConsultationsSection';
+import FavoritesSection from '@/components/user-dashboard/FavoritesSection';
+import WalletSection from '@/components/user-dashboard/WalletSection';
 
 interface UserDashboardContentProps {
-  currentUser?: any;
-  isAuthenticated?: boolean;
-  authLoading?: boolean;
-  user?: any;
-  dashboardLoading?: boolean;
-  loadingTimedOut?: boolean;
-  isRechargeDialogOpen?: boolean;
-  isProcessingPayment?: boolean;
-  logout?: () => Promise<boolean>;
-  handleOpenRechargeDialog?: () => void;
-  handleCloseRechargeDialog?: () => void;
-  handlePaymentSuccess?: () => void;
-  handlePaymentCancel?: () => void;
-  setIsProcessingPayment?: (isProcessing: boolean) => void;
+  user: any;
 }
 
-const UserDashboardContent: React.FC<UserDashboardContentProps> = ({
-  currentUser,
-  isAuthenticated,
-  authLoading,
-  user,
-  dashboardLoading,
-  loadingTimedOut,
-  isRechargeDialogOpen,
-  isProcessingPayment,
-  logout,
-  handleOpenRechargeDialog,
-  handleCloseRechargeDialog,
-  handlePaymentSuccess,
-  handlePaymentCancel,
-  setIsProcessingPayment
-}) => {
+const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = React.useState('profile');
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
-  
+
   const handleLogout = async () => {
-    if (!logout) return;
-    
     try {
       setIsLoggingOut(true);
-      await logout();
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Logout error:', error);
+        toast.error('Failed to logout');
+        return;
+      }
+      
+      localStorage.removeItem('sessionType');
+      toast.success('Logged out successfully');
+      navigate('/user-login');
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Logout error:', error);
+      toast.error('An error occurred during logout');
     } finally {
       setIsLoggingOut(false);
     }
   };
-  
-  if (dashboardLoading || authLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-        <p className="text-lg font-medium">Loading your dashboard...</p>
-      </div>
-    );
-  }
-  
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">Authentication Required</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <p className="text-center mb-4">
-              Please log in to access your dashboard.
-            </p>
-            <Button variant="default" asChild>
-              <a href="/login">Go to Login</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
-  const userData = currentUser || user;
-  
+
   return (
-    <div className="container mx-auto p-4 md:p-6">
+    <div className="container mx-auto py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Your Dashboard</h1>
-        <Button 
-          variant="outline" 
-          onClick={handleLogout} 
-          disabled={isLoggingOut}
-        >
-          {isLoggingOut ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Logging out
-            </>
-          ) : (
-            'Logout'
-          )}
-        </Button>
+        <h1 className="text-2xl font-bold">User Dashboard</h1>
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            Logged in as: {user?.email}
+          </span>
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+          >
+            {isLoggingOut ? 'Logging out...' : 'Logout'}
+          </Button>
+        </div>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-md mb-6">
+        <TabsList className="grid grid-cols-4 w-full max-w-md">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="consultations">Consultations</TabsTrigger>
           <TabsTrigger value="favorites">Favorites</TabsTrigger>
@@ -118,28 +68,19 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({
         </TabsList>
         
         <TabsContent value="profile" className="mt-6">
-          <ProfileSettings user={userData} />
+          <ProfileSettings user={user} />
         </TabsContent>
         
         <TabsContent value="consultations" className="mt-6">
-          <ConsultationsSection user={userData} />
+          <ConsultationsSection user={user} />
         </TabsContent>
         
         <TabsContent value="favorites" className="mt-6">
-          <FavoritesSection user={userData} />
+          <FavoritesSection user={user} />
         </TabsContent>
         
         <TabsContent value="wallet" className="mt-6">
-          <WalletSection 
-            user={userData}
-            isRechargeDialogOpen={isRechargeDialogOpen}
-            isProcessingPayment={isProcessingPayment}
-            handleOpenRechargeDialog={handleOpenRechargeDialog}
-            handleCloseRechargeDialog={handleCloseRechargeDialog}
-            handlePaymentSuccess={handlePaymentSuccess}
-            handlePaymentCancel={handlePaymentCancel}
-            setIsProcessingPayment={setIsProcessingPayment}
-          />
+          <WalletSection user={user} />
         </TabsContent>
       </Tabs>
     </div>

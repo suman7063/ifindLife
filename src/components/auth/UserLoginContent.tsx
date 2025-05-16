@@ -1,97 +1,109 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import UserLoginTabs from '@/components/auth/UserLoginTabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/lib/supabase';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
-import { directUserLogin, getRedirectPath } from '@/utils/directAuth';
+import { Loader2 } from 'lucide-react';
 
 const UserLoginContent: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Check for pending actions in sessionStorage
-  useEffect(() => {
-    const pendingActionStr = sessionStorage.getItem('pendingAction');
-    if (pendingActionStr) {
-      try {
-        const action = JSON.parse(pendingActionStr);
-        setPendingAction(action);
-        console.log("UserLoginContent - Found pending action:", action);
-      } catch (error) {
-        console.error('Error parsing pending action:', error);
-        sessionStorage.removeItem('pendingAction');
-      }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Please enter both email and password');
+      return;
     }
-  }, []);
-  
-  // Set login origin to 'user' to ensure correct role determination
-  useEffect(() => {
-    sessionStorage.setItem('loginOrigin', 'user');
-    console.log('UserLoginContent: Setting login origin to user');
-  }, []);
-  
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
-    setIsLoggingIn(true);
-    setLoginError(null);
     
     try {
-      console.log("Attempting user login with direct method:", email);
+      setIsLoading(true);
+      console.log('Attempting login with:', email);
       
-      // Use direct login method
-      const result = await directUserLogin(email, password);
+      // Store intended role in localStorage before login attempt
+      localStorage.setItem('sessionType', 'user');
       
-      if (!result.success) {
-        const errorMessage = result.error?.message || 'Login failed. Please check your credentials.';
-        setLoginError(errorMessage);
-        toast.error(errorMessage);
-        setIsLoggingIn(false);
-        return false;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.error('Login error:', error.message);
+        toast.error(error.message);
+        return;
       }
       
-      toast.success("Login successful!");
+      if (!data.session) {
+        toast.error('Login failed - no session created');
+        return;
+      }
       
-      // Allow time for the authentication state to update
+      toast.success('Login successful!');
+      console.log('Login successful, redirecting...');
+      
+      // Add a delay to ensure state changes have time to propagate
       setTimeout(() => {
-        const redirectPath = getRedirectPath();
-        console.log("Login successful, redirecting to:", redirectPath);
-        navigate(redirectPath, { replace: true });
+        navigate('/user-dashboard');
       }, 1000);
       
-      return true;
     } catch (error) {
-      console.error("Login error:", error);
-      setLoginError("An error occurred during login. Please try again.");
-      toast.error("An error occurred during login. Please try again.");
-      setIsLoggingIn(false);
-      return false;
+      console.error('Login error:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
     }
   };
-
+  
   return (
-    <div className="w-full">
-      {pendingAction && (
-        <Alert className="mb-4">
-          <AlertDescription>
-            After login, you'll be returned to continue your {
-              pendingAction.type === 'favorite' ? 'favoriting' : 
-              pendingAction.type === 'call' ? 'call' : 
-              pendingAction.type === 'book' ? 'booking' : 'previous'
-            } action.
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {loginError && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertDescription>{loginError}</AlertDescription>
-        </Alert>
-      )}
-      <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
-    </div>
+    <Card>
+      <CardContent className="pt-6">
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium">Email</label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium">Password</label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              'Log in'
+            )}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
