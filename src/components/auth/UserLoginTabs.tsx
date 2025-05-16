@@ -17,13 +17,26 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
   // Use the unified auth context
   const auth = useAuth();
   
+  // Log auth context availability
+  console.log('UserLoginTabs: Auth context available:', {
+    authExists: !!auth,
+    loginExists: !!auth?.login,
+    signupExists: !!auth?.signup
+  });
+  
   const handleLogin = async (email: string, password: string) => {
     setIsLoading(true);
     try {
       if (onLogin) {
+        console.log('UserLoginTabs: Using provided onLogin function');
         return await onLogin(email, password);
-      } else {
+      } else if (auth && auth.login) {
+        console.log('UserLoginTabs: Using auth.login from context');
         return await auth.login(email, password);
+      } else {
+        console.error('UserLoginTabs: No login function available');
+        toast.error('Login functionality is not available');
+        return false;
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -46,7 +59,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     setIsLoading(true);
     try {
       console.log("Attempting user registration with:", userData.email);
-      if (!auth.signup) {
+      if (!auth?.signup) {
         toast.error('Registration feature is not available');
         return;
       }
@@ -85,14 +98,14 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
       <TabsContent value="login">
         <LoginForm 
           onLogin={handleLogin} 
-          loading={isLoading || auth.isLoading} 
+          loading={isLoading || (auth?.isLoading || false)} 
         />
       </TabsContent>
       
       <TabsContent value="register">
         <RegisterForm 
           onRegister={handleRegister}
-          loading={isLoading || auth.isLoading}
+          loading={isLoading || (auth?.isLoading || false)}
         />
       </TabsContent>
     </Tabs>

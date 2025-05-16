@@ -26,4 +26,5 @@ export interface UserAuthContextType {
   updateProfilePicture: (file: File) => Promise<string | null>;
 }
 
+// Create the context with a default empty object that will be populated by the provider
 export const UserAuthContext = React.createContext<UserAuthContextType>({} as UserAuthContextType);

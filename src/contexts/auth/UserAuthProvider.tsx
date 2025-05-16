@@ -11,14 +11,29 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const userAuthValue = {
     currentUser: auth.userProfile || auth.profile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
-    login: auth.login, 
-    signup: auth.signup,
-    logout: auth.logout,
+    login: auth.login || (async () => { 
+      console.error("Login function not available in UserAuthProvider");
+      return false;
+    }),
+    signup: auth.signup || (async () => { 
+      console.error("Signup function not available in UserAuthProvider");
+      return false;
+    }),
+    logout: auth.logout || (async () => { 
+      console.error("Logout function not available in UserAuthProvider");
+      return false;
+    }),
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isAuthenticated && !auth.isLoading,
-    updateProfile: auth.updateProfile, 
-    updatePassword: auth.updatePassword || (async () => false),
+    updateProfile: auth.updateProfile || (async () => { 
+      console.error("UpdateProfile function not available in UserAuthProvider");
+      return false;
+    }),
+    updatePassword: auth.updatePassword || (async () => {
+      console.error("UpdatePassword function not available in UserAuthProvider");
+      return false;
+    }),
     
     // Default implementations for extended functionality
     addToFavorites: auth.addToFavorites || (async (expertId: number) => false),
@@ -32,6 +47,8 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     user: auth.user,
     updateProfilePicture: auth.updateProfilePicture || (async (file: File) => null)
   };
+
+  console.log('UserAuthProvider rendering with login available:', !!userAuthValue.login);
 
   return (
     <UserAuthContext.Provider value={userAuthValue}>
