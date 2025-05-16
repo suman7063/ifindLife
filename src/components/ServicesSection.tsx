@@ -61,8 +61,8 @@ const ServicesSection = () => {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-3xl font-bold mb-4 text-left">IFL Programs for Individuals</h2>
-        <p className="text-gray-600 mb-8 max-w-3xl text-left">
+        <h2 className="text-3xl font-bold mb-4">IFL Programs for Individuals</h2>
+        <p className="text-gray-600 mb-8 max-w-3xl">
           IFL provides specialized programs to support your mental health journey
         </p>
 
@@ -87,7 +87,7 @@ const ServicesSection = () => {
 
         {/* Keep the existing "Issue-based Sessions" content from IssueSessions component */}
         <div className="mt-8">
-          <h3 className="text-2xl font-semibold mb-6 text-left">Issue Based Sessions</h3>
+          <h3 className="text-2xl font-semibold mb-6">Issue Based Sessions</h3>
           <FeaturedPrograms onProgramClick={handleProgramClick} />
         </div>
       </div>

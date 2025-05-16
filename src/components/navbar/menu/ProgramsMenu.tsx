@@ -18,7 +18,7 @@ const ProgramsMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/programs-for-wellness-seekers" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Wellness Seekers
               </Link>
@@ -28,7 +28,7 @@ const ProgramsMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/programs-for-academic-institutes" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Academic Institutes
               </Link>
@@ -38,7 +38,7 @@ const ProgramsMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/programs-for-business" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Business
               </Link>

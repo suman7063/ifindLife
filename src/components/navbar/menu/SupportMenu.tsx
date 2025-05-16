@@ -18,7 +18,7 @@ const SupportMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/contact" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Contact Us
               </Link>
@@ -28,7 +28,7 @@ const SupportMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/faqs" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 FAQs
               </Link>
@@ -38,7 +38,7 @@ const SupportMenu = () => {
             <NavigationMenuLink asChild>
               <Link 
                 to="/blog" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md"
               >
                 Blog
               </Link>

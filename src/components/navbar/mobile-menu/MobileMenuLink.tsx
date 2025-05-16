@@ -18,7 +18,7 @@ const MobileMenuLink: React.FC<MobileMenuLinkProps> = ({
     <Link 
       to={to}
       className={cn(
-        "block w-full p-2 text-sm rounded-md hover:bg-accent text-left",
+        "block w-full p-2 text-sm rounded-md hover:bg-accent",
         className
       )}
     >

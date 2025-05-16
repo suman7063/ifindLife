@@ -38,7 +38,7 @@ const BlogSection = () => {
                     <span className="mx-2">•</span>
                     <span>{post.date}</span>
                   </div>
-                  <h3 className="font-semibold text-lg group-hover:text-ifind-aqua transition-colors text-left">
+                  <h3 className="font-semibold text-lg group-hover:text-ifind-aqua transition-colors">
                     {post.title}
                   </h3>
                 </div>

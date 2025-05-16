@@ -45,14 +45,14 @@ const WhatWeDoSection = () => {
   return (
     <section className="py-16 bg-calm-gradient">
       <div className="container mx-auto px-6 sm:px-12">
-        <h2 className="text-2xl font-bold mb-8 text-left">What We do</h2>
+        <h2 className="text-2xl font-bold mb-8">What We do</h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {services.map((service, index) => (
             <Link key={index} to={service.href} className="block">
               <div className={`${service.color} rounded-lg p-6 h-full shadow-md hover:shadow-lg transition-all duration-300`}>
-                <h3 className="font-semibold text-xl mb-4 text-gray-800 text-left">{service.title}</h3>
-                <ul className="space-y-2 text-gray-700 text-left">
+                <h3 className="font-semibold text-xl mb-4 text-gray-800">{service.title}</h3>
+                <ul className="space-y-2 text-gray-700">
                   {service.items.map((item, i) => (
                     <li key={i} className="flex items-start">
                       <span className="mr-2">•</span>
