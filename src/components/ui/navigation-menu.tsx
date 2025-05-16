@@ -75,19 +75,6 @@ const NavigationMenuContent = React.forwardRef<
       "data-[motion^=from-]:animate-in data-[motion^=to-]:animate-out data-[motion^=from-]:fade-in data-[motion^=to-]:fade-out data-[motion=from-end]:slide-in-from-right-52 data-[motion=from-start]:slide-in-from-left-52 data-[motion=to-end]:slide-out-to-right-52 data-[motion=to-start]:slide-out-to-left-52 top-0 w-full md:absolute",
       className
     )}
-    onMouseLeave={(e) => {
-      e.persist();
-      setTimeout(() => {
-        if (!e.currentTarget.contains(document.activeElement) &&
-            !e.currentTarget.matches(':hover')) {
-          const event = new MouseEvent('mouseleave', {
-            bubbles: true,
-            cancelable: true,
-          });
-          e.currentTarget.dispatchEvent(event);
-        }
-      }, 300);
-    }}
     {...props}
   />
 ))
@@ -106,19 +93,6 @@ const NavigationMenuViewport = React.forwardRef<
         className
       )}
       ref={ref}
-      onMouseLeave={(e) => {
-        e.persist();
-        setTimeout(() => {
-          if (!e.currentTarget.contains(document.activeElement) && 
-              !e.currentTarget.matches(':hover')) {
-            const event = new MouseEvent('mouseleave', {
-              bubbles: true,
-              cancelable: true,
-            });
-            e.currentTarget.dispatchEvent(event);
-          }
-        }, 300);
-      }}
       {...props}
     />
   </div>

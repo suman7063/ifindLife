@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lato:wght@300;400;700&family=Poppins:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700;900&display=swap');
 
 @tailwind base;
@@ -92,6 +93,18 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-poppins font-medium;
   }
+  
+  /* Add justified text alignment for all pages except home page */
+  .justify-text p:not(.home-page p) {
+    @apply text-justify;
+  }
+  
+  /* Left align headings except home page and page headings */
+  .left-align-headings h2:not(.home-page h2, .page-heading),
+  .left-align-headings h3:not(.home-page h3, .page-heading),
+  .left-align-headings h4:not(.home-page h4, .page-heading) {
+    @apply text-left;
+  }
 
   .bg-pattern {
     position: relative;
@@ -133,5 +146,22 @@
   
   .icon-container {
     @apply w-12 h-12 flex items-center justify-center rounded-full mb-4;
+  }
+  
+  /* Add this class to apply text-justify to non-homepage elements */
+  .non-homepage-content p {
+    @apply text-justify;
+  }
+  
+  /* Add this class for left-aligned headings on non-homepage */
+  .non-homepage-content h2, 
+  .non-homepage-content h3, 
+  .non-homepage-content h4 {
+    @apply text-left;
+  }
+  
+  /* Full width container without gutters */
+  .container-full {
+    @apply w-full max-w-none px-0;
   }
 }

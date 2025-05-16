@@ -47,14 +47,14 @@ const Services = () => {
   }, [location]);
   
   return (
-    <>
+    <div className="non-homepage-content">
       <Navbar />
-      <main>
-        <section className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 py-20">
-          <div className="container mx-auto px-4 max-w-6xl">
+      <main className="w-full">
+        <section className="bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-950 py-20 w-full">
+          <div className="w-full px-4 sm:px-6 lg:px-8 max-w-full">
             <div className="text-center mb-16">
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Services</h1>
-              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8">
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 page-heading">Our Services</h1>
+              <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto mb-8 text-justify">
                 Comprehensive mental wellness services tailored to your unique needs and journey.
               </p>
               
@@ -85,7 +85,7 @@ const Services = () => {
               </Button>
             </div>
             
-            <div ref={servicesRef} className="space-y-24">
+            <div ref={servicesRef} className="space-y-24 w-full max-w-7xl mx-auto">
               {servicesData.map((service, index) => {
                 // Use our custom hook for each service card
                 const { ref, isVisible } = useScrollAnimation();
@@ -95,9 +95,9 @@ const Services = () => {
                     key={service.id} 
                     id={service.id} 
                     ref={ref}
-                    className={`scroll-mt-24 ${index % 2 === 0 ? '' : 'bg-gray-50 dark:bg-gray-900 py-8 rounded-xl'} transition-opacity duration-1000 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+                    className={`scroll-mt-24 ${index % 2 === 0 ? '' : 'bg-gray-50 dark:bg-gray-900 py-8 rounded-xl'} transition-opacity duration-1000 ease-in-out ${isVisible ? 'opacity-100' : 'opacity-0'} w-full`}
                   >
-                    <div className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center`}>
+                    <div className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-8 items-center px-4 sm:px-6 lg:px-8`}>
                       <div className="md:w-1/2">
                         <div className="p-4 rounded-xl overflow-hidden h-80 shadow-md border border-gray-200">
                           <img 
@@ -123,8 +123,8 @@ const Services = () => {
                           <h2 className={`text-3xl font-bold ${service.textColor}`}>{service.title}</h2>
                         </div>
                         
-                        <p className="text-lg text-gray-700 dark:text-gray-300">{service.description}</p>
-                        <p className="text-gray-600 dark:text-gray-400">{service.detailedDescription.substring(0, 150)}...</p>
+                        <p className="text-lg text-gray-700 dark:text-gray-300 text-justify">{service.description}</p>
+                        <p className="text-gray-600 dark:text-gray-400 text-justify">{service.detailedDescription.substring(0, 150)}...</p>
                         
                         <div className="pt-4">
                           <Button asChild className={`${service.buttonColor}`}>
@@ -140,9 +140,9 @@ const Services = () => {
           </div>
         </section>
         
-        <section className="py-16 bg-ifind-lavender/10">
-          <div className="container mx-auto px-4 max-w-4xl text-center">
-            <h2 className="text-3xl font-bold mb-6">Why Choose Our Services?</h2>
+        <section className="py-16 bg-ifind-lavender/10 w-full">
+          <div className="w-full px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-6 text-left">Why Choose Our Services?</h2>
             <div className="grid md:grid-cols-3 gap-8 mt-10">
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-t-4 border-ifind-teal">
                 <div className="w-12 h-12 bg-ifind-teal/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -150,8 +150,8 @@ const Services = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Expert Practitioners</h3>
-                <p className="text-gray-600 dark:text-gray-300">Qualified professionals with extensive experience and a passion for helping others.</p>
+                <h3 className="text-xl font-semibold mb-2 text-left">Expert Practitioners</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-justify">Qualified professionals with extensive experience and a passion for helping others.</p>
               </div>
               
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-t-4 border-ifind-purple">
@@ -160,8 +160,8 @@ const Services = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Personalized Approach</h3>
-                <p className="text-gray-600 dark:text-gray-300">Tailored solutions designed to meet your unique needs and wellness goals.</p>
+                <h3 className="text-xl font-semibold mb-2 text-left">Personalized Approach</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-justify">Tailored solutions designed to meet your unique needs and wellness goals.</p>
               </div>
               
               <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border-t-4 border-ifind-pink">
@@ -170,15 +170,15 @@ const Services = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">Flexible Scheduling</h3>
-                <p className="text-gray-600 dark:text-gray-300">Convenient appointment times that work with your busy lifestyle.</p>
+                <h3 className="text-xl font-semibold mb-2 text-left">Flexible Scheduling</h3>
+                <p className="text-gray-600 dark:text-gray-300 text-justify">Convenient appointment times that work with your busy lifestyle.</p>
               </div>
             </div>
           </div>
         </section>
       </main>
       <Footer />
-    </>
+    </div>
   );
 };
 
