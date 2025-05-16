@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { LoginOptions } from '@/contexts/auth/types';
+import { logFunctionError } from '@/utils/errorLogger';
 
 export const useAuthLogin = (state: any, onActionComplete: () => void) => {
   const login = useCallback(async (
@@ -39,7 +40,7 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
       onActionComplete();
       return true;
     } catch (error) {
-      console.error('Login error in try/catch block:', error);
+      logFunctionError('login', error);
       toast.error('Failed to login. Please try again.');
       return false;
     }

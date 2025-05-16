@@ -1,4 +1,3 @@
-
 import React, { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import LoadingScreen from './components/auth/LoadingScreen';
@@ -34,6 +33,9 @@ const IndexOriginal = lazy(() => import('./pages/IndexOriginal'));
 // Import the new expert dashboard
 const NewExpertDashboard = lazy(() => import('./pages/NewExpertDashboard'));
 
+// Add import for Testing page
+const Testing = lazy(() => import('./pages/admin/Testing'));
+
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, role, isLoading } = useAuth();
   
@@ -66,6 +68,16 @@ const AppRoutes: React.FC = () => {
             <Admin />
           </AdminProtectedRoute>
         } />
+        
+        {/* Add Testing Dashboard route */}
+        <Route 
+          path="/admin/testing" 
+          element={
+            <AdminProtectedRoute>
+              <Testing />
+            </AdminProtectedRoute>
+          } 
+        />
         
         {/* Expert Dashboard with proper protection - Handle all sub-routes */}
         <Route 
