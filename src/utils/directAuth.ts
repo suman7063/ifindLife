@@ -46,19 +46,19 @@ export function redirectAfterLogin(role?: string) {
       
       if (pendingAction.type === 'book' && pendingAction.id) {
         console.log('Redirecting to booking page with expert ID:', pendingAction.id);
-        window.location.href = `/experts/${pendingAction.id}?book=true`;
+        window.location.replace(`/experts/${pendingAction.id}?book=true`);
         return;
       }
       
       if (pendingAction.type === 'call' && pendingAction.id) {
         console.log('Redirecting to call page with expert ID:', pendingAction.id);
-        window.location.href = `/experts/${pendingAction.id}?call=true`;
+        window.location.replace(`/experts/${pendingAction.id}?call=true`);
         return;
       }
       
       if (pendingAction.path) {
         console.log('Redirecting to pending action path:', pendingAction.path);
-        window.location.href = pendingAction.path;
+        window.location.replace(pendingAction.path);
         return;
       }
     } catch (error) {
