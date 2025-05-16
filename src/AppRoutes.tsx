@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -8,8 +7,8 @@ import ExpertLogin from './pages/ExpertLogin';
 import AdminLogin from './pages/AdminLogin';
 import NotFound from './pages/NotFound';
 import LoadingScreen from './components/auth/LoadingScreen';
-import ProtectedRoute from '@/components/authentication/ProtectedRoute';
-import UserDashboard from '@/components/user/dashboard/UserDashboard'; // Import the complete dashboard component
+import ProtectedRoute from '@/components/routing/ProtectedRoute';
+import UserDashboardPage from './pages/UserDashboard'; // Import the page component that renders the dashboard
 
 // Lazy-loaded components
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -151,17 +150,17 @@ const AppRoutes: React.FC = () => {
           path="/user-dashboard" 
           element={
             <ProtectedRoute allowedRoles={['user']} redirectPath="/user-login">
-              <UserDashboard />
+              <UserDashboardPage />
             </ProtectedRoute>
           } 
         />
 
-        {/* Modified route for direct access to /user-dashboard path */}
+        {/* Modified route for direct access to /user-dashboard path with nested routes */}
         <Route 
           path="/user-dashboard/*" 
           element={
             <ProtectedRoute allowedRoles={['user']} redirectPath="/user-login">
-              <UserDashboard />
+              <UserDashboardPage />
             </ProtectedRoute>
           } 
         />
