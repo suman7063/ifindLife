@@ -16,6 +16,7 @@ const Login: React.FC = () => {
   const { isLoading: contextLoading } = useAuth();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
   const [localLoading, setLocalLoading] = useState(true);
+  const [authCheckCompleted, setAuthCheckCompleted] = useState(false);
   
   // Check for authenticated session without relying on context
   useEffect(() => {
@@ -35,14 +36,16 @@ const Login: React.FC = () => {
             const redirectPath = getRedirectPath();
             console.log("Login page: Redirecting to", redirectPath);
             navigate(redirectPath, { replace: true });
-          }, 100);
-          return;
+          }, 500);
         } else {
           console.log("Login page: User is not authenticated, showing login form");
-          setLocalLoading(false);
         }
+        
+        setAuthCheckCompleted(true);
+        setLocalLoading(false);
       } catch (error) {
         console.error("Error checking authentication status:", error);
+        setAuthCheckCompleted(true);
         setLocalLoading(false);
       }
     };
@@ -66,7 +69,7 @@ const Login: React.FC = () => {
   }, []);
   
   // Avoid showing loading screen unless necessary
-  if (localLoading) {
+  if (localLoading && !authCheckCompleted) {
     return <LoadingScreen message="Checking authentication status..." />;
   }
   

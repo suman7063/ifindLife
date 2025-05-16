@@ -44,8 +44,22 @@ export async function directUserLogin(email: string, password: string): Promise<
 export async function checkAuthStatus() {
   try {
     const { data } = await supabase.auth.getSession();
+    const sessionValid = !!data.session;
+
+    // If session exists, ensure we have role information stored
+    if (sessionValid && !localStorage.getItem('sessionType')) {
+      localStorage.setItem('sessionType', 'user');
+      console.log('Auth check: Adding missing sessionType to localStorage');
+    }
+
+    console.log('Auth check result:', { 
+      isAuthenticated: sessionValid,
+      session: data.session ? 'exists' : 'null',
+      user: data.session?.user ? data.session.user.id : 'null'
+    });
+    
     return {
-      isAuthenticated: !!data.session,
+      isAuthenticated: sessionValid,
       session: data.session,
       user: data.session?.user
     };
@@ -98,4 +112,21 @@ export function getRedirectPath(): string {
   } else {
     return '/user-dashboard';
   }
+}
+
+/**
+ * Cleans up authentication state in local storage
+ */
+export function cleanupAuthState(): void {
+  localStorage.removeItem('sessionType');
+  sessionStorage.removeItem('pendingAction');
+  sessionStorage.removeItem('returnPath');
+  sessionStorage.removeItem('loginOrigin');
+}
+
+/**
+ * Sets up proper authentication state in local storage
+ */
+export function setupAuthState(role: string = 'user'): void {
+  localStorage.setItem('sessionType', role);
 }

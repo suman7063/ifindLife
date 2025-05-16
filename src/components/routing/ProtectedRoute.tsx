@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import type { UserRole } from '@/contexts/auth/types';
+import { checkAuthStatus } from '@/utils/directAuth';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -16,29 +17,70 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles = ['user', 'expert', 'admin'], 
   redirectPath = '/login'
 }) => {
-  const { isAuthenticated, role, isLoading } = useAuth();
+  const { isAuthenticated: contextAuthenticated, role: contextRole, isLoading: contextLoading } = useAuth();
+  const [directAuthChecked, setDirectAuthChecked] = useState(false);
+  const [directAuthData, setDirectAuthData] = useState<{
+    isAuthenticated: boolean;
+    role?: UserRole;
+  }>({ isAuthenticated: false });
   const location = useLocation();
   const [isChecking, setIsChecking] = useState(true);
 
+  // Check authentication directly with Supabase as a fallback
   useEffect(() => {
-    // Once the auth loading is complete, we can finish our check
-    if (!isLoading) {
-      setIsChecking(false);
-      
-      // Log authentication details for debugging
-      console.log('ProtectedRoute check:', { 
-        isAuthenticated, 
-        role, 
-        allowedRoles,
-        currentPath: location.pathname
-      });
-    }
-  }, [isLoading, isAuthenticated, role, allowedRoles, location.pathname]);
+    const verifyAuthWithSupabase = async () => {
+      try {
+        // Only do a direct check if context auth is not yet available
+        if (!contextAuthenticated && !directAuthChecked) {
+          console.log('ProtectedRoute: performing direct auth check with Supabase');
+          const authData = await checkAuthStatus();
+          
+          if (authData.isAuthenticated) {
+            const sessionType = localStorage.getItem('sessionType') as UserRole || 'user';
+            console.log('ProtectedRoute: direct auth check successful, user is authenticated as:', sessionType);
+            setDirectAuthData({
+              isAuthenticated: true,
+              role: sessionType
+            });
+          } else {
+            console.log('ProtectedRoute: direct auth check failed, user is not authenticated');
+          }
+          
+          setDirectAuthChecked(true);
+        }
+        
+        // Only finish checking when we have results from both methods
+        if (!contextLoading || directAuthChecked) {
+          setIsChecking(false);
+        }
+      } catch (error) {
+        console.error('Error in direct auth check:', error);
+        setIsChecking(false);
+        setDirectAuthChecked(true);
+      }
+    };
+
+    verifyAuthWithSupabase();
+  }, [contextAuthenticated, contextLoading, directAuthChecked]);
+
+  // Determine final authentication state (use context if available, fallback to direct check)
+  const isAuthenticated = contextAuthenticated || directAuthData.isAuthenticated;
+  const role = contextRole || directAuthData.role;
 
   // Show loading screen while checking authentication
-  if (isLoading || isChecking) {
-    return <LoadingScreen />;
+  if (contextLoading || isChecking) {
+    return <LoadingScreen message="Verifying authentication..." />;
   }
+
+  // Log authentication details for debugging
+  console.log('ProtectedRoute final check:', { 
+    isAuthenticated, 
+    role, 
+    allowedRoles,
+    contextAuthenticated,
+    directAuthData,
+    currentPath: location.pathname
+  });
 
   // If not authenticated, redirect to login
   if (!isAuthenticated) {

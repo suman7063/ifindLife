@@ -9,12 +9,20 @@ export const useAuthState = (): AuthState => {
   const [state, setState] = useState<AuthState>(initialAuthState);
 
   useEffect(() => {
+    // Ensure we have sessionType in localStorage before proceeding
+    const existingSessionType = localStorage.getItem('sessionType');
+    if (!existingSessionType) {
+      localStorage.setItem('sessionType', 'user');
+      console.log('useAuthState: Setting default sessionType as user');
+    }
+
     // Set up subscription to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event);
         
         if (event === 'SIGNED_OUT') {
+          localStorage.removeItem('sessionType');
           setState({
             ...initialAuthState,
             isLoading: false
@@ -94,7 +102,10 @@ export const useAuthState = (): AuthState => {
           throw error;
         }
         
-        if (!data.session) {
+        if (data.session) {
+          console.log('Initial auth check found session:', data.session.user.id);
+        } else {
+          console.log('Initial auth check: No active session');
           setState({
             ...initialAuthState,
             isLoading: false
