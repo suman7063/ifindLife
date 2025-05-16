@@ -7,12 +7,9 @@ import UserLogin from './pages/UserLogin';
 import ExpertLogin from './pages/ExpertLogin';
 import AdminLogin from './pages/AdminLogin';
 import NotFound from './pages/NotFound';
-import UserDashboard from './pages/UserDashboard';
-import ExpertDashboard from './pages/ExpertDashboard';
-import Admin from './pages/Admin';
-import AboutUs from './pages/AboutUs';
 import LoadingScreen from './components/auth/LoadingScreen';
 import ProtectedRoute from '@/components/authentication/ProtectedRoute';
+import UserDashboard from '@/components/user/dashboard/UserDashboard'; // Import the complete dashboard component
 
 // Lazy-loaded components
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -35,6 +32,9 @@ const Contact = lazy(() => import('./pages/Contact'));
 const FAQs = lazy(() => import('./pages/FAQs'));
 const Referral = lazy(() => import('./pages/Referral'));
 const UserWallet = lazy(() => import('./pages/UserWallet'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
+const Admin = lazy(() => import('./pages/Admin'));
 
 // The main routes component
 const AppRoutes: React.FC = () => {
@@ -148,6 +148,16 @@ const AppRoutes: React.FC = () => {
 
         {/* Protected user routes */}
         <Route 
+          path="/user-dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['user']} redirectPath="/user-login">
+              <UserDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Modified route for direct access to /user-dashboard path */}
+        <Route 
           path="/user-dashboard/*" 
           element={
             <ProtectedRoute allowedRoles={['user']} redirectPath="/user-login">
@@ -155,6 +165,7 @@ const AppRoutes: React.FC = () => {
             </ProtectedRoute>
           } 
         />
+        
         <Route 
           path="/user-dashboard/wallet" 
           element={
@@ -171,7 +182,9 @@ const AppRoutes: React.FC = () => {
           path="/expert-dashboard/*" 
           element={
             <ProtectedRoute allowedRoles={['expert']} redirectPath="/expert-login">
-              <ExpertDashboard />
+              <Suspense fallback={<LoadingScreen />}>
+                <ExpertDashboard />
+              </Suspense>
             </ProtectedRoute>
           } 
         />
@@ -181,7 +194,9 @@ const AppRoutes: React.FC = () => {
           path="/admin/*" 
           element={
             <ProtectedRoute allowedRoles={['admin']} redirectPath="/admin-login">
-              <Admin />
+              <Suspense fallback={<LoadingScreen />}>
+                <Admin />
+              </Suspense>
             </ProtectedRoute>
           } 
         />
