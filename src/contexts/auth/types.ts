@@ -30,6 +30,21 @@ export interface AuthState {
   sessionType: SessionType;
 }
 
+// Add the initialAuthState that was missing
+export const initialAuthState: AuthState = {
+  user: null,
+  userProfile: null,
+  expertProfile: null,
+  isAuthenticated: false,
+  isLoading: true,
+  role: null,
+  session: null,
+  error: null,
+  walletBalance: 0,
+  profile: null,
+  sessionType: 'none'
+};
+
 export interface AuthContextType extends AuthState {
   login: (email: string, password: string, options?: LoginOptions) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;

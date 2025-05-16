@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
-import { ExclamationTriangleIcon } from '@radix-ui/react-icons';
+import { AlertTriangle } from 'lucide-react'; // Using Lucide icon instead of Radix
 import { Link } from 'react-router-dom';
 
 interface ExpertLoginFormProps {
@@ -55,7 +55,7 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
     <div className="space-y-4">
       {loginError && (
         <Alert variant="destructive">
-          <ExclamationTriangleIcon className="h-4 w-4 mr-2" />
+          <AlertTriangle className="h-4 w-4 mr-2" />
           <AlertDescription>{loginError}</AlertDescription>
         </Alert>
       )}
