@@ -18,7 +18,7 @@ const MessagingTab: React.FC = () => {
 
   const handleSendMessage = async (message: string) => {
     if (!expertProfile?.auth_id || !selectedUserId) return;
-    // Correctly call sendMessage with recipient ID and message content
+    // Updated to call sendMessage with two arguments (recipientId and message)
     await sendMessage(selectedUserId, message);
   };
 

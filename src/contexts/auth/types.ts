@@ -26,6 +26,11 @@ export const initialAuthState: AuthState = {
   sessionType: 'none'
 };
 
+// Define a LoginOptions interface for the login function
+export interface LoginOptions {
+  asExpert?: boolean;
+}
+
 export interface AuthState {
   user: AuthUser | null;
   userProfile: UserProfile | null;
@@ -41,7 +46,7 @@ export interface AuthState {
 }
 
 export interface AuthActions {
-  login: (email: string, password: string, asExpert?: boolean) => Promise<boolean>;
+  login: (email: string, password: string, options?: LoginOptions) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   registerExpert: (email: string, password: string, expertData: any) => Promise<boolean>;
   logout: () => Promise<boolean>;

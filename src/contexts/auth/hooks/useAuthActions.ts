@@ -6,8 +6,17 @@ import { toast } from 'sonner';
 import { userRepository } from '@/repositories/userRepository';
 import { expertRepository } from '@/repositories/expertRepository';
 
+// Define a LoginOptions interface to handle the optional parameters
+interface LoginOptions {
+  asExpert?: boolean;
+}
+
 export const useAuthActions = (state: AuthState, onActionComplete: () => void) => {
-  const login = useCallback(async (email: string, password: string, asExpert: boolean = false): Promise<boolean> => {
+  const login = useCallback(async (
+    email: string, 
+    password: string, 
+    options?: LoginOptions
+  ): Promise<boolean> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -19,7 +28,8 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
         return false;
       }
 
-      if (asExpert) {
+      // Use options.asExpert if provided, otherwise default to false
+      if (options?.asExpert) {
         localStorage.setItem('sessionType', 'expert');
       } else {
         localStorage.setItem('sessionType', 'user');
@@ -138,7 +148,7 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
           state: expertData.state || '',
           country: expertData.country || '',
           specialization: expertData.specialization || '',
-          experience: experience,
+          experience,
           bio: expertData.bio || '',
           profile_picture: expertData.profile_picture || '',
           selected_services: expertData.selected_services || []

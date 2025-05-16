@@ -31,8 +31,8 @@ const ExpertLogin: React.FC = () => {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      // Pass true as the second argument to indicate expert login
-      const success = await login(email, password, true);
+      // Updated to use asExpert parameter as part of the object instead of a third argument
+      const success = await login(email, password, { asExpert: true });
       
       if (!success) {
         setLoginError('Login failed. Please check your credentials and try again.');
