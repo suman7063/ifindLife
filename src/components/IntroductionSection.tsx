@@ -4,12 +4,12 @@ import React from 'react';
 const IntroductionSection = () => {
   return (
     <section className="py-16 w-full bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="container mx-auto px-0">
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-ifind-aqua to-ifind-purple">
             Welcome to Your Mental Wellness Journey
           </h2>
-          <p className="text-lg text-gray-700 leading-relaxed">
+          <p className="text-lg text-gray-700 leading-relaxed px-4 md:px-0">
             iFindLife is your safe space for real-time mental & emotional health support—offering 
             instant access to expert help during moments of distress, personalized guidance for 
             everyday challenges, and long-term tools to build emotional resilience. Anytime, anywhere.

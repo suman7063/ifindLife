@@ -115,16 +115,6 @@
     @apply text-justify;
   }
   
-  /* Left align all headings except on homepage */
-  main:not(.home-page) h1:not(.page-heading),
-  main:not(.home-page) h2:not(.page-heading),
-  main:not(.home-page) h3:not(.page-heading),
-  main:not(.home-page) h4:not(.page-heading),
-  main:not(.home-page) h5:not(.page-heading),
-  main:not(.home-page) h6:not(.page-heading) {
-    @apply text-left;
-  }
-
   /* Navigation menu item alignment */
   .navigation-menu-item {
     @apply text-left w-full;

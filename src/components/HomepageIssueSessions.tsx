@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Brain, Heart, Clock, Cloud, ShieldAlert, Sparkles, Star, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 
@@ -9,76 +9,76 @@ const HomepageIssueSessions: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Issue sessions matching the screenshot
+  // Issue sessions matching the screenshot with proper icons instead of emojis
   const sessions = [
     {
       id: '1',
       title: 'Depression',
       description: 'Support for managing depression symptoms and improving mood',
-      icon: '😔',
+      icon: <Cloud className="h-5 w-5 text-blue-500" />,
       color: 'bg-blue-100',
-      iconColor: 'text-blue-400',
+      iconColor: 'text-blue-500',
       href: '/mental-health/depression'
     },
     {
       id: '2',
       title: 'Anxiety',
       description: 'Tools and techniques to help manage anxiety and worry',
-      icon: '😰',
+      icon: <Brain className="h-5 w-5 text-green-500" />,
       color: 'bg-green-100',
-      iconColor: 'text-green-400',
+      iconColor: 'text-green-500',
       href: '/mental-health/anxiety'
     },
     {
       id: '3',
       title: 'Stress Management',
       description: 'Effective strategies to cope with and reduce stress',
-      icon: '🧠',
+      icon: <Clock className="h-5 w-5 text-purple-500" />,
       color: 'bg-purple-100',
-      iconColor: 'text-purple-400',
+      iconColor: 'text-purple-500',
       href: '/mental-health/stress'
     },
     {
       id: '4',
       title: 'Sleep Issues',
       description: 'Help with improving sleep quality and addressing insomnia',
-      icon: '😴',
+      icon: <Cloud className="h-5 w-5 text-indigo-500" />,
       color: 'bg-indigo-100',
-      iconColor: 'text-indigo-400',
+      iconColor: 'text-indigo-500',
       href: '/mental-health/sleep'
     },
     {
       id: '5',
       title: 'Relationships',
       description: 'Guidance for building healthy and fulfilling relationships',
-      icon: '❤️',
+      icon: <Heart className="h-5 w-5 text-red-500" />,
       color: 'bg-red-100',
-      iconColor: 'text-red-400',
+      iconColor: 'text-red-500',
       href: '/mental-health/relationships'
     },
     {
       id: '6',
       title: 'Trauma & PTSD',
       description: 'Support for healing from trauma and managing PTSD symptoms',
-      icon: '🛡️',
+      icon: <ShieldAlert className="h-5 w-5 text-orange-500" />,
       color: 'bg-orange-100',
-      iconColor: 'text-orange-400',
+      iconColor: 'text-orange-500',
       href: '/mental-health/trauma'
     },
     {
       id: '7',
       title: 'Grief & Loss',
       description: 'Compassionate support for navigating grief and loss',
-      icon: '💔',
+      icon: <Heart className="h-5 w-5 text-pink-500" />,
       color: 'bg-pink-100',
-      iconColor: 'text-pink-400',
+      iconColor: 'text-pink-500',
       href: '/mental-health/grief'
     },
     {
       id: '8',
       title: 'Self-Esteem',
       description: 'Help with building confidence and improving self-image',
-      icon: '✨',
+      icon: <Star className="h-5 w-5 text-yellow-500" />,
       color: 'bg-yellow-100',
       iconColor: 'text-yellow-500',
       href: '/mental-health/self-esteem'
@@ -109,7 +109,7 @@ const HomepageIssueSessions: React.FC = () => {
               aria-label={`View details about ${session.title}`}
             >
               <div className={`w-12 h-12 ${session.color} rounded-full flex items-center justify-center mb-3`}>
-                <span className="text-xl">{session.icon}</span>
+                {session.icon}
               </div>
               <h3 className="font-medium mb-1">{session.title}</h3>
               <p className="text-sm text-gray-500 line-clamp-2">{session.description}</p>

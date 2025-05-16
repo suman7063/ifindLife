@@ -4,7 +4,7 @@ import { CheckCircle } from 'lucide-react';
 import { Container } from '@/components/ui/container';
 
 const WhyChooseUsSection = () => {
-  // List of benefits with only titles as in the screenshot
+  // List of benefits with only titles as shown in the screenshot
   const benefits = [
     "24/7 Availability",
     "Confidential & Secure",
