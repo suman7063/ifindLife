@@ -7,63 +7,66 @@ import { toast } from 'sonner';
 import UserDashboardContent from '@/components/user-dashboard/UserDashboardContent';
 
 const UserDashboard: React.FC = () => {
-  const [isChecking, setIsChecking] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
   
-  // Check authentication directly
+  // Direct authentication check on mount
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkSession = async () => {
       try {
-        setIsChecking(true);
-        
+        console.log('UserDashboard: Checking auth session...');
         // Add a small delay to ensure auth state is fully processed
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        console.log('UserDashboard: Checking authentication...');
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Auth check error:', error);
+          console.error('Auth session error:', error);
           toast.error('Authentication check failed');
           setIsAuthenticated(false);
-          setIsChecking(false);
+          setIsLoading(false);
           return;
         }
         
         if (data.session) {
-          console.log('UserDashboard: User is authenticated');
+          console.log('UserDashboard: Session found, user authenticated');
           setUser(data.session.user);
           setIsAuthenticated(true);
         } else {
-          console.log('UserDashboard: No active session found');
+          console.log('UserDashboard: No session found');
           setIsAuthenticated(false);
+          
+          // Redirect after state update
+          setTimeout(() => {
+            console.log('UserDashboard: Redirecting to login...');
+            navigate('/user-login', { replace: true });
+          }, 100);
         }
       } catch (error) {
         console.error('Error checking auth:', error);
         setIsAuthenticated(false);
       } finally {
-        setIsChecking(false);
+        setIsLoading(false);
       }
     };
     
-    checkAuth();
+    checkSession();
   }, [navigate]);
   
-  // Show loading screen during auth check
-  if (isChecking) {
-    return <LoadingScreen message="Checking authentication..." />;
+  // Show loading screen while checking auth
+  if (isLoading) {
+    return <LoadingScreen message="Loading your dashboard..." />;
   }
   
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    console.log('UserDashboard: User not authenticated, redirecting to login');
-    return <Navigate to="/user-login" replace />;
+  // Show dashboard content if authenticated
+  if (isAuthenticated && user) {
+    return <UserDashboardContent user={user} />;
   }
   
-  // Render the dashboard content if authenticated
-  return <UserDashboardContent user={user} />;
+  // This should rarely be visible due to the redirect in the useEffect
+  return <Navigate to="/user-login" replace />;
 };
 
 export default UserDashboard;

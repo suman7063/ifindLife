@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,12 +16,14 @@ interface UserDashboardContentProps {
 
 const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = React.useState('profile');
-  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const [activeTab, setActiveTab] = useState('profile');
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
+      console.log('Logging out...');
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
@@ -32,7 +34,11 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
       
       localStorage.removeItem('sessionType');
       toast.success('Logged out successfully');
-      navigate('/user-login');
+      
+      // Redirect after a slight delay
+      setTimeout(() => {
+        navigate('/user-login', { replace: true });
+      }, 500);
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('An error occurred during logout');

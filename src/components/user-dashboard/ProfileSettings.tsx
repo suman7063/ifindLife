@@ -10,24 +10,20 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Profile Settings</CardTitle>
+        <CardTitle>Your Profile</CardTitle>
       </CardHeader>
       <CardContent>
-        {user ? (
-          <div className="space-y-4">
-            <div>
-              <h3 className="font-medium">Name</h3>
-              <p>{user.full_name || user.name || 'Not provided'}</p>
-            </div>
-            <div>
-              <h3 className="font-medium">Email</h3>
-              <p>{user.email || 'Not provided'}</p>
-            </div>
-            {/* Additional profile fields can be added here */}
+        <div className="space-y-4">
+          <div className="flex flex-col">
+            <span className="text-sm text-muted-foreground">Email</span>
+            <span className="font-medium">{user?.email}</span>
           </div>
-        ) : (
-          <p>Unable to load profile information.</p>
-        )}
+          
+          <div className="flex flex-col">
+            <span className="text-sm text-muted-foreground">User ID</span>
+            <span className="font-medium text-xs">{user?.id}</span>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

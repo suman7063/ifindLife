@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,19 @@ const UserLoginContent: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Check if already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        console.log('Already logged in, redirecting to dashboard...');
+        navigate('/user-dashboard');
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
   
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,11 +59,11 @@ const UserLoginContent: React.FC = () => {
       }
       
       toast.success('Login successful!');
-      console.log('Login successful, redirecting...');
+      console.log('Login successful, redirecting to dashboard...');
       
-      // Add a delay to ensure state changes have time to propagate
+      // Set a small delay to ensure auth state is processed
       setTimeout(() => {
-        navigate('/user-dashboard');
+        navigate('/user-dashboard', { replace: true });
       }, 1000);
       
     } catch (error) {

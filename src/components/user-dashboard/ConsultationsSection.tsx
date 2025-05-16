@@ -14,7 +14,7 @@ const ConsultationsSection: React.FC<ConsultationsSectionProps> = ({ user }) => 
       </CardHeader>
       <CardContent>
         <p className="text-muted-foreground">
-          No active consultations found. Book a session with an expert to get started.
+          You don't have any upcoming consultations.
         </p>
         {/* Consultation listings would go here */}
       </CardContent>
