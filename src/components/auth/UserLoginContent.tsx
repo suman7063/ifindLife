@@ -20,6 +20,7 @@ const UserLoginContent: React.FC = () => {
       try {
         const action = JSON.parse(pendingActionStr);
         setPendingAction(action);
+        console.log("UserLoginContent - Found pending action:", action);
       } catch (error) {
         console.error('Error parsing pending action:', error);
         sessionStorage.removeItem('pendingAction');
@@ -54,8 +55,11 @@ const UserLoginContent: React.FC = () => {
       toast.success("Login successful!");
       
       // Handle redirect using React Router for better SPA experience
-      const redirectPath = getRedirectPath();
-      navigate(redirectPath, { replace: true });
+      setTimeout(() => {
+        const redirectPath = getRedirectPath();
+        console.log("Login successful, redirecting to:", redirectPath);
+        navigate(redirectPath, { replace: true });
+      }, 100);
       
       return true;
     } catch (error) {
@@ -72,7 +76,11 @@ const UserLoginContent: React.FC = () => {
       {pendingAction && (
         <Alert className="mb-4">
           <AlertDescription>
-            After login, you'll be returned to continue your {pendingAction.type === 'favorite' ? 'favoriting' : pendingAction.type === 'call' ? 'call' : 'booking'} action.
+            After login, you'll be returned to continue your {
+              pendingAction.type === 'favorite' ? 'favoriting' : 
+              pendingAction.type === 'call' ? 'call' : 
+              pendingAction.type === 'book' ? 'booking' : 'previous'
+            } action.
           </AlertDescription>
         </Alert>
       )}
@@ -82,7 +90,7 @@ const UserLoginContent: React.FC = () => {
           <AlertDescription>{loginError}</AlertDescription>
         </Alert>
       )}
-      <UserLoginTabs onLogin={handleLogin} />
+      <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
     </div>
   );
 };

@@ -68,6 +68,7 @@ export function getRedirectPath(): string {
   if (pendingActionStr) {
     try {
       const pendingAction = JSON.parse(pendingActionStr) as PendingAction;
+      console.log('Processing pending action for redirect:', pendingAction);
       sessionStorage.removeItem('pendingAction');
       
       if (pendingAction.type === 'book' && pendingAction.id) {
@@ -78,7 +79,6 @@ export function getRedirectPath(): string {
         return `/experts/${pendingAction.id}?call=true`;
       }
       
-      // Remove references to the non-existent path property
       if (pendingAction.type === 'navigate' && pendingAction.data?.path) {
         return pendingAction.data.path;
       }
@@ -89,6 +89,7 @@ export function getRedirectPath(): string {
   
   // Default redirects based on role
   const sessionType = localStorage.getItem('sessionType') || 'user';
+  console.log('No pending action, redirecting based on session type:', sessionType);
   
   if (sessionType === 'expert') {
     return '/expert-dashboard';

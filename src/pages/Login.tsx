@@ -29,9 +29,13 @@ const Login: React.FC = () => {
         if (isAuthenticated) {
           console.log("Login page: User is authenticated, handling redirect");
           
-          // Handle redirect using React Router
-          const redirectPath = getRedirectPath();
-          navigate(redirectPath, { replace: true });
+          // Add a small delay to ensure auth state is fully processed
+          setTimeout(() => {
+            // Handle redirect using React Router
+            const redirectPath = getRedirectPath();
+            console.log("Login page: Redirecting to", redirectPath);
+            navigate(redirectPath, { replace: true });
+          }, 100);
           return;
         } else {
           console.log("Login page: User is not authenticated, showing login form");
