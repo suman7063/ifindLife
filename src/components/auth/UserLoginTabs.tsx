@@ -37,17 +37,36 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
     
     setIsLoading(true);
     try {
-      if (onLogin) {
+      // First try the provided onLogin function (from parent)
+      if (onLogin && typeof onLogin === 'function') {
         console.log('UserLoginTabs: Using provided onLogin function');
         return await onLogin(email, password);
-      } else if (auth && typeof auth.login === 'function') {
+      }
+      
+      // If no onLogin provided, try auth context
+      if (auth && typeof auth.login === 'function') {
         console.log('UserLoginTabs: Using auth.login from context');
         return await auth.login(email, password);
-      } else {
-        console.error('UserLoginTabs: No login function available');
-        toast.error('Login functionality is not available');
-        return false;
       }
+      
+      // If still no login function, try to find any login-like function
+      if (auth) {
+        const authFunctions = Object.entries(auth)
+          .filter(([key, val]) => 
+            typeof val === 'function' && 
+            (key.toLowerCase().includes('login') || key.toLowerCase().includes('signin'))
+          );
+          
+        if (authFunctions.length > 0) {
+          console.log(`UserLoginTabs: Using ${authFunctions[0][0]} as login function`);
+          const loginFn = authFunctions[0][1] as (email: string, password: string) => Promise<boolean>;
+          return await loginFn(email, password);
+        }
+      }
+      
+      console.error('UserLoginTabs: No login function available');
+      toast.error('Login functionality is not available');
+      return false;
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred during login. Please try again.');

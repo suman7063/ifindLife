@@ -16,14 +16,39 @@ const UserLoginContent: React.FC = () => {
   // Use the unified auth context
   const auth = useAuth();
   
-  // Check for auth context validity
+  // Detailed inspection logs
   useEffect(() => {
     console.log('UserLoginContent: Auth context check:', {
       authAvailable: !!auth,
       loginAvailable: !!auth?.login,
       loginType: typeof auth?.login,
-      authKeysAvailable: auth ? Object.keys(auth) : []
+      authKeys: auth ? Object.keys(auth) : []
     });
+    
+    // Log more detailed structure
+    console.log('Auth object keys:', Object.keys(auth || {}));
+    console.log('Auth object structure:', JSON.stringify(auth, (key, value) => 
+      typeof value === 'function' ? 'FUNCTION' : value, 2));
+    
+    // Check if login exists under a different name
+    const possibleLoginFunctions = [
+      auth?.login,
+      auth?.signIn,
+      auth?.loginWithPassword,
+      auth?.loginWithEmail,
+      auth?.signInWithPassword
+    ];
+    
+    console.log('Possible login functions:', possibleLoginFunctions.map(fn => typeof fn));
+    
+    // Find any function in auth object
+    if (auth) {
+      const authFunctions = Object.entries(auth)
+        .filter(([_, val]) => typeof val === 'function')
+        .map(([key, _]) => key);
+      
+      console.log('All functions in auth object:', authFunctions);
+    }
   }, [auth]);
   
   // Check for pending actions in sessionStorage
@@ -60,15 +85,41 @@ const UserLoginContent: React.FC = () => {
         return false;
       }
       
-      if (typeof auth.login !== 'function') {
-        console.error("Login function is not available:", typeof auth?.login);
+      // Check if login function exists directly in auth object
+      let loginFunction = auth.login;
+      
+      // If not, look for it in another property
+      if (typeof loginFunction !== 'function') {
+        console.warn("Direct login function not available, checking for alternatives");
+        
+        // Try to find any function that might be the login function
+        const authFunctions = Object.entries(auth)
+          .filter(([_, val]) => typeof val === 'function')
+          .map(([key, val]) => ({ key, val }));
+          
+        console.log("Available functions:", authFunctions.map(f => f.key));
+        
+        // Try to use any function with "login" in its name
+        const loginFunctions = authFunctions.filter(f => 
+          f.key.toLowerCase().includes('login') || 
+          f.key.toLowerCase().includes('signin')
+        );
+        
+        if (loginFunctions.length > 0) {
+          console.log("Found potential login function:", loginFunctions[0].key);
+          loginFunction = loginFunctions[0].val;
+        }
+      }
+      
+      if (typeof loginFunction !== 'function') {
+        console.error("Login function is not available:", typeof loginFunction);
         console.error("Auth keys available:", Object.keys(auth));
         setLoginError("Login functionality is not available. Please try again later.");
         return false;
       }
       
       // Call the login function from auth context
-      const success = await auth.login(email, password);
+      const success = await loginFunction(email, password);
       
       if (success) {
         toast.success("Login successful!");

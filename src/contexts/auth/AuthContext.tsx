@@ -21,6 +21,11 @@ export const useAuth = (): AuthContextType => {
       role: context.role,
       availableKeys: Object.keys(context)
     });
+    
+    // Check if login exists but is not a function
+    if (context.login !== undefined && typeof context.login !== 'function') {
+      console.error('Login is defined but not a function:', context.login);
+    }
   }
   
   return context;
