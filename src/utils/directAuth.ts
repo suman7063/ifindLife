@@ -26,6 +26,42 @@ export async function directUserLogin(email: string, password: string): Promise<
     // Store session type for role determination
     localStorage.setItem('sessionType', 'user');
     
+    // Force redirect with a slight delay to ensure session is fully established
+    setTimeout(() => {
+      // Check for pending actions first
+      const pendingActionStr = sessionStorage.getItem('pendingAction');
+      if (pendingActionStr) {
+        try {
+          const pendingAction = JSON.parse(pendingActionStr);
+          sessionStorage.removeItem('pendingAction');
+          
+          if (pendingAction.type === 'book' && pendingAction.id) {
+            console.log('Force redirecting to booking page:', pendingAction.id);
+            window.location.href = `/experts/${pendingAction.id}?book=true`;
+            return;
+          }
+          
+          if (pendingAction.type === 'call' && pendingAction.id) {
+            console.log('Force redirecting to call page:', pendingAction.id);
+            window.location.href = `/experts/${pendingAction.id}?call=true`;
+            return;
+          }
+          
+          if (pendingAction.path) {
+            console.log('Force redirecting to path:', pendingAction.path);
+            window.location.href = pendingAction.path;
+            return;
+          }
+        } catch (error) {
+          console.error('Error handling pending action, redirecting to dashboard:', error);
+        }
+      }
+      
+      // Default redirect to user dashboard
+      console.log('Force redirecting to user dashboard');
+      window.location.href = '/user-dashboard';
+    }, 100);
+    
     return { success: true, data };
   } catch (err) {
     console.error('Exception during direct login:', err);
@@ -46,19 +82,19 @@ export function redirectAfterLogin(role?: string) {
       
       if (pendingAction.type === 'book' && pendingAction.id) {
         console.log('Redirecting to booking page with expert ID:', pendingAction.id);
-        window.location.replace(`/experts/${pendingAction.id}?book=true`);
+        window.location.href = `/experts/${pendingAction.id}?book=true`;
         return;
       }
       
       if (pendingAction.type === 'call' && pendingAction.id) {
         console.log('Redirecting to call page with expert ID:', pendingAction.id);
-        window.location.replace(`/experts/${pendingAction.id}?call=true`);
+        window.location.href = `/experts/${pendingAction.id}?call=true`;
         return;
       }
       
       if (pendingAction.path) {
         console.log('Redirecting to pending action path:', pendingAction.path);
-        window.location.replace(pendingAction.path);
+        window.location.href = pendingAction.path;
         return;
       }
     } catch (error) {
@@ -69,14 +105,14 @@ export function redirectAfterLogin(role?: string) {
   // Default redirects based on role - FIXED PATHS TO MATCH ROUTE CONFIGURATION
   console.log('No pending actions, using default redirect for role:', role);
   if (role === 'expert') {
-    // Using replace for more reliable redirect
-    window.location.replace('/expert-dashboard');
+    // Using direct URL assignment for more reliable redirect
+    window.location.href = '/expert-dashboard';
   } else if (role === 'admin') {
-    // Using replace for more reliable redirect
-    window.location.replace('/admin');
+    // Using direct URL assignment for more reliable redirect
+    window.location.href = '/admin';
   } else {
-    // Using replace for more reliable redirect 
-    window.location.replace('/user-dashboard');
+    // Using direct URL assignment for more reliable redirect
+    window.location.href = '/user-dashboard';
   }
 }
 

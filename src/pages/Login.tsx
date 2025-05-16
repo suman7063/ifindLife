@@ -8,7 +8,6 @@ import LoadingScreen from '@/components/auth/LoadingScreen';
 import { Container } from '@/components/ui/container';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
-import { supabase } from '@/lib/supabase';
 import { checkAuthStatus } from '@/utils/directAuth';
 
 const Login: React.FC = () => {
@@ -30,34 +29,20 @@ const Login: React.FC = () => {
         if (isAuthenticated && session) {
           console.log("Login page: User is authenticated, handling redirect");
           
-          // Get the redirect location from session storage if it exists
-          const pendingActionStr = sessionStorage.getItem('pendingAction');
-          if (pendingActionStr) {
-            try {
-              const action = JSON.parse(pendingActionStr);
-              sessionStorage.removeItem('pendingAction');
-              
-              if (action.path) {
-                console.log("Redirecting to pending action path:", action.path);
-                navigate(action.path, { replace: true });
-                return;
-              }
-            } catch (error) {
-              console.error('Error parsing pending action:', error);
-            }
-          }
-          
-          // Default redirects based on session type
+          // Check for session type to determine the dashboard
           const sessionType = localStorage.getItem('sessionType');
-          console.log("Login page: Redirecting based on session type:", sessionType);
+          
+          // Force immediate redirect based on session type
+          console.log("Login page: Force redirecting based on session type:", sessionType);
           
           if (sessionType === 'expert') {
-            navigate('/expert-dashboard', { replace: true });
+            window.location.href = '/expert-dashboard';
           } else if (sessionType === 'admin') {
-            navigate('/admin', { replace: true });
+            window.location.href = '/admin';
           } else {
-            navigate('/user-dashboard', { replace: true });
+            window.location.href = '/user-dashboard';
           }
+          return;
         } else {
           console.log("Login page: User is not authenticated, showing login form");
         }

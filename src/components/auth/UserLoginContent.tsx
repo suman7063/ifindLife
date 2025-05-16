@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 import { PendingAction } from '@/hooks/useAuthJourneyPreservation';
-import { directUserLogin, redirectAfterLogin } from '@/utils/directAuth';
+import { directUserLogin } from '@/utils/directAuth';
 
 const UserLoginContent: React.FC = () => {
   const navigate = useNavigate();
@@ -44,7 +44,7 @@ const UserLoginContent: React.FC = () => {
     try {
       console.log("Attempting user login with direct method:", email);
       
-      // Use direct login method instead of context
+      // Use direct login method
       const result = await directUserLogin(email, password);
       
       if (!result.success) {
@@ -57,20 +57,7 @@ const UserLoginContent: React.FC = () => {
       
       toast.success("Login successful!");
       
-      // Check if auth context is available for role determination
-      let role = 'user'; // Default role
-      
-      if (auth && auth.role) {
-        role = auth.role;
-      }
-      
-      console.log("Login successful, redirecting with role:", role);
-      
-      // Handle redirect based on role - using setTimeout for more reliable redirect
-      setTimeout(() => {
-        redirectAfterLogin(role);
-      }, 100);
-      
+      // The redirect is handled in the directUserLogin function
       return true;
       
     } catch (error) {
