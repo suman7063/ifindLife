@@ -6,24 +6,37 @@ import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
+import { toast } from 'sonner';
 
 const ExpertLogin: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const { login, isAuthenticated, isLoading, role } = useAuth();
+  const auth = useAuth();
   const navigate = useNavigate();
+  
+  // Log auth context on mount to debug
+  useEffect(() => {
+    console.log('ExpertLogin: Auth context available:', {
+      isAuthenticated: auth?.isAuthenticated,
+      isLoading: auth?.isLoading,
+      role: auth?.role,
+      hasLogin: !!auth?.login,
+      loginType: typeof auth?.login,
+      authKeys: auth ? Object.keys(auth) : []
+    });
+  }, [auth]);
 
   useEffect(() => {
     // Redirect if already authenticated
-    if (!isLoading && isAuthenticated) {
-      if (role === 'expert') {
+    if (!auth.isLoading && auth.isAuthenticated) {
+      if (auth.role === 'expert') {
         navigate('/expert-dashboard', { replace: true });
       } else {
         navigate('/', { replace: true });
       }
     }
-  }, [isAuthenticated, isLoading, navigate, role]);
+  }, [auth.isAuthenticated, auth.isLoading, navigate, auth.role]);
 
   // Handle login
   const handleLogin = async (email: string, password: string) => {
@@ -31,8 +44,26 @@ const ExpertLogin: React.FC = () => {
       setIsLoggingIn(true);
       setLoginError(null);
       
+      console.log('ExpertLogin: Attempting login with:', {
+        email,
+        hasLoginFunction: !!auth?.login,
+        loginFunctionType: typeof auth?.login
+      });
+      
+      // Verify login function exists
+      if (!auth || typeof auth.login !== 'function') {
+        console.error('ExpertLogin: Login function not available:', {
+          authAvailable: !!auth,
+          loginType: typeof auth?.login,
+          authKeys: auth ? Object.keys(auth) : []
+        });
+        setLoginError('Login function is not available. Please try again later.');
+        toast.error('Login function is not available. Please try again later.');
+        return false;
+      }
+      
       // Using login with options parameter
-      const success = await login(email, password, { asExpert: true });
+      const success = await auth.login(email, password, { asExpert: true });
       
       if (!success) {
         setLoginError('Login failed. Please check your credentials and try again.');

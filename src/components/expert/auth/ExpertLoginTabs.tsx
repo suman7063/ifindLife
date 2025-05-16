@@ -19,6 +19,14 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
   isLoggingIn,
   loginError
 }) => {
+  // Log props on render to debug
+  console.log('ExpertLoginTabs: Rendered with props:', {
+    activeTab,
+    hasOnLogin: typeof onLogin === 'function',
+    isLoggingIn,
+    hasError: !!loginError
+  });
+  
   // Handle tab change
   const handleTabChange = (value: string) => {
     setActiveTab(value);
