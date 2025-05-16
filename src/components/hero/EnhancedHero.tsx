@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Headphones, BookOpen } from 'lucide-react';
+import { MessageSquare, Headphones, FileText } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const EnhancedHero: React.FC = () => {
@@ -10,34 +10,34 @@ const EnhancedHero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const isMobile = useIsMobile();
   
-  // Slider images
+  // Slider images - using the same ones from the existing hero component
   const sliderImages = [
     "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // First image (man)
     "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Second image (woman)
   ];
 
-  // Service cards data - Updated colors and links to match service pages
+  // Service cards data - match the screenshot
   const serviceCards = [
     {
       title: "Speak your Heart",
       description: "We are here to listen mindfully. No judgement",
       icon: <MessageSquare className="h-6 w-6" />,
-      action: () => navigate("/services/mindful-listening"), // Updated to Heart2Heart service page
-      color: "from-ifind-teal/70 to-ifind-teal/90" // Teal color for Heart2Heart
+      action: () => navigate("/services/mindful-listening"),
+      color: "from-ifind-teal/70 to-ifind-teal/90"
     },
     {
       title: "Get Guidance",
       description: "Get 1 on 1 guidance from experts for your situation",
       icon: <Headphones className="h-6 w-6" />,
-      action: () => navigate("/services/therapy-sessions"), // Updated to Therapy Sessions page
-      color: "from-ifind-purple/70 to-ifind-purple/90" // Purple color for Therapy
+      action: () => navigate("/services/therapy-sessions"),
+      color: "from-ifind-purple/70 to-ifind-purple/90"
     },
     {
       title: "Take a Test",
       description: "Discover insights about your mental wellbeing through our assessment",
-      icon: <BookOpen className="h-6 w-6" />,
+      icon: <FileText className="h-6 w-6" />,
       action: () => navigate("/mental-health-assessment"),
-      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Aqua color for Guided Meditation
+      color: "from-ifind-aqua/70 to-ifind-aqua/90"
     }
   ];
 
@@ -90,7 +90,7 @@ const EnhancedHero: React.FC = () => {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                objectPosition: 'center 30%',
+                objectPosition: 'center 30%', // Show more of the face
               }}
               loading={index === 0 ? "eager" : "lazy"}
             />
