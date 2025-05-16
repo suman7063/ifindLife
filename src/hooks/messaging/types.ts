@@ -29,3 +29,23 @@ export interface MessagingContextType {
   sendMessage: (recipientId: string, content: string) => Promise<boolean>;
   fetchConversations: () => Promise<void>;
 }
+
+export interface UseConversationsReturn {
+  conversations: Conversation[];
+  loading: boolean;
+  error: Error | null;
+  selectedConversation: string | null;
+  selectConversation: (conversationId: string) => void;
+  fetchConversations: () => Promise<void>;
+  setCurrentConversation: (conversationId: string) => void;
+}
+
+export interface UseMessagesReturn {
+  messages: Message[];
+  loading: boolean;
+  error: Error | null;
+  sendMessage: (content: string) => Promise<boolean>;
+  markAsRead: (messageId: string) => Promise<boolean>;
+  fetchMessages: (conversationId: string) => Promise<void>;
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+}
