@@ -11,13 +11,12 @@ import { lazy, Suspense } from 'react';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 
 // Lazy load non-critical components
-const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
+const ExpertsOnlineSection = lazy(() => import('@/components/ExpertsOnlineSection'));
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
 const CTASection = lazy(() => import('@/components/CTASection'));
 const Footer = lazy(() => import('@/components/Footer'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
-const StayInTouchSection = lazy(() => import('@/components/StayInTouchSection'));
 
 // Loading fallback component
 const SectionLoadingFallback = () => (
@@ -42,8 +41,8 @@ const Index = () => {
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Section 2: Introduction Section - Full Width */}
-        <div className="full-width-section">
+        {/* Section 2: Introduction Section - Full Width with grey background */}
+        <div className="full-width-section bg-gray-50">
           <IntroductionSection />
         </div>
         
@@ -59,9 +58,9 @@ const Index = () => {
         {/* Section 6: Programs for Organizations (Services Section) */}
         <ServicesSection />
         
-        {/* Section 7: Top IFL Experts */}
+        {/* Section 7: Experts Currently Online */}
         <Suspense fallback={<SectionLoadingFallback />}>
-          <TopTherapistsSection />
+          <ExpertsOnlineSection />
         </Suspense>
         
         {/* Section 8: Why Choose Us */}

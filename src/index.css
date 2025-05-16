@@ -94,8 +94,8 @@
     @apply font-poppins font-medium;
   }
   
-  /* Center align all section headings */
-  section h2 {
+  /* Center align all section headings and descriptions */
+  section h2, section .section-description {
     @apply text-center;
   }
   
@@ -104,10 +104,9 @@
     @apply text-justify;
   }
   
-  /* Left align headings except home page and page headings */
-  .left-align-headings h2:not(.home-page h2, .page-heading),
-  .left-align-headings h3:not(.home-page h3, .page-heading),
-  .left-align-headings h4:not(.home-page h4, .page-heading) {
+  /* Left align specific headings when needed */
+  .left-align-text h3,
+  .left-align-text h4 {
     @apply text-left;
   }
 

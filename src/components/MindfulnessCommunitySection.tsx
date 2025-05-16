@@ -23,7 +23,7 @@ const MindfulnessCommunitySection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {/* Left side - Community image */}
-          <div className="rounded-lg overflow-hidden h-[400px]">
+          <div className="rounded-lg overflow-hidden h-[400px] flex items-center">
             <img 
               src="/lovable-uploads/c0f975b0-a7b3-4d75-924c-b743978c511c.png" 
               alt="Mindfulness Community" 
@@ -58,7 +58,7 @@ const MindfulnessCommunitySection = () => {
             <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="mt-1">
-                  <MessageCircle className="text-green-500 h-6 w-6" />
+                  <MessageCircle className="text-ifind-teal h-6 w-6" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-bold mb-2 text-left">Join WhatsApp Community</h3>
@@ -68,7 +68,7 @@ const MindfulnessCommunitySection = () => {
                   </p>
                   <Button 
                     onClick={handleJoinWhatsApp} 
-                    className="w-full bg-green-500 hover:bg-green-600 text-white"
+                    className="w-full bg-ifind-teal hover:bg-ifind-teal/90 text-white"
                   >
                     <MessageCircle className="mr-2 h-5 w-5" /> Join WhatsApp Group
                   </Button>
