@@ -23,6 +23,10 @@ export function adaptUserProfile(user: any): UserProfile {
     favorite_programs: [],
     enrolled_courses: [],
     currency: '$',
+    reviews: [],
+    reports: [],
+    transactions: [],
+    referrals: []
   };
   
   return {
@@ -42,6 +46,10 @@ export function adaptUserProfile(user: any): UserProfile {
     favorite_programs: user.favorite_programs || [],
     enrolled_courses: user.enrolled_courses || [],
     currency: user.currency || '$',
+    reviews: user.reviews || [],
+    reports: user.reports || [],
+    transactions: user.transactions || [],
+    referrals: user.referrals || []
     // Optional properties will be undefined if not provided
     // but we've covered all required properties
   };
