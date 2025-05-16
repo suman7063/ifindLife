@@ -50,7 +50,5 @@ export function adaptUserProfile(user: any): UserProfile {
     reports: user.reports || [],
     transactions: user.transactions || [],
     referrals: user.referrals || []
-    // Optional properties will be undefined if not provided
-    // but we've covered all required properties
   };
 }
