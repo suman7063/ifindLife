@@ -30,24 +30,18 @@ const UserLoginContent: React.FC = () => {
     console.log('Auth object structure:', JSON.stringify(auth, (key, value) => 
       typeof value === 'function' ? 'FUNCTION' : value, 2));
     
-    // Check if login exists under a different name
-    const possibleLoginFunctions = [
-      auth?.login,
-      auth?.signIn,
-      auth?.loginWithPassword,
-      auth?.loginWithEmail,
-      auth?.signInWithPassword
-    ];
-    
-    console.log('Possible login functions:', possibleLoginFunctions.map(fn => typeof fn));
-    
-    // Find any function in auth object
-    if (auth) {
-      const authFunctions = Object.entries(auth)
-        .filter(([_, val]) => typeof val === 'function')
-        .map(([key, _]) => key);
+    // Check if login function exists
+    if (typeof auth?.login !== 'function') {
+      console.warn('Login function is not available in auth context');
       
-      console.log('All functions in auth object:', authFunctions);
+      // Find any function in auth object that might be used for login
+      if (auth) {
+        const authFunctions = Object.entries(auth)
+          .filter(([_, val]) => typeof val === 'function')
+          .map(([key, _]) => key);
+        
+        console.log('All functions in auth object:', authFunctions);
+      }
     }
   }, [auth]);
   

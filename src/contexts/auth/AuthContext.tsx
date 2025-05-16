@@ -28,5 +28,15 @@ export const useAuth = (): AuthContextType => {
     }
   }
   
+  // Create a fallback login function if it's missing
+  if (!context.login || typeof context.login !== 'function') {
+    console.error('Login function missing from auth context. Creating a fallback that will fail.');
+    // @ts-ignore - Adding fallback login function
+    context.login = async () => {
+      console.error('Using fallback login function which always fails');
+      return false;
+    };
+  }
+  
   return context;
 };

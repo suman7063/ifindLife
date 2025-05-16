@@ -59,6 +59,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin }) => {
           
         if (authFunctions.length > 0) {
           console.log(`UserLoginTabs: Using ${authFunctions[0][0]} as login function`);
+          // We need to use type assertion here since this is a dynamic function discovery
           const loginFn = authFunctions[0][1] as (email: string, password: string) => Promise<boolean>;
           return await loginFn(email, password);
         }
