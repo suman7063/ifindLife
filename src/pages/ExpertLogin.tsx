@@ -66,7 +66,7 @@ const ExpertLogin: React.FC = () => {
                   setActiveTab={setActiveTab}
                   onLogin={handleLogin}
                   isLoggingIn={isLoggingIn}
-                  loginError={loginError || null}
+                  loginError={loginError}
                 />
               </div>
             </div>

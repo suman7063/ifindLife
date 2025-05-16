@@ -1,11 +1,10 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Message, Conversation } from './messaging/types';
 
-export const useMessaging = () => {
+const useMessaging = () => {
   const { user, isAuthenticated } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -162,8 +161,8 @@ export const useMessaging = () => {
     }
   }, [isAuthenticated, user]);
 
-  // Send a message
-  const sendMessage = useCallback(async (recipientId: string, content: string) => {
+  // Send a message - updated to use 2 parameters
+  const sendMessage = useCallback(async (recipientId: string, content: string): Promise<boolean> => {
     if (!isAuthenticated || !user) {
       toast.error('You must be logged in to send messages');
       return false;

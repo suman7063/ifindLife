@@ -1,4 +1,3 @@
-
 import { useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
@@ -121,6 +120,11 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
       }
 
       if (data.user) {
+        // Convert experience to string if it's a number
+        const experience = typeof expertData.experience === 'number' 
+          ? String(expertData.experience) 
+          : expertData.experience || '';
+
         // Create expert profile with the auth user id
         const expertProfileData = {
           auth_id: data.user.id,
@@ -134,11 +138,9 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
           state: expertData.state || '',
           country: expertData.country || '',
           specialization: expertData.specialization || '',
-          experience: expertData.experience || '',
+          experience: experience,
           bio: expertData.bio || '',
           profile_picture: expertData.profile_picture || '',
-          pricing_tier: expertData.pricing_tier || 'standard',
-          availability: expertData.availability || [],
           selected_services: expertData.selected_services || []
         };
 
@@ -201,16 +203,16 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
       const sessionType = localStorage.getItem('sessionType') || 'user';
       
       if (sessionType === 'expert' || sessionType === 'dual') {
-        await refreshExpertProfile();
+        await expertRepository.getExpertByAuthId(state.user.id);
       }
       
       if (sessionType === 'user' || sessionType === 'dual') {
-        await refreshUserProfile();
+        await userRepository.getUser(state.user.id);
       }
     } catch (error) {
       console.error('Error refreshing profile:', error);
     }
-  }, [state.user?.id, refreshUserProfile, refreshExpertProfile]);
+  }, [state.user?.id]);
 
   const updateUserProfile = useCallback(async (updates: Partial<UserProfile>): Promise<boolean> => {
     if (!state.user?.id) return false;
@@ -222,7 +224,6 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
     return await expertRepository.updateExpert(state.expertProfile.id, updates);
   }, [state.expertProfile?.id]);
 
-  // Backwards compatibility
   const updateProfile = useCallback(async (updates: Partial<UserProfile>): Promise<boolean> => {
     return await updateUserProfile(updates);
   }, [updateUserProfile]);
