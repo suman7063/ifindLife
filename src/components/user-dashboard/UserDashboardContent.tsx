@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import ProfileSettings from '@/components/user-dashboard/ProfileSettings';
 import ConsultationsSection from '@/components/user-dashboard/ConsultationsSection';
 import WalletSection from '@/components/user-dashboard/WalletSection';
+import FavoritesSection from '@/components/user-dashboard/FavoritesSection';
 
 interface UserDashboardContentProps {
   user: any;
@@ -18,6 +19,7 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
   const [activeTab, setActiveTab] = useState('profile');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
+  // Handle logout
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
@@ -62,9 +64,10 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-4 w-full max-w-md">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="consultations">Consultations</TabsTrigger>
+          <TabsTrigger value="favorites">Favorites</TabsTrigger>
           <TabsTrigger value="wallet">Wallet</TabsTrigger>
         </TabsList>
         
@@ -74,6 +77,10 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
         
         <TabsContent value="consultations" className="mt-6">
           <ConsultationsSection user={user} />
+        </TabsContent>
+        
+        <TabsContent value="favorites" className="mt-6">
+          <FavoritesSection user={user} />
         </TabsContent>
         
         <TabsContent value="wallet" className="mt-6">

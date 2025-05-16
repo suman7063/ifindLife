@@ -11,31 +11,29 @@ const UserDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
+  // Check authentication on component mount
   useEffect(() => {
-    // Directly check for session with Supabase
     const checkAuth = async () => {
       try {
-        console.log('Checking authentication...');
-        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('UserDashboard: Checking authentication...');
+        const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           throw error;
         }
         
-        if (session) {
-          console.log('Session found, user authenticated');
-          setUser(session.user);
+        if (data.session) {
+          console.log('UserDashboard: Session found, setting user');
+          setUser(data.session.user);
           
-          // Ensure sessionType is set
-          if (!localStorage.getItem('sessionType')) {
-            localStorage.setItem('sessionType', 'user');
-          }
+          // Ensure session type is set
+          localStorage.setItem('sessionType', 'user');
         } else {
-          console.log('No session found, redirecting to login');
+          console.log('UserDashboard: No session found, redirecting to login');
           navigate('/user-login', { replace: true });
         }
       } catch (error) {
-        console.error('Auth check error:', error);
+        console.error('UserDashboard: Auth check error:', error);
         toast.error('Authentication error');
         navigate('/user-login', { replace: true });
       } finally {
@@ -45,9 +43,11 @@ const UserDashboard: React.FC = () => {
     
     checkAuth();
     
-    // Listen for auth changes
+    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        console.log('UserDashboard: Auth state changed:', event);
+        
         if (session) {
           setUser(session.user);
         } else {
@@ -57,6 +57,7 @@ const UserDashboard: React.FC = () => {
       }
     );
     
+    // Cleanup subscription on unmount
     return () => {
       subscription.unsubscribe();
     };
