@@ -4,9 +4,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 export type PendingAction = {
-  type: 'favorite' | 'book' | 'call' | string;
+  type: 'favorite' | 'book' | 'call' | 'navigate' | string;
   id?: string | number;
-  data?: any;
+  data?: {
+    path?: string;
+    [key: string]: any;
+  };
 };
 
 export const useAuthJourneyPreservation = () => {

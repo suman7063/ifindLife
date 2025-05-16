@@ -78,8 +78,9 @@ export function getRedirectPath(): string {
         return `/experts/${pendingAction.id}?call=true`;
       }
       
-      if (pendingAction.path) {
-        return pendingAction.path;
+      // Remove references to the non-existent path property
+      if (pendingAction.type === 'navigate' && pendingAction.data?.path) {
+        return pendingAction.data.path;
       }
     } catch (error) {
       console.error('Error handling pending action:', error);
