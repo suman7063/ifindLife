@@ -1,5 +1,6 @@
+
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import Login from './pages/Login';
 import UserLogin from './pages/UserLogin';
@@ -38,7 +39,7 @@ const UserWallet = lazy(() => import('./pages/UserWallet'));
 // The main routes component
 const AppRoutes: React.FC = () => {
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Login />} />
@@ -189,7 +190,7 @@ const AppRoutes: React.FC = () => {
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
-    </BrowserRouter>
+    </>
   );
 };
 
