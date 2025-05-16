@@ -1,35 +1,18 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Container } from '@/components/ui/container';
 import { Mail, Users, MessageCircle } from 'lucide-react';
-import { toast } from 'sonner';
 import NewsletterSubscription from './newsletter/NewsletterSubscription';
 
 const MindfulnessCommunitySection = () => {
-  const [email, setEmail] = useState('');
-
-  const handleJoinNewsletter = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes('@')) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-    
-    // Here you would typically call an API to subscribe the user
-    toast.success('Thank you for subscribing to our newsletter!');
-    setEmail('');
-  };
-
   const handleJoinWhatsApp = () => {
-    // Real WhatsApp community link
+    // WhatsApp community link
     window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank');
-    toast.success('Opening WhatsApp community link');
   };
 
   return (
-    <section className="py-16 bg-white">
-      <Container>
+    <section className="py-16 bg-gray-50 w-full">
+      <div className="container mx-auto px-4">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Our Mindfulness Community</h2>
           <p className="text-gray-600 max-w-3xl mx-auto">
@@ -49,41 +32,35 @@ const MindfulnessCommunitySection = () => {
           </div>
           
           {/* Right side - Newsletter and WhatsApp */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 justify-center">
             {/* Newsletter subscription */}
-            <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="mt-1">
                   <Mail className="text-ifind-purple h-6 w-6" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="text-xl font-bold mb-2 text-left">Daily Activities Newsletter</h3>
                   <p className="text-gray-600 mb-4 text-left">
                     Join our email list to receive daily mindfulness practices and activities directly to
                     your inbox. Start your day with intention and clarity.
                   </p>
-                  <form onSubmit={handleJoinNewsletter} className="flex gap-2">
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Your email address"
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ifind-purple"
-                      required
-                    />
-                    <Button type="submit" className="bg-ifind-purple hover:bg-ifind-purple/90">Join</Button>
-                  </form>
+                  <NewsletterSubscription 
+                    placeholder="Your email address" 
+                    buttonLabel="Join"
+                    className="flex gap-2" 
+                  />
                 </div>
               </div>
             </div>
             
             {/* WhatsApp community */}
-            <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="bg-white p-6 rounded-lg shadow-sm">
               <div className="flex items-start gap-4">
                 <div className="mt-1">
                   <MessageCircle className="text-green-500 h-6 w-6" />
                 </div>
-                <div>
+                <div className="flex-1">
                   <h3 className="text-xl font-bold mb-2 text-left">Join WhatsApp Community</h3>
                   <p className="text-gray-600 mb-4 text-left">
                     Connect with like-minded individuals in our WhatsApp group. Share experiences, get
@@ -91,7 +68,7 @@ const MindfulnessCommunitySection = () => {
                   </p>
                   <Button 
                     onClick={handleJoinWhatsApp} 
-                    className="w-full bg-green-500 hover:bg-green-600"
+                    className="w-full bg-green-500 hover:bg-green-600 text-white"
                   >
                     <MessageCircle className="mr-2 h-5 w-5" /> Join WhatsApp Group
                   </Button>
@@ -105,7 +82,7 @@ const MindfulnessCommunitySection = () => {
             </div>
           </div>
         </div>
-      </Container>
+      </div>
     </section>
   );
 };

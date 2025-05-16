@@ -8,6 +8,7 @@ import EnhancedHero from '@/components/hero/EnhancedHero';
 import MindfulnessCommunitySection from '@/components/MindfulnessCommunitySection';
 import IntroductionSection from '@/components/IntroductionSection';
 import { lazy, Suspense } from 'react';
+import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 
 // Lazy load non-critical components
 const TopTherapistsSection = lazy(() => import('@/components/TopTherapistsSection'));
@@ -46,7 +47,7 @@ const Index = () => {
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Section 2: Introduction Section */}
+        {/* Section 2: Introduction Section - Full Width */}
         <IntroductionSection />
         
         {/* Section 3: Services Section */}
@@ -55,30 +56,33 @@ const Index = () => {
         {/* Section 4: What We Do */}
         <WhatWeDoSection />
         
-        {/* Section 5: Top IFL Experts */}
+        {/* Section 5: How Can We Help You Today */}
+        <HomepageIssueSessions />
+        
+        {/* Section 6: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
         
-        {/* Section 6: Why Choose Us */}
+        {/* Section 7: Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 7: Testimonials */}
+        {/* Section 8: Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
         
-        {/* Section 8: Join Our Mindfulness Community */}
+        {/* Section 9: Join Our Mindfulness Community */}
         <MindfulnessCommunitySection />
         
-        {/* Section 9: Blog Section */}
+        {/* Section 10: Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <BlogSection />
         </Suspense>
         
-        {/* Section 10: CTA Section */}
+        {/* Section 11: CTA Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <CTASection />
         </Suspense>

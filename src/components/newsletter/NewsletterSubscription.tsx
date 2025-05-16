@@ -74,7 +74,7 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
       />
       <Button 
         type="submit" 
-        className="bg-ifind-purple hover:bg-ifind-purple/80"
+        className="bg-ifind-purple hover:bg-ifind-purple/80 text-white"
         disabled={isSubmitting}
         aria-label="Subscribe"
       >

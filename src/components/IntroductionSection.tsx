@@ -1,13 +1,12 @@
 
 import React from 'react';
-import { Container } from '@/components/ui/container';
 
 const IntroductionSection = () => {
   return (
-    <section className="py-20 bg-white">
-      <Container>
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-ifind-aqua to-ifind-purple">
+    <section className="py-20 bg-white w-full">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-ifind-aqua to-ifind-purple">
             Welcome to Your Mental Wellness Journey
           </h2>
           <p className="text-lg text-gray-700 leading-relaxed">
@@ -57,7 +56,7 @@ const IntroductionSection = () => {
             </div>
           </div>
         </div>
-      </Container>
+      </div>
     </section>
   );
 };

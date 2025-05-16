@@ -94,6 +94,11 @@
     @apply font-poppins font-medium;
   }
   
+  /* Center align all section headings */
+  section h2 {
+    @apply text-center;
+  }
+  
   /* Add justified text alignment for all pages except home page */
   .justify-text p:not(.home-page p) {
     @apply text-justify;
