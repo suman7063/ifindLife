@@ -131,11 +131,12 @@ export const useMessaging = () => {
       // Transform to our Message type
       const formattedMessages: Message[] = filteredMessages.map(msg => ({
         id: msg.id,
-        senderId: msg.sender_id,
-        receiverId: msg.receiver_id,
+        sender_id: msg.sender_id,
+        receiver_id: msg.receiver_id,
         content: msg.content,
+        created_at: msg.created_at,
+        read: msg.read,
         timestamp: new Date(msg.created_at),
-        isRead: msg.read,
         isMine: msg.sender_id === user.id
       }));
       
@@ -198,11 +199,12 @@ export const useMessaging = () => {
       // Add the new message to the state
       const formattedMessage: Message = {
         id: data.id,
-        senderId: data.sender_id,
-        receiverId: data.receiver_id,
+        sender_id: data.sender_id,
+        receiver_id: data.receiver_id,
         content: data.content,
+        created_at: data.created_at,
+        read: data.read,
         timestamp: new Date(data.created_at),
-        isRead: data.read,
         isMine: true
       };
       
@@ -240,11 +242,12 @@ export const useMessaging = () => {
         if (selectedConversation === newMessage.sender_id) {
           const formattedMessage: Message = {
             id: newMessage.id,
-            senderId: newMessage.sender_id,
-            receiverId: newMessage.receiver_id,
+            sender_id: newMessage.sender_id,
+            receiver_id: newMessage.receiver_id,
             content: newMessage.content,
+            created_at: newMessage.created_at,
+            read: newMessage.read,
             timestamp: new Date(newMessage.created_at),
-            isRead: newMessage.read,
             isMine: false
           };
           

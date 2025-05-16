@@ -1,2 +1,2 @@
 
-export { useMessaging } from './useMessaging';
+export { default as useMessaging } from './useMessaging';

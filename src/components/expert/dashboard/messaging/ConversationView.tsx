@@ -22,28 +22,32 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   userAvatar
 }) => {
   const { user } = useAuth();
-  const messaging = useMessaging();
-  const { messages, loading } = messaging;
+  const { 
+    messages: messagesList, 
+    loading,
+    fetchMessages: getMessagesList, 
+    sendMessage 
+  } = useMessaging();
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Fetch messages for this conversation when userId changes
   useEffect(() => {
-    if (userId) {
-      messaging.fetchMessages(userId);
+    if (userId && user?.id) {
+      getMessagesList(userId);
     }
-  }, [userId, messaging]);
+  }, [userId, user?.id, getMessagesList]);
   
   // Scroll to bottom on new messages
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [messagesList]);
   
   const handleSendMessage = () => {
-    if (newMessage.trim() && user && userId) {
-      messaging.sendMessage(userId, newMessage);
+    if (newMessage.trim() && user?.id && userId) {
+      sendMessage(userId, newMessage);
       setNewMessage('');
     }
   };
@@ -65,7 +69,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     );
   }
   
-  if (!userId || !messages || messages.length === 0) {
+  if (!userId || !messagesList || messagesList.length === 0) {
     return (
       <div className="flex flex-col h-full justify-center items-center p-8">
         <p className="text-muted-foreground text-center">
@@ -91,7 +95,7 @@ const ConversationView: React.FC<ConversationViewProps> = ({
   }
   
   // Filter messages for the current conversation
-  const conversationMessages = messages.filter(
+  const conversationMessages = messagesList.filter(
     msg => (msg.sender_id === userId && msg.receiver_id === user?.id) || 
            (msg.sender_id === user?.id && msg.receiver_id === userId)
   );

@@ -11,6 +11,21 @@ export interface AuthUser {
   role: UserRole;
 }
 
+// Initial auth state
+export const initialAuthState: AuthState = {
+  user: null,
+  userProfile: null,
+  expertProfile: null,
+  isAuthenticated: false,
+  isLoading: true,
+  role: null,
+  session: null,
+  error: null,
+  profile: null,
+  walletBalance: 0,
+  sessionType: 'none'
+};
+
 export interface AuthState {
   user: AuthUser | null;
   userProfile: UserProfile | null;

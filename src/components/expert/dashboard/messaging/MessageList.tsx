@@ -4,7 +4,7 @@ import { Message } from '@/types/database/unified';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
-import { useMessaging } from '@/hooks/messaging/useMessaging'; // Fixed import
+import { useMessaging } from '@/hooks/messaging';
 
 interface MessageListProps {
   userId: string;
@@ -14,7 +14,7 @@ interface MessageListProps {
 
 const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation, selectedUserId }) => {
   const [message, setMessage] = React.useState('');
-  const { messages, sendMessage, loading } = useMessaging();
+  const { messages: messagesList, sendMessage, loading } = useMessaging();
 
   const handleSendMessage = async () => {
     if (!message.trim()) return;
@@ -29,12 +29,12 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
           <div className="flex justify-center p-4">
             <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
           </div>
-        ) : messages.length === 0 ? (
+        ) : messagesList.length === 0 ? (
           <div className="flex justify-center items-center h-full text-gray-500">
             No messages yet
           </div>
         ) : (
-          messages.map((msg: Message) => (
+          messagesList.map((msg: Message) => (
             <div
               key={msg.id}
               className={`max-w-[80%] p-3 rounded-lg ${

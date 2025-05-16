@@ -123,16 +123,28 @@ export const useAuthActions = (state: AuthState, onActionComplete: () => void) =
       if (data.user) {
         // Create expert profile with the auth user id
         const expertProfileData = {
-          ...expertData,
           auth_id: data.user.id,
           email,
           status: 'pending',
           verified: false,
+          name: expertData.name || '',
+          phone: expertData.phone || '',
+          address: expertData.address || '',
+          city: expertData.city || '',
+          state: expertData.state || '',
+          country: expertData.country || '',
+          specialization: expertData.specialization || '',
+          experience: expertData.experience || '',
+          bio: expertData.bio || '',
+          profile_picture: expertData.profile_picture || '',
+          pricing_tier: expertData.pricing_tier || 'standard',
+          availability: expertData.availability || [],
+          selected_services: expertData.selected_services || []
         };
 
         const { error: profileError } = await supabase
           .from('expert_accounts')
-          .insert([expertProfileData]);
+          .insert(expertProfileData);
 
         if (profileError) {
           console.error('Expert profile creation error:', profileError);
