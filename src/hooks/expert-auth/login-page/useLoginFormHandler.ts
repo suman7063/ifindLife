@@ -2,6 +2,7 @@
 // Fix the login handler to match the expected function signature
 import { useState } from 'react';
 import { useExpertAuth } from '../useExpertAuth';
+import { LoginOptions } from '@/contexts/auth/types';
 
 export const useLoginFormHandler = () => {
   const [email, setEmail] = useState('');
@@ -21,8 +22,8 @@ export const useLoginFormHandler = () => {
     setLoginError(null);
     
     try {
-      // Update to match expected function signature
-      const success = await login(email, password);
+      // Login as expert
+      const success = await login(email, password, { asExpert: true });
       
       if (!success) {
         setLoginError('Login failed. Please check your credentials.');

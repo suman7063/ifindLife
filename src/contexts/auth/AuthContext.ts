@@ -3,6 +3,7 @@ import { createContext } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 import { NewReview, NewReport } from '@/types/supabase/tables';
+import { LoginOptions } from './types';
 
 export type UserRole = 'user' | 'expert' | 'admin' | null;
 export type SessionType = 'none' | 'user' | 'expert' | 'dual';
@@ -20,7 +21,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   role: UserRole;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string, options?: LoginOptions) => Promise<boolean>;
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
