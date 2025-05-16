@@ -6,6 +6,7 @@ import WhatWeDoSection from '@/components/WhatWeDoSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import EnhancedHero from '@/components/hero/EnhancedHero';
 import MindfulnessCommunitySection from '@/components/MindfulnessCommunitySection';
+import IntroductionSection from '@/components/IntroductionSection';
 import { lazy, Suspense } from 'react';
 
 // Lazy load non-critical components
@@ -39,42 +40,45 @@ const Index = () => {
   }
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col home-page">
       <Navbar />
       <main className="flex-1">
         {/* Section 1: Enhanced Hero Banner with tabs */}
         <EnhancedHero />
         
-        {/* Section 2: Services Section */}
+        {/* Section 2: Introduction Section */}
+        <IntroductionSection />
+        
+        {/* Section 3: Services Section */}
         <ServicesSection />
 
-        {/* Section 3: What We Do */}
+        {/* Section 4: What We Do */}
         <WhatWeDoSection />
         
-        {/* Section 4: Top IFL Experts */}
+        {/* Section 5: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
         
-        {/* Section 5: Why Choose Us */}
+        {/* Section 6: Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 6: Testimonials */}
+        {/* Section 7: Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
         
-        {/* Section 7: Join Our Mindfulness Community */}
+        {/* Section 8: Join Our Mindfulness Community */}
         <MindfulnessCommunitySection />
         
-        {/* Section 8: Blog Section */}
+        {/* Section 9: Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <BlogSection />
         </Suspense>
         
-        {/* Section 9: CTA Section */}
+        {/* Section 10: CTA Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <CTASection />
         </Suspense>

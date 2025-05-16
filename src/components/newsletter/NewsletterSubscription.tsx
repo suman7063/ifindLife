@@ -8,9 +8,17 @@ import { from } from '@/lib/supabase';
 
 interface NewsletterSubscriptionProps {
   className?: string;
+  placeholder?: string;
+  buttonLabel?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
-const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({ className }) => {
+const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({ 
+  className,
+  placeholder = "Your email",
+  buttonLabel,
+  onSuccess 
+}) => {
   const [email, setEmail] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -40,6 +48,9 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({ classNa
       } else {
         toast.success('Thank you for subscribing to our newsletter!');
         setEmail('');
+        if (onSuccess) {
+          onSuccess();
+        }
       }
     } catch (error: any) {
       console.error('Failed to subscribe:', error);
@@ -55,22 +66,21 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({ classNa
         type="email" 
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        placeholder="Your email" 
-        className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+        placeholder={placeholder} 
+        className="bg-white border-gray-300"
         disabled={isSubmitting}
         required
         aria-label="Email for newsletter"
       />
       <Button 
         type="submit" 
-        size="icon" 
-        className="bg-ifind-aqua hover:bg-ifind-aqua/80"
+        className="bg-ifind-purple hover:bg-ifind-purple/80"
         disabled={isSubmitting}
         aria-label="Subscribe"
       >
         {isSubmitting ? (
           <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-        ) : (
+        ) : buttonLabel || (
           <Send size={16} />
         )}
       </Button>

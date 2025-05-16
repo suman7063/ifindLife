@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Container } from '@/components/ui/container';
 import { Mail, Users, MessageCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import NewsletterSubscription from './newsletter/NewsletterSubscription';
 
 const MindfulnessCommunitySection = () => {
   const [email, setEmail] = useState('');
@@ -21,14 +22,14 @@ const MindfulnessCommunitySection = () => {
   };
 
   const handleJoinWhatsApp = () => {
-    // This would typically link to your WhatsApp group invite
-    window.open('https://whatsapp.com/channel/your-channel-link', '_blank');
+    // Real WhatsApp community link
+    window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank');
     toast.success('Opening WhatsApp community link');
   };
 
   return (
     <section className="py-16 bg-white">
-      <div className="container mx-auto px-6 sm:px-12">
+      <Container>
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Join Our Mindfulness Community</h2>
           <p className="text-gray-600 max-w-3xl mx-auto">
@@ -41,18 +42,20 @@ const MindfulnessCommunitySection = () => {
           {/* Left side - Community image */}
           <div className="rounded-lg overflow-hidden h-[400px]">
             <img 
-              src="/lovable-uploads/279827ab-6ab5-47dc-a1af-213e53684caf.png" 
+              src="/lovable-uploads/c0f975b0-a7b3-4d75-924c-b743978c511c.png" 
               alt="Mindfulness Community" 
               className="w-full h-full object-cover"
             />
           </div>
           
           {/* Right side - Newsletter and WhatsApp */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-6">
             {/* Newsletter subscription */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <div className="flex items-start gap-4 mb-4">
-                <Mail className="text-ifind-purple mt-1" />
+              <div className="flex items-start gap-4">
+                <div className="mt-1">
+                  <Mail className="text-ifind-purple h-6 w-6" />
+                </div>
                 <div>
                   <h3 className="text-xl font-bold mb-2 text-left">Daily Activities Newsletter</h3>
                   <p className="text-gray-600 mb-4 text-left">
@@ -76,8 +79,10 @@ const MindfulnessCommunitySection = () => {
             
             {/* WhatsApp community */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <div className="flex items-start gap-4 mb-4">
-                <MessageCircle className="text-ifind-aqua mt-1" />
+              <div className="flex items-start gap-4">
+                <div className="mt-1">
+                  <MessageCircle className="text-green-500 h-6 w-6" />
+                </div>
                 <div>
                   <h3 className="text-xl font-bold mb-2 text-left">Join WhatsApp Community</h3>
                   <p className="text-gray-600 mb-4 text-left">
@@ -100,7 +105,7 @@ const MindfulnessCommunitySection = () => {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </section>
   );
 };
