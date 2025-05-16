@@ -16,7 +16,6 @@ const FavoritesSection: React.FC<FavoritesSectionProps> = ({ user }) => {
         <p className="text-muted-foreground">
           You haven't added any experts to your favorites yet.
         </p>
-        {/* Favorites listings would go here */}
       </CardContent>
     </Card>
   );

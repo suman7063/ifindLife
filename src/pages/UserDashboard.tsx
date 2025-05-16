@@ -1,72 +1,76 @@
 
-import React, { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import LoadingScreen from '@/components/auth/LoadingScreen';
 import { toast } from 'sonner';
+import LoadingScreen from '@/components/auth/LoadingScreen';
 import UserDashboardContent from '@/components/user-dashboard/UserDashboardContent';
 
 const UserDashboard: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
-  // Direct authentication check on mount
   useEffect(() => {
-    const checkSession = async () => {
+    // Directly check for session with Supabase
+    const checkAuth = async () => {
       try {
-        console.log('UserDashboard: Checking auth session...');
-        // Add a small delay to ensure auth state is fully processed
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        const { data, error } = await supabase.auth.getSession();
+        console.log('Checking authentication...');
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('Auth session error:', error);
-          toast.error('Authentication check failed');
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
+          throw error;
         }
         
-        if (data.session) {
-          console.log('UserDashboard: Session found, user authenticated');
-          setUser(data.session.user);
-          setIsAuthenticated(true);
-        } else {
-          console.log('UserDashboard: No session found');
-          setIsAuthenticated(false);
+        if (session) {
+          console.log('Session found, user authenticated');
+          setUser(session.user);
           
-          // Redirect after state update
-          setTimeout(() => {
-            console.log('UserDashboard: Redirecting to login...');
-            navigate('/user-login', { replace: true });
-          }, 100);
+          // Ensure sessionType is set
+          if (!localStorage.getItem('sessionType')) {
+            localStorage.setItem('sessionType', 'user');
+          }
+        } else {
+          console.log('No session found, redirecting to login');
+          navigate('/user-login', { replace: true });
         }
       } catch (error) {
-        console.error('Error checking auth:', error);
-        setIsAuthenticated(false);
+        console.error('Auth check error:', error);
+        toast.error('Authentication error');
+        navigate('/user-login', { replace: true });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
-    checkSession();
+    checkAuth();
+    
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+          navigate('/user-login', { replace: true });
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [navigate]);
   
-  // Show loading screen while checking auth
-  if (isLoading) {
+  if (loading) {
     return <LoadingScreen message="Loading your dashboard..." />;
   }
   
-  // Show dashboard content if authenticated
-  if (isAuthenticated && user) {
-    return <UserDashboardContent user={user} />;
+  if (!user) {
+    return <LoadingScreen message="Redirecting to login..." />;
   }
   
-  // This should rarely be visible due to the redirect in the useEffect
-  return <Navigate to="/user-login" replace />;
+  return <UserDashboardContent user={user} />;
 };
 
 export default UserDashboard;

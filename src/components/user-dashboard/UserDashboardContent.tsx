@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import ProfileSettings from '@/components/user-dashboard/ProfileSettings';
 import ConsultationsSection from '@/components/user-dashboard/ConsultationsSection';
-import FavoritesSection from '@/components/user-dashboard/FavoritesSection';
 import WalletSection from '@/components/user-dashboard/WalletSection';
 
 interface UserDashboardContentProps {
@@ -29,20 +28,17 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
       if (error) {
         console.error('Logout error:', error);
         toast.error('Failed to logout');
+        setIsLoggingOut(false);
         return;
       }
       
       localStorage.removeItem('sessionType');
       toast.success('Logged out successfully');
       
-      // Redirect after a slight delay
-      setTimeout(() => {
-        navigate('/user-login', { replace: true });
-      }, 500);
+      navigate('/user-login', { replace: true });
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('An error occurred during logout');
-    } finally {
       setIsLoggingOut(false);
     }
   };
@@ -66,10 +62,9 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-md">
+        <TabsList className="grid grid-cols-3 w-full max-w-md">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="consultations">Consultations</TabsTrigger>
-          <TabsTrigger value="favorites">Favorites</TabsTrigger>
           <TabsTrigger value="wallet">Wallet</TabsTrigger>
         </TabsList>
         
@@ -79,10 +74,6 @@ const UserDashboardContent: React.FC<UserDashboardContentProps> = ({ user }) => 
         
         <TabsContent value="consultations" className="mt-6">
           <ConsultationsSection user={user} />
-        </TabsContent>
-        
-        <TabsContent value="favorites" className="mt-6">
-          <FavoritesSection user={user} />
         </TabsContent>
         
         <TabsContent value="wallet" className="mt-6">
