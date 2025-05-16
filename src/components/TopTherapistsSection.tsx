@@ -62,9 +62,9 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
   return (
     <section className="py-12 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Top Therapists</h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+        <div className="mb-10">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4 text-left">Our Top Therapists</h2>
+          <p className="text-lg text-gray-600 max-w-2xl text-left">
             Connect with our highly qualified and experienced therapists who are ready to support you on your wellness journey.
           </p>
         </div>
