@@ -22,8 +22,8 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
   isLoggingOut = false
 }) => {
   // Ensure the user profile has all required fields
-  const adaptedUser = user ? adaptUserProfile(user) : { name: 'User', email: '' };
-  const userName = adaptedUser?.name || user?.email || 'User';
+  const adaptedUser = adaptUserProfile(user);
+  const userName = adaptedUser?.name || adaptedUser?.email || 'User';
   
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -35,7 +35,7 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
           </Avatar>
           <div>
             <h1 className="text-2xl font-bold">{userName}</h1>
-            <p className="text-muted-foreground">{adaptedUser?.email || user?.email || ''}</p>
+            <p className="text-muted-foreground">{adaptedUser?.email || ''}</p>
           </div>
         </div>
         <Button 

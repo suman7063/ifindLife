@@ -10,19 +10,39 @@ export function adaptUserProfile(user: any): UserProfile {
     id: '',
     name: 'User',
     email: '',
-    auth_id: '',
+    phone: '',
+    country: '',
+    city: '',
     profile_picture: '',
     wallet_balance: 0,
+    created_at: '',
+    referred_by: null,
+    referral_code: '',
+    referral_link: '',
+    favorite_experts: [],
+    favorite_programs: [],
+    enrolled_courses: [],
+    currency: '$',
   };
   
   return {
-    id: user.id || user.auth_id || '',
-    name: user.name || user.displayName || user.username || '',
+    id: user.id || '',
+    name: user.name || user.displayName || user.username || 'User',
     email: user.email || '',
-    auth_id: user.auth_id || user.id || '',
+    phone: user.phone || '',
+    country: user.country || '',
+    city: user.city || '',
     profile_picture: user.profile_picture || user.avatar || '',
     wallet_balance: user.wallet_balance || 0,
+    created_at: user.created_at || '',
+    referred_by: user.referred_by || null,
+    referral_code: user.referral_code || '',
+    referral_link: user.referral_link || '',
+    favorite_experts: user.favorite_experts || [],
+    favorite_programs: user.favorite_programs || [],
+    enrolled_courses: user.enrolled_courses || [],
     currency: user.currency || '$',
-    ...user // Keep any additional properties
+    // Optional properties will be undefined if not provided
+    // but we've covered all required properties
   };
 }

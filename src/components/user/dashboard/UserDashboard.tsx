@@ -10,6 +10,7 @@ import ConsultationsSection from './ConsultationsSection';
 import FavoritesSection from './FavoritesSection';
 import WalletSection from './WalletSection';
 import DashboardHome from './DashboardHome';
+import { adaptUserProfile } from '@/utils/adaptUserProfile';
 
 const UserDashboard: React.FC = () => {
   const { profile, userProfile, user, logout } = useAuth();
@@ -18,7 +19,9 @@ const UserDashboard: React.FC = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Use the first available profile data
-  const dashboardUser = userProfile || profile || (user ? { id: user.id, email: user.email } : null);
+  const rawUser = userProfile || profile || (user ? { id: user.id, email: user.email } : null);
+  // Adapt the user to ensure consistent properties
+  const dashboardUser = adaptUserProfile(rawUser);
   
   useEffect(() => {
     console.log('UserDashboard mounted with:', {
