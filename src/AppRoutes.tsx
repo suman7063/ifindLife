@@ -1,3 +1,4 @@
+
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -8,7 +9,8 @@ import AdminLogin from './pages/AdminLogin';
 import NotFound from './pages/NotFound';
 import LoadingScreen from './components/auth/LoadingScreen';
 import ProtectedRoute from '@/components/routing/ProtectedRoute';
-import UserDashboardPage from './pages/UserDashboard'; // Import the page component that renders the dashboard
+import UserDashboardPage from './pages/UserDashboard';
+import Index from './pages/Index';
 
 // Lazy-loaded components
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -40,8 +42,10 @@ const AppRoutes: React.FC = () => {
   return (
     <>
       <Routes>
+        {/* Home page route */}
+        <Route path="/" element={<Index />} />
+        
         {/* Public routes */}
-        <Route path="/" element={<Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/expert-login" element={<ExpertLogin />} />

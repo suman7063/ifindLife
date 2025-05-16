@@ -19,7 +19,19 @@ const Login: React.FC = () => {
         
         if (data.session) {
           console.log('Already logged in, redirecting to dashboard...');
-          navigate('/user-dashboard', { replace: true });
+          // Get session type from localStorage
+          const sessionType = localStorage.getItem('sessionType') || 'user';
+          
+          if (sessionType === 'user') {
+            navigate('/user-dashboard', { replace: true });
+          } else if (sessionType === 'expert') {
+            navigate('/expert-dashboard', { replace: true });
+          } else if (sessionType === 'admin') {
+            navigate('/admin', { replace: true });
+          } else {
+            // Default fallback
+            navigate('/user-dashboard', { replace: true });
+          }
         }
       } catch (error) {
         console.error('Error checking session:', error);
