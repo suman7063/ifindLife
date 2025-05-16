@@ -22,14 +22,14 @@ const EnhancedHero: React.FC = () => {
       title: "Speak your Heart",
       description: "We are here to listen mindfully. No judgement",
       icon: <MessageSquare className="h-6 w-6" />,
-      action: () => navigate("/services/mindful-listening"), // Updated to Heart2Heart service page
+      action: () => navigate("/services/mindful-listening"), // Heart2Heart service page
       color: "from-ifind-teal/70 to-ifind-teal/90" // Teal color for Heart2Heart
     },
     {
       title: "Get Guidance",
       description: "Get 1 on 1 guidance from experts for your situation",
       icon: <Headphones className="h-6 w-6" />,
-      action: () => navigate("/services/therapy-sessions"), // Updated to Therapy Sessions page
+      action: () => navigate("/services/therapy-sessions"), // Therapy Sessions page
       color: "from-ifind-purple/70 to-ifind-purple/90" // Purple color for Therapy
     },
     {
@@ -37,7 +37,7 @@ const EnhancedHero: React.FC = () => {
       description: "Discover insights about your mental wellbeing through our assessment",
       icon: <BookOpen className="h-6 w-6" />,
       action: () => navigate("/mental-health-assessment"),
-      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Aqua color for Guided Meditation
+      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Aqua color for Assessment
     }
   ];
 
@@ -68,7 +68,7 @@ const EnhancedHero: React.FC = () => {
   );
 
   return (
-    <div className="relative h-[100vh]">
+    <div className="relative h-screen">
       {/* Hero image/slider */}
       <div className="relative w-full h-full overflow-hidden">
         {sliderImages.map((image, index) => (
