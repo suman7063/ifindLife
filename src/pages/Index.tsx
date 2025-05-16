@@ -35,11 +35,6 @@ const SectionLoadingFallback = () => (
 );
 
 const Index = () => {
-  // Only log in development mode
-  if (import.meta.env.DEV) {
-    console.log('Index component rendering with EnhancedHero');
-  }
-  
   return (
     <div className="min-h-screen flex flex-col home-page">
       <Navbar />
@@ -52,46 +47,41 @@ const Index = () => {
           <IntroductionSection />
         </div>
         
-        {/* Section 3: Services Section */}
-        <ServicesSection />
-
-        {/* Section 4: What We Do */}
+        {/* Section 3: IFL Programs for Individuals (What We Do) */}
         <WhatWeDoSection />
         
-        {/* Section 5: How Can We Help You Today */}
+        {/* Section 4: How Can We Help You Today */}
         <HomepageIssueSessions />
         
-        {/* Section 6: Top IFL Experts */}
+        {/* Section 5: Join Our Mindfulness Community */}
+        <MindfulnessCommunitySection />
+        
+        {/* Section 6: Programs for Organizations (Services Section) */}
+        <ServicesSection />
+        
+        {/* Section 7: Top IFL Experts */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TopTherapistsSection />
         </Suspense>
         
-        {/* Section 7: Why Choose Us */}
+        {/* Section 8: Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 8: Testimonials */}
+        {/* Section 9: Testimonials */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <TestimonialsSection />
         </Suspense>
         
-        {/* Section 9: Join Our Mindfulness Community */}
-        <MindfulnessCommunitySection />
-        
-        {/* Section 10: Blog Section */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <BlogSection />
-        </Suspense>
-        
-        {/* Section 11: CTA Section */}
+        {/* Section 10: CTA Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
           <CTASection />
         </Suspense>
         
-        {/* Stay in Touch Section */}
+        {/* Section 11: Blog Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
-          <StayInTouchSection />
+          <BlogSection />
         </Suspense>
       </main>
 

@@ -10,45 +10,35 @@ const EnhancedHero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const isMobile = useIsMobile();
   
-  // Slider images
+  // Slider images - Using the woman image as shown in the screenshot
   const sliderImages = [
-    "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // First image (man)
-    "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Second image (woman)
+    "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Woman image
   ];
 
-  // Service cards data - Updated colors and links to match service pages
+  // Service cards data with proper colors
   const serviceCards = [
     {
       title: "Speak your Heart",
       description: "We are here to listen mindfully. No judgement",
       icon: <MessageSquare className="h-6 w-6" />,
-      action: () => navigate("/services/mindful-listening"), // Heart2Heart service page
-      color: "from-ifind-teal/70 to-ifind-teal/90" // Teal color for Heart2Heart
+      action: () => navigate("/services/mindful-listening"),
+      color: "from-ifind-teal/70 to-ifind-teal/90" // Teal color
     },
     {
       title: "Get Guidance",
       description: "Get 1 on 1 guidance from experts for your situation",
       icon: <Headphones className="h-6 w-6" />,
-      action: () => navigate("/services/therapy-sessions"), // Therapy Sessions page
-      color: "from-ifind-purple/70 to-ifind-purple/90" // Purple color for Therapy
+      action: () => navigate("/services/therapy-sessions"),
+      color: "from-ifind-purple/70 to-ifind-purple/90" // Purple color
     },
     {
       title: "Take a Test",
       description: "Discover insights about your mental wellbeing through our assessment",
       icon: <BookOpen className="h-6 w-6" />,
       action: () => navigate("/mental-health-assessment"),
-      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Aqua color for Assessment
+      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Aqua color
     }
   ];
-
-  // Auto slide rotation with fade effect
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
-    }, 5000); // Change slide every 5 seconds
-
-    return () => clearInterval(interval);
-  }, [sliderImages.length]);
 
   // Service Card Component
   const ServiceCard = ({ title, description, icon, action, color }: any) => (
@@ -69,33 +59,23 @@ const EnhancedHero: React.FC = () => {
 
   return (
     <div className="relative h-screen w-full">
-      {/* Hero image/slider */}
+      {/* Hero image - fixed to show the woman image as in screenshot */}
       <div className="relative w-full h-full overflow-hidden">
-        {sliderImages.map((image, index) => (
-          <div 
-            key={index}
-            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
-              currentSlide === index ? 'opacity-100' : 'opacity-0'
-            }`}
-            aria-hidden={currentSlide !== index}
-          >
-            <img 
-              src={image} 
-              alt={`Slide ${index + 1}`} 
-              className="w-full h-full object-cover"
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: 'center 30%',
-              }}
-              loading={index === 0 ? "eager" : "lazy"}
-            />
-          </div>
-        ))}
+        <img 
+          src={sliderImages[0]} 
+          alt="Hero" 
+          className="w-full h-full object-cover"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            objectPosition: 'center 30%',
+          }}
+          loading="eager"
+        />
         
         {/* Headline - positioned correctly */}
         <div 
