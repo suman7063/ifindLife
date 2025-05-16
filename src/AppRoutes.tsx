@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -11,6 +10,7 @@ import LoadingScreen from './components/auth/LoadingScreen';
 import ProtectedRoute from '@/components/routing/ProtectedRoute';
 import UserDashboardPage from './pages/UserDashboard';
 import Index from './pages/Index';
+import AboutUs from './pages/AboutUs';
 
 // Lazy-loaded components
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
@@ -33,7 +33,6 @@ const Contact = lazy(() => import('./pages/Contact'));
 const FAQs = lazy(() => import('./pages/FAQs'));
 const Referral = lazy(() => import('./pages/Referral'));
 const UserWallet = lazy(() => import('./pages/UserWallet'));
-const AboutUs = lazy(() => import('./pages/AboutUs'));
 const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
 const Admin = lazy(() => import('./pages/Admin'));
 

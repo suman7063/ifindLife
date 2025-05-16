@@ -1,103 +1,103 @@
 
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import LoadingScreen from '@/components/auth/LoadingScreen';
-import type { UserRole } from '@/contexts/auth/types';
 import { supabase } from '@/lib/supabase';
+import LoadingScreen from '@/components/auth/LoadingScreen';
+import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: UserRole[];
+  allowedRoles?: string[];
   redirectPath?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   allowedRoles = ['user', 'expert', 'admin'], 
-  redirectPath = '/login'
+  redirectPath = '/login' 
 }) => {
-  const { isAuthenticated: contextAuthenticated, role: contextRole, isLoading: contextLoading } = useAuth();
-  const [directAuthChecked, setDirectAuthChecked] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(contextAuthenticated);
-  const [userRole, setUserRole] = useState<UserRole | null>(contextRole);
-  const [isChecking, setIsChecking] = useState(true);
+  const [authState, setAuthState] = useState<{
+    isChecking: boolean;
+    isAuthenticated: boolean;
+    role?: string;
+  }>({
+    isChecking: true,
+    isAuthenticated: false
+  });
+  
   const location = useLocation();
-
-  // Direct check with Supabase - only run once
+  
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        console.log('ProtectedRoute: Direct auth check with Supabase...');
+        console.log('ProtectedRoute: Checking authentication...');
         const { data } = await supabase.auth.getSession();
         
-        if (data.session) {
-          const sessionType = localStorage.getItem('sessionType') as UserRole || 'user';
-          console.log('ProtectedRoute: Session found, role:', sessionType);
-          setIsAuthenticated(true);
-          setUserRole(sessionType);
-        } else {
-          console.log('ProtectedRoute: No session found');
-          setIsAuthenticated(false);
-          setUserRole(null);
+        const sessionExists = !!data.session;
+        
+        // Get role from local storage as a fallback
+        const storedRole = localStorage.getItem('sessionType') || 'user';
+        
+        console.log('ProtectedRoute: Auth check result:', { 
+          sessionExists, 
+          storedRole 
+        });
+        
+        setAuthState({
+          isChecking: false,
+          isAuthenticated: sessionExists,
+          role: storedRole
+        });
+        
+        if (!sessionExists) {
+          toast.error('Please log in to access this page');
         }
       } catch (error) {
-        console.error('Error in direct auth check:', error);
-        setIsAuthenticated(false);
-        setUserRole(null);
-      } finally {
-        setDirectAuthChecked(true);
-        setIsChecking(false);
+        console.error('ProtectedRoute: Error checking authentication:', error);
+        setAuthState({
+          isChecking: false,
+          isAuthenticated: false
+        });
+        toast.error('Authentication error. Please log in again.');
       }
     };
-
-    // Only run the check if we're not already authenticated from context
-    if (!contextAuthenticated || !contextRole) {
-      checkAuth();
-    } else {
-      console.log('ProtectedRoute: Already authenticated from context');
-      setDirectAuthChecked(true);
-      setIsChecking(false);
-    }
-  }, [contextAuthenticated, contextRole]);
-
-  // Use either context auth or direct auth check
-  const authResolved = directAuthChecked || !contextLoading;
-  const finalIsAuthenticated = contextAuthenticated || isAuthenticated;
-  const finalRole = contextRole || userRole;
-
-  if ((isChecking || contextLoading) && !authResolved) {
-    return <LoadingScreen message="Verifying authentication..." />;
+    
+    checkAuth();
+  }, []);
+  
+  // Show loading while checking
+  if (authState.isChecking) {
+    return <LoadingScreen message="Verifying your access..." />;
   }
-
-  console.log('ProtectedRoute final check:', {
-    finalIsAuthenticated,
-    finalRole,
+  
+  console.log('ProtectedRoute: Auth state resolved:', {
+    isAuthenticated: authState.isAuthenticated,
+    role: authState.role,
     allowedRoles,
     currentPath: location.pathname
   });
-
-  // If not authenticated, redirect to login
-  if (!finalIsAuthenticated) {
-    console.log('Not authenticated, redirecting to:', redirectPath);
+  
+  // Not authenticated at all
+  if (!authState.isAuthenticated) {
+    console.log('ProtectedRoute: Not authenticated, redirecting to:', redirectPath);
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
-
-  // If authenticated but not in allowed roles, redirect to appropriate dashboard
-  if (finalRole && !allowedRoles.includes(finalRole)) {
-    console.log(`User role ${finalRole} not in allowed roles ${allowedRoles.join(', ')}`);
+  
+  // Check for required roles
+  if (authState.role && allowedRoles.length > 0 && !allowedRoles.includes(authState.role)) {
+    console.log(`ProtectedRoute: User role ${authState.role} not in allowed roles ${allowedRoles.join(', ')}`);
     
-    // Redirect based on role
-    if (finalRole === 'user') {
+    // Redirect based on actual role
+    if (authState.role === 'user') {
       return <Navigate to="/user-dashboard" replace />;
-    } else if (finalRole === 'expert') {
+    } else if (authState.role === 'expert') {
       return <Navigate to="/expert-dashboard" replace />;
-    } else if (finalRole === 'admin') {
+    } else if (authState.role === 'admin') {
       return <Navigate to="/admin" replace />;
     }
   }
-
-  // If authenticated and has allowed role, render the children
+  
+  // All checks passed
   return <>{children}</>;
 };
 
