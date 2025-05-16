@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from '@/components/theme-provider';
 import { AuthProvider } from '@/contexts/auth/AuthProvider';
@@ -25,16 +24,15 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="ifind-theme">
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <Router>
-            <AdminAuthProvider>
-              <AuthProvider>
-                <FavoritesProvider>
-                  <AppRoutes />
-                  <Toaster />
-                </FavoritesProvider>
-              </AuthProvider>
-            </AdminAuthProvider>
-          </Router>
+          {/* Removed the Router component here as it's already in main.tsx */}
+          <AdminAuthProvider>
+            <AuthProvider>
+              <FavoritesProvider>
+                <AppRoutes />
+                <Toaster />
+              </FavoritesProvider>
+            </AuthProvider>
+          </AdminAuthProvider>
         </ToastProvider>
       </QueryClientProvider>
     </ThemeProvider>

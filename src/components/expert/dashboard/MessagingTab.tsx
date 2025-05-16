@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import MessageList from '@/components/messaging/MessageList';
 import MessageThread from '@/components/messaging/MessageThread';
 import { useMessaging } from '@/hooks/messaging';
@@ -18,7 +18,7 @@ const MessagingTab: React.FC = () => {
 
   const handleSendMessage = async (message: string) => {
     if (!expertProfile?.auth_id || !selectedUserId) return;
-    // Updated to call sendMessage with two arguments (recipientId and message)
+    // Call sendMessage with two arguments (recipientId and message)
     await sendMessage(selectedUserId, message);
   };
 
