@@ -52,29 +52,25 @@ const ServiceDetailPage: React.FC = () => {
         title={serviceData.title}
         image={serviceData.image}
         description={serviceData.description}
-        icon={serviceData.icon}
-        color={serviceData.color}
+        buttonColor={serviceData.buttonColor}
+        onInquireClick={handleBookNowClick}
       />
       
       {/* Main Content */}
       <div className="container mx-auto py-12 px-4">
-        {/* Dialog Trigger - to be passed to the content component */}
-        const dialogTriggerElement = <span onClick={handleBookNowClick}>Book Now</span>;
-        
         <ServiceDetailContent 
           serviceId={serviceId || ''}
           serviceData={serviceData}
-          dialogTriggerElement={dialogTriggerElement}
           onBookNowClick={handleBookNowClick}
         />
       </div>
       
       {/* Booking Dialog */}
       <BookingDialog 
-        isOpen={isBookingDialogOpen} 
+        open={isBookingDialogOpen} 
         onOpenChange={setIsBookingDialogOpen}
         serviceTitle={serviceData.title}
-        serviceType={serviceData.type || 'service'}
+        serviceType="service"
       />
       
       <Footer />

@@ -10,14 +10,12 @@ import ServiceTestimonial from './ServiceTestimonial';
 interface ServiceDetailContentProps {
   serviceId: string;
   serviceData: any;
-  dialogTriggerElement: React.ReactNode;
   onBookNowClick: () => void;
 }
 
 const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
   serviceId,
   serviceData,
-  dialogTriggerElement,
   onBookNowClick
 }) => {
   return (
@@ -48,7 +46,6 @@ const ServiceDetailContent: React.FC<ServiceDetailContentProps> = ({
           textColor={serviceData.textColor}
           buttonColor={serviceData.buttonColor}
           gradientColor={serviceData.gradientColor}
-          dialogTriggerElement={dialogTriggerElement}
           onBookNowClick={onBookNowClick}
         />
         
