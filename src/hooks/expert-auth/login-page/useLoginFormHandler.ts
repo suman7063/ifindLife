@@ -22,8 +22,8 @@ export const useLoginFormHandler = () => {
     setLoginError(null);
     
     try {
-      // Login as expert
-      const success = await login(email, password, { asExpert: true });
+      // Login as expert - make sure we're only passing 2 arguments as expected by the function
+      const success = await login(email, password);
       
       if (!success) {
         setLoginError('Login failed. Please check your credentials.');
