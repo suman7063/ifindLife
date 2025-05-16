@@ -1,4 +1,3 @@
-
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'sonner';
@@ -36,6 +35,7 @@ const FAQs = lazy(() => import('./pages/FAQs'));
 const Referral = lazy(() => import('./pages/Referral'));
 const UserWallet = lazy(() => import('./pages/UserWallet'));
 
+// The main routes component
 const AppRoutes: React.FC = () => {
   return (
     <BrowserRouter>
