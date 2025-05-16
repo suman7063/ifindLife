@@ -1,17 +1,16 @@
 
 /**
- * Extracts initials from a name string
- * @param name The full name to extract initials from
- * @returns A string containing initials (up to 2 characters)
+ * Gets the initials from a name string
+ * @param name The name to get initials from
+ * @returns The initials (up to 2 characters)
  */
-export function getInitials(name?: string): string {
-  if (!name) return '?';
+export function getInitials(name: string): string {
+  if (!name || typeof name !== 'string') return 'U';
   
-  const names = name.trim().split(' ');
+  const parts = name.trim().split(/\s+/);
   
-  if (names.length === 1) {
-    return names[0].substring(0, 2).toUpperCase();
-  }
+  if (parts.length === 0) return 'U';
+  if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
   
-  return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }

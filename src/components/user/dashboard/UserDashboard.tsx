@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
@@ -9,12 +9,25 @@ import ProfileSettings from './ProfileSettings';
 import ConsultationsSection from './ConsultationsSection';
 import FavoritesSection from './FavoritesSection';
 import WalletSection from './WalletSection';
+import DashboardHome from './DashboardHome';
 
 const UserDashboard: React.FC = () => {
-  const { profile, logout } = useAuth();
+  const { profile, userProfile, user, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState('home');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
+  // Use the first available profile data
+  const dashboardUser = userProfile || profile || (user ? { id: user.id, email: user.email } : null);
+  
+  useEffect(() => {
+    console.log('UserDashboard mounted with:', {
+      hasProfile: !!profile,
+      hasUserProfile: !!userProfile,
+      hasUser: !!user,
+      dashboardUser
+    });
+  }, [profile, userProfile, user, dashboardUser]);
 
   // Handle user logout
   const handleLogout = async () => {
@@ -34,34 +47,39 @@ const UserDashboard: React.FC = () => {
     }
   };
 
-  if (!profile) {
-    return <div className="container mx-auto p-6">Loading user profile...</div>;
+  if (!dashboardUser) {
+    return <div className="container mx-auto p-6">Loading user dashboard...</div>;
   }
 
   return (
-    <UserDashboardLayout user={profile} onLogout={handleLogout} isLoggingOut={isLoggingOut}>
+    <UserDashboardLayout user={dashboardUser} onLogout={handleLogout} isLoggingOut={isLoggingOut}>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-4 w-full max-w-md">
+        <TabsList className="grid grid-cols-5 w-full max-w-lg">
+          <TabsTrigger value="home">Home</TabsTrigger>
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="consultations">Consultations</TabsTrigger>
           <TabsTrigger value="favorites">Favorites</TabsTrigger>
           <TabsTrigger value="wallet">Wallet</TabsTrigger>
         </TabsList>
         
+        <TabsContent value="home" className="mt-6">
+          <DashboardHome user={dashboardUser} />
+        </TabsContent>
+        
         <TabsContent value="profile" className="mt-6">
-          <ProfileSettings user={profile} />
+          <ProfileSettings user={dashboardUser} />
         </TabsContent>
         
         <TabsContent value="consultations" className="mt-6">
-          <ConsultationsSection user={profile} />
+          <ConsultationsSection user={dashboardUser} />
         </TabsContent>
         
         <TabsContent value="favorites" className="mt-6">
-          <FavoritesSection user={profile} />
+          <FavoritesSection user={dashboardUser} />
         </TabsContent>
         
         <TabsContent value="wallet" className="mt-6">
-          <WalletSection user={profile} />
+          <WalletSection user={dashboardUser} />
         </TabsContent>
       </Tabs>
     </UserDashboardLayout>

@@ -6,15 +6,29 @@ import LoadingScreen from '@/components/auth/LoadingScreen';
 
 // This page component ensures the user profile is loaded before rendering the dashboard
 const UserDashboardPage: React.FC = () => {
-  const { isLoading, profile } = useAuth();
+  const { isLoading, profile, userProfile, user, isAuthenticated } = useAuth();
+  
+  console.log('UserDashboardPage: Auth state:', { 
+    isLoading, 
+    hasProfile: !!profile, 
+    hasUserProfile: !!userProfile, 
+    hasUser: !!user,
+    isAuthenticated
+  });
   
   // Show loading screen while profile is loading
   if (isLoading) {
     return <LoadingScreen message="Loading your dashboard..." />;
   }
   
-  // If we have a profile, render the dashboard
-  if (profile) {
+  // If we have any profile data, render the dashboard
+  if (profile || userProfile) {
+    return <UserDashboard />;
+  }
+  
+  // If there's no profile but we're authenticated, try to render anyway
+  if (isAuthenticated && user) {
+    console.log('No profile but authenticated, attempting to render dashboard anyway');
     return <UserDashboard />;
   }
   

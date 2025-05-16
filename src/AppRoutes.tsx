@@ -155,7 +155,17 @@ const AppRoutes: React.FC = () => {
           } 
         />
 
-        {/* Modified route for direct access to /user-dashboard path with nested routes */}
+        {/* Nested routes for dashboard - this allows accessing tabs directly with URLs */}
+        <Route 
+          path="/user-dashboard/:tab" 
+          element={
+            <ProtectedRoute allowedRoles={['user']} redirectPath="/user-login">
+              <UserDashboardPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* All other dashboard routes with any path */}
         <Route 
           path="/user-dashboard/*" 
           element={
@@ -165,17 +175,6 @@ const AppRoutes: React.FC = () => {
           } 
         />
         
-        <Route 
-          path="/user-dashboard/wallet" 
-          element={
-            <ProtectedRoute allowedRoles={['user']} redirectPath="/user-login">
-              <Suspense fallback={<LoadingScreen />}>
-                <UserWallet />
-              </Suspense>
-            </ProtectedRoute>
-          } 
-        />
-
         {/* Protected expert routes */}
         <Route 
           path="/expert-dashboard/*" 

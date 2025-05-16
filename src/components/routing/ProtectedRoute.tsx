@@ -17,18 +17,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles = ['user', 'expert', 'admin'], 
   redirectPath = '/login'
 }) => {
-  const { isAuthenticated: contextAuthenticated, role: contextRole } = useAuth();
+  const { isAuthenticated: contextAuthenticated, role: contextRole, isLoading: contextLoading } = useAuth();
   const [directAuthChecked, setDirectAuthChecked] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(contextAuthenticated);
+  const [userRole, setUserRole] = useState<UserRole | null>(contextRole);
   const [isChecking, setIsChecking] = useState(true);
-  const [checkAttempted, setCheckAttempted] = useState(false);
   const location = useLocation();
 
   // Direct check with Supabase - only run once
   useEffect(() => {
-    if (checkAttempted) return;
-    
     const checkAuth = async () => {
       try {
         console.log('ProtectedRoute: Direct auth check with Supabase...');
@@ -51,19 +48,25 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       } finally {
         setDirectAuthChecked(true);
         setIsChecking(false);
-        setCheckAttempted(true);
       }
     };
 
-    checkAuth();
-  }, [checkAttempted]);
+    // Only run the check if we're not already authenticated from context
+    if (!contextAuthenticated || !contextRole) {
+      checkAuth();
+    } else {
+      console.log('ProtectedRoute: Already authenticated from context');
+      setDirectAuthChecked(true);
+      setIsChecking(false);
+    }
+  }, [contextAuthenticated, contextRole]);
 
   // Use either context auth or direct auth check
-  const authResolved = directAuthChecked;
+  const authResolved = directAuthChecked || !contextLoading;
   const finalIsAuthenticated = contextAuthenticated || isAuthenticated;
   const finalRole = contextRole || userRole;
 
-  if (isChecking || !authResolved) {
+  if ((isChecking || contextLoading) && !authResolved) {
     return <LoadingScreen message="Verifying authentication..." />;
   }
 

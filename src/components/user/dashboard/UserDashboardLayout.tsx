@@ -10,7 +10,7 @@ import { LogOut } from 'lucide-react';
 
 export interface UserDashboardLayoutProps {
   children: React.ReactNode;
-  user: UserProfile;
+  user: UserProfile | any; // More flexible typing to handle different user objects
   onLogout: () => void;
   isLoggingOut: boolean;
 }
@@ -22,9 +22,9 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
   isLoggingOut = false
 }) => {
   // Ensure the user profile has all required fields
-  const adaptedUser = adaptUserProfile(user);
-  const userName = adaptedUser?.name || 'User';
-
+  const adaptedUser = user ? adaptUserProfile(user) : { name: 'User', email: '' };
+  const userName = adaptedUser?.name || user?.email || 'User';
+  
   return (
     <div className="container mx-auto py-6 space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b">
@@ -35,7 +35,7 @@ const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({
           </Avatar>
           <div>
             <h1 className="text-2xl font-bold">{userName}</h1>
-            <p className="text-muted-foreground">{adaptedUser?.email}</p>
+            <p className="text-muted-foreground">{adaptedUser?.email || user?.email || ''}</p>
           </div>
         </div>
         <Button 
