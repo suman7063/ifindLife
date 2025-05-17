@@ -85,7 +85,7 @@ const UserDashboard: React.FC = () => {
 
       <div className="flex-1 flex">
         {/* Sidebar */}
-        <UserDashboardSidebar />
+        <UserDashboardSidebar user={currentUser} />
 
         {/* Main Content */}
         <main className="flex-1 bg-gray-50 p-6">

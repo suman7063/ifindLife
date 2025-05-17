@@ -1,7 +1,11 @@
-
 import { useEffect, useRef } from 'react';
-import { AuthInitializationState } from './useAuthInitialization';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
+
+// Define the AuthInitializationState type here or import it properly
+interface AuthInitializationState {
+  authLoading: boolean;
+  authInitialized: boolean;
+}
 
 export const useAuthSessionEffects = (
   authState: AuthInitializationState,
