@@ -1,9 +1,9 @@
 
 import React from 'react';
 import { UserProfile } from '@/types/database/unified';
-import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
+import DashboardHeader from './DashboardHeader';
 
-// Import sub-components
+// Import sub-components for dashboard sections
 import WalletSummary from '@/components/dashboard/WalletSummary';
 import RecentActivities from './RecentActivities';
 import EnrolledPrograms from './EnrolledPrograms';
@@ -20,11 +20,6 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
   loading = false,
   children 
 }) => {
-  const { toTypeA } = useProfileTypeAdapter();
-  
-  // Convert user profile to type A to ensure compatibility
-  const adaptedUser = currentUser ? toTypeA(currentUser as any) : null;
-  
   if (loading) {
     return (
       <div className="p-8 flex justify-center">
@@ -44,10 +39,13 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      {/* Header with user information */}
+      <DashboardHeader user={currentUser} />
+      
       {/* Welcome message */}
-      <div className="bg-gradient-to-r from-ifind-purple to-ifind-teal p-6 rounded-lg text-white">
+      <div className="bg-gradient-to-r from-blue-500 to-teal-400 p-6 rounded-lg text-white">
         <h2 className="text-2xl font-semibold">
-          Welcome back, {adaptedUser?.name || 'User'}!
+          Welcome back, {currentUser.name || 'User'}!
         </h2>
         <p className="mt-2">
           Here's an overview of your activities and favorites.
@@ -63,14 +61,14 @@ const DashboardContent: React.FC<DashboardContentProps> = ({
         
         {/* Right column - Recent activities */}
         <div className="md:col-span-2">
-          <RecentActivities user={adaptedUser} />
+          <RecentActivities user={currentUser} />
         </div>
       </div>
       
       {/* Programs and experts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <EnrolledPrograms user={adaptedUser} />
-        <FavoriteExperts user={adaptedUser} />
+        <EnrolledPrograms user={currentUser} />
+        <FavoriteExperts user={currentUser} />
       </div>
       
       {/* Additional content */}

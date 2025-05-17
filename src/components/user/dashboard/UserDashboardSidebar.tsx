@@ -18,7 +18,6 @@ import {
   LogOut,
   Users 
 } from 'lucide-react';
-import { useHelpNavigation } from '@/components/help/HelpNavigation';
 import { toast } from 'sonner';
 
 interface UserDashboardSidebarProps {
@@ -37,7 +36,6 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  const { handleHelpClick, HelpFormDialog } = useHelpNavigation();
   
   // Add debug logging to see if user data is available
   console.log('UserDashboardSidebar rendering with user:', user?.name);
@@ -49,6 +47,10 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
         console.log('Sidebar: Logout successful, redirecting to home');
       }
     }
+  };
+
+  const handleHelpClick = () => {
+    toast.info('Help section is coming soon!');
   };
 
   return (
@@ -70,58 +72,51 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
           <SidebarLink 
             to="/user-dashboard" 
             active={currentPath === '/user-dashboard'}
-          >
-            <Home className="mr-2 h-4 w-4" />
-            Overview
-          </SidebarLink>
+            icon={<Home className="mr-2 h-4 w-4" />}
+            label="Overview"
+          />
           
           <SidebarLink 
             to="/user-dashboard/wallet" 
             active={currentPath === '/user-dashboard/wallet'}
-          >
-            <Wallet className="mr-2 h-4 w-4" />
-            Wallet
-          </SidebarLink>
+            icon={<Wallet className="mr-2 h-4 w-4" />}
+            label="Wallet"
+          />
           
           <SidebarLink 
             to="/user-dashboard/appointments" 
             active={currentPath === '/user-dashboard/appointments'}
-          >
-            <CalendarDays className="mr-2 h-4 w-4" />
-            Appointments
-          </SidebarLink>
+            icon={<CalendarDays className="mr-2 h-4 w-4" />}
+            label="Appointments"
+          />
           
           <SidebarLink 
             to="/user-dashboard/messages" 
             active={currentPath === '/user-dashboard/messages'}
-          >
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Messages
-          </SidebarLink>
+            icon={<MessageSquare className="mr-2 h-4 w-4" />}
+            label="Messages"
+          />
           
           <SidebarLink 
             to="/user-dashboard/favorites" 
             active={currentPath === '/user-dashboard/favorites'}
-          >
-            <Heart className="mr-2 h-4 w-4" />
-            Favorites
-          </SidebarLink>
+            icon={<Heart className="mr-2 h-4 w-4" />}
+            label="Favorites"
+          />
           
           <SidebarLink 
             to="/user-dashboard/referrals" 
             active={currentPath === '/user-dashboard/referrals'}
-          >
-            <Users className="mr-2 h-4 w-4" />
-            Referrals
-          </SidebarLink>
+            icon={<Users className="mr-2 h-4 w-4" />}
+            label="Referrals"
+          />
           
           <SidebarLink 
             to="/user-dashboard/settings" 
             active={currentPath === '/user-dashboard/settings'}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
-          </SidebarLink>
+            icon={<Settings className="mr-2 h-4 w-4" />}
+            label="Settings"
+          />
           
           <Button
             variant="ghost"
@@ -131,9 +126,6 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             <HelpCircle className="mr-2 h-4 w-4" />
             Help
           </Button>
-          
-          {/* Render the help form dialog */}
-          <HelpFormDialog />
         </div>
       </ScrollArea>
       
@@ -157,10 +149,11 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
 interface SidebarLinkProps {
   to: string;
   active: boolean;
-  children: React.ReactNode;
+  icon: React.ReactNode;
+  label: string;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ to, active, children }) => {
+const SidebarLink: React.FC<SidebarLinkProps> = ({ to, active, icon, label }) => {
   return (
     <Button
       asChild
@@ -171,7 +164,8 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ to, active, children }) => {
       )}
     >
       <Link to={to}>
-        {children}
+        {icon}
+        {label}
       </Link>
     </Button>
   );
