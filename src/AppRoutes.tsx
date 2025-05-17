@@ -21,7 +21,7 @@ const AppRoutes: React.FC = () => {
   return (
     <>
       <Routes>
-        {/* Include route groups using fragments */}
+        {/* Render each route group - each group will provide Route components */}
         <PublicRoutes />
         <ContentRoutes />
         <ProgramRoutes />
