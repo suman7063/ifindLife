@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -17,7 +17,6 @@ import {
   HelpCircle,
   Users 
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface UserDashboardSidebarProps {
   user: UserProfile | null;
@@ -31,7 +30,6 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   className
 }) => {
   const location = useLocation();
-  const navigate = useNavigate();
   const currentPath = location.pathname;
 
   return (

@@ -1,158 +1,113 @@
 
-import React, { useEffect, useState } from 'react';
-import { UserProfile, Review } from '@/types/database/unified';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star, StarHalf, Edit2, ThumbsUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { MessageSquare, Star } from 'lucide-react';
+import { UserProfile, Review } from '@/types/database/unified';
 import { supabase } from '@/lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface ReviewsSectionProps {
-  user: UserProfile | null;
+  user: UserProfile;
 }
 
 const ReviewsSection: React.FC<ReviewsSectionProps> = ({ user }) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const navigate = useNavigate();
-
+  const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
-    if (!user) return;
-    
-    const fetchReviews = async () => {
-      setIsLoading(true);
-      
+    const fetchUserReviews = async () => {
       try {
-        // Fetch user reviews
+        setLoading(true);
+        
+        if (!user?.id) return;
+        
         const { data, error } = await supabase
-          .rpc('get_user_reviews_with_experts', { user_id_param: user.id });
+          .from('reviews')
+          .select('*, expert:experts(name)')
+          .eq('user_id', user.id);
+          
+        if (error) throw error;
         
-        if (error) {
-          console.error('Error fetching reviews:', error);
-          return;
-        }
+        // Transform the data to match the Review interface
+        const formattedReviews = data?.map(review => ({
+          id: review.id,
+          user_id: review.user_id,
+          expert_id: review.expert_id,
+          rating: review.rating,
+          comment: review.comment || '',
+          date: review.created_at,
+          verified: review.verified || false,
+          expert_name: review.expert?.name || 'Expert',
+          user_name: user.name || 'User',
+          review_id: review.id // Add this field to match the structure expected
+        })) as Review[];
         
-        // Map the returned data to match our Review interface
-        const mappedReviews: Review[] = (data || []).map(item => ({
-          id: item.review_id,
-          user_id: user.id,
-          expert_id: item.expert_id,
-          rating: item.rating,
-          comment: item.comment,
-          date: item.date,
-          verified: item.verified,
-          user_name: item.user_name,
-          expert_name: item.expert_name,
-          review_id: item.review_id
-        }));
-        
-        setReviews(mappedReviews);
+        setReviews(formattedReviews || []);
       } catch (error) {
         console.error('Error fetching reviews:', error);
+        toast.error('Failed to load review data');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
-    fetchReviews();
-  }, [user]);
-
+    fetchUserReviews();
+  }, [user?.id, user?.name]);
+  
   const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-    
-    // Full stars
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<Star key={`full-${i}`} className="h-4 w-4 fill-yellow-400 text-yellow-400" />);
-    }
-    
-    // Half star
-    if (hasHalfStar) {
-      stars.push(<StarHalf key="half" className="h-4 w-4 fill-yellow-400 text-yellow-400" />);
-    }
-    
-    // Empty stars
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<Star key={`empty-${i}`} className="h-4 w-4 text-gray-300" />);
-    }
-    
-    return stars;
+    return Array.from({ length: 5 }).map((_, i) => (
+      <Star 
+        key={i} 
+        className={`h-4 w-4 ${i < rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+      />
+    ));
   };
-
-  if (!user) return null;
-
+  
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Your Reviews</CardTitle>
-              <CardDescription>Reviews you've given to experts</CardDescription>
-            </div>
+          <div className="flex items-center space-x-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            <CardTitle>My Reviews</CardTitle>
           </div>
+          <CardDescription>
+            See all the reviews you've left for experts.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {isLoading ? (
-            <div className="py-8 text-center">
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              <p className="mt-2 text-sm text-muted-foreground">Loading reviews...</p>
-            </div>
+          {loading ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">Loading reviews...</p>
           ) : reviews.length > 0 ? (
             <div className="space-y-4">
-              {reviews.map(review => (
-                <div key={review.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarFallback>
-                          {review.expert_name?.charAt(0) || 'E'}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4 className="font-medium">{review.expert_name || 'Expert'}</h4>
-                        <div className="flex items-center mt-1">
-                          <div className="flex">
-                            {renderStars(review.rating)}
-                          </div>
-                          <span className="text-xs text-muted-foreground ml-2">
-                            {new Date(review.date).toLocaleDateString()}
-                          </span>
-                        </div>
+              {reviews.map((review) => (
+                <div key={review.id} className="p-4 border rounded-lg">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-medium">Review for: {review.expert_name}</h4>
+                      <div className="flex items-center mt-1">
+                        {renderStars(review.rating)}
+                        <span className="ml-2 text-sm text-muted-foreground">
+                          {new Date(review.date).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" asChild>
-                      <span className="flex items-center">
-                        <Edit2 className="h-3 w-3 mr-1" />
-                        Edit
+                    {review.verified && (
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        Verified
                       </span>
-                    </Button>
+                    )}
                   </div>
-                  
                   {review.comment && (
-                    <div className="mt-3 text-sm">
-                      <p>{review.comment}</p>
-                    </div>
-                  )}
-                  
-                  {review.verified && (
-                    <div className="mt-3 flex items-center text-xs text-green-600">
-                      <ThumbsUp className="h-3 w-3 mr-1" />
-                      <span>Verified Consultation</span>
-                    </div>
+                    <p className="mt-3 text-sm">{review.comment}</p>
                   )}
                 </div>
               ))}
             </div>
           ) : (
-            <div className="py-16 text-center">
-              <p className="text-muted-foreground mb-4">You haven't written any reviews yet</p>
-              <Button onClick={() => navigate('/user-dashboard/consultations')} variant="outline">
-                View Your Consultations
-              </Button>
+            <div className="py-8 text-center">
+              <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground opacity-50" />
+              <p className="mt-4 text-muted-foreground">You haven't left any reviews yet.</p>
             </div>
           )}
         </CardContent>

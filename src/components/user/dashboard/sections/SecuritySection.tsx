@@ -1,59 +1,72 @@
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
-import { Loader2, Lock, Shield } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Lock, Loader2, Shield } from 'lucide-react';
 
 const SecuritySection: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [passwordData, setPasswordData] = useState({
-    newPassword: '',
-    confirmPassword: ''
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPasswordData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdating, setIsUpdating] = useState(false);
+  
+  // Handle password update
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("Passwords don't match");
+    // Validate passwords
+    if (newPassword !== confirmPassword) {
+      toast.error('New passwords do not match');
       return;
     }
     
-    if (passwordData.newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
     
-    setIsLoading(true);
+    setIsUpdating(true);
     
     try {
+      // First verify the current password by signing in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: (await supabase.auth.getUser()).data.user?.email || '',
+        password: currentPassword,
+      });
+      
+      if (signInError) {
+        toast.error('Current password is incorrect');
+        setIsUpdating(false);
+        return;
+      }
+      
+      // Update the password
       const { error } = await supabase.auth.updateUser({
-        password: passwordData.newPassword
+        password: newPassword,
       });
       
       if (error) {
         throw error;
       }
       
-      toast.success("Password updated successfully");
-      setPasswordData({ newPassword: '', confirmPassword: '' });
+      // Clear the form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      toast.success('Password updated successfully');
     } catch (error: any) {
       console.error('Error updating password:', error);
       toast.error(error?.message || 'Failed to update password');
     } finally {
-      setIsLoading(false);
+      setIsUpdating(false);
     }
   };
-
+  
   return (
     <div className="space-y-6">
       <Card>
@@ -63,80 +76,83 @@ const SecuritySection: React.FC = () => {
             <CardTitle>Account Security</CardTitle>
           </div>
           <CardDescription>
-            Manage your password and security settings
+            Manage your account security settings
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handlePasswordUpdate} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="newPassword">New Password</Label>
+              <Label htmlFor="current-password">Current Password</Label>
               <Input
-                id="newPassword"
-                name="newPassword"
+                id="current-password"
                 type="password"
-                value={passwordData.newPassword}
-                onChange={handleInputChange}
-                placeholder="••••••••"
-                disabled={isLoading}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
                 required
+                disabled={isUpdating}
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Label htmlFor="new-password">New Password</Label>
               <Input
-                id="confirmPassword"
-                name="confirmPassword"
+                id="new-password"
                 type="password"
-                value={passwordData.confirmPassword}
-                onChange={handleInputChange}
-                placeholder="••••••••"
-                disabled={isLoading}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 required
+                disabled={isUpdating}
               />
-              
-              {passwordData.newPassword && passwordData.confirmPassword && 
-                passwordData.newPassword !== passwordData.confirmPassword && (
-                <p className="text-sm text-red-500 mt-1">Passwords don't match</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={isUpdating}
+              />
+            </div>
+            
+            <Button 
+              type="submit" 
+              className="mt-4"
+              disabled={isUpdating}
+            >
+              {isUpdating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Update Password
+                </>
               )}
-            </div>
-            
-            <div className="pt-2">
-              <Button
-                type="submit"
-                className="w-full md:w-auto"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating Password...
-                  </>
-                ) : (
-                  <>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Update Password
-                  </>
-                )}
-              </Button>
-            </div>
+            </Button>
           </form>
         </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <CardTitle>Two-Factor Authentication</CardTitle>
-          <CardDescription>
-            Add an extra layer of security to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            Two-factor authentication is currently disabled. Enable it to add an extra layer of security to your account.
-          </p>
-          <Button variant="outline">Enable 2FA</Button>
-        </CardContent>
+        <CardFooter className="flex flex-col space-y-4 bg-muted/50 border-t">
+          <div>
+            <h4 className="font-medium mb-1">Two Factor Authentication</h4>
+            <p className="text-sm text-muted-foreground mb-2">
+              Add an extra layer of security to your account by enabling two-factor authentication.
+            </p>
+            <Button variant="outline">Enable 2FA</Button>
+          </div>
+          
+          <div>
+            <h4 className="font-medium mb-1">Security Log</h4>
+            <p className="text-sm text-muted-foreground mb-2">
+              View a log of recent account activity to monitor for suspicious behavior.
+            </p>
+            <Button variant="outline">View Log</Button>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );
