@@ -44,6 +44,7 @@ export const useAuthState = (): AuthState => {
           
           // Process user data from session
           const sessionType = localStorage.getItem('sessionType') || 'user';
+          console.log('Using session type:', sessionType);
           
           // Create basic auth user
           const authUser: AuthUser = {
@@ -70,15 +71,32 @@ export const useAuthState = (): AuthState => {
             let userProfile = null;
             let expertProfile = null;
             let walletBalance = 0;
+            let hasUserAccount = false;
             
             if (sessionType === 'user' || sessionType === 'dual') {
               userProfile = await userRepository.getUser(data.session.user.id);
-              walletBalance = userProfile?.wallet_balance || 0;
+              if (userProfile) {
+                hasUserAccount = true;
+                walletBalance = userProfile?.wallet_balance || 0;
+              }
             }
             
             if (sessionType === 'expert' || sessionType === 'dual') {
               expertProfile = await expertRepository.getExpertByAuthId(data.session.user.id);
+              // Check if user has both accounts
+              if (sessionType === 'expert' && expertProfile) {
+                // Let's check if they have a user account as well
+                const userCheck = await userRepository.getUser(data.session.user.id);
+                hasUserAccount = !!userCheck;
+              }
             }
+            
+            console.log('Loaded profiles:', { 
+              hasUserProfile: !!userProfile, 
+              hasExpertProfile: !!expertProfile,
+              hasUserAccount,
+              sessionType
+            });
             
             // Finally update with full profile data
             if (isMounted) {
@@ -88,6 +106,7 @@ export const useAuthState = (): AuthState => {
                 expertProfile,
                 profile: userProfile, // Backward compatibility
                 walletBalance,
+                hasUserAccount,
                 isLoading: false
               }));
               setInitialCheckDone(true);
@@ -187,14 +206,24 @@ export const useAuthState = (): AuthState => {
                 let userProfile = null;
                 let expertProfile = null;
                 let walletBalance = 0;
+                let hasUserAccount = false;
                 
                 if (sessionType === 'user' || sessionType === 'dual') {
                   userProfile = await userRepository.getUser(session.user.id);
-                  walletBalance = userProfile?.wallet_balance || 0;
+                  if (userProfile) {
+                    hasUserAccount = true;
+                    walletBalance = userProfile?.wallet_balance || 0;
+                  }
                 }
                 
                 if (sessionType === 'expert' || sessionType === 'dual') {
                   expertProfile = await expertRepository.getExpertByAuthId(session.user.id);
+                  // Check if user has both accounts
+                  if (sessionType === 'expert' && expertProfile) {
+                    // Let's check if they have a user account as well
+                    const userCheck = await userRepository.getUser(session.user.id);
+                    hasUserAccount = !!userCheck;
+                  }
                 }
                 
                 // Finally update with full profile data
@@ -205,6 +234,7 @@ export const useAuthState = (): AuthState => {
                     expertProfile,
                     profile: userProfile, // Backward compatibility
                     walletBalance,
+                    hasUserAccount,
                     isLoading: false
                   }));
                 }

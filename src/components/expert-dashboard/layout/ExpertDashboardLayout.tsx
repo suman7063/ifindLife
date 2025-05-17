@@ -15,7 +15,7 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   const { isLoading, expertProfile, role, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
-  // Add debug logging
+  // Enhanced debug logging
   useEffect(() => {
     console.log('ExpertDashboardLayout auth state:', {
       isLoading,
@@ -23,6 +23,11 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
       isAuthenticated,
       hasExpertProfile: !!expertProfile
     });
+    
+    // Ensure we're in expert mode
+    if (isAuthenticated && expertProfile) {
+      localStorage.setItem('sessionType', 'expert');
+    }
     
     // Handle edge case where user is authenticated but not as expert
     if (!isLoading && isAuthenticated && role !== 'expert') {
@@ -37,9 +42,13 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
     return <DashboardLoader />;
   }
   
-  // If not authenticated or not an expert, redirect
+  // Handle unauthorized access
   if (!isAuthenticated || role !== 'expert' || !expertProfile) {
-    console.log('Not authenticated as expert, redirecting to expert login');
+    console.log('Not authenticated as expert, redirecting to expert login', {
+      isAuthenticated,
+      role,
+      hasExpertProfile: !!expertProfile
+    });
     return <Navigate to="/expert-login" replace />;
   }
 

@@ -11,20 +11,27 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
     options?: LoginOptions
   ): Promise<boolean> => {
     try {
+      console.log('Login function called with email:', email, 'and options:', options);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
+        console.error('Login error from Supabase:', error);
         toast.error(error.message);
         return false;
       }
 
-      // Use options.asExpert if provided, otherwise default to false
+      console.log('Login success, session established:', !!data.session);
+
+      // Use options.asExpert if provided, otherwise default to 'user'
       if (options?.asExpert) {
+        console.log('Setting session type to expert based on options');
         localStorage.setItem('sessionType', 'expert');
       } else {
+        console.log('Setting session type to user (default)');
         localStorage.setItem('sessionType', 'user');
       }
       
@@ -37,6 +44,9 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
       return false;
     }
   }, [onActionComplete]);
+
+  // Log at hook level to verify login function is created
+  console.log('useAuthLogin hook: created login function of type:', typeof login);
 
   return { login };
 };

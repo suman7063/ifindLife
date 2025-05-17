@@ -10,36 +10,44 @@ import MessagingTab from '@/components/expert/dashboard/MessagingTab';
 import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
-import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 const NewExpertDashboard: React.FC = () => {
-  // Use our fixed useExpertAuth hook
-  const { currentExpert, isAuthenticated, isLoading } = useExpertAuth();
+  const { expertProfile, isAuthenticated, isLoading, role } = useAuth();
   const navigate = useNavigate();
   
-  // Debug logging to track authentication status
+  // Enhanced debug logging
   useEffect(() => {
     console.log('NewExpertDashboard - Auth state:', {
       isAuthenticated,
-      hasExpertProfile: !!currentExpert,
-      isLoading
+      hasExpertProfile: !!expertProfile,
+      isLoading,
+      role
     });
     
     // Ensure role is set to expert when accessing this page
-    if (isAuthenticated) {
+    if (isAuthenticated && expertProfile) {
       console.log('Setting preferred role to expert');
       localStorage.setItem('preferredRole', 'expert');
+      localStorage.setItem('sessionType', 'expert');
     }
-  }, [isAuthenticated, currentExpert, isLoading]);
+  }, [isAuthenticated, expertProfile, isLoading, role]);
   
-  // If not authenticated or not an expert, redirect to login
+  // Display loading state
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  if (!isAuthenticated || !currentExpert) {
-    console.error('User not authenticated as expert, redirecting to expert login');
+  // Handle unauthorized access
+  if (!isAuthenticated || role !== 'expert' || !expertProfile) {
+    console.error('User not authenticated as expert, redirecting to expert login', {
+      isAuthenticated,
+      role,
+      hasExpertProfile: !!expertProfile
+    });
+    
+    // Show toast and redirect
     toast.error('You must be logged in as an expert to access this page');
     return <Navigate to="/expert-login" replace />;
   }

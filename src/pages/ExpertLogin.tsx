@@ -15,7 +15,7 @@ const ExpertLogin: React.FC = () => {
   const auth = useAuth();
   const navigate = useNavigate();
   
-  // Log auth context on mount to debug
+  // Enhanced debug logging
   useEffect(() => {
     console.log('ExpertLogin: Auth context available:', {
       isAuthenticated: auth?.isAuthenticated,
@@ -28,17 +28,19 @@ const ExpertLogin: React.FC = () => {
   }, [auth]);
 
   useEffect(() => {
-    // Redirect if already authenticated
+    // Check if already authenticated as expert and redirect
     if (!auth.isLoading && auth.isAuthenticated) {
       if (auth.role === 'expert') {
+        console.log('Already authenticated as expert, redirecting to dashboard');
         navigate('/expert-dashboard', { replace: true });
-      } else {
-        navigate('/', { replace: true });
+      } else if (auth.role === 'user') {
+        console.log('Authenticated as user, not expert');
+        toast.info('You are logged in as a user. To access expert features, please log in as an expert.');
       }
     }
   }, [auth.isAuthenticated, auth.isLoading, navigate, auth.role]);
 
-  // Handle login
+  // Handle login with better error handling
   const handleLogin = async (email: string, password: string) => {
     try {
       setIsLoggingIn(true);
@@ -50,7 +52,6 @@ const ExpertLogin: React.FC = () => {
         loginFunctionType: typeof auth?.login
       });
       
-      // Verify login function exists
       if (!auth || typeof auth.login !== 'function') {
         console.error('ExpertLogin: Login function not available:', {
           authAvailable: !!auth,
@@ -62,14 +63,18 @@ const ExpertLogin: React.FC = () => {
         return false;
       }
       
-      // Using login with options parameter
+      // Using login with explicit asExpert option
       const success = await auth.login(email, password, { asExpert: true });
       
-      if (!success) {
+      if (success) {
+        console.log('Expert login successful, will redirect shortly');
+        // Will redirect via the useEffect above
+        return true;
+      } else {
+        console.error('Expert login failed');
         setLoginError('Login failed. Please check your credentials and try again.');
+        return false;
       }
-      
-      return success;
     } catch (error) {
       console.error('Login error:', error);
       setLoginError('An error occurred during login. Please try again.');
