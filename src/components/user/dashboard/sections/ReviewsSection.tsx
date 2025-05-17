@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { UserProfile } from '@/types/database/unified';
+import { UserProfile, Review } from '@/types/database/unified';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Star, StarHalf, Edit2, ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,16 +10,6 @@ import { useNavigate } from 'react-router-dom';
 
 interface ReviewsSectionProps {
   user: UserProfile | null;
-}
-
-interface Review {
-  id: string;
-  expert_id: string | number;
-  rating: number;
-  comment?: string;
-  date: string;
-  verified?: boolean;
-  expert_name?: string;
 }
 
 const ReviewsSection: React.FC<ReviewsSectionProps> = ({ user }) => {
@@ -43,7 +33,21 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ user }) => {
           return;
         }
         
-        setReviews(data || []);
+        // Map the returned data to match our Review interface
+        const mappedReviews: Review[] = (data || []).map(item => ({
+          id: item.review_id,
+          user_id: user.id,
+          expert_id: item.expert_id,
+          rating: item.rating,
+          comment: item.comment,
+          date: item.date,
+          verified: item.verified,
+          user_name: item.user_name,
+          expert_name: item.expert_name,
+          review_id: item.review_id
+        }));
+        
+        setReviews(mappedReviews);
       } catch (error) {
         console.error('Error fetching reviews:', error);
       } finally {

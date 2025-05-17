@@ -39,7 +39,7 @@ const FavoritesSection: React.FC<FavoritesSectionProps> = ({ user }) => {
         
         // If there are favorite experts, fetch their details
         if (favoritesData && favoritesData.length > 0) {
-          const expertIds = favoritesData.map(f => f.expert_id);
+          const expertIds = favoritesData.map(f => String(f.expert_id)); // Convert to string for query
           
           const { data: expertsData, error: expertsError } = await supabase
             .from('experts')
@@ -100,7 +100,7 @@ const FavoritesSection: React.FC<FavoritesSectionProps> = ({ user }) => {
         .from('user_favorites')
         .delete()
         .eq('user_id', user.id)
-        .eq('expert_id', expertId);
+        .eq('expert_id', Number(expertId)); // Convert to number for database query
       
       if (error) {
         throw error;

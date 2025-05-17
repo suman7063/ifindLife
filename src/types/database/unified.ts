@@ -1,3 +1,4 @@
+
 // Import UserProfile from both sources to unify them
 import { UserProfile as UserProfileA } from '@/types/supabase/user';
 import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
@@ -19,19 +20,19 @@ export interface UserProfile {
   referral_link: string;
   referred_by: string | null;
   
-  // Related data with compatibility for both types
+  // Related data with compatibility for both types (made flexible to handle string or number IDs)
   transactions: any[];
   reviews: any[];
   reports: any[];
-  favorite_experts: string[];
-  favorite_programs: string[];
+  favorite_experts: string[] | number[]; // Support both string and number IDs
+  favorite_programs: string[] | number[]; // Support both string and number IDs
   enrolled_courses: any[];
   referrals: any[];
   
   // Aliases for camelCase access (from UserProfileB)
   profilePicture?: string;
   walletBalance?: number;
-  favoriteExperts?: string[];
+  favoriteExperts?: string[] | number[];
   enrolledCourses?: any[];
   referralCode?: string;
 }
@@ -104,6 +105,7 @@ export interface Review {
   verified?: boolean;
   expert_name?: string;
   user_name?: string;
+  review_id?: string; // Added to support data from database function
 }
 
 // Favorite experts
