@@ -1,167 +1,115 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
-  BarChart, 
-  Calendar, 
-  Clock, 
-  DollarSign, 
-  MessageCircle, 
-  UserCheck, 
-  Users, 
-  ArrowRight 
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Calendar, Users, MessageSquare, Wallet, BarChart } from 'lucide-react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { supabase } from '@/lib/supabase';
+import UpcomingAppointments from '../widgets/UpcomingAppointments';
+import RecentEarnings from '../widgets/RecentEarnings';
+import StatsOverview from '../widgets/StatsOverview';
 
 const DashboardHome: React.FC = () => {
-  // These would be fetched from the backend in a real implementation
-  const stats = {
-    totalAppointments: 12,
-    upcomingAppointments: 3,
-    totalClients: 8,
-    earnings: 1850,
-    completionRate: 95,
-    averageRating: 4.7
-  };
-  
-  const upcomingAppointments = [
-    { id: 1, client: 'Sarah Johnson', time: '10:00 AM', date: 'Today', type: 'Initial Consultation' },
-    { id: 2, client: 'Michael Chen', time: '2:30 PM', date: 'Today', type: 'Follow-up Session' },
-    { id: 3, client: 'Emma Wilson', time: '11:15 AM', date: 'Tomorrow', type: 'Therapy Session' }
-  ];
+  const { expertProfile } = useAuth();
+  const [stats, setStats] = useState({
+    totalClients: 0,
+    upcomingAppointments: 0,
+    totalEarnings: 0,
+    unreadMessages: 0
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!expertProfile?.id) return;
+      
+      setIsLoading(true);
+      try {
+        // Get total unique clients
+        const { count: clientsCount } = await supabase
+          .from('appointments')
+          .select('user_id', { count: 'exact', head: true })
+          .eq('expert_id', expertProfile.id)
+          .is('canceled_at', null);
+
+        // Get upcoming appointments
+        const { count: appointmentsCount } = await supabase
+          .from('appointments')
+          .select('id', { count: 'exact', head: true })
+          .eq('expert_id', expertProfile.id)
+          .gt('appointment_date', new Date().toISOString().split('T')[0])
+          .is('canceled_at', null);
+
+        // Get unread messages
+        const { count: messagesCount } = await supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .eq('receiver_id', expertProfile.id)
+          .eq('read', false);
+
+        // Get total earnings
+        const { data: earningsData } = await supabase
+          .from('user_expert_services')
+          .select('amount')
+          .eq('expert_id', expertProfile.id)
+          .eq('status', 'completed');
+          
+        const totalEarnings = earningsData?.reduce((sum, transaction) => sum + (transaction.amount || 0), 0) || 0;
+
+        setStats({
+          totalClients: clientsCount || 0,
+          upcomingAppointments: appointmentsCount || 0,
+          totalEarnings: totalEarnings,
+          unreadMessages: messagesCount || 0
+        });
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [expertProfile]);
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-        <p className="text-muted-foreground">Your expert portal overview and summary</p>
+      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      
+      <StatsOverview
+        stats={[
+          {
+            title: "Total Clients",
+            value: stats.totalClients,
+            icon: <Users className="h-4 w-4 text-muted-foreground" />,
+            description: "Unique clients served"
+          },
+          {
+            title: "Upcoming Sessions",
+            value: stats.upcomingAppointments,
+            icon: <Calendar className="h-4 w-4 text-muted-foreground" />,
+            description: "Scheduled appointments"
+          },
+          {
+            title: "Unread Messages",
+            value: stats.unreadMessages,
+            icon: <MessageSquare className="h-4 w-4 text-muted-foreground" />,
+            description: "Messages requiring attention"
+          },
+          {
+            title: "Total Earnings",
+            value: `$${stats.totalEarnings.toFixed(2)}`,
+            icon: <Wallet className="h-4 w-4 text-muted-foreground" />,
+            description: "Lifetime earnings"
+          }
+        ]}
+        isLoading={isLoading}
+      />
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <UpcomingAppointments expertId={expertProfile?.id} />
+        <RecentEarnings expertId={expertProfile?.id} />
       </div>
-      
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Appointments</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAppointments}</div>
-            <p className="text-xs text-muted-foreground">+2 from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Sessions</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.upcomingAppointments}</div>
-            <p className="text-xs text-muted-foreground">Next one today at 10:00 AM</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalClients}</div>
-            <p className="text-xs text-muted-foreground">+1 new client this week</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${stats.earnings}</div>
-            <p className="text-xs text-muted-foreground">+$350 from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Completion Rate</CardTitle>
-            <UserCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.completionRate}%</div>
-            <p className="text-xs text-muted-foreground">+2% from last month</p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.averageRating} ★</div>
-            <p className="text-xs text-muted-foreground">From 24 reviews</p>
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Upcoming Appointments Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Upcoming Appointments</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {upcomingAppointments.map(appointment => (
-              <div key={appointment.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <div className="bg-ifind-teal/20 p-2 rounded-full">
-                    <Calendar className="h-5 w-5 text-ifind-teal" />
-                  </div>
-                  <div>
-                    <h4 className="font-medium">{appointment.client}</h4>
-                    <div className="flex gap-2 text-sm text-muted-foreground">
-                      <span>{appointment.date}</span>
-                      <span>•</span>
-                      <span>{appointment.time}</span>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <Badge className="bg-ifind-teal/10 text-ifind-teal border-none">
-                    {appointment.type}
-                  </Badge>
-                </div>
-              </div>
-            ))}
-            
-            <Button variant="ghost" className="w-full justify-between" asChild>
-              <a href="/expert-dashboard/schedule">
-                View all appointments <ArrowRight className="h-4 w-4 ml-1" />
-              </a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {/* Recent Messages Preview */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Messages</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-muted p-8 rounded-lg flex flex-col items-center justify-center text-center">
-            <MessageCircle className="h-10 w-10 text-muted-foreground mb-2" />
-            <h3 className="font-medium">No unread messages</h3>
-            <p className="text-sm text-muted-foreground mb-4">You're all caught up!</p>
-            <Button asChild variant="outline">
-              <a href="/expert-dashboard/messages">View message center</a>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

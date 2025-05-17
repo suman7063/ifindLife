@@ -9,11 +9,14 @@ import {
   Settings,
   Users,
   MessageSquare,
-  FileText,
+  Wallet,
   LogOut,
   PieChart,
   ChevronRight,
   Menu,
+  UserCircle,
+  AlertCircle,
+  Briefcase,
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -69,17 +72,25 @@ const ExpertSidebar = () => {
           <SidebarLink
             href="/expert-dashboard"
             icon={<LayoutDashboard className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard")}
+            isActive={isActive("/expert-dashboard") && location.pathname === "/expert-dashboard"}
           >
             Dashboard
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/appointments"
-            icon={<Calendar className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/appointments")}
+            href="/expert-dashboard/profile"
+            icon={<UserCircle className="h-5 w-5" />}
+            isActive={isActive("/expert-dashboard/profile")}
           >
-            Appointments
+            Profile
+          </SidebarLink>
+          
+          <SidebarLink
+            href="/expert-dashboard/schedule"
+            icon={<Calendar className="h-5 w-5" />}
+            isActive={isActive("/expert-dashboard/schedule")}
+          >
+            Schedule
           </SidebarLink>
           
           <SidebarLink
@@ -88,6 +99,14 @@ const ExpertSidebar = () => {
             isActive={isActive("/expert-dashboard/clients")}
           >
             Clients
+          </SidebarLink>
+          
+          <SidebarLink
+            href="/expert-dashboard/services"
+            icon={<Briefcase className="h-5 w-5" />}
+            isActive={isActive("/expert-dashboard/services")}
+          >
+            Services
           </SidebarLink>
           
           <SidebarLink
@@ -100,10 +119,18 @@ const ExpertSidebar = () => {
           
           <SidebarLink
             href="/expert-dashboard/earnings"
-            icon={<FileText className="h-5 w-5" />}
+            icon={<Wallet className="h-5 w-5" />}
             isActive={isActive("/expert-dashboard/earnings")}
           >
             Earnings
+          </SidebarLink>
+          
+          <SidebarLink
+            href="/expert-dashboard/reports"
+            icon={<AlertCircle className="h-5 w-5" />}
+            isActive={isActive("/expert-dashboard/reports")}
+          >
+            Report User
           </SidebarLink>
           
           <SidebarLink

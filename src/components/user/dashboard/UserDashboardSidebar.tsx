@@ -1,158 +1,117 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserProfile } from '@/types/database/unified';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { 
   Home, 
+  User2, 
   Wallet, 
-  CalendarDays, 
-  MessageSquare, 
   Heart, 
+  BookOpen, 
+  MessageSquare, 
   Settings, 
-  HelpCircle,
-  Users 
+  HelpCircle
 } from 'lucide-react';
 
-interface UserDashboardSidebarProps {
-  user: UserProfile | null;
-  onLogout?: () => Promise<boolean> | void;
-  isLoggingOut?: boolean;
-  className?: string;
+export interface UserDashboardSidebarProps {
+  user: UserProfile;
 }
 
-const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ 
-  user,
-  className
-}) => {
+const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ user }) => {
   const location = useLocation();
-  const currentPath = location.pathname;
+  
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
 
   return (
-    <div className={cn("h-full flex flex-col bg-white", className)}>
+    <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto hidden md:block">
       <div className="p-4">
-        <Link to="/user-dashboard" className="flex items-center gap-2">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.profile_picture || ''} />
+        <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-100">
+          <Avatar className="h-12 w-12">
+            <AvatarImage src={user?.profile_picture || ''} alt={user?.name || 'User'} />
             <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
           </Avatar>
-          <span className="font-semibold">{user?.name || 'User'}</span>
-        </Link>
-      </div>
-      
-      <Separator />
-      
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
-          <SidebarLink 
-            to="/user-dashboard" 
-            active={currentPath === '/user-dashboard'}
-            icon={<Home className="mr-2 h-4 w-4" />}
-            label="Overview"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/profile" 
-            active={currentPath === '/user-dashboard/profile'}
-            icon={<Settings className="mr-2 h-4 w-4" />}
-            label="Profile Settings"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/wallet" 
-            active={currentPath === '/user-dashboard/wallet'}
-            icon={<Wallet className="mr-2 h-4 w-4" />}
-            label="Wallet"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/appointments" 
-            active={currentPath === '/user-dashboard/appointments'}
-            icon={<CalendarDays className="mr-2 h-4 w-4" />}
-            label="Appointments"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/messages" 
-            active={currentPath === '/user-dashboard/messages'}
-            icon={<MessageSquare className="mr-2 h-4 w-4" />}
-            label="Messages"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/favorites" 
-            active={currentPath === '/user-dashboard/favorites'}
-            icon={<Heart className="mr-2 h-4 w-4" />}
-            label="Favorites"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/referrals" 
-            active={currentPath === '/user-dashboard/referrals'}
-            icon={<Users className="mr-2 h-4 w-4" />}
-            label="Referrals"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/security" 
-            active={currentPath === '/user-dashboard/security'}
-            icon={<Settings className="mr-2 h-4 w-4" />}
-            label="Account Security"
-          />
-          
-          <SidebarLink 
-            to="/user-dashboard/help" 
-            active={currentPath === '/user-dashboard/help'}
-            icon={<HelpCircle className="mr-2 h-4 w-4" />}
-            label="Help & Support"
-          />
+          <div>
+            <h3 className="font-medium">{user?.name || 'User'}</h3>
+            <p className="text-sm text-muted-foreground truncate max-w-[150px]">{user?.email}</p>
+          </div>
         </div>
-      </ScrollArea>
+
+        <nav className="space-y-1">
+          <SidebarItem 
+            href="/user-dashboard" 
+            icon={<Home className="h-5 w-5" />} 
+            label="Dashboard" 
+            isActive={isActive('/user-dashboard')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/profile" 
+            icon={<User2 className="h-5 w-5" />} 
+            label="My Profile" 
+            isActive={isActive('/user-dashboard/profile')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/wallet" 
+            icon={<Wallet className="h-5 w-5" />} 
+            label="Wallet" 
+            isActive={isActive('/user-dashboard/wallet')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/favorites" 
+            icon={<Heart className="h-5 w-5" />} 
+            label="Favorites" 
+            isActive={isActive('/user-dashboard/favorites')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/programs" 
+            icon={<BookOpen className="h-5 w-5" />} 
+            label="My Programs" 
+            isActive={isActive('/user-dashboard/programs')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/messages" 
+            icon={<MessageSquare className="h-5 w-5" />} 
+            label="Messages" 
+            isActive={isActive('/user-dashboard/messages')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/settings" 
+            icon={<Settings className="h-5 w-5" />} 
+            label="Settings" 
+            isActive={isActive('/user-dashboard/settings')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/support" 
+            icon={<HelpCircle className="h-5 w-5" />} 
+            label="Support" 
+            isActive={isActive('/user-dashboard/support')} 
+          />
+        </nav>
+      </div>
     </div>
   );
 };
 
-interface SidebarLinkProps {
-  to: string;
-  active: boolean;
+interface SidebarItemProps {
+  href: string;
   icon: React.ReactNode;
   label: string;
-  onClick?: () => void;
+  isActive: boolean;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ to, active, icon, label, onClick }) => {
-  if (onClick) {
-    return (
-      <Button
-        variant={active ? "secondary" : "ghost"}
-        className={cn(
-          "w-full justify-start",
-          active ? "bg-secondary" : "hover:bg-muted"
-        )}
-        onClick={onClick}
-      >
-        {icon}
-        {label}
-      </Button>
-    );
-  }
-  
+const SidebarItem: React.FC<SidebarItemProps> = ({ href, icon, label, isActive }) => {
   return (
     <Button
       asChild
-      variant={active ? "secondary" : "ghost"}
-      className={cn(
-        "w-full justify-start",
-        active ? "bg-secondary" : "hover:bg-muted"
-      )}
+      variant={isActive ? "secondary" : "ghost"}
+      className="w-full justify-start"
     >
-      <Link to={to}>
-        {icon}
-        {label}
+      <Link to={href} className="flex items-center">
+        <span className="mr-3">{icon}</span>
+        <span>{label}</span>
       </Link>
     </Button>
   );

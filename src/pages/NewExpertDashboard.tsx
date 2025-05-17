@@ -4,10 +4,14 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import ExpertDashboardLayout from '@/components/expert-dashboard/layout/ExpertDashboardLayout';
 import DashboardHome from '@/components/expert-dashboard/pages/DashboardHome';
 import ProfilePage from '@/components/expert-dashboard/pages/ProfilePage';
-import PlaceholderPage from '@/components/expert-dashboard/pages/PlaceholderPage';
+import SchedulePage from '@/components/expert-dashboard/pages/SchedulePage';
+import ClientsPage from '@/components/expert-dashboard/pages/ClientsPage';
+import MessagingTab from '@/components/expert/dashboard/MessagingTab';
+import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
+import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
+import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
-import MessagingTab from '@/components/expert/dashboard/MessagingTab';
 
 const NewExpertDashboard: React.FC = () => {
   const { expertProfile, isAuthenticated, role, isLoading } = useAuth();
@@ -46,53 +50,26 @@ const NewExpertDashboard: React.FC = () => {
         {/* Dashboard Home */}
         <Route index element={<DashboardHome />} />
         
-        {/* Phase 1 Pages */}
+        {/* Profile Management */}
         <Route path="profile" element={<ProfilePage />} />
         
-        {/* Messaging Route - Now Implemented */}
+        {/* Schedule Management */}
+        <Route path="schedule" element={<SchedulePage />} />
+        
+        {/* Client Management */}
+        <Route path="clients" element={<ClientsPage />} />
+        
+        {/* Messaging */}
         <Route path="messages" element={<MessagingTab />} />
         
-        {/* Placeholders for Future Phases */}
-        <Route 
-          path="schedule" 
-          element={
-            <PlaceholderPage 
-              title="Schedule Management" 
-              description="Manage your availability and appointments" 
-              phase={4}
-            />
-          } 
-        />
-        <Route 
-          path="documents" 
-          element={
-            <PlaceholderPage 
-              title="Documents" 
-              description="Manage your professional documents and resources" 
-              phase={3}
-            />
-          } 
-        />
-        <Route 
-          path="earnings" 
-          element={
-            <PlaceholderPage 
-              title="Earnings" 
-              description="Track your earnings and financial performance" 
-              phase={5}
-            />
-          } 
-        />
-        <Route 
-          path="settings" 
-          element={
-            <PlaceholderPage 
-              title="Settings" 
-              description="Manage your account settings and preferences" 
-              phase={2}
-            />
-          } 
-        />
+        {/* Services Management */}
+        <Route path="services" element={<ServicesPage />} />
+        
+        {/* Earnings */}
+        <Route path="earnings" element={<EarningsPage />} />
+        
+        {/* User Reports */}
+        <Route path="reports" element={<ReportPage />} />
         
         {/* Fallback route */}
         <Route path="*" element={<Navigate to="/expert-dashboard" replace />} />
