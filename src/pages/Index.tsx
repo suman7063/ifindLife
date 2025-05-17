@@ -9,13 +9,13 @@ import MindfulnessCommunitySection from '@/components/MindfulnessCommunitySectio
 import IntroductionSection from '@/components/IntroductionSection';
 import { lazy, Suspense } from 'react';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
-import ExpertsOnlineSection from '@/components/ExpertsOnlineSection'; // Import directly instead of lazy loading
+import ExpertsOnlineSection from '@/components/ExpertsOnlineSection';
+import Footer from '@/components/Footer';
 
-// Lazy load non-critical components that are NOT causing errors
+// Lazy load non-critical components
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
 const CTASection = lazy(() => import('@/components/CTASection'));
-const Footer = lazy(() => import('@/components/Footer'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
 
 // Loading fallback component
@@ -58,7 +58,7 @@ const Index = () => {
         {/* Section 6: Programs for Organizations (Services Section) */}
         <ServicesSection />
         
-        {/* Section 7: Experts Currently Online - Load directly instead of lazy loading */}
+        {/* Section 7: Experts Currently Online - Import directly to avoid dynamic import issues */}
         <ExpertsOnlineSection />
         
         {/* Section 8: Why Choose Us */}
@@ -83,9 +83,7 @@ const Index = () => {
       </main>
 
       {/* Footer */}
-      <Suspense fallback={<div className="h-40 bg-gray-100" />}>
-        <Footer />
-      </Suspense>
+      <Footer />
     </div>
   );
 };

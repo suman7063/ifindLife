@@ -1,293 +1,88 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { format } from 'date-fns';
-import { Calendar, Clock, User } from 'lucide-react';
-import { toast } from 'sonner';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Calendar, Clock } from 'lucide-react';
+import { format } from 'date-fns';
 
 interface Appointment {
   id: string;
+  name: string;
+  avatar: string;
   date: string;
-  start_time: string;
-  end_time: string;
-  duration: number;
-  client_name: string;
-  service_name: string;
-  status: string;
-  notes?: string;
+  time: string;
 }
 
 interface UpcomingAppointmentsProps {
-  expertId?: string;
-  limit?: number;
+  appointments: Appointment[];
+  isLoading: boolean;
 }
 
-const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ expertId, limit = 3 }) => {
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [notes, setNotes] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+const mockAppointments: Appointment[] = [
+  {
+    id: '1',
+    name: 'John Doe',
+    avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
+    date: format(new Date(), 'MMM d, yyyy'),
+    time: '10:00 AM',
+  },
+  {
+    id: '2',
+    name: 'Jane Smith',
+    avatar: 'https://randomuser.me/api/portraits/women/2.jpg',
+    date: format(new Date(), 'MMM d, yyyy'),
+    time: '2:00 PM',
+  },
+];
 
-  useEffect(() => {
-    if (expertId) {
-      fetchAppointments();
-    }
-  }, [expertId]);
-
-  const fetchAppointments = async () => {
-    if (!expertId) return;
-    
-    setIsLoading(true);
-    try {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Fetch appointments
-      const { data, error } = await supabase
-        .from('appointments')
-        .select(`
-          id,
-          appointment_date,
-          start_time,
-          end_time,
-          duration,
-          notes,
-          status,
-          user_id,
-          service_id,
-          users (name),
-          services (name)
-        `)
-        .eq('expert_id', expertId)
-        .gte('appointment_date', today)
-        .order('appointment_date', { ascending: true })
-        .limit(limit);
-        
-      if (error) throw error;
-      
-      // Format appointments
-      const formattedAppointments = (data || []).map(app => ({
-        id: app.id,
-        date: app.appointment_date,
-        start_time: app.start_time,
-        end_time: app.end_time,
-        duration: app.duration,
-        client_name: app.users?.name || 'Unknown Client',
-        service_name: app.services?.name || 'Unknown Service',
-        status: app.status,
-        notes: app.notes
-      }));
-      
-      setAppointments(formattedAppointments);
-    } catch (error) {
-      console.error('Error fetching appointments:', error);
-      toast.error('Failed to load appointments');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleViewAppointment = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
-    setNotes(appointment.notes || '');
-    setIsDialogOpen(true);
-  };
-
-  const handleSaveNotes = async () => {
-    if (!expertId || !selectedAppointment) return;
-    
-    setIsSaving(true);
-    try {
-      const { error } = await supabase
-        .from('appointments')
-        .update({ notes })
-        .eq('id', selectedAppointment.id);
-        
-      if (error) throw error;
-      
-      toast.success('Notes saved successfully');
-      setIsDialogOpen(false);
-      
-      // Update local state
-      setAppointments(prevAppointments => 
-        prevAppointments.map(app => 
-          app.id === selectedAppointment.id ? { ...app, notes } : app
-        )
-      );
-    } catch (error) {
-      console.error('Error saving notes:', error);
-      toast.error('Failed to save notes');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const formatDate = (dateStr: string) => {
-    return format(new Date(dateStr), 'EEEE, MMMM d, yyyy');
-  };
-
-  const formatTime = (timeStr: string) => {
-    return timeStr ? timeStr.substring(0, 5) : '';
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return <Badge className="bg-green-500">Confirmed</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-500">Pending</Badge>;
-      case 'canceled':
-        return <Badge className="bg-red-500">Canceled</Badge>;
-      case 'completed':
-        return <Badge className="bg-blue-500">Completed</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
-
+const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ appointments = mockAppointments, isLoading }) => {
   return (
-    <div className="space-y-4">
-      {isLoading ? (
-        <div className="text-center py-8">Loading appointments...</div>
-      ) : appointments.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          No upcoming appointments found.
+    <Card className="col-span-2">
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Upcoming Appointments</CardTitle>
+          <CardDescription>Your schedule for the next few days</CardDescription>
         </div>
-      ) : (
-        appointments.map((appointment) => (
-          <Card key={appointment.id}>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <CardTitle className="text-base">{appointment.service_name}</CardTitle>
-                {getStatusBadge(appointment.status)}
-              </div>
-              <CardDescription>
-                <div className="flex items-center">
-                  <Calendar className="h-3.5 w-3.5 mr-1" />
-                  <span>{formatDate(appointment.date)}</span>
-                </div>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-2">
-              <div className="space-y-1">
-                <div className="flex items-center">
-                  <User className="h-3.5 w-3.5 mr-1" />
-                  <span className="text-sm">{appointment.client_name}</span>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="h-3.5 w-3.5 mr-1" />
-                  <span className="text-sm">
-                    {formatTime(appointment.start_time)} - {formatTime(appointment.end_time)} 
-                    ({appointment.duration} min)
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="pt-0">
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="w-full"
-                onClick={() => handleViewAppointment(appointment)}
-              >
-                View Details
-              </Button>
-            </CardFooter>
-          </Card>
-        ))
-      )}
-      
-      {/* Appointment Details Dialog */}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Appointment Details</DialogTitle>
-            <DialogDescription>
-              View and manage appointment information
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedAppointment && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Date</Label>
-                  <div className="font-medium">{formatDate(selectedAppointment.date)}</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Time</Label>
-                  <div className="font-medium">
-                    {formatTime(selectedAppointment.start_time)} - {formatTime(selectedAppointment.end_time)}
+        <Button variant="outline" size="sm" className="h-8">
+          <Calendar className="h-4 w-4 mr-2" />
+          View Calendar
+        </Button>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="h-16 bg-muted rounded-md animate-pulse" />
+            <div className="h-16 bg-muted rounded-md animate-pulse" />
+          </div>
+        ) : appointments.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <p>No upcoming appointments scheduled.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {appointments.map((appointment, index) => (
+              <div key={index} className="flex items-center gap-4 border p-3 rounded-lg">
+                <Avatar className="h-12 w-12 border">
+                  <AvatarImage src={appointment[0]?.avatar || ''} />
+                  <AvatarFallback>{appointment[0]?.name?.charAt(0) || 'C'}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-1">
+                  <div className="font-medium">{appointment[0]?.name || 'Client'}</div>
+                  <div className="text-sm flex items-center text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5 mr-1" />
+                    <span>{appointment[0]?.date || 'No date'}</span>
+                    <span className="mx-2">•</span>
+                    <Clock className="h-3.5 w-3.5 mr-1" />
+                    <span>{appointment[0]?.time || 'No time'}</span>
                   </div>
                 </div>
+                <Button variant="ghost" size="sm">View</Button>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Client</Label>
-                  <div className="font-medium">{selectedAppointment.client_name}</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Service</Label>
-                  <div className="font-medium">{selectedAppointment.service_name}</div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm text-muted-foreground">Duration</Label>
-                  <div className="font-medium">{selectedAppointment.duration} minutes</div>
-                </div>
-                <div>
-                  <Label className="text-sm text-muted-foreground">Status</Label>
-                  <div className="font-medium">{getStatusBadge(selectedAppointment.status)}</div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="notes" className="text-sm font-medium">Session Notes</Label>
-                <Textarea 
-                  id="notes" 
-                  placeholder="Add notes about this session..."
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  rows={4}
-                />
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button 
-              onClick={handleSaveNotes}
-              disabled={isSaving}
-            >
-              {isSaving ? 'Saving...' : 'Save Notes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

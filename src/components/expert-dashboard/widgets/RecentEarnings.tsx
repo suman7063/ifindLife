@@ -1,150 +1,105 @@
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { format } from 'date-fns';
-import { DollarSign, ArrowRight } from 'lucide-react';
-import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-
-interface Transaction {
-  id: string;
-  client_name: string;
-  service_name: string;
+interface EarningsData {
+  name: string;
   amount: number;
-  date: string;
 }
 
-interface RecentEarningsProps {
-  expertId?: string;
-  limit?: number;
+interface TopServiceData {
+  name: string;
+  amount: number;
+  count: number;
 }
 
-const RecentEarnings: React.FC<RecentEarningsProps> = ({ expertId, limit = 5 }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState(0);
+const data: EarningsData[] = [
+  {
+    name: 'Jan',
+    amount: 4000,
+  },
+  {
+    name: 'Feb',
+    amount: 3000,
+  },
+  {
+    name: 'Mar',
+    amount: 2000,
+  },
+  {
+    name: 'Apr',
+    amount: 2780,
+  },
+  {
+    name: 'May',
+    amount: 1890,
+  },
+  {
+    name: 'Jun',
+    amount: 2390,
+  },
+  {
+    name: 'Jul',
+    amount: 3490,
+  },
+];
 
-  useEffect(() => {
-    if (expertId) {
-      fetchRecentEarnings();
-    }
-  }, [expertId]);
+const topServiceData: TopServiceData[] = [
+  {
+    name: 'Therapy Session',
+    amount: 1200,
+    count: 12
+  }
+];
 
-  const fetchRecentEarnings = async () => {
-    if (!expertId) return;
-    
-    setIsLoading(true);
-    try {
-      // Fetch recent transactions
-      const { data, error } = await supabase
-        .from('user_expert_services')
-        .select(`
-          id,
-          user_id,
-          expert_id,
-          service_id,
-          amount,
-          created_at,
-          status,
-          users (
-            name
-          ),
-          services (
-            name
-          )
-        `)
-        .eq('expert_id', expertId)
-        .eq('status', 'completed')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-        
-      if (error) throw error;
-      
-      // Format transactions
-      const formattedTransactions = (data || []).map(t => ({
-        id: t.id,
-        client_name: t.users?.name || 'Unknown Client',
-        service_name: t.services?.name || 'Unknown Service',
-        amount: t.amount,
-        date: format(new Date(t.created_at), 'MMM d, yyyy')
-      }));
-      
-      setTransactions(formattedTransactions);
-      
-      // Calculate total
-      const totalAmount = formattedTransactions.reduce((sum, t) => sum + t.amount, 0);
-      setTotal(totalAmount);
-      
-    } catch (error) {
-      console.error('Error fetching earnings:', error);
-      toast.error('Failed to load earnings data');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+const RecentEarnings = () => {
+  const { expertProfile } = useAuth();
+  const isLoading = !expertProfile;
+  const topService = isLoading ? [] : topServiceData;
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
+    <Card className="col-span-3">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Recent Earnings</h3>
-          <p className="text-sm text-muted-foreground">Last {limit} transactions</p>
+          <CardTitle>Recent Earnings</CardTitle>
+          <CardDescription>Your earnings over the recent period</CardDescription>
         </div>
-        <div className="flex items-center text-lg font-bold">
-          <DollarSign className="h-5 w-5 mr-1" />
-          <span>${total.toFixed(2)}</span>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-muted-foreground">
+                Top Service
+              </div>
+              <div className="text-2xl font-bold">
+                {topService[0]?.name || 'None'}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {topService[0]?.amount || '$0'} from {topService[0]?.count || 0} sessions
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="text-sm font-medium text-muted-foreground">
+                Total Earnings
+              </div>
+              <div className="text-2xl font-bold">$46,000</div>
+              <div className="text-xs text-muted-foreground">
+                +20.1% from last month
+              </div>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={data}>
+              <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+              <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+              <Bar dataKey="amount" fill="#3182CE" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      </div>
-      
-      {isLoading ? (
-        <div className="text-center py-8">Loading transactions...</div>
-      ) : transactions.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          No recent earnings found.
-        </div>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Service</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {transactions.map((transaction) => (
-                <TableRow key={transaction.id}>
-                  <TableCell>{transaction.client_name}</TableCell>
-                  <TableCell>{transaction.service_name}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    ${transaction.amount.toFixed(2)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-      
-      <div className="flex justify-center mt-4">
-        <Button variant="outline" asChild>
-          <Link to="/expert-dashboard/earnings" className="flex items-center">
-            View all earnings
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -204,12 +203,10 @@ const ClientsPage = () => {
       setClientSessions((appointments || []).map(item => ({
         id: item.id,
         date: item.appointment_date,
-        start_time: '', // Add default values for required fields
-        end_time: '',
-        duration: item.duration,
-        status: item.status,
+        duration: item.duration || 0,
+        status: item.status || 'unknown',
         notes: item.notes,
-        // Correctly access the service name
+        // Correctly access the service name from the services object
         service_name: item.services?.name || 'Unknown Service'
       })));
     } catch (error) {
