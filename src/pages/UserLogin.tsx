@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { authenticate, navigation } from '@/modules/authentication';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { Loader2, Mail, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import RegisterTab from '@/components/auth/RegisterTab';
 
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -18,15 +19,16 @@ const UserLogin: React.FC = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   // Check for existing session on component mount
   useEffect(() => {
     const checkSession = async () => {
       try {
         console.log('UserLogin: Checking for existing session...');
-        const result = await authenticate.checkSession();
+        const { data } = await supabase.auth.getSession();
         
-        if (result.isAuthenticated) {
+        if (data.session) {
           console.log('UserLogin: Existing session found, redirecting to dashboard');
           navigate('/user-dashboard', { replace: true });
         }
@@ -43,9 +45,10 @@ const UserLogin: React.FC = () => {
   // Handle login form submission
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError(null);
     
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      setLoginError('Please enter both email and password');
       return;
     }
     
@@ -53,24 +56,52 @@ const UserLogin: React.FC = () => {
       setIsLoading(true);
       console.log('UserLogin: Attempting login with:', email);
       
-      const result = await authenticate.userLogin(email, password);
-      
-      if (!result.success) {
-        const errorMessage = result.error?.message || 'Login failed';
-        console.error('UserLogin: Login error:', errorMessage);
-        toast.error(errorMessage);
+      // First check if user exists in the users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .maybeSingle();
+        
+      if (userError) {
+        console.error('Error checking user:', userError);
+        setLoginError('An error occurred while checking user');
         return;
       }
       
+      if (!userData) {
+        setLoginError('No account found with this email address');
+        return;
+      }
+      
+      // Proceed with login if user exists
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) {
+        console.error('Login error:', error);
+        setLoginError(error.message || 'Invalid email or password');
+        return;
+      }
+      
+      if (!data.user || !data.session) {
+        setLoginError('Login failed. Please try again.');
+        return;
+      }
+      
+      // Set session type
+      localStorage.setItem('sessionType', 'user');
+      
       toast.success('Login successful!');
-      console.log('UserLogin: Login successful, redirecting to dashboard...');
       
       // Navigate to dashboard
-      navigate(navigation.redirects.afterLogin, { replace: true });
+      navigate('/user-dashboard', { replace: true });
       
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
-      toast.error('An unexpected error occurred');
+      setLoginError('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }
@@ -106,77 +137,90 @@ const UserLogin: React.FC = () => {
             >
               Login
             </button>
-            <Link to="/user-register" className="flex-1 py-3 text-center font-medium">
+            <button 
+              className={`flex-1 py-3 text-center font-medium ${activeTab === 'register' ? 'border-b-2 border-primary' : ''}`}
+              onClick={() => setActiveTab('register')}
+            >
               Register
-            </Link>
+            </button>
           </div>
           
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="email" className="block text-sm font-medium">Email Address</label>
-                <div className="relative">
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    className="pl-10"
-                    disabled={isLoading}
-                    required
-                  />
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <label htmlFor="password" className="block text-sm font-medium">Password</label>
-                  <Link to="/forgot-password" className="text-xs text-sky-500 hover:text-sky-600">
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="pr-10"
-                    disabled={isLoading}
-                    required
-                  />
-                  <button 
-                    type="button"
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                    onClick={togglePasswordVisibility}
-                    tabIndex={-1}
-                  >
-                    {showPassword ? 
-                      <EyeOff className="h-4 w-4 text-gray-400" /> : 
-                      <Eye className="h-4 w-4 text-gray-400" />
-                    }
-                  </button>
-                </div>
-              </div>
-              
-              <Button 
-                type="submit" 
-                className="w-full bg-sky-500 hover:bg-sky-600 text-white" 
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing In...
-                  </>
-                ) : (
-                  'Sign In'
+            {activeTab === 'login' ? (
+              <form onSubmit={handleLogin} className="space-y-4">
+                {loginError && (
+                  <div className="bg-red-50 text-red-700 p-3 rounded-md text-sm">
+                    {loginError}
+                  </div>
                 )}
-              </Button>
-            </form>
+                
+                <div className="space-y-2">
+                  <label htmlFor="email" className="block text-sm font-medium">Email Address</label>
+                  <div className="relative">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="pl-10"
+                      disabled={isLoading}
+                      required
+                    />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label htmlFor="password" className="block text-sm font-medium">Password</label>
+                    <a href="/forgot-password" className="text-xs text-sky-500 hover:text-sky-600">
+                      Forgot password?
+                    </a>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="pr-10"
+                      disabled={isLoading}
+                      required
+                    />
+                    <button 
+                      type="button"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                      onClick={togglePasswordVisibility}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? 
+                        <EyeOff className="h-4 w-4 text-gray-400" /> : 
+                        <Eye className="h-4 w-4 text-gray-400" />
+                      }
+                    </button>
+                  </div>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  className="w-full bg-sky-500 hover:bg-sky-600 text-white" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing In...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
+                </Button>
+              </form>
+            ) : (
+              <RegisterTab />
+            )}
           </CardContent>
         </Card>
       </div>

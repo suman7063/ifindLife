@@ -1,82 +1,105 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { authenticate } from '@/modules/authentication';
+import { supabase } from '@/lib/supabase';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { toast } from 'sonner';
 import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
 import DashboardContent from '@/components/user/dashboard/DashboardContent';
+import { UserProfile } from '@/types/database/unified';
 
-const UserDashboardPage: React.FC = () => {
+const UserDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
   
-  // Check auth status
+  // Check auth status and fetch user profile
   useEffect(() => {
-    const checkAuth = async () => {
+    const fetchUserData = async () => {
       try {
         setIsLoading(true);
-        console.log('UserDashboardPage: Checking authentication status...');
-        const result = await authenticate.checkSession();
         
-        if (!result.isAuthenticated) {
-          console.log('UserDashboardPage: No active session found, redirecting to login');
-          navigate('/user-login');
+        // Check if user is logged in
+        const { data: sessionData } = await supabase.auth.getSession();
+        
+        if (!sessionData.session) {
+          console.log('No session found, redirecting to login');
+          navigate('/login');
           return;
         }
         
-        // In a real app, we would fetch user profile data from backend
-        // For now, we'll create a simple user object
-        setUser({
-          id: 'user-1',
-          name: 'John Doe',
-          email: 'user@example.com',
-          role: 'user',
-          profile_picture: null
-        });
+        // Get user data from users table
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', sessionData.session.user.id)
+          .single();
+          
+        if (error || !userData) {
+          console.error('Error fetching user data:', error);
+          // Try to get at least basic info from auth user
+          setUser({
+            id: sessionData.session.user.id,
+            name: sessionData.session.user.user_metadata.name || 'User',
+            email: sessionData.session.user.email || '',
+            profile_picture: null
+          });
+        } else {
+          // Use data from users table
+          setUser({
+            id: userData.id,
+            name: userData.name || sessionData.session.user.user_metadata.name || 'User',
+            email: userData.email || sessionData.session.user.email || '',
+            profile_picture: userData.profile_picture || null,
+            phone: userData.phone,
+            country: userData.country,
+            city: userData.city,
+            wallet_balance: userData.wallet_balance,
+            created_at: userData.created_at
+          });
+        }
       } catch (error) {
-        console.error('UserDashboardPage: Error checking authentication:', error);
-        toast.error('Authentication error. Please login again.');
-        navigate('/user-login');
+        console.error('Error fetching user data:', error);
+        toast.error('Failed to load user data');
+        navigate('/login');
       } finally {
         setIsLoading(false);
       }
     };
     
-    checkAuth();
+    fetchUserData();
   }, [navigate]);
-  
+
+  // Handle user logout
   const handleLogout = async (): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      console.log('UserDashboardPage: Logging out...');
-      const result = await authenticate.logout();
+      setIsLoggingOut(true);
+      const { error } = await supabase.auth.signOut();
       
-      if (result.success) {
-        toast.success('Logged out successfully');
-        navigate('/user-login', { replace: true });
-        return true;
-      } else {
-        console.error('UserDashboardPage: Logout failed:', result.error);
-        toast.error('Logout failed. Please try again.');
+      if (error) {
+        toast.error('Failed to logout. Please try again.');
         return false;
       }
+      
+      // Clear local storage
+      localStorage.removeItem('sessionType');
+      
+      // Redirect to login page
+      toast.success('Logged out successfully');
+      navigate('/login');
+      return true;
     } catch (error) {
-      console.error('UserDashboardPage: Error during logout:', error);
+      console.error('Logout error:', error);
       toast.error('An error occurred during logout');
       return false;
     } finally {
-      setIsLoading(false);
+      setIsLoggingOut(false);
     }
   };
 
   if (isLoading) {
     return <LoadingScreen message="Loading your dashboard..." />;
-  }
-
-  if (!user) {
-    return null; // Will redirect in the useEffect
   }
 
   return (
@@ -86,16 +109,16 @@ const UserDashboardPage: React.FC = () => {
         <UserDashboardSidebar 
           user={user} 
           onLogout={handleLogout} 
-          isLoggingOut={isLoading} 
+          isLoggingOut={isLoggingOut} 
         />
       </div>
       
       {/* Main content */}
-      <div className="flex-1">
+      <div className="flex-1 overflow-auto">
         <DashboardContent currentUser={user} />
       </div>
     </div>
   );
 };
 
-export default UserDashboardPage;
+export default UserDashboard;
