@@ -206,8 +206,8 @@ const ClientsPage = () => {
         duration: item.duration || 0,
         status: item.status || 'unknown',
         notes: item.notes,
-        // Correctly access the service name from the services object
-        service_name: item.services?.name || 'Unknown Service'
+        // Fix the property access - use optional chaining and type assertion
+        service_name: item.services ? (item.services as any).name : 'Unknown Service'
       })));
     } catch (error) {
       console.error('Error fetching client sessions:', error);
