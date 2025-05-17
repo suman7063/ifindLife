@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
@@ -12,6 +13,10 @@ interface TopServiceData {
   name: string;
   amount: number;
   count: number;
+}
+
+interface RecentEarningsProps {
+  expertId?: string;
 }
 
 const data: EarningsData[] = [
@@ -53,7 +58,7 @@ const topServiceData: TopServiceData[] = [
   }
 ];
 
-const RecentEarnings = () => {
+const RecentEarnings: React.FC<RecentEarningsProps> = ({ expertId }) => {
   const { expertProfile } = useAuth();
   const isLoading = !expertProfile;
   const topService = isLoading ? [] : topServiceData;

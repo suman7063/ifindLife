@@ -36,8 +36,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     ...state,
     ...actions,
-    // Add the missing hasUserAccount property with a fallback value
-    hasUserAccount: false // Using default value since it doesn't exist in state
+    // Add the missing hasUserAccount property
+    hasUserAccount: state.hasUserAccount !== undefined ? state.hasUserAccount : false // Use state value if it exists, otherwise default to false
   };
 
   console.log('AuthProvider rendering with values:', {

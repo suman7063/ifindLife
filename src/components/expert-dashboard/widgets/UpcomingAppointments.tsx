@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,8 +15,10 @@ interface Appointment {
 }
 
 interface UpcomingAppointmentsProps {
-  appointments: Appointment[];
-  isLoading: boolean;
+  appointments?: Appointment[];
+  isLoading?: boolean;
+  expertId?: string; // Added the expertId prop
+  limit?: number; // Added limit prop for pagination
 }
 
 const mockAppointments: Appointment[] = [
@@ -35,7 +38,15 @@ const mockAppointments: Appointment[] = [
   },
 ];
 
-const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ appointments = mockAppointments, isLoading }) => {
+const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ 
+  appointments = mockAppointments, 
+  isLoading = false,
+  expertId, // Using the new prop
+  limit 
+}) => {
+  // Apply limit if provided
+  const displayAppointments = limit ? appointments.slice(0, limit) : appointments;
+  
   return (
     <Card className="col-span-2">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -60,20 +71,20 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ appointment
           </div>
         ) : (
           <div className="space-y-4">
-            {appointments.map((appointment, index) => (
+            {displayAppointments.map((appointment, index) => (
               <div key={index} className="flex items-center gap-4 border p-3 rounded-lg">
                 <Avatar className="h-12 w-12 border">
-                  <AvatarImage src={appointment[0]?.avatar || ''} />
-                  <AvatarFallback>{appointment[0]?.name?.charAt(0) || 'C'}</AvatarFallback>
+                  <AvatarImage src={appointment.avatar || ''} />
+                  <AvatarFallback>{appointment?.name?.charAt(0) || 'C'}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 space-y-1">
-                  <div className="font-medium">{appointment[0]?.name || 'Client'}</div>
+                  <div className="font-medium">{appointment?.name || 'Client'}</div>
                   <div className="text-sm flex items-center text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5 mr-1" />
-                    <span>{appointment[0]?.date || 'No date'}</span>
+                    <span>{appointment?.date || 'No date'}</span>
                     <span className="mx-2">•</span>
                     <Clock className="h-3.5 w-3.5 mr-1" />
-                    <span>{appointment[0]?.time || 'No time'}</span>
+                    <span>{appointment?.time || 'No time'}</span>
                   </div>
                 </div>
                 <Button variant="ghost" size="sm">View</Button>

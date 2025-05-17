@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar, Users, MessageSquare, Wallet, BarChart } from 'lucide-react';
@@ -107,7 +106,12 @@ const DashboardHome: React.FC = () => {
       />
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <UpcomingAppointments expertId={expertProfile?.id} />
+        <UpcomingAppointments 
+          appointments={[]} // Pass proper appointments data if available
+          isLoading={isLoading}
+          expertId={expertProfile?.id} 
+          limit={5}
+        />
         <RecentEarnings expertId={expertProfile?.id} />
       </div>
     </div>

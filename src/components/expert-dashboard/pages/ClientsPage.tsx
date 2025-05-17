@@ -424,8 +424,8 @@ const ClientsPage = () => {
                     <AvatarFallback>{selectedClient.name?.charAt(0) || 'U'}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <div className="font-medium text-foreground">{selectedClient.name}</div>
-                    <div className="text-sm text-muted-foreground">{selectedClient.email}</div>
+                    <div className="font-medium">{selectedClient?.name || 'Client'}</div>
+                    <div className="text-sm text-muted-foreground">{selectedClient?.email}</div>
                   </div>
                 </div>
               )}
