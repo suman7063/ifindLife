@@ -39,25 +39,54 @@ const UserDashboard: React.FC = () => {
         if (error || !userData) {
           console.error('Error fetching user data:', error);
           // Try to get at least basic info from auth user
-          setUser({
+          const basicUserProfile: UserProfile = {
             id: sessionData.session.user.id,
             name: sessionData.session.user.user_metadata.name || 'User',
             email: sessionData.session.user.email || '',
-            profile_picture: null
-          });
+            profile_picture: null,
+            phone: '',
+            country: '',
+            city: '',
+            wallet_balance: 0,
+            currency: 'USD',
+            created_at: new Date().toISOString(),
+            referred_by: null,
+            referral_code: '',
+            referral_link: '',
+            favorite_experts: [],
+            favorite_programs: [],
+            enrolled_courses: [],
+            reviews: [],
+            reports: [],
+            transactions: [],
+            referrals: []
+          };
+          setUser(basicUserProfile);
         } else {
           // Use data from users table
-          setUser({
+          const fullUserProfile: UserProfile = {
             id: userData.id,
             name: userData.name || sessionData.session.user.user_metadata.name || 'User',
             email: userData.email || sessionData.session.user.email || '',
             profile_picture: userData.profile_picture || null,
-            phone: userData.phone,
-            country: userData.country,
-            city: userData.city,
-            wallet_balance: userData.wallet_balance,
-            created_at: userData.created_at
-          });
+            phone: userData.phone || '',
+            country: userData.country || '',
+            city: userData.city || '',
+            wallet_balance: userData.wallet_balance || 0,
+            currency: userData.currency || 'USD',
+            created_at: userData.created_at || new Date().toISOString(),
+            referred_by: userData.referred_by || null,
+            referral_code: userData.referral_code || '',
+            referral_link: userData.referral_link || '',
+            favorite_experts: userData.favorite_experts || [],
+            favorite_programs: userData.favorite_programs || [],
+            enrolled_courses: userData.enrolled_courses || [],
+            reviews: [],
+            reports: [],
+            transactions: [],
+            referrals: []
+          };
+          setUser(fullUserProfile);
         }
       } catch (error) {
         console.error('Error fetching user data:', error);

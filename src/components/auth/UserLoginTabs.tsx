@@ -8,7 +8,7 @@ import { ReferralSettings } from '@/types/supabase';
 
 interface UserLoginTabsProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
-  isLoggingIn?: boolean;  // Add this prop
+  isLoggingIn?: boolean;
 }
 
 const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = false }) => {
@@ -30,7 +30,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = fa
     }
   };
   
-  // Dummy function for RegisterTab
+  // Function for RegisterTab that matches its expected props
   const handleRegister = async (userData: {
     name: string;
     email: string;
@@ -39,12 +39,13 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = fa
     country: string;
     city?: string;
     referralCode?: string;
-  }): Promise<void> => {
+  }): Promise<boolean> => {
     // This would typically connect to your registration service
     console.log('Registration data:', userData);
     
     // After successful registration, switch to login tab
     setActiveTab('login');
+    return true;
   };
   
   return (
@@ -73,15 +74,7 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = fa
       </TabsContent>
       
       <TabsContent value="register" className="mt-6">
-        <RegisterTab 
-          onRegister={handleRegister}
-          loading={false}
-          isRegistering={false}
-          registerError={null}
-          initialReferralCode={null}
-          referralSettings={null}
-          setCaptchaVerified={() => {}}
-        />
+        <RegisterTab />
       </TabsContent>
     </Tabs>
   );
