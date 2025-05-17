@@ -5,9 +5,15 @@ import AdminLoginForm from './AdminLoginForm';
 
 interface AdminLoginContentProps {
   onLoginSuccess: () => void;
+  onLogin?: (username: string, password: string) => Promise<boolean>;
+  isLoggingIn?: boolean;
 }
 
-const AdminLoginContent: React.FC<AdminLoginContentProps> = ({ onLoginSuccess }) => {
+const AdminLoginContent: React.FC<AdminLoginContentProps> = ({ 
+  onLoginSuccess, 
+  onLogin,
+  isLoggingIn = false
+}) => {
   return (
     <Card className="border shadow-lg">
       <CardHeader>
@@ -17,7 +23,11 @@ const AdminLoginContent: React.FC<AdminLoginContentProps> = ({ onLoginSuccess })
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <AdminLoginForm onLoginSuccess={onLoginSuccess} />
+        <AdminLoginForm 
+          onLoginSuccess={onLoginSuccess} 
+          onLogin={onLogin}
+          isLoading={isLoggingIn}
+        />
       </CardContent>
     </Card>
   );

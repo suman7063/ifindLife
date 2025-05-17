@@ -20,13 +20,17 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
 
   const fetchAdminUser = async (userId: string) => {
     try {
+      console.log('Fetching admin user with ID:', userId);
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching admin user:', error);
+        throw error;
+      }
 
       if (data) {
         // Default permissions for admin users
@@ -36,17 +40,23 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
           canManageContent: true
         };
 
+        const userData = await supabase.auth.getUser();
+        const email = userData.data.user?.email || 'admin@example.com';
+        const username = email.split('@')[0] || 'admin';
+
         const adminUser: AdminUser = {
           id: data.id,
-          email: (await supabase.auth.getUser()).data.user?.email || 'admin@example.com',
-          username: (await supabase.auth.getUser()).data.user?.email?.split('@')[0] || 'admin',
+          email: email,
+          username: username,
           role: data.role as AdminRole,
           permissions: defaultPermissions,
           createdAt: data.created_at
         };
+        console.log('Admin user found:', adminUser);
         setUser(adminUser);
         setIsAuthenticated(true);
       } else {
+        console.log('No admin user found for ID:', userId);
         // User exists but not in admin_users table
         setIsAuthenticated(false);
         setUser(null);
@@ -64,17 +74,9 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       try {
         setLoading(true);
         
-        const { data } = await supabase.auth.getSession();
-        setSession(data.session);
-        
-        if (data.session?.user) {
-          await fetchAdminUser(data.session.user.id);
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-        }
-        
+        // First set up auth state listener
         const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+          console.log('Admin auth state changed:', event);
           setSession(session);
           
           if (event === 'SIGNED_IN' && session?.user) {
@@ -85,6 +87,18 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
           }
         });
 
+        // Then check for existing session
+        const { data } = await supabase.auth.getSession();
+        console.log('Initial admin auth check:', data.session ? 'Session found' : 'No session');
+        setSession(data.session);
+        
+        if (data.session?.user) {
+          await fetchAdminUser(data.session.user.id);
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
+        
         return () => {
           authListener.subscription.unsubscribe();
         };
@@ -104,16 +118,22 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       setLoading(true);
       setError(null);
       
+      console.log('Admin login attempt with email:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Admin login error:', error);
+        throw error;
+      }
 
       if (data?.user) {
+        localStorage.setItem('sessionType', 'admin');
         await fetchAdminUser(data.user.id);
-        toast.success('Successfully logged in');
+        toast.success('Successfully logged in as admin');
         return true;
       }
       
@@ -137,6 +157,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       
       setIsAuthenticated(false);
       setUser(null);
+      localStorage.removeItem('sessionType');
       toast.success('Successfully logged out');
       return true;
     } catch (error: any) {
@@ -170,7 +191,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
   const updateAdminPermissions = (userId: string, permissions: AdminPermissions) => {};
   const hasPermission = (permission: string) => {
     if (!user || !user.permissions) return false;
-    return !!user.permissions[permission];
+    return !!user.permissions[permission as keyof AdminPermissions];
   };
   const getAdminById = (userId: string) => null;
   const updateAdminRole = (userId: string, role: string) => true;

@@ -19,24 +19,35 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   requiredPermission
 }) => {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { isAuthenticated, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    console.log('Admin ProtectedRoute check - isAuthenticated:', isAuthenticated, 'currentUser:', currentUser);
+    console.log('Admin ProtectedRoute check:', { 
+      isAuthenticated, 
+      isLoading, 
+      currentUser: currentUser?.username, 
+      requiredRole, 
+      requiredPermission 
+    });
     
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       console.log('Admin user not authenticated, will redirect');
       toast.error('Please log in to access this page');
-    } else if (requiredRole && currentUser?.role !== requiredRole && !isSuperAdmin(currentUser)) {
+    } else if (!isLoading && requiredRole && currentUser?.role !== requiredRole && !isSuperAdmin(currentUser)) {
       console.log(`Required role: ${requiredRole}, but user has role: ${currentUser?.role}`);
       toast.error(`You need ${requiredRole} permissions to access this page`);
-    } else if (requiredPermission && !hasPermission(currentUser, requiredPermission)) {
+    } else if (!isLoading && requiredPermission && !hasPermission(currentUser, requiredPermission)) {
       console.log(`Required permission: ${requiredPermission}, but user doesn't have it`);
       toast.error(`You don't have permission to access this page`);
     }
-  }, [isAuthenticated, currentUser, requiredRole, requiredPermission]);
+  }, [isAuthenticated, isLoading, currentUser, requiredRole, requiredPermission]);
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return <div>Loading authentication status...</div>;
+  }
 
   // If not authenticated, redirect to admin login page specifically
   if (!isAuthenticated) {

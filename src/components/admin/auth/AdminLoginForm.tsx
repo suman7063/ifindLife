@@ -9,43 +9,65 @@ import { Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginFormProps {
   onLoginSuccess: () => void;
+  onLogin?: (username: string, password: string) => Promise<boolean>;
+  isLoading?: boolean;
 }
 
-const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ onLoginSuccess }) => {
+const AdminLoginForm: React.FC<AdminLoginFormProps> = ({ 
+  onLoginSuccess, 
+  onLogin, 
+  isLoading = false 
+}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { login, adminUsers } = useAuth();
+  const { login: contextLogin, adminUsers } = useAuth();
+  
+  console.log('AdminLoginForm rendered', {
+    hasProvidedLoginFunction: typeof onLogin === 'function',
+    hasContextLoginFunction: typeof contextLogin === 'function'
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     
     // Debug logs
     console.log('Admin login form submitted with username:', username);
-    console.log('Available admin users:', adminUsers.map(u => u.username));
+    console.log('Available login methods:', {
+      propLogin: !!onLogin, 
+      contextLogin: !!contextLogin
+    });
     
     try {
-      // The login function returns boolean immediately
-      const success = login(username, password);
-      console.log('Admin login result:', success ? 'success' : 'failed');
+      let success = false;
+      
+      // First try to use the provided login function
+      if (typeof onLogin === 'function') {
+        success = await onLogin(username, password);
+        console.log('Using provided login function, result:', success);
+      } 
+      // Fall back to context login if provided login fails or doesn't exist
+      else if (typeof contextLogin === 'function') {
+        success = await contextLogin(username, password);
+        console.log('Using context login function, result:', success);
+      }
+      // No login function available
+      else {
+        console.error('No login function available');
+        toast.error('Authentication service is not available');
+        return;
+      }
       
       if (success) {
         toast.success('Successfully logged in as administrator');
-        console.log('Login successful, redirecting to admin panel');
-        
-        // Call the onLoginSuccess callback - this triggers navigation to admin panel
         onLoginSuccess(); 
       } else {
-        // Login failed - show error and reset loading state
+        // Login failed - show error
         toast.error('Invalid username or password');
-        setIsLoading(false);
       }
     } catch (error) {
       console.error('Login error:', error);
       toast.error('An error occurred during login');
-      setIsLoading(false);
     }
   };
 

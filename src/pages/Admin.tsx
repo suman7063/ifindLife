@@ -26,6 +26,13 @@ const Admin = () => {
   const [retryCount, setRetryCount] = useState(0);
   const MAX_RETRIES = 3;
   
+  console.log('Admin page rendered', { 
+    isAuthenticated, 
+    authLoading, 
+    currentUser: currentUser?.username,
+    activeTab
+  });
+  
   // Update active tab when the URL changes
   useEffect(() => {
     setActiveTab(getCurrentTabFromPath());
@@ -36,7 +43,7 @@ const Admin = () => {
     experts, setExperts,
     services, setServices,
     testimonials, setTestimonials,
-    loading,
+    loading: contentLoading,
     error,
     refreshData
   } = useAdminContent();
@@ -54,10 +61,10 @@ const Admin = () => {
 
   // Reset retry count when data loads successfully
   useEffect(() => {
-    if (!loading && !error) {
+    if (!contentLoading && !error) {
       setRetryCount(0);
     }
-  }, [loading, error]);
+  }, [contentLoading, error]);
 
   // Show loading state while authentication is being checked
   if (authLoading) {
@@ -78,9 +85,9 @@ const Admin = () => {
   
   // Debug log data loading status
   useEffect(() => {
-    console.log('Admin Dashboard: Data loading status:', { loading, error });
+    console.log('Admin Dashboard: Data loading status:', { contentLoading, error });
     
-    if (!loading && !error) {
+    if (!contentLoading && !error) {
       console.log('Admin Dashboard: Data loaded', { 
         expertsCount: experts?.length || 0,
         servicesCount: services?.length || 0,
@@ -91,10 +98,10 @@ const Admin = () => {
     if (error) {
       toast.error(`Error loading data: ${error}`);
     }
-  }, [loading, experts, services, error]);
+  }, [contentLoading, experts, services, error]);
 
   // Show error UI with retry button
-  if (error && !loading) {
+  if (error && !contentLoading) {
     return (
       <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
         <div className="flex flex-col items-center justify-center p-8 space-y-4">
@@ -124,12 +131,12 @@ const Admin = () => {
 
   return (
     <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {loading ? (
+      {contentLoading ? (
         <AdminContentLoader retryCount={retryCount} />
       ) : (
         <AdminRoutes
           isSuperAdmin={isSuperAdmin(currentUser)}
-          loading={loading}
+          loading={contentLoading}
           experts={experts}
           setExperts={setExperts}
           services={services}
