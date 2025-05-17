@@ -10,35 +10,35 @@ import MessagingTab from '@/components/expert/dashboard/MessagingTab';
 import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
 import { toast } from 'sonner';
 
 const NewExpertDashboard: React.FC = () => {
-  const { expertProfile, isAuthenticated, role, isLoading } = useAuth();
+  // Use our fixed useExpertAuth hook
+  const { currentExpert, isAuthenticated, isLoading } = useExpertAuth();
   const navigate = useNavigate();
   
   // Debug logging to track authentication status
   useEffect(() => {
     console.log('NewExpertDashboard - Auth state:', {
       isAuthenticated,
-      role,
-      hasExpertProfile: !!expertProfile,
+      hasExpertProfile: !!currentExpert,
       isLoading
     });
     
     // Ensure role is set to expert when accessing this page
-    if (isAuthenticated && role !== 'expert') {
+    if (isAuthenticated) {
       console.log('Setting preferred role to expert');
       localStorage.setItem('preferredRole', 'expert');
     }
-  }, [isAuthenticated, role, expertProfile, isLoading]);
+  }, [isAuthenticated, currentExpert, isLoading]);
   
   // If not authenticated or not an expert, redirect to login
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
   
-  if (!isAuthenticated || role !== 'expert' || !expertProfile) {
+  if (!isAuthenticated || !currentExpert) {
     console.error('User not authenticated as expert, redirecting to expert login');
     toast.error('You must be logged in as an expert to access this page');
     return <Navigate to="/expert-login" replace />;

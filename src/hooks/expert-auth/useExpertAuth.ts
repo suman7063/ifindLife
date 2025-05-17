@@ -20,10 +20,10 @@ export const useExpertAuth = () => {
     isLoading: auth.isLoading,
     login: (email: string, password: string) => auth.login(email, password, { asExpert: true }),
     logout: auth.logout,
-    register: auth.register,
-    updateProfile: auth.updateExpertProfile,
+    // Use properties that exist in AuthContext
+    updateProfile: auth.updateProfile, // Use generic updateProfile instead of updateExpertProfile
     error: auth.error,
     initialized: !auth.isLoading,
-    hasUserAccount: auth.hasUserAccount
+    hasUserAccount: auth.hasUserAccount || false // Provide a default value
   };
 };

@@ -9,9 +9,9 @@ import MindfulnessCommunitySection from '@/components/MindfulnessCommunitySectio
 import IntroductionSection from '@/components/IntroductionSection';
 import { lazy, Suspense } from 'react';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
+import ExpertsOnlineSection from '@/components/ExpertsOnlineSection'; // Import directly instead of lazy loading
 
-// Lazy load non-critical components
-const ExpertsOnlineSection = lazy(() => import('@/components/ExpertsOnlineSection'));
+// Lazy load non-critical components that are NOT causing errors
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
 const CTASection = lazy(() => import('@/components/CTASection'));
@@ -58,10 +58,8 @@ const Index = () => {
         {/* Section 6: Programs for Organizations (Services Section) */}
         <ServicesSection />
         
-        {/* Section 7: Experts Currently Online */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <ExpertsOnlineSection />
-        </Suspense>
+        {/* Section 7: Experts Currently Online - Load directly instead of lazy loading */}
+        <ExpertsOnlineSection />
         
         {/* Section 8: Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>
