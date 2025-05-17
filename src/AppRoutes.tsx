@@ -21,22 +21,12 @@ const AppRoutes: React.FC = () => {
   return (
     <>
       <Routes>
-        {/* Public Routes */}
+        {/* Route categories */}
         <PublicRoutes />
-        
-        {/* Content Routes (Blog, Services) */}
         <ContentRoutes />
-        
-        {/* Program Routes */}
         <ProgramRoutes />
-        
-        {/* Expert Routes (public and protected) */}
         <ExpertRoutes />
-        
-        {/* User Routes (protected) */}
         <UserRoutes />
-        
-        {/* Admin Routes (protected) */}
         <AdminRoutes />
 
         {/* Fallback route */}
