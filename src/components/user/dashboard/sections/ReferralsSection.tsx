@@ -1,291 +1,219 @@
 
-import React, { useEffect, useState } from 'react';
-import { UserProfile } from '@/types/database/unified';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, Share2, Gift, Users } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserProfile } from '@/types/database/unified';
+import { Copy, Share2, Users, User, Gift } from 'lucide-react';
 import { toast } from 'sonner';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 
 interface ReferralsSectionProps {
   user: UserProfile | null;
 }
 
-interface ReferralSetting {
-  id: string;
+interface ReferralSettings {
   referrer_reward: number;
   referred_reward: number;
-  active: boolean;
-  description: string;
-}
-
-interface Referral {
-  id: string;
-  referrer_id: string;
-  referred_id: string;
-  referral_code: string;
-  reward_claimed: boolean;
-  created_at: string;
-  completed_at: string | null;
-  status: string;
-  referred_name?: string;
-  referred_email?: string;
 }
 
 const ReferralsSection: React.FC<ReferralsSectionProps> = ({ user }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [referrals, setReferrals] = useState<Referral[]>([]);
-  const [referralSettings, setReferralSettings] = useState<ReferralSetting | null>(null);
+  const [settings, setSettings] = useState<ReferralSettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [copied, setCopied] = useState(false);
   
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     
     const fetchReferralData = async () => {
-      setIsLoading(true);
-      
+      setLoading(true);
       try {
-        // Fetch referral settings
-        const { data: settingsData, error: settingsError } = await supabase
-          .from('referral_settings')
+        // Get referral settings
+        const { data: settingsData } = await supabase
+          .from('settings')
           .select('*')
-          .eq('active', true)
+          .eq('type', 'referral')
           .single();
         
-        if (settingsError) {
-          console.error('Error fetching referral settings:', settingsError);
-        } else {
-          setReferralSettings(settingsData);
+        if (settingsData) {
+          setSettings({
+            referrer_reward: settingsData.value?.referrer_reward || 10,
+            referred_reward: settingsData.value?.referred_reward || 5
+          });
         }
         
-        // Fetch user referrals
-        const { data: referralsData, error: referralsError } = await supabase
-          .from('referrals')
-          .select('*')
-          .eq('referrer_id', user.id)
-          .order('created_at', { ascending: false });
+        // Get user's referrals
+        const { data: referralsData } = await supabase
+          .from('users')
+          .select('id, name, email, created_at')
+          .eq('referred_by', user.id);
         
-        if (referralsError) {
-          console.error('Error fetching referrals:', referralsError);
-          return;
+        if (referralsData) {
+          setReferrals(referralsData);
         }
-        
-        // If there are referrals, fetch referred user names
-        let referralsWithNames = [...(referralsData || [])];
-        
-        if (referralsData && referralsData.length > 0) {
-          const referredIds = referralsData.map(r => r.referred_id);
-          
-          const { data: userData, error: userError } = await supabase
-            .from('users')
-            .select('id, name, email')
-            .in('id', referredIds);
-          
-          if (!userError && userData) {
-            referralsWithNames = referralsData.map(referral => {
-              const referredUser = userData.find(user => user.id === referral.referred_id);
-              return {
-                ...referral,
-                referred_name: referredUser?.name || 'Unknown',
-                referred_email: referredUser?.email || 'Unknown'
-              };
-            });
-          }
-        }
-        
-        setReferrals(referralsWithNames);
       } catch (error) {
         console.error('Error fetching referral data:', error);
-        toast.error('Failed to load referral information');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
     fetchReferralData();
-  }, [user]);
+  }, [user?.id]);
 
-  const copyReferralCode = () => {
-    if (!user?.referral_code) return;
-    
-    navigator.clipboard.writeText(user.referral_code);
-    toast.success('Referral code copied to clipboard');
+  // Generate referral code from user profile or create a random one
+  const referralCode = user?.referral_code || 
+    (user?.id ? `REF-${user.id.substring(0, 6).toUpperCase()}` : 'LOADING');
+  
+  // Generate referral link
+  const referralLink = `${window.location.origin}/signup?ref=${referralCode}`;
+  
+  const copyToClipboard = (text: string, type: 'code' | 'link') => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      toast.success(`${type === 'code' ? 'Referral code' : 'Referral link'} copied to clipboard!`);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy to clipboard');
+    });
   };
-
-  const copyReferralLink = () => {
-    if (!user?.referral_link) return;
-    
-    const baseUrl = window.location.origin;
-    const fullLink = `${baseUrl}/signup?ref=${user.referral_code}`;
-    
-    navigator.clipboard.writeText(fullLink);
-    toast.success('Referral link copied to clipboard');
-  };
-
-  const shareReferral = () => {
-    if (!user?.referral_code) return;
-    
-    const baseUrl = window.location.origin;
-    const fullLink = `${baseUrl}/signup?ref=${user.referral_code}`;
-    const text = `Join me on iFindLife! Use my referral code ${user.referral_code} to sign up and get exclusive benefits.`;
+  
+  const shareReferral = async () => {
+    const shareText = `Join iFindLife using my referral code ${referralCode} and get ₹${settings?.referred_reward || 5} in your wallet!`;
     
     if (navigator.share) {
-      navigator.share({
-        title: 'iFindLife Referral',
-        text,
-        url: fullLink,
-      })
-      .catch((error) => console.error('Error sharing:', error));
+      try {
+        await navigator.share({
+          title: 'Join iFindLife',
+          text: shareText,
+          url: referralLink,
+        });
+        toast.success('Referral link shared successfully!');
+      } catch (error) {
+        console.error('Error sharing:', error);
+        // If sharing fails, fall back to copying the link
+        copyToClipboard(referralLink, 'link');
+      }
     } else {
-      copyReferralLink();
+      // If Web Share API is not available, copy the link to clipboard
+      copyToClipboard(referralLink, 'link');
     }
   };
-
-  if (!user) return null;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Referral Program</CardTitle>
-              <CardDescription>Invite friends and earn rewards</CardDescription>
-            </div>
-            <Gift className="h-6 w-6 text-primary" />
+          <div className="flex items-center space-x-2">
+            <Users className="h-5 w-5 text-primary" />
+            <CardTitle>Referral Program</CardTitle>
           </div>
+          <CardDescription>
+            Invite friends and earn rewards when they sign up and use our services
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-muted p-6 rounded-lg flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium mb-1">Your Referral Code</p>
-                <p className="text-2xl font-semibold tracking-wider">{user.referral_code || 'Not available'}</p>
-              </div>
-              <Button variant="outline" size="sm" onClick={copyReferralCode} disabled={!user.referral_code}>
+        <CardContent className="space-y-6">
+          <div className="bg-muted p-6 rounded-lg">
+            <h3 className="font-semibold text-lg mb-2">Your Referral Code</h3>
+            <div className="flex items-center gap-2">
+              <Input 
+                value={referralCode} 
+                readOnly 
+                className="font-mono text-center"
+              />
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => copyToClipboard(referralCode, 'code')}
+                className="flex-shrink-0"
+              >
                 <Copy className="h-4 w-4" />
               </Button>
             </div>
             
-            <div className="bg-muted p-6 rounded-lg flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium mb-1">Referral Link</p>
-                <p className="text-sm text-muted-foreground truncate max-w-[200px] md:max-w-[300px]">
-                  {window.location.origin}/signup?ref={user.referral_code}
-                </p>
+            <h3 className="font-semibold text-lg mt-4 mb-2">Share Your Link</h3>
+            <div className="flex items-center gap-2">
+              <Input 
+                value={referralLink} 
+                readOnly 
+                className="text-sm"
+              />
+              <Button 
+                variant="outline" 
+                size="icon"
+                onClick={() => copyToClipboard(referralLink, 'link')}
+                className="flex-shrink-0"
+              >
+                <Copy className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <Button onClick={shareReferral} className="w-full mt-4">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share Your Referral
+            </Button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-green-50 p-4 rounded-lg border border-green-100">
+              <div className="flex items-start space-x-2">
+                <Gift className="h-5 w-5 text-green-600 mt-1" />
+                <div>
+                  <h4 className="font-medium">You Earn</h4>
+                  <p className="text-lg font-bold text-green-600">₹{settings?.referrer_reward || 10}</p>
+                  <p className="text-sm text-muted-foreground">For each friend who signs up and uses our services</p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" size="sm" onClick={copyReferralLink} disabled={!user.referral_code}>
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="sm" onClick={shareReferral} disabled={!user.referral_code}>
-                  <Share2 className="h-4 w-4" />
-                </Button>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+              <div className="flex items-start space-x-2">
+                <Gift className="h-5 w-5 text-blue-600 mt-1" />
+                <div>
+                  <h4 className="font-medium">Your Friend Earns</h4>
+                  <p className="text-lg font-bold text-blue-600">₹{settings?.referred_reward || 5}</p>
+                  <p className="text-sm text-muted-foreground">When they sign up using your referral code</p>
+                </div>
               </div>
             </div>
           </div>
           
-          {referralSettings && (
-            <div className="mt-6 border rounded-lg p-4">
-              <div className="flex items-center mb-4">
-                <Users className="h-5 w-5 mr-2 text-primary" />
-                <h3 className="text-lg font-medium">How It Works</h3>
+          <div className="border-t pt-4">
+            <h3 className="font-semibold text-lg mb-4">Your Referrals</h3>
+            {loading ? (
+              <div className="text-center py-6">
+                <p className="text-muted-foreground">Loading referrals...</p>
               </div>
-              <p className="text-muted-foreground mb-4">{referralSettings.description || 'Invite your friends to join iFindLife using your personal referral code and earn rewards!'}</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="border rounded-md p-3 bg-muted/50">
-                  <p className="text-sm font-medium">You Get</p>
-                  <p className="text-xl font-semibold text-green-600">
-                    {user.currency} {referralSettings.referrer_reward}
-                  </p>
-                  <p className="text-xs text-muted-foreground">For each successful referral</p>
-                </div>
-                <div className="border rounded-md p-3 bg-muted/50">
-                  <p className="text-sm font-medium">Your Friend Gets</p>
-                  <p className="text-xl font-semibold text-blue-600">
-                    {user.currency} {referralSettings.referred_reward}
-                  </p>
-                  <p className="text-xs text-muted-foreground">When they sign up using your code</p>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Your Referrals</CardTitle>
-              <CardDescription>Track your referral activity</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="py-8 text-center">
-              <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-              <p className="mt-2 text-sm text-muted-foreground">Loading referrals...</p>
-            </div>
-          ) : referrals.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reward</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            ) : referrals.length > 0 ? (
+              <div className="space-y-3">
                 {referrals.map((referral) => (
-                  <TableRow key={referral.id}>
-                    <TableCell className="font-medium">{referral.referred_name || 'User'}</TableCell>
-                    <TableCell>
+                  <div key={referral.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <Avatar>
+                        <AvatarFallback>
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{referral.name}</p>
+                        <p className="text-sm text-muted-foreground">{referral.email}</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
                       {new Date(referral.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          referral.status === 'completed'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }
-                      >
-                        {referral.status.charAt(0).toUpperCase() + referral.status.slice(1)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {referral.reward_claimed ? (
-                        <Badge className="bg-green-100 text-green-800">Claimed</Badge>
-                      ) : referral.status === 'completed' ? (
-                        <Badge className="bg-blue-100 text-blue-800">Ready to claim</Badge>
-                      ) : (
-                        <Badge className="bg-gray-100 text-gray-800">Pending</Badge>
-                      )}
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="py-16 text-center">
-              <p className="text-muted-foreground mb-4">You haven't referred anyone yet</p>
-              <Button onClick={shareReferral} disabled={!user.referral_code}>
-                <Share2 className="mr-2 h-4 w-4" />
-                Share Your Referral Code
-              </Button>
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="text-center py-6 bg-muted rounded-lg">
+                <p className="text-muted-foreground">You haven't referred anyone yet</p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>

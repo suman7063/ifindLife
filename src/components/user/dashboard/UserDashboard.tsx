@@ -2,23 +2,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import UserDashboardLayout from './UserDashboardLayout';
-import ProfileSettings from './ProfileSettings';
-import ConsultationsSection from './ConsultationsSection';
-import FavoritesSection from './FavoritesSection';
-import WalletSection from './WalletSection';
 import DashboardHome from './DashboardHome';
 import { adaptUserProfile } from '@/utils/adaptUserProfile';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('home');
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   // Check authentication status and fetch user profile
   useEffect(() => {
@@ -44,7 +38,25 @@ const UserDashboard: React.FC = () => {
         
         const adaptedUser = adaptUserProfile(userData || { 
           id: sessionData.session.user.id, 
-          email: sessionData.session.user.email 
+          email: sessionData.session.user.email,
+          name: sessionData.session.user.user_metadata?.name || 'User',
+          profile_picture: null,
+          wallet_balance: 0,
+          currency: 'INR',
+          phone: '',
+          city: '',
+          country: '',
+          created_at: new Date().toISOString(),
+          referred_by: null,
+          referral_code: '',
+          referral_link: '',
+          favorite_experts: [],
+          favorite_programs: [],
+          enrolled_courses: [],
+          transactions: [],
+          reviews: [],
+          reports: [],
+          referrals: []
         });
         
         setUser(adaptedUser);
@@ -92,37 +104,29 @@ const UserDashboard: React.FC = () => {
   }
 
   return (
-    <UserDashboardLayout user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut}>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-5 w-full max-w-lg">
-          <TabsTrigger value="home">Home</TabsTrigger>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="consultations">Consultations</TabsTrigger>
-          <TabsTrigger value="favorites">Favorites</TabsTrigger>
-          <TabsTrigger value="wallet">Wallet</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="home" className="mt-6">
+    <div className="flex min-h-screen bg-background">
+      {/* Sidebar */}
+      <div className="hidden md:block w-64 border-r border-border">
+        <div className="h-full">
+          <UserDashboardSidebar 
+            user={user} 
+            onLogout={handleLogout} 
+            isLoggingOut={isLoggingOut} 
+          />
+        </div>
+      </div>
+      
+      {/* Main content */}
+      <div className="flex-1 overflow-auto">
+        <UserDashboardLayout 
+          user={user} 
+          onLogout={handleLogout} 
+          isLoggingOut={isLoggingOut}
+        >
           <DashboardHome user={user} />
-        </TabsContent>
-        
-        <TabsContent value="profile" className="mt-6">
-          <ProfileSettings user={user} />
-        </TabsContent>
-        
-        <TabsContent value="consultations" className="mt-6">
-          <ConsultationsSection user={user} />
-        </TabsContent>
-        
-        <TabsContent value="favorites" className="mt-6">
-          <FavoritesSection user={user} />
-        </TabsContent>
-        
-        <TabsContent value="wallet" className="mt-6">
-          <WalletSection user={user} />
-        </TabsContent>
-      </Tabs>
-    </UserDashboardLayout>
+        </UserDashboardLayout>
+      </div>
+    </div>
   );
 };
 

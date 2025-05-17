@@ -15,40 +15,24 @@ import {
   Heart, 
   Settings, 
   HelpCircle,
-  LogOut,
   Users 
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface UserDashboardSidebarProps {
   user: UserProfile | null;
-  onLogout?: () => Promise<boolean>;
+  onLogout?: () => Promise<boolean> | void;
   isLoggingOut?: boolean;
   className?: string;
 }
 
 const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ 
   user,
-  onLogout,
-  isLoggingOut = false,
   className
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
-  
-  const handleLogout = async () => {
-    if (onLogout) {
-      const success = await onLogout();
-      if (success) {
-        console.log('Sidebar: Logout successful, redirecting to login');
-      }
-    }
-  };
-
-  const handleHelpClick = () => {
-    toast.info('Help section is coming soon!');
-  };
 
   return (
     <div className={cn("h-full flex flex-col bg-white", className)}>
@@ -74,11 +58,17 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
           />
           
           <SidebarLink 
+            to="/user-dashboard/profile" 
+            active={currentPath === '/user-dashboard/profile'}
+            icon={<Settings className="mr-2 h-4 w-4" />}
+            label="Profile Settings"
+          />
+          
+          <SidebarLink 
             to="/user-dashboard/wallet" 
             active={currentPath === '/user-dashboard/wallet'}
             icon={<Wallet className="mr-2 h-4 w-4" />}
             label="Wallet"
-            onClick={() => toast.info("Wallet page coming soon")}
           />
           
           <SidebarLink 
@@ -86,7 +76,6 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             active={currentPath === '/user-dashboard/appointments'}
             icon={<CalendarDays className="mr-2 h-4 w-4" />}
             label="Appointments"
-            onClick={() => toast.info("Appointments page coming soon")}
           />
           
           <SidebarLink 
@@ -94,7 +83,6 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             active={currentPath === '/user-dashboard/messages'}
             icon={<MessageSquare className="mr-2 h-4 w-4" />}
             label="Messages"
-            onClick={() => toast.info("Messages page coming soon")}
           />
           
           <SidebarLink 
@@ -102,7 +90,6 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             active={currentPath === '/user-dashboard/favorites'}
             icon={<Heart className="mr-2 h-4 w-4" />}
             label="Favorites"
-            onClick={() => toast.info("Favorites page coming soon")}
           />
           
           <SidebarLink 
@@ -110,41 +97,23 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             active={currentPath === '/user-dashboard/referrals'}
             icon={<Users className="mr-2 h-4 w-4" />}
             label="Referrals"
-            onClick={() => toast.info("Referrals page coming soon")}
           />
           
           <SidebarLink 
-            to="/user-dashboard/settings" 
-            active={currentPath === '/user-dashboard/settings'}
+            to="/user-dashboard/security" 
+            active={currentPath === '/user-dashboard/security'}
             icon={<Settings className="mr-2 h-4 w-4" />}
-            label="Settings"
-            onClick={() => toast.info("Settings page coming soon")}
+            label="Account Security"
           />
           
-          <Button
-            variant="ghost"
-            className="w-full justify-start"
-            onClick={handleHelpClick}
-          >
-            <HelpCircle className="mr-2 h-4 w-4" />
-            Help
-          </Button>
+          <SidebarLink 
+            to="/user-dashboard/help" 
+            active={currentPath === '/user-dashboard/help'}
+            icon={<HelpCircle className="mr-2 h-4 w-4" />}
+            label="Help & Support"
+          />
         </div>
       </ScrollArea>
-      
-      <Separator />
-      
-      <div className="p-4">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          {isLoggingOut ? 'Logging out...' : 'Log out'}
-        </Button>
-      </div>
     </div>
   );
 };
