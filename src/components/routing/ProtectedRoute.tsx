@@ -1,73 +1,66 @@
 
 import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import { authenticate, UserRole } from '@/modules/authentication';
 import LoadingScreen from '@/components/auth/LoadingScreen';
-import { toast } from 'sonner';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  allowedRoles?: string[];
+  allowedRoles?: UserRole[];
   redirectPath?: string;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   allowedRoles = ['user', 'expert', 'admin'], 
-  redirectPath = '/login' 
+  redirectPath = '/user-login'
 }) => {
   const [authState, setAuthState] = useState<{
     isChecking: boolean;
     isAuthenticated: boolean;
-    role?: string;
+    role?: UserRole;
+    checkAttempted: boolean;
   }>({
     isChecking: true,
-    isAuthenticated: false
+    isAuthenticated: false,
+    checkAttempted: false
   });
   
   const location = useLocation();
   
   useEffect(() => {
+    // Prevent multiple check attempts
+    if (authState.checkAttempted) return;
+    
     const checkAuth = async () => {
       try {
         console.log('ProtectedRoute: Checking authentication...');
-        const { data } = await supabase.auth.getSession();
+        const result = await authenticate.checkSession();
         
-        const sessionExists = !!data.session;
-        
-        // Get role from local storage as a fallback
-        const storedRole = localStorage.getItem('sessionType') || 'user';
-        
-        console.log('ProtectedRoute: Auth check result:', { 
-          sessionExists, 
-          storedRole 
-        });
+        console.log('ProtectedRoute: Auth check result:', result);
         
         setAuthState({
           isChecking: false,
-          isAuthenticated: sessionExists,
-          role: storedRole
+          isAuthenticated: result.isAuthenticated,
+          role: result.role,
+          checkAttempted: true
         });
-        
-        if (!sessionExists) {
-          toast.error('Please log in to access this page');
-        }
       } catch (error) {
         console.error('ProtectedRoute: Error checking authentication:', error);
         setAuthState({
           isChecking: false,
-          isAuthenticated: false
+          isAuthenticated: false,
+          checkAttempted: true
         });
-        toast.error('Authentication error. Please log in again.');
       }
     };
     
     checkAuth();
-  }, []);
+  }, [authState.checkAttempted]);
   
   // Show loading while checking
   if (authState.isChecking) {
-    return <LoadingScreen message="Verifying your access..." />;
+    return <LoadingScreen message="Verifying authentication..." />;
   }
   
   console.log('ProtectedRoute: Auth state resolved:', {
@@ -84,7 +77,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
   
   // Check for required roles
-  if (authState.role && allowedRoles.length > 0 && !allowedRoles.includes(authState.role)) {
+  if (authState.role && !allowedRoles.includes(authState.role)) {
     console.log(`ProtectedRoute: User role ${authState.role} not in allowed roles ${allowedRoles.join(', ')}`);
     
     // Redirect based on actual role
