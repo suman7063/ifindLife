@@ -15,6 +15,8 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = fa
   const [activeTab, setActiveTab] = useState('login');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [socialLoading, setSocialLoading] = useState<string | null>(null);
+  const [registerError, setRegisterError] = useState<string | null>(null);
+  const [isRegistering, setIsRegistering] = useState(false);
   
   // Wrapper for the login function to handle loading state
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -40,12 +42,26 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = fa
     city?: string;
     referralCode?: string;
   }): Promise<boolean> => {
-    // This would typically connect to your registration service
-    console.log('Registration data:', userData);
-    
-    // After successful registration, switch to login tab
-    setActiveTab('login');
-    return true;
+    try {
+      setIsRegistering(true);
+      setRegisterError(null);
+      
+      // This would typically connect to your registration service
+      console.log('Registration data:', userData);
+      
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // After successful registration, switch to login tab
+      setActiveTab('login');
+      return true;
+    } catch (error) {
+      console.error('Registration error:', error);
+      setRegisterError('Registration failed. Please try again.');
+      return false;
+    } finally {
+      setIsRegistering(false);
+    }
   };
   
   return (
@@ -74,7 +90,15 @@ const UserLoginTabs: React.FC<UserLoginTabsProps> = ({ onLogin, isLoggingIn = fa
       </TabsContent>
       
       <TabsContent value="register" className="mt-6">
-        <RegisterTab />
+        <RegisterTab 
+          onRegister={handleRegister}
+          loading={false}
+          isRegistering={isRegistering}
+          registerError={registerError}
+          initialReferralCode={null}
+          referralSettings={null}
+          setCaptchaVerified={() => {}}
+        />
       </TabsContent>
     </Tabs>
   );

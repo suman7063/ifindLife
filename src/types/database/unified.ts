@@ -1,4 +1,3 @@
-
 // Import UserProfile from both sources to unify them
 import { UserProfile as UserProfileA } from '@/types/supabase/user';
 import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
@@ -11,7 +10,7 @@ export interface UserProfile {
   phone: string;
   city: string;
   country: string;
-  profile_picture: string;
+  profile_picture: string | null;
   wallet_balance: number;
   currency: string;
   created_at: string;
