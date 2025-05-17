@@ -47,7 +47,7 @@ const UserDashboardPage: React.FC = () => {
     checkAuth();
   }, [navigate]);
   
-  const handleLogout = async () => {
+  const handleLogout = async (): Promise<boolean> => {
     try {
       setIsLoading(true);
       console.log('UserDashboardPage: Logging out...');
@@ -56,13 +56,16 @@ const UserDashboardPage: React.FC = () => {
       if (result.success) {
         toast.success('Logged out successfully');
         navigate('/user-login', { replace: true });
+        return true;
       } else {
         console.error('UserDashboardPage: Logout failed:', result.error);
         toast.error('Logout failed. Please try again.');
+        return false;
       }
     } catch (error) {
       console.error('UserDashboardPage: Error during logout:', error);
       toast.error('An error occurred during logout');
+      return false;
     } finally {
       setIsLoading(false);
     }
