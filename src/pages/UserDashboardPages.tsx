@@ -15,8 +15,7 @@ import ReviewsSection from '@/components/user/dashboard/sections/ReviewsSection'
 import ReferralsSection from '@/components/user/dashboard/sections/ReferralsSection';
 import SecuritySection from '@/components/user/dashboard/sections/SecuritySection';
 import HelpSection from '@/components/user/dashboard/sections/HelpSection';
-import { UserProfile } from '@/types/database/unified';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { UserProfile } from '@/types/supabase/user';
 
 const UserDashboardPages: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -111,15 +110,15 @@ const UserDashboardPages: React.FC = () => {
     fetchUserData();
   }, [navigate]);
 
-  // Handle user logout
-  const handleLogout = async () => {
+  // Handle user logout with boolean return type
+  const handleLogout = async (): Promise<boolean> => {
     try {
       setIsLoggingOut(true);
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         toast.error('Failed to logout. Please try again.');
-        return;
+        return false;
       }
       
       // Clear local storage
@@ -128,9 +127,11 @@ const UserDashboardPages: React.FC = () => {
       // Redirect to login page
       toast.success('Logged out successfully');
       navigate('/login');
+      return true;
     } catch (error) {
       console.error('Logout error:', error);
       toast.error('An error occurred during logout');
+      return false;
     } finally {
       setIsLoggingOut(false);
     }

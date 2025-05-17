@@ -1,130 +1,115 @@
-
-import { useState, useEffect, useCallback } from 'react';
-import { Program, ProgramType, ProgramCategory } from '@/types/programs';
-import { from } from '@/lib/supabase';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { Program } from '@/types/programs';
+import { supabase } from '@/lib/supabase';
 
-export const useProgramManager = (programType: ProgramType) => {
+export const useProgramManager = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch programs
-  const fetchPrograms = useCallback(async () => {
-    setIsLoading(true);
+  const fetchPrograms = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const { data, error } = await from('programs')
-        .select('*')
-        .eq('programType', programType);
+      const { data, error } = await supabase
+        .from('programs')
+        .select('*');
 
-      if (error) throw error;
-      
-      setPrograms(data as unknown as Program[]);
-    } catch (error) {
-      console.error('Error fetching programs:', error);
-      toast.error('Failed to load programs');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [programType]);
-
-  useEffect(() => {
-    fetchPrograms();
-  }, [fetchPrograms, programType]);
-
-  // Handle opening the dialog for create/edit
-  const handleOpenDialog = (program?: Program) => {
-    setSelectedProgram(program || null);
-    setIsDialogOpen(true);
-  };
-
-  // Save program (create or update)
-  const handleSaveProgram = async (programData: Program) => {
-    try {
-      // Creating a new program
-      if (!programData.id || programData.id === -1) {
-        const { data, error } = await from('programs').insert([{
-          title: programData.title,
-          description: programData.description,
-          duration: programData.duration,
-          sessions: programData.sessions,
-          price: programData.price,
-          image: programData.image,
-          category: programData.category,
-          programType: programData.programType,
-          enrollments: 0
-        }]).select('*');
-
-        if (error) throw error;
-        
-        toast.success('Program created successfully');
-        setPrograms(prev => [...prev, data[0] as unknown as Program]);
-      } 
-      // Updating existing program
-      else {
-        const { id, ...updateData } = programData;
-        const { error } = await from('programs')
-          .update(updateData)
-          .eq('id', id);
-
-        if (error) throw error;
-        
-        toast.success('Program updated successfully');
-        setPrograms(prev => 
-          prev.map(p => p.id === id ? { ...p, ...updateData } : p)
-        );
+      if (error) {
+        setError(error.message);
+      } else {
+        setPrograms(data || []);
       }
-      
-      setIsDialogOpen(false);
-    } catch (error) {
-      console.error('Error saving program:', error);
-      toast.error('Failed to save program');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Delete program
-  const handleDeleteProgram = async (programId: number) => {
+  const addProgram = async (program: Omit<Program, 'id'>) => {
+    setLoading(true);
+    setError(null);
     try {
-      const { error } = await from('programs')
+      const { data, error } = await supabase
+        .from('programs')
+        .insert([program])
+        .select();
+
+      if (error) {
+        setError(error.message);
+        toast.error(`Failed to add program: ${error.message}`);
+      } else {
+        setPrograms([...programs, ...(data as Program[])]);
+        toast.success('Program added successfully!');
+        await fetchPrograms(); // Refresh programs after adding
+      }
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(`Failed to add program: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProgram = async (programId: string, updates: Partial<Program>) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from('programs')
+        .update(updates)
+        .eq('id', programId);
+
+      if (error) {
+        setError(error.message);
+        toast.error(`Failed to update program: ${error.message}`);
+      } else {
+        setPrograms(programs.map(p => (p.id === programId ? { ...p, ...updates } : p)));
+        toast.success('Program updated successfully!');
+        await fetchPrograms(); // Refresh programs after updating
+      }
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(`Failed to update program: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProgram = async (programId: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase
+        .from('programs')
         .delete()
         .eq('id', programId);
 
-      if (error) throw error;
-      
-      toast.success('Program deleted successfully');
-      setPrograms(prev => prev.filter(p => p.id !== programId));
-    } catch (error) {
-      console.error('Error deleting program:', error);
-      toast.error('Failed to delete program');
-    }
-  };
-
-  // Get category color for UI
-  const getCategoryColor = (category: string) => {
-    switch (category as ProgramCategory) {
-      case 'quick-ease':
-        return 'bg-green-100 text-green-800';
-      case 'resilience-building':
-        return 'bg-blue-100 text-blue-800';
-      case 'super-human':
-        return 'bg-purple-100 text-purple-800';
-      case 'issue-based':
-        return 'bg-amber-100 text-amber-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      if (error) {
+        setError(error.message);
+        toast.error(`Failed to delete program: ${error.message}`);
+      } else {
+        setPrograms(programs.filter(p => p.id !== programId));
+        toast.success('Program deleted successfully!');
+        await fetchPrograms(); // Refresh programs after deleting
+      }
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(`Failed to delete program: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
   return {
     programs,
-    isLoading,
-    selectedProgram,
-    isDialogOpen,
-    setIsDialogOpen,
-    handleOpenDialog,
-    handleSaveProgram,
-    handleDeleteProgram,
-    getCategoryColor
+    loading,
+    error,
+    fetchPrograms,
+    addProgram,
+    updateProgram,
+    deleteProgram,
   };
 };

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageSquare, Star } from 'lucide-react';
-import { UserProfile, Review } from '@/types/database/unified';
+import { UserProfile, Review } from '@/types/supabase/user';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -30,7 +30,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ user }) => {
         
         // Transform the data to match the Review interface
         const formattedReviews = data?.map(review => ({
-          id: review.id,
+          id: review.id, // Map review_id to id for compatibility
           user_id: review.user_id,
           expert_id: review.expert_id,
           rating: review.rating,
@@ -39,7 +39,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ user }) => {
           verified: review.verified || false,
           expert_name: review.expert?.name || 'Expert',
           user_name: user.name || 'User',
-          review_id: review.id // Add this field to match the structure expected
+          review_id: review.id // Add this for backward compatibility
         })) as Review[];
         
         setReviews(formattedReviews || []);

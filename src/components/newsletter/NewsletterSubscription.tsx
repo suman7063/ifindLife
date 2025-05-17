@@ -1,10 +1,8 @@
-
 import React, { useState } from 'react';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Send } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { from } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 interface NewsletterSubscriptionProps {
   className?: string;
@@ -34,7 +32,7 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
     
     try {
       // Store subscription in Supabase
-      const { error } = await from('newsletter_subscriptions').insert([
+      const { error } = await supabase.from('newsletter_subscriptions').insert([
         { email, created_at: new Date().toISOString() }
       ]);
       

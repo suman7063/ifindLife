@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -8,6 +7,14 @@ import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { BlogPost } from '@/types/blog';
 import { from } from '@/lib/supabase';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
 
 // Sample blog data (this would come from your database)
 const sampleBlogPosts: BlogPost[] = [

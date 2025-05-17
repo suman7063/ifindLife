@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import UserDashboardLayout from './UserDashboardLayout';
+import UserDashboardSidebar from './UserDashboardSidebar';  // Import the sidebar component
 import DashboardHome from './DashboardHome';
 import { adaptUserProfile } from '@/utils/adaptUserProfile';
-import { UserProfile } from '@/types/database/unified';
+import { UserProfile } from '@/types/supabase/user';  // Use the updated UserProfile type
 
 const UserDashboard: React.FC = () => {
   const navigate = useNavigate();

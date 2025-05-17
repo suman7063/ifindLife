@@ -1,87 +1,52 @@
+import { useEffect, useState } from 'react';
+import { Card } from '@/components/ui/card';
+import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Program, ProgramType } from '@/types/programs';
-import { from } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { UserProfile } from '@/types/supabase/user';
-import { Loader2 } from 'lucide-react';
-import { useFavorites } from '@/contexts/favorites/FavoritesContext';
-import { withProgramUserTypeA } from './ProgramUserAdapter';
-import ProgramCard from './ProgramCard';
-
-interface ProgramsListingComponentProps {
-  programType: ProgramType;
-  currentUser: UserProfile | null;
-  isAuthenticated: boolean;
-}
-
-const ProgramsListingComponent: React.FC<ProgramsListingComponentProps> = ({
-  programType,
-  currentUser,
-  isAuthenticated
-}) => {
-  const [featuredPrograms, setFeaturedPrograms] = useState<Program[]>([]);
+const ProgramsListingComponent = () => {
+  const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const { programFavorites, isProgramFavorite } = useFavorites();
 
   useEffect(() => {
     const fetchPrograms = async () => {
-      setLoading(true);
       try {
-        let query = from('programs').select('*').eq('programType', programType);
-
-        const { data, error } = await query;
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('programs')
+          .select('*');
 
         if (error) {
-          throw new Error(error.message);
+          console.error('Error fetching programs:', error);
+        } else {
+          setPrograms(data || []);
         }
-
-        // Type assertion to handle unknown data structure
-        setFeaturedPrograms((data || []) as unknown as Program[]);
+      } finally {
         setLoading(false);
-      } catch (err) {
-        console.error('Error fetching programs:', err);
-        setError(err instanceof Error ? err : new Error('Failed to fetch programs'));
-        setLoading(false);
-        toast.error('Failed to load programs. Please try again later.');
       }
     };
 
     fetchPrograms();
-  }, [programType]);
-
-  const programsWithFavorites = useMemo(() => {
-    return featuredPrograms.map(program => ({
-      ...program,
-      is_favorite: isProgramFavorite(program.id)
-    }));
-  }, [featuredPrograms, programFavorites, isProgramFavorite]);
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-48">
-        <Loader2 className="h-8 w-8 animate-spin text-ifind-teal" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div className="text-red-500">Error: {error.message}</div>;
-  }
+  }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {programsWithFavorites.map((program) => (
-        <ProgramCard
-          key={program.id}
-          program={program}
-          currentUser={currentUser}
-          isAuthenticated={isAuthenticated}
-        />
-      ))}
+    <div>
+      <h1>Programs</h1>
+      {loading ? (
+        <p>Loading programs...</p>
+      ) : (
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+          {programs.map((program) => (
+            <Card key={program.id} style={{ width: '300px', margin: '10px' }}>
+              <Link to={`/program/${program.id}`}>
+                <h2>{program.title}</h2>
+                <p>{program.description}</p>
+              </Link>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default withProgramUserTypeA(ProgramsListingComponent);
+export default ProgramsListingComponent;

@@ -13,18 +13,19 @@ export interface UserTransaction {
 
 export interface Review {
   id: string;
-  expert_id: number;
+  expert_id: number | string; // Updated to allow both types
   rating: number;
   date: string;
   comment?: string;
   verified?: boolean;
   user_name?: string;
   expert_name?: string;
+  review_id?: string; // For backward compatibility
 }
 
 export interface Report {
   id: string;
-  expert_id: number;
+  expert_id: number | string; // Updated to allow both types
   reason: string;
   details?: string;
   date: string;
@@ -59,17 +60,21 @@ export interface UserProfile {
   country: string;
   city: string;
   currency: string;
-  profile_picture: string;
+  profile_picture: string | null;
   wallet_balance: number;
   created_at: string;
   referred_by: string | null;
   referral_code: string;
   referral_link: string;
-  favorite_experts: string[];
-  favorite_programs: string[];
+  favorite_experts: string[] | number[];  // Updated to match unified type
+  favorite_programs: string[] | number[]; // Updated to match unified type
   enrolled_courses: Course[];
   reviews: Review[];
   reports: Report[];
   transactions: UserTransaction[];
   referrals: Referral[];
+  // Add these for improved type compatibility
+  profilePicture?: string | null;
+  walletBalance?: number;
+  favoriteExperts?: string[] | number[];
 }

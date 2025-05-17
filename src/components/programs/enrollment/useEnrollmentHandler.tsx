@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Program } from '@/types/programs';
-import { UserProfile } from '@/types/supabase';
-import { from, supabase } from '@/lib/supabase';
+import { UserProfile } from '@/types/supabase/user';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,7 +14,8 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
   const handleWalletPayment = async () => {
     try {
       // Create enrollment
-      const { error: enrollmentError } = await from('program_enrollments')
+      const { error: enrollmentError } = await supabase
+        .from('program_enrollments')
         .insert({
           program_id: program.id,
           user_id: currentUser.id,
@@ -28,7 +28,8 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
       if (enrollmentError) throw enrollmentError;
       
       // Update wallet balance
-      const { error: walletError } = await from('profiles')
+      const { error: walletError } = await supabase
+        .from('profiles')
         .update({
           wallet_balance: (currentUser.walletBalance || 0) - program.price
         })
@@ -37,7 +38,8 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
       if (walletError) throw walletError;
       
       // Create transaction record
-      const { error: transactionError } = await from('user_transactions')
+      const { error: transactionError } = await supabase
+        .from('user_transactions')
         .insert({
           user_id: currentUser.id,
           date: new Date().toISOString(),
