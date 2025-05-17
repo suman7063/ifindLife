@@ -21,7 +21,7 @@ const ExpertLogin: React.FC = () => {
       isAuthenticated: auth?.isAuthenticated,
       isLoading: auth?.isLoading,
       role: auth?.role,
-      hasLogin: !!auth?.login,
+      hasLogin: typeof auth?.login === 'function',
       loginType: typeof auth?.login,
       authKeys: auth ? Object.keys(auth) : []
     });
@@ -41,8 +41,7 @@ const ExpertLogin: React.FC = () => {
       
       console.log('ExpertLogin: Attempting login with:', {
         email,
-        hasLoginFunction: !!auth?.login,
-        loginFunctionType: typeof auth?.login
+        hasLoginFunction: typeof auth?.login === 'function'
       });
       
       if (!auth || typeof auth.login !== 'function') {

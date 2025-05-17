@@ -39,7 +39,6 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
     console.log('ExpertLoginForm: Submit handler called with:', { email });
     
     try {
-      // Validate onLogin function
       if (typeof onLogin !== 'function') {
         console.error('ExpertLoginForm: onLogin is not a function', typeof onLogin);
         return;

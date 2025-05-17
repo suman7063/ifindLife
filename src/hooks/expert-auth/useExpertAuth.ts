@@ -18,9 +18,12 @@ export const useExpertAuth = () => {
     currentExpert: auth.expertProfile,
     isAuthenticated: auth.isAuthenticated && auth.role === 'expert',
     isLoading: auth.isLoading,
-    login: (email: string, password: string) => auth.login(email, password, { asExpert: true }),
+    login: (email: string, password: string) => {
+      console.log('Expert login function called with:', { email });
+      // Ensure we explicitly set asExpert to true
+      return auth.login(email, password, { asExpert: true });
+    },
     logout: auth.logout,
-    // Use properties that exist in AuthContext
     updateProfile: auth.updateProfile,
     updateExpertProfile: auth.updateExpertProfile,
     error: auth.error,
@@ -29,3 +32,5 @@ export const useExpertAuth = () => {
     register: auth.registerExpert || (async () => false)
   };
 };
+
+export { useAuth as useAuthUnified } from '@/contexts/auth/AuthContext';

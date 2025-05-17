@@ -26,14 +26,10 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
 
       console.log('Login success, session established:', !!data.session);
 
-      // Use options.asExpert if provided, otherwise default to 'user'
-      if (options?.asExpert) {
-        console.log('Setting session type to expert based on options');
-        localStorage.setItem('sessionType', 'expert');
-      } else {
-        console.log('Setting session type to user (default)');
-        localStorage.setItem('sessionType', 'user');
-      }
+      // Set session type based on options
+      const sessionType = options?.asExpert ? 'expert' : 'user';
+      console.log(`Setting session type to ${sessionType}`);
+      localStorage.setItem('sessionType', sessionType);
       
       console.log('Login successful, calling onActionComplete');
       onActionComplete();
