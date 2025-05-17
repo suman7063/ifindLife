@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -62,7 +63,10 @@ const ProgramsEditor = () => {
       <ProgramFormDialog 
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onSave={handleSaveProgram}
+        onSave={(program) => {
+          handleSaveProgram(program);
+          return Promise.resolve();
+        }}
         program={selectedProgram}
       />
     </div>

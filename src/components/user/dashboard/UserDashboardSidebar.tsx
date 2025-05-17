@@ -12,18 +12,31 @@ import {
   BookOpen, 
   MessageSquare, 
   Settings, 
-  HelpCircle
+  HelpCircle,
+  LogOut
 } from 'lucide-react';
 
 export interface UserDashboardSidebarProps {
   user: UserProfile;
+  onLogout?: () => Promise<boolean>;
+  isLoggingOut?: boolean;
 }
 
-const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ user }) => {
+const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ 
+  user,
+  onLogout,
+  isLoggingOut = false
+}) => {
   const location = useLocation();
   
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleLogout = async () => {
+    if (onLogout) {
+      await onLogout();
+    }
   };
 
   return (
@@ -89,6 +102,19 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({ user }) => 
             label="Support" 
             isActive={isActive('/user-dashboard/support')} 
           />
+
+          {/* Add logout button if onLogout prop exists */}
+          {onLogout && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              <span>{isLoggingOut ? 'Logging out...' : 'Logout'}</span>
+            </Button>
+          )}
         </nav>
       </div>
     </div>

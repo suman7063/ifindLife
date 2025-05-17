@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { format } from 'date-fns';
@@ -94,7 +93,7 @@ const UpcomingAppointments: React.FC<UpcomingAppointmentsProps> = ({ expertId, l
         end_time: app.end_time,
         duration: app.duration,
         client_name: app.users?.name || 'Unknown Client',
-        service_name: app.services?.name || 'Consultation',
+        service_name: app.services?.name || 'Unknown Service',
         status: app.status,
         notes: app.notes
       }));

@@ -177,7 +177,8 @@ const ClientsPage = () => {
           duration,
           status,
           notes,
-          service_id
+          service_id,
+          services (name)
         `)
         .eq('expert_id', expertProfile.id)
         .eq('user_id', clientId)
@@ -199,7 +200,17 @@ const ClientsPage = () => {
         setClientNotes('');
       }
       
-      setClientSessions(appointments || []);
+      // Map the appointments data to match the ClientSession type
+      setClientSessions((appointments || []).map(item => ({
+        id: item.id,
+        date: item.appointment_date,
+        start_time: '', // Add default values for required fields
+        end_time: '',
+        duration: item.duration,
+        status: item.status,
+        notes: item.notes,
+        service_name: item.services?.name || 'Unknown Service'
+      })));
     } catch (error) {
       console.error('Error fetching client sessions:', error);
       toast.error('Failed to load client sessions');

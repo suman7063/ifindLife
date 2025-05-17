@@ -25,6 +25,7 @@ export interface AuthContextType {
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   updateProfile: (data: Partial<UserProfile>) => Promise<boolean>;
+  updateExpertProfile: (data: Partial<ExpertProfile>) => Promise<boolean>; // Added missing method
   updatePassword: (password: string) => Promise<boolean>;
   refreshProfile: () => Promise<void>;
   session: Session | null;
@@ -32,6 +33,7 @@ export interface AuthContextType {
   walletBalance: number;
   profile: UserProfile | null; // For backward compatibility
   sessionType: SessionType;
+  hasUserAccount: boolean; // Added missing property
   
   // Expert-specific functions
   registerExpert?: (email: string, password: string, expertData: any) => Promise<boolean>;
@@ -59,13 +61,15 @@ export const AuthContext = createContext<AuthContextType>({
   signup: async () => false,
   logout: async () => false,
   updateProfile: async () => false,
+  updateExpertProfile: async () => false, // Added missing method default
   updatePassword: async () => false,
   refreshProfile: async () => {},
   session: null,
   error: null,
   walletBalance: 0,
   profile: null,
-  sessionType: 'none'
+  sessionType: 'none',
+  hasUserAccount: false // Added missing property default
 });
 
 export const useAuth = () => {

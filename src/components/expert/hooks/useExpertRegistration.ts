@@ -1,222 +1,63 @@
 
-import { useState, useEffect } from 'react';
+// Add this file if it doesn't exist or update it
+import { useState } from 'react';
+import { useExpertAuth } from '@/hooks/expert-auth';
 import { toast } from 'sonner';
-import { ExpertFormData, formDataToRegistrationData } from '../types';
-import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
-import { useExpertForm } from './useExpertForm';
-import { fetchServices } from '../services/expertServicesService';
-import { ServiceType } from '../types';
+import { ExpertRegistrationData } from '../types';
 
 export const useExpertRegistration = () => {
-  const { register } = useExpertAuth();
-  const [step, setStep] = useState(1);
-  const [services, setServices] = useState<ServiceType[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [formError, setFormError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const auth = useExpertAuth();
   
-  const initialFormData: ExpertFormData = {
-    name: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
-    address: '',
-    city: '',
-    state: '',
-    country: '',
-    specialization: '',
-    experience: '',
-    certificates: [],
-    certificateUrls: [],
-    bio: '',
-    selectedServices: [],
-    acceptedTerms: false
-  };
-  
-  const {
-    formData,
-    setFormData,
-    handleChange,
-    handleCheckboxChange,
-    handleFileUpload,
-    handleRemoveCertificate
-  } = useExpertForm(initialFormData);
+  // Ensure register exists, even as a fallback
+  const register = auth.register || (async () => {
+    toast.error('Expert registration is not currently available');
+    return false;
+  });
 
-  useEffect(() => {
-    const loadServices = async () => {
-      try {
-        console.log('Fetching services...');
-        const servicesData = await fetchServices();
-        console.log('Services fetched successfully:', servicesData);
-        setServices(servicesData);
-      } catch (error) {
-        console.error('Error loading services:', error);
-        toast.error('Failed to load services. Using default service list.');
-      }
-    };
-    
-    loadServices();
-  }, []);
-
-  const validateField = (name: string, value: any): string => {
-    switch(name) {
-      case 'name':
-        return !value ? 'Name is required' : '';
-      case 'email':
-        return !value ? 'Email is required' : 
-               !/\S+@\S+\.\S+/.test(value) ? 'Email is invalid' : '';
-      case 'phone':
-        return !value ? 'Phone number is required' : '';
-      case 'password':
-        return !value ? 'Password is required' : 
-               value.length < 6 ? 'Password must be at least 6 characters' : '';
-      case 'confirmPassword':
-        return !value ? 'Please confirm your password' : 
-               value !== formData.password ? 'Passwords do not match' : '';
-      case 'address':
-        return !value && step >= 2 ? 'Address is required' : '';
-      case 'city':
-        return !value && step >= 2 ? 'City is required' : '';
-      case 'state':
-        return !value && step >= 2 ? 'State is required' : '';
-      case 'country':
-        return !value && step >= 2 ? 'Country is required' : '';
-      case 'specialization':
-        return !value && step >= 3 ? 'Specialization is required' : '';
-      case 'experience':
-        return !value && step >= 3 ? 'Experience information is required' : '';
-      case 'bio':
-        return !value && step >= 3 ? 'Bio is required' : '';
-      case 'selectedServices':
-        return (!value || value.length === 0) && step === 4 ? 'Please select at least one service' : '';
-      case 'acceptedTerms':
-        return (!value) && step === 4 ? 'You must accept the terms and conditions' : '';
-      default:
-        return '';
-    }
-  };
-
-  const validateCurrentStep = () => {
-    const newErrors: Record<string, string> = {};
-    let isValid = true;
-    
-    if (step === 1) {
-      ['name', 'email', 'phone', 'password', 'confirmPassword'].forEach(field => {
-        const error = validateField(field, formData[field as keyof ExpertFormData]);
-        if (error) {
-          newErrors[field] = error;
-          isValid = false;
-        }
-      });
-    } else if (step === 2) {
-      ['address', 'city', 'state', 'country'].forEach(field => {
-        const error = validateField(field, formData[field as keyof ExpertFormData]);
-        if (error) {
-          newErrors[field] = error;
-          isValid = false;
-        }
-      });
-    } else if (step === 3) {
-      ['specialization', 'experience', 'bio'].forEach(field => {
-        const error = validateField(field, formData[field as keyof ExpertFormData]);
-        if (error) {
-          newErrors[field] = error;
-          isValid = false;
-        }
-      });
-    } else if (step === 4) {
-      const servicesError = validateField('selectedServices', formData.selectedServices);
-      if (servicesError) {
-        newErrors.selectedServices = servicesError;
-        isValid = false;
-      }
-      
-      const termsError = validateField('acceptedTerms', formData.acceptedTerms);
-      if (termsError) {
-        newErrors.acceptedTerms = termsError;
-        isValid = false;
-      }
-    }
-    
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (isSubmitting) return false;
-    
-    setFormError(null);
-    
-    if (!validateCurrentStep()) {
-      toast.error('Please correct the errors before submitting');
-      return false;
-    }
-    
-    setIsSubmitting(true);
+  const registerExpert = async (data: ExpertRegistrationData): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
     
     try {
-      console.log('Submitting form with data:', formData);
-      
-      const registrationData = formDataToRegistrationData(formData);
-      
-      console.log('Registering with data:', registrationData);
-      
-      const success = await register(registrationData);
+      const success = await register(data.email, data.password, {
+        name: data.name,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        specialization: data.specialization,
+        experience: data.experience,
+        bio: data.bio,
+        certificate_urls: data.certificate_urls,
+        selected_services: data.selected_services
+      });
       
       if (success) {
+        toast.success('Registration successful! Please log in.');
         return true;
       } else {
-        setFormError("Registration failed. Please try again with a different email.");
-        toast.error("Registration failed. Please try again with a different email.");
+        setError('Registration failed');
+        toast.error('Registration failed. Please try again.');
         return false;
       }
-    } catch (error: any) {
-      console.error('Error during registration:', error);
-      
-      setFormError(error.message || "Registration failed. Please try again later.");
-      
-      if (error.message && error.message.includes('Email is already registered')) {
-        toast.error("This email is already registered. Please try logging in or use a different email.");
-      } else if (error.message && error.message.includes('422')) {
-        toast.error("Registration validation failed. Please check your form and try again.");
-      } else {
-        toast.error("Registration failed. Please try again later.");
-      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      setError(errorMessage);
+      toast.error(`Registration error: ${errorMessage}`);
       return false;
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
-
-  const nextStep = () => {
-    if (!validateCurrentStep()) {
-      toast.error('Please correct the errors before proceeding');
-      return;
-    }
-    setStep(step + 1);
-  };
-
-  const prevStep = () => {
-    setStep(step - 1);
-  };
-
+  
   return {
-    step,
-    services,
-    formData,
-    errors,
-    formError,
-    handleChange,
-    handleCheckboxChange,
-    handleFileUpload,
-    handleRemoveCertificate,
-    handleSubmit,
-    nextStep,
-    prevStep,
-    setFormData,
-    isSubmitting
+    registerExpert,
+    isLoading,
+    error
   };
 };
+
+export default useExpertRegistration;

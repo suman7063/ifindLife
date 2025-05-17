@@ -22,8 +22,10 @@ export const useExpertAuth = () => {
     logout: auth.logout,
     // Use properties that exist in AuthContext
     updateProfile: auth.updateProfile, // Use generic updateProfile instead of updateExpertProfile
+    updateExpertProfile: auth.updateExpertProfile, // Use the added method
     error: auth.error,
     initialized: !auth.isLoading,
-    hasUserAccount: auth.hasUserAccount || false // Provide a default value
+    hasUserAccount: auth.hasUserAccount || false, // Now it exists in AuthContextType
+    register: auth.registerExpert || (async () => false) // Add fallback for register
   };
 };

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 export const useDashboardState = () => {
   const {
     currentExpert, 
-    loading, 
+    isLoading, // Changed from loading to isLoading
     initialized,
     error,
     logout
@@ -27,18 +27,18 @@ export const useDashboardState = () => {
   
   // If not authenticated, redirect to login
   useEffect(() => {
-    if (!loading && !currentExpert && !redirectAttempted) {
+    if (!isLoading && !currentExpert && !redirectAttempted) {
       console.log('Not authenticated, redirecting to expert login');
       setRedirectAttempted(true);
       toast.error('Please log in to access the expert dashboard');
       navigate('/expert-login');
     }
-  }, [currentExpert, loading, redirectAttempted, navigate]);
+  }, [currentExpert, isLoading, redirectAttempted, navigate]);
 
   return {
     expert, // Make sure this property is available
     currentExpert,
-    isLoading: loading,
+    isLoading, // Changed from loading to isLoading
     isAuthenticated: !!currentExpert,
     error,
     initialized,

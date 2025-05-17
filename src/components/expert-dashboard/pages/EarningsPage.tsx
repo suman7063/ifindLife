@@ -21,7 +21,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { Wallet, Download, ArrowDown, ArrowUp } from 'lucide-react';
+import { Wallet, Download, ArrowDown, ArrowUp, DollarSign } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { 
   Dialog,
