@@ -36,8 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value = {
     ...state,
     ...actions,
-    // Handle the hasUserAccount property correctly - it's now part of state interface
-    hasUserAccount: state.hasUserAccount
+    hasUserAccount: state.hasUserAccount || false
   };
 
   console.log('AuthProvider rendering with values:', {
@@ -45,9 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isLoading: value.isLoading,
     role: value.role,
     hasLogin: !!value.login,
-    loginType: typeof value.login,
-    actionKeys: Object.keys(actions),
-    hasUserAccount: value.hasUserAccount
+    loginType: typeof value.login
   });
 
   return (

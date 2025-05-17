@@ -45,8 +45,5 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
     }
   }, [onActionComplete]);
 
-  // Log at hook level to verify login function is created
-  console.log('useAuthLogin hook: created login function of type:', typeof login);
-
   return { login };
 };

@@ -17,7 +17,7 @@ const ExpertLogin: React.FC = () => {
   
   // Enhanced debug logging
   useEffect(() => {
-    console.log('ExpertLogin: Auth context available:', {
+    console.log('ExpertLogin: Auth context state:', {
       isAuthenticated: auth?.isAuthenticated,
       isLoading: auth?.isLoading,
       role: auth?.role,
@@ -25,20 +25,13 @@ const ExpertLogin: React.FC = () => {
       loginType: typeof auth?.login,
       authKeys: auth ? Object.keys(auth) : []
     });
-  }, [auth]);
 
-  useEffect(() => {
     // Check if already authenticated as expert and redirect
-    if (!auth.isLoading && auth.isAuthenticated) {
-      if (auth.role === 'expert') {
-        console.log('Already authenticated as expert, redirecting to dashboard');
-        navigate('/expert-dashboard', { replace: true });
-      } else if (auth.role === 'user') {
-        console.log('Authenticated as user, not expert');
-        toast.info('You are logged in as a user. To access expert features, please log in as an expert.');
-      }
+    if (!auth.isLoading && auth.isAuthenticated && auth.role === 'expert') {
+      console.log('Already authenticated as expert, redirecting to dashboard');
+      navigate('/expert-dashboard', { replace: true });
     }
-  }, [auth.isAuthenticated, auth.isLoading, navigate, auth.role]);
+  }, [auth, navigate]);
 
   // Handle login with better error handling
   const handleLogin = async (email: string, password: string) => {
@@ -68,7 +61,7 @@ const ExpertLogin: React.FC = () => {
       
       if (success) {
         console.log('Expert login successful, will redirect shortly');
-        // Will redirect via the useEffect above
+        navigate('/expert-dashboard');
         return true;
       } else {
         console.error('Expert login failed');
