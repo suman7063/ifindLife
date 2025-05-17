@@ -1,131 +1,96 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
+import UserDashboardSidebar from './UserDashboardSidebar';
+import { Card } from '@/components/ui/card';
+import {
+  BellIcon,
+  LogOutIcon,
+  User2Icon,
+  WalletIcon,
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import UserDashboardLayout from './UserDashboardLayout';
-import UserDashboardSidebar from './UserDashboardSidebar';  // Import the sidebar component
-import DashboardHome from './DashboardHome';
-import { adaptUserProfile } from '@/utils/adaptUserProfile';
-import { UserProfile } from '@/types/supabase/user';  // Use the updated UserProfile type
 
 const UserDashboard: React.FC = () => {
-  const navigate = useNavigate();
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const {
+    currentUser,
+    isAuthenticated,
+    logout,
+  } = useUserAuth();
   
-  // Check authentication status and fetch user profile
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setLoading(true);
-        
-        // Check if user is logged in
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        if (!sessionData.session) {
-          console.log('No session found, redirecting to login');
-          navigate('/login');
-          return;
-        }
-        
-        // Get user data
-        const { data: userData } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', sessionData.session.user.id)
-          .single();
-        
-        const adaptedUser = adaptUserProfile(userData || { 
-          id: sessionData.session.user.id, 
-          email: sessionData.session.user.email,
-          name: sessionData.session.user.user_metadata?.name || 'User',
-          profile_picture: null,
-          wallet_balance: 0,
-          currency: 'INR',
-          phone: '',
-          city: '',
-          country: '',
-          created_at: new Date().toISOString(),
-          referred_by: null,
-          referral_code: '',
-          referral_link: '',
-          favorite_experts: [],
-          favorite_programs: [],
-          enrolled_courses: [],
-          transactions: [],
-          reviews: [],
-          reports: [],
-          referrals: []
-        });
-        
-        setUser(adaptedUser);
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        toast.error('Failed to load user data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchUserData();
-  }, [navigate]);
-
-  // Handle user logout
-  const handleLogout = async () => {
+  // Fix the handleLogout function to return a boolean Promise
+  const handleLogout = async (): Promise<boolean> => {
     try {
-      setIsLoggingOut(true);
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        toast.error('Failed to logout. Please try again.');
-        return;
-      }
-      
-      // Clear local storage
-      localStorage.removeItem('sessionType');
-      
-      // Redirect to login page
-      navigate('/login');
+      await logout();
+      toast.success('Successfully logged out');
+      return true;
     } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('An error occurred during logout');
-    } finally {
-      setIsLoggingOut(false);
+      console.error('Error logging out:', error);
+      toast.error('Failed to log out');
+      return false;
     }
   };
 
-  if (loading) {
-    return <div className="container mx-auto p-6">Loading user dashboard...</div>;
-  }
-
-  if (!user) {
-    return <div className="container mx-auto p-6">User profile not found. Please log in again.</div>;
+  if (!isAuthenticated || !currentUser) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Card className="p-8">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Not Authenticated</h1>
+            <p>Please log in to access your dashboard.</p>
+            <Button className="mt-4" asChild>
+              <a href="/user-login">Login</a>
+            </Button>
+          </div>
+        </Card>
+      </div>
+    );
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <div className="hidden md:block w-64 border-r border-border">
-        <div className="h-full">
-          <UserDashboardSidebar 
-            user={user} 
-            onLogout={handleLogout} 
-            isLoggingOut={isLoggingOut} 
-          />
+    <div className="flex flex-col min-h-screen">
+      {/* Dashboard Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={currentUser.profile_picture || ''} alt={currentUser.name} />
+              <AvatarFallback>{currentUser.name?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="font-semibold">{currentUser.name}</h2>
+              <div className="text-sm text-muted-foreground">
+                {format(new Date(), 'MMMM d, yyyy')}
+              </div>
+              <div className="text-sm font-medium">
+                Wallet Balance: ${currentUser.wallet_balance?.toFixed(2) || '0.00'}
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-red-500 hover:text-red-600 hover:bg-red-50 -ml-2 mt-1 flex items-center gap-1"
+                onClick={handleLogout}
+              >
+                <LogOutIcon className="h-4 w-4" />
+                <span>Logout</span>
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        <UserDashboardLayout 
-          user={user} 
-          onLogout={handleLogout} 
-          isLoggingOut={isLoggingOut}
-        >
-          <DashboardHome user={user} />
-        </UserDashboardLayout>
+      </header>
+
+      <div className="flex-1 flex">
+        {/* Sidebar */}
+        <UserDashboardSidebar />
+
+        {/* Main Content */}
+        <main className="flex-1 bg-gray-50 p-6">
+          <Outlet />
+        </main>
       </div>
     </div>
   );
