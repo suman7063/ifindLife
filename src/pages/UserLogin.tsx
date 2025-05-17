@@ -64,7 +64,7 @@ const UserLogin: React.FC = () => {
       console.log('UserLogin: Login successful, redirecting to dashboard...');
       
       // Navigate to dashboard
-      navigate('/user-dashboard', { replace: true });
+      navigate(navigation.redirects.afterLogin, { replace: true });
       
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);

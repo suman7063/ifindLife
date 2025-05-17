@@ -26,5 +26,68 @@ export const authenticate = {
         isAuthenticated: false
       };
     }
+  },
+  
+  // User login function
+  userLogin: async (email: string, password: string): Promise<{
+    success: boolean;
+    error?: { message: string }
+  }> => {
+    try {
+      console.log(`Attempting to login with email: ${email}`);
+      
+      // This is a placeholder implementation
+      // In a real app, you would validate credentials against a backend
+      
+      // For demo purposes, accept any non-empty credentials
+      if (!email || !password) {
+        return {
+          success: false,
+          error: { message: 'Email and password are required' }
+        };
+      }
+      
+      // Store auth token and role in localStorage
+      localStorage.setItem('auth_token', 'demo-token');
+      localStorage.setItem('user_role', 'user');
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Login error:', error);
+      return {
+        success: false,
+        error: { message: 'An unexpected error occurred during login' }
+      };
+    }
+  },
+  
+  // User logout function
+  logout: async (): Promise<{
+    success: boolean;
+    error?: string
+  }> => {
+    try {
+      // Clear auth data from localStorage
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_role');
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Logout error:', error);
+      return {
+        success: false,
+        error: 'An unexpected error occurred during logout'
+      };
+    }
+  }
+};
+
+// Navigation utilities for auth flows
+export const navigation = {
+  // Redirect paths after auth actions
+  redirects: {
+    afterLogin: '/user-dashboard',
+    afterLogout: '/user-login',
+    afterSignup: '/user-dashboard'
   }
 };
