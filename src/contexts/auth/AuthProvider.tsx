@@ -35,7 +35,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Combine state and actions
   const value = {
     ...state,
-    ...actions
+    ...actions,
+    // Add the missing hasUserAccount property with a fallback value
+    hasUserAccount: state.hasUserAccount !== undefined ? state.hasUserAccount : false
   };
 
   console.log('AuthProvider rendering with values:', {
@@ -44,7 +46,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     role: value.role,
     hasLogin: !!value.login,
     loginType: typeof value.login,
-    actionKeys: Object.keys(actions)
+    actionKeys: Object.keys(actions),
+    hasUserAccount: value.hasUserAccount
   });
 
   return (

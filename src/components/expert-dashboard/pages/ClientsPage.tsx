@@ -209,6 +209,7 @@ const ClientsPage = () => {
         duration: item.duration,
         status: item.status,
         notes: item.notes,
+        // Correctly access the service name
         service_name: item.services?.name || 'Unknown Service'
       })));
     } catch (error) {
