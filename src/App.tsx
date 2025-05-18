@@ -3,8 +3,8 @@ import React from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
 import { Toaster } from 'sonner';
-import { UserAuthProvider } from './contexts/auth/UserAuthProvider';
 import { AuthProvider } from './contexts/auth/AuthProvider';
+import { UserAuthProvider } from './contexts/auth/UserAuthProvider';
 
 const App: React.FC = () => {
   return (
