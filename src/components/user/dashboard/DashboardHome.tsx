@@ -2,7 +2,6 @@
 import React from 'react';
 import { UserProfile } from '@/types/database/unified';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import DashboardHeader from './DashboardHeader';
 import { Calendar, Heart, MessageSquare, Wallet } from 'lucide-react';
 
 interface DashboardHomeProps {
@@ -14,7 +13,8 @@ const DashboardHome: React.FC<DashboardHomeProps> = ({ user }) => {
 
   return (
     <div className="space-y-6">
-      <DashboardHeader user={user} />
+      <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+      <p className="text-muted-foreground mb-6">Welcome back, {user.name || 'User'}!</p>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

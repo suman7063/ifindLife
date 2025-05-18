@@ -144,6 +144,12 @@ const Navbar = () => {
   // Safely cast sessionType to the valid union type
   const typedSessionType = getValidSessionType(sessionType);
 
+  console.log("Navbar rendering. Auth state:", {
+    isAuthenticated,
+    isExpertAuthenticated,
+    sessionType: typedSessionType
+  });
+
   return (
     <>
       {hasDualSessions && (

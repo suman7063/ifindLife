@@ -26,6 +26,8 @@ const UserDashboardPages: React.FC = () => {
   const navigate = useNavigate();
   const { section } = useParams<{ section?: string }>();
   
+  console.log('Current dashboard section:', section);
+  
   // Check auth status and fetch user profile
   useEffect(() => {
     const fetchUserData = async () => {
@@ -143,7 +145,7 @@ const UserDashboardPages: React.FC = () => {
   const renderSection = () => {
     if (!user) return null;
     
-    console.log('Current section:', section);
+    console.log('Rendering section:', section);
     
     switch(section) {
       case 'profile':
