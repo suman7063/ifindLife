@@ -94,6 +94,18 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     setShowPassword(!showPassword);
   };
 
+  // Provide helper text for testing
+  const getHelperText = () => {
+    return (
+      <div className="text-xs text-muted-foreground mt-2">
+        <p>For testing:</p>
+        <p>- Username: admin, Password: admin123</p>
+        <p>- Username: superadmin, Password: super123</p>
+        <p>- Username: IFLsuperadmin, Password: Freesoul@99IFL</p>
+      </div>
+    );
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {errorMessage && (
@@ -140,6 +152,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
           </button>
         </div>
       </div>
+      {getHelperText()}
       <Button
         type="submit"
         className="w-full"

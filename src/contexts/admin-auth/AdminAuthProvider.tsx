@@ -35,9 +35,10 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       if (data) {
         // Default permissions for admin users
         const defaultPermissions: AdminPermissions = {
-          canManageUsers: true,
-          canManageExperts: true,
-          canManageContent: true
+          canManageUsers: data.role === 'super_admin' || data.role === 'superadmin',
+          canManageExperts: data.role === 'super_admin' || data.role === 'superadmin',
+          canManageContent: true,
+          canViewAnalytics: true
         };
 
         const userData = await supabase.auth.getUser();
@@ -50,7 +51,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
           username: username,
           role: data.role as AdminRole,
           permissions: defaultPermissions,
-          createdAt: data.created_at
+          createdAt: data.created_at,
+          lastLogin: new Date().toISOString()
         };
         console.log('Admin user found:', adminUser);
         setUser(adminUser);
@@ -121,7 +123,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       console.log('Admin login attempt with:', emailOrUsername);
       
       // Special handling for IFLsuperadmin - hardcoded credentials for super admin
-      if (emailOrUsername === 'IFLsuperadmin') {
+      if (emailOrUsername.toLowerCase() === 'iflsuperadmin') {
         console.log('Special handling for IFLsuperadmin');
         if (password !== 'Freesoul@99IFL') {
           console.error('Invalid password for super admin');
@@ -150,7 +152,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             canDeleteContent: true,
             canApproveExperts: true
           },
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
         };
         
         setUser(superAdmin);
@@ -159,6 +162,66 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         toast.success('Successfully logged in as super admin');
         setLoading(false);
         return true;
+      }
+      
+      // Handle direct admin login with username only
+      if (['admin', 'superadmin'].includes(emailOrUsername.toLowerCase())) {
+        console.log('Direct admin login with username:', emailOrUsername);
+        
+        if (emailOrUsername.toLowerCase() === 'admin' && password === 'admin123') {
+          // Create admin user
+          const adminUser: AdminUser = {
+            id: '11111111-1111-1111-1111-111111111111',
+            email: 'admin@ifindlife.com',
+            username: 'admin',
+            role: 'admin',
+            permissions: {
+              canManageContent: true,
+              canViewAnalytics: true
+            },
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          };
+          
+          setUser(adminUser);
+          setIsAuthenticated(true);
+          localStorage.setItem('sessionType', 'admin');
+          toast.success('Successfully logged in as admin');
+          setLoading(false);
+          return true;
+        } else if (emailOrUsername.toLowerCase() === 'superadmin' && password === 'super123') {
+          // Create super admin user
+          const superAdmin: AdminUser = {
+            id: '22222222-2222-2222-2222-222222222222',
+            email: 'superadmin@ifindlife.com',
+            username: 'superadmin',
+            role: 'superadmin',
+            permissions: {
+              canManageUsers: true,
+              canManageExperts: true,
+              canManageContent: true,
+              canManageServices: true,
+              canManagePrograms: true,
+              canViewAnalytics: true,
+              canDeleteContent: true,
+              canApproveExperts: true
+            },
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          };
+          
+          setUser(superAdmin);
+          setIsAuthenticated(true);
+          localStorage.setItem('sessionType', 'admin');
+          toast.success('Successfully logged in as super admin');
+          setLoading(false);
+          return true;
+        }
+        
+        console.error('Invalid credentials for admin login');
+        toast.error('Invalid username or password');
+        setLoading(false);
+        return false;
       }
       
       // For other users, use email directly or add domain if not provided
@@ -196,12 +259,20 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
           }
         }
         
-        if (isAuthenticated) {
-          toast.success('Successfully logged in as admin');
-          return true;
-        }
+        // Check if isAuthenticated was set in the fetch operation
+        // Delay check to ensure state has updated
+        setTimeout(() => {
+          if (!isAuthenticated) {
+            toast.error('User exists but is not registered as an admin');
+          } else {
+            toast.success('Successfully logged in as admin');
+          }
+        }, 100);
+        
+        return isAuthenticated;
       }
       
+      toast.error('Invalid username or password');
       return false;
     } catch (error: any) {
       console.error('Login error:', error);
@@ -251,7 +322,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
   };
 
   // Compute isSuperAdmin based on user role
-  const isSuperAdmin = user?.role === 'super_admin';
+  const isSuperAdmin = user?.role === 'super_admin' || user?.role === 'superadmin';
 
   // Create additional mock functions for backward compatibility
   const adminUsers = user ? [user, ...defaultAdminUsers.filter(u => u.id !== user.id)] : defaultAdminUsers;
