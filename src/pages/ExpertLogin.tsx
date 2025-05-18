@@ -50,8 +50,8 @@ const ExpertLogin: React.FC = () => {
           loginType: typeof auth?.login,
           authKeys: auth ? Object.keys(auth) : []
         });
-        setLoginError('Login function is not available. Please try again later.');
-        toast.error('Login function is not available. Please try again later.');
+        setLoginError('Authentication service is not available. Please try again later.');
+        toast.error('Authentication service is not available. Please try again later.');
         return false;
       }
       
@@ -60,16 +60,19 @@ const ExpertLogin: React.FC = () => {
       
       if (success) {
         console.log('Expert login successful, will redirect shortly');
+        toast.success('Login successful!');
         navigate('/expert-dashboard');
         return true;
       } else {
         console.error('Expert login failed');
-        setLoginError('Login failed. Please check your credentials and try again.');
+        setLoginError('Invalid username or password. Please check your credentials and try again.');
+        toast.error('Invalid username or password. Please check your credentials and try again.');
         return false;
       }
     } catch (error) {
       console.error('Login error:', error);
       setLoginError('An error occurred during login. Please try again.');
+      toast.error('An error occurred during login. Please try again.');
       return false;
     } finally {
       setIsLoggingIn(false);

@@ -70,6 +70,7 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={isLoggingIn}
+            className="bg-white"
           />
         </div>
         
@@ -91,6 +92,7 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={isLoggingIn}
+            className="bg-white"
           />
         </div>
         

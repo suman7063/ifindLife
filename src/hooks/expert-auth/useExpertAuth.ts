@@ -17,7 +17,7 @@ export const useExpertAuth = () => {
   }
   
   // Create a wrapped login function that provides better feedback
-  const handleExpertLogin = async (email: string, password: string) => {
+  const handleExpertLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password');
       return false;
