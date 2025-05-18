@@ -210,15 +210,7 @@ const ProfileSection: React.FC<ProfileSectionProps> = ({ user }) => {
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Security</CardTitle>
-          <CardDescription>Manage your account security settings</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline">Change Password</Button>
-        </CardContent>
-      </Card>
+      {/* Removing the Account Security card from here as it's already in the sidebar */}
     </div>
   );
 };
