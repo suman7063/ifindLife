@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -204,13 +205,13 @@ const UserDashboardPages: React.FC = () => {
       case 'favorites':
         return <FavoritesSection user={user} />;
       case 'programs':
-        return <ProgramsSection />;
+        return <ProgramsSection user={user} />;
       case 'messages':
-        return <MessagesSection />;
+        return <MessagesSection user={user} />;
       case 'security':
         return <SecuritySection />;
       case 'settings':
-        return <SettingsSection />;
+        return <SettingsSection user={user} />;
       case 'support':
       case 'help':
         return <SupportSection />;
