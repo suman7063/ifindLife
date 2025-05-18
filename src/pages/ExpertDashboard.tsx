@@ -22,9 +22,12 @@ const ExpertDashboard = () => {
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   const [users, setUsers] = useState<any[]>([]);
   
-  // Clear any cached redirects
+  // Set session type to expert on mount
   useEffect(() => {
-    // Clear local storage redirect data that might be causing issues
+    localStorage.setItem('sessionType', 'expert');
+    localStorage.setItem('preferredRole', 'expert');
+    
+    // Clear any cached redirects
     localStorage.removeItem('redirectAfterLogin');
     
     console.log('ExpertDashboard - Auth states:', {
@@ -57,14 +60,43 @@ const ExpertDashboard = () => {
         navigate('/');
       }
     }
+    
+    // If expert profile is not found
+    if (!isLoading && isAuthenticated && role === 'expert' && !expertProfile && !redirectAttempted) {
+      console.log('Expert authentication issue - No expert profile found');
+      setRedirectAttempted(true);
+      toast.error('Your expert profile was not found. Please contact support.');
+      // Stay on dashboard but with limited functionality
+    }
   }, [expertProfile, isLoading, isAuthenticated, redirectAttempted, navigate, role]);
   
   if (isLoading) {
     return <DashboardLoader />;
   }
 
-  if (!expertProfile) {
+  // Show unauthorized view if not authenticated as expert
+  if (!isAuthenticated || role !== 'expert') {
     return <UnauthorizedView />;
+  }
+
+  // Show a limited view if authenticated but no expert profile
+  if (!expertProfile) {
+    return (
+      <DashboardLayout>
+        <div className="p-8">
+          <h1 className="text-2xl font-bold mb-4">Expert Profile Not Found</h1>
+          <p className="mb-4">
+            Your expert profile could not be loaded. This may be due to a technical issue or your account may be pending approval.
+          </p>
+          <button 
+            onClick={() => logout()}
+            className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+          >
+            Sign Out
+          </button>
+        </div>
+      </DashboardLayout>
+    );
   }
 
   return (

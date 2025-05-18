@@ -8,13 +8,29 @@ export const useExpertAuth = () => {
   
   if (!auth) {
     console.error('useExpertAuth must be used within an AuthProvider');
-    throw new Error('useExpertAuth must be used within an AuthProvider');
+    // Return a default context with empty values instead of throwing
+    return {
+      currentExpert: null,
+      isAuthenticated: false,
+      isLoading: false,
+      login: async () => false,
+      logout: async () => false,
+      updateProfile: async () => false,
+      updateExpertProfile: async () => false,
+      error: 'Auth context not found',
+      initialized: true,
+      hasUserAccount: false,
+      register: async () => false
+    };
   }
   
-  // Check if the user is logged in as an expert
-  if (auth.role !== 'expert' && auth.isAuthenticated) {
-    console.warn('User is authenticated but not as an expert');
-  }
+  // Enhanced debug logging
+  console.log('Expert auth state:', {
+    isAuthenticated: auth.isAuthenticated,
+    hasExpertProfile: !!auth.expertProfile,
+    role: auth.role,
+    isLoading: auth.isLoading
+  });
   
   // Create a wrapped login function that provides better feedback
   const handleExpertLogin = async (email: string, password: string): Promise<boolean> => {
@@ -36,8 +52,20 @@ export const useExpertAuth = () => {
     
     console.log('Expert login function called with:', { email });
     try {
+      // Set session type to expert BEFORE login attempt
+      localStorage.setItem('sessionType', 'expert');
+      localStorage.setItem('preferredRole', 'expert');
+      
       // Ensure we explicitly set asExpert to true
-      return await auth.login(email, password, { asExpert: true });
+      const success = await auth.login(email, password, { asExpert: true });
+      
+      if (success) {
+        console.log('Expert login successful');
+      } else {
+        console.error('Expert login failed');
+      }
+      
+      return success;
     } catch (error) {
       console.error('Error during expert login:', error);
       toast.error('An unexpected error occurred during login');

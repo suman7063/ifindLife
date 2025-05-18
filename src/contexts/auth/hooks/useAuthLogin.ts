@@ -18,6 +18,12 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
         return false;
       }
       
+      // Set session type based on options BEFORE login attempt
+      const sessionType = options?.asExpert ? 'expert' : 'user';
+      console.log(`Setting session type to ${sessionType} before login`);
+      localStorage.setItem('sessionType', sessionType);
+      localStorage.setItem('preferredRole', sessionType);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -39,11 +45,11 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
       }
 
       console.log('Login success, session established:', !!data.session);
-
-      // Set session type based on options
-      const sessionType = options?.asExpert ? 'expert' : 'user';
-      console.log(`Setting session type to ${sessionType}`);
+      
+      // Set session type again after successful login to ensure consistency
+      console.log(`Setting session type to ${sessionType} after successful login`);
       localStorage.setItem('sessionType', sessionType);
+      localStorage.setItem('preferredRole', sessionType);
       
       console.log('Login successful, calling onActionComplete');
       onActionComplete();

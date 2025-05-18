@@ -1,17 +1,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useExpertAuth } from '@/hooks/useExpertAuth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const ExpertLogin: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
   const auth = useExpertAuth();
   const navigate = useNavigate();
   
@@ -20,16 +22,25 @@ const ExpertLogin: React.FC = () => {
     console.log('ExpertLogin: Auth context state:', {
       isAuthenticated: auth?.isAuthenticated,
       isLoading: auth?.isLoading,
+      hasExpertProfile: !!auth?.currentExpert,
       role: typeof auth?.login === 'function' ? 'available' : 'missing',
-      authKeys: Object.keys(auth)
+      authKeys: Object.keys(auth || {})
     });
 
-    // Check if already authenticated as expert and redirect
-    if (!auth.isLoading && auth.isAuthenticated) {
+    // Check status from URL parameters
+    const status = searchParams.get('status');
+    if (status === 'pending') {
+      toast.info('Your expert account is pending approval. You will be notified once approved.');
+    } else if (status === 'disapproved') {
+      toast.error('Your expert account application has been disapproved.');
+    }
+
+    // Only redirect if fully loaded and actually authenticated as expert
+    if (!auth.isLoading && auth.isAuthenticated && auth.currentExpert) {
       console.log('Already authenticated as expert, redirecting to dashboard');
       navigate('/expert-dashboard', { replace: true });
     }
-  }, [auth, navigate]);
+  }, [auth, navigate, searchParams]);
 
   // Handle login with better error handling
   const handleLogin = async (email: string, password: string) => {
@@ -55,7 +66,16 @@ const ExpertLogin: React.FC = () => {
       if (success) {
         console.log('Expert login successful, will redirect shortly');
         toast.success('Login successful!');
-        navigate('/expert-dashboard');
+        
+        // Set session type again to ensure consistency
+        localStorage.setItem('sessionType', 'expert');
+        localStorage.setItem('preferredRole', 'expert');
+        
+        // Add a small delay to allow auth state to update
+        setTimeout(() => {
+          navigate('/expert-dashboard', { replace: true });
+        }, 100);
+        
         return true;
       } else {
         console.error('Expert login failed');
@@ -72,6 +92,15 @@ const ExpertLogin: React.FC = () => {
       setIsLoggingIn(false);
     }
   };
+
+  if (auth.isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Checking authentication...</span>
+      </div>
+    );
+  }
 
   return (
     <>
