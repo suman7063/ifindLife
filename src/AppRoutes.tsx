@@ -202,7 +202,7 @@ const AppRoutes: React.FC = () => {
             </Suspense>
           </ProtectedRoute>
         } />
-        <Route path="/user-dashboard/:tab" element={
+        <Route path="/user-dashboard/:section" element={
           <ProtectedRoute allowedRoles={['user']} redirectPath="/user-login">
             <Suspense fallback={<LoadingScreen />}>
               <UserDashboard />

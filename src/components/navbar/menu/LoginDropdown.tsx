@@ -20,6 +20,11 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
   isAuthenticated, 
   hasExpertProfile 
 }) => {
+  // If user is authenticated in any way, don't show login dropdown
+  if (isAuthenticated || hasExpertProfile) {
+    return null;
+  }
+  
   return (
     <NavigationMenu>
       <NavigationMenuList>
@@ -30,13 +35,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
               <li>
                 <NavigationMenuLink 
                   asChild
-                  className={cn(
-                    "block w-full p-2 text-sm rounded-md text-left", 
-                    hasExpertProfile 
-                      ? "text-muted cursor-not-allowed" 
-                      : "hover:bg-accent"
-                  )}
-                  onClick={(e) => hasExpertProfile && e.preventDefault()}
+                  className="block w-full p-2 text-sm rounded-md text-left hover:bg-accent"
                 >
                   <Link to="/user-login">User Login</Link>
                 </NavigationMenuLink>
@@ -44,13 +43,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
               <li>
                 <NavigationMenuLink 
                   asChild
-                  className={cn(
-                    "block w-full p-2 text-sm rounded-md text-left", 
-                    isAuthenticated 
-                      ? "text-muted cursor-not-allowed" 
-                      : "hover:bg-accent"
-                  )}
-                  onClick={(e) => isAuthenticated && e.preventDefault()}
+                  className="block w-full p-2 text-sm rounded-md text-left hover:bg-accent"
                 >
                   <Link to="/expert-login">Expert Login</Link>
                 </NavigationMenuLink>
