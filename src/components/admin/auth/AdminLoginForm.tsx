@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/admin-auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +24,19 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { login: contextLogin } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   console.log('AdminLoginForm rendered', {
     hasProvidedLoginFunction: typeof onLogin === 'function',
     hasContextLoginFunction: typeof contextLogin === 'function'
   });
+
+  useEffect(() => {
+    // Clear error message when user changes inputs
+    if (errorMessage) {
+      setErrorMessage(null);
+    }
+  }, [username, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,6 +55,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     });
     
     try {
+      setIsSubmitting(true);
       let success = false;
       
       // First try to use the provided login function
@@ -76,6 +85,8 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     } catch (error) {
       console.error('Login error:', error);
       setErrorMessage('An error occurred during login');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -101,7 +112,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-          disabled={isLoading}
+          disabled={isLoading || isSubmitting}
           autoComplete="username"
         />
       </div>
@@ -115,7 +126,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            disabled={isLoading}
+            disabled={isLoading || isSubmitting}
             autoComplete="current-password"
           />
           <button
@@ -132,9 +143,9 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       <Button
         type="submit"
         className="w-full"
-        disabled={isLoading}
+        disabled={isLoading || isSubmitting}
       >
-        {isLoading ? 'Logging in...' : 'Login'}
+        {isLoading || isSubmitting ? 'Logging in...' : 'Login'}
       </Button>
     </form>
   );

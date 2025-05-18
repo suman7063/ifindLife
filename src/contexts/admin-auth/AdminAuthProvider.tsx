@@ -120,19 +120,53 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       
       console.log('Admin login attempt with:', emailOrUsername);
       
-      // Special handling for IFLsuperadmin
+      // Special handling for IFLsuperadmin - hardcoded credentials for super admin
       if (emailOrUsername === 'IFLsuperadmin') {
+        console.log('Special handling for IFLsuperadmin');
         if (password !== 'Freesoul@99IFL') {
+          console.error('Invalid password for super admin');
           toast.error('Invalid password for super admin');
+          setLoading(false);
           return false;
         }
+        
+        // Super admin uses this email format
         emailOrUsername = 'IFLsuperadmin@ifindlife.com';
+        console.log('Using email format for super admin:', emailOrUsername);
+        
+        // Create a special hardcoded super admin user
+        const superAdmin: AdminUser = {
+          id: '00000000-0000-0000-0000-000000000000',
+          email: emailOrUsername,
+          username: 'IFLsuperadmin',
+          role: 'super_admin',
+          permissions: {
+            canManageUsers: true,
+            canManageExperts: true,
+            canManageContent: true,
+            canManageServices: true,
+            canManagePrograms: true,
+            canViewAnalytics: true,
+            canDeleteContent: true,
+            canApproveExperts: true
+          },
+          createdAt: new Date().toISOString()
+        };
+        
+        setUser(superAdmin);
+        setIsAuthenticated(true);
+        localStorage.setItem('sessionType', 'admin');
+        toast.success('Successfully logged in as super admin');
+        setLoading(false);
+        return true;
       }
       
-      // For other users, use email directly
+      // For other users, use email directly or add domain if not provided
       const email = emailOrUsername.includes('@') 
         ? emailOrUsername 
         : `${emailOrUsername}@ifindlife.com`;
+      
+      console.log('Attempting regular admin login with email:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -142,6 +176,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       if (error) {
         console.error('Admin login error:', error);
         toast.error(error.message || 'Login failed');
+        setLoading(false);
         return false;
       }
 
@@ -151,7 +186,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         
         // If no admin user was found in the database but credentials matched,
         // use default admin data for super admin
-        if (!isAuthenticated && emailOrUsername === 'IFLsuperadmin@ifindlife.com') {
+        if (!isAuthenticated && email === 'IFLsuperadmin@ifindlife.com') {
           const superAdmin = defaultAdminUsers.find(u => u.email === 'IFLsuperadmin@ifindlife.com');
           if (superAdmin) {
             setUser(superAdmin);

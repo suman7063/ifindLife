@@ -46,6 +46,14 @@ const AdminLogin = () => {
         return false;
       }
       
+      // Special handling for superadmin (case insensitive)
+      const normalizedUsername = username.toLowerCase();
+      if (normalizedUsername === 'iflsuperadmin' || 
+          normalizedUsername === 'superadmin' || 
+          normalizedUsername === 'admin') {
+        console.log('Admin login: Detected special admin username');
+      }
+      
       const success = await login(username, password);
       
       if (success) {

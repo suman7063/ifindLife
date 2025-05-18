@@ -1,8 +1,10 @@
 
 import { Session } from '@supabase/supabase-js';
 
-export type AdminRole = 'admin' | 'super_admin' | 'content_editor' | 'support' | 'superadmin';
+// Define the role types for admins
+export type AdminRole = 'admin' | 'super_admin';
 
+// Define the permissions interface for admin users
 export interface AdminPermissions {
   canManageUsers?: boolean;
   canManageExperts?: boolean;
@@ -17,37 +19,26 @@ export interface AdminPermissions {
   [key: string]: boolean | undefined;
 }
 
+// Define the admin user interface
 export interface AdminUser {
   id: string;
+  username: string;
   email: string;
   role: AdminRole;
-  username?: string;
-  permissions?: AdminPermissions;
-  lastLogin?: string;
-  createdAt?: string;
+  permissions: AdminPermissions;
+  createdAt: string;
 }
 
-export interface AdminAuthState {
+// Define the authentication context type
+export interface AdminAuthContextType {
   user: AdminUser | null;
   session: Session | null;
   loading: boolean;
   error: Error | null;
   isAuthenticated: boolean;
-}
-
-export const initialAuthState: AdminAuthState = {
-  user: null,
-  session: null,
-  loading: true,
-  error: null,
-  isAuthenticated: false
-};
-
-export interface AdminAuthContextType extends AdminAuthState {
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (emailOrUsername: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   checkRole: (requiredRole: AdminRole | AdminRole[]) => boolean;
-  
   // Legacy properties for backward compatibility
   currentUser: AdminUser | null;
   isSuperAdmin: boolean;
@@ -59,6 +50,14 @@ export interface AdminAuthContextType extends AdminAuthState {
   getAdminById: (userId: string) => AdminUser | null;
   updateAdminRole: (userId: string, role: string) => boolean;
   permissions: AdminPermissions;
-  isLoading?: boolean;
-  sessionType?: 'none' | 'user' | 'expert' | 'dual';
+  isLoading: boolean;
 }
+
+// Initial auth state
+export const initialAuthState = {
+  isAuthenticated: false,
+  isLoading: true,
+  error: null,
+  user: null,
+  session: null
+};

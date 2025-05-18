@@ -1,12 +1,13 @@
 
-import { AdminUser, AdminRole, AdminPermissions } from './types';
+import { AdminUser } from './types';
 
+// Default admin users for the system
 export const defaultAdminUsers: AdminUser[] = [
   {
-    id: "1",
-    email: "IFLsuperadmin@ifindlife.com",
-    role: "super_admin",
-    username: "IFLsuperadmin",
+    id: '00000000-0000-0000-0000-000000000000',
+    username: 'IFLsuperadmin',
+    email: 'IFLsuperadmin@ifindlife.com',
+    role: 'super_admin',
     permissions: {
       canManageUsers: true,
       canManageExperts: true,
@@ -19,25 +20,6 @@ export const defaultAdminUsers: AdminUser[] = [
       canManageBlog: true,
       canManageTestimonials: true
     },
-    lastLogin: new Date().toISOString()
-  },
-  {
-    id: "2",
-    email: "admin@ifindlife.com",
-    role: "admin",
-    username: "admin",
-    permissions: {
-      canManageUsers: false,
-      canManageExperts: true,
-      canManageContent: true,
-      canManageServices: false,
-      canManagePrograms: true,
-      canViewAnalytics: true,
-      canDeleteContent: false,
-      canApproveExperts: false,
-      canManageBlog: true,
-      canManageTestimonials: true
-    },
-    lastLogin: new Date().toISOString()
+    createdAt: new Date().toISOString()
   }
 ];
