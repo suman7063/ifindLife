@@ -2,7 +2,7 @@
 import { Session } from '@supabase/supabase-js';
 
 // Define the role types for admins
-export type AdminRole = 'admin' | 'super_admin';
+export type AdminRole = 'admin' | 'super_admin' | 'superadmin';
 
 // Define the permissions interface for admin users
 export interface AdminPermissions {
@@ -27,6 +27,7 @@ export interface AdminUser {
   role: AdminRole;
   permissions: AdminPermissions;
   createdAt: string;
+  lastLogin?: string; // Added lastLogin property as optional
 }
 
 // Define the authentication context type

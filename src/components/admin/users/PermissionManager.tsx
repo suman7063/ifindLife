@@ -84,7 +84,7 @@ const PermissionManager: React.FC<PermissionManagerProps> = ({
   };
   
   // If user is super admin, show all permissions as enabled and read-only
-  const isUserSuperAdmin = user.role === 'superadmin' || user.role === 'super_admin';
+  const isUserSuperAdmin = isSuperAdmin(user);
   
   return (
     <div className="space-y-6">

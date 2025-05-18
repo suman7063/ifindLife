@@ -5,7 +5,7 @@ import { AdminUser, AdminRole, AdminPermissions } from '@/contexts/admin-auth/ty
  * Check if the user is a super admin
  */
 export const isSuperAdmin = (user: AdminUser | null): boolean => {
-  return user?.role === 'superadmin' || user?.role === 'super_admin';
+  return user?.role === 'super_admin' || user?.role === 'superadmin';
 };
 
 /**

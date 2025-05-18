@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -78,7 +77,17 @@ export const useAdminSession = () => {
         const adminUser: AdminUser = {
           id: userId,
           email: session?.user?.email || '',
-          role: data.role as AdminRole
+          username: session?.user?.email?.split('@')[0] || 'admin', // Generate username from email
+          role: data.role as AdminRole,
+          permissions: { // Default permissions based on role
+            canViewAnalytics: true,
+            canManageContent: data.role === 'super_admin' || data.role === 'superadmin',
+            canManageUsers: data.role === 'super_admin' || data.role === 'superadmin',
+            canManageExperts: data.role === 'super_admin' || data.role === 'superadmin',
+            canManageServices: data.role === 'super_admin' || data.role === 'superadmin'
+          },
+          createdAt: data.created_at || new Date().toISOString(),
+          lastLogin: new Date().toISOString() // Set current login time
         };
         
         setUser(adminUser);

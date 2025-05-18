@@ -21,7 +21,7 @@ const AdminOverview: React.FC = () => {
           <CardContent>
             <p>Logged in as: {currentUser?.username}</p>
             <p>Role: {currentUser?.role}</p>
-            <p>Last login: {currentUser?.lastLogin ? new Date(currentUser.lastLogin).toLocaleString() : 'Unknown'}</p>
+            <p>Last login: {currentUser?.lastLogin ? new Date(currentUser.lastLogin).toLocaleString() : 'First login'}</p>
           </CardContent>
         </Card>
         
