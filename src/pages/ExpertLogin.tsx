@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
 import { useNavigate } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
@@ -12,7 +12,7 @@ const ExpertLogin: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const auth = useAuth();
+  const auth = useExpertAuth();
   const navigate = useNavigate();
   
   // Enhanced debug logging
@@ -20,14 +20,12 @@ const ExpertLogin: React.FC = () => {
     console.log('ExpertLogin: Auth context state:', {
       isAuthenticated: auth?.isAuthenticated,
       isLoading: auth?.isLoading,
-      role: auth?.role,
-      hasLogin: typeof auth?.login === 'function',
-      loginType: typeof auth?.login,
-      authKeys: auth ? Object.keys(auth) : []
+      role: typeof auth?.login === 'function' ? 'available' : 'missing',
+      authKeys: Object.keys(auth)
     });
 
     // Check if already authenticated as expert and redirect
-    if (!auth.isLoading && auth.isAuthenticated && auth.role === 'expert') {
+    if (!auth.isLoading && auth.isAuthenticated) {
       console.log('Already authenticated as expert, redirecting to dashboard');
       navigate('/expert-dashboard', { replace: true });
     }
@@ -45,18 +43,14 @@ const ExpertLogin: React.FC = () => {
       });
       
       if (!auth || typeof auth.login !== 'function') {
-        console.error('ExpertLogin: Login function not available:', {
-          authAvailable: !!auth,
-          loginType: typeof auth?.login,
-          authKeys: auth ? Object.keys(auth) : []
-        });
+        console.error('ExpertLogin: Login function not available');
         setLoginError('Authentication service is not available. Please try again later.');
         toast.error('Authentication service is not available. Please try again later.');
         return false;
       }
       
       // Using login with explicit asExpert option
-      const success = await auth.login(email, password, { asExpert: true });
+      const success = await auth.login(email, password);
       
       if (success) {
         console.log('Expert login successful, will redirect shortly');
