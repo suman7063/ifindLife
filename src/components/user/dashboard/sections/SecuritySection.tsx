@@ -14,11 +14,16 @@ const SecuritySection: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   
-  // Handle password update
+  // Handle password update with improved functionality
   const handlePasswordUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate passwords
+    if (!currentPassword) {
+      toast.error('Please enter your current password');
+      return;
+    }
+    
     if (newPassword !== confirmPassword) {
       toast.error('New passwords do not match');
       return;
@@ -32,9 +37,18 @@ const SecuritySection: React.FC = () => {
     setIsUpdating(true);
     
     try {
+      // Get current user email
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !user.email) {
+        toast.error('User session not found. Please log in again.');
+        setIsUpdating(false);
+        return;
+      }
+      
       // First verify the current password by signing in
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: (await supabase.auth.getUser()).data.user?.email || '',
+        email: user.email,
         password: currentPassword,
       });
       
@@ -69,14 +83,17 @@ const SecuritySection: React.FC = () => {
   
   return (
     <div className="space-y-6">
+      <h2 className="text-3xl font-bold tracking-tight">Security Settings</h2>
+      <p className="text-muted-foreground">Manage your account security and password</p>
+      
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
             <Shield className="h-5 w-5 text-primary" />
-            <CardTitle>Account Security</CardTitle>
+            <CardTitle>Change Password</CardTitle>
           </div>
           <CardDescription>
-            Manage your account security settings
+            Update your password to keep your account secure
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -136,7 +153,19 @@ const SecuritySection: React.FC = () => {
             </Button>
           </form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4 bg-muted/50 border-t">
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <div className="flex items-center space-x-2">
+            <Shield className="h-5 w-5 text-primary" />
+            <CardTitle>Account Security</CardTitle>
+          </div>
+          <CardDescription>
+            Additional security settings for your account
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div>
             <h4 className="font-medium mb-1">Two Factor Authentication</h4>
             <p className="text-sm text-muted-foreground mb-2">
@@ -152,7 +181,7 @@ const SecuritySection: React.FC = () => {
             </p>
             <Button variant="outline">View Log</Button>
           </div>
-        </CardFooter>
+        </CardContent>
       </Card>
     </div>
   );

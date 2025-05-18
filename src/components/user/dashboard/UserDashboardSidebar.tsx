@@ -13,8 +13,10 @@ import {
   MessageSquare, 
   Settings, 
   HelpCircle,
-  LogOut
+  LogOut,
+  Lock
 } from 'lucide-react';
+import { format } from 'date-fns';
 
 export interface UserDashboardSidebarProps {
   user: UserProfile;
@@ -28,6 +30,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   isLoggingOut = false
 }) => {
   const location = useLocation();
+  const today = format(new Date(), 'EEEE, MMMM do');
   
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -40,16 +43,28 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
   };
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto hidden md:block">
+    <div className="w-64 bg-white border-r border-gray-200 h-full overflow-y-auto">
       <div className="p-4">
-        <div className="flex items-center space-x-3 mb-6 pb-6 border-b border-gray-100">
-          <Avatar className="h-12 w-12">
-            <AvatarImage src={user?.profile_picture || ''} alt={user?.name || 'User'} />
-            <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
-          </Avatar>
-          <div>
-            <h3 className="font-medium">{user?.name || 'User'}</h3>
-            <p className="text-sm text-muted-foreground truncate max-w-[150px]">{user?.email}</p>
+        {/* User profile section with wallet balance and date */}
+        <div className="flex flex-col mb-6 pb-6 border-b border-gray-100">
+          <div className="flex items-center space-x-3 mb-3">
+            <Avatar className="h-12 w-12">
+              <AvatarImage src={user?.profile_picture || ''} alt={user?.name || 'User'} />
+              <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h3 className="font-medium">{user?.name || 'User'}</h3>
+              <p className="text-sm text-muted-foreground truncate max-w-[150px]">{user?.email}</p>
+            </div>
+          </div>
+          
+          {/* Wallet balance and date - added as per requirement */}
+          <div className="mt-2 text-sm">
+            <div className="flex items-center text-green-600 font-medium">
+              <Wallet className="h-4 w-4 mr-2" />
+              Balance: {user?.currency || '$'}{user?.wallet_balance?.toFixed(2) || '0.00'}
+            </div>
+            <div className="text-muted-foreground mt-1">{today}</div>
           </div>
         </div>
 
@@ -89,6 +104,12 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             icon={<MessageSquare className="h-5 w-5" />} 
             label="Messages" 
             isActive={isActive('/user-dashboard/messages')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/security" 
+            icon={<Lock className="h-5 w-5" />} 
+            label="Security" 
+            isActive={isActive('/user-dashboard/security')} 
           />
           <SidebarItem 
             href="/user-dashboard/settings" 

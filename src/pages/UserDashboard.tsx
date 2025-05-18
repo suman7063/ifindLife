@@ -1,11 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { toast } from 'sonner';
 import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
-import DashboardContent from '@/components/user/dashboard/DashboardContent';
 import { UserProfile } from '@/types/database/unified';
 
 const UserDashboard: React.FC = () => {
@@ -114,9 +114,9 @@ const UserDashboard: React.FC = () => {
       // Clear local storage
       localStorage.removeItem('sessionType');
       
-      // Redirect to login page
+      // Redirect to logout confirmation page
       toast.success('Logged out successfully');
-      navigate('/login');
+      navigate('/logout?type=user');
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -132,20 +132,25 @@ const UserDashboard: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <div className="hidden md:block w-64 border-r border-border">
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* Keep website header */}
+      <Navbar />
+      
+      <div className="flex flex-1">
+        {/* Sidebar */}
         <UserDashboardSidebar 
           user={user} 
           onLogout={handleLogout} 
           isLoggingOut={isLoggingOut} 
         />
+        
+        {/* Main content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <Outlet />
+        </div>
       </div>
       
-      {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        <DashboardContent currentUser={user} />
-      </div>
+      <Footer />
     </div>
   );
 };

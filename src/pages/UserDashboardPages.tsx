@@ -1,21 +1,73 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { toast } from 'sonner';
 import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
-import UserDashboardLayout from '@/components/user/dashboard/UserDashboardLayout';
 import DashboardHome from '@/components/user/dashboard/DashboardHome';
 import ProfileSection from '@/components/user/dashboard/sections/ProfileSection';
 import WalletSection from '@/components/user/dashboard/sections/WalletSection';
 import ConsultationsSection from '@/components/user/dashboard/sections/ConsultationsSection';
 import FavoritesSection from '@/components/user/dashboard/sections/FavoritesSection';
-import ReviewsSection from '@/components/user/dashboard/sections/ReviewsSection';
-import ReferralsSection from '@/components/user/dashboard/sections/ReferralsSection';
+import MessagesSection from '@/components/user/dashboard/sections/MessagesSection';
 import SecuritySection from '@/components/user/dashboard/sections/SecuritySection';
-import HelpSection from '@/components/user/dashboard/sections/HelpSection';
-import { UserProfile } from '@/types/supabase/user';
+import SettingsSection from '@/components/user/dashboard/sections/SettingsSection';
+import SupportSection from '@/components/user/dashboard/sections/SupportSection';
+import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSection';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
+import { UserProfile } from '@/types/database/unified';
+
+// Add missing section components with placeholder content
+const MessagesSection: React.FC = () => {
+  return (
+    <div>
+      <h2 className="text-3xl font-bold tracking-tight">Messages</h2>
+      <p className="text-muted-foreground mb-6">Manage your conversations</p>
+      <div className="bg-muted p-12 rounded-md text-center">
+        <p>You have no messages.</p>
+      </div>
+    </div>
+  );
+};
+
+const ProgramsSection: React.FC = () => {
+  return (
+    <div>
+      <h2 className="text-3xl font-bold tracking-tight">My Programs</h2>
+      <p className="text-muted-foreground mb-6">Your enrolled programs and courses</p>
+      <div className="bg-muted p-12 rounded-md text-center">
+        <p>You are not enrolled in any programs yet.</p>
+      </div>
+    </div>
+  );
+};
+
+const SettingsSection: React.FC = () => {
+  return (
+    <div>
+      <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
+      <p className="text-muted-foreground mb-6">Manage your account preferences</p>
+      <div className="bg-muted p-12 rounded-md">
+        <p className="mb-2">Settings page is under development.</p>
+        <p>You can manage your profile and security settings from their respective sections.</p>
+      </div>
+    </div>
+  );
+};
+
+const SupportSection: React.FC = () => {
+  return (
+    <div>
+      <h2 className="text-3xl font-bold tracking-tight">Help & Support</h2>
+      <p className="text-muted-foreground mb-6">Get assistance with your account</p>
+      <div className="bg-muted p-12 rounded-md text-center">
+        <p className="mb-2">Need help? Contact our support team:</p>
+        <p className="font-medium">support@ifindlife.com</p>
+      </div>
+    </div>
+  );
+};
 
 const UserDashboardPages: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -124,9 +176,9 @@ const UserDashboardPages: React.FC = () => {
       // Clear local storage
       localStorage.removeItem('sessionType');
       
-      // Redirect to login page
+      // Redirect to logout confirmation page
       toast.success('Logged out successfully');
-      navigate('/login');
+      navigate('/logout?type=user');
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -147,17 +199,21 @@ const UserDashboardPages: React.FC = () => {
       case 'wallet':
         return <WalletSection user={user} />;
       case 'appointments':
+      case 'consultations':
         return <ConsultationsSection user={user} />;
       case 'favorites':
         return <FavoritesSection user={user} />;
-      case 'reviews':
-        return <ReviewsSection user={user} />;
-      case 'referrals':
-        return <ReferralsSection user={user} />;
+      case 'programs':
+        return <ProgramsSection />;
+      case 'messages':
+        return <MessagesSection />;
       case 'security':
         return <SecuritySection />;
+      case 'settings':
+        return <SettingsSection />;
+      case 'support':
       case 'help':
-        return <HelpSection user={user} />;
+        return <SupportSection />;
       default:
         return <DashboardHome user={user} />;
     }
@@ -168,26 +224,26 @@ const UserDashboardPages: React.FC = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <div className="hidden md:block w-64 border-r border-border">
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* Keep website header */}
+      <Navbar />
+      
+      {/* Main content */}
+      <div className="flex flex-1">
+        {/* Sidebar */}
         <UserDashboardSidebar 
           user={user} 
           onLogout={handleLogout} 
-          isLoggingOut={isLoggingOut} 
+          isLoggingOut={isLoggingOut}
         />
+        
+        {/* Content */}
+        <div className="flex-1 p-6 overflow-auto">
+          {renderSection()}
+        </div>
       </div>
       
-      {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        <UserDashboardLayout 
-          user={user} 
-          onLogout={handleLogout} 
-          isLoggingOut={isLoggingOut}
-        >
-          {renderSection()}
-        </UserDashboardLayout>
-      </div>
+      <Footer />
     </div>
   );
 };
