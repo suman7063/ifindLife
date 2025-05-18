@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -36,7 +37,7 @@ const UserDashboardPages: React.FC = () => {
         
         if (!sessionData.session) {
           console.log('No session found, redirecting to login');
-          navigate('/login');
+          navigate('/user-login');
           return;
         }
         
@@ -102,7 +103,7 @@ const UserDashboardPages: React.FC = () => {
       } catch (error) {
         console.error('Error fetching user data:', error);
         toast.error('Failed to load user data');
-        navigate('/login');
+        navigate('/user-login');
       } finally {
         setIsLoading(false);
       }
@@ -141,6 +142,8 @@ const UserDashboardPages: React.FC = () => {
   // Render the appropriate section based on the URL parameter
   const renderSection = () => {
     if (!user) return null;
+    
+    console.log('Current section:', section);
     
     switch(section) {
       case 'profile':
