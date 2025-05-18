@@ -13,7 +13,21 @@ import PageHeader from '@/components/common/PageHeader';
 const ProgramsForBusiness: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { currentUser, isAuthenticated } = useUserAuth();
+  const [authError, setAuthError] = useState<boolean>(false);
+  
+  // Try to use auth context, but handle case where it might not be available
+  let currentUser = null;
+  let isAuthenticated = false;
+  
+  try {
+    // Use optional chaining to safely access the auth context
+    const auth = useUserAuth();
+    currentUser = auth?.currentUser;
+    isAuthenticated = auth?.isAuthenticated || false;
+  } catch (error) {
+    console.error('Auth context not available:', error);
+    setAuthError(true);
+  }
 
   // Fetch business programs
   useEffect(() => {
