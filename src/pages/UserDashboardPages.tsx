@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -18,57 +17,6 @@ import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSectio
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserProfile } from '@/types/database/unified';
-
-// Add missing section components with placeholder content
-const MessagesSection: React.FC = () => {
-  return (
-    <div>
-      <h2 className="text-3xl font-bold tracking-tight">Messages</h2>
-      <p className="text-muted-foreground mb-6">Manage your conversations</p>
-      <div className="bg-muted p-12 rounded-md text-center">
-        <p>You have no messages.</p>
-      </div>
-    </div>
-  );
-};
-
-const ProgramsSection: React.FC = () => {
-  return (
-    <div>
-      <h2 className="text-3xl font-bold tracking-tight">My Programs</h2>
-      <p className="text-muted-foreground mb-6">Your enrolled programs and courses</p>
-      <div className="bg-muted p-12 rounded-md text-center">
-        <p>You are not enrolled in any programs yet.</p>
-      </div>
-    </div>
-  );
-};
-
-const SettingsSection: React.FC = () => {
-  return (
-    <div>
-      <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-      <p className="text-muted-foreground mb-6">Manage your account preferences</p>
-      <div className="bg-muted p-12 rounded-md">
-        <p className="mb-2">Settings page is under development.</p>
-        <p>You can manage your profile and security settings from their respective sections.</p>
-      </div>
-    </div>
-  );
-};
-
-const SupportSection: React.FC = () => {
-  return (
-    <div>
-      <h2 className="text-3xl font-bold tracking-tight">Help & Support</h2>
-      <p className="text-muted-foreground mb-6">Get assistance with your account</p>
-      <div className="bg-muted p-12 rounded-md text-center">
-        <p className="mb-2">Need help? Contact our support team:</p>
-        <p className="font-medium">support@ifindlife.com</p>
-      </div>
-    </div>
-  );
-};
 
 const UserDashboardPages: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
