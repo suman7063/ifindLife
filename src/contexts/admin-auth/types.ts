@@ -1,11 +1,12 @@
 
 import { Session } from '@supabase/supabase-js';
 
-// Define the role types for admins
-export type AdminRole = 'admin' | 'super_admin' | 'superadmin';
+// Define the role types
+export type AdminRole = 'admin' | 'superadmin' | 'super_admin';
 
-// Define the permissions interface for admin users
+// Define the permissions interface
 export interface AdminPermissions {
+  [key: string]: boolean;
   canManageUsers?: boolean;
   canManageExperts?: boolean;
   canManageContent?: boolean;
@@ -16,21 +17,20 @@ export interface AdminPermissions {
   canApproveExperts?: boolean;
   canManageBlog?: boolean;
   canManageTestimonials?: boolean;
-  [key: string]: boolean | undefined;
 }
 
 // Define the admin user interface
 export interface AdminUser {
   id: string;
-  username: string;
   email: string;
+  username: string;
   role: AdminRole;
   permissions: AdminPermissions;
   createdAt: string;
-  lastLogin?: string; // Added lastLogin property as optional
+  lastLogin: string;
 }
 
-// Define the authentication context type
+// Define the admin context type
 export interface AdminAuthContextType {
   user: AdminUser | null;
   session: Session | null;
@@ -54,11 +54,15 @@ export interface AdminAuthContextType {
   isLoading: boolean;
 }
 
-// Initial auth state
+// Initial state for the admin auth context
 export const initialAuthState = {
-  isAuthenticated: false,
-  isLoading: true,
-  error: null,
   user: null,
-  session: null
+  session: null,
+  loading: true,
+  error: null,
+  isAuthenticated: false,
+  currentUser: null,
+  isSuperAdmin: false,
+  adminUsers: [],
+  permissions: {}
 };
