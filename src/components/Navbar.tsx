@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
@@ -64,7 +63,8 @@ const Navbar = () => {
       if (success) {
         console.log("Navbar: User logout successful");
         toast.success('Successfully logged out');
-        navigate('/');
+        // Redirect to logout page with user type info
+        navigate('/logout', { state: { userType: 'user' } });
         return true;
       } else {
         console.error("Navbar: User logout failed");
@@ -92,7 +92,8 @@ const Navbar = () => {
       if (success) {
         console.log("Navbar: Expert logout completed");
         toast.success('Successfully logged out as expert');
-        navigate('/');
+        // Redirect to logout page with expert type info
+        navigate('/logout', { state: { userType: 'expert' } });
         return true;
       } else {
         console.error("Navbar: Expert logout failed");
@@ -119,7 +120,9 @@ const Navbar = () => {
       
       if (success) {
         toast.success('Successfully logged out of all accounts');
-        navigate('/');
+        // Determine primary account type for the logout page
+        const primaryType = typedSessionType === 'expert' ? 'expert' : 'user';
+        navigate('/logout', { state: { userType: primaryType } });
       }
       
       return success;

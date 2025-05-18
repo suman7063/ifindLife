@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { BriefcaseBusiness, LogOut } from "lucide-react";
 import { 
   DropdownMenu,
@@ -24,6 +24,7 @@ const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({
 }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     if (isLoggingOut || parentIsLoggingOut) return;
@@ -35,7 +36,11 @@ const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({
       console.log("NavbarExpertMenu: Initiating expert logout...");
       const success = await onLogout();
       
-      if (!success) {
+      if (success) {
+        console.log("NavbarExpertMenu: Expert logout successful");
+        toast.success('Successfully logged out as expert');
+        navigate('/logout', { state: { userType: 'expert' } });
+      } else {
         console.error("NavbarExpertMenu: Expert logout failed");
         toast.error('Failed to log out as expert. Please try again.');
       }

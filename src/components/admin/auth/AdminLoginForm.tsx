@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface AdminLoginFormProps {
   onLoginSuccess: () => void;
@@ -21,7 +22,8 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login: contextLogin, adminUsers } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { login: contextLogin } = useAuth();
   
   console.log('AdminLoginForm rendered', {
     hasProvidedLoginFunction: typeof onLogin === 'function',
@@ -30,6 +32,12 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+    
+    if (!username || !password) {
+      setErrorMessage('Please enter both username and password');
+      return;
+    }
     
     // Debug logs
     console.log('Admin login form submitted with username:', username);
@@ -54,7 +62,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       // No login function available
       else {
         console.error('No login function available');
-        toast.error('Authentication service is not available');
+        setErrorMessage('Authentication service is not available');
         return;
       }
       
@@ -63,11 +71,11 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
         onLoginSuccess(); 
       } else {
         // Login failed - show error
-        toast.error('Invalid username or password');
+        setErrorMessage('Invalid username or password');
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('An error occurred during login');
+      setErrorMessage('An error occurred during login');
     }
   };
 
@@ -77,6 +85,14 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {errorMessage && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            {errorMessage}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="admin-username">Username</Label>
         <Input

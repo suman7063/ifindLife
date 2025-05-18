@@ -1,150 +1,84 @@
+import React from 'react';
+import { Route, Routes } from 'react-router-dom';
+import Home from './pages/Home';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Services from './pages/Services';
+import Experts from './pages/Experts';
+import ExpertDetails from './pages/ExpertDetails';
+import UserLogin from './pages/UserLogin';
+import UserSignup from './pages/UserSignup';
+import ExpertLogin from './pages/ExpertLogin';
+import ExpertSignup from './pages/ExpertSignup';
+import UserDashboard from './pages/UserDashboard';
+import ExpertDashboard from './pages/ExpertDashboard';
+import AdminLogin from './pages/AdminLogin';
+import Admin from './pages/Admin';
+import ProtectedRoute from './components/ProtectedRoute';
+import NotFound from './pages/NotFound';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Programs } from './pages/Programs';
+import { TermsOfService } from './pages/TermsOfService';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import LogoutPage from '@/pages/LogoutPage';
 
-import { lazy } from 'react';
-import NotFound from './pages/NotFound'; // Import NotFound directly to avoid lazy loading issues
-
-// Define route types without extending RouteObject from react-router-dom
-export interface AppRoute {
-  path: string;
-  element: JSX.Element;
-  requiredRole?: 'user' | 'admin' | 'expert';
-}
-
-// Pages - pre-import critical pages to avoid dynamic import issues
-const Login = lazy(() => import('./pages/Login'));
-// ExpertLogin is directly imported in AppRoutes.tsx
-const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword'));
-const MentalHealthAssessment = lazy(() => import('./pages/MentalHealthAssessment'));
-const Experts = lazy(() => import('./pages/Experts'));
-const ExpertDetail = lazy(() => import('./pages/ExpertDetail'));
-const ProgramsForWellnessSeekers = lazy(() => import('./pages/ProgramsForWellnessSeekers'));
-const ProgramsForAcademicInstitutes = lazy(() => import('./pages/ProgramsForAcademicInstitutes'));
-const ProgramsForBusiness = lazy(() => import('./pages/ProgramsForBusiness'));
-const ProgramDetail = lazy(() => import('./pages/ProgramDetail'));
-// AboutUs is directly defined in AppRoutes.tsx only
-const CareerGuidance = lazy(() => import('./pages/CareerGuidance'));
-const Blog = lazy(() => import('./pages/Blog'));
-const BlogPost = lazy(() => import('./pages/BlogPost'));
-const Services = lazy(() => import('./pages/Services'));
-const ServiceDetailPage = lazy(() => import('./pages/service/ServiceDetailPage'));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
-const TermsOfService = lazy(() => import('./pages/TermsOfService'));
-const Contact = lazy(() => import('./pages/Contact'));
-const FAQs = lazy(() => import('./pages/FAQs'));
-const UserDashboard = lazy(() => import('./pages/UserDashboard'));
-const ExpertDashboard = lazy(() => import('./pages/ExpertDashboard'));
-const Admin = lazy(() => import('./pages/Admin'));
-const Referral = lazy(() => import('./pages/Referral'));
-const UserWallet = lazy(() => import('./pages/UserWallet'));
-
-export const routes: AppRoute[] = [
-  // Main navigation routes 
-  {
-    path: '/login',
-    element: <Login />
-  },
-  {
-    path: '/user-login',
-    element: <Login />  // Alias for /login for backward compatibility
-  },
-  // ExpertLogin is directly imported in AppRoutes.tsx, not included here to avoid circular dependencies
-  {
-    path: '/forgot-password',
-    element: <ForgotPassword />
-  },
-  {
-    path: '/reset-password',
-    element: <ResetPassword />
-  },
-  {
-    path: '/mental-health-assessment',
-    element: <MentalHealthAssessment />
-  },
-  {
-    path: '/experts',
-    element: <Experts />
-  },
-  {
-    path: '/experts/:id',
-    element: <ExpertDetail />
-  },
-  {
-    path: '/programs-for-wellness-seekers',
-    element: <ProgramsForWellnessSeekers />
-  },
-  {
-    path: '/programs-for-academic-institutes',
-    element: <ProgramsForAcademicInstitutes />
-  },
-  {
-    path: '/programs-for-business',
-    element: <ProgramsForBusiness />
-  },
-  {
-    path: '/program/:id',
-    element: <ProgramDetail />
-  },
-  // AboutUs route is completely removed from here as it's directly defined in AppRoutes.tsx
-  {
-    path: '/career-guidance',
-    element: <CareerGuidance />
-  },
-  {
-    path: '/blog',
-    element: <Blog />
-  },
-  {
-    path: '/blog/:slug',
-    element: <BlogPost />
-  },
-  {
-    path: '/services',
-    element: <Services />
-  },
-  {
-    path: '/services/:serviceId',
-    element: <ServiceDetailPage />
-  },
-  {
-    path: '/privacy',
-    element: <PrivacyPolicy />
-  },
-  {
-    path: '/terms',
-    element: <TermsOfService />
-  },
-  {
-    path: '/contact',
-    element: <Contact />
-  },
-  {
-    path: '/faqs',
-    element: <FAQs />
-  },
-  {
-    path: '/referral',
-    element: <Referral />
-  },
+export const AppRoutes = () => {
+  const { isAuthenticated, isLoading, role } = useAuth();
   
-  // Protected routes with role requirements
-  {
-    path: '/user-dashboard/*',
-    element: <UserDashboard />,
-    requiredRole: 'user'
-  },
-  {
-    path: '/expert-dashboard/*',
-    element: <ExpertDashboard />,
-    requiredRole: 'expert'
-  },
-  {
-    path: '/admin/*',
-    element: <Admin />,
-    requiredRole: 'admin'
-  },
-  {
-    path: "/user-dashboard/wallet",
-    element: <UserWallet />,
-    requiredRole: "user"
-  }
-];
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/services" element={<Services />} />
+      <Route path="/experts" element={<Experts />} />
+      <Route path="/expert/:id" element={<ExpertDetails />} />
+      <Route path="/user-login" element={<UserLogin />} />
+      <Route path="/user-signup" element={<UserSignup />} />
+      <Route path="/expert-login" element={<ExpertLogin />} />
+      <Route path="/expert-signup" element={<ExpertSignup />} />
+      <Route path="/programs" element={<Programs />} />
+      <Route path="/terms" element={<TermsOfService />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
+      
+      {/* User Dashboard - accessible only to authenticated users */}
+      <Route 
+        path="/user-dashboard" 
+        element={
+          <ProtectedRoute>
+            <UserDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Expert Dashboard - accessible only to authenticated experts */}
+      <Route 
+        path="/expert-dashboard" 
+        element={
+          <ProtectedRoute requiredRole="expert">
+            <ExpertDashboard />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Admin Routes - accessible only to authenticated admins */}
+      <Route path="/admin-login" element={<AdminLogin />} />
+      <Route 
+        path="/admin/*" 
+        element={
+          <ProtectedRoute requiredRole="super_admin">
+            <Admin />
+          </ProtectedRoute>
+        } 
+      />
+      
+      {/* Logout Page */}
+      <Route path="/logout" element={<LogoutPage />} />
+
+      {/* Not Found Route - catch-all for unmatched routes */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
+export default AppRoutes;

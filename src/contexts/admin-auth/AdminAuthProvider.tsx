@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -159,6 +158,10 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       setUser(null);
       localStorage.removeItem('sessionType');
       toast.success('Successfully logged out');
+      
+      // Navigate to the logout confirmation page
+      window.location.href = '/logout?type=admin';
+      
       return true;
     } catch (error: any) {
       console.error('Logout error:', error);

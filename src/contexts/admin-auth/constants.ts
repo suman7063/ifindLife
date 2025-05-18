@@ -4,7 +4,7 @@ import { AdminUser, AdminRole, AdminPermissions } from './types';
 export const defaultAdminUsers: AdminUser[] = [
   {
     id: "1",
-    email: "superadmin@ifindlife.com",
+    email: "IFLsuperadmin@ifindlife.com",
     role: "super_admin",
     username: "IFLsuperadmin",
     permissions: {

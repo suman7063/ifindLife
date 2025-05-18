@@ -13,6 +13,11 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
     try {
       console.log('Login function called with email:', email, 'and options:', options);
       
+      if (!email || !password) {
+        toast.error('Email and password are required');
+        return false;
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -20,7 +25,16 @@ export const useAuthLogin = (state: any, onActionComplete: () => void) => {
 
       if (error) {
         console.error('Login error from Supabase:', error);
-        toast.error(error.message);
+        
+        // Provide more user-friendly error messages based on error code
+        if (error.message.includes('Invalid login credentials')) {
+          toast.error('Invalid email or password. Please try again.');
+        } else if (error.message.includes('Email not confirmed')) {
+          toast.error('Please verify your email address before logging in.');
+        } else {
+          toast.error(error.message || 'Login failed. Please try again.');
+        }
+        
         return false;
       }
 
