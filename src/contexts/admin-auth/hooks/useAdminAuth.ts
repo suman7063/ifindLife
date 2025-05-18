@@ -11,3 +11,5 @@ export const useAdminAuth = () => {
   
   return context;
 };
+
+export const useAuth = useAdminAuth; // Add an alias for backward compatibility

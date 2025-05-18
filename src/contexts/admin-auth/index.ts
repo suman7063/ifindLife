@@ -2,7 +2,7 @@
 // Export all admin auth related components and hooks
 export { AdminAuthContext } from './AdminAuthContext';
 export { AdminAuthProvider } from './AdminAuthProvider';
-export { useAdminAuth as useAuth } from './hooks/useAdminAuth';
+export { useAdminAuth, useAuth } from './hooks/useAdminAuth';
 
 // Re-export types for convenience
 export type { 

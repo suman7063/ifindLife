@@ -7,7 +7,6 @@ import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
 
 const AdminLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -40,18 +39,6 @@ const AdminLogin = () => {
     try {
       setIsLoggingIn(true);
       console.log('Attempting admin login for:', username);
-      
-      // Special handling for the superadmin account
-      if (username === 'IFLsuperadmin') {
-        // Use the super admin email instead
-        username = 'IFLsuperadmin@ifindlife.com';
-        
-        // Check if password matches the required password
-        if (password !== 'Freesoul@99IFL') {
-          toast.error('Invalid password for super admin');
-          return false;
-        }
-      }
       
       if (typeof login !== 'function') {
         console.error('Login function is not available');

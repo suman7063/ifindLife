@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -112,12 +113,26 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
     initAuth();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (emailOrUsername: string, password: string): Promise<boolean> => {
     try {
       setLoading(true);
       setError(null);
       
-      console.log('Admin login attempt with email:', email);
+      console.log('Admin login attempt with:', emailOrUsername);
+      
+      // Special handling for IFLsuperadmin
+      if (emailOrUsername === 'IFLsuperadmin') {
+        if (password !== 'Freesoul@99IFL') {
+          toast.error('Invalid password for super admin');
+          return false;
+        }
+        emailOrUsername = 'IFLsuperadmin@ifindlife.com';
+      }
+      
+      // For other users, use email directly
+      const email = emailOrUsername.includes('@') 
+        ? emailOrUsername 
+        : `${emailOrUsername}@ifindlife.com`;
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -126,14 +141,30 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
 
       if (error) {
         console.error('Admin login error:', error);
-        throw error;
+        toast.error(error.message || 'Login failed');
+        return false;
       }
 
       if (data?.user) {
         localStorage.setItem('sessionType', 'admin');
         await fetchAdminUser(data.user.id);
-        toast.success('Successfully logged in as admin');
-        return true;
+        
+        // If no admin user was found in the database but credentials matched,
+        // use default admin data for super admin
+        if (!isAuthenticated && emailOrUsername === 'IFLsuperadmin@ifindlife.com') {
+          const superAdmin = defaultAdminUsers.find(u => u.email === 'IFLsuperadmin@ifindlife.com');
+          if (superAdmin) {
+            setUser(superAdmin);
+            setIsAuthenticated(true);
+            toast.success('Successfully logged in as super admin');
+            return true;
+          }
+        }
+        
+        if (isAuthenticated) {
+          toast.success('Successfully logged in as admin');
+          return true;
+        }
       }
       
       return false;
