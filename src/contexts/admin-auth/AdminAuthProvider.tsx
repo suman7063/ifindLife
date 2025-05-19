@@ -21,7 +21,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
   // Session management hook
   const sessionData = useAdminSession();
   
-  // Authentication hook - Pass the setter functions to the hook
+  // Authentication hook
   const authActions = useAdminAuth();
   
   // Sync session state with our component state

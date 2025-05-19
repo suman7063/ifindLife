@@ -35,8 +35,22 @@ import {
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import PermissionManager from './PermissionManager';
-import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
+import { AdminUser, AdminPermissions, AdminRole } from '@/contexts/admin-auth/types';
 import { isSuperAdmin } from '@/components/admin/utils/permissionUtils';
+
+// Default permissions for new admin users
+const DEFAULT_ADMIN_PERMISSIONS: AdminPermissions = {
+  canManageUsers: false,
+  canManageExperts: true,
+  canManageContent: true,
+  canManageServices: true,
+  canManagePrograms: true,
+  canViewAnalytics: true,
+  canDeleteContent: false,
+  canApproveExperts: false,
+  canManageBlog: true,
+  canManageTestimonials: true
+};
 
 const AdminUsersManager: React.FC = () => {
   const { 
@@ -63,10 +77,15 @@ const AdminUsersManager: React.FC = () => {
     }
     
     try {
+      // Create a complete admin user object with all required properties
       addAdmin({
         username: newUsername,
-        role: 'admin'
+        email: `${newUsername.toLowerCase()}@ifindlife.com`,
+        role: 'admin' as AdminRole,
+        permissions: DEFAULT_ADMIN_PERMISSIONS,
+        lastLogin: new Date().toISOString()
       });
+      
       setNewUsername('');
       setNewPassword('');
       setIsAddDialogOpen(false);

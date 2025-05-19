@@ -2,8 +2,22 @@
 import { useContext } from 'react';
 import { AdminAuthContext } from '../AdminAuthContext';
 import { supabase } from '@/lib/supabase';
-import { AdminUser, AdminRole } from '../types';
+import { AdminUser, AdminRole, AdminPermissions } from '../types';
 import { testCredentials } from '../constants';
+
+// Default permissions for test accounts
+const DEFAULT_PERMISSIONS: AdminPermissions = {
+  canManageUsers: true,
+  canManageExperts: true,
+  canManageContent: true,
+  canManageServices: true,
+  canManagePrograms: true,
+  canViewAnalytics: true,
+  canDeleteContent: true,
+  canApproveExperts: true,
+  canManageBlog: true,
+  canManageTestimonials: true
+};
 
 export const useAdminAuth = () => {
   const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {

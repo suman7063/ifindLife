@@ -1,77 +1,86 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminUser, AdminRole, AdminPermissions } from '../types';
 import { defaultAdminUsers } from '../constants';
 
-export const usePermissions = (currentUser: AdminUser | null) => {
-  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
-
-  const isSuperAdmin = useCallback((user: AdminUser | null): boolean => {
+export const usePermissions = (user: AdminUser | null) => {
+  const [admins, setAdmins] = useState<AdminUser[]>(defaultAdminUsers);
+  
+  // Helper to check if user is a super admin
+  const isSuperAdmin = (user: AdminUser | null): boolean => {
     if (!user) return false;
     return user.role === 'superadmin' || user.role === 'super_admin';
-  }, []);
-
-  const hasPermission = useCallback((user: AdminUser | null, permission: keyof AdminPermissions): boolean => {
+  };
+  
+  // Role checker function
+  const checkRole = (requiredRole: AdminRole | AdminRole[]): boolean => {
+    if (!user) return false;
+    
+    if (Array.isArray(requiredRole)) {
+      return requiredRole.includes(user.role) || isSuperAdmin(user);
+    }
+    
+    return user.role === requiredRole || isSuperAdmin(user);
+  };
+  
+  // Permission checker function
+  const hasPermission = (user: AdminUser | null, permission: keyof AdminPermissions): boolean => {
     if (!user) return false;
     if (isSuperAdmin(user)) return true;
-    return !!user.permissions && !!user.permissions[permission];
-  }, [isSuperAdmin]);
-
-  const checkRole = useCallback((role: AdminRole): boolean => {
-    if (!currentUser) return false;
-    if (isSuperAdmin(currentUser)) return true;
-    return currentUser.role === role;
-  }, [currentUser, isSuperAdmin]);
-
-  const getAdminById = useCallback((id: string): AdminUser | undefined => {
-    return adminUsers.find(admin => admin.id === id);
-  }, [adminUsers]);
-
-  const addAdmin = useCallback((admin: Omit<AdminUser, 'id' | 'createdAt'>): void => {
+    return !!user.permissions?.[permission];
+  };
+  
+  // Get admin by ID
+  const getAdminById = (id: string): AdminUser | undefined => {
+    return admins.find(admin => admin.id === id);
+  };
+  
+  // Add admin
+  const addAdmin = (adminData: Omit<AdminUser, "id" | "createdAt">): void => {
     const newAdmin: AdminUser = {
-      ...admin,
-      id: `admin-${Date.now()}`,
+      id: `admin_${Date.now()}`,
       createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString()
+      ...adminData
     };
-    setAdminUsers(prev => [...prev, newAdmin]);
-  }, []);
-
-  const removeAdmin = useCallback((adminId: string): void => {
-    setAdminUsers(prev => prev.filter(admin => admin.id !== adminId));
-  }, []);
-
-  const updateAdminPermissions = useCallback((adminId: string, permissions: Partial<AdminPermissions>): void => {
-    setAdminUsers(prev => 
+    
+    setAdmins(prev => [...prev, newAdmin]);
+  };
+  
+  // Remove admin
+  const removeAdmin = (adminId: string): void => {
+    setAdmins(prev => prev.filter(admin => admin.id !== adminId));
+  };
+  
+  // Update admin permissions
+  const updateAdminPermissions = (adminId: string, permissions: Partial<AdminPermissions>): void => {
+    setAdmins(prev => 
       prev.map(admin => 
         admin.id === adminId 
-          ? { 
-              ...admin, 
-              permissions: { ...admin.permissions, ...permissions } 
-            } 
+          ? { ...admin, permissions: { ...admin.permissions, ...permissions } }
           : admin
       )
     );
-  }, []);
-
-  const updateAdminRole = useCallback((adminId: string, role: AdminRole): void => {
-    setAdminUsers(prev => 
+  };
+  
+  // Update admin role
+  const updateAdminRole = (adminId: string, role: AdminRole): void => {
+    setAdmins(prev => 
       prev.map(admin => 
         admin.id === adminId 
-          ? { ...admin, role } 
+          ? { ...admin, role }
           : admin
       )
     );
-  }, []);
+  };
 
   return {
     isSuperAdmin,
-    hasPermission,
     checkRole,
+    hasPermission,
     getAdminById,
     addAdmin,
     removeAdmin,
     updateAdminPermissions,
-    updateAdminRole
+    updateAdminRole,
   };
 };
