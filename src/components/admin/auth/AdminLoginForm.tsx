@@ -25,6 +25,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { login: contextLogin } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   
   console.log('AdminLoginForm rendered', {
     hasProvidedLoginFunction: typeof onLogin === 'function',
@@ -41,6 +42,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setDebugInfo(null);
     
     if (!username || !password) {
       setErrorMessage('Please enter both username and password');
@@ -58,6 +60,9 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       setIsSubmitting(true);
       let success = false;
       
+      // Debug the credentials being used
+      setDebugInfo(`Attempting login with username: ${username}`);
+      
       // First try to use the provided login function
       if (typeof onLogin === 'function') {
         success = await onLogin(username, password);
@@ -65,6 +70,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       } 
       // Fall back to context login if provided login fails or doesn't exist
       else if (typeof contextLogin === 'function') {
+        console.log(`Trying contextLogin with "${username}" and password "${password.substring(0, 2)}***"`);
         success = await contextLogin(username, password);
         console.log('Using context login function, result:', success);
       }
@@ -81,10 +87,12 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       } else {
         // Login failed - show error
         setErrorMessage('Invalid username or password. Please check credentials and try again.');
+        setDebugInfo('Login attempt failed. Please check your credentials and try again with the test credentials below.');
       }
     } catch (error) {
       console.error('Login error:', error);
       setErrorMessage('An error occurred during login');
+      setDebugInfo(`Error details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -112,6 +120,14 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
         <Alert variant="destructive">
           <AlertDescription>
             {errorMessage}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {debugInfo && (
+        <Alert>
+          <AlertDescription className="text-amber-600">
+            {debugInfo}
           </AlertDescription>
         </Alert>
       )}

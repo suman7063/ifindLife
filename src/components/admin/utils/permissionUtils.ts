@@ -25,13 +25,13 @@ export const hasAnyPermission = (user: AdminUser | null): boolean => {
 /**
  * Check if the user has a specific permission
  */
-export const hasPermission = (user: AdminUser | null, permissionName: string): boolean => {
+export const hasPermission = (user: AdminUser | null, permissionName: keyof AdminPermissions | string): boolean => {
   if (!user) return false;
   
   // Super admins always have all permissions
   if (isSuperAdmin(user)) return true;
   
-  return !!user.permissions[permissionName];
+  return !!user.permissions[permissionName as keyof AdminPermissions];
 };
 
 /**

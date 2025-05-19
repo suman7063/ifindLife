@@ -122,9 +122,15 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       
       console.log('Admin login attempt with:', emailOrUsername);
       
+      // For development, show the inputs to help debug
+      console.log(`Login credentials - Username: "${emailOrUsername}", Password length: ${password.length}`);
+      
       // Special handling for IFLsuperadmin
       if (emailOrUsername.toLowerCase() === 'iflsuperadmin') {
         console.log('Special handling for IFLsuperadmin');
+        
+        // Debug password matching
+        console.log(`IFLsuperadmin login - Password check: Expected "Freesoul@99IFL", Got "${password}"`);
         
         if (password !== 'Freesoul@99IFL') {
           console.error('Invalid password for IFLsuperadmin');
@@ -154,6 +160,9 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       if (emailOrUsername.toLowerCase() === 'admin') {
         console.log('Direct admin login with username:', emailOrUsername);
         
+        // Debug password matching
+        console.log(`Admin login - Password check: Expected "admin123", Got "${password}"`);
+        
         if (password === 'admin123') {
           // Get admin user from default admin users
           const adminUser = defaultAdminUsers.find(u => u.username === 'admin');
@@ -173,6 +182,9 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         }
       } else if (emailOrUsername.toLowerCase() === 'superadmin') {
         console.log('Direct superadmin login with username:', emailOrUsername);
+        
+        // Debug password matching
+        console.log(`Superadmin login - Password check: Expected "super123", Got "${password}"`);
         
         if (password === 'super123') {
           // Get super admin user from default admin users
