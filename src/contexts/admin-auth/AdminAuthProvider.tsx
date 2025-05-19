@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -121,13 +122,12 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       
       console.log('Admin login attempt with:', emailOrUsername);
       
-      // FIXED: Hardcoded admin credentials for testing
       // Special handling for IFLsuperadmin
       if (emailOrUsername.toLowerCase() === 'iflsuperadmin') {
         console.log('Special handling for IFLsuperadmin');
-        // FIXED: Use the correct test password
+        
         if (password !== 'Freesoul@99IFL') {
-          console.error('Invalid password for super admin');
+          console.error('Invalid password for IFLsuperadmin');
           toast.error('Invalid password for super admin');
           setLoading(false);
           return false;
@@ -150,7 +150,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         }
       }
       
-      // FIXED: Handle direct admin login with username only - use correct passwords
+      // Handle direct admin login with username only
       if (emailOrUsername.toLowerCase() === 'admin') {
         console.log('Direct admin login with username:', emailOrUsername);
         
@@ -165,6 +165,11 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             setLoading(false);
             return true;
           }
+        } else {
+          console.log(`Password mismatch for admin. Expected: admin123, Got: ${password}`);
+          toast.error('Invalid credentials for admin user');
+          setLoading(false);
+          return false;
         }
       } else if (emailOrUsername.toLowerCase() === 'superadmin') {
         console.log('Direct superadmin login with username:', emailOrUsername);
@@ -180,6 +185,11 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             setLoading(false);
             return true;
           }
+        } else {
+          console.log(`Password mismatch for superadmin. Expected: super123, Got: ${password}`);
+          toast.error('Invalid credentials for super admin user');
+          setLoading(false);
+          return false;
         }
       }
       
