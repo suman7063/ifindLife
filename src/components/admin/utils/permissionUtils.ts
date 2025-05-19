@@ -1,5 +1,5 @@
 
-import { AdminUser } from '@/contexts/admin-auth/types';
+import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
 
 /**
  * Check if the user has superadmin privileges
@@ -32,4 +32,28 @@ export const hasPermission = (user: AdminUser | null, permissionName: string): b
   if (isSuperAdmin(user)) return true;
   
   return !!user.permissions[permissionName];
+};
+
+/**
+ * Get all user permissions
+ */
+export const getUserPermissions = (user: AdminUser | null): AdminPermissions => {
+  if (!user) return {};
+  return user.permissions || {};
+};
+
+/**
+ * Default permission set for new admins
+ */
+export const defaultPermissionSet: AdminPermissions = {
+  canManageUsers: false,
+  canManageExperts: false,
+  canManageContent: true,
+  canManageServices: false,
+  canManagePrograms: false,
+  canViewAnalytics: true,
+  canDeleteContent: false,
+  canApproveExperts: false,
+  canManageBlog: false,
+  canManageTestimonials: false
 };

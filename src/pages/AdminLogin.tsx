@@ -46,7 +46,7 @@ const AdminLogin = () => {
         return false;
       }
       
-      // Special handling for superadmin (case insensitive)
+      // Special handling for admin users (case insensitive)
       const normalizedUsername = username.toLowerCase();
       if (normalizedUsername === 'iflsuperadmin' || 
           normalizedUsername === 'superadmin' || 
@@ -61,7 +61,7 @@ const AdminLogin = () => {
         handleLoginSuccess();
         return true;
       } else {
-        toast.error('Login failed. Please check your credentials.');
+        toast.error('Login failed. Please check your credentials and try again.');
         return false;
       }
     } catch (error) {

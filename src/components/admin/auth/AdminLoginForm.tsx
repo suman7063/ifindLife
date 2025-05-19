@@ -80,7 +80,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
         onLoginSuccess(); 
       } else {
         // Login failed - show error
-        setErrorMessage('Invalid username or password');
+        setErrorMessage('Invalid username or password. Please check credentials and try again.');
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -99,9 +99,9 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     return (
       <div className="text-xs text-muted-foreground mt-2">
         <p>For testing:</p>
-        <p>- Username: admin, Password: admin123</p>
-        <p>- Username: superadmin, Password: super123</p>
-        <p>- Username: IFLsuperadmin, Password: Freesoul@99IFL</p>
+        <p>- Username: <strong>admin</strong>, Password: <strong>admin123</strong></p>
+        <p>- Username: <strong>superadmin</strong>, Password: <strong>super123</strong></p>
+        <p>- Username: <strong>IFLsuperadmin</strong>, Password: <strong>Freesoul@99IFL</strong></p>
       </div>
     );
   };

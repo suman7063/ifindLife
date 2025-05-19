@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -122,9 +121,11 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       
       console.log('Admin login attempt with:', emailOrUsername);
       
-      // Special handling for IFLsuperadmin - hardcoded credentials for super admin
+      // FIXED: Hardcoded admin credentials for testing
+      // Special handling for IFLsuperadmin
       if (emailOrUsername.toLowerCase() === 'iflsuperadmin') {
         console.log('Special handling for IFLsuperadmin');
+        // FIXED: Use the correct test password
         if (password !== 'Freesoul@99IFL') {
           console.error('Invalid password for super admin');
           toast.error('Invalid password for super admin');
@@ -137,79 +138,9 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         console.log('Using email format for super admin:', emailOrUsername);
         
         // Create a special hardcoded super admin user
-        const superAdmin: AdminUser = {
-          id: '00000000-0000-0000-0000-000000000000',
-          email: emailOrUsername,
-          username: 'IFLsuperadmin',
-          role: 'super_admin',
-          permissions: {
-            canManageUsers: true,
-            canManageExperts: true,
-            canManageContent: true,
-            canManageServices: true,
-            canManagePrograms: true,
-            canViewAnalytics: true,
-            canDeleteContent: true,
-            canApproveExperts: true
-          },
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        };
+        const superAdmin = defaultAdminUsers.find(u => u.username === 'IFLsuperadmin');
         
-        setUser(superAdmin);
-        setIsAuthenticated(true);
-        localStorage.setItem('sessionType', 'admin');
-        toast.success('Successfully logged in as super admin');
-        setLoading(false);
-        return true;
-      }
-      
-      // Handle direct admin login with username only
-      if (['admin', 'superadmin'].includes(emailOrUsername.toLowerCase())) {
-        console.log('Direct admin login with username:', emailOrUsername);
-        
-        if (emailOrUsername.toLowerCase() === 'admin' && password === 'admin123') {
-          // Create admin user
-          const adminUser: AdminUser = {
-            id: '11111111-1111-1111-1111-111111111111',
-            email: 'admin@ifindlife.com',
-            username: 'admin',
-            role: 'admin',
-            permissions: {
-              canManageContent: true,
-              canViewAnalytics: true
-            },
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString()
-          };
-          
-          setUser(adminUser);
-          setIsAuthenticated(true);
-          localStorage.setItem('sessionType', 'admin');
-          toast.success('Successfully logged in as admin');
-          setLoading(false);
-          return true;
-        } else if (emailOrUsername.toLowerCase() === 'superadmin' && password === 'super123') {
-          // Create super admin user
-          const superAdmin: AdminUser = {
-            id: '22222222-2222-2222-2222-222222222222',
-            email: 'superadmin@ifindlife.com',
-            username: 'superadmin',
-            role: 'superadmin',
-            permissions: {
-              canManageUsers: true,
-              canManageExperts: true,
-              canManageContent: true,
-              canManageServices: true,
-              canManagePrograms: true,
-              canViewAnalytics: true,
-              canDeleteContent: true,
-              canApproveExperts: true
-            },
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString()
-          };
-          
+        if (superAdmin) {
           setUser(superAdmin);
           setIsAuthenticated(true);
           localStorage.setItem('sessionType', 'admin');
@@ -217,14 +148,43 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
           setLoading(false);
           return true;
         }
-        
-        console.error('Invalid credentials for admin login');
-        toast.error('Invalid username or password');
-        setLoading(false);
-        return false;
       }
       
-      // For other users, use email directly or add domain if not provided
+      // FIXED: Handle direct admin login with username only - use correct passwords
+      if (emailOrUsername.toLowerCase() === 'admin') {
+        console.log('Direct admin login with username:', emailOrUsername);
+        
+        if (password === 'admin123') {
+          // Get admin user from default admin users
+          const adminUser = defaultAdminUsers.find(u => u.username === 'admin');
+          if (adminUser) {
+            setUser(adminUser);
+            setIsAuthenticated(true);
+            localStorage.setItem('sessionType', 'admin');
+            toast.success('Successfully logged in as admin');
+            setLoading(false);
+            return true;
+          }
+        }
+      } else if (emailOrUsername.toLowerCase() === 'superadmin') {
+        console.log('Direct superadmin login with username:', emailOrUsername);
+        
+        if (password === 'super123') {
+          // Get super admin user from default admin users
+          const superAdmin = defaultAdminUsers.find(u => u.username === 'superadmin');
+          if (superAdmin) {
+            setUser(superAdmin);
+            setIsAuthenticated(true);
+            localStorage.setItem('sessionType', 'admin');
+            toast.success('Successfully logged in as super admin');
+            setLoading(false);
+            return true;
+          }
+        }
+      }
+      
+      // For other users, use Supabase auth
+      // Only attempt Supabase login if username contains @ or we add the domain
       const email = emailOrUsername.includes('@') 
         ? emailOrUsername 
         : `${emailOrUsername}@ifindlife.com`;
