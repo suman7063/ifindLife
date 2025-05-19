@@ -47,31 +47,26 @@ const AdminLogin = () => {
         return false;
       }
       
-      // Special handling for admin users (case insensitive)
+      // Special handling for IFLsuperadmin (case insensitive)
       const normalizedUsername = username.toLowerCase();
       
-      // Debug - check if it's one of our test users
-      if (normalizedUsername === 'admin' || 
-          normalizedUsername === 'superadmin' || 
-          normalizedUsername === 'iflsuperadmin') {
-        
+      // Debug - check if it's our allowed user
+      if (normalizedUsername === 'iflsuperadmin') {
         console.log('Admin login: Test account detected:', normalizedUsername);
         
         // Get expected password for debugging
-        let expectedPassword = '';
-        if (normalizedUsername === 'admin') {
-          expectedPassword = testCredentials.admin.password;
-        } else if (normalizedUsername === 'superadmin') {
-          expectedPassword = testCredentials.superadmin.password;
-        } else if (normalizedUsername === 'iflsuperadmin') {
-          expectedPassword = testCredentials.iflsuperadmin.password;
-        }
+        const expectedPassword = testCredentials.iflsuperadmin.password;
         
         console.log(`DEBUG - Password check for ${normalizedUsername}:`, {
           expected: expectedPassword,
           provided: password,
           match: password === expectedPassword
         });
+      } else {
+        console.log('Admin login: Only IFLsuperadmin is allowed to log in');
+        toast.error('Invalid username. Only IFLsuperadmin can access the admin panel.');
+        setIsLoggingIn(false);
+        return false;
       }
       
       // Add logs to track login process
@@ -83,6 +78,7 @@ const AdminLogin = () => {
       
       if (success) {
         console.log('Admin login successful');
+        toast.success('Successfully logged in as admin');
         handleLoginSuccess();
         return true;
       } else {

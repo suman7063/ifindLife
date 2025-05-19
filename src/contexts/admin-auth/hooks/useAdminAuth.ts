@@ -27,32 +27,13 @@ export const useAdminAuth = () => {
       // Check for test credentials first
       const normalizedInput = usernameOrEmail.toLowerCase();
       
-      // Try to match against test credentials
-      if (
-        (normalizedInput === testCredentials.admin.username.toLowerCase() && 
-         password === testCredentials.admin.password) ||
-        (normalizedInput === testCredentials.superadmin.username.toLowerCase() && 
-         password === testCredentials.superadmin.password) ||
-        (normalizedInput === testCredentials.iflsuperadmin.username.toLowerCase() && 
-         password === testCredentials.iflsuperadmin.password)
-      ) {
+      // Only check for IFLsuperadmin credentials
+      if (normalizedInput === testCredentials.iflsuperadmin.username.toLowerCase() && 
+         password === testCredentials.iflsuperadmin.password) {
         console.log(`AdminAuth: Test credential match found for ${usernameOrEmail}`);
         
-        // For test cases, we'll use the matched credentials
-        let matchedCredential;
-        
-        if (normalizedInput === testCredentials.admin.username.toLowerCase()) {
-          matchedCredential = testCredentials.admin;
-        } else if (normalizedInput === testCredentials.superadmin.username.toLowerCase()) {
-          matchedCredential = testCredentials.superadmin;
-        } else {
-          matchedCredential = testCredentials.iflsuperadmin;
-        }
-        
-        console.log(`AdminAuth: Logging in as test user ${matchedCredential.username} with role ${matchedCredential.role}`);
-        
         // Use email address with @ifindlife.com domain for Supabase auth
-        const email = `${matchedCredential.username}@ifindlife.com`;
+        const email = `${testCredentials.iflsuperadmin.username}@ifindlife.com`;
         
         // Sign in with Supabase
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -73,43 +54,8 @@ export const useAdminAuth = () => {
         return true;
       }
       
-      // For non-test credentials, try regular Supabase auth
-      // First, check if input is an email or username
-      const isEmail = usernameOrEmail.includes('@');
-      
-      let email = isEmail ? usernameOrEmail : `${usernameOrEmail}@ifindlife.com`;
-      
-      console.log(`AdminAuth: Attempting Supabase auth with ${email}`);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        console.error('AdminAuth: Supabase auth error:', error);
-        return false;
-      }
-      
-      // Check if user exists in admin_users table
-      if (data.user) {
-        const { data: adminData, error: adminError } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-        
-        if (adminError || !adminData) {
-          console.error('AdminAuth: Not an admin user:', adminError);
-          // User exists but not as admin
-          await supabase.auth.signOut();
-          return false;
-        }
-        
-        console.log('AdminAuth: Admin login successful for user ID:', data.user.id);
-        return true;
-      }
-      
+      // For non-IFLsuperadmin accounts, authentication fails
+      console.log('AdminAuth: Invalid credentials - only IFLsuperadmin is allowed');
       return false;
     } catch (error) {
       console.error('AdminAuth: Login error:', error);

@@ -48,19 +48,10 @@ export const useAdminLoginForm = ({ onLogin, onLoginSuccess }: UseAdminLoginForm
       if (typeof onLogin === 'function') {
         console.log(`Trying onLogin with username: "${username}" and password length: ${password.length}`);
         
-        // For debugging - show expected password for test accounts
+        // For debugging - show expected password for IFLsuperadmin
         const normalizedUsername = username.toLowerCase();
-        if (normalizedUsername === 'admin' || 
-            normalizedUsername === 'superadmin' || 
-            normalizedUsername === 'iflsuperadmin') {
-          let expectedPassword = '';
-          if (normalizedUsername === 'admin') {
-            expectedPassword = testCredentials.admin.password;
-          } else if (normalizedUsername === 'superadmin') {
-            expectedPassword = testCredentials.superadmin.password;
-          } else if (normalizedUsername === 'iflsuperadmin') {
-            expectedPassword = testCredentials.iflsuperadmin.password;
-          }
+        if (normalizedUsername === 'iflsuperadmin') {
+          const expectedPassword = testCredentials.iflsuperadmin.password;
           console.log(`DEBUG - Expected password for ${normalizedUsername}: "${expectedPassword}"`);
           console.log(`DEBUG - Password match: ${password === expectedPassword ? 'YES' : 'NO'}`);
         }
@@ -73,26 +64,14 @@ export const useAdminLoginForm = ({ onLogin, onLoginSuccess }: UseAdminLoginForm
           return;
         } else {
           // Login failed - show error with helpful information
-          setErrorMessage('Login failed. Please check your credentials and try again.');
+          setErrorMessage('Login failed. Please check your credentials. Only IFLsuperadmin can log in.');
           
           // Add more helpful debug info
           const normalizedUsername = username.toLowerCase();
-          if (normalizedUsername === 'admin' || 
-              normalizedUsername === 'superadmin' || 
-              normalizedUsername === 'iflsuperadmin') {
-            const credentials = {
-              admin: testCredentials.admin,
-              superadmin: testCredentials.superadmin,
-              iflsuperadmin: testCredentials.iflsuperadmin
-            };
-            
-            const testAccount = Object.entries(credentials).find(
-              ([key]) => key.toLowerCase() === normalizedUsername
-            );
-            
-            if (testAccount) {
-              setDebugInfo(`For this test account "${normalizedUsername}", try the password: "${testAccount[1].password}"`);
-            }
+          if (normalizedUsername === 'iflsuperadmin') {
+            setDebugInfo(`For IFLsuperadmin, try the password: "${testCredentials.iflsuperadmin.password}"`);
+          } else {
+            setDebugInfo('Only IFLsuperadmin is allowed to log in.');
           }
         }
       } else {
