@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 import { toast } from 'sonner';
+import { testCredentials } from '@/contexts/admin-auth/constants';
 
 const AdminLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -49,8 +50,32 @@ const AdminLogin = () => {
       // Special handling for admin users (case insensitive)
       const normalizedUsername = username.toLowerCase();
       
+      // Debug - check if it's one of our test users
+      if (normalizedUsername === 'admin' || 
+          normalizedUsername === 'superadmin' || 
+          normalizedUsername === 'iflsuperadmin') {
+        
+        console.log('Admin login: Test account detected:', normalizedUsername);
+        
+        // Get expected password for debugging
+        let expectedPassword = '';
+        if (normalizedUsername === 'admin') {
+          expectedPassword = testCredentials.admin.password;
+        } else if (normalizedUsername === 'superadmin') {
+          expectedPassword = testCredentials.superadmin.password;
+        } else if (normalizedUsername === 'iflsuperadmin') {
+          expectedPassword = testCredentials.iflsuperadmin.password;
+        }
+        
+        console.log(`DEBUG - Password check for ${normalizedUsername}:`, {
+          expected: expectedPassword,
+          provided: password,
+          match: password === expectedPassword
+        });
+      }
+      
       // Add logs to track login process
-      console.log('Admin login: Starting login process with normalized username:', normalizedUsername);
+      console.log('Admin login: Starting login process with username:', username);
       
       const success = await login(username, password);
       

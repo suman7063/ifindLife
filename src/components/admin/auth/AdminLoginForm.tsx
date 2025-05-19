@@ -57,39 +57,40 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       contextLogin: !!contextLogin
     });
     
-    // Log credentials for debugging
-    const normalizedUsername = username.toLowerCase();
-    let expectedPassword = '';
-    
-    if (normalizedUsername === 'admin') {
-      expectedPassword = testCredentials.admin.password;
-    } else if (normalizedUsername === 'superadmin') {
-      expectedPassword = testCredentials.superadmin.password;
-    } else if (normalizedUsername.toLowerCase() === 'iflsuperadmin') {
-      expectedPassword = testCredentials.iflsuperadmin.password;
-    }
-    
-    if (expectedPassword) {
-      console.log(`DEBUG - Expected password for ${username}: ${expectedPassword}`);
-      console.log(`DEBUG - Password match: ${password === expectedPassword ? 'YES' : 'NO'}`);
-    }
-    
     try {
       setIsSubmitting(true);
       let success = false;
       
       // Debug the credentials being used
-      setDebugInfo(`Attempting login with username: ${username}`);
+      setDebugInfo(`Attempting login with username: "${username}" and password: "${password}"`);
       
       // First try to use the provided login function
       if (typeof onLogin === 'function') {
-        console.log(`Trying onLogin with "${username}" and password "${password.substring(0, 2)}***"`);
+        console.log(`Trying onLogin with username: "${username}" and password length: ${password.length}`);
+        
+        // For debugging - show expected password for test accounts
+        const normalizedUsername = username.toLowerCase();
+        if (normalizedUsername === 'admin' || 
+            normalizedUsername === 'superadmin' || 
+            normalizedUsername === 'iflsuperadmin') {
+          let expectedPassword = '';
+          if (normalizedUsername === 'admin') {
+            expectedPassword = testCredentials.admin.password;
+          } else if (normalizedUsername === 'superadmin') {
+            expectedPassword = testCredentials.superadmin.password;
+          } else if (normalizedUsername === 'iflsuperadmin') {
+            expectedPassword = testCredentials.iflsuperadmin.password;
+          }
+          console.log(`DEBUG - Expected password for ${normalizedUsername}: "${expectedPassword}"`);
+          console.log(`DEBUG - Password match: ${password === expectedPassword ? 'YES' : 'NO'}`);
+        }
+        
         success = await onLogin(username, password);
         console.log('Using provided login function, result:', success);
       } 
       // Fall back to context login if provided login fails or doesn't exist
       else if (typeof contextLogin === 'function') {
-        console.log(`Trying contextLogin with "${username}" and password "${password.substring(0, 2)}***"`);
+        console.log(`Trying contextLogin with username: "${username}" and password length: ${password.length}`);
         success = await contextLogin(username, password);
         console.log('Using context login function, result:', success);
       }
@@ -104,9 +105,28 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
         toast.success('Successfully logged in as administrator');
         onLoginSuccess(); 
       } else {
-        // Login failed - show error
-        setErrorMessage('Invalid username or password. Please check credentials and try again.');
-        setDebugInfo('Login attempt failed. Please check your credentials and try again with the test credentials below.');
+        // Login failed - show error with helpful information
+        setErrorMessage('Login failed. Please check your credentials and try again.');
+        
+        // Add more helpful debug info
+        const normalizedUsername = username.toLowerCase();
+        if (normalizedUsername === 'admin' || 
+            normalizedUsername === 'superadmin' || 
+            normalizedUsername === 'iflsuperadmin') {
+          const credentials = {
+            admin: testCredentials.admin,
+            superadmin: testCredentials.superadmin,
+            iflsuperadmin: testCredentials.iflsuperadmin
+          };
+          
+          const testAccount = Object.entries(credentials).find(
+            ([key]) => key.toLowerCase() === normalizedUsername
+          );
+          
+          if (testAccount) {
+            setDebugInfo(`For this test account "${normalizedUsername}", try the password: "${testAccount[1].password}"`);
+          }
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -125,7 +145,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   const getHelperText = () => {
     return (
       <div className="text-xs text-muted-foreground mt-2">
-        <p>For testing:</p>
+        <p>For testing, try these credentials:</p>
         <p>- Username: <strong>{testCredentials.admin.username}</strong>, Password: <strong>{testCredentials.admin.password}</strong></p>
         <p>- Username: <strong>{testCredentials.superadmin.username}</strong>, Password: <strong>{testCredentials.superadmin.password}</strong></p>
         <p>- Username: <strong>{testCredentials.iflsuperadmin.username}</strong>, Password: <strong>{testCredentials.iflsuperadmin.password}</strong></p>

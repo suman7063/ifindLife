@@ -119,49 +119,54 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       setLoading(true);
       setError(null);
       
-      console.log('Admin login attempt with:', emailOrUsername);
+      console.log('[AdminAuth] Login attempt with:', emailOrUsername);
       
-      // For development, show the inputs to help debug
-      console.log(`Login credentials - Username: "${emailOrUsername}", Password length: ${password.length}`);
+      // For development, show credentials for debugging
+      console.log(`[AdminAuth] Login credentials - Username: "${emailOrUsername}", Password length: ${password.length}`);
       
-      // Handle test admin accounts directly
-      const normalizedUsername = emailOrUsername.toLowerCase();
+      // Handle test admin accounts
+      // Convert username to lowercase for case-insensitive comparison
+      const normalizedInput = emailOrUsername.toLowerCase();
       
       // Check for admin user
-      if (normalizedUsername === 'admin') {
-        console.log('Detected admin login attempt');
-        console.log(`Password check: Expected "${testCredentials.admin.password}", Got "${password}"`);
+      if (normalizedInput === testCredentials.admin.username.toLowerCase()) {
+        console.log('[AdminAuth] Detected admin login attempt');
+        console.log(`[AdminAuth] Password check: Expected "${testCredentials.admin.password}", Got "${password}"`);
         
         if (password === testCredentials.admin.password) {
-          console.log('Admin login successful with hardcoded credentials');
+          console.log('[AdminAuth] Admin login successful with test credentials');
           
           // Get admin user from default admin users
-          const adminUser = defaultAdminUsers.find(u => u.username.toLowerCase() === 'admin');
+          const adminUser = defaultAdminUsers.find(u => 
+            u.username.toLowerCase() === testCredentials.admin.username.toLowerCase());
+          
           if (adminUser) {
             setUser(adminUser);
             setIsAuthenticated(true);
             localStorage.setItem('sessionType', 'admin');
-            toast.success('Successfully logged in as admin');
+            toast.success('Successfully logged in as administrator');
             setLoading(false);
             return true;
           }
         } else {
-          console.log(`Password mismatch for admin user`);
+          console.log(`[AdminAuth] Password mismatch for admin user`);
           toast.error('Invalid credentials for admin user');
           setLoading(false);
           return false;
         }
       } 
       // Check for superadmin user
-      else if (normalizedUsername === 'superadmin') {
-        console.log('Detected superadmin login attempt');
-        console.log(`Password check: Expected "${testCredentials.superadmin.password}", Got "${password}"`);
+      else if (normalizedInput === testCredentials.superadmin.username.toLowerCase()) {
+        console.log('[AdminAuth] Detected superadmin login attempt');
+        console.log(`[AdminAuth] Password check: Expected "${testCredentials.superadmin.password}", Got "${password}"`);
         
         if (password === testCredentials.superadmin.password) {
-          console.log('Superadmin login successful with hardcoded credentials');
+          console.log('[AdminAuth] Superadmin login successful with test credentials');
           
           // Get super admin user from default admin users
-          const superAdmin = defaultAdminUsers.find(u => u.username.toLowerCase() === 'superadmin');
+          const superAdmin = defaultAdminUsers.find(u => 
+            u.username.toLowerCase() === testCredentials.superadmin.username.toLowerCase());
+          
           if (superAdmin) {
             setUser(superAdmin);
             setIsAuthenticated(true);
@@ -171,22 +176,24 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             return true;
           }
         } else {
-          console.log(`Password mismatch for superadmin user`);
+          console.log(`[AdminAuth] Password mismatch for superadmin user`);
           toast.error('Invalid credentials for super admin user');
           setLoading(false);
           return false;
         }
       }
       // Check for IFLsuperadmin user 
-      else if (normalizedUsername === 'iflsuperadmin') {
-        console.log('Detected IFLsuperadmin login attempt');
-        console.log(`Password check: Expected "${testCredentials.iflsuperadmin.password}", Got "${password}"`);
+      else if (normalizedInput === testCredentials.iflsuperadmin.username.toLowerCase()) {
+        console.log('[AdminAuth] Detected IFLsuperadmin login attempt');
+        console.log(`[AdminAuth] Password check: Expected "${testCredentials.iflsuperadmin.password}", Got "${password}"`);
         
         if (password === testCredentials.iflsuperadmin.password) {
-          console.log('IFLsuperadmin login successful with hardcoded credentials');
+          console.log('[AdminAuth] IFLsuperadmin login successful with test credentials');
           
           // Find the IFLsuperadmin user
-          const superAdmin = defaultAdminUsers.find(u => u.username.toLowerCase() === 'iflsuperadmin'.toLowerCase());
+          const superAdmin = defaultAdminUsers.find(u => 
+            u.username.toLowerCase() === testCredentials.iflsuperadmin.username.toLowerCase());
+          
           if (superAdmin) {
             setUser(superAdmin);
             setIsAuthenticated(true);
@@ -196,7 +203,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             return true;
           }
         } else {
-          console.log(`Password mismatch for IFLsuperadmin user`);
+          console.log(`[AdminAuth] Password mismatch for IFLsuperadmin user`);
           toast.error('Invalid credentials for IFL super admin');
           setLoading(false);
           return false;
