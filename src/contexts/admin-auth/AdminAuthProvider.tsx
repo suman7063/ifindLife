@@ -21,8 +21,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
   // Session management hook
   const sessionData = useAdminSession();
   
-  // Authentication hook
-  const authActions = useAdminAuth(setUser, setIsAuthenticated, setLoading, setError);
+  // Authentication hook - Pass the setter functions to the hook
+  const authActions = useAdminAuth();
   
   // Sync session state with our component state
   useEffect(() => {
@@ -59,8 +59,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         loading,
         error,
         isAuthenticated,
-        login: authActions.login,
-        logout: authActions.logout,
+        login: authActions.login || sessionData.login,
+        logout: authActions.logout || sessionData.logout,
         checkRole: permissionsActions.checkRole,
         // Legacy properties for backward compatibility
         currentUser,
