@@ -63,7 +63,10 @@ const AdminUsersManager: React.FC = () => {
     }
     
     try {
-      addAdmin(newUsername, 'admin');
+      addAdmin({
+        username: newUsername,
+        role: 'admin'
+      });
       setNewUsername('');
       setNewPassword('');
       setIsAddDialogOpen(false);
@@ -102,9 +105,12 @@ const AdminUsersManager: React.FC = () => {
     updateAdminPermissions(userId, permissions);
   };
 
+  // Check if the current user is a super admin
+  const userIsSuperAdmin = currentUser ? currentUserIsSuperAdmin(currentUser) : false;
+
   // Cannot delete self or superadmin accounts
   const canDeleteUser = (user: AdminUser): boolean => {
-    return !!currentUserIsSuperAdmin && !isSuperAdmin(user) && 
+    return !!userIsSuperAdmin && !isSuperAdmin(user) && 
            user.username !== 'admin' && currentUser?.id !== user.id;
   };
 
@@ -112,7 +118,7 @@ const AdminUsersManager: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Admin Users</h2>
-        {currentUserIsSuperAdmin && (
+        {userIsSuperAdmin && (
           <Button onClick={() => setIsAddDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> Add Admin
           </Button>
@@ -261,7 +267,7 @@ const AdminUsersManager: React.FC = () => {
             <PermissionManager 
               user={selectedUser}
               onSave={handleUpdatePermissions}
-              isSuperAdmin={currentUserIsSuperAdmin}
+              isSuperAdmin={userIsSuperAdmin}
             />
           )}
         </DialogContent>

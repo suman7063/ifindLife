@@ -59,8 +59,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         loading,
         error,
         isAuthenticated,
-        login: authActions.login || sessionData.login,
-        logout: authActions.logout || sessionData.logout,
+        login: authActions.login,
+        logout: authActions.logout,
         checkRole: permissionsActions.checkRole,
         // Legacy properties for backward compatibility
         currentUser,

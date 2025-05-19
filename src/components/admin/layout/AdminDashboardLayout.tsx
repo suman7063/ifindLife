@@ -45,6 +45,9 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     navigate('/admin-login');
   };
 
+  // Check if current user is a super admin
+  const userIsSuperAdmin = currentUser ? isSuperAdmin(currentUser) : false;
+
   // Get user permissions for display
   const userPermissions = getUserPermissions(currentUser);
 
@@ -56,7 +59,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             activeTab={activeTab} 
             onTabChange={handleTabChange}
             onLogout={handleLogout}
-            isSuperAdmin={isSuperAdmin}
+            isSuperAdmin={userIsSuperAdmin}
             username={currentUser?.username || 'Admin'}
             userPermissions={(currentUser?.permissions || {}) as Record<string, boolean>}
           />
@@ -69,7 +72,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
               
               {/* Display user role badge */}
               <div className="flex items-center gap-2">
-                {isSuperAdmin ? (
+                {userIsSuperAdmin ? (
                   <Badge variant="default" className="bg-green-600">Super Admin</Badge>
                 ) : (
                   <Badge variant="outline">{currentUser?.role || 'Admin'}</Badge>

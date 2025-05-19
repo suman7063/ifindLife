@@ -38,7 +38,7 @@ const AdminUserManagement: React.FC = () => {
   }
   
   // Check if user has permission to manage users
-  if (!isSuperAdmin && !hasPermission('canManageUsers')) {
+  if (!isSuperAdmin(currentUser) && !hasPermission(currentUser, 'canManageUsers')) {
     return (
       <Card>
         <CardHeader>
@@ -74,7 +74,7 @@ const AdminUserManagement: React.FC = () => {
                   <span className="font-semibold">{admin.username}</span>
                   <span className="ml-2 text-sm text-muted-foreground">({admin.role})</span>
                 </div>
-                {admin.id !== currentUser.id && isSuperAdmin && (
+                {admin.id !== currentUser.id && isSuperAdmin(currentUser) && (
                   <Button variant="destructive" size="sm">Remove</Button>
                 )}
               </div>
@@ -82,7 +82,7 @@ const AdminUserManagement: React.FC = () => {
           </div>
         </div>
         
-        {isSuperAdmin && (
+        {isSuperAdmin(currentUser) && (
           <div className="mt-6">
             <h3 className="font-medium mb-2">Add New Admin</h3>
             <div className="flex gap-2">

@@ -2,7 +2,7 @@
 import { useContext } from 'react';
 import { AdminAuthContext } from '../AdminAuthContext';
 import { supabase } from '@/lib/supabase';
-import { AdminUser } from '../types';
+import { AdminUser, AdminRole } from '../types';
 import { testCredentials } from '../constants';
 
 export const useAdminAuth = () => {
