@@ -1,81 +1,45 @@
 
-import React, { useState, useEffect, ReactNode } from 'react';
-import { AdminAuthContext } from './AdminAuthContext';
-import { AdminUser, initialAuthState } from './types';
-import { defaultAdminUsers } from './constants';
-import { useAdminSession } from './hooks/useAdminSession';
-import { useAdminAuth } from './hooks/useAdminAuth';
-import { usePermissions } from './hooks/usePermissions';
+import React, { ReactNode, createContext, useContext } from 'react';
+import { useAdminAuth } from './useAdminAuth';
+import { AdminUser } from './types';
 
-interface AdminAuthProviderProps {
-  children: ReactNode;
+interface AdminAuthContextType {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  currentUser: AdminUser | null;
+  login: (usernameOrEmail: string, password: string) => Promise<boolean>;
+  logout: () => Promise<boolean>;
 }
 
-export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }) => {
-  // State
-  const [user, setUser] = useState<AdminUser | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+// Create context with default values
+export const AdminAuthContext = createContext<AdminAuthContextType>({
+  isAuthenticated: false,
+  isLoading: true,
+  currentUser: null,
+  login: async () => false,
+  logout: async () => false
+});
 
-  // Session management hook
-  const sessionData = useAdminSession();
-  
-  // Authentication hook
-  const authActions = useAdminAuth();
-  
-  // Sync session state with our component state
-  useEffect(() => {
-    setUser(sessionData.user);
-    setIsAuthenticated(sessionData.isAuthenticated);
-    setLoading(sessionData.loading);
-    setError(sessionData.error);
-  }, [
-    sessionData.user, 
-    sessionData.isAuthenticated, 
-    sessionData.loading, 
-    sessionData.error
-  ]);
-  
-  // Permissions hook
-  const permissionsActions = usePermissions(user);
+// Hook to use the admin auth context
+export const useAuth = (): AdminAuthContextType => {
+  return useContext(AdminAuthContext);
+};
 
-  // Computed values
-  const adminUsers = user 
-    ? [user, ...defaultAdminUsers.filter(u => u.id !== user.id)] 
-    : defaultAdminUsers;
+// Provider component
+export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const adminAuth = useAdminAuth();
   
-  const permissions = user?.permissions || {};
-
-  // Map legacy property names to new properties
-  const currentUser = user;
-  const isLoading = loading;
+  // Context value
+  const value: AdminAuthContextType = {
+    isAuthenticated: adminAuth.isAuthenticated,
+    isLoading: adminAuth.isLoading,
+    currentUser: adminAuth.currentUser,
+    login: adminAuth.login,
+    logout: adminAuth.logout
+  };
 
   return (
-    <AdminAuthContext.Provider
-      value={{
-        user,
-        session: sessionData.session,
-        loading,
-        error,
-        isAuthenticated,
-        login: authActions.login,
-        logout: authActions.logout,
-        checkRole: permissionsActions.checkRole,
-        // Legacy properties for backward compatibility
-        currentUser,
-        isSuperAdmin: permissionsActions.isSuperAdmin,
-        adminUsers,
-        addAdmin: permissionsActions.addAdmin,
-        removeAdmin: permissionsActions.removeAdmin,
-        updateAdminPermissions: permissionsActions.updateAdminPermissions,
-        hasPermission: permissionsActions.hasPermission,
-        getAdminById: permissionsActions.getAdminById,
-        updateAdminRole: permissionsActions.updateAdminRole,
-        permissions,
-        isLoading
-      }}
-    >
+    <AdminAuthContext.Provider value={value}>
       {children}
     </AdminAuthContext.Provider>
   );

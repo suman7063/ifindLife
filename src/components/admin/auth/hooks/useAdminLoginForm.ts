@@ -41,15 +41,20 @@ export const useAdminLoginForm = ({ onLogin, onLoginSuccess }: UseAdminLoginForm
     try {
       setIsSubmitting(true);
       
-      // Debug the credentials being used
-      setDebugInfo(`Attempting login with username: "${username}" and password: "${password}"`);
+      // Only allow IFLsuperadmin to log in
+      const normalizedUsername = username.toLowerCase();
+      if (normalizedUsername !== testCredentials.iflsuperadmin.username.toLowerCase()) {
+        setErrorMessage('Login failed. Only IFLsuperadmin can log in.');
+        setDebugInfo('Only IFLsuperadmin is allowed to log in.');
+        setIsSubmitting(false);
+        return;
+      }
       
       // Try to use the provided login function
       if (typeof onLogin === 'function') {
         console.log(`Trying onLogin with username: "${username}" and password length: ${password.length}`);
         
         // For debugging - show expected password for IFLsuperadmin
-        const normalizedUsername = username.toLowerCase();
         if (normalizedUsername === 'iflsuperadmin') {
           const expectedPassword = testCredentials.iflsuperadmin.password;
           console.log(`DEBUG - Expected password for ${normalizedUsername}: "${expectedPassword}"`);
@@ -67,7 +72,6 @@ export const useAdminLoginForm = ({ onLogin, onLoginSuccess }: UseAdminLoginForm
           setErrorMessage('Login failed. Please check your credentials. Only IFLsuperadmin can log in.');
           
           // Add more helpful debug info
-          const normalizedUsername = username.toLowerCase();
           if (normalizedUsername === 'iflsuperadmin') {
             setDebugInfo(`For IFLsuperadmin, try the password: "${testCredentials.iflsuperadmin.password}"`);
           } else {
