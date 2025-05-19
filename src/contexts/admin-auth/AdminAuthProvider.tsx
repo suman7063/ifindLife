@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, ReactNode } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { AdminAuthContext } from './AdminAuthContext';
 import { AdminUser, AdminRole, AdminPermissions, initialAuthState } from './types';
-import { defaultAdminUsers } from './constants';
+import { defaultAdminUsers, testCredentials } from './constants';
 import { toast } from 'sonner';
 
 interface AdminAuthProviderProps {
@@ -125,47 +124,19 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       // For development, show the inputs to help debug
       console.log(`Login credentials - Username: "${emailOrUsername}", Password length: ${password.length}`);
       
-      // Special handling for IFLsuperadmin
-      if (emailOrUsername.toLowerCase() === 'iflsuperadmin') {
-        console.log('Special handling for IFLsuperadmin');
-        
-        // Debug password matching
-        console.log(`IFLsuperadmin login - Password check: Expected "Freesoul@99IFL", Got "${password}"`);
-        
-        if (password !== 'Freesoul@99IFL') {
-          console.error('Invalid password for IFLsuperadmin');
-          toast.error('Invalid password for super admin');
-          setLoading(false);
-          return false;
-        }
-        
-        // Super admin uses this email format
-        emailOrUsername = 'IFLsuperadmin@ifindlife.com';
-        console.log('Using email format for super admin:', emailOrUsername);
-        
-        // Create a special hardcoded super admin user
-        const superAdmin = defaultAdminUsers.find(u => u.username === 'IFLsuperadmin');
-        
-        if (superAdmin) {
-          setUser(superAdmin);
-          setIsAuthenticated(true);
-          localStorage.setItem('sessionType', 'admin');
-          toast.success('Successfully logged in as super admin');
-          setLoading(false);
-          return true;
-        }
-      }
+      // Handle test admin accounts directly
+      const normalizedUsername = emailOrUsername.toLowerCase();
       
-      // Handle direct admin login with username only
-      if (emailOrUsername.toLowerCase() === 'admin') {
-        console.log('Direct admin login with username:', emailOrUsername);
+      // Check for admin user
+      if (normalizedUsername === 'admin') {
+        console.log('Detected admin login attempt');
+        console.log(`Password check: Expected "${testCredentials.admin.password}", Got "${password}"`);
         
-        // Debug password matching
-        console.log(`Admin login - Password check: Expected "admin123", Got "${password}"`);
-        
-        if (password === 'admin123') {
+        if (password === testCredentials.admin.password) {
+          console.log('Admin login successful with hardcoded credentials');
+          
           // Get admin user from default admin users
-          const adminUser = defaultAdminUsers.find(u => u.username === 'admin');
+          const adminUser = defaultAdminUsers.find(u => u.username.toLowerCase() === 'admin');
           if (adminUser) {
             setUser(adminUser);
             setIsAuthenticated(true);
@@ -175,20 +146,22 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             return true;
           }
         } else {
-          console.log(`Password mismatch for admin. Expected: admin123, Got: ${password}`);
+          console.log(`Password mismatch for admin user`);
           toast.error('Invalid credentials for admin user');
           setLoading(false);
           return false;
         }
-      } else if (emailOrUsername.toLowerCase() === 'superadmin') {
-        console.log('Direct superadmin login with username:', emailOrUsername);
+      } 
+      // Check for superadmin user
+      else if (normalizedUsername === 'superadmin') {
+        console.log('Detected superadmin login attempt');
+        console.log(`Password check: Expected "${testCredentials.superadmin.password}", Got "${password}"`);
         
-        // Debug password matching
-        console.log(`Superadmin login - Password check: Expected "super123", Got "${password}"`);
-        
-        if (password === 'super123') {
+        if (password === testCredentials.superadmin.password) {
+          console.log('Superadmin login successful with hardcoded credentials');
+          
           // Get super admin user from default admin users
-          const superAdmin = defaultAdminUsers.find(u => u.username === 'superadmin');
+          const superAdmin = defaultAdminUsers.find(u => u.username.toLowerCase() === 'superadmin');
           if (superAdmin) {
             setUser(superAdmin);
             setIsAuthenticated(true);
@@ -198,13 +171,39 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
             return true;
           }
         } else {
-          console.log(`Password mismatch for superadmin. Expected: super123, Got: ${password}`);
+          console.log(`Password mismatch for superadmin user`);
           toast.error('Invalid credentials for super admin user');
           setLoading(false);
           return false;
         }
       }
+      // Check for IFLsuperadmin user 
+      else if (normalizedUsername === 'iflsuperadmin') {
+        console.log('Detected IFLsuperadmin login attempt');
+        console.log(`Password check: Expected "${testCredentials.iflsuperadmin.password}", Got "${password}"`);
+        
+        if (password === testCredentials.iflsuperadmin.password) {
+          console.log('IFLsuperadmin login successful with hardcoded credentials');
+          
+          // Find the IFLsuperadmin user
+          const superAdmin = defaultAdminUsers.find(u => u.username.toLowerCase() === 'iflsuperadmin'.toLowerCase());
+          if (superAdmin) {
+            setUser(superAdmin);
+            setIsAuthenticated(true);
+            localStorage.setItem('sessionType', 'admin');
+            toast.success('Successfully logged in as super admin');
+            setLoading(false);
+            return true;
+          }
+        } else {
+          console.log(`Password mismatch for IFLsuperadmin user`);
+          toast.error('Invalid credentials for IFL super admin');
+          setLoading(false);
+          return false;
+        }
+      }
       
+      // If none of the hardcoded admin users matched, try with Supabase
       // For other users, use Supabase auth
       // Only attempt Supabase login if username contains @ or we add the domain
       const email = emailOrUsername.includes('@') 

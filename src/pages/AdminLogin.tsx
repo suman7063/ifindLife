@@ -48,20 +48,9 @@ const AdminLogin = () => {
       
       // Special handling for admin users (case insensitive)
       const normalizedUsername = username.toLowerCase();
-      if (normalizedUsername === 'iflsuperadmin' || 
-          normalizedUsername === 'superadmin' || 
-          normalizedUsername === 'admin') {
-        console.log('Admin login: Detected special admin username');
-        
-        // Add specific password debugging for test accounts
-        if (normalizedUsername === 'admin') {
-          console.log('Admin test account: Password should be "admin123"');
-        } else if (normalizedUsername === 'superadmin') {
-          console.log('Superadmin test account: Password should be "super123"');
-        } else if (normalizedUsername === 'iflsuperadmin') {
-          console.log('IFLsuperadmin test account: Password should be "Freesoul@99IFL"');
-        }
-      }
+      
+      // Add logs to track login process
+      console.log('Admin login: Starting login process with normalized username:', normalizedUsername);
       
       const success = await login(username, password);
       

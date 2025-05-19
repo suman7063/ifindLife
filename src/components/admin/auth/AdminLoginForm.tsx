@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { testCredentials } from '@/contexts/admin-auth/constants';
 
 interface AdminLoginFormProps {
   onLoginSuccess: () => void;
@@ -23,9 +24,9 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   const { login: contextLogin } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string | null>(null);
   
   console.log('AdminLoginForm rendered', {
     hasProvidedLoginFunction: typeof onLogin === 'function',
@@ -56,6 +57,23 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       contextLogin: !!contextLogin
     });
     
+    // Log credentials for debugging
+    const normalizedUsername = username.toLowerCase();
+    let expectedPassword = '';
+    
+    if (normalizedUsername === 'admin') {
+      expectedPassword = testCredentials.admin.password;
+    } else if (normalizedUsername === 'superadmin') {
+      expectedPassword = testCredentials.superadmin.password;
+    } else if (normalizedUsername.toLowerCase() === 'iflsuperadmin') {
+      expectedPassword = testCredentials.iflsuperadmin.password;
+    }
+    
+    if (expectedPassword) {
+      console.log(`DEBUG - Expected password for ${username}: ${expectedPassword}`);
+      console.log(`DEBUG - Password match: ${password === expectedPassword ? 'YES' : 'NO'}`);
+    }
+    
     try {
       setIsSubmitting(true);
       let success = false;
@@ -65,6 +83,7 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
       
       // First try to use the provided login function
       if (typeof onLogin === 'function') {
+        console.log(`Trying onLogin with "${username}" and password "${password.substring(0, 2)}***"`);
         success = await onLogin(username, password);
         console.log('Using provided login function, result:', success);
       } 
@@ -107,9 +126,9 @@ const AdminLoginForm: React.FC<AdminLoginFormProps> = ({
     return (
       <div className="text-xs text-muted-foreground mt-2">
         <p>For testing:</p>
-        <p>- Username: <strong>admin</strong>, Password: <strong>admin123</strong></p>
-        <p>- Username: <strong>superadmin</strong>, Password: <strong>super123</strong></p>
-        <p>- Username: <strong>IFLsuperadmin</strong>, Password: <strong>Freesoul@99IFL</strong></p>
+        <p>- Username: <strong>{testCredentials.admin.username}</strong>, Password: <strong>{testCredentials.admin.password}</strong></p>
+        <p>- Username: <strong>{testCredentials.superadmin.username}</strong>, Password: <strong>{testCredentials.superadmin.password}</strong></p>
+        <p>- Username: <strong>{testCredentials.iflsuperadmin.username}</strong>, Password: <strong>{testCredentials.iflsuperadmin.password}</strong></p>
       </div>
     );
   };

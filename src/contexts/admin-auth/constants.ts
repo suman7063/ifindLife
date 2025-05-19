@@ -59,3 +59,22 @@ export const defaultAdminUsers: AdminUser[] = [
     lastLogin: new Date().toISOString()
   }
 ];
+
+// Define test credentials that match what's displayed to users
+export const testCredentials = {
+  admin: {
+    username: 'admin',
+    password: 'admin123',
+    role: 'admin'
+  },
+  superadmin: {
+    username: 'superadmin',
+    password: 'super123',
+    role: 'superadmin'
+  },
+  iflsuperadmin: {
+    username: 'IFLsuperadmin',
+    password: 'Freesoul@99IFL',
+    role: 'super_admin'
+  }
+};
