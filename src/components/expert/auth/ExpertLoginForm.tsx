@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ExpertLoginFormProps {
@@ -101,7 +101,14 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
           className="w-full" 
           disabled={isLoggingIn || !email || !password}
         >
-          {isLoggingIn ? 'Signing in...' : 'Sign In'}
+          {isLoggingIn ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> 
+              Signing in...
+            </>
+          ) : (
+            'Sign In'
+          )}
         </Button>
       </form>
       

@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
+import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -14,17 +14,15 @@ const ExpertLogin: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
-  const auth = useExpertAuth();
+  const { currentExpert, isAuthenticated, isLoading, login } = useExpertAuth();
   const navigate = useNavigate();
   
-  // Enhanced debug logging
+  // Check for existing authentication
   useEffect(() => {
-    console.log('ExpertLogin: Auth context state:', {
-      isAuthenticated: auth?.isAuthenticated,
-      isLoading: auth?.isLoading,
-      hasExpertProfile: !!auth?.currentExpert,
-      role: typeof auth?.login === 'function' ? 'available' : 'missing',
-      authKeys: Object.keys(auth || {})
+    console.log('ExpertLogin: Auth state:', {
+      isAuthenticated,
+      hasExpertProfile: !!currentExpert,
+      isLoading
     });
 
     // Check status from URL parameters
@@ -35,39 +33,35 @@ const ExpertLogin: React.FC = () => {
       toast.error('Your expert account application has been disapproved.');
     }
 
-    // Only redirect if fully loaded and actually authenticated as expert
-    if (!auth.isLoading && auth.isAuthenticated && auth.currentExpert) {
+    // Redirect if already authenticated
+    if (!isLoading && isAuthenticated && currentExpert) {
       console.log('Already authenticated as expert, redirecting to dashboard');
       navigate('/expert-dashboard', { replace: true });
     }
-  }, [auth, navigate, searchParams]);
+  }, [isAuthenticated, currentExpert, isLoading, navigate, searchParams]);
 
-  // Handle login with better error handling
+  // Handle login with proper error handling
   const handleLogin = async (email: string, password: string) => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      console.log('ExpertLogin: Attempting login with:', {
-        email,
-        hasLoginFunction: typeof auth?.login === 'function'
-      });
+      console.log('ExpertLogin: Attempting login with:', email);
       
-      if (!auth || typeof auth.login !== 'function') {
+      if (typeof login !== 'function') {
         console.error('ExpertLogin: Login function not available');
         setLoginError('Authentication service is not available. Please try again later.');
         toast.error('Authentication service is not available. Please try again later.');
         return false;
       }
       
-      // Using login with explicit asExpert option
-      const success = await auth.login(email, password);
+      const success = await login(email, password);
       
       if (success) {
         console.log('Expert login successful, will redirect shortly');
         toast.success('Login successful!');
         
-        // Set session type again to ensure consistency
+        // Set session type to ensure consistency
         localStorage.setItem('sessionType', 'expert');
         localStorage.setItem('preferredRole', 'expert');
         
@@ -79,8 +73,8 @@ const ExpertLogin: React.FC = () => {
         return true;
       } else {
         console.error('Expert login failed');
-        setLoginError('Invalid username or password. Please check your credentials and try again.');
-        toast.error('Invalid username or password. Please check your credentials and try again.');
+        setLoginError('Invalid email or password. Please check your credentials and try again.');
+        toast.error('Invalid email or password. Please check your credentials and try again.');
         return false;
       }
     } catch (error) {
@@ -93,7 +87,7 @@ const ExpertLogin: React.FC = () => {
     }
   };
 
-  if (auth.isLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
