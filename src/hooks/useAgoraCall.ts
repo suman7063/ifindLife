@@ -20,7 +20,7 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
     formatTime
   } = useCallTimer(expertPrice);
   
-  // Helper function to calculate final cost
+  // Instead of returning a function that returns a function, directly return the calculation function
   const getCostCalculator = () => {
     return calculateFinalCost;
   };
