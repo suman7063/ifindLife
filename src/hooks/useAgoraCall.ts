@@ -38,7 +38,7 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
     callState,
     startTimers,
     stopTimers,
-    getCostCalculator()
+    getCostCalculator
   );
 
   return {

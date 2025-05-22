@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import AgoraChatTypeSelector from '@/components/chat/AgoraChatTypeSelector';
@@ -32,11 +32,10 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
   const {
     duration,
     cost,
-    remainingFreeTime,
+    remainingTime: remainingFreeTime,
     formatTime,
-    startTimer,
-    pauseTimer,
-    resetTimer
+    startTimers,
+    stopTimers
   } = useCallTimer(expert.price);
 
   // Helper function to calculate final cost
@@ -55,8 +54,8 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
     expert.id,
     setCallState,
     callState,
-    startTimer,
-    pauseTimer,
+    startTimers,
+    stopTimers,
     calculateFinalCost
   );
 

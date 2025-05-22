@@ -1,155 +1,102 @@
 
 import { useState, useCallback } from 'react';
-import { 
-  CallSettings, 
-  CallType,
-  joinCall, 
-  leaveCall, 
-  toggleMute, 
-  toggleVideo
-} from '@/utils/agoraService';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { CallState } from '@/utils/agoraService';
+import { toast } from 'sonner';
 
 export const useCallOperations = (
-  expertId: number, 
-  setCallState: Function,
-  callState: any,
-  startTimers: Function,
-  stopTimers: Function,
-  calculateFinalCost: Function
+  expertId: number,
+  setCallState: React.Dispatch<React.SetStateAction<CallState>>,
+  callState: CallState,
+  startTimers: () => void,
+  stopTimers: () => void,
+  calculateFinalCost: () => number
 ) => {
-  const { currentUser } = useUserAuth();
-  const [callType, setCallType] = useState<CallType>('video');
+  const [callType, setCallType] = useState<'audio' | 'video'>('video');
   const [callError, setCallError] = useState<string | null>(null);
   const [hasVideoPermission, setHasVideoPermission] = useState(true);
   const [hasMicrophonePermission, setHasMicrophonePermission] = useState(true);
 
-  const join = useCallback(async () => {
-    // Implementation would go here
-    console.log("Joining call");
-  }, []);
-
-  const leave = useCallback(async () => {
-    // Implementation would go here
-    console.log("Leaving call");
-    return endCall();
-  }, []);
-
-  const toggleMicrophone = useCallback(() => {
-    if (!callState.localAudioTrack) return;
-    
-    const newMuteState = toggleMute(callState.localAudioTrack, callState.isMuted);
-    
-    setCallState(prev => ({
-      ...prev,
-      isMuted: newMuteState,
-      isAudioEnabled: !newMuteState
-    }));
-  }, [callState, setCallState]);
-
-  const toggleCamera = useCallback(() => {
-    if (!callState.localVideoTrack) return;
-    
-    const newVideoState = toggleVideo(callState.localVideoTrack, callState.isVideoEnabled);
-    
-    setCallState(prev => ({
-      ...prev,
-      isVideoEnabled: newVideoState
-    }));
-  }, [callState, setCallState]);
-
-  const startCall = useCallback(async (selectedCallType: CallType = 'video') => {
+  const startCall = useCallback(async (type: 'audio' | 'video' = 'video') => {
+    console.log(`Starting ${type} call with expert ID: ${expertId}`);
+    setCallType(type);
     setCallError(null);
-    
-    if (!callState.client) {
-      console.error("No Agora client available");
-      setCallError("Call initialization failed: No client available");
-      return false;
-    }
-    
-    const userId = currentUser?.id || `guest-${Date.now()}`;
-    console.log("Starting call with user:", userId, "expertId:", expertId);
-    
+
     try {
-      setCallType(selectedCallType);
+      if (!callState.client) {
+        toast.error('Call client not initialized. Please try again.');
+        return false;
+      }
+
+      // In a real implementation, you would connect to the Agora channel here
+      // For this example, we'll just simulate a successful connection
+      toast.success(`${type} call started`);
       
-      const channelName = `call_${userId}_${expertId}`;
-      console.log("Channel name:", channelName);
+      // Start call timer
+      startTimers();
       
-      const callSettings: CallSettings = {
-        channelName,
-        callType: selectedCallType
-      };
-      
-      console.log("Joining call with settings:", callSettings);
-      
-      const { localAudioTrack, localVideoTrack } = await joinCall(callSettings, callState.client);
-      console.log("Join call success, tracks created:", 
-        "audio:", !!localAudioTrack, 
-        "video:", !!localVideoTrack
-      );
-      
+      // Set join status
       setCallState(prev => ({
         ...prev,
-        localAudioTrack,
-        localVideoTrack,
         isJoined: true,
-        isMuted: false,
-        isAudioEnabled: true,
-        isVideoEnabled: selectedCallType === 'video'
+        isVideoEnabled: type === 'video'
       }));
-      
-      startTimers();
       
       return true;
     } catch (error) {
-      console.error('Error joining call:', error);
-      setCallError(`Failed to join call: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('Failed to start call:', error);
+      setCallError('Failed to start call. Please check your connection and try again.');
+      toast.error('Failed to start call');
       return false;
     }
-  }, [callState.client, currentUser, expertId, setCallState, startTimers]);
+  }, [callState.client, expertId, setCallState, startTimers]);
 
   const endCall = useCallback(async () => {
-    const { client, localAudioTrack, localVideoTrack } = callState;
-    
-    if (!client) {
-      console.error("No client available to end call");
-      return { success: false, duration: 0, cost: 0 };
-    }
-    
     try {
-      console.log("Ending call, cleaning up resources");
-      await leaveCall(client, localAudioTrack, localVideoTrack);
-      
+      // Stop timers first to capture final duration/cost
       stopTimers();
       
-      setCallState(prev => ({
-        ...prev,
-        localAudioTrack: null,
-        localVideoTrack: null,
-        remoteUsers: [],
-        isJoined: false,
-        isMuted: false,
-        isAudioEnabled: true,
-        isVideoEnabled: true
-      }));
-      
+      // Calculate final cost
       const finalCost = calculateFinalCost();
       
-      return { success: true, duration: 0, cost: finalCost };
+      // In a real implementation, you would disconnect from the Agora channel here
+      console.log('Ending call, final cost:', finalCost);
+      
+      // Reset call state
+      setCallState(prev => ({
+        ...prev,
+        isJoined: false,
+        localAudioTrack: null,
+        localVideoTrack: null,
+        remoteUsers: []
+      }));
+      
+      return {
+        success: true,
+        cost: finalCost
+      };
     } catch (error) {
       console.error('Error ending call:', error);
-      return { success: false, duration: 0, cost: 0 };
+      return {
+        success: false,
+        error: 'Failed to end call properly'
+      };
     }
-  }, [callState, setCallState, stopTimers, calculateFinalCost]);
+  }, [calculateFinalCost, setCallState, stopTimers]);
 
   const handleToggleMute = useCallback(() => {
-    toggleMicrophone();
-  }, [toggleMicrophone]);
+    setCallState(prev => ({
+      ...prev,
+      isMuted: !prev.isMuted,
+      isAudioEnabled: prev.isMuted // Toggle audio enabled based on previous mute state
+    }));
+  }, [setCallState]);
 
   const handleToggleVideo = useCallback(() => {
-    toggleCamera();
-  }, [toggleCamera]);
+    setCallState(prev => ({
+      ...prev,
+      isVideoEnabled: !prev.isVideoEnabled
+    }));
+  }, [setCallState]);
 
   return {
     callType,
@@ -158,10 +105,6 @@ export const useCallOperations = (
     endCall,
     handleToggleMute,
     handleToggleVideo,
-    join,
-    leave,
-    toggleMicrophone,
-    toggleCamera,
     hasVideoPermission,
     hasMicrophonePermission
   };

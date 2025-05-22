@@ -1,63 +1,58 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MessageCircle } from 'lucide-react';
+import { MessageSquare, Video } from 'lucide-react';
+
+type ChatType = 'text' | 'video';
 
 interface AgoraChatTypeSelectorProps {
   expert: {
     id: number;
     name: string;
-    imageUrl: string;
+    imageUrl?: string;
     price: number;
   };
-  onSelectChatType: (type: 'text' | 'video') => void;
+  onSelectChatType: (type: ChatType) => void;
 }
 
-const AgoraChatTypeSelector: React.FC<AgoraChatTypeSelectorProps> = ({ expert, onSelectChatType }) => {
-  // Chat has a discounted price compared to calls
-  const chatPrice = Math.round(expert.price * 0.7); // 30% discount for chat
-  
+const AgoraChatTypeSelector: React.FC<AgoraChatTypeSelectorProps> = ({
+  expert,
+  onSelectChatType
+}) => {
   return (
-    <Card className="border-0 shadow-none">
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">Chat with {expert.name}</CardTitle>
-        <CardDescription>
-          Start a text conversation with {expert.name} for real-time guidance
-        </CardDescription>
-      </CardHeader>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Choose chat type:</h3>
       
-      <CardContent className="space-y-6 pb-2">
-        <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer">
-          <CardContent className="pt-6 pb-4 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-4">
-              <MessageCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-            </div>
-            <h3 className="font-medium text-lg">Text Chat</h3>
-            <p className="text-sm text-muted-foreground mt-2">
-              Connect through text messaging for convenient communication
-            </p>
-            <p className="mt-4 font-medium">₹{chatPrice}/min</p>
-          </CardContent>
-          <CardFooter className="pt-0">
-            <Button 
-              className="w-full" 
-              onClick={() => onSelectChatType('text')}
-            >
-              Start Chat Session
-            </Button>
-          </CardFooter>
-        </Card>
-        
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-md">
-          <div className="flex gap-2">
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              The first 15 minutes are free. After that, you'll be charged at ₹{chatPrice} per minute.
-            </p>
+      <div className="flex flex-col md:flex-row gap-3">
+        <Button 
+          onClick={() => onSelectChatType('text')}
+          className="flex items-center justify-center gap-2 py-6"
+          variant="outline"
+        >
+          <MessageSquare className="h-5 w-5" />
+          <div>
+            <div className="font-medium">Text Chat</div>
+            <div className="text-xs text-muted-foreground">₹{expert.price}/min</div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </Button>
+        
+        <Button 
+          onClick={() => onSelectChatType('video')}
+          className="flex items-center justify-center gap-2 py-6"
+          variant="outline"
+        >
+          <Video className="h-5 w-5" />
+          <div>
+            <div className="font-medium">Video Chat</div>
+            <div className="text-xs text-muted-foreground">₹{expert.price}/min</div>
+          </div>
+        </Button>
+      </div>
+      
+      <p className="text-sm text-muted-foreground mt-4">
+        You will be charged ₹{expert.price} per minute. Free session starts with 3 minutes.
+      </p>
+    </div>
   );
 };
 
