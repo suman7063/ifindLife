@@ -3,8 +3,10 @@ import { useCallState } from './call/useCallState';
 import { useCallTimer } from './call/useCallTimer';
 import { useCallOperations } from './call/useCallOperations';
 
+// This hook only initializes the necessary state but doesn't load Agora SDK
+// until the startCall function is actually called
 export const useAgoraCall = (expertId: number, expertPrice: number) => {
-  const { callState, setCallState } = useCallState();
+  const { callState, setCallState, initializeCall } = useCallState();
   
   const {
     duration,
@@ -31,7 +33,8 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
     callState,
     startTimers,
     stopTimers,
-    calculateFinalCost
+    calculateFinalCost,
+    initializeCall
   );
 
   return {

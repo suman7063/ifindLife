@@ -1,140 +1,46 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import AgoraRTC, { IAgoraRTCClient, IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
+import { useState } from 'react';
 import { CallState, createClient } from '@/utils/agoraService';
 
-export interface CallInitOptions {
-  expertId: string;
-  expertName: string;
-  chatMode?: boolean;
-}
+// Initial empty state - no Agora SDK initialization here
+const initialCallState: CallState = {
+  localAudioTrack: null,
+  localVideoTrack: null,
+  remoteUsers: [],
+  client: null,
+  isJoined: false,
+  isMuted: false,
+  isVideoEnabled: true,
+  isAudioEnabled: true
+};
 
 export const useCallState = () => {
-  const [callState, setCallState] = useState<CallState>({
-    localAudioTrack: null,
-    localVideoTrack: null,
-    remoteUsers: [],
-    client: null,
-    isJoined: false,
-    isMuted: false,
-    isAudioEnabled: true,
-    isVideoEnabled: true
-  });
+  const [callState, setCallState] = useState<CallState>(initialCallState);
   
-  // Define handleUserPublished as a useCallback to maintain consistent function reference
-  const handleUserPublished = useCallback(async (user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
-    if (!callState.client) return;
+  // Only create the Agora client when explicitly called
+  const initializeCall = () => {
+    console.log('Initializing Agora client - only when needed');
     
-    console.log("Remote user published:", user.uid, mediaType);
-    await callState.client.subscribe(user, mediaType);
-    console.log("Subscribed to remote user:", user.uid, mediaType);
-    
-    setCallState(prevState => ({
-      ...prevState,
-      remoteUsers: [...prevState.remoteUsers.filter(u => u.uid !== user.uid), user]
-    }));
-  }, [callState.client]);
-
-  // Make sure handleUserUnpublished correctly accepts two arguments as required by Agora SDK
-  const handleUserUnpublished = useCallback((user: IAgoraRTCRemoteUser, mediaType: 'audio' | 'video') => {
-    console.log("Remote user unpublished:", user.uid, mediaType);
-    setCallState(prevState => ({
-      ...prevState,
-      remoteUsers: prevState.remoteUsers.filter(u => u.uid !== user.uid)
-    }));
-  }, []);
-
-  const handleUserLeft = useCallback((user: IAgoraRTCRemoteUser) => {
-    console.log("Remote user left:", user.uid);
-    setCallState(prevState => ({
-      ...prevState,
-      remoteUsers: prevState.remoteUsers.filter(u => u.uid !== user.uid)
-    }));
-  }, []);
-  
-  // Define error handler with proper signature
-  const handleError = useCallback((err: Error) => {
-    console.error("Agora client error:", err);
-  }, []);
-  
-  // Initialize call function
-  const initializeCall = useCallback(async (options: CallInitOptions) => {
-    console.log("Initializing call with options:", options);
-    
-    let client = callState.client;
-    
-    if (!client) {
-      client = createClient();
-      console.log("Created new Agora client:", client);
-      setCallState(prev => ({ ...prev, client }));
+    try {
+      const client = createClient();
+      
+      setCallState(prev => ({
+        ...prev,
+        client
+      }));
+      
+      return client;
+    } catch (error) {
+      console.error('Error initializing Agora client:', error);
+      return null;
     }
-    
-    return { client };
-  }, [callState.client]);
+  };
   
-  // End call function
-  const endCall = useCallback(() => {
-    setCallState(prev => ({
-      ...prev,
-      localAudioTrack: null,
-      localVideoTrack: null,
-      remoteUsers: [],
-      isJoined: false,
-      isMuted: false,
-      isAudioEnabled: true,
-      isVideoEnabled: true
-    }));
-  }, []);
+  // Clean up the call state
+  const endCall = () => {
+    setCallState(initialCallState);
+  };
   
-  useEffect(() => {
-    // Initialize client only once
-    let client: IAgoraRTCClient | null = null;
-    
-    // Create client asynchronously to avoid blocking the main thread
-    const initClient = async () => {
-      client = createClient();
-      console.log("Agora client initialized:", client);
-      setCallState(prev => ({ ...prev, client }));
-    };
-    
-    // Initialize in a non-blocking way
-    initClient();
-
-    return () => {
-      // Cleanup will happen in the useEffect below
-    };
-  }, []);
-  
-  // Separate useEffect for event listeners to avoid stale callbacks
-  useEffect(() => {
-    const { client } = callState;
-    if (!client) return;
-    
-    // The event handler for user-published takes two arguments: user and mediaType
-    client.on('user-published', handleUserPublished);
-    
-    // The event handler for user-unpublished also takes two arguments: user and mediaType
-    client.on('user-unpublished', handleUserUnpublished);
-    
-    // The event handler for user-left takes one argument: user
-    client.on('user-left', handleUserLeft);
-    
-    // Add the error event handler
-    client.on('error', handleError);
-    
-    return () => {
-      // Make sure to use the same reference to the handlers when removing them
-      // When using client.off(), we need to pass the same event type and handler function
-      client.off('user-published', handleUserPublished);
-      // For user-unpublished event, we need to specify the event name and the handler function
-      client.off('user-unpublished', handleUserUnpublished);
-      // For user-left event, we need to specify the event name and the handler function
-      client.off('user-left', handleUserLeft);
-      // For error event, we need to specify both the event name and the handler function
-      client.off('error', handleError);
-    };
-  }, [callState.client, handleUserPublished, handleUserUnpublished, handleUserLeft, handleError]);
-
   return {
     callState,
     setCallState,
