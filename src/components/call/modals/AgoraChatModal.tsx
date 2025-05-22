@@ -123,6 +123,7 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
   // End chat - fix here, removing the argument
   const handleEndChat = async () => {
     try {
+      // Fix here: don't pass argument to finishCall
       const result = await finishCall();
       
       if (result.success) {

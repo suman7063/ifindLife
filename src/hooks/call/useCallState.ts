@@ -18,8 +18,12 @@ export const useCallState = () => {
   const [callState, setCallState] = useState<CallState>(initialCallState);
   
   // Only create the Agora client when explicitly called
-  const initializeCall = () => {
-    console.log('Initializing Agora client - only when needed');
+  const initializeCall = async (options?: { 
+    expertId?: string; 
+    expertName?: string; 
+    chatMode?: boolean 
+  }): Promise<any> => {
+    console.log('Initializing Agora client - only when needed', options);
     
     try {
       const client = createClient();
@@ -29,10 +33,10 @@ export const useCallState = () => {
         client
       }));
       
-      return client;
+      return Promise.resolve(client);
     } catch (error) {
       console.error('Error initializing Agora client:', error);
-      return null;
+      return Promise.reject(error);
     }
   };
   
