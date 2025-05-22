@@ -36,7 +36,29 @@ const AgoraCallModal: React.FC<AgoraCallModalProps> = ({
             <span className="ml-2">Loading call interface...</span>
           </div>
         }>
-          {isOpen && <AgoraCallContent expert={expert} onClose={onClose} />}
+          {isOpen && (
+            <AgoraCallContent 
+              callState={{
+                localAudioTrack: null,
+                localVideoTrack: null,
+                remoteUsers: [],
+                client: null,
+                isJoined: false,
+                isMuted: false,
+                isVideoEnabled: true,
+                isAudioEnabled: true
+              }}
+              callStatus="connecting"
+              showChat={false}
+              duration={0}
+              remainingTime={0}
+              cost={0}
+              formatTime={(seconds) => '00:00:00'}
+              expertPrice={expert.price}
+              userName="You"
+              expertName={expert.name}
+            />
+          )}
         </Suspense>
       </DialogContent>
     </Dialog>

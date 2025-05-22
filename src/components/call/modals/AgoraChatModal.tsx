@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -119,7 +120,7 @@ const AgoraChatModal: React.FC<AgoraChatModalProps> = ({
     setErrorMessage(null);
   };
 
-  // End chat
+  // End chat - fix here, removing the argument
   const handleEndChat = async () => {
     try {
       const result = await finishCall();

@@ -9,7 +9,18 @@ const AgoraChatModalComponent = lazy(() =>
 );
 
 // This is just a wrapper that lazily loads the real component
-export default function AgoraChatModal(props) {
+interface AgoraChatModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  expert: {
+    id: number;
+    name: string;
+    imageUrl: string;
+    price: number;
+  };
+}
+
+export default function AgoraChatModal(props: AgoraChatModalProps) {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center p-6">
