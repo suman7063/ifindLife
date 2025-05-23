@@ -14,11 +14,25 @@ const ExpertLogin: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
-  const { currentExpert, isAuthenticated, isLoading, login } = useExpertAuth();
   const navigate = useNavigate();
+  
+  // Don't load expert authentication until component mounts
+  const [authLoaded, setAuthLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Load authentication hook after component mount to prevent circular dependencies
+  const { isAuthenticated, currentExpert, login } = useExpertAuth();
+  
+  // Mark auth as loaded after initial render
+  useEffect(() => {
+    setAuthLoaded(true);
+    setIsLoading(false);
+  }, []);
   
   // Check for existing authentication
   useEffect(() => {
+    if (!authLoaded) return;
+    
     console.log('ExpertLogin: Auth state:', {
       isAuthenticated,
       hasExpertProfile: !!currentExpert,
@@ -38,7 +52,7 @@ const ExpertLogin: React.FC = () => {
       console.log('Already authenticated as expert, redirecting to dashboard');
       navigate('/expert-dashboard', { replace: true });
     }
-  }, [isAuthenticated, currentExpert, isLoading, navigate, searchParams]);
+  }, [isAuthenticated, currentExpert, isLoading, navigate, searchParams, authLoaded]);
 
   // Handle login with proper error handling
   const handleLogin = async (email: string, password: string) => {
@@ -87,15 +101,6 @@ const ExpertLogin: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Checking authentication...</span>
-      </div>
-    );
-  }
-
   return (
     <>
       <Navbar />
@@ -104,20 +109,27 @@ const ExpertLogin: React.FC = () => {
         <Container>
           <div className="flex justify-center">
             <div className="w-full max-w-lg">
-              <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-                <div className="mb-6 text-center">
-                  <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
-                  <p className="text-gray-600">Login or join as an expert</p>
+              {isLoading ? (
+                <div className="bg-white rounded-lg shadow-md p-6 md:p-8 flex flex-col items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                  <p>Loading authentication service...</p>
                 </div>
-                
-                <ExpertLoginTabs
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  onLogin={handleLogin}
-                  isLoggingIn={isLoggingIn}
-                  loginError={loginError}
-                />
-              </div>
+              ) : (
+                <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+                  <div className="mb-6 text-center">
+                    <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
+                    <p className="text-gray-600">Login or join as an expert</p>
+                  </div>
+                  
+                  <ExpertLoginTabs
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    onLogin={handleLogin}
+                    isLoggingIn={isLoggingIn}
+                    loginError={loginError}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </Container>

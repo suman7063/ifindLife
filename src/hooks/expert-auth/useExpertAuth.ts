@@ -4,7 +4,15 @@ import { AuthContext } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 export const useExpertAuth = () => {
-  const auth = useContext(AuthContext);
+  // Instead of throwing an error if auth context isn't available, provide a fallback
+  let auth;
+  
+  try {
+    auth = useContext(AuthContext);
+  } catch (error) {
+    console.error('Error accessing AuthContext:', error);
+    auth = null;
+  }
   
   if (!auth) {
     console.error('useExpertAuth must be used within an AuthProvider');
@@ -13,8 +21,14 @@ export const useExpertAuth = () => {
       currentExpert: null,
       isAuthenticated: false,
       isLoading: false,
-      login: async () => false,
-      logout: async () => false,
+      login: async () => {
+        toast.error('Authentication service not available');
+        return false;
+      },
+      logout: async () => {
+        toast.error('Authentication service not available');
+        return false;
+      },
       updateProfile: async () => false,
       updateExpertProfile: async () => false,
       error: 'Auth context not found',
@@ -87,5 +101,3 @@ export const useExpertAuth = () => {
     register: auth.registerExpert || (async () => false)
   };
 };
-
-export { useAuth as useAuthUnified } from '@/contexts/auth/AuthContext';
