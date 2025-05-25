@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Index from './pages/Index';
@@ -59,6 +60,9 @@ const AppRoutes = () => {
       <Route path="/faq" element={<FAQs />} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/help" element={<Help />} />
+      
+      {/* Mental Health Assessment Route */}
+      <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
       
       {/* User Dashboard - accessible only to authenticated users */}
       <Route 
