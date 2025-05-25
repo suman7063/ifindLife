@@ -21,23 +21,48 @@ export const useSessionsManager = () => {
     try {
       let fetchedSessions: Session[] = [];
       
-      // Try to fetch from localStorage first
-      const storedSessions = localStorage.getItem('ifindlife-sessions');
-      if (storedSessions) {
-        fetchedSessions = JSON.parse(storedSessions);
-        console.log('Sessions fetched from localStorage:', fetchedSessions.length);
-      } else {
-        // Initialize with default sessions if none found
+      // First, try to get sessions from the main website content
+      const storedContent = localStorage.getItem('ifindlife-content');
+      if (storedContent) {
+        const parsedContent = JSON.parse(storedContent);
+        if (parsedContent.sessions && parsedContent.sessions.length > 0) {
+          fetchedSessions = parsedContent.sessions;
+          console.log('Sessions loaded from website content:', fetchedSessions.length);
+        }
+      }
+      
+      // If no sessions in main content, try dedicated sessions storage
+      if (fetchedSessions.length === 0) {
+        const storedSessions = localStorage.getItem('ifindlife-sessions');
+        if (storedSessions) {
+          fetchedSessions = JSON.parse(storedSessions);
+          console.log('Sessions loaded from dedicated storage:', fetchedSessions.length);
+        }
+      }
+      
+      // If still no sessions, use defaults and save them
+      if (fetchedSessions.length === 0) {
         fetchedSessions = [...defaultSessions];
         
-        // Save defaults to localStorage
+        // Save defaults to both storages for consistency
         localStorage.setItem('ifindlife-sessions', JSON.stringify(fetchedSessions));
+        
+        // Also update main content if it exists
+        if (storedContent) {
+          const content = JSON.parse(storedContent);
+          content.sessions = fetchedSessions;
+          localStorage.setItem('ifindlife-content', JSON.stringify(content));
+        }
+        
+        console.log('Using default sessions and saved for future use');
       }
       
       setSessions(fetchedSessions);
     } catch (error) {
       console.error('Error fetching sessions:', error);
       toast.error('Failed to fetch sessions');
+      // Fallback to defaults
+      setSessions([...defaultSessions]);
     } finally {
       setIsLoading(false);
     }
@@ -64,16 +89,14 @@ export const useSessionsManager = () => {
         // Update existing session
         savedSession = { ...sessionData, id: selectedSession.id };
         
-        // Update in localStorage
         const updatedSessions = sessions.map(s => 
           s.id === selectedSession.id ? savedSession : s
         );
-        localStorage.setItem('ifindlife-sessions', JSON.stringify(updatedSessions));
         setSessions(updatedSessions);
+        saveToStorage(updatedSessions);
         toast.success('Session updated successfully');
       } else {
         // Create new session with new ID
-        // Generate a new string ID based on the highest existing ID + 1
         const highestId = sessions.reduce((max, session) => {
           const id = parseInt(session.id);
           return id > max ? id : max;
@@ -82,10 +105,9 @@ export const useSessionsManager = () => {
         const newId = (highestId + 1).toString();
         savedSession = { ...sessionData, id: newId };
         
-        // Save to localStorage
         const updatedSessions = [...sessions, savedSession];
-        localStorage.setItem('ifindlife-sessions', JSON.stringify(updatedSessions));
         setSessions(updatedSessions);
+        saveToStorage(updatedSessions);
         toast.success('Session created successfully');
       }
       
@@ -101,14 +123,31 @@ export const useSessionsManager = () => {
     if (!confirm('Are you sure you want to delete this session?')) return;
     
     try {
-      // Remove from localStorage
       const updatedSessions = sessions.filter(s => s.id !== sessionId);
-      localStorage.setItem('ifindlife-sessions', JSON.stringify(updatedSessions));
       setSessions(updatedSessions);
+      saveToStorage(updatedSessions);
       toast.success('Session deleted successfully');
     } catch (error) {
       console.error('Error deleting session:', error);
       toast.error('Failed to delete session');
+    }
+  };
+
+  // Save to both storage locations for consistency
+  const saveToStorage = (updatedSessions: Session[]) => {
+    // Save to dedicated sessions storage
+    localStorage.setItem('ifindlife-sessions', JSON.stringify(updatedSessions));
+    
+    // Also update main website content storage
+    try {
+      const storedContent = localStorage.getItem('ifindlife-content');
+      if (storedContent) {
+        const content = JSON.parse(storedContent);
+        content.sessions = updatedSessions;
+        localStorage.setItem('ifindlife-content', JSON.stringify(content));
+      }
+    } catch (error) {
+      console.error('Error updating main content storage:', error);
     }
   };
 

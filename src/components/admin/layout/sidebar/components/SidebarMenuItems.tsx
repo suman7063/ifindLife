@@ -63,7 +63,6 @@ const SidebarMenuItems: React.FC<SidebarMenuItemsProps> = ({
       <ContentManagementSection
         activeTab={activeTab}
         onTabChange={onTabChange}
-        hasServicesPermission={checkPermission('services')}
         hasHeroSectionPermission={checkPermission('herosection')}
         hasTestimonialsPermission={checkPermission('testimonials')}
         hasProgramsPermission={checkPermission('programs')}

@@ -1,58 +1,67 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from "@/lib/supabase";
-import { ReferralSettings } from "@/types/supabase";
-import { toast } from "sonner";
+import { toast } from 'sonner';
+
+interface ReferralSettings {
+  id?: string;
+  referrer_reward: number;
+  referred_reward: number;
+  active: boolean;
+  description: string;
+}
+
+interface ReferralErrors {
+  referrer_reward?: string;
+  referred_reward?: string;
+  description?: string;
+}
 
 export const useReferralSettings = () => {
   const [settings, setSettings] = useState<ReferralSettings>({
-    id: '',
     referrer_reward: 10,
     referred_reward: 5,
     active: true,
-    description: 'Invite friends and earn rewards when they make their first purchase.',
+    description: 'Invite friends and earn rewards when they complete their first session.',
   });
-  const [isLoading, setIsLoading] = useState(true);
+  
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [errors, setErrors] = useState<{
-    referrer_reward?: string;
-    referred_reward?: string;
-    description?: string;
-  }>({});
+  const [errors, setErrors] = useState<ReferralErrors>({});
 
+  // Load settings from localStorage
   useEffect(() => {
-    fetchSettings();
+    const loadSettings = () => {
+      try {
+        const saved = localStorage.getItem('referral-settings');
+        if (saved) {
+          const parsedSettings = JSON.parse(saved);
+          setSettings(prev => ({ ...prev, ...parsedSettings }));
+        }
+      } catch (error) {
+        console.error('Error loading referral settings:', error);
+      }
+    };
+    
+    loadSettings();
   }, []);
 
-  const fetchSettings = async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('referral_settings')
-        .select('*')
-        .limit(1)
-        .single();
-
-      if (error) {
-        console.error('Error fetching referral settings:', error);
-        toast.error('Failed to load referral settings');
-      } else if (data) {
-        setSettings(data);
-      }
-    } catch (error) {
-      console.error('Error fetching referral settings:', error);
-      toast.error('Failed to load referral settings');
-    } finally {
-      setIsLoading(false);
+  const updateSetting = (key: keyof ReferralSettings, value: any) => {
+    setSettings(prev => ({
+      ...prev,
+      [key]: value
+    }));
+    
+    // Clear error when field is updated
+    if (errors[key as keyof ReferralErrors]) {
+      setErrors(prev => ({
+        ...prev,
+        [key]: undefined
+      }));
     }
   };
 
-  const validateForm = (): boolean => {
-    const newErrors: {
-      referrer_reward?: string;
-      referred_reward?: string;
-      description?: string;
-    } = {};
+  const validateSettings = (): boolean => {
+    const newErrors: ReferralErrors = {};
     
     if (settings.referrer_reward < 0) {
       newErrors.referrer_reward = 'Reward cannot be negative';
@@ -71,60 +80,21 @@ export const useReferralSettings = () => {
   };
 
   const saveSettings = async () => {
-    if (!validateForm()) {
+    if (!validateSettings()) {
       toast.error('Please fix the errors before saving');
       return;
     }
     
     setIsSaving(true);
     try {
-      const updatedSettings = {
-        id: settings.id || undefined,
-        referrer_reward: settings.referrer_reward,
-        referred_reward: settings.referred_reward,
-        active: settings.active,
-        description: settings.description,
-        updated_at: new Date().toISOString()
-      };
-
-      const { data, error } = await supabase
-        .from('referral_settings')
-        .upsert(updatedSettings)
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error saving referral settings:', error);
-        toast.error('Failed to save referral settings');
-      } else {
-        toast.success('Referral settings saved successfully');
-        if (data) {
-          setSettings(data);
-        }
-      }
+      // Save to localStorage
+      localStorage.setItem('referral-settings', JSON.stringify(settings));
+      toast.success('Referral settings saved successfully');
     } catch (error) {
       console.error('Error saving referral settings:', error);
       toast.error('Failed to save referral settings');
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const updateSetting = <T extends keyof ReferralSettings>(
-    name: T, 
-    value: ReferralSettings[T]
-  ) => {
-    setSettings((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    
-    // Clear error when field is edited
-    if (errors[name as keyof typeof errors]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: undefined
-      }));
     }
   };
 

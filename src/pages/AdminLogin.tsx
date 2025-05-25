@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/admin-auth';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import PageHeader from '@/components/common/PageHeader';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 import { toast } from 'sonner';
 import { testCredentials } from '@/contexts/admin-auth/constants';
@@ -97,11 +96,19 @@ const AdminLogin = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <PageHeader 
-        title="Admin Access" 
-        subtitle="Secure login for system administrators" 
-      />
-      <main className="flex-1 py-10 flex items-center justify-center">
+      
+      {/* Simplified header without extra padding/margin */}
+      <div className="bg-gradient-to-r from-ifind-aqua to-ifind-teal py-12">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-white mb-4">Admin Access</h1>
+            <p className="text-xl text-white/90">Secure login for system administrators</p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Main content with reduced top padding */}
+      <main className="flex-1 py-6 flex items-center justify-center bg-gray-50">
         <div className="container max-w-md">
           <AdminLoginContent 
             onLoginSuccess={handleLoginSuccess} 
