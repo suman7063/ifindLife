@@ -28,6 +28,7 @@ export interface AdminUser {
   permissions: AdminPermissions;
   createdAt: string;
   lastLogin: string;
+  isActive: boolean; // Add this required property
 }
 
 // Define the admin context type
