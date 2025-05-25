@@ -1,17 +1,16 @@
 
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
-import Index from './pages/Index';
-import AboutUs from './pages/AboutUs';
+import Index from './pages/Index'; // Using Index instead of Home
+import AboutUs from './pages/AboutUs'; // Using AboutUs instead of About
 import Contact from './pages/Contact';
 import Services from './pages/Services';
-import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import Experts from './pages/Experts';
-import ExpertDetail from './pages/ExpertDetail';
+import ExpertDetail from './pages/ExpertDetail'; // Using ExpertDetail instead of ExpertDetails
 import UserLogin from './pages/UserLogin';
-import UserRegister from './pages/UserRegister';
+import UserRegister from './pages/UserRegister'; // Using UserRegister instead of UserSignup
 import ExpertLogin from './pages/ExpertLogin';
-import ExpertRegister from './pages/ExpertRegister';
+import ExpertRegister from './pages/ExpertRegister'; // Using ExpertRegister instead of ExpertSignup
 import UserDashboardPages from './pages/UserDashboardPages';
 import ExpertDashboard from './pages/ExpertDashboard';
 import AdminLogin from './pages/AdminLogin';
@@ -19,14 +18,10 @@ import Admin from './pages/Admin';
 import ProtectedRoute from './components/ProtectedRoute';
 import NotFound from './pages/NotFound';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import Programs from './pages/Programs';
-import TermsOfService from './pages/TermsOfService';
-import PrivacyPolicy from './pages/PrivacyPolicy';
+import Programs from './pages/Programs'; // Fixed import syntax
+import TermsOfService from './pages/TermsOfService'; // Fixed import syntax
+import PrivacyPolicy from './pages/PrivacyPolicy'; // Fixed import syntax
 import LogoutPage from './pages/LogoutPage';
-import ProgramsForBusiness from './pages/ProgramsForBusiness';
-import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
-import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
-import FAQs from './pages/FAQs';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -37,8 +32,6 @@ const AppRoutes = () => {
       <Route path="/about" element={<AboutUs />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/services" element={<Services />} />
-      {/* Individual Service Detail Pages */}
-      <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
       <Route path="/experts" element={<Experts />} />
       <Route path="/expert/:id" element={<ExpertDetail />} />
       <Route path="/user-login" element={<UserLogin />} />
@@ -46,37 +39,47 @@ const AppRoutes = () => {
       <Route path="/expert-login" element={<ExpertLogin />} />
       <Route path="/expert-signup" element={<ExpertRegister />} />
       <Route path="/programs" element={<Programs />} />
-      <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
-      <Route path="/programs-for-academic-institutes" element={<ProgramsForAcademicInstitutes />} />
-      <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      
-      {/* Support Routes */}
-      <Route path="/faqs" element={<FAQs />} />
-      <Route path="/faq" element={<FAQs />} />
-      <Route path="/blog" element={<NotFound />} />
-      <Route path="/help" element={<NotFound />} />
       
       {/* User Dashboard - accessible only to authenticated users */}
       <Route 
         path="/user-dashboard" 
-        element={<UserDashboardPages />}
+        element={
+          <ProtectedRoute>
+            <UserDashboardPages />
+          </ProtectedRoute>
+        } 
       />
       <Route 
         path="/user-dashboard/:section" 
-        element={<UserDashboardPages />}
+        element={
+          <ProtectedRoute>
+            <UserDashboardPages />
+          </ProtectedRoute>
+        } 
       />
       
       {/* Expert Dashboard - accessible only to authenticated experts */}
       <Route 
         path="/expert-dashboard" 
-        element={<ExpertDashboard />}
+        element={
+          <ProtectedRoute requiredRole="expert">
+            <ExpertDashboard />
+          </ProtectedRoute>
+        } 
       />
       
       {/* Admin Routes - accessible only to authenticated admins */}
       <Route path="/admin-login" element={<AdminLogin />} />
-      <Route path="/admin/*" element={<Admin />} />
+      <Route 
+        path="/admin/*" 
+        element={
+          <ProtectedRoute requiredRole="super_admin">
+            <Admin />
+          </ProtectedRoute>
+        } 
+      />
       
       {/* Logout Page */}
       <Route path="/logout" element={<LogoutPage />} />
