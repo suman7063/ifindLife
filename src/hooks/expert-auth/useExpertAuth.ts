@@ -38,8 +38,8 @@ export const useExpertAuth = () => {
     };
   }
   
-  // Enhanced debug logging
-  console.log('Expert auth state:', {
+  // Enhanced debug logging - no Agora references
+  console.log('Expert auth state (pure auth):', {
     isAuthenticated: auth.isAuthenticated,
     hasExpertProfile: !!auth.expertProfile,
     role: auth.role,

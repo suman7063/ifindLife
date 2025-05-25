@@ -16,11 +16,11 @@ const ExpertLogin: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  // Don't load expert authentication until component mounts
+  // Authentication state - no Agora dependencies here
   const [authLoaded, setAuthLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Load authentication hook after component mount to prevent circular dependencies
+  // Load authentication hook after component mount
   const { isAuthenticated, currentExpert, login } = useExpertAuth();
   
   // Mark auth as loaded after initial render
@@ -29,11 +29,11 @@ const ExpertLogin: React.FC = () => {
     setIsLoading(false);
   }, []);
   
-  // Check for existing authentication
+  // Check for existing authentication - pure auth logic only
   useEffect(() => {
     if (!authLoaded) return;
     
-    console.log('ExpertLogin: Auth state:', {
+    console.log('ExpertLogin: Auth state (no Agora):', {
       isAuthenticated,
       hasExpertProfile: !!currentExpert,
       isLoading
@@ -54,13 +54,13 @@ const ExpertLogin: React.FC = () => {
     }
   }, [isAuthenticated, currentExpert, isLoading, navigate, searchParams, authLoaded]);
 
-  // Handle login with proper error handling
+  // Handle login with proper error handling - no Agora dependencies
   const handleLogin = async (email: string, password: string) => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      console.log('ExpertLogin: Attempting login with:', email);
+      console.log('ExpertLogin: Attempting login (auth only):', email);
       
       if (typeof login !== 'function') {
         console.error('ExpertLogin: Login function not available');

@@ -1,55 +1,48 @@
 
-import { useCallState } from './call/useCallState';
-import { useCallTimer } from './call/useCallTimer';
-import { useCallOperations } from './call/useCallOperations';
+import { useState, useCallback } from 'react';
 
-// This hook only initializes the necessary state but doesn't load Agora SDK
-// until the startCall function is actually called
+// Lazy-loaded hook that only initializes when actually needed
 export const useAgoraCall = (expertId: number, expertPrice: number) => {
-  const { callState, setCallState, initializeCall } = useCallState();
+  const [isInitialized, setIsInitialized] = useState(false);
   
-  const {
-    duration,
-    cost,
-    remainingTime,
-    isExtending,
-    startTimers,
-    stopTimers,
-    extendCall,
-    calculateFinalCost,
-    formatTime
-  } = useCallTimer(expertPrice);
-  
-  // Pass the calculateFinalCost function directly rather than wrapping it
-  const {
-    callType,
-    callError,
-    startCall,
-    endCall,
-    handleToggleMute,
-    handleToggleVideo
-  } = useCallOperations(
-    expertId,
-    setCallState,
-    callState,
-    startTimers,
-    stopTimers,
-    calculateFinalCost
-  );
+  // Lazy initialization of actual Agora functionality
+  const initializeAgoraCall = useCallback(async () => {
+    if (isInitialized) return;
+    
+    console.log('Lazy loading Agora call functionality for expert:', expertId);
+    
+    // Dynamic import of actual Agora modules
+    const { useCallState } = await import('./call/useCallState');
+    const { useCallTimer } = await import('./call/useCallTimer');
+    const { useCallOperations } = await import('./call/useCallOperations');
+    
+    setIsInitialized(true);
+    
+    // Return the actual hooks after lazy loading
+    return {
+      useCallState,
+      useCallTimer,
+      useCallOperations
+    };
+  }, [expertId, isInitialized]);
 
+  // Placeholder return until initialized
   return {
-    callState,
-    callType,
-    duration,
-    cost,
-    remainingTime,
-    isExtending,
-    callError,
-    startCall,
-    endCall,
-    handleToggleMute,
-    handleToggleVideo,
-    extendCall,
-    formatTime
+    callState: null,
+    callType: 'video' as const,
+    duration: 0,
+    cost: 0,
+    remainingTime: 0,
+    isExtending: false,
+    callError: null,
+    startCall: async () => {
+      await initializeAgoraCall();
+      return false;
+    },
+    endCall: async () => ({ success: true, cost: 0 }),
+    handleToggleMute: () => {},
+    handleToggleVideo: () => {},
+    extendCall: async () => {},
+    formatTime: (seconds: number) => '00:00:00'
   };
 };

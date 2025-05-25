@@ -24,11 +24,7 @@ const ExpertLoginForm: React.FC<ExpertLoginFormProps> = ({
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   
-  console.log('ExpertLoginForm: Rendered with props:', {
-    hasOnLogin: typeof onLogin === 'function',
-    isLoggingIn,
-    hasError: !!loginError
-  });
+  console.log('ExpertLoginForm: Rendered - authentication only');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
