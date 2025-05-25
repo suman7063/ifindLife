@@ -4,7 +4,7 @@ import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
 import WhatWeDoSection from '@/components/WhatWeDoSection';
 import { Skeleton } from '@/components/ui/skeleton';
-import Hero from '@/components/hero';
+import EnhancedHero from '@/components/hero/EnhancedHero';
 import MindfulnessCommunitySection from '@/components/MindfulnessCommunitySection';
 import IntroductionSection from '@/components/IntroductionSection';
 import { lazy, Suspense } from 'react';
@@ -38,8 +38,8 @@ const Index = () => {
     <div className="min-h-screen flex flex-col home-page">
       <Navbar />
       <main className="flex-1">
-        {/* Section 1: Hero Banner with working slider */}
-        <Hero />
+        {/* Section 1: Hero Banner with enhanced slider and service cards */}
+        <EnhancedHero />
         
         {/* Section 2: Introduction Section - Full Width with grey background */}
         <div className="full-width-section bg-gray-50">

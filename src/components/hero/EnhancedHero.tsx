@@ -10,33 +10,43 @@ const EnhancedHero: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const isMobile = useIsMobile();
   
-  // Slider images - Using the woman image as shown in the screenshot
+  // Slider images - Using both images for rotation
   const sliderImages = [
+    "/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png", // Man image
     "/lovable-uploads/2ce75196-58b1-4f39-b5cb-9b4a559c53b2.png", // Woman image
   ];
 
-  // Service cards data with proper colors
+  // Auto slide rotation every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % sliderImages.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [sliderImages.length]);
+
+  // Service cards data with proper navigation to correct pages
   const serviceCards = [
     {
       title: "Speak your Heart",
       description: "We are here to listen mindfully. No judgement",
       icon: <MessageSquare className="h-6 w-6" />,
       action: () => navigate("/services/mindful-listening"),
-      color: "from-ifind-teal/70 to-ifind-teal/90" // Teal color
+      color: "from-ifind-teal/70 to-ifind-teal/90"
     },
     {
       title: "Get Guidance",
       description: "Get 1 on 1 guidance from experts for your situation",
       icon: <Headphones className="h-6 w-6" />,
       action: () => navigate("/services/therapy-sessions"),
-      color: "from-ifind-purple/70 to-ifind-purple/90" // Purple color
+      color: "from-ifind-purple/70 to-ifind-purple/90"
     },
     {
       title: "Take a Test",
       description: "Discover insights about your mental wellbeing through our assessment",
       icon: <BookOpen className="h-6 w-6" />,
       action: () => navigate("/mental-health-assessment"),
-      color: "from-ifind-aqua/70 to-ifind-aqua/90" // Aqua color
+      color: "from-ifind-aqua/70 to-ifind-aqua/90"
     }
   ];
 
@@ -59,23 +69,26 @@ const EnhancedHero: React.FC = () => {
 
   return (
     <div className="relative h-screen w-full">
-      {/* Hero image - fixed to show the woman image as in screenshot */}
+      {/* Hero images with fade transition */}
       <div className="relative w-full h-full overflow-hidden">
-        <img 
-          src={sliderImages[0]} 
-          alt="Hero" 
-          className="w-full h-full object-cover"
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center 30%',
-          }}
-          loading="eager"
-        />
+        {sliderImages.map((image, index) => (
+          <div 
+            key={index}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${
+              currentSlide === index ? 'opacity-100' : 'opacity-0'
+            }`}
+          >
+            <img 
+              src={image} 
+              alt={`Hero Slide ${index + 1}`} 
+              className="w-full h-full object-cover"
+              style={{
+                objectPosition: 'center 30%',
+              }}
+              loading={index === 0 ? "eager" : "lazy"}
+            />
+          </div>
+        ))}
         
         {/* Headline - positioned correctly */}
         <div 
