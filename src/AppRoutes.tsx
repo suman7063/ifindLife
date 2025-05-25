@@ -25,6 +25,7 @@ import LogoutPage from './pages/LogoutPage';
 import ProgramsForBusiness from './pages/ProgramsForBusiness';
 import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
 import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
+import FAQs from './pages/FAQs';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -49,8 +50,9 @@ const AppRoutes = () => {
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       
-      {/* Support Routes */}
-      <Route path="/faqs" element={<NotFound />} />
+      {/* Support Routes - Fixed to use actual pages instead of NotFound */}
+      <Route path="/faqs" element={<FAQs />} />
+      <Route path="/faq" element={<FAQs />} />
       <Route path="/blog" element={<NotFound />} />
       <Route path="/help" element={<NotFound />} />
       

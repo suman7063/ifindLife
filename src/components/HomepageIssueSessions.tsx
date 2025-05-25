@@ -17,7 +17,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <Cloud className="h-5 w-5 text-blue-500" />,
     color: 'bg-blue-100',
     iconColor: 'text-blue-500',
-    href: '/issue-based-sessions#depression'
+    href: '/programs-for-wellness-seekers#issue-based'
   }, {
     id: 'anxiety',
     title: 'Anxiety',
@@ -25,7 +25,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <Brain className="h-5 w-5 text-green-500" />,
     color: 'bg-green-100',
     iconColor: 'text-green-500',
-    href: '/issue-based-sessions#anxiety'
+    href: '/programs-for-wellness-seekers#issue-based'
   }, {
     id: 'stress',
     title: 'Stress Management',
@@ -33,7 +33,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <Clock className="h-5 w-5 text-purple-500" />,
     color: 'bg-purple-100',
     iconColor: 'text-purple-500',
-    href: '/issue-based-sessions#stress'
+    href: '/programs-for-wellness-seekers#issue-based'
   }, {
     id: 'sleep',
     title: 'Sleep Issues',
@@ -41,7 +41,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <Cloud className="h-5 w-5 text-indigo-500" />,
     color: 'bg-indigo-100',
     iconColor: 'text-indigo-500',
-    href: '/issue-based-sessions#sleep'
+    href: '/programs-for-wellness-seekers#issue-based'
   }, {
     id: 'relationships',
     title: 'Relationships',
@@ -49,7 +49,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <Heart className="h-5 w-5 text-red-500" />,
     color: 'bg-red-100',
     iconColor: 'text-red-500',
-    href: '/issue-based-sessions#relationships'
+    href: '/programs-for-wellness-seekers#issue-based'
   }, {
     id: 'trauma',
     title: 'Trauma & PTSD',
@@ -57,7 +57,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <ShieldAlert className="h-5 w-5 text-orange-500" />,
     color: 'bg-orange-100',
     iconColor: 'text-orange-500',
-    href: '/issue-based-sessions#trauma'
+    href: '/programs-for-wellness-seekers#issue-based'
   }, {
     id: 'grief',
     title: 'Grief & Loss',
@@ -65,7 +65,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <Heart className="h-5 w-5 text-pink-500" />,
     color: 'bg-pink-100',
     iconColor: 'text-pink-500',
-    href: '/issue-based-sessions#grief'
+    href: '/programs-for-wellness-seekers#issue-based'
   }, {
     id: 'self-esteem',
     title: 'Self-Esteem',
@@ -73,7 +73,7 @@ const HomepageIssueSessions: React.FC = () => {
     icon: <Star className="h-5 w-5 text-yellow-500" />,
     color: 'bg-yellow-100',
     iconColor: 'text-yellow-500',
-    href: '/issue-based-sessions#self-esteem'
+    href: '/programs-for-wellness-seekers#issue-based'
   }];
 
   const handleOpenSession = (session: any) => {
@@ -106,7 +106,7 @@ const HomepageIssueSessions: React.FC = () => {
         </div>
         
         <div className="text-center mt-8">
-          <Link to="/issue-based-sessions">
+          <Link to="/programs-for-wellness-seekers#issue-based">
             <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">
               View All Sessions <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -138,7 +138,7 @@ const HomepageIssueSessions: React.FC = () => {
                 </Button>
                 
                 <Button asChild className="bg-ifind-teal hover:bg-ifind-teal/90">
-                  <Link to={selectedSession?.href || "/issue-based-sessions"}>
+                  <Link to={selectedSession?.href || "/programs-for-wellness-seekers#issue-based"}>
                     View Details <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
