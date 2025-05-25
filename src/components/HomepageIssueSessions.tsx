@@ -1,83 +1,88 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ArrowRight, Brain, Heart, Clock, Cloud, ShieldAlert, Sparkles, Star, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+
 const HomepageIssueSessions: React.FC = () => {
   const [selectedSession, setSelectedSession] = useState<any | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Issue sessions matching the screenshot with proper icons instead of emojis
   const sessions = [{
-    id: '1',
+    id: 'depression',
     title: 'Depression',
     description: 'Support for managing depression symptoms and improving mood',
     icon: <Cloud className="h-5 w-5 text-blue-500" />,
     color: 'bg-blue-100',
     iconColor: 'text-blue-500',
-    href: '/mental-health/depression'
+    href: '/issue-based-sessions#depression'
   }, {
-    id: '2',
+    id: 'anxiety',
     title: 'Anxiety',
     description: 'Tools and techniques to help manage anxiety and worry',
     icon: <Brain className="h-5 w-5 text-green-500" />,
     color: 'bg-green-100',
     iconColor: 'text-green-500',
-    href: '/mental-health/anxiety'
+    href: '/issue-based-sessions#anxiety'
   }, {
-    id: '3',
+    id: 'stress',
     title: 'Stress Management',
     description: 'Effective strategies to cope with and reduce stress',
     icon: <Clock className="h-5 w-5 text-purple-500" />,
     color: 'bg-purple-100',
     iconColor: 'text-purple-500',
-    href: '/mental-health/stress'
+    href: '/issue-based-sessions#stress'
   }, {
-    id: '4',
+    id: 'sleep',
     title: 'Sleep Issues',
     description: 'Help with improving sleep quality and addressing insomnia',
     icon: <Cloud className="h-5 w-5 text-indigo-500" />,
     color: 'bg-indigo-100',
     iconColor: 'text-indigo-500',
-    href: '/mental-health/sleep'
+    href: '/issue-based-sessions#sleep'
   }, {
-    id: '5',
+    id: 'relationships',
     title: 'Relationships',
     description: 'Guidance for building healthy and fulfilling relationships',
     icon: <Heart className="h-5 w-5 text-red-500" />,
     color: 'bg-red-100',
     iconColor: 'text-red-500',
-    href: '/mental-health/relationships'
+    href: '/issue-based-sessions#relationships'
   }, {
-    id: '6',
+    id: 'trauma',
     title: 'Trauma & PTSD',
     description: 'Support for healing from trauma and managing PTSD symptoms',
     icon: <ShieldAlert className="h-5 w-5 text-orange-500" />,
     color: 'bg-orange-100',
     iconColor: 'text-orange-500',
-    href: '/mental-health/trauma'
+    href: '/issue-based-sessions#trauma'
   }, {
-    id: '7',
+    id: 'grief',
     title: 'Grief & Loss',
     description: 'Compassionate support for navigating grief and loss',
     icon: <Heart className="h-5 w-5 text-pink-500" />,
     color: 'bg-pink-100',
     iconColor: 'text-pink-500',
-    href: '/mental-health/grief'
+    href: '/issue-based-sessions#grief'
   }, {
-    id: '8',
+    id: 'self-esteem',
     title: 'Self-Esteem',
     description: 'Help with building confidence and improving self-image',
     icon: <Star className="h-5 w-5 text-yellow-500" />,
     color: 'bg-yellow-100',
     iconColor: 'text-yellow-500',
-    href: '/mental-health/self-esteem'
+    href: '/issue-based-sessions#self-esteem'
   }];
+
   const handleOpenSession = (session: any) => {
     setSelectedSession(session);
     setIsDialogOpen(true);
   };
-  return <section className="py-12 bg-gray-50">
+
+  return (
+    <section className="py-12 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-bold mb-2">How Can We Help You Today?</h2>
@@ -85,13 +90,27 @@ const HomepageIssueSessions: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {sessions.map(session => <div key={session.id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleOpenSession(session)} role="button" tabIndex={0} aria-label={`View details about ${session.title}`}>
+          {sessions.map(session => (
+            <Link 
+              key={session.id} 
+              to={session.href}
+              className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow"
+            >
               <div className={`w-12 h-12 ${session.color} rounded-full flex items-center justify-center mb-3`}>
                 {session.icon}
               </div>
               <h3 className="font-medium mb-1">{session.title}</h3>
               <p className="text-sm text-gray-500 line-clamp-2">{session.description}</p>
-            </div>)}
+            </Link>
+          ))}
+        </div>
+        
+        <div className="text-center mt-8">
+          <Link to="/issue-based-sessions">
+            <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">
+              View All Sessions <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
         </div>
         
         {/* Session Detail Dialog */}
@@ -99,12 +118,14 @@ const HomepageIssueSessions: React.FC = () => {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                {selectedSession && <>
+                {selectedSession && (
+                  <>
                     <span className={`w-8 h-8 ${selectedSession.color} rounded-full flex items-center justify-center`}>
                       {selectedSession?.icon}
                     </span>
                     {selectedSession.title}
-                  </>}
+                  </>
+                )}
               </DialogTitle>
             </DialogHeader>
             
@@ -117,8 +138,8 @@ const HomepageIssueSessions: React.FC = () => {
                 </Button>
                 
                 <Button asChild className="bg-ifind-teal hover:bg-ifind-teal/90">
-                  <Link to={selectedSession?.href || "/experts"}>
-                    Find Specialist <ArrowRight className="ml-2 h-4 w-4" />
+                  <Link to={selectedSession?.href || "/issue-based-sessions"}>
+                    View Details <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
                 </Button>
               </div>
@@ -126,6 +147,8 @@ const HomepageIssueSessions: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default HomepageIssueSessions;

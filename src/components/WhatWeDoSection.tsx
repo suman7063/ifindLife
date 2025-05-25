@@ -9,7 +9,7 @@ const WhatWeDoSection = () => {
       description: "Short-term solutions for immediate stress and anxiety relief",
       color: "bg-blue-50",
       borderColor: "border-l-blue-400",
-      href: "/programs/quickease",
+      href: "/programs",
       icon: (
         <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-6">
           <div className="w-8 h-8 rounded-full border-2 border-blue-400"></div>
@@ -21,7 +21,7 @@ const WhatWeDoSection = () => {
       description: "Build psychological strength to handle life's challenges",
       color: "bg-purple-50",
       borderColor: "border-l-purple-400",
-      href: "/programs/emotional-resilience",
+      href: "/programs",
       icon: (
         <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6">
           <div className="w-8 h-8">
@@ -37,7 +37,7 @@ const WhatWeDoSection = () => {
       description: "Achieve your highest potential through mental optimization",
       color: "bg-teal-50",
       borderColor: "border-l-teal-400",
-      href: "/programs/super-human",
+      href: "/programs",
       icon: (
         <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mb-6">
           <div className="w-8 h-8">

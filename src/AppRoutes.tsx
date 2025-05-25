@@ -23,6 +23,7 @@ import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import LogoutPage from './pages/LogoutPage';
 import ProgramsForBusiness from './pages/ProgramsForBusiness';
+import IssueBasedSessions from './pages/IssueBasedSessions';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -43,6 +44,7 @@ const AppRoutes = () => {
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
+      <Route path="/issue-based-sessions" element={<IssueBasedSessions />} />
       
       {/* User Dashboard - accessible only to authenticated users */}
       <Route 
