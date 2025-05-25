@@ -24,6 +24,8 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import LogoutPage from './pages/LogoutPage';
 import ProgramsForBusiness from './pages/ProgramsForBusiness';
 import IssueBasedSessions from './pages/IssueBasedSessions';
+import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
+import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -42,9 +44,11 @@ const AppRoutes = () => {
       <Route path="/expert-login" element={<ExpertLogin />} />
       <Route path="/expert-signup" element={<ExpertRegister />} />
       <Route path="/programs" element={<Programs />} />
+      <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
+      <Route path="/programs-for-academic-institutes" element={<ProgramsForAcademicInstitutes />} />
+      <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/issue-based-sessions" element={<IssueBasedSessions />} />
       
       {/* Support Routes */}

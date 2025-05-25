@@ -1,107 +1,193 @@
 
-import React, { useEffect, useState } from 'react';
-import { Program } from '@/types/programs';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { addSamplePrograms } from '@/utils/sampleProgramsData';
-import { supabase } from '@/lib/supabase';
-import ProgramList from '@/components/programs/ProgramList';
-import { useUserAuth } from '@/hooks/useUserAuth';
-import { Loader2 } from 'lucide-react';
-import PageHeader from '@/components/common/PageHeader';
+import { Container } from '@/components/ui/container';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Clock, Users, BookOpen, GraduationCap } from 'lucide-react';
 
-const ProgramsForAcademicInstitutes: React.FC = () => {
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { currentUser, isAuthenticated } = useUserAuth();
+const ProgramsForAcademicInstitutes = () => {
+  const academicPrograms = [
+    {
+      id: 1,
+      title: "Student Stress Management Program",
+      description: "Comprehensive program designed to help students manage academic stress, exam anxiety, and maintain mental wellness during their studies.",
+      category: "Stress Management",
+      duration: "8 weeks",
+      sessions: 16,
+      price: 299.99,
+      image: "/lovable-uploads/program-exam.jpg",
+      features: [
+        "Exam anxiety reduction techniques",
+        "Time management skills",
+        "Mindfulness practices for students",
+        "Group sessions and peer support"
+      ],
+      targetAudience: "High school and college students",
+      expert: "Dr. Sarah Johnson"
+    },
+    {
+      id: 2,
+      title: "Academic Performance Enhancement",
+      description: "Evidence-based program to improve focus, concentration, and academic performance through mental wellness techniques.",
+      category: "Performance Enhancement",
+      duration: "10 weeks",
+      sessions: 20,
+      price: 399.99,
+      image: "/lovable-uploads/program-time.jpg",
+      features: [
+        "Cognitive enhancement techniques",
+        "Memory improvement strategies",
+        "Focus and attention training",
+        "Study optimization methods"
+      ],
+      targetAudience: "University students and researchers",
+      expert: "Prof. Michael Chen"
+    },
+    {
+      id: 3,
+      title: "Educator Wellness Program",
+      description: "Specialized program for teachers and educators to manage burnout, stress, and maintain mental wellness while supporting students.",
+      category: "Educator Support",
+      duration: "6 weeks",
+      sessions: 12,
+      price: 249.99,
+      image: "/lovable-uploads/program-leadership.jpg",
+      features: [
+        "Burnout prevention strategies",
+        "Classroom stress management",
+        "Work-life balance techniques",
+        "Student support strategies"
+      ],
+      targetAudience: "Teachers and educational staff",
+      expert: "Dr. Emily Rodriguez"
+    }
+  ];
 
-  // Fetch academic programs
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        setIsLoading(true);
-        console.log('Fetching academic programs...');
-        
-        // First ensure we have sample academic programs in the database
-        await addSamplePrograms('academic');
-        
-        // Then fetch all academic programs
-        const { data, error } = await supabase
-          .from('programs')
-          .select('*')
-          .eq('programType', 'academic')
-          .order('title');
-          
-        if (error) {
-          console.error('Error fetching academic programs:', error);
-          return;
-        }
-        
-        console.log('Academic programs fetched:', data);
-        
-        if (data) {
-          // Convert the data to Program type explicitly
-          const formattedPrograms: Program[] = data.map(program => ({
-            id: program.id,
-            title: program.title,
-            description: program.description,
-            duration: program.duration,
-            sessions: program.sessions,
-            price: program.price,
-            image: program.image,
-            category: program.category as Program['category'],
-            programType: program.programType as Program['programType'],
-            enrollments: program.enrollments || 0,
-            created_at: program.created_at
-          }));
-          
-          setPrograms(formattedPrograms);
-          console.log('Academic programs set to state:', formattedPrograms);
-        }
-      } catch (error) {
-        console.error('Error in academic programs fetch:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchPrograms();
-  }, []);
-  
   return (
     <>
       <Navbar />
-      <PageHeader 
-        title="Programs For Academic Institutes" 
-        subtitle="Comprehensive mental health solutions designed for schools, colleges, and universities"
-      />
-      <div className="container mx-auto px-4 sm:px-6 py-8">        
-        <div className="my-6">
-          <h2 className="text-xl font-semibold mb-4 text-ifind-purple">
-            Mental Wellness Solutions for Educational Institutions
-          </h2>
-          <p className="text-gray-700 mb-6">
-            Our specialized programs for academic institutions provide comprehensive mental health support 
-            for students, faculty, and staff. Create a healthier learning environment with our evidence-based 
-            approaches to mental wellbeing in educational settings.
-          </p>
-        </div>
-        
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
+      
+      <Container className="py-12">
+        <div className="space-y-8">
+          {/* Header Section */}
+          <div className="text-center space-y-4">
+            <h1 className="text-4xl font-bold text-gray-900">Programs for Academic Institutes</h1>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Specialized mental wellness programs designed for educational institutions, students, and educators to enhance academic performance and well-being.
+            </p>
           </div>
-        ) : (
-          <ProgramList 
-            programs={programs}
-            isLoading={isLoading}
-            currentUser={currentUser}
-            isAuthenticated={isAuthenticated}
-            emptyMessage="No academic programs are currently available."
-          />
-        )}
-      </div>
-      <div className="mb-36"></div>
+
+          {/* Stats Section */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 py-8">
+            <div className="text-center">
+              <div className="flex justify-center mb-2">
+                <GraduationCap className="h-8 w-8 text-ifind-teal" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">500+</h3>
+              <p className="text-gray-600">Students Helped</p>
+            </div>
+            <div className="text-center">
+              <div className="flex justify-center mb-2">
+                <Users className="h-8 w-8 text-ifind-teal" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">50+</h3>
+              <p className="text-gray-600">Institutions</p>
+            </div>
+            <div className="text-center">
+              <div className="flex justify-center mb-2">
+                <BookOpen className="h-8 w-8 text-ifind-teal" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">15+</h3>
+              <p className="text-gray-600">Program Modules</p>
+            </div>
+            <div className="text-center">
+              <div className="flex justify-center mb-2">
+                <Clock className="h-8 w-8 text-ifind-teal" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900">95%</h3>
+              <p className="text-gray-600">Success Rate</p>
+            </div>
+          </div>
+
+          {/* Programs Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
+            {academicPrograms.map((program) => (
+              <Card key={program.id} className="overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="lg:order-2">
+                    <img 
+                      src={program.image} 
+                      alt={program.title}
+                      className="w-full h-64 lg:h-full object-cover"
+                    />
+                  </div>
+                  <div className="lg:order-1 p-6">
+                    <CardHeader className="p-0 mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="inline-flex items-center rounded-md bg-ifind-aqua/10 px-2 py-1 text-xs font-medium text-ifind-aqua ring-1 ring-inset ring-ifind-aqua/20">
+                          {program.category}
+                        </span>
+                      </div>
+                      <CardTitle className="text-2xl">{program.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 space-y-4">
+                      <p className="text-gray-600">{program.description}</p>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-semibold">Duration:</span> {program.duration}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Sessions:</span> {program.sessions}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Target:</span> {program.targetAudience}
+                        </div>
+                        <div>
+                          <span className="font-semibold">Expert:</span> {program.expert}
+                        </div>
+                      </div>
+
+                      <div>
+                        <h4 className="font-semibold mb-2">Program Features:</h4>
+                        <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
+                          {program.features.map((feature, index) => (
+                            <li key={index}>{feature}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-4">
+                        <div>
+                          <span className="text-2xl font-bold text-ifind-teal">${program.price}</span>
+                          <span className="text-gray-500 ml-1">per program</span>
+                        </div>
+                        <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
+                          Enroll Now
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* CTA Section */}
+          <div className="bg-gradient-to-r from-ifind-aqua/10 to-ifind-lavender/10 rounded-lg p-8 text-center">
+            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Institution?</h2>
+            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+              Join hundreds of educational institutions that have already implemented our mental wellness programs and seen remarkable improvements in student and educator well-being.
+            </p>
+            <Button size="lg" className="bg-ifind-teal hover:bg-ifind-teal/90">
+              Contact Us for Institutional Programs
+            </Button>
+          </div>
+        </div>
+      </Container>
+
       <Footer />
     </>
   );
