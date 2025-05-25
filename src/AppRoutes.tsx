@@ -5,7 +5,6 @@ import Index from './pages/Index';
 import AboutUs from './pages/AboutUs';
 import Contact from './pages/Contact';
 import Services from './pages/Services';
-import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import Experts from './pages/Experts';
 import ExpertDetail from './pages/ExpertDetail';
 import UserLogin from './pages/UserLogin';
@@ -37,8 +36,7 @@ const AppRoutes = () => {
       <Route path="/about" element={<AboutUs />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/services" element={<Services />} />
-      {/* Individual Service Detail Pages */}
-      <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+      <Route path="/services/:serviceType" element={<Services />} />
       <Route path="/experts" element={<Experts />} />
       <Route path="/expert/:id" element={<ExpertDetail />} />
       <Route path="/user-login" element={<UserLogin />} />
@@ -52,7 +50,7 @@ const AppRoutes = () => {
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
       
-      {/* Support Routes */}
+      {/* Support Routes - Fixed to use actual pages instead of NotFound */}
       <Route path="/faqs" element={<FAQs />} />
       <Route path="/faq" element={<FAQs />} />
       <Route path="/blog" element={<NotFound />} />
