@@ -1,85 +1,135 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import AssessmentIntro from '@/components/assessment/AssessmentIntro';
+import AssessmentQuestions from '@/components/assessment/AssessmentQuestions';
+import AssessmentResults from '@/components/assessment/AssessmentResults';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
-import { FileText, Brain, Heart, Shield } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { AssessmentData } from '@/types/assessment';
+
+enum AssessmentStep {
+  INTRO = 'intro',
+  QUESTIONS = 'questions',
+  RESULTS = 'results',
+}
 
 const MentalHealthAssessment = () => {
-  return (
-    <>
-      <Navbar />
+  const [currentStep, setCurrentStep] = useState<AssessmentStep>(AssessmentStep.INTRO);
+  const [assessmentData, setAssessmentData] = useState<AssessmentData>({
+    emotionalWellbeing: {
+      depression: [0, 0],
+      anxiety: [0, 0],
+    },
+    stressCoping: [0, 0, 0, 0],
+    lifestyleHealth: [0, 0, 0],
+    openEndedReflection: '',
+  });
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const handleStartAssessment = () => {
+    setCurrentStep(AssessmentStep.QUESTIONS);
+    window.scrollTo(0, 0);
+  };
+
+  const handleAnswerChange = (section: keyof AssessmentData, index: number, value: number) => {
+    setAssessmentData(prevData => {
+      const newData = { ...prevData };
       
-      {/* Hero Section */}
-      <section className="relative h-96 flex items-center justify-center overflow-hidden">
-        <div 
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: 'url(/lovable-uploads/35d6ff96-c06b-4787-84bc-64318cfa9fb0.png)' }}
-        >
-          <div className="absolute inset-0 bg-black/40"></div>
-        </div>
-        
-        <div className="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Mental Health Assessment</h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Discover insights about your mental wellbeing through our comprehensive assessment
-          </p>
-        </div>
-      </section>
+      if (section === 'emotionalWellbeing') {
+        if (index < 2) {
+          newData.emotionalWellbeing.depression[index] = value;
+        } else {
+          newData.emotionalWellbeing.anxiety[index - 2] = value;
+        }
+      } else if (section === 'stressCoping') {
+        newData.stressCoping[index] = value;
+      } else if (section === 'lifestyleHealth') {
+        newData.lifestyleHealth[index] = value;
+      }
+      
+      return newData;
+    });
+  };
 
-      {/* Assessment Content */}
-      <Container className="py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Take Your Free Mental Health Assessment</h2>
-            <p className="text-lg text-gray-600">
-              Our scientifically-backed assessment helps you understand your current mental health status 
-              and provides personalized recommendations for your wellness journey.
-            </p>
+  const handleOpenEndedResponse = (text: string) => {
+    setAssessmentData(prevData => ({
+      ...prevData,
+      openEndedReflection: text
+    }));
+  };
+
+  const handleCompleteAssessment = () => {
+    setCurrentStep(AssessmentStep.RESULTS);
+    window.scrollTo(0, 0);
+  };
+
+  const handleRetake = () => {
+    setCurrentStep(AssessmentStep.INTRO);
+    setAssessmentData({
+      emotionalWellbeing: {
+        depression: [0, 0],
+        anxiety: [0, 0],
+      },
+      stressCoping: [0, 0, 0, 0],
+      lifestyleHealth: [0, 0, 0],
+      openEndedReflection: '',
+    });
+    window.scrollTo(0, 0);
+  };
+
+  const handleExit = () => {
+    window.location.href = '/';
+  };
+
+  return (
+    <div id="top" className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-1 py-10 bg-gradient-to-b from-white to-gray-50">
+        <div className="container max-w-4xl mx-auto px-4">
+          <div className="mb-8 flex items-center">
+            <Link to="/">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+            </Link>
+            <h1 className="text-3xl font-bold text-center flex-1 mr-16">Mental Health Assessment</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center p-6">
-              <Brain className="h-12 w-12 text-ifind-teal mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Comprehensive</h3>
-              <p className="text-gray-600">
-                Covers all aspects of mental wellness including stress, anxiety, and mood
-              </p>
-            </div>
-            
-            <div className="text-center p-6">
-              <Heart className="h-12 w-12 text-ifind-purple mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Personalized</h3>
-              <p className="text-gray-600">
-                Get tailored recommendations based on your unique responses
-              </p>
-            </div>
-            
-            <div className="text-center p-6">
-              <Shield className="h-12 w-12 text-ifind-aqua mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Confidential</h3>
-              <p className="text-gray-600">
-                Your responses are completely private and secure
-              </p>
-            </div>
-          </div>
-
-          <div className="text-center bg-gray-50 p-8 rounded-lg">
-            <FileText className="h-16 w-16 text-ifind-teal mx-auto mb-4" />
-            <h3 className="text-2xl font-bold mb-4">Ready to Begin?</h3>
-            <p className="text-lg text-gray-600 mb-6">
-              The assessment takes approximately 10-15 minutes to complete.
-            </p>
-            <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white px-8 py-3 text-lg">
-              Start Assessment
-            </Button>
-          </div>
+          <Card className="shadow-md border-ifind-teal/10">
+            <CardContent className="p-6 md:p-8">
+              {currentStep === AssessmentStep.INTRO && (
+                <AssessmentIntro onStart={handleStartAssessment} />
+              )}
+              
+              {currentStep === AssessmentStep.QUESTIONS && (
+                <AssessmentQuestions 
+                  assessmentData={assessmentData}
+                  onAnswerChange={handleAnswerChange}
+                  onOpenEndedResponse={handleOpenEndedResponse}
+                  onSubmit={handleCompleteAssessment}
+                />
+              )}
+              
+              {currentStep === AssessmentStep.RESULTS && (
+                <AssessmentResults 
+                  assessmentData={assessmentData}
+                  onRetake={handleRetake}
+                  onExit={handleExit}
+                />
+              )}
+            </CardContent>
+          </Card>
         </div>
-      </Container>
-
+      </main>
       <Footer />
-    </>
+    </div>
   );
 };
 
