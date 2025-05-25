@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Index from './pages/Index';
@@ -27,6 +26,9 @@ import ProgramsForBusiness from './pages/ProgramsForBusiness';
 import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
 import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
 import FAQs from './pages/FAQs';
+import Blog from './pages/Blog';
+import Help from './pages/Help';
+import MentalHealthAssessment from './pages/MentalHealthAssessment';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -55,8 +57,8 @@ const AppRoutes = () => {
       {/* Support Routes */}
       <Route path="/faqs" element={<FAQs />} />
       <Route path="/faq" element={<FAQs />} />
-      <Route path="/blog" element={<NotFound />} />
-      <Route path="/help" element={<NotFound />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/help" element={<Help />} />
       
       {/* User Dashboard - accessible only to authenticated users */}
       <Route 

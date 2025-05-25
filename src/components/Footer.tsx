@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, Twitter, Instagram, Youtube, Heart, Award, BrainCircuit } from 'lucide-react';
@@ -46,6 +45,11 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
+                <Link to="/services/mindful-listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Heart2Heart Listening
+                </Link>
+              </li>
+              <li>
                 <Link to="/services/therapy-sessions" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Therapy Sessions
                 </Link>
@@ -56,18 +60,13 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/services/mindful-listening" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Heart2Heart Listening
+                <Link to="/services/life-coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
+                  Life Coaching
                 </Link>
               </li>
               <li>
                 <Link to="/services/offline-retreats" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
                   Offline Retreats
-                </Link>
-              </li>
-              <li>
-                <Link to="/services/life-coaching" className="text-ifind-offwhite/80 hover:text-ifind-offwhite transition-colors">
-                  Life Coaching
                 </Link>
               </li>
             </ul>

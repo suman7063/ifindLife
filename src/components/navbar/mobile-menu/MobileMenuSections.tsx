@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Separator } from '@/components/ui/separator';
@@ -103,6 +102,14 @@ const MobileMenuSections = () => {
           </Link>
           
           <Link 
+            to="/services/mindful-listening" 
+            className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
+          >
+            <Heart className="h-4 w-4" />
+            Heart2Heart Listening
+          </Link>
+          
+          <Link 
             to="/services/therapy-sessions" 
             className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
           >
@@ -119,11 +126,11 @@ const MobileMenuSections = () => {
           </Link>
           
           <Link 
-            to="/services/mindful-listening" 
+            to="/services/life-coaching" 
             className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
           >
-            <Heart className="h-4 w-4" />
-            Heart2Heart Listening
+            <Compass className="h-4 w-4" />
+            Life Coaching
           </Link>
           
           <Link 
@@ -132,14 +139,6 @@ const MobileMenuSections = () => {
           >
             <Mountain className="h-4 w-4" />
             Offline Retreats
-          </Link>
-          
-          <Link 
-            to="/services/life-coaching" 
-            className="flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors"
-          >
-            <Compass className="h-4 w-4" />
-            Life Coaching
           </Link>
         </nav>
       </div>
