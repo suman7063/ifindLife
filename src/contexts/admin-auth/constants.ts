@@ -1,3 +1,4 @@
+
 import { AdminUser } from './types';
 
 export const defaultAdminUsers: AdminUser[] = [
@@ -19,7 +20,8 @@ export const defaultAdminUsers: AdminUser[] = [
       canManageTestimonials: true
     },
     createdAt: '2023-01-01T00:00:00Z',
-    lastLogin: new Date().toISOString()
+    lastLogin: new Date().toISOString(),
+    isActive: true
   }
 ];
 

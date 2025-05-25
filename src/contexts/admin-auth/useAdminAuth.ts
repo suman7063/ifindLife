@@ -11,6 +11,31 @@ export const useAdminAuth = () => {
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
   const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
 
+  // Helper function to create AdminUser objects with all required properties
+  const createAdminUser = (userData: Partial<AdminUser> & { id: string; email: string; username: string; role: AdminRole }): AdminUser => {
+    return {
+      id: userData.id,
+      email: userData.email,
+      username: userData.username,
+      role: userData.role,
+      permissions: userData.permissions || {
+        canManageUsers: true,
+        canManageExperts: true,
+        canManageContent: true,
+        canViewAnalytics: true,
+        canManageServices: true,
+        canManagePrograms: true,
+        canDeleteContent: true,
+        canApproveExperts: true,
+        canManageBlog: true,
+        canManageTestimonials: true
+      },
+      createdAt: userData.createdAt || new Date().toISOString(),
+      lastLogin: userData.lastLogin || new Date().toISOString(),
+      isActive: userData.isActive ?? true
+    };
+  };
+
   // Initialize authentication state from local storage or session
   useEffect(() => {
     const checkAuth = async () => {
@@ -66,11 +91,23 @@ export const useAdminAuth = () => {
       );
       
       if (adminUser) {
+        // Create a complete admin user object
+        const completeAdminUser = createAdminUser({
+          id: adminUser.id,
+          email: adminUser.email,
+          username: adminUser.username,
+          role: adminUser.role,
+          permissions: adminUser.permissions,
+          createdAt: adminUser.createdAt,
+          lastLogin: new Date().toISOString(),
+          isActive: true
+        });
+        
         // Store in localStorage for persistence
-        localStorage.setItem('admin_auth', JSON.stringify(adminUser));
+        localStorage.setItem('admin_auth', JSON.stringify(completeAdminUser));
         
         // Update state
-        setCurrentUser(adminUser);
+        setCurrentUser(completeAdminUser);
         setIsAuthenticated(true);
         
         console.log('AdminAuth: Login successful');
@@ -129,15 +166,21 @@ export const useAdminAuth = () => {
 
   // Add a new admin
   const addAdmin = useCallback((adminData: Partial<AdminUser>): void => {
-    const newAdmin: AdminUser = {
+    if (!adminData.username || !adminData.email) {
+      console.error('AdminAuth: Cannot add admin without username and email');
+      return;
+    }
+    
+    const newAdmin = createAdminUser({
       id: `admin_${Date.now()}`,
-      email: adminData.email || 'admin@example.com',
-      username: adminData.username || 'newadmin',
+      email: adminData.email,
+      username: adminData.username,
       role: adminData.role || 'admin',
-      permissions: adminData.permissions || {},
-      createdAt: adminData.createdAt || new Date().toISOString(),
-      lastLogin: adminData.lastLogin || new Date().toISOString()
-    };
+      permissions: adminData.permissions,
+      createdAt: adminData.createdAt,
+      lastLogin: adminData.lastLogin,
+      isActive: adminData.isActive
+    });
     
     setAdminUsers(prev => [...prev, newAdmin]);
   }, []);

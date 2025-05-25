@@ -75,7 +75,13 @@ export const useAdminSession = () => {
           canManageUsers: data.role === 'super_admin' || data.role === 'superadmin',
           canManageExperts: data.role === 'super_admin' || data.role === 'superadmin',
           canManageContent: true,
-          canViewAnalytics: true
+          canViewAnalytics: true,
+          canManageServices: true,
+          canManagePrograms: true,
+          canDeleteContent: true,
+          canApproveExperts: true,
+          canManageBlog: true,
+          canManageTestimonials: true
         };
 
         const userData = await supabase.auth.getUser();
@@ -89,7 +95,8 @@ export const useAdminSession = () => {
           role: data.role as any,
           permissions: defaultPermissions,
           createdAt: data.created_at,
-          lastLogin: new Date().toISOString()
+          lastLogin: new Date().toISOString(),
+          isActive: true
         };
         console.log('Admin user found:', adminUser);
         setUser(adminUser);

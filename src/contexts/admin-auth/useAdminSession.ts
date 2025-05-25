@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -84,10 +85,16 @@ export const useAdminSession = () => {
             canManageContent: data.role === 'super_admin' || data.role === 'superadmin',
             canManageUsers: data.role === 'super_admin' || data.role === 'superadmin',
             canManageExperts: data.role === 'super_admin' || data.role === 'superadmin',
-            canManageServices: data.role === 'super_admin' || data.role === 'superadmin'
+            canManageServices: data.role === 'super_admin' || data.role === 'superadmin',
+            canManagePrograms: data.role === 'super_admin' || data.role === 'superadmin',
+            canDeleteContent: data.role === 'super_admin' || data.role === 'superadmin',
+            canApproveExperts: data.role === 'super_admin' || data.role === 'superadmin',
+            canManageBlog: data.role === 'super_admin' || data.role === 'superadmin',
+            canManageTestimonials: data.role === 'super_admin' || data.role === 'superadmin'
           },
           createdAt: data.created_at || new Date().toISOString(),
-          lastLogin: new Date().toISOString() // Set current login time
+          lastLogin: new Date().toISOString(), // Set current login time
+          isActive: true
         };
         
         setUser(adminUser);

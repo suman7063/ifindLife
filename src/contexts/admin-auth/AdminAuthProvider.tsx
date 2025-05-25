@@ -60,6 +60,20 @@ const DEFAULT_PERMISSIONS: AdminPermissions = {
   canManageTestimonials: true
 };
 
+// Helper function to create AdminUser objects with all required properties
+const createAdminUser = (userData: Partial<AdminUser> & { id: string; username: string; email: string; role: AdminRole }): AdminUser => {
+  return {
+    id: userData.id,
+    username: userData.username,
+    email: userData.email,
+    role: userData.role,
+    permissions: userData.permissions || DEFAULT_PERMISSIONS,
+    isActive: userData.isActive ?? true,
+    createdAt: userData.createdAt || new Date().toISOString(),
+    lastLogin: userData.lastLogin || new Date().toISOString()
+  };
+};
+
 // Provider component
 export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   console.log('AdminAuthProvider rendering...');
@@ -71,7 +85,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   
   // Mock admin users for testing
   const [adminUsers] = useState<AdminUser[]>([
-    {
+    createAdminUser({
       id: '1',
       username: 'IFLsuperadmin',
       email: 'iflsuperadmin@ifindlife.com',
@@ -79,8 +93,8 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
       permissions: DEFAULT_PERMISSIONS,
       isActive: true,
       createdAt: new Date().toISOString(),
-      lastLoginAt: null
-    }
+      lastLogin: new Date().toISOString()
+    })
   ]);
 
   // Check authentication status on mount
@@ -91,7 +105,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
         const { data } = await supabase.auth.getSession();
         
         if (data.session && data.session.user.email?.includes('@ifindlife.com')) {
-          const adminUser: AdminUser = {
+          const adminUser = createAdminUser({
             id: data.session.user.id,
             username: 'IFLsuperadmin',
             email: data.session.user.email,
@@ -99,8 +113,8 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
             permissions: DEFAULT_PERMISSIONS,
             isActive: true,
             createdAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString()
-          };
+            lastLogin: new Date().toISOString()
+          });
           
           setCurrentUser(adminUser);
           setIsAuthenticated(true);
@@ -138,7 +152,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
           console.log('AdminAuth: Using mock authentication for test account');
           
           // Mock authentication for test account
-          const adminUser: AdminUser = {
+          const adminUser = createAdminUser({
             id: '1',
             username: 'IFLsuperadmin',
             email: email,
@@ -146,8 +160,8 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
             permissions: DEFAULT_PERMISSIONS,
             isActive: true,
             createdAt: new Date().toISOString(),
-            lastLoginAt: new Date().toISOString()
-          };
+            lastLogin: new Date().toISOString()
+          });
           
           setCurrentUser(adminUser);
           setIsAuthenticated(true);
@@ -156,7 +170,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
         
         console.log('AdminAuth: Test account login successful with Supabase');
         
-        const adminUser: AdminUser = {
+        const adminUser = createAdminUser({
           id: data.user.id,
           username: 'IFLsuperadmin',
           email: data.user.email || email,
@@ -164,8 +178,8 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
           permissions: DEFAULT_PERMISSIONS,
           isActive: true,
           createdAt: new Date().toISOString(),
-          lastLoginAt: new Date().toISOString()
-        };
+          lastLogin: new Date().toISOString()
+        });
         
         setCurrentUser(adminUser);
         setIsAuthenticated(true);
