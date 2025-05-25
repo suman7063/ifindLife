@@ -1,4 +1,3 @@
-
 export interface AssessmentData {
   emotionalWellbeing: {
     depression: [number, number];
@@ -18,14 +17,32 @@ export interface AssessmentScores {
   overallScore: number;
 }
 
+export interface AssessmentScore {
+  phq2Score: number;
+  gad2Score: number;
+  phq4TotalScore: number;
+  stressCopingScore: number;
+  lifestyleHealthScore: number;
+  totalScore: number;
+}
+
 export interface AssessmentFeedback {
-  phq2Feedback: string;
-  gad2Feedback: string;
-  phq4Feedback: string;
-  stressFeedback: string;
-  lifestyleFeedback: string;
-  overallFeedback: string;
-  recommendations: string[];
-  resources: string[];
-  seekProfessionalHelp: boolean;
+  depressionFeedback?: string;
+  anxietyFeedback?: string;
+  overallMentalHealthFeedback?: string;
+  stressFeedback?: string;
+  lifestyleFeedback?: string;
+  generalRecommendations: string[];
+  resourceLinks: Array<{
+    title: string;
+    description: string;
+    url: string;
+  }>;
+  phq2Feedback?: string;
+  gad2Feedback?: string;
+  phq4Feedback?: string;
+  overallFeedback?: string;
+  recommendations?: string[];
+  resources?: string[];
+  seekProfessionalHelp?: boolean;
 }
