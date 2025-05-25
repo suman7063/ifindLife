@@ -44,16 +44,6 @@ const SupportMenu = () => {
               </Link>
             </NavigationMenuLink>
           </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/help" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Help Center
-              </Link>
-            </NavigationMenuLink>
-          </li>
         </ul>
       </NavigationMenuContent>
     </NavigationMenuItem>

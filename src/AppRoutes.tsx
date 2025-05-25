@@ -27,6 +27,8 @@ import ProgramsForBusiness from './pages/ProgramsForBusiness';
 import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
 import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
 import FAQs from './pages/FAQs';
+import Blog from './pages/Blog';
+import MentalHealthAssessment from './pages/MentalHealthAssessment';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -51,12 +53,12 @@ const AppRoutes = () => {
       <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
+      <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
       
       {/* Support Routes */}
       <Route path="/faqs" element={<FAQs />} />
       <Route path="/faq" element={<FAQs />} />
-      <Route path="/blog" element={<NotFound />} />
-      <Route path="/help" element={<NotFound />} />
+      <Route path="/blog" element={<Blog />} />
       
       {/* User Dashboard - accessible only to authenticated users */}
       <Route 
