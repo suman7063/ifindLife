@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import BookingTab from '@/components/booking/BookingTab';
-import { User } from '@supabase/supabase-js';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 interface BookingDialogProps {
   open: boolean;
@@ -11,58 +11,42 @@ interface BookingDialogProps {
   serviceType: string;
 }
 
-const BookingDialog: React.FC<BookingDialogProps> = ({ 
-  open, 
-  onOpenChange, 
+const BookingDialog: React.FC<BookingDialogProps> = ({
+  open,
+  onOpenChange,
   serviceTitle,
   serviceType
 }) => {
-  // We'll need to fetch expert data and user state here in a real implementation
-  // For now, we'll use mock data
-  const mockExpert = {
-    id: "expert-1",
-    name: "Dr. Example"
-  };
-  const mockUser = null;
-  const isUserLoading = false;
-  
-  const handleBookingComplete = () => {
-    onOpenChange(false);
-  };
-  
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Book a {serviceType}: {serviceTitle}</DialogTitle>
+          <DialogTitle>Book {serviceTitle}</DialogTitle>
         </DialogHeader>
         
-        {isUserLoading ? (
-          <div className="flex justify-center p-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-700"></div>
-          </div>
-        ) : !mockUser ? (
-          <div className="p-6 text-center">
-            <p className="mb-4">Please sign in to book this service.</p>
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              onClick={() => {
-                // Save the current state so we can return to it after login
-                sessionStorage.setItem('returnPath', window.location.pathname);
-                sessionStorage.setItem('pendingAction', 'booking');
-                window.location.href = '/user-login';
-              }}
+        <div className="mt-4">
+          <p className="text-muted-foreground mb-6">
+            Ready to book your {serviceTitle.toLowerCase()} session? Choose how you'd like to proceed.
+          </p>
+          
+          <div className="space-y-3">
+            <Button asChild className="w-full">
+              <Link to="/experts">Find an Expert</Link>
+            </Button>
+            
+            <Button variant="outline" asChild className="w-full">
+              <Link to="/contact">Contact Us</Link>
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              className="w-full" 
+              onClick={() => onOpenChange(false)}
             >
-              Sign In to Book
-            </button>
+              Cancel
+            </Button>
           </div>
-        ) : (
-          <BookingTab 
-            expertId={mockExpert.id} 
-            expertName={mockExpert.name}
-            onBookingComplete={handleBookingComplete} 
-          />
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
