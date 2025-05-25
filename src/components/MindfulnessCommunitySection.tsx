@@ -1,47 +1,93 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
 const MindfulnessCommunitySection = () => {
-  return <section className="py-16 bg-white">
+  return (
+    <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <div className="flex flex-col md:flex-row items-center md:space-x-8">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-4 text-gray-900">Join Our Mindfulness Community</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Be part of our supportive community and receive daily mindfulness activities to help 
+            you maintain balance and well-being in your life.
+          </p>
+        </div>
+        
+        <div className="flex flex-col lg:flex-row items-center gap-12">
           {/* Left - Image */}
-          <div className="w-full md:w-1/2 mb-8 md:mb-0">
-            <img src="/lovable-uploads/6c427c55-7a38-4dad-8c60-cc782cbc5bd7.png" alt="Mindfulness Community" className="rounded-lg shadow-lg w-full h-auto" />
+          <div className="w-full lg:w-1/2">
+            <img 
+              src="/lovable-uploads/7f8f5b16-65a3-4c35-b438-d5269980e6db.png" 
+              alt="Happy community members" 
+              className="rounded-lg shadow-lg w-full h-auto" 
+            />
           </div>
           
           {/* Right - Content */}
-          <div className="w-full md:w-1/2">
-            <h2 className="text-3xl font-bold mb-4 text-center md:text-center">Join Our Mindfulness Community</h2>
-            <p className="text-gray-600 mb-6">
-              Connect with like-minded individuals committed to mental wellbeing and personal growth. 
-              Our supportive community offers a safe space to share experiences, learn mindfulness 
-              techniques, and build meaningful connections.
-            </p>
-            
-            <div className="space-y-4">
-              <Button className="w-full bg-ifind-teal hover:bg-ifind-teal/90 text-white flex items-center justify-center gap-2" onClick={() => window.open('https://chat.whatsapp.com/xyz', '_blank')}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path fillRule="evenodd" clipRule="evenodd" d="M20.6004 3.39894C18.3074 1.19895 15.2034 0 11.9954 0C5.4424 0 0.0914 5.35095 0.0914 11.9039C0.0914 14.0159 0.6544 16.0729 1.7304 17.8799L0.0184 24L6.2624 22.3179C8.0034 23.2979 9.9734 23.8159 11.9904 23.8159H11.9954C18.5454 23.8159 24.0004 18.4649 24.0004 11.9119C24.0004 8.70395 22.8924 5.59895 20.6004 3.39894ZM11.9954 21.8399C10.2034 21.8399 8.4504 21.3499 6.9064 20.4199L6.5474 20.2199L2.8424 21.2089L3.8464 17.6039L3.6274 17.2319C2.5994 15.6449 2.0674 13.8039 2.0674 11.9039C2.0674 6.43895 6.5304 1.97595 12.0004 1.97595C14.6774 1.97595 17.1974 3.00895 19.1014 4.91295C21.0044 6.81695 22.0304 9.33594 22.0254 11.9119C22.0254 17.3789 17.4604 21.8399 11.9954 21.8399Z" fill="currentColor" />
-                  <path fillRule="evenodd" clipRule="evenodd" d="M17.8694 14.4315C17.5894 14.2915 16.1044 13.5615 15.8434 13.4715C15.5834 13.3815 15.3884 13.3365 15.1944 13.6165C15.0004 13.8965 14.4224 14.5765 14.2534 14.7705C14.0824 14.9645 13.9134 14.9885 13.6344 14.8475C11.8744 13.9675 10.7224 13.2745 9.56439 11.2715C9.24539 10.7315 9.83639 10.7785 10.3854 9.68152C10.4764 9.48752 10.4304 9.31752 10.3624 9.17652C10.2944 9.03552 9.71439 7.55053 9.47639 6.99053C9.24539 6.44253 9.01039 6.52053 8.83139 6.51053C8.66039 6.50153 8.46639 6.50153 8.27139 6.50153C8.07739 6.50153 7.77139 6.56853 7.51239 6.84853C7.25239 7.12853 6.47539 7.85852 6.47539 9.34352C6.47539 10.8275 7.53939 12.2695 7.67639 12.4645C7.81439 12.6585 9.69939 15.5405 12.5774 16.8405C14.2424 17.6415 14.9164 17.7095 15.7784 17.5695C16.3074 17.4815 17.5044 16.8415 17.7424 16.1915C17.9804 15.5405 17.9804 14.9805 17.9124 14.8695C17.8464 14.7525 17.6524 14.6835 17.3734 14.5435L17.8694 14.4315Z" fill="currentColor" />
+          <div className="w-full lg:w-1/2 space-y-8">
+            {/* Daily Activities Newsletter */}
+            <div className="bg-white rounded-lg p-6 border border-purple-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Daily Activities Newsletter</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Join our email list to receive daily mindfulness practices and activities directly to 
+                your inbox. Start your day with intention and clarity.
+              </p>
+              <div className="flex gap-2">
+                <Input 
+                  type="email" 
+                  placeholder="Your email address" 
+                  className="flex-1"
+                />
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white px-6">
+                  Join
+                </Button>
+              </div>
+            </div>
+
+            {/* WhatsApp Community */}
+            <div className="bg-white rounded-lg p-6 border border-teal-200">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-teal-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Join WhatsApp Community</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Connect with like-minded individuals in our WhatsApp group. Share experiences, get 
+                instant support, and participate in group activities.
+              </p>
+              <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893A11.821 11.821 0 0020.885 3.488"/>
                 </svg>
-                Join WhatsApp Community
+                Join WhatsApp Group
               </Button>
-              <Button className="w-full bg-ifind-purple hover:bg-ifind-purple/90 text-white flex items-center justify-center gap-2" onClick={() => window.open('https://discord.gg/xyz', '_blank')}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z" fill="currentColor" />
-                </svg>
-                Join Discord Community
-              </Button>
-              <Button className="w-full bg-black hover:bg-gray-800 text-white flex items-center justify-center gap-2" onClick={() => window.open('https://t.me/xyz', '_blank')}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.96 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.244-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z" fill="currentColor" />
-                </svg>
-                Join Telegram Group
-              </Button>
+            </div>
+
+            {/* Community Stats */}
+            <div className="flex items-center gap-2 text-gray-600">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"/>
+              </svg>
+              <span>Join 2,500+ members already in our community</span>
             </div>
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default MindfulnessCommunitySection;
