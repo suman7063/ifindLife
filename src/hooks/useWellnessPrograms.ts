@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Program } from '@/types/programs';
 import { supabase } from '@/lib/supabase';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import { issueBasedPrograms } from '@/data/issueBasedPrograms';
 
 export const useWellnessPrograms = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -35,7 +35,7 @@ export const useWellnessPrograms = () => {
         console.log('Wellness programs fetched:', data);
         
         if (data) {
-          const programData: Program[] = data.map(program => ({
+          const databasePrograms: Program[] = data.map(program => ({
             id: program.id,
             title: program.title,
             description: program.description,
@@ -50,7 +50,13 @@ export const useWellnessPrograms = () => {
             is_favorite: isProgramFavorite(program.id)
           }));
           
-          const sortedPrograms = [...programData].sort((a, b) => 
+          // Combine database programs with issue-based programs
+          const allPrograms = [...databasePrograms, ...issueBasedPrograms.map(program => ({
+            ...program,
+            is_favorite: isProgramFavorite(program.id)
+          }))];
+          
+          const sortedPrograms = [...allPrograms].sort((a, b) => 
             (b.enrollments || 0) - (a.enrollments || 0)
           );
           

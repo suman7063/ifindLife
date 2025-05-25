@@ -1,11 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Program } from '@/types/programs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/types/database/unified';
 import { CalendarDays, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
+import FavoriteButton from '@/components/favorites/FavoriteButton';
+import { toast } from 'sonner';
 
 interface ProgramCardProps {
   program: Program;
@@ -19,6 +22,11 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
   isAuthenticated
 }) => {
   const navigate = useNavigate();
+  const { toggleProgramFavorite, isProgramFavorite } = useFavorites();
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
+  
+  // Check if this program is a favorite
+  const isFavorite = program.is_favorite || isProgramFavorite(program.id);
   
   // Default images for different program types
   const getDefaultProgramImage = (type: string) => {
@@ -36,6 +44,26 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
     navigate(`/program/${program.id}`);
   };
   
+  const handleFavoriteToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.info("Please log in to save programs to your favorites");
+      navigate('/user-login');
+      return;
+    }
+    
+    setIsTogglingFavorite(true);
+    try {
+      await toggleProgramFavorite(program.id);
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error('Failed to update favorite status');
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
+  
   return (
     <Card className="h-full flex flex-col overflow-hidden transition-all hover:shadow-md">
       <div className="relative h-48 overflow-hidden">
@@ -46,6 +74,15 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
         />
         <div className="absolute top-3 right-3 bg-white/80 backdrop-blur-sm text-sm font-medium py-1 px-2 rounded">
           {program.category}
+        </div>
+        <div className="absolute top-3 left-3">
+          <FavoriteButton
+            isFavorite={isFavorite}
+            isLoading={isTogglingFavorite}
+            onClick={handleFavoriteToggle}
+            size="sm"
+            tooltipText={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          />
         </div>
       </div>
       

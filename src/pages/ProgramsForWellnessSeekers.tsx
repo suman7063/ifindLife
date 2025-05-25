@@ -20,13 +20,13 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     programsByCategory
   } = useWellnessPrograms();
 
-  // Define all possible category options with explicit typing
+  // Define all possible category options with explicit typing including issue-based
   const allCategoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[] = [
     { value: 'all', label: 'All Programs' },
     { value: 'quick-ease', label: 'QuickEase' },
     { value: 'resilience-building', label: 'Resilience Building' },
     { value: 'super-human', label: 'Super Human' },
-    { value: 'issue-based', label: 'Issue-Based' },
+    { value: 'issue-based', label: 'Issue-Based Sessions' },
     { value: 'favorites', label: 'My Favorites' }
   ];
 

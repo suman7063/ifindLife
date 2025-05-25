@@ -23,7 +23,6 @@ import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import LogoutPage from './pages/LogoutPage';
 import ProgramsForBusiness from './pages/ProgramsForBusiness';
-import IssueBasedSessions from './pages/IssueBasedSessions';
 import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
 import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
 
@@ -49,7 +48,6 @@ const AppRoutes = () => {
       <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/issue-based-sessions" element={<IssueBasedSessions />} />
       
       {/* Support Routes */}
       <Route path="/faqs" element={<NotFound />} />
