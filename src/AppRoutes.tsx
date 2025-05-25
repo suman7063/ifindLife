@@ -34,6 +34,7 @@ const AppRoutes = () => {
       <Route path="/about" element={<AboutUs />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/services" element={<Services />} />
+      <Route path="/services/:serviceType" element={<Services />} />
       <Route path="/experts" element={<Experts />} />
       <Route path="/expert/:id" element={<ExpertDetail />} />
       <Route path="/user-login" element={<UserLogin />} />
@@ -45,6 +46,11 @@ const AppRoutes = () => {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/issue-based-sessions" element={<IssueBasedSessions />} />
+      
+      {/* Support Routes */}
+      <Route path="/faqs" element={<NotFound />} />
+      <Route path="/blog" element={<NotFound />} />
+      <Route path="/help" element={<NotFound />} />
       
       {/* User Dashboard - accessible only to authenticated users */}
       <Route 

@@ -27,16 +27,6 @@ const ServicesMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/services/mindful-listening" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Heart2Heart Listening Sessions
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
                 to="/services/therapy-sessions" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
@@ -51,6 +41,16 @@ const ServicesMenu = () => {
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
                 Guided Meditations
+              </Link>
+            </NavigationMenuLink>
+          </li>
+          <li>
+            <NavigationMenuLink asChild>
+              <Link 
+                to="/services/mindful-listening" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              >
+                Heart2Heart Listening
               </Link>
             </NavigationMenuLink>
           </li>

@@ -17,20 +17,10 @@ const ProgramsMenu = () => {
           <li>
             <NavigationMenuLink asChild>
               <Link 
-                to="/programs-for-wellness-seekers" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                to="/programs" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md font-medium text-left"
               >
-                Wellness Seekers
-              </Link>
-            </NavigationMenuLink>
-          </li>
-          <li>
-            <NavigationMenuLink asChild>
-              <Link 
-                to="/programs-for-academic-institutes" 
-                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
-              >
-                Academic Institutes
+                All Programs
               </Link>
             </NavigationMenuLink>
           </li>
@@ -40,7 +30,17 @@ const ProgramsMenu = () => {
                 to="/programs-for-business" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
               >
-                Business
+                Programs for Business
+              </Link>
+            </NavigationMenuLink>
+          </li>
+          <li>
+            <NavigationMenuLink asChild>
+              <Link 
+                to="/issue-based-sessions" 
+                className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+              >
+                Issue Based Sessions
               </Link>
             </NavigationMenuLink>
           </li>
