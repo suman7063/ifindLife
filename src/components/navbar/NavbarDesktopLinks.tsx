@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import NavbarUserMenu from './NavbarUserMenu';
+import NavbarUserAvatar from './NavbarUserAvatar';
 import NavbarExpertMenu from './NavbarExpertMenu';
 import {
   NavigationMenu,
@@ -12,7 +12,7 @@ import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown } from './menu';
 
 interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
-  currentUser: any; // Accept any profile type
+  currentUser: any;
   hasExpertProfile: boolean;
   userLogout: () => Promise<boolean>;
   expertLogout: () => Promise<boolean>;
@@ -29,6 +29,9 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
+  // Don't show login dropdown if user is authenticated in any way
+  const showLoginDropdown = !isAuthenticated && !hasExpertProfile;
+  
   return (
     <div className="hidden md:flex items-center space-x-1">
       <Button variant="ghost" asChild>
@@ -43,28 +46,27 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       
       <NavigationMenu>
         <NavigationMenuList>
-          {/* Programs Dropdown */}
           <ProgramsMenu />
-
-          {/* Services Dropdown */}
           <ServicesMenu />
-
-          {/* Support Dropdown */}
           <SupportMenu />
         </NavigationMenuList>
       </NavigationMenu>
       
-      {/* Login or User Menu */}
+      {/* Show appropriate authentication UI */}
       {hasExpertProfile ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
-      ) : isAuthenticated && sessionType === 'user' ? (
-        <NavbarUserMenu currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />
-      ) : (
+      ) : isAuthenticated && currentUser ? (
+        <NavbarUserAvatar 
+          currentUser={currentUser} 
+          onLogout={userLogout} 
+          isLoggingOut={isLoggingOut} 
+        />
+      ) : showLoginDropdown ? (
         <LoginDropdown 
           isAuthenticated={isAuthenticated} 
           hasExpertProfile={hasExpertProfile} 
         />
-      )}
+      ) : null}
     </div>
   );
 };

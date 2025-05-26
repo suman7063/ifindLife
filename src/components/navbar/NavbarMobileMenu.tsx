@@ -22,6 +22,7 @@ interface NavbarMobileMenuProps {
 
 const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
   isAuthenticated,
+  currentUser,
   hasExpertProfile,
   userLogout,
   expertLogout,
@@ -39,7 +40,6 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
     setOpen(false);
   };
 
-  // Create dashboard link based on user role
   const getDashboardLink = () => {
     if (hasExpertProfile) {
       return "/expert-dashboard";
@@ -65,6 +65,7 @@ const NavbarMobileMenu: React.FC<NavbarMobileMenuProps> = ({
             <MobileMenuFooter 
               isAuthenticated={isAuthenticated}
               hasExpertProfile={hasExpertProfile}
+              currentUser={currentUser}
               handleLogout={handleLogout}
               isLoggingOut={isLoggingOut}
               getDashboardLink={getDashboardLink}
