@@ -1,7 +1,11 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
+import { toast } from 'sonner';
+import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+
 interface Expert {
   id: string;
   name: string;
@@ -12,8 +16,10 @@ interface Expert {
   status: 'online' | 'offline';
   waitTime: string;
 }
+
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthSynchronization();
 
   // Sample experts data matching the screenshot
   const experts: Expert[] = [{
@@ -44,15 +50,46 @@ const ExpertsOnlineSection: React.FC = () => {
     status: 'online',
     waitTime: 'Available Now'
   }];
+
   const handleViewExpert = (expertId: string) => {
     navigate(`/experts/${expertId}`);
   };
+
+  const handleConnect = (e: React.MouseEvent, expertId: string, expertName: string) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.error('Please login or sign up to connect with experts');
+      navigate('/user-login', { 
+        state: { 
+          redirectTo: `/experts/${expertId}?connect=true`,
+          message: `Login to connect with ${expertName}`
+        }
+      });
+      return;
+    }
+
+    // If authenticated, redirect to expert page with connect parameter
+    navigate(`/experts/${expertId}?connect=true`);
+    toast.info('Redirecting to expert profile to initiate call...');
+  };
+
   const handleAddToFavorites = (e: React.MouseEvent, expertId: string) => {
     e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.error('Please login to add experts to favorites');
+      navigate('/user-login');
+      return;
+    }
+    
     console.log(`Added expert ${expertId} to favorites`);
+    toast.success('Expert added to favorites!');
     // Add favorite functionality here
   };
-  return <section className="py-16 bg-white">
+
+  return (
+    <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
         <div className="text-center mb-10">
           <h2 className="text-3xl font-bold mb-3 text-center">Experts Currently Online</h2>
@@ -62,10 +99,19 @@ const ExpertsOnlineSection: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {experts.map(expert => <div key={expert.id} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer overflow-hidden" onClick={() => handleViewExpert(expert.id)}>
+          {experts.map(expert => (
+            <div 
+              key={expert.id} 
+              className="bg-white rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer overflow-hidden" 
+              onClick={() => handleViewExpert(expert.id)}
+            >
               <div className="relative h-48 overflow-hidden">
                 <img src={expert.imageUrl} alt={expert.name} className="w-full h-full object-cover" />
-                <button className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:bg-gray-100" onClick={e => handleAddToFavorites(e, expert.id)} aria-label="Add to favorites">
+                <button 
+                  className="absolute top-3 right-3 bg-white p-2 rounded-full shadow hover:bg-gray-100" 
+                  onClick={(e) => handleAddToFavorites(e, expert.id)} 
+                  aria-label="Add to favorites"
+                >
                   <Heart className="h-5 w-5 text-ifind-teal" />
                 </button>
                 <div className="absolute bottom-3 left-3 bg-green-500 text-white px-2 py-1 rounded-full text-xs">
@@ -85,12 +131,17 @@ const ExpertsOnlineSection: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-green-500 font-medium">{expert.waitTime}</span>
-                  <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white" size="sm">
+                  <Button 
+                    className="bg-ifind-teal hover:bg-ifind-teal/90 text-white" 
+                    size="sm"
+                    onClick={(e) => handleConnect(e, expert.id, expert.name)}
+                  >
                     Connect
                   </Button>
                 </div>
               </div>
-            </div>)}
+            </div>
+          ))}
         </div>
         
         <div className="text-center mt-8">
@@ -99,6 +150,8 @@ const ExpertsOnlineSection: React.FC = () => {
           </Button>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default ExpertsOnlineSection;
