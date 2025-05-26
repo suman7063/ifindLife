@@ -60,7 +60,7 @@ const MindfulnessCommunitySection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch gap-12">
           {/* Left - Image */}
           <div className="w-full">
             <img 
@@ -71,9 +71,9 @@ const MindfulnessCommunitySection = () => {
           </div>
           
           {/* Right - Content - Height matched to image with proper vertical alignment */}
-          <div className="w-full h-full flex flex-col justify-center space-y-6">
+          <div className="w-full flex flex-col justify-between space-y-6 lg:py-8">
             {/* Daily Activities Newsletter */}
-            <div className="bg-white rounded-lg p-6 border border-purple-200">
+            <div className="bg-white rounded-lg p-6 border border-purple-200 flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
@@ -108,7 +108,7 @@ const MindfulnessCommunitySection = () => {
             </div>
 
             {/* WhatsApp Community */}
-            <div className="bg-white rounded-lg p-6 border border-teal-200">
+            <div className="bg-white rounded-lg p-6 border border-teal-200 flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
                   <svg className="w-5 h-5 text-teal-600" fill="currentColor" viewBox="0 0 24 24">

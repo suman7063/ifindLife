@@ -21,7 +21,7 @@ const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuthSynchronization();
 
-  // Sample experts data matching the screenshot
+  // Sample experts data with IDs that match existing expert pages
   const experts: Expert[] = [{
     id: '1',
     name: 'Dr. Emily Chen',
