@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { X, Share } from 'lucide-react';
+import { X, Share2 } from 'lucide-react';
 import { ProgramDetail } from '@/types/programDetail';
 import { useToast } from '@/hooks/use-toast';
 
@@ -23,6 +23,10 @@ const ProgramModalHeader: React.FC<ProgramModalHeaderProps> = ({
           title: programData.title,
           text: programData.description,
           url: window.location.href,
+        });
+        toast({
+          title: "Shared Successfully",
+          description: "Program shared successfully",
         });
       } else {
         await navigator.clipboard.writeText(window.location.href);
@@ -53,7 +57,7 @@ const ProgramModalHeader: React.FC<ProgramModalHeaderProps> = ({
                 onClick={handleShareProgram}
                 className="h-8 w-8"
               >
-                <Share className="h-4 w-4" />
+                <Share2 className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"

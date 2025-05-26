@@ -20,18 +20,33 @@ export const useProgramModalActions = (programData: ProgramDetail | null) => {
       return;
     }
 
+    if (!programData) {
+      toast({
+        title: "Error",
+        description: "Program information is not available. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       const newWishlistState = !isWishlisted;
       setIsWishlisted(newWishlistState);
       
+      // Show immediate feedback
+      toast({
+        title: newWishlistState ? "Adding to Wishlist..." : "Removing from Wishlist...",
+        description: "Please wait while we update your wishlist.",
+      });
+      
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       toast({
         title: newWishlistState ? "Added to Wishlist" : "Removed from Wishlist",
         description: newWishlistState 
-          ? "Program added to your wishlist successfully" 
-          : "Program removed from your wishlist",
+          ? `"${programData.title}" has been added to your wishlist successfully` 
+          : `"${programData.title}" has been removed from your wishlist`,
       });
       
       console.log(`Program ${programData?.id} ${newWishlistState ? 'added to' : 'removed from'} wishlist`);
@@ -39,8 +54,8 @@ export const useProgramModalActions = (programData: ProgramDetail | null) => {
       // Revert the state change on error
       setIsWishlisted(!isWishlisted);
       toast({
-        title: "Error",
-        description: "Failed to update wishlist. Please try again.",
+        title: "Operation Failed",
+        description: "Failed to update your wishlist. Please check your connection and try again.",
         variant: "destructive"
       });
     }
@@ -56,28 +71,56 @@ export const useProgramModalActions = (programData: ProgramDetail | null) => {
       return;
     }
 
-    if (!programData) return;
+    if (!programData) {
+      toast({
+        title: "Error",
+        description: "Program information is not available. Please refresh and try again.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validation checks
+    if (!programData.pricing?.individual?.perSession) {
+      toast({
+        title: "Pricing Information Missing",
+        description: "Program pricing information is not available. Please contact support.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setIsEnrolling(true);
     try {
       toast({
-        title: "Enrollment Started",
-        description: "Processing your enrollment request...",
+        title: "Processing Enrollment",
+        description: `Enrolling you in "${programData.title}". Please wait...`,
       });
       
-      // Simulate enrollment process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Simulate enrollment process with validation
+      await new Promise((resolve, reject) => {
+        setTimeout(() => {
+          // Simulate potential validation failure
+          const random = Math.random();
+          if (random < 0.1) { // 10% chance of failure for demo
+            reject(new Error('Payment validation failed'));
+          } else {
+            resolve(true);
+          }
+        }, 2500);
+      });
       
       toast({
         title: "Enrollment Successful!",
-        description: `You have been enrolled in ${programData.title}. Check your dashboard for details.`,
+        description: `You have been successfully enrolled in "${programData.title}". Check your dashboard for program access and next steps.`,
       });
       
       console.log('Successfully enrolled in program:', programData.id);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       toast({
         title: "Enrollment Failed",
-        description: "Failed to complete enrollment. Please try again.",
+        description: `Failed to complete enrollment: ${errorMessage}. Please try again or contact support.`,
         variant: "destructive"
       });
     } finally {

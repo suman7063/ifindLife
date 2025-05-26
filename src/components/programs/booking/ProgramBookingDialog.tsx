@@ -2,11 +2,11 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, X, User } from 'lucide-react';
+import { Calendar, X, User, AlertCircle } from 'lucide-react';
 import { ProgramDetail } from '@/types/programDetail';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import BookingCalendar from './BookingCalendar';
 import TimeSlotSelector from './TimeSlotSelector';
-import BookingNotes from './BookingNotes';
 import { BookingFormData } from './useProgramBooking';
 
 interface ProgramBookingDialogProps {
@@ -36,6 +36,31 @@ const ProgramBookingDialog: React.FC<ProgramBookingDialogProps> = ({
   };
 
   const isFormValid = bookingData.selectedDate && bookingData.selectedTime;
+  
+  // Validation warnings
+  const getValidationWarnings = () => {
+    const warnings = [];
+    
+    if (!bookingData.selectedDate) {
+      warnings.push("Please select a date");
+    }
+    
+    if (!bookingData.selectedTime) {
+      warnings.push("Please select a time slot");
+    }
+    
+    if (bookingData.selectedDate && bookingData.selectedTime) {
+      const selectedDateTime = new Date(`${bookingData.selectedDate}T${bookingData.selectedTime}`);
+      const now = new Date();
+      if (selectedDateTime <= now) {
+        warnings.push("Selected time must be in the future");
+      }
+    }
+    
+    return warnings;
+  };
+
+  const validationWarnings = getValidationWarnings();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -51,6 +76,7 @@ const ProgramBookingDialog: React.FC<ProgramBookingDialogProps> = ({
               size="icon"
               onClick={onClose}
               className="h-8 w-8"
+              disabled={isSubmitting}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -92,7 +118,7 @@ const ProgramBookingDialog: React.FC<ProgramBookingDialogProps> = ({
               </p>
             </div>
 
-            {/* Notes Section - Compact */}
+            {/* Notes Section */}
             <div className="space-y-2">
               <label className="text-xs font-medium flex items-center gap-1">
                 <User className="h-3 w-3" />
@@ -103,16 +129,31 @@ const ProgramBookingDialog: React.FC<ProgramBookingDialogProps> = ({
                 onChange={(e) => onBookingDataUpdate({ notes: e.target.value })}
                 placeholder="Brief notes about your goals or concerns..."
                 className="w-full text-xs border rounded p-2 h-16 resize-none"
-                maxLength={200}
+                maxLength={500}
+                disabled={isSubmitting}
               />
-              <p className="text-xs text-gray-500">{(bookingData.notes || '').length}/200</p>
+              <p className="text-xs text-gray-500">{(bookingData.notes || '').length}/500</p>
             </div>
           </div>
 
           {/* Right Column - Date & Time Selection */}
           <div className="lg:w-2/3 p-4 overflow-y-auto">
             <div className="space-y-4">
-              {/* Date Selection - Compact */}
+              {/* Validation Warnings */}
+              {validationWarnings.length > 0 && (
+                <Alert variant="warning">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <ul className="list-disc list-inside space-y-1">
+                      {validationWarnings.map((warning, index) => (
+                        <li key={index} className="text-sm">{warning}</li>
+                      ))}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Date Selection */}
               <div>
                 <h3 className="text-sm font-medium mb-2">Select Date</h3>
                 <div className="border rounded-lg p-2">
