@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ProgramDetail } from '@/types/programDetail';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import ProgramDetailTabs from './ProgramDetailTabs';
 import ProgramDetailContent from './ProgramDetailContent';
 
@@ -58,9 +59,9 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden">
-        {/* Header */}
-        <div className="border-b p-6 pb-4">
+      <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+        {/* Header - Fixed */}
+        <div className="border-b p-6 pb-4 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">{programData.title}</h2>
@@ -82,26 +83,30 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8"
+              className="h-8 w-8 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <ProgramDetailTabs activeTab={activeTab} onTabChange={onTabChange} />
-
-        {/* Content */}
-        <div className="flex-1 overflow-auto">
-          <ProgramDetailContent 
-            programData={programData} 
-            activeTab={activeTab} 
-          />
+        {/* Tabs - Fixed */}
+        <div className="flex-shrink-0">
+          <ProgramDetailTabs activeTab={activeTab} onTabChange={onTabChange} />
         </div>
 
-        {/* Footer CTAs */}
-        <div className="border-t p-6 pt-4">
+        {/* Content - Scrollable */}
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full">
+            <ProgramDetailContent 
+              programData={programData} 
+              activeTab={activeTab} 
+            />
+          </ScrollArea>
+        </div>
+
+        {/* Footer CTAs - Fixed */}
+        <div className="border-t p-6 pt-4 flex-shrink-0">
           <div className="flex flex-col sm:flex-row gap-3">
             <Button className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90">
               Book Session (₹{programData.pricing.individual.perSession})
