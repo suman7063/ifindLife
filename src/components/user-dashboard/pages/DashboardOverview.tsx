@@ -67,7 +67,7 @@ const DashboardOverview: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-gray-900">
-          Welcome back, {currentUser?.full_name || 'User'}!
+          Welcome back, {currentUser?.name || 'User'}!
         </h2>
         <p className="text-gray-600 mt-2">
           Here's an overview of your mental health journey

@@ -31,7 +31,7 @@ const UserDashboardHeader: React.FC = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Dashboard</h1>
           <p className="text-sm text-gray-600">
-            Welcome back, {currentUser?.full_name || currentUser?.email}
+            Welcome back, {currentUser?.name || currentUser?.email}
           </p>
         </div>
         
@@ -45,7 +45,7 @@ const UserDashboardHeader: React.FC = () => {
               <User className="h-4 w-4 text-white" />
             </div>
             <span className="text-sm font-medium">
-              {currentUser?.full_name || 'User'}
+              {currentUser?.name || 'User'}
             </span>
           </div>
           

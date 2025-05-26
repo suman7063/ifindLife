@@ -1,17 +1,20 @@
 
 import React from 'react';
-import { Outlet } from 'react-router-dom';
 import UserDashboardSidebar from './UserDashboardSidebar';
 import UserDashboardHeader from './UserDashboardHeader';
 
-const UserDashboardLayout: React.FC = () => {
+interface UserDashboardLayoutProps {
+  children: React.ReactNode;
+}
+
+const UserDashboardLayout: React.FC<UserDashboardLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50">
       <UserDashboardHeader />
       <div className="flex">
         <UserDashboardSidebar />
         <main className="flex-1 p-6">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>

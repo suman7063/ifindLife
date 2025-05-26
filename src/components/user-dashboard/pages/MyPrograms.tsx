@@ -5,10 +5,41 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Calendar, Clock, Star, Play } from 'lucide-react';
+import { BookOpen, Calendar, Clock, Star, Play, ExternalLink } from 'lucide-react';
+import LMSIntegration from '../LMSIntegration';
 
 const MyPrograms: React.FC = () => {
   const [activeTab, setActiveTab] = useState('active');
+
+  // Sample LMS courses data
+  const lmsCourses = [
+    {
+      id: 'lms-1',
+      title: 'Stress Management Fundamentals',
+      description: 'Learn practical techniques to manage daily stress and build resilience.',
+      progress: 65,
+      totalLessons: 12,
+      completedLessons: 8,
+      duration: '6 weeks',
+      instructor: 'Dr. Sarah Wilson',
+      lmsUrl: 'https://lms.example.com/courses/stress-management',
+      isAccessible: true,
+      certificateAvailable: true
+    },
+    {
+      id: 'lms-2',
+      title: 'Mindfulness & Meditation Mastery',
+      description: 'Develop a consistent mindfulness practice with guided meditation sessions.',
+      progress: 40,
+      totalLessons: 15,
+      completedLessons: 6,
+      duration: '8 weeks',
+      instructor: 'Dr. Michael Chen',
+      lmsUrl: 'https://lms.example.com/courses/mindfulness',
+      isAccessible: true,
+      certificateAvailable: true
+    }
+  ];
 
   const activePrograms = [
     {
@@ -20,7 +51,8 @@ const MyPrograms: React.FC = () => {
       completedSessions: 5,
       nextSession: 'Today, 2:00 PM',
       status: 'In Progress',
-      image: '/lovable-uploads/stress-management.jpg'
+      image: '/lovable-uploads/stress-management.jpg',
+      hasLMSComponent: true
     },
     {
       id: '2',
@@ -31,7 +63,8 @@ const MyPrograms: React.FC = () => {
       completedSessions: 4,
       nextSession: 'Tomorrow, 10:00 AM',
       status: 'In Progress',
-      image: '/lovable-uploads/mindfulness.jpg'
+      image: '/lovable-uploads/mindfulness.jpg',
+      hasLMSComponent: true
     }
   ];
 
@@ -46,7 +79,8 @@ const MyPrograms: React.FC = () => {
       completedDate: '2024-01-15',
       status: 'Completed',
       rating: 5,
-      image: '/lovable-uploads/anxiety-relief.jpg'
+      image: '/lovable-uploads/anxiety-relief.jpg',
+      hasLMSComponent: false
     }
   ];
 
@@ -120,6 +154,17 @@ const MyPrograms: React.FC = () => {
               </>
             )}
           </div>
+
+          {/* LMS Access Button */}
+          {program.hasLMSComponent && (
+            <div className="border-t pt-4">
+              <p className="text-sm text-gray-600 mb-2">Online Course Materials</p>
+              <Button size="sm" variant="outline" className="w-full">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Access Course Platform
+              </Button>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -137,6 +182,7 @@ const MyPrograms: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="active">Active Programs ({activePrograms.length})</TabsTrigger>
+          <TabsTrigger value="courses">Online Courses ({lmsCourses.length})</TabsTrigger>
           <TabsTrigger value="completed">Completed ({completedPrograms.length})</TabsTrigger>
         </TabsList>
 
@@ -159,6 +205,19 @@ const MyPrograms: React.FC = () => {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="courses" className="mt-6">
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="font-semibold text-blue-900 mb-2">Online Learning Platform</h3>
+              <p className="text-blue-700 text-sm">
+                Access your purchased course materials through our integrated learning management system. 
+                Track your progress, complete assignments, and earn certificates.
+              </p>
+            </div>
+            <LMSIntegration courses={lmsCourses} />
+          </div>
         </TabsContent>
 
         <TabsContent value="completed" className="mt-6">
