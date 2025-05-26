@@ -44,23 +44,29 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger>Login</NavigationMenuTrigger>
-          <NavigationMenuContent className="min-w-[220px]">
+          <NavigationMenuTrigger className="text-sm font-medium">
+            Login
+          </NavigationMenuTrigger>
+          <NavigationMenuContent className="min-w-[220px] bg-white border border-gray-200 shadow-lg z-50">
             <ul className="grid w-full gap-1 p-2">
               <li>
                 <NavigationMenuLink 
                   asChild
-                  className="block w-full p-2 text-sm rounded-md text-left hover:bg-accent"
+                  className="block w-full p-3 text-sm rounded-md text-left hover:bg-gray-100 transition-colors"
                 >
-                  <Link to="/user-login">User Login</Link>
+                  <Link to="/user-login" className="flex items-center">
+                    User Login
+                  </Link>
                 </NavigationMenuLink>
               </li>
               <li>
                 <NavigationMenuLink 
                   asChild
-                  className="block w-full p-2 text-sm rounded-md text-left hover:bg-accent"
+                  className="block w-full p-3 text-sm rounded-md text-left hover:bg-gray-100 transition-colors"
                 >
-                  <Link to="/expert-login">Expert Login</Link>
+                  <Link to="/expert-login" className="flex items-center">
+                    Expert Login
+                  </Link>
                 </NavigationMenuLink>
               </li>
             </ul>

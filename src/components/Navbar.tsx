@@ -80,21 +80,21 @@ const Navbar = () => {
       if (success) {
         console.log("Navbar: User logout successful");
         toast.success('Successfully logged out', {
-          duration: 2000 // 2 seconds
+          duration: 2000 // Fixed: 2 seconds duration
         });
         navigate('/logout', { state: { userType: 'user' } });
         return true;
       } else {
         console.error("Navbar: User logout failed");
         toast.error('Logout failed. Please try again.', {
-          duration: 2000 // 2 seconds
+          duration: 2000 // Fixed: 2 seconds duration
         });
         return false;
       }
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out. Please try again.', {
-        duration: 2000 // 2 seconds
+        duration: 2000 // Fixed: 2 seconds duration
       });
       return false;
     } finally {
@@ -114,21 +114,21 @@ const Navbar = () => {
       if (success) {
         console.log("Navbar: Expert logout completed");
         toast.success('Successfully logged out as expert', {
-          duration: 2000 // 2 seconds
+          duration: 2000 // Fixed: 2 seconds duration
         });
         navigate('/logout', { state: { userType: 'expert' } });
         return true;
       } else {
         console.error("Navbar: Expert logout failed");
         toast.error('Failed to log out as expert. Please try again.', {
-          duration: 2000 // 2 seconds
+          duration: 2000 // Fixed: 2 seconds duration
         });
         return false;
       }
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.', {
-        duration: 2000 // 2 seconds
+        duration: 2000 // Fixed: 2 seconds duration
       });
       return false;
     } finally {
@@ -147,7 +147,7 @@ const Navbar = () => {
       
       if (success) {
         toast.success('Successfully logged out of all accounts', {
-          duration: 2000 // 2 seconds
+          duration: 2000 // Fixed: 2 seconds duration
         });
         const primaryType = typedSessionType === 'expert' ? 'expert' : 'user';
         navigate('/logout', { state: { userType: primaryType } });
@@ -157,7 +157,7 @@ const Navbar = () => {
     } catch (error) {
       console.error('Error during full logout:', error);
       toast.error('Failed to log out. Please try again.', {
-        duration: 2000 // 2 seconds
+        duration: 2000 // Fixed: 2 seconds duration
       });
       return false;
     } finally {
@@ -173,12 +173,15 @@ const Navbar = () => {
   // Safely cast sessionType to the valid union type
   const typedSessionType = getValidSessionType(sessionType);
 
+  // Enhanced authentication state logging for debugging
   console.log("Navbar rendering. Auth state:", {
     isAuthenticated: Boolean(isAuthenticated),
+    isUserAuthenticated: Boolean(isUserAuthenticated),
     isExpertAuthenticated: Boolean(isExpertAuthenticated),
     sessionType: typedSessionType,
     currentUser: !!currentUser,
     currentExpert: !!currentExpert,
+    hasDualSessions: Boolean(hasDualSessions),
     authTypes: {
       isAuthenticatedType: typeof isAuthenticated,
       isExpertAuthenticatedType: typeof isExpertAuthenticated
@@ -216,7 +219,7 @@ const Navbar = () => {
           </Link>
           
           <NavbarDesktopLinks 
-            isAuthenticated={Boolean(isAuthenticated)}
+            isAuthenticated={Boolean(isUserAuthenticated)}
             currentUser={currentUser}
             hasExpertProfile={Boolean(isExpertAuthenticated)}
             userLogout={handleUserLogout}
@@ -226,7 +229,7 @@ const Navbar = () => {
           />
           
           <NavbarMobileMenu 
-            isAuthenticated={Boolean(isAuthenticated)}
+            isAuthenticated={Boolean(isUserAuthenticated)}
             currentUser={currentUser}
             hasExpertProfile={Boolean(isExpertAuthenticated)}
             userLogout={handleUserLogout}

@@ -39,7 +39,9 @@ const UserLogin: React.FC = () => {
   // Handle login form submission
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      toast.error('Please enter both email and password', {
+        duration: 2000 // Fixed: 2 seconds duration
+      });
       return false;
     }
     
@@ -56,7 +58,9 @@ const UserLogin: React.FC = () => {
         
       if (userError) {
         console.error('Error checking user:', userError);
-        toast.error('An error occurred while checking user');
+        toast.error('An error occurred while checking user', {
+          duration: 2000 // Fixed: 2 seconds duration
+        });
         return false;
       }
       
@@ -68,19 +72,25 @@ const UserLogin: React.FC = () => {
       
       if (error) {
         console.error('Login error:', error);
-        toast.error(error.message || 'Invalid email or password');
+        toast.error(error.message || 'Invalid email or password', {
+          duration: 2000 // Fixed: 2 seconds duration
+        });
         return false;
       }
       
       if (!data.user || !data.session) {
-        toast.error('Login failed. Please try again.');
+        toast.error('Login failed. Please try again.', {
+          duration: 2000 // Fixed: 2 seconds duration
+        });
         return false;
       }
       
       // Set session type
       localStorage.setItem('sessionType', 'user');
       
-      toast.success('Login successful!');
+      toast.success('Login successful!', {
+        duration: 2000 // Fixed: 2 seconds duration
+      });
       
       // Navigate to dashboard
       navigate('/user-dashboard', { replace: true });
@@ -88,7 +98,9 @@ const UserLogin: React.FC = () => {
       return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
-      toast.error('An unexpected error occurred');
+      toast.error('An unexpected error occurred', {
+        duration: 2000 // Fixed: 2 seconds duration
+      });
       return false;
     } finally {
       setIsLoggingIn(false);
