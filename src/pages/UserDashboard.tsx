@@ -1,32 +1,18 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { toast } from 'sonner';
 import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
-import DashboardHome from '@/components/user/dashboard/DashboardHome';
-import ProfileSection from '@/components/user/dashboard/sections/ProfileSection';
-import WalletSection from '@/components/user/dashboard/sections/WalletSection';
-import ConsultationsSection from '@/components/user/dashboard/sections/ConsultationsSection';
-import FavoritesSection from '@/components/user/dashboard/sections/FavoritesSection';
-import MessagesSection from '@/components/user/dashboard/sections/MessagesSection';
-import SecuritySection from '@/components/user/dashboard/sections/SecuritySection';
-import SettingsSection from '@/components/user/dashboard/sections/SettingsSection';
-import SupportSection from '@/components/user/dashboard/sections/SupportSection';
-import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSection';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { UserProfile } from '@/types/database/unified';
 
-const UserDashboardPages: React.FC = () => {
+const UserDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const navigate = useNavigate();
-  const { section } = useParams<{ section?: string }>();
-  
-  console.log('Current dashboard section:', section);
   
   // Check auth status and fetch user profile
   useEffect(() => {
@@ -39,7 +25,7 @@ const UserDashboardPages: React.FC = () => {
         
         if (!sessionData.session) {
           console.log('No session found, redirecting to login');
-          navigate('/user-login');
+          navigate('/login');
           return;
         }
         
@@ -55,14 +41,14 @@ const UserDashboardPages: React.FC = () => {
           // Try to get at least basic info from auth user
           const basicUserProfile: UserProfile = {
             id: sessionData.session.user.id,
-            name: sessionData.session.user.user_metadata?.name || 'User',
+            name: sessionData.session.user.user_metadata.name || 'User',
             email: sessionData.session.user.email || '',
             profile_picture: null,
             phone: '',
             country: '',
             city: '',
             wallet_balance: 0,
-            currency: 'INR',
+            currency: 'USD',
             created_at: new Date().toISOString(),
             referred_by: null,
             referral_code: '',
@@ -77,17 +63,17 @@ const UserDashboardPages: React.FC = () => {
           };
           setUser(basicUserProfile);
         } else {
-          // Use data from users table and ensure all properties exist
+          // Use data from users table
           const fullUserProfile: UserProfile = {
             id: userData.id,
-            name: userData.name || sessionData.session.user.user_metadata?.name || 'User',
+            name: userData.name || sessionData.session.user.user_metadata.name || 'User',
             email: userData.email || sessionData.session.user.email || '',
             profile_picture: userData.profile_picture || null,
             phone: userData.phone || '',
             country: userData.country || '',
             city: userData.city || '',
             wallet_balance: userData.wallet_balance || 0,
-            currency: userData.currency || 'INR',
+            currency: userData.currency || 'USD',
             created_at: userData.created_at || new Date().toISOString(),
             referred_by: userData.referred_by || null,
             referral_code: userData.referral_code || '',
@@ -105,7 +91,7 @@ const UserDashboardPages: React.FC = () => {
       } catch (error) {
         console.error('Error fetching user data:', error);
         toast.error('Failed to load user data');
-        navigate('/user-login');
+        navigate('/login');
       } finally {
         setIsLoading(false);
       }
@@ -114,7 +100,7 @@ const UserDashboardPages: React.FC = () => {
     fetchUserData();
   }, [navigate]);
 
-  // Handle user logout with boolean return type
+  // Handle user logout
   const handleLogout = async (): Promise<boolean> => {
     try {
       setIsLoggingOut(true);
@@ -141,38 +127,6 @@ const UserDashboardPages: React.FC = () => {
     }
   };
 
-  // Render the appropriate section based on the URL parameter
-  const renderSection = () => {
-    if (!user) return null;
-    
-    console.log('Rendering section:', section);
-    
-    switch(section) {
-      case 'profile':
-        return <ProfileSection user={user} />;
-      case 'wallet':
-        return <WalletSection user={user} />;
-      case 'appointments':
-      case 'consultations':
-        return <ConsultationsSection user={user} />;
-      case 'favorites':
-        return <FavoritesSection user={user} />;
-      case 'programs':
-        return <ProgramsSection user={user} />;
-      case 'messages':
-        return <MessagesSection user={user} />;
-      case 'security':
-        return <SecuritySection />;
-      case 'settings':
-        return <SettingsSection user={user} />;
-      case 'support':
-      case 'help':
-        return <SupportSection />;
-      default:
-        return <DashboardHome user={user} />;
-    }
-  };
-
   if (isLoading) {
     return <LoadingScreen message="Loading your dashboard..." />;
   }
@@ -182,18 +136,17 @@ const UserDashboardPages: React.FC = () => {
       {/* Keep website header */}
       <Navbar />
       
-      {/* Main content */}
       <div className="flex flex-1">
         {/* Sidebar */}
         <UserDashboardSidebar 
           user={user} 
           onLogout={handleLogout} 
-          isLoggingOut={isLoggingOut}
+          isLoggingOut={isLoggingOut} 
         />
         
-        {/* Content */}
-        <div className="flex-1 p-6 overflow-auto">
-          {renderSection()}
+        {/* Main content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <Outlet />
         </div>
       </div>
       
@@ -202,4 +155,4 @@ const UserDashboardPages: React.FC = () => {
   );
 };
 
-export default UserDashboardPages;
+export default UserDashboard;
