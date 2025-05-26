@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Index from './pages/Index';
@@ -29,6 +28,7 @@ import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes
 import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
+import ProgramsDemo from '@/pages/ProgramsDemo';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -85,6 +85,9 @@ const AppRoutes = () => {
       
       {/* Not Found Route - catch-all for unmatched routes */}
       <Route path="*" element={<NotFound />} />
+      
+      {/* Programs Demo Route */}
+      <Route path="/programs-demo" element={<ProgramsDemo />} />
     </Routes>
   );
 };
