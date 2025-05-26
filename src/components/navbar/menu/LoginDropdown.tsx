@@ -20,7 +20,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
   isAuthenticated, 
   hasExpertProfile 
 }) => {
-  console.log('LoginDropdown render state:', {
+  console.log('LoginDropdown (navbar/menu) render state:', {
     isAuthenticated,
     hasExpertProfile,
     isAuthenticatedType: typeof isAuthenticated,
@@ -32,7 +32,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
   const isUserSignedIn = Boolean(isAuthenticated);
   const isExpertSignedIn = Boolean(hasExpertProfile);
   
-  console.log('LoginDropdown: Processed auth state:', {
+  console.log('LoginDropdown (navbar/menu): Processed auth state:', {
     isUserSignedIn,
     isExpertSignedIn,
     anyAuthenticated: isUserSignedIn || isExpertSignedIn
@@ -40,11 +40,11 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
   
   // If user is authenticated in any way, don't show login dropdown
   if (isUserSignedIn || isExpertSignedIn) {
-    console.log('LoginDropdown: User is authenticated, not showing dropdown');
+    console.log('LoginDropdown (navbar/menu): User is authenticated, not showing dropdown');
     return null;
   }
   
-  console.log('LoginDropdown: Showing login dropdown for unauthenticated user');
+  console.log('LoginDropdown (navbar/menu): Showing login dropdown for unauthenticated user');
   
   return (
     <NavigationMenu>
