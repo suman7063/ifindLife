@@ -6,8 +6,6 @@ import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -122,24 +120,20 @@ const UserLogin: React.FC = () => {
   }
   
   return (
-    <>
-      <Navbar />
-      <div className="py-12 bg-gray-50 min-h-screen flex items-center justify-center">
-        <Card className="max-w-md w-full shadow-lg">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Welcome to iFindLife</CardTitle>
-            <p className="text-muted-foreground mt-2">
-              Log in or create an account to connect with experts
-            </p>
-          </CardHeader>
-          
-          <CardContent>
-            <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
-          </CardContent>
-        </Card>
-      </div>
-      <Footer />
-    </>
+    <div className="py-12 bg-gray-50 min-h-screen flex items-center justify-center">
+      <Card className="max-w-md w-full shadow-lg">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl font-bold">Welcome to iFindLife</CardTitle>
+          <p className="text-muted-foreground mt-2">
+            Log in or create an account to connect with experts
+          </p>
+        </CardHeader>
+        
+        <CardContent>
+          <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

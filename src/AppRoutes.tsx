@@ -1,94 +1,72 @@
+
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import NewNavbar from './components/NewNavbar';
+import Footer from './components/Footer';
+
+// Import all pages
 import Index from './pages/Index';
 import AboutUs from './pages/AboutUs';
-import Contact from './pages/Contact';
 import Services from './pages/Services';
-import ServiceDetailPage from './pages/service/ServiceDetailPage';
+import Programs from './pages/Programs';
 import Experts from './pages/Experts';
-import ExpertDetail from './pages/ExpertDetail';
 import UserLogin from './pages/UserLogin';
 import UserRegister from './pages/UserRegister';
+import UserDashboardPages from './pages/UserDashboardPages';
 import ExpertLogin from './pages/ExpertLogin';
 import ExpertRegister from './pages/ExpertRegister';
-import UserDashboardPages from './pages/UserDashboardPages';
 import ExpertDashboard from './pages/ExpertDashboard';
 import AdminLogin from './pages/AdminLogin';
 import Admin from './pages/Admin';
-import ProtectedRoute from './components/ProtectedRoute';
-import NotFound from './pages/NotFound';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import Programs from './pages/Programs';
-import TermsOfService from './pages/TermsOfService';
-import PrivacyPolicy from './pages/PrivacyPolicy';
-import LogoutPage from './pages/LogoutPage';
-import ProgramsForBusiness from './pages/ProgramsForBusiness';
-import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
-import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
+import Contact from './pages/Contact';
 import FAQs from './pages/FAQs';
-import Blog from './pages/Blog';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsOfService from './pages/TermsOfService';
+import CareerGuidance from './pages/CareerGuidance';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
-import ProgramsDemo from '@/pages/ProgramsDemo';
+import IssueBasedSessions from './pages/IssueBasedSessions';
+import AcademicPrograms from './pages/AcademicPrograms';
+import BusinessPrograms from './pages/BusinessPrograms';
+import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
+import LogoutPage from './pages/LogoutPage';
+import NotFound from './pages/NotFound';
 
-const AppRoutes = () => {
-  const { isAuthenticated, isLoading, role } = useAuth();
-  
+const AppRoutes: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<Index />} />
-      <Route path="/about" element={<AboutUs />} />
-      <Route path="/contact" element={<Contact />} />
-      <Route path="/services" element={<Services />} />
-      {/* Individual Service Detail Pages */}
-      <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
-      <Route path="/experts" element={<Experts />} />
-      <Route path="/expert/:id" element={<ExpertDetail />} />
-      <Route path="/user-login" element={<UserLogin />} />
-      <Route path="/user-signup" element={<UserRegister />} />
-      <Route path="/expert-login" element={<ExpertLogin />} />
-      <Route path="/expert-signup" element={<ExpertRegister />} />
-      <Route path="/programs" element={<Programs />} />
-      <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
-      <Route path="/programs-for-academic-institutes" element={<ProgramsForAcademicInstitutes />} />
-      <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
-      <Route path="/terms" element={<TermsOfService />} />
-      <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
-      
-      {/* Support Routes */}
-      <Route path="/faqs" element={<FAQs />} />
-      <Route path="/faq" element={<FAQs />} />
-      <Route path="/blog" element={<Blog />} />
-      
-      {/* User Dashboard - accessible only to authenticated users */}
-      <Route 
-        path="/user-dashboard" 
-        element={<UserDashboardPages />}
-      />
-      <Route 
-        path="/user-dashboard/:section" 
-        element={<UserDashboardPages />}
-      />
-      
-      {/* Expert Dashboard - accessible only to authenticated experts */}
-      <Route 
-        path="/expert-dashboard" 
-        element={<ExpertDashboard />}
-      />
-      
-      {/* Admin Routes - accessible only to authenticated admins */}
-      <Route path="/admin-login" element={<AdminLogin />} />
-      <Route path="/admin/*" element={<Admin />} />
-      
-      {/* Logout Page */}
-      <Route path="/logout" element={<LogoutPage />} />
-      
-      {/* Not Found Route - catch-all for unmatched routes */}
-      <Route path="*" element={<NotFound />} />
-      
-      {/* Programs Demo Route */}
-      <Route path="/programs-demo" element={<ProgramsDemo />} />
-    </Routes>
+    <div className="min-h-screen flex flex-col">
+      <NewNavbar />
+      <main className="flex-1 pt-16">
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/services" element={<Services />} />
+          <Route path="/programs" element={<Programs />} />
+          <Route path="/experts" element={<Experts />} />
+          <Route path="/user-login" element={<UserLogin />} />
+          <Route path="/user-register" element={<UserRegister />} />
+          <Route path="/user-dashboard" element={<UserDashboardPages />} />
+          <Route path="/user-dashboard/:section" element={<UserDashboardPages />} />
+          <Route path="/expert-login" element={<ExpertLogin />} />
+          <Route path="/expert-register" element={<ExpertRegister />} />
+          <Route path="/expert-dashboard" element={<ExpertDashboard />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/faqs" element={<FAQs />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+          <Route path="/career-guidance" element={<CareerGuidance />} />
+          <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
+          <Route path="/issue-based-sessions" element={<IssueBasedSessions />} />
+          <Route path="/academic-programs" element={<AcademicPrograms />} />
+          <Route path="/business-programs" element={<BusinessPrograms />} />
+          <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
+          <Route path="/logout" element={<LogoutPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </main>
+      <Footer />
+    </div>
   );
 };
 

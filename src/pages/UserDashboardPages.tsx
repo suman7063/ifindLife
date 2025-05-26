@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -16,8 +17,6 @@ import SupportSection from '@/components/user/dashboard/sections/SupportSection'
 import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSection';
 import BookingHistorySection from '@/components/user/dashboard/sections/BookingHistorySection';
 import ProgressTrackingSection from '@/components/user/dashboard/sections/ProgressTrackingSection';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import { UserProfile } from '@/types/database/unified';
 
 const UserDashboardPages: React.FC = () => {
@@ -201,10 +200,7 @@ const UserDashboardPages: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      {/* Keep website header */}
-      <Navbar />
-      
-      {/* Main content */}
+      {/* Main content - no navbar here as it's now in AppRoutes */}
       <div className="flex flex-1">
         {/* Sidebar */}
         <UserDashboardSidebar 
@@ -218,8 +214,6 @@ const UserDashboardPages: React.FC = () => {
           {renderSection(currentSection)}
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };
