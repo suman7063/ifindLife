@@ -14,7 +14,7 @@ const BusinessProgramsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { currentUser, isAuthenticated } = useUserAuth();
 
-  // Fetch business programs
+  // Fetch business programs only
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
@@ -23,7 +23,7 @@ const BusinessProgramsPage: React.FC = () => {
         // First ensure we have sample business programs in the database
         await addSamplePrograms('business');
         
-        // Then fetch them
+        // Then fetch only business programs
         const { data, error } = await supabase
           .from('programs')
           .select('*')
@@ -35,8 +35,14 @@ const BusinessProgramsPage: React.FC = () => {
           return;
         }
         
-        // Ensure the data matches the Program type
-        setPrograms(data as unknown as Program[]);
+        // Filter out any programs that might have wrong categorization
+        const businessPrograms = (data || []).filter(program => 
+          program.programType === 'business' && 
+          program.category !== 'super-human'
+        );
+        
+        console.log('Business programs fetched:', businessPrograms);
+        setPrograms(businessPrograms as unknown as Program[]);
       } catch (error) {
         console.error('Error in business programs fetch:', error);
       } finally {

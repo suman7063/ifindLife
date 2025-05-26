@@ -1,3 +1,4 @@
+
 import { Program, ProgramType } from '@/types/programs';
 import { supabase } from '@/lib/supabase';
 
@@ -39,6 +40,56 @@ const wellnessPrograms: Partial<Program>[] = [
     enrollments: 95,
     created_at: new Date().toISOString()
   },
+  // Resilience Building Programs
+  {
+    title: 'Emotional Resilience Masterclass',
+    description: 'Build psychological strength and learn to handle life\'s challenges with confidence and grace.',
+    duration: '8 weeks',
+    sessions: 12,
+    price: 8999,
+    image: 'https://source.unsplash.com/random/800x600/?resilience',
+    category: 'resilience-building',
+    programType: 'wellness',
+    enrollments: 89,
+    created_at: new Date().toISOString()
+  },
+  {
+    title: 'Overcoming Life Challenges',
+    description: 'Develop coping strategies and build mental toughness to overcome personal and professional obstacles.',
+    duration: '10 weeks',
+    sessions: 15,
+    price: 11999,
+    image: 'https://source.unsplash.com/random/800x600/?strength',
+    category: 'resilience-building',
+    programType: 'wellness',
+    enrollments: 67,
+    created_at: new Date().toISOString()
+  },
+  // Super Human Programs
+  {
+    title: 'Peak Performance Optimization',
+    description: 'Unlock your highest potential through advanced mental optimization techniques and peak performance strategies.',
+    duration: '12 weeks',
+    sessions: 20,
+    price: 15999,
+    image: 'https://source.unsplash.com/random/800x600/?peak',
+    category: 'super-human',
+    programType: 'wellness',
+    enrollments: 45,
+    created_at: new Date().toISOString()
+  },
+  {
+    title: 'Mental Mastery Program',
+    description: 'Advanced mental training to achieve superhuman levels of focus, clarity, and cognitive performance.',
+    duration: '16 weeks',
+    sessions: 24,
+    price: 19999,
+    image: 'https://source.unsplash.com/random/800x600/?mastery',
+    category: 'super-human',
+    programType: 'wellness',
+    enrollments: 32,
+    created_at: new Date().toISOString()
+  }
 ];
 
 // Sample program data for academic institutes
@@ -51,7 +102,7 @@ const academicPrograms: Partial<Program>[] = [
     price: 12999,
     image: 'https://source.unsplash.com/random/800x600/?students',
     category: 'quick-ease',
-    programType: 'wellness',
+    programType: 'academic',
     enrollments: 42,
     created_at: new Date().toISOString()
   },
@@ -91,7 +142,7 @@ const businessPrograms: Partial<Program>[] = [
     price: 14999,
     image: 'https://source.unsplash.com/random/800x600/?workplace',
     category: 'quick-ease',
-    programType: 'wellness',
+    programType: 'business',
     enrollments: 53,
     created_at: new Date().toISOString()
   },
@@ -123,10 +174,10 @@ const businessPrograms: Partial<Program>[] = [
 
 /**
  * Adds sample programs to the database based on program type
- * @param type The type of programs to add (wellness, academic, business)
+ * @param type The type of programs to add
  * @returns Boolean indicating success
  */
-export const addSamplePrograms = async (type: ProgramType): Promise<boolean> => {
+export const addSamplePrograms = async (type: ProgramType | 'wellness' | 'business' | 'academic'): Promise<boolean> => {
   try {
     // Select the appropriate program list based on type
     let programsList: Partial<Program>[] = [];
@@ -165,7 +216,6 @@ export const addSamplePrograms = async (type: ProgramType): Promise<boolean> => 
     }
     
     // Convert Partial<Program>[] to the exact type expected by supabase insert
-    // by ensuring all required fields are present
     const programsToInsert = programsList.map(program => ({
       title: program.title || '',
       description: program.description || '',

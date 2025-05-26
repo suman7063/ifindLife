@@ -22,21 +22,35 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     programsByCategory
   } = useWellnessPrograms();
 
-  // Handle hash navigation for issue-based sessions
+  // Handle hash navigation for different program categories
   useEffect(() => {
-    if (location.hash === '#issue-based') {
-      setSelectedCategory('issue-based');
-      // Scroll to the programs section after a small delay
-      setTimeout(() => {
-        const programsSection = document.getElementById('programs-section');
-        if (programsSection) {
-          programsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
+    const hash = location.hash.replace('#', '');
+    
+    if (hash) {
+      // Map hash values to category values
+      const categoryMap: Record<string, string> = {
+        'quick-ease': 'quick-ease',
+        'resilience-building': 'resilience-building',
+        'super-human': 'super-human',
+        'issue-based': 'issue-based'
+      };
+      
+      const mappedCategory = categoryMap[hash];
+      if (mappedCategory && mappedCategory !== selectedCategory) {
+        setSelectedCategory(mappedCategory);
+        
+        // Scroll to the programs section after a small delay
+        setTimeout(() => {
+          const programsSection = document.getElementById('programs-section');
+          if (programsSection) {
+            programsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+      }
     }
-  }, [location.hash, setSelectedCategory]);
+  }, [location.hash, setSelectedCategory, selectedCategory]);
 
-  // Define all possible category options with explicit typing including issue-based
+  // Define all possible category options with explicit typing
   const allCategoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[] = [
     { value: 'all', label: 'All Programs' },
     { value: 'quick-ease', label: 'QuickEase' },

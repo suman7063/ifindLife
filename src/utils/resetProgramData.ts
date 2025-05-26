@@ -1,38 +1,32 @@
 
 import { supabase } from '@/lib/supabase';
 import { addSamplePrograms } from './sampleProgramsData';
-import { ProgramType } from '@/types/programs';
 
-/**
- * Resets all program data by deleting existing programs and re-adding sample data
- */
-export const resetProgramData = async (): Promise<boolean> => {
+export const resetProgramData = async () => {
   try {
-    console.log('Starting program data reset...');
+    console.log('Starting program data cleanup...');
     
-    // Delete all existing programs
-    const { error: deleteError } = await supabase
+    // First, remove any Super Human programs that might be incorrectly categorized as business
+    const { error: cleanupError } = await supabase
       .from('programs')
       .delete()
-      .neq('id', 0); // Delete all records
-      
-    if (deleteError) {
-      console.error('Error deleting programs:', deleteError);
-      return false;
+      .eq('programType', 'business')
+      .eq('category', 'super-human');
+    
+    if (cleanupError) {
+      console.error('Error cleaning up misplaced programs:', cleanupError);
+    } else {
+      console.log('Cleaned up misplaced Super Human programs from business category');
     }
     
-    console.log('All existing programs deleted successfully');
+    // Reset and add fresh program data
+    console.log('Adding fresh program data...');
     
-    // Re-add sample programs for each type
-    const addedWellness = await addSamplePrograms('wellness');
-    const addedAcademic = await addSamplePrograms('academic' as ProgramType);
-    const addedBusiness = await addSamplePrograms('business' as ProgramType);
+    await addSamplePrograms('wellness');
+    await addSamplePrograms('business');
+    await addSamplePrograms('academic');
     
     console.log('Program data reset completed successfully');
-    console.log('Added wellness programs:', addedWellness);
-    console.log('Added academic programs:', addedAcademic);
-    console.log('Added business programs:', addedBusiness);
-    
     return true;
   } catch (error) {
     console.error('Error resetting program data:', error);
