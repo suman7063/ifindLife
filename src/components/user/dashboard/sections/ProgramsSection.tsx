@@ -18,7 +18,6 @@ const ProgramsSection: React.FC<ProgramsSectionProps> = ({ user }) => {
   const enrolledPrograms = user?.enrolled_courses || [];
   
   // Filter programs by completion status
-  const currentPrograms = enrolledPrograms.filter(program => !program.completed);
   const completedPrograms = enrolledPrograms.filter(program => program.completed);
   
   const renderProgramsGrid = (programs: any[], emptyMessage: string) => {
@@ -28,12 +27,12 @@ const ProgramsSection: React.FC<ProgramsSectionProps> = ({ user }) => {
           <BookOpen className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-xl font-medium mb-2">{emptyMessage}</h3>
           <p className="text-muted-foreground mb-6">
-            {emptyMessage.includes('current') ? 
-              "You don't have any active programs. Start your learning journey today!" :
-              "You haven't completed any programs yet. Keep learning to see your achievements here!"
+            {emptyMessage.includes('completed') ? 
+              "You haven't completed any programs yet. Keep learning to see your achievements here!" :
+              "You don't have any programs. Start your learning journey today!"
             }
           </p>
-          {emptyMessage.includes('current') && (
+          {!emptyMessage.includes('completed') && (
             <Button asChild>
               <Link to="/programs">Browse Programs</Link>
             </Button>
@@ -113,23 +112,18 @@ const ProgramsSection: React.FC<ProgramsSectionProps> = ({ user }) => {
         <p className="text-muted-foreground mb-6">Your enrolled programs, courses, and learning materials</p>
       </div>
 
-      <Tabs defaultValue="current" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="current">Current/Upcoming Programs</TabsTrigger>
+      <Tabs defaultValue="courses" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="courses">Current/Upcoming Courses</TabsTrigger>
           <TabsTrigger value="completed">Completed Programs</TabsTrigger>
-          <TabsTrigger value="courses">Online Courses</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="current" className="mt-6">
-          {renderProgramsGrid(currentPrograms, "No Current Programs")}
+        <TabsContent value="courses" className="mt-6">
+          <LMSAccess user={user} />
         </TabsContent>
         
         <TabsContent value="completed" className="mt-6">
           {renderProgramsGrid(completedPrograms, "No Completed Programs")}
-        </TabsContent>
-        
-        <TabsContent value="courses" className="mt-6">
-          <LMSAccess user={user} />
         </TabsContent>
       </Tabs>
     </div>

@@ -29,7 +29,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
-  // Don't show login dropdown if user is authenticated in any way
+  // Show login dropdown only if NOT authenticated and NO expert profile
   const showLoginDropdown = !isAuthenticated && !hasExpertProfile;
   
   return (
@@ -52,7 +52,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         </NavigationMenuList>
       </NavigationMenu>
       
-      {/* Show appropriate authentication UI */}
+      {/* Show appropriate authentication UI based on state */}
       {hasExpertProfile ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
       ) : isAuthenticated && currentUser ? (

@@ -5,6 +5,7 @@ import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { toast } from 'sonner';
 import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,20 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
+
+  // Set up session timeout (4 hours = 4 * 60 * 60 * 1000 ms)
+  const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
+  
+  const handleSessionTimeout = async () => {
+    console.log('Session timeout - logging out user');
+    await handleUserLogout();
+  };
+
+  // Use session timeout hook only if user is authenticated
+  useSessionTimeout(
+    SESSION_TIMEOUT, 
+    isAuthenticated || isExpertAuthenticated ? handleSessionTimeout : () => {}
+  );
 
   // Ensure sessionType is one of the allowed values
   const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
