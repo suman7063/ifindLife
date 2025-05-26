@@ -4,10 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Calendar, Clock, TrendingUp } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import EnrolledProgramsCard from '../components/EnrolledProgramsCard';
+import { EnrolledProgram } from '@/types/user.types';
 
 const DashboardOverview: React.FC = () => {
   const [user, setUser] = React.useState<any>(null);
   const [loading, setLoading] = React.useState(true);
+  const [enrolledPrograms, setEnrolledPrograms] = React.useState<EnrolledProgram[]>([]);
 
   React.useEffect(() => {
     const getCurrentUser = async () => {
@@ -24,6 +27,30 @@ const DashboardOverview: React.FC = () => {
             name: session.user.user_metadata?.name || 'User',
             email: session.user.email 
           });
+
+          // Sample enrolled programs with LMS integration
+          const samplePrograms: EnrolledProgram[] = [
+            {
+              id: '1',
+              program_id: 'prog-1',
+              user_id: session.user.id,
+              enrollment_date: '2024-01-15',
+              completion_status: 'in_progress',
+              progress_percentage: 65,
+              program: {
+                id: 'prog-1',
+                title: 'Stress Management Mastery',
+                description: 'Learn effective stress management techniques',
+                instructor_name: 'Dr. Sarah Wilson'
+              },
+              third_party_lms: {
+                provider: 'moodle',
+                access_url: 'https://lms.example.com/course/stress-management',
+                last_synced: '2024-01-20'
+              }
+            }
+          ];
+          setEnrolledPrograms(samplePrograms);
         }
       } catch (error) {
         console.error('Error getting user:', error);
@@ -131,6 +158,9 @@ const DashboardOverview: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Enrolled Programs */}
+        <EnrolledProgramsCard enrolledPrograms={enrolledPrograms} />
+
         {/* Upcoming Sessions */}
         <Card>
           <CardHeader>
@@ -154,50 +184,6 @@ const DashboardOverview: React.FC = () => {
             ))}
             <Button className="w-full mt-4" variant="outline">
               View All Sessions
-            </Button>
-          </CardContent>
-        </Card>
-
-        {/* Recent Progress */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Recent Progress
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Stress Management</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '75%' }}></div>
-                  </div>
-                  <span className="text-sm font-medium">75%</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Mindfulness</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-500 h-2 rounded-full" style={{ width: '60%' }}></div>
-                  </div>
-                  <span className="text-sm font-medium">60%</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Anxiety Relief</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-20 bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-500 h-2 rounded-full" style={{ width: '90%' }}></div>
-                  </div>
-                  <span className="text-sm font-medium">90%</span>
-                </div>
-              </div>
-            </div>
-            <Button className="w-full mt-4" variant="outline">
-              View Detailed Progress
             </Button>
           </CardContent>
         </Card>
