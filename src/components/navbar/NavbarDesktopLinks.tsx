@@ -29,11 +29,22 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
+  // Convert undefined values to proper booleans for reliable checking
+  const isUserAuthenticated = Boolean(isAuthenticated);
+  const isExpertAuthenticated = Boolean(hasExpertProfile);
+  const hasUserData = Boolean(currentUser);
+  
   console.log('NavbarDesktopLinks render state:', {
     isAuthenticated,
+    isUserAuthenticated,
     currentUser: !!currentUser,
     hasExpertProfile,
-    sessionType
+    isExpertAuthenticated,
+    sessionType,
+    authTypes: {
+      isAuthenticatedType: typeof isAuthenticated,
+      hasExpertProfileType: typeof hasExpertProfile
+    }
   });
   
   return (
@@ -57,9 +68,9 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       </NavigationMenu>
       
       {/* Show appropriate authentication UI based on state */}
-      {hasExpertProfile ? (
+      {isExpertAuthenticated ? (
         <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
-      ) : isAuthenticated && currentUser ? (
+      ) : isUserAuthenticated && hasUserData ? (
         <NavbarUserAvatar 
           currentUser={currentUser} 
           onLogout={userLogout} 
@@ -67,8 +78,8 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         />
       ) : (
         <LoginDropdown 
-          isAuthenticated={isAuthenticated} 
-          hasExpertProfile={hasExpertProfile} 
+          isAuthenticated={isUserAuthenticated} 
+          hasExpertProfile={isExpertAuthenticated} 
         />
       )}
     </div>

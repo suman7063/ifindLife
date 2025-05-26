@@ -174,11 +174,15 @@ const Navbar = () => {
   const typedSessionType = getValidSessionType(sessionType);
 
   console.log("Navbar rendering. Auth state:", {
-    isAuthenticated,
-    isExpertAuthenticated,
+    isAuthenticated: Boolean(isAuthenticated),
+    isExpertAuthenticated: Boolean(isExpertAuthenticated),
     sessionType: typedSessionType,
     currentUser: !!currentUser,
-    currentExpert: !!currentExpert
+    currentExpert: !!currentExpert,
+    authTypes: {
+      isAuthenticatedType: typeof isAuthenticated,
+      isExpertAuthenticatedType: typeof isExpertAuthenticated
+    }
   });
 
   return (
@@ -212,9 +216,9 @@ const Navbar = () => {
           </Link>
           
           <NavbarDesktopLinks 
-            isAuthenticated={isAuthenticated}
+            isAuthenticated={Boolean(isAuthenticated)}
             currentUser={currentUser}
-            hasExpertProfile={isExpertAuthenticated}
+            hasExpertProfile={Boolean(isExpertAuthenticated)}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
             sessionType={typedSessionType}
@@ -222,9 +226,9 @@ const Navbar = () => {
           />
           
           <NavbarMobileMenu 
-            isAuthenticated={isAuthenticated}
+            isAuthenticated={Boolean(isAuthenticated)}
             currentUser={currentUser}
-            hasExpertProfile={isExpertAuthenticated}
+            hasExpertProfile={Boolean(isExpertAuthenticated)}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
             sessionType={typedSessionType}

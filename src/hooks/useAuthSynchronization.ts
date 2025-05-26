@@ -10,7 +10,7 @@ export const useAuthSynchronization = () => {
   const auth = useAuth();
   const [initialized, setInitialized] = useState(false);
   
-  // Set up derived state
+  // Set up derived state with proper boolean defaults
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
   const [isExpertAuthenticated, setIsExpertAuthenticated] = useState(false);
@@ -22,28 +22,41 @@ export const useAuthSynchronization = () => {
   
   // Initialize all state based on auth context
   useEffect(() => {
+    console.log('useAuthSynchronization: Processing auth state:', {
+      authIsAuthenticated: auth.isAuthenticated,
+      authRole: auth.role,
+      userProfile: !!auth.userProfile,
+      expertProfile: !!auth.expertProfile,
+      isLoading: auth.isLoading
+    });
+
+    // Convert auth.isAuthenticated to proper boolean
+    const authIsAuthenticated = Boolean(auth.isAuthenticated);
+    const hasUserProfile = Boolean(auth.userProfile);
+    const hasExpertProfile = Boolean(auth.expertProfile);
+    
     // Set user authentication state
-    setIsAuthenticated(auth.isAuthenticated);
-    setCurrentUser(auth.userProfile);
-    setCurrentExpert(auth.expertProfile);
+    setIsAuthenticated(authIsAuthenticated);
+    setCurrentUser(auth.userProfile || null);
+    setCurrentExpert(auth.expertProfile || null);
     
     // Determine specific authentication state
-    setIsUserAuthenticated(auth.isAuthenticated && auth.role === 'user' && !!auth.userProfile);
-    setIsExpertAuthenticated(auth.isAuthenticated && auth.role === 'expert' && !!auth.expertProfile);
+    setIsUserAuthenticated(authIsAuthenticated && auth.role === 'user' && hasUserProfile);
+    setIsExpertAuthenticated(authIsAuthenticated && auth.role === 'expert' && hasExpertProfile);
     
     // Check for dual sessions
-    setHasDualSessions(!!auth.userProfile && !!auth.expertProfile && auth.isAuthenticated);
+    setHasDualSessions(hasUserProfile && hasExpertProfile && authIsAuthenticated);
     
     // Initialize session type from auth context
-    if (auth.sessionType) {
+    if (auth.sessionType && auth.sessionType !== 'none') {
       setSessionType(auth.sessionType);
     } else {
       // Fallback determination of session type
-      if (!!auth.userProfile && !!auth.expertProfile) {
+      if (hasUserProfile && hasExpertProfile) {
         setSessionType('dual');
-      } else if (!!auth.userProfile) {
+      } else if (hasUserProfile && auth.role === 'user') {
         setSessionType('user');
-      } else if (!!auth.expertProfile) {
+      } else if (hasExpertProfile && auth.role === 'expert') {
         setSessionType('expert');
       } else {
         setSessionType('none');
@@ -55,6 +68,13 @@ export const useAuthSynchronization = () => {
       setIsAuthInitialized(true);
       setInitialized(true);
     }
+
+    console.log('useAuthSynchronization: Updated state:', {
+      isAuthenticated: authIsAuthenticated,
+      isUserAuthenticated: authIsAuthenticated && auth.role === 'user' && hasUserProfile,
+      isExpertAuthenticated: authIsAuthenticated && auth.role === 'expert' && hasExpertProfile,
+      sessionType: auth.sessionType || 'none'
+    });
   }, [auth.isAuthenticated, auth.role, auth.userProfile, auth.expertProfile, auth.isLoading, auth.sessionType]);
   
   // Handle user logout
@@ -112,7 +132,7 @@ export const useAuthSynchronization = () => {
   };
 
   return {
-    // Auth state
+    // Auth state - all properly converted to booleans
     isAuthenticated,
     isUserAuthenticated,
     isExpertAuthenticated,
@@ -121,7 +141,7 @@ export const useAuthSynchronization = () => {
     isAuthInitialized,
     hasDualSessions,
     sessionType,
-    isLoading: auth.isLoading,
+    isLoading: Boolean(auth.isLoading),
     
     // Auth actions
     userLogout,
