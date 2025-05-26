@@ -7,7 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Heart, ShoppingCart, Calendar, X } from 'lucide-react';
 import ProgramDetailTabs from './ProgramDetailTabs';
 import ProgramDetailContent from './ProgramDetailContent';
-import { useAuth } from '@/contexts/AuthContext';
+import { useUserAuth } from '@/contexts/auth/hooks/useUserAuth';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProgramDetailModalProps {
@@ -29,7 +29,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   loading = false,
   error = null
 }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { currentUser, isAuthenticated } = useUserAuth();
   const { toast } = useToast();
   const [isWishlisted, setIsWishlisted] = React.useState(false);
   const [isEnrolling, setIsEnrolling] = React.useState(false);
