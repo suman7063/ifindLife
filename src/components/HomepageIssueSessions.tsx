@@ -1,13 +1,13 @@
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ArrowRight, Brain, Heart, Clock, Cloud, ShieldAlert, Sparkles, Star, Users } from 'lucide-react';
+import React from 'react';
+import { ArrowRight, Brain, Heart, Clock, Cloud, ShieldAlert, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useProgramDetailModal } from '@/hooks/useProgramDetailModal';
+import ProgramDetailModal from '@/components/programs/detail/ProgramDetailModal';
 
 const HomepageIssueSessions: React.FC = () => {
-  const [selectedSession, setSelectedSession] = useState<any | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { modalState, openModal, closeModal, switchTab } = useProgramDetailModal();
 
   // Issue sessions matching the screenshot with proper icons instead of emojis
   const sessions = [{
@@ -76,9 +76,11 @@ const HomepageIssueSessions: React.FC = () => {
     href: '/programs-for-wellness-seekers#issue-based'
   }];
 
-  const handleOpenSession = (session: any) => {
-    setSelectedSession(session);
-    setIsDialogOpen(true);
+  const handleSessionClick = (sessionId: string) => {
+    // Only open modal for sessions that have detailed data (depression, anxiety, stress)
+    if (['depression', 'anxiety', 'stress'].includes(sessionId)) {
+      openModal(sessionId);
+    }
   };
 
   return (
@@ -91,17 +93,17 @@ const HomepageIssueSessions: React.FC = () => {
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {sessions.map(session => (
-            <Link 
+            <div 
               key={session.id} 
-              to={session.href}
               className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => handleSessionClick(session.id)}
             >
               <div className={`w-12 h-12 ${session.color} rounded-full flex items-center justify-center mb-3`}>
                 {session.icon}
               </div>
               <h3 className="font-medium mb-1">{session.title}</h3>
               <p className="text-sm text-gray-500 line-clamp-2">{session.description}</p>
-            </Link>
+            </div>
           ))}
         </div>
         
@@ -113,39 +115,16 @@ const HomepageIssueSessions: React.FC = () => {
           </Link>
         </div>
         
-        {/* Session Detail Dialog */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                {selectedSession && (
-                  <>
-                    <span className={`w-8 h-8 ${selectedSession.color} rounded-full flex items-center justify-center`}>
-                      {selectedSession?.icon}
-                    </span>
-                    {selectedSession.title}
-                  </>
-                )}
-              </DialogTitle>
-            </DialogHeader>
-            
-            <div className="mt-4">
-              <p className="text-muted-foreground mb-6">{selectedSession?.description}</p>
-              
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                  Cancel
-                </Button>
-                
-                <Button asChild className="bg-ifind-teal hover:bg-ifind-teal/90">
-                  <Link to={selectedSession?.href || "/programs-for-wellness-seekers#issue-based"}>
-                    View Details <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Program Detail Modal */}
+        <ProgramDetailModal
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          programData={modalState.programData}
+          activeTab={modalState.activeTab}
+          onTabChange={switchTab}
+          loading={modalState.loading}
+          error={modalState.error}
+        />
       </div>
     </section>
   );
