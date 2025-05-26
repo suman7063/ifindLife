@@ -7,33 +7,33 @@
 
 @layer base {
   :root {
-    --background: 180 30% 99%;
-    --foreground: 220 20% 20%;
+    --background: 0 0% 97%;
+    --foreground: 0 0% 18%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 20%;
+    --card-foreground: 0 0% 18%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 20%;
+    --popover-foreground: 0 0% 18%;
 
-    --primary: 196 94% 67%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 199 94% 67%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 260 67% 73%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 261 67% 73%;
+    --secondary-foreground: 0 0% 98%;
 
-    --muted: 213 5% 96%;
-    --muted-foreground: 217 10% 50%;
+    --muted: 0 0% 97%;
+    --muted-foreground: 0 0% 45%;
 
     --accent: 173 52% 66%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 196 94% 67%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 199 94% 67%;
 
     --radius: 0.5rem;
 
@@ -48,19 +48,19 @@
   }
 
   .dark {
-    --background: 220 20% 20%;
+    --background: 0 0% 18%;
     --foreground: 210 40% 98%;
 
-    --card: 220 20% 18%;
+    --card: 0 0% 15%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 220 20% 18%;
+    --popover: 0 0% 15%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 196 94% 67%;
+    --primary: 199 94% 67%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 260 67% 73%;
+    --secondary: 261 67% 73%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217.2 32.6% 17.5%;
@@ -74,7 +74,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 196 94% 67%;
+    --ring: 199 94% 67%;
   }
 }
 
@@ -84,14 +84,14 @@
   }
   
   body {
-    @apply bg-background text-foreground font-lato;
-    background-image: radial-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 0);
+    @apply bg-ifind-offwhite text-ifind-charcoal font-lato;
+    background-image: radial-gradient(rgba(90, 200, 250, 0.05) 1px, transparent 0);
     background-size: 30px 30px;
     background-position: -15px -15px;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-poppins font-medium;
+    @apply font-poppins font-medium text-ifind-charcoal;
   }
   
   /* Center align all section headings and descriptions */
