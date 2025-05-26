@@ -1,202 +1,198 @@
-
+import { Program, ProgramType } from '@/types/programs';
 import { supabase } from '@/lib/supabase';
-import { Program } from '@/types/programs';
 
-const wellnessProgramsData: Omit<Program, 'id' | 'created_at'>[] = [
-  // QuickEase Programs
+// Sample program data for wellness seekers
+const wellnessPrograms: Partial<Program>[] = [
   {
-    title: "5-Minute Stress Relief",
-    description: "Quick and effective stress relief techniques that you can use anywhere, anytime.",
-    category: "quick-ease",
-    price: 999,
-    duration: "1 week",
-    sessions: 7,
-    image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    programType: "wellness",
-    enrollments: 1205,
-    is_featured: true
-  },
-  {
-    title: "Instant Calm Techniques",
-    description: "Learn breathing and mindfulness techniques for immediate anxiety relief.",
-    category: "quick-ease",
-    price: 799,
-    duration: "3 days",
-    sessions: 3,
-    image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    programType: "wellness",
-    enrollments: 892
-  },
-  // Resilience Building Programs
-  {
-    title: "Building Emotional Resilience",
-    description: "Develop the skills to bounce back from life's challenges with greater strength.",
-    category: "resilience-building",
-    price: 2499,
-    duration: "8 weeks",
-    sessions: 16,
-    image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    programType: "wellness",
-    enrollments: 654,
-    is_featured: true
-  },
-  {
-    title: "Stress Management Mastery",
-    description: "Comprehensive program to develop long-term stress management strategies.",
-    category: "resilience-building",
-    price: 1999,
-    duration: "6 weeks",
-    sessions: 12,
-    image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    programType: "wellness",
-    enrollments: 423
-  },
-  // Super Human Programs
-  {
-    title: "Peak Performance Mindset",
-    description: "Unlock your full potential and achieve extraordinary results in all areas of life.",
-    category: "super-human",
+    title: 'Stress Management Program',
+    description: 'Learn techniques to manage stress and anxiety in your daily life with proven methods from expert psychologists.',
+    duration: '4 weeks',
+    sessions: 6,
     price: 4999,
-    duration: "12 weeks",
-    sessions: 24,
-    image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    programType: "wellness",
-    enrollments: 267,
-    is_featured: true
+    image: 'https://source.unsplash.com/random/800x600/?meditation',
+    category: 'quick-ease',
+    programType: 'wellness',
+    enrollments: 156,
+    created_at: new Date().toISOString()
   },
   {
-    title: "Mental Excellence Training",
-    description: "Advanced mental training for peak cognitive performance and clarity.",
-    category: "super-human",
-    price: 3999,
-    duration: "10 weeks",
-    sessions: 20,
-    image: "/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png",
-    programType: "wellness",
-    enrollments: 189
-  }
-];
-
-const businessProgramsData: Omit<Program, 'id' | 'created_at'>[] = [
-  {
-    title: "Workplace Mental Health Strategy",
-    description: "Comprehensive mental health solutions for organizations to support employee wellbeing.",
-    category: "Leadership",
-    price: 9999,
-    duration: "6 months",
-    sessions: 24,
-    image: "/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png",
-    programType: "business",
-    enrollments: 45
-  },
-  {
-    title: "Team Resilience Building",
-    description: "Build stronger, more resilient teams through evidence-based mental health practices.",
-    category: "Team Building",
-    price: 7499,
-    duration: "3 months",
-    sessions: 12,
-    image: "/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png",
-    programType: "business",
-    enrollments: 67
-  },
-  {
-    title: "Executive Stress Management",
-    description: "Specialized stress management program designed for executives and leadership teams.",
-    category: "Leadership",
-    price: 12999,
-    duration: "4 months",
-    sessions: 16,
-    image: "/lovable-uploads/cda89cc2-6ac2-4a32-b237-9d98a8b76e4e.png",
-    programType: "business",
-    enrollments: 23
-  }
-];
-
-const academicProgramsData: Omit<Program, 'id' | 'created_at'>[] = [
-  {
-    title: "Student Mental Health Support",
-    description: "Comprehensive mental health program designed for educational institutions.",
-    category: "Study Skills",
+    title: 'Mindfulness Meditation Course',
+    description: 'A beginner-friendly course to introduce mindfulness and meditation practices for stress reduction and mental clarity.',
+    duration: '6 weeks',
+    sessions: 8,
     price: 5999,
-    duration: "1 semester",
-    sessions: 18,
-    image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
-    programType: "academic",
-    enrollments: 156
+    image: 'https://source.unsplash.com/random/800x600/?mindfulness',
+    category: 'quick-ease',
+    programType: 'wellness',
+    enrollments: 120,
+    created_at: new Date().toISOString()
   },
   {
-    title: "Faculty Wellness Program",
-    description: "Mental wellness support specifically designed for educators and academic staff.",
-    category: "Stress Reduction",
-    price: 4999,
-    duration: "3 months",
-    sessions: 12,
-    image: "/lovable-uploads/3ba262c7-796f-46aa-92f7-23924bdc6a44.png",
-    programType: "academic",
-    enrollments: 89
-  }
+    title: 'Yoga for Beginners',
+    description: 'Gentle yoga sessions designed for beginners to improve flexibility, reduce stress, and enhance overall wellbeing.',
+    duration: '8 weeks',
+    sessions: 10,
+    price: 6999,
+    image: 'https://source.unsplash.com/random/800x6/yoga',
+    category: 'quick-ease',
+    programType: 'wellness',
+    enrollments: 95,
+    created_at: new Date().toISOString()
+  },
 ];
 
-export const addSamplePrograms = async (type: 'wellness' | 'business' | 'academic' = 'wellness') => {
+// Sample program data for academic institutes
+const academicPrograms: Partial<Program>[] = [
+  {
+    title: 'Student Mental Health Support',
+    description: 'Comprehensive program for academic institutions to support student mental health needs and foster a positive learning environment.',
+    duration: '12 weeks',
+    sessions: 15,
+    price: 12999,
+    image: 'https://source.unsplash.com/random/800x600/?students',
+    category: 'quick-ease',
+    programType: 'wellness',
+    enrollments: 42,
+    created_at: new Date().toISOString()
+  },
+  {
+    title: 'Academic Stress Reduction Workshop',
+    description: 'A workshop designed to equip students with effective strategies to manage academic stress and improve study habits.',
+    duration: '2 days',
+    sessions: 4,
+    price: 2999,
+    image: 'https://source.unsplash.com/random/800x600/?workshop',
+    category: 'quick-ease',
+    programType: 'academic',
+    enrollments: 68,
+    created_at: new Date().toISOString()
+  },
+  {
+    title: 'Mindful Study Techniques',
+    description: 'A program that teaches students how to apply mindfulness techniques to enhance focus and retention during study sessions.',
+    duration: '6 weeks',
+    sessions: 8,
+    price: 5499,
+    image: 'https://source.unsplash.com/random/800x600/?studying',
+    category: 'quick-ease',
+    programType: 'academic',
+    enrollments: 55,
+    created_at: new Date().toISOString()
+  },
+];
+
+// Sample program data for businesses
+const businessPrograms: Partial<Program>[] = [
+  {
+    title: 'Workplace Wellness Program',
+    description: 'Comprehensive mental health support for organizations to improve employee wellbeing and productivity.',
+    duration: '10 weeks',
+    sessions: 12,
+    price: 14999,
+    image: 'https://source.unsplash.com/random/800x600/?workplace',
+    category: 'quick-ease',
+    programType: 'wellness',
+    enrollments: 53,
+    created_at: new Date().toISOString()
+  },
+  {
+    title: 'Stress-Free Workplace Workshop',
+    description: 'A workshop designed to help employees manage stress and improve their mental wellbeing in the workplace.',
+    duration: '2 days',
+    sessions: 4,
+    price: 3999,
+    image: 'https://source.unsplash.com/random/800x600/?office',
+    category: 'quick-ease',
+    programType: 'business',
+    enrollments: 72,
+    created_at: new Date().toISOString()
+  },
+  {
+    title: 'Mindfulness for Corporate Teams',
+    description: 'A program that teaches corporate teams how to use mindfulness techniques to improve communication and reduce workplace stress.',
+    duration: '8 weeks',
+    sessions: 10,
+    price: 7999,
+    image: 'https://source.unsplash.com/random/800x600/?team',
+    category: 'quick-ease',
+    programType: 'business',
+    enrollments: 48,
+    created_at: new Date().toISOString()
+  },
+];
+
+/**
+ * Adds sample programs to the database based on program type
+ * @param type The type of programs to add (wellness, academic, business)
+ * @returns Boolean indicating success
+ */
+export const addSamplePrograms = async (type: ProgramType): Promise<boolean> => {
   try {
-    let programsData: Omit<Program, 'id' | 'created_at'>[] = [];
+    // Select the appropriate program list based on type
+    let programsList: Partial<Program>[] = [];
     
-    switch (type) {
-      case 'wellness':
-        programsData = wellnessProgramsData;
-        break;
-      case 'business':
-        programsData = businessProgramsData;
-        break;
-      case 'academic':
-        programsData = academicProgramsData;
-        break;
-    }
-
-    // Check if programs already exist to avoid duplicates
-    const { data: existingPrograms } = await supabase
-      .from('programs')
-      .select('title, programType')
-      .eq('programType', type);
-
-    const existingTitles = existingPrograms?.map(p => p.title) || [];
-    const newPrograms = programsData.filter(p => !existingTitles.includes(p.title));
-
-    if (newPrograms.length > 0) {
-      const { error } = await supabase
-        .from('programs')
-        .insert(newPrograms);
-
-      if (error) {
-        console.error(`Error adding ${type} programs:`, error);
-      } else {
-        console.log(`Successfully added ${newPrograms.length} new ${type} programs`);
-      }
+    if (type === 'wellness') {
+      programsList = wellnessPrograms;
+    } else if (type === 'academic') {
+      programsList = academicPrograms;
+    } else if (type === 'business') {
+      programsList = businessPrograms;
     } else {
-      console.log(`${type} programs already exist`);
+      console.warn(`Unknown program type: ${type}`);
+      return false;
     }
-  } catch (error) {
-    console.error(`Error in addSamplePrograms for ${type}:`, error);
-  }
-};
-
-// Clean up function to remove incorrectly categorized programs
-export const cleanupIncorrectPrograms = async () => {
-  try {
-    // Remove any super-human programs that were incorrectly placed in business
-    const { error } = await supabase
+    
+    if (programsList.length === 0) {
+      return false;
+    }
+    
+    // First check if we already have programs of this type
+    const { data: existingPrograms, error: checkError } = await supabase
       .from('programs')
-      .delete()
-      .eq('programType', 'business')
-      .in('title', ['Peak Performance Mindset', 'Mental Excellence Training']);
-
+      .select('id')
+      .eq('programType', type)
+      .limit(1);
+      
+    if (checkError) {
+      console.error('Error checking for existing programs:', checkError);
+      return false;
+    }
+    
+    // If we already have programs of this type, don't add more
+    if (existingPrograms && existingPrograms.length > 0) {
+      console.log(`Programs of type '${type}' already exist, skipping...`);
+      return true;
+    }
+    
+    // Convert Partial<Program>[] to the exact type expected by supabase insert
+    // by ensuring all required fields are present
+    const programsToInsert = programsList.map(program => ({
+      title: program.title || '',
+      description: program.description || '',
+      duration: program.duration || '',
+      sessions: program.sessions || 0,
+      price: program.price || 0,
+      image: program.image || '',
+      category: program.category || 'quick-ease',
+      programType: program.programType || 'wellness',
+      enrollments: program.enrollments || 0,
+      created_at: program.created_at || new Date().toISOString()
+    }));
+    
+    // Add the programs to the database
+    const { data, error } = await supabase
+      .from('programs')
+      .insert(programsToInsert);
+      
     if (error) {
-      console.error('Error cleaning up incorrect programs:', error);
-    } else {
-      console.log('Successfully cleaned up incorrectly categorized programs');
+      console.error('Error adding sample programs:', error);
+      return false;
     }
+    
+    console.log(`Added ${programsList.length} sample ${type} programs`);
+    return true;
   } catch (error) {
-    console.error('Error in cleanupIncorrectPrograms:', error);
+    console.error('Error in addSamplePrograms:', error);
+    return false;
   }
 };
