@@ -24,6 +24,12 @@ const MobileMenuFooter: React.FC<MobileMenuFooterProps> = ({
   isLoggingOut,
   getDashboardLink
 }) => {
+  console.log('MobileMenuFooter state:', {
+    isAuthenticated,
+    hasExpertProfile,
+    currentUser: !!currentUser
+  });
+
   // If user is authenticated, show user info and logout
   if (isAuthenticated || hasExpertProfile) {
     const userName = currentUser?.name || '';
