@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { ProgramDetail } from '@/types/programDetail';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ProgramDetailTabs from './ProgramDetailTabs';
