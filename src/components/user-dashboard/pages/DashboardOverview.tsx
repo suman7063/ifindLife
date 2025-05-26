@@ -3,10 +3,37 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Calendar, Clock, TrendingUp } from 'lucide-react';
-import { useUserAuth } from '@/contexts/auth/hooks/useUserAuth';
+import { supabase } from '@/lib/supabase';
 
 const DashboardOverview: React.FC = () => {
-  const { currentUser } = useUserAuth();
+  const [user, setUser] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const getCurrentUser = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          setUser(profile || { 
+            name: session.user.user_metadata?.name || 'User',
+            email: session.user.email 
+          });
+        }
+      } catch (error) {
+        console.error('Error getting user:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getCurrentUser();
+  }, []);
 
   const stats = [
     {
@@ -63,11 +90,22 @@ const DashboardOverview: React.FC = () => {
     }
   ];
 
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-64 mb-2"></div>
+          <div className="h-4 bg-gray-200 rounded w-48"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold text-gray-900">
-          Welcome back, {currentUser?.name || 'User'}!
+          Welcome back, {user?.name || 'User'}!
         </h2>
         <p className="text-gray-600 mt-2">
           Here's an overview of your mental health journey
@@ -120,7 +158,7 @@ const DashboardOverview: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Activity */}
+        {/* Recent Progress */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

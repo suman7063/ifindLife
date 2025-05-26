@@ -63,7 +63,7 @@ const UserDashboardSidebar: React.FC = () => {
               cn(
                 'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
                 isActive
-                  ? 'bg-ifind-teal text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'text-gray-700 hover:bg-gray-100'
               )
             }
