@@ -59,7 +59,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-0 gap-0 overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col">
         {/* Header - Fixed */}
         <div className="border-b p-6 pb-4 flex-shrink-0">
           <div className="flex items-start justify-between">
@@ -96,12 +96,14 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 min-h-0">
-          <ScrollArea className="h-full">
-            <ProgramDetailContent 
-              programData={programData} 
-              activeTab={activeTab} 
-            />
+        <div className="flex-1 overflow-hidden">
+          <ScrollArea className="h-full w-full">
+            <div className="h-full">
+              <ProgramDetailContent 
+                programData={programData} 
+                activeTab={activeTab} 
+              />
+            </div>
           </ScrollArea>
         </div>
 
