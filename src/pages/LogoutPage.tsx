@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import Navbar from '@/components/Navbar';
+import NewNavbar from '@/components/NewNavbar';
 import Footer from '@/components/Footer';
 import { CheckCircle } from 'lucide-react';
 
@@ -55,7 +55,7 @@ const LogoutPage: React.FC = () => {
   
   return (
     <>
-      <Navbar />
+      <NewNavbar />
       
       <Container className="py-16 flex flex-col items-center justify-center min-h-[60vh]">
         <Card className="w-full max-w-md p-6 text-center">

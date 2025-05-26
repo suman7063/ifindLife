@@ -1,6 +1,7 @@
+
 import React, { useEffect, useState } from 'react';
 import { Program } from '@/types/programs';
-import Navbar from '@/components/Navbar';
+import NewNavbar from '@/components/NewNavbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
@@ -48,7 +49,7 @@ const AcademicProgramsPage: React.FC = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <NewNavbar />
       <PageHeader 
         title="Programs for Academic Institutes" 
         subtitle="Comprehensive mental health solutions designed for schools, colleges, and universities"

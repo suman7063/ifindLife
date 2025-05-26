@@ -1,13 +1,13 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
+import NewNavbar from '@/components/NewNavbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 
 const CareerGuidance = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <NewNavbar />
       <PageHeader 
         title="Career Guidance" 
         subtitle="Navigate work stress, career transitions, and professional development"

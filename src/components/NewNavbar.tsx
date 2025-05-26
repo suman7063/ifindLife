@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, Menu, X, User, Wallet } from 'lucide-react';
@@ -63,10 +62,11 @@ const NewNavbar: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Get user initials
+  // Get user initials - Fixed the user_metadata access
   const getUserInitials = () => {
     if (!user?.email) return 'U';
-    const name = user.user_metadata?.name || user.email;
+    // Access user metadata from session instead of user object
+    const name = session?.user?.user_metadata?.name || user.email;
     return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
