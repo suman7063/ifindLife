@@ -17,7 +17,7 @@ const ProgramDetailTabs: React.FC<ProgramDetailTabsProps> = ({ activeTab, onTabC
   ] as const;
 
   return (
-    <div className="border-b border-gray-200">
+    <div className="border-b">
       <div className="flex overflow-x-auto">
         {tabs.map((tab) => (
           <button
@@ -26,8 +26,8 @@ const ProgramDetailTabs: React.FC<ProgramDetailTabsProps> = ({ activeTab, onTabC
             className={cn(
               "flex-shrink-0 px-6 py-3 text-sm font-medium border-b-2 transition-colors",
               activeTab === tab.id
-                ? "border-ifind-aqua text-ifind-aqua"
-                : "border-transparent text-ifind-charcoal/70 hover:text-ifind-charcoal hover:border-ifind-teal/50"
+                ? "border-ifind-teal text-ifind-teal"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
             )}
           >
             {tab.label}

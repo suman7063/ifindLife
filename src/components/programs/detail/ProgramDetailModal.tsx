@@ -31,7 +31,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-0 gap-0" hideCloseButton>
           <div className="flex items-center justify-center h-96">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ifind-aqua"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ifind-teal"></div>
           </div>
         </DialogContent>
       </Dialog>
@@ -43,9 +43,9 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-[500px] p-6" hideCloseButton>
           <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2 text-ifind-charcoal">Error Loading Program</h3>
+            <h3 className="text-lg font-semibold mb-2">Error Loading Program</h3>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={onClose} className="bg-ifind-aqua hover:bg-ifind-aqua/90 text-white">Close</Button>
+            <Button onClick={onClose}>Close</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -58,21 +58,21 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col bg-ifind-offwhite" hideCloseButton>
+      <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col" hideCloseButton>
         {/* Header - Fixed */}
-        <div className="border-b border-gray-200 p-6 pb-4 flex-shrink-0 bg-white">
+        <div className="border-b p-6 pb-4 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-ifind-charcoal mb-2">{programData.title}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{programData.title}</h2>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <img 
                     src={programData.expert.photo} 
                     alt={programData.expert.name}
-                    className="w-8 h-8 rounded-full object-cover border-2 border-ifind-teal"
+                    className="w-8 h-8 rounded-full object-cover"
                   />
                   <div>
-                    <p className="font-medium text-sm text-ifind-charcoal">{programData.expert.name}</p>
+                    <p className="font-medium text-sm">{programData.expert.name}</p>
                     <p className="text-xs text-gray-500">{programData.expert.experience} experience</p>
                   </div>
                 </div>
@@ -82,7 +82,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8 flex-shrink-0 text-ifind-charcoal hover:bg-ifind-teal/10"
+              className="h-8 w-8 flex-shrink-0"
             >
               <span className="h-4 w-4">×</span>
             </Button>
@@ -90,12 +90,12 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         </div>
 
         {/* Tabs - Fixed */}
-        <div className="flex-shrink-0 bg-white">
+        <div className="flex-shrink-0">
           <ProgramDetailTabs activeTab={activeTab} onTabChange={onTabChange} />
         </div>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-hidden bg-ifind-offwhite">
+        <div className="flex-1 overflow-hidden">
           <ScrollArea className="h-full w-full">
             <div className="h-full">
               <ProgramDetailContent 
@@ -107,12 +107,12 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         </div>
 
         {/* Footer CTAs - Fixed */}
-        <div className="border-t border-gray-200 p-6 pt-4 flex-shrink-0 bg-white">
+        <div className="border-t p-6 pt-4 flex-shrink-0">
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button className="flex-1 bg-ifind-aqua hover:bg-ifind-aqua/90 text-white">
+            <Button className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90">
               Book Now (₹{programData.pricing.individual.perSession})
             </Button>
-            <Button variant="outline" className="flex-1 border-ifind-teal text-ifind-teal hover:bg-ifind-teal hover:text-white">
+            <Button variant="outline" className="flex-1">
               Add to Wishlist
             </Button>
           </div>
