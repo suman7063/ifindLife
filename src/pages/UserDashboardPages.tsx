@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -15,6 +14,8 @@ import SecuritySection from '@/components/user/dashboard/sections/SecuritySectio
 import SettingsSection from '@/components/user/dashboard/sections/SettingsSection';
 import SupportSection from '@/components/user/dashboard/sections/SupportSection';
 import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSection';
+import BookingHistorySection from '@/components/user/dashboard/sections/BookingHistorySection';
+import ProgressTrackingSection from '@/components/user/dashboard/sections/ProgressTrackingSection';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserProfile } from '@/types/database/unified';
@@ -155,6 +156,10 @@ const UserDashboardPages: React.FC = () => {
       case 'appointments':
       case 'consultations':
         return <ConsultationsSection user={user} />;
+      case 'booking-history':
+        return <BookingHistorySection user={user} />;
+      case 'progress':
+        return <ProgressTrackingSection user={user} />;
       case 'favorites':
         return <FavoritesSection user={user} />;
       case 'programs':

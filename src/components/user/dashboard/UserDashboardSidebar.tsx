@@ -14,7 +14,10 @@ import {
   Settings, 
   HelpCircle,
   LogOut,
-  Lock
+  Lock,
+  Calendar,
+  TrendingUp,
+  History
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -58,7 +61,7 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             </div>
           </div>
           
-          {/* Wallet balance and date - added as per requirement */}
+          {/* Wallet balance and date */}
           <div className="mt-2 text-sm">
             <div className="flex items-center text-green-600 font-medium">
               <Wallet className="h-4 w-4 mr-2" />
@@ -88,16 +91,28 @@ const UserDashboardSidebar: React.FC<UserDashboardSidebarProps> = ({
             isActive={isActive('/user-dashboard/wallet')} 
           />
           <SidebarItem 
-            href="/user-dashboard/favorites" 
-            icon={<Heart className="h-5 w-5" />} 
-            label="Favorites" 
-            isActive={isActive('/user-dashboard/favorites')} 
-          />
-          <SidebarItem 
             href="/user-dashboard/programs" 
             icon={<BookOpen className="h-5 w-5" />} 
             label="My Programs" 
             isActive={isActive('/user-dashboard/programs')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/booking-history" 
+            icon={<History className="h-5 w-5" />} 
+            label="Booking History" 
+            isActive={isActive('/user-dashboard/booking-history')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/progress" 
+            icon={<TrendingUp className="h-5 w-5" />} 
+            label="Progress Tracking" 
+            isActive={isActive('/user-dashboard/progress')} 
+          />
+          <SidebarItem 
+            href="/user-dashboard/favorites" 
+            icon={<Heart className="h-5 w-5" />} 
+            label="Favorites" 
+            isActive={isActive('/user-dashboard/favorites')} 
           />
           <SidebarItem 
             href="/user-dashboard/messages" 
