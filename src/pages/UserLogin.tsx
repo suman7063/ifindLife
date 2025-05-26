@@ -22,10 +22,14 @@ const UserLogin: React.FC = () => {
         console.log('UserLogin: Checking for existing session...');
         const { data } = await supabase.auth.getSession();
         
-        if (data.session) {
+        if (data.session?.user) {
           console.log('UserLogin: Existing session found, redirecting to dashboard');
+          // Make sure the redirect actually happens
           navigate('/user-dashboard', { replace: true });
+          return;
         }
+        
+        console.log('UserLogin: No existing session found');
       } catch (error) {
         console.error('UserLogin: Error checking session:', error);
       } finally {
@@ -40,7 +44,7 @@ const UserLogin: React.FC = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       return false;
     }
@@ -57,9 +61,9 @@ const UserLogin: React.FC = () => {
         .maybeSingle();
         
       if (userError) {
-        console.error('Error checking user:', userError);
+        console.error('UserLogin: Error checking user:', userError);
         toast.error('An error occurred while checking user', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
@@ -71,16 +75,16 @@ const UserLogin: React.FC = () => {
       });
       
       if (error) {
-        console.error('Login error:', error);
+        console.error('UserLogin: Login error:', error);
         toast.error(error.message || 'Invalid email or password', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
       
       if (!data.user || !data.session) {
         toast.error('Login failed. Please try again.', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
@@ -89,17 +93,18 @@ const UserLogin: React.FC = () => {
       localStorage.setItem('sessionType', 'user');
       
       toast.success('Login successful!', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       
-      // Navigate to dashboard
+      console.log('UserLogin: Login successful, navigating to dashboard');
+      // Make sure the redirect actually happens
       navigate('/user-dashboard', { replace: true });
       
       return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
       toast.error('An unexpected error occurred', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       return false;
     } finally {

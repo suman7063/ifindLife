@@ -27,7 +27,22 @@ const UserDashboardPages: React.FC = () => {
   const navigate = useNavigate();
   const { section } = useParams<{ section?: string }>();
   
-  console.log('Current dashboard section:', section);
+  // Set default section and add logging
+  const [currentSection, setCurrentSection] = useState(section || 'overview');
+  
+  useEffect(() => {
+    console.log('UserDashboardPages: Current section from URL:', section);
+    console.log('UserDashboardPages: Current dashboard section state:', currentSection);
+  }, [section, currentSection]);
+
+  // Update current section when URL changes
+  useEffect(() => {
+    if (section) {
+      setCurrentSection(section);
+    } else {
+      setCurrentSection('overview');
+    }
+  }, [section]);
   
   // Check auth status and fetch user profile
   useEffect(() => {
@@ -39,7 +54,7 @@ const UserDashboardPages: React.FC = () => {
         const { data: sessionData } = await supabase.auth.getSession();
         
         if (!sessionData.session) {
-          console.log('No session found, redirecting to login');
+          console.log('UserDashboardPages: No session found, redirecting to login');
           navigate('/user-login');
           return;
         }
@@ -52,7 +67,7 @@ const UserDashboardPages: React.FC = () => {
           .single();
           
         if (error || !userData) {
-          console.error('Error fetching user data:', error);
+          console.error('UserDashboardPages: Error fetching user data:', error);
           // Try to get at least basic info from auth user
           const basicUserProfile: UserProfile = {
             id: sessionData.session.user.id,
@@ -104,7 +119,7 @@ const UserDashboardPages: React.FC = () => {
           setUser(fullUserProfile);
         }
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('UserDashboardPages: Error fetching user data:', error);
         toast.error('Failed to load user data');
         navigate('/user-login');
       } finally {
@@ -134,7 +149,7 @@ const UserDashboardPages: React.FC = () => {
       navigate('/logout?type=user');
       return true;
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('UserDashboardPages: Logout error:', error);
       toast.error('An error occurred during logout');
       return false;
     } finally {
@@ -142,13 +157,13 @@ const UserDashboardPages: React.FC = () => {
     }
   };
 
-  // Render the appropriate section based on the URL parameter
-  const renderSection = () => {
+  // Render the appropriate section based on current section with proper fallback
+  const renderSection = (sectionName: string) => {
     if (!user) return null;
     
-    console.log('Rendering section:', section);
+    console.log('UserDashboardPages: Rendering section:', sectionName);
     
-    switch(section) {
+    switch(sectionName) {
       case 'profile':
         return <ProfileSection user={user} />;
       case 'wallet':
@@ -173,7 +188,9 @@ const UserDashboardPages: React.FC = () => {
       case 'support':
       case 'help':
         return <SupportSection />;
+      case 'overview':
       default:
+        console.log('UserDashboardPages: Rendering default overview section for:', sectionName);
         return <DashboardHome user={user} />;
     }
   };
@@ -198,7 +215,7 @@ const UserDashboardPages: React.FC = () => {
         
         {/* Content */}
         <div className="flex-1 p-6 overflow-auto">
-          {renderSection()}
+          {renderSection(currentSection)}
         </div>
       </div>
       
