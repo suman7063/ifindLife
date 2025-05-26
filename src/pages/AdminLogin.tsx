@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/admin-auth';
-import Navbar from '@/components/Navbar';
+import NewNavbar from '@/components/NewNavbar';
 import Footer from '@/components/Footer';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 import { toast } from 'sonner';
@@ -95,7 +94,7 @@ const AdminLogin = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <NewNavbar />
       
       {/* Simplified header without extra padding/margin */}
       <div className="bg-gradient-to-r from-ifind-aqua to-ifind-teal py-12">

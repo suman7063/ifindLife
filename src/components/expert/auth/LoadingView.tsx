@@ -1,12 +1,12 @@
 
 import React from 'react';
-import Navbar from '@/components/Navbar';
+import NewNavbar from '@/components/NewNavbar';
 import Footer from '@/components/Footer';
 
 const LoadingView: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <NewNavbar />
       <main className="flex-1 flex items-center justify-center bg-stars">
         <div className="flex flex-col items-center">
           <div className="relative flex justify-center items-center">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Container } from '@/components/ui/container';
 import { SearchIcon } from 'lucide-react';
@@ -11,7 +10,7 @@ import SearchSort from '@/components/experts/SearchSort';
 import { useExpertFilters } from '@/hooks/useExpertFilters';
 import expertData from '@/data/expertData'; // Import the expert data
 import { ExperienceLevel } from '@/types/experts';
-import Navbar from '@/components/Navbar';
+import NewNavbar from '@/components/NewNavbar';
 import Footer from '@/components/Footer';
 
 export default function Experts() {
@@ -52,7 +51,7 @@ export default function Experts() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      <NewNavbar />
       <ExpertsHeader />
       
       <div className="flex-1 bg-gradient-to-b from-white to-gray-50 py-8">

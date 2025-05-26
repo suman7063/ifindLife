@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
+import NewNavbar from '@/components/NewNavbar';
 import Footer from '@/components/Footer';
 import { servicesData } from '@/components/services/detail/servicesData';
 import ServiceHero from '@/components/services/detail/ServiceHero';
@@ -32,7 +31,7 @@ const ServiceDetailPage: React.FC = () => {
   if (!serviceData) {
     return (
       <>
-        <Navbar />
+        <NewNavbar />
         <div className="container mx-auto py-20 px-4">
           <h1 className="text-3xl font-bold mb-4">Service Not Found</h1>
           <p className="text-gray-700 text-justify">The service you're looking for could not be found.</p>
@@ -44,7 +43,7 @@ const ServiceDetailPage: React.FC = () => {
   
   return (
     <>
-      <Navbar />
+      <NewNavbar />
       
       {/* Hero Section with Cover Image */}
       <ServiceHero 
