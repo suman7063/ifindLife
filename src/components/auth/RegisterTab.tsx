@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,6 +22,7 @@ interface RegisterTabProps {
   initialReferralCode?: string | null;
   referralSettings?: ReferralSettings | null;
   setCaptchaVerified?: () => void;
+  onSwitchToLogin: () => void; // Added missing property
 }
 
 const RegisterTab: React.FC<RegisterTabProps> = ({
@@ -32,7 +32,8 @@ const RegisterTab: React.FC<RegisterTabProps> = ({
   registerError = null,
   initialReferralCode = null,
   referralSettings = null,
-  setCaptchaVerified = () => {}
+  setCaptchaVerified = () => {},
+  onSwitchToLogin
 }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
