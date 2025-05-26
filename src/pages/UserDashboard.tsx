@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
@@ -5,7 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoadingScreen from '@/components/auth/LoadingScreen';
 import { toast } from 'sonner';
-import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
+import UserDashboardSidebar from '@/components/user-dashboard/UserDashboardSidebar';
 import { UserProfile } from '@/types/database/unified';
 
 const UserDashboard: React.FC = () => {

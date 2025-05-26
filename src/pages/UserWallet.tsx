@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import UserDashboardLayout from '@/components/user/dashboard/UserDashboardLayout';
+import UserDashboardLayout from '@/components/user-dashboard/UserDashboardLayout';
 import WalletPage from '@/components/user/dashboard/wallet/WalletPage';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
