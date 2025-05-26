@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
-import Navbar from '@/components/Navbar';
+import Navbar from '../components/Navbar';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
 import { toast } from 'sonner';

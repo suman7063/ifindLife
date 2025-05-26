@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 import AgoraCallModal from '@/components/AgoraCallModal';
 import AgoraChatModal from '@/components/AgoraChatModal';
 import { toast } from 'sonner';
