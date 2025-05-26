@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ProgramDetail } from '@/types/programDetail';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Heart, ShoppingCart, Calendar, X } from 'lucide-react';
+import { Heart, ShoppingCart, X, Share } from 'lucide-react';
 import ProgramDetailTabs from './ProgramDetailTabs';
 import ProgramDetailContent from './ProgramDetailContent';
 import { useUserAuth } from '@/contexts/auth/hooks/useUserAuth';
@@ -98,31 +98,28 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
     }
   };
 
-  const handleBookConsultation = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to book consultations.",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleShareProgram = async () => {
     if (!programData) return;
 
     try {
-      // TODO: Implement booking API call
-      toast({
-        title: "Consultation Booking",
-        description: "Opening booking calendar...",
-      });
-      
-      // TODO: Open booking modal or redirect to booking page
-      console.log('Booking consultation for program:', programData.id);
+      if (navigator.share) {
+        await navigator.share({
+          title: programData.title,
+          text: programData.description,
+          url: window.location.href,
+        });
+      } else {
+        // Fallback to copying URL to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "Link Copied",
+          description: "Program link copied to clipboard",
+        });
+      }
     } catch (error) {
       toast({
-        title: "Booking Failed",
-        description: "Failed to open booking. Please try again.",
+        title: "Share Failed",
+        description: "Failed to share program. Please try again.",
         variant: "destructive"
       });
     }
@@ -165,7 +162,27 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         <div className="border-b p-6 pb-4 flex-shrink-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{programData.title}</h2>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-2xl font-bold text-gray-900">{programData.title}</h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleShareProgram}
+                    className="h-8 w-8"
+                  >
+                    <Share className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={onClose}
+                    className="h-8 w-8"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <img 
@@ -180,14 +197,6 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                 </div>
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8 flex-shrink-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
           </div>
         </div>
 
@@ -208,7 +217,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
           </ScrollArea>
         </div>
 
-        {/* Enhanced Footer CTAs - Fixed */}
+        {/* Simplified Footer CTAs - Fixed */}
         <div className="border-t p-6 pt-4 flex-shrink-0">
           <div className="flex flex-col gap-4">
             {/* Primary Actions */}
@@ -224,25 +233,10 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
               <Button 
                 variant="outline" 
                 className="flex-1 flex items-center gap-2"
-                onClick={handleBookConsultation}
-              >
-                <Calendar className="h-4 w-4" />
-                Book Consultation
-              </Button>
-            </div>
-            
-            {/* Secondary Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                variant="outline" 
-                className="flex-1 flex items-center gap-2"
                 onClick={handleWishlistToggle}
               >
                 <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
                 {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-              </Button>
-              <Button variant="ghost" className="flex-1">
-                Share Program
               </Button>
             </div>
 
