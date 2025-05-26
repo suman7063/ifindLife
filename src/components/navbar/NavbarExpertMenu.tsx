@@ -38,15 +38,21 @@ const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({
       
       if (success) {
         console.log("NavbarExpertMenu: Expert logout successful");
-        toast.success('Successfully logged out as expert');
+        toast.success('Successfully logged out as expert', {
+          duration: 2000 // 2 seconds
+        });
         navigate('/logout', { state: { userType: 'expert' } });
       } else {
         console.error("NavbarExpertMenu: Expert logout failed");
-        toast.error('Failed to log out as expert. Please try again.');
+        toast.error('Failed to log out as expert. Please try again.', {
+          duration: 2000 // 2 seconds
+        });
       }
     } catch (error) {
       console.error('Error during expert logout:', error);
-      toast.error('Failed to log out as expert. Please try again.');
+      toast.error('Failed to log out as expert. Please try again.', {
+        duration: 2000 // 2 seconds
+      });
     } finally {
       setIsLoggingOut(false);
     }

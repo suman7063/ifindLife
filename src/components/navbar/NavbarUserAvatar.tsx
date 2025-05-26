@@ -49,14 +49,20 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
       const success = await onLogout();
       
       if (success) {
-        toast.success('Successfully logged out');
+        toast.success('Successfully logged out', {
+          duration: 2000 // 2 seconds
+        });
         navigate('/logout', { state: { userType: 'user' } });
       } else {
-        toast.error('Failed to log out. Please try again.');
+        toast.error('Failed to log out. Please try again.', {
+          duration: 2000 // 2 seconds
+        });
       }
     } catch (error) {
       console.error('Error during logout:', error);
-      toast.error('Failed to log out. Please try again.');
+      toast.error('Failed to log out. Please try again.', {
+        duration: 2000 // 2 seconds
+      });
     }
   };
 

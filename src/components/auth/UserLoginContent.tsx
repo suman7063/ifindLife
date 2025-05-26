@@ -31,7 +31,9 @@ const UserLoginContent: React.FC = () => {
     e.preventDefault();
     
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      toast.error('Please enter both email and password', {
+        duration: 2000 // 2 seconds
+      });
       return;
     }
     
@@ -49,16 +51,22 @@ const UserLoginContent: React.FC = () => {
       
       if (error) {
         console.error('Login error:', error.message);
-        toast.error(error.message);
+        toast.error(error.message, {
+          duration: 2000 // 2 seconds
+        });
         return;
       }
       
       if (!data.session) {
-        toast.error('Login failed - no session created');
+        toast.error('Login failed - no session created', {
+          duration: 2000 // 2 seconds
+        });
         return;
       }
       
-      toast.success('Login successful!');
+      toast.success('Login successful!', {
+        duration: 2000 // 2 seconds
+      });
       console.log('Login successful, redirecting to dashboard...');
       
       // Set a small delay to ensure auth state is processed
@@ -68,7 +76,9 @@ const UserLoginContent: React.FC = () => {
       
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('An unexpected error occurred');
+      toast.error('An unexpected error occurred', {
+        duration: 2000 // 2 seconds
+      });
     } finally {
       setIsLoading(false);
     }

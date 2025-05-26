@@ -13,6 +13,10 @@ import { Button } from '@/components/ui/button';
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Always call hooks in the same order
   const { 
     isAuthenticated, 
     isExpertAuthenticated,
@@ -25,9 +29,6 @@ const Navbar = () => {
     hasDualSessions,
     sessionType
   } = useAuthSynchronization();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const isHomePage = location.pathname === '/';
 
   // Set up session timeout (4 hours = 4 * 60 * 60 * 1000 ms)
   const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
@@ -43,16 +44,7 @@ const Navbar = () => {
     isAuthenticated || isExpertAuthenticated ? handleSessionTimeout : () => {}
   );
 
-  // Ensure sessionType is one of the allowed values
-  const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
-    if (type === 'user' || type === 'expert' || type === 'none' || type === 'dual') {
-      return type;
-    }
-    // Default to 'none' if value is unexpected
-    console.warn(`Invalid session type detected: ${type}. Defaulting to 'none'`);
-    return 'none';
-  };
-
+  // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
@@ -67,7 +59,16 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
-  // Handle user logout
+  // Ensure sessionType is one of the allowed values
+  const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
+    if (type === 'user' || type === 'expert' || type === 'none' || type === 'dual') {
+      return type;
+    }
+    console.warn(`Invalid session type detected: ${type}. Defaulting to 'none'`);
+    return 'none';
+  };
+
+  // Handle user logout with 2-second toast
   const handleUserLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -78,25 +79,30 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: User logout successful");
-        toast.success('Successfully logged out');
-        // Redirect to logout page with user type info
+        toast.success('Successfully logged out', {
+          duration: 2000 // 2 seconds
+        });
         navigate('/logout', { state: { userType: 'user' } });
         return true;
       } else {
         console.error("Navbar: User logout failed");
-        toast.error('Logout failed. Please try again.');
+        toast.error('Logout failed. Please try again.', {
+          duration: 2000 // 2 seconds
+        });
         return false;
       }
     } catch (error) {
       console.error('Error during user logout:', error);
-      toast.error('Failed to log out. Please try again.');
+      toast.error('Failed to log out. Please try again.', {
+        duration: 2000 // 2 seconds
+      });
       return false;
     } finally {
       setIsLoggingOut(false);
     }
   };
 
-  // Handle expert logout
+  // Handle expert logout with 2-second toast
   const handleExpertLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -107,25 +113,30 @@ const Navbar = () => {
       
       if (success) {
         console.log("Navbar: Expert logout completed");
-        toast.success('Successfully logged out as expert');
-        // Redirect to logout page with expert type info
+        toast.success('Successfully logged out as expert', {
+          duration: 2000 // 2 seconds
+        });
         navigate('/logout', { state: { userType: 'expert' } });
         return true;
       } else {
         console.error("Navbar: Expert logout failed");
-        toast.error('Failed to log out as expert. Please try again.');
+        toast.error('Failed to log out as expert. Please try again.', {
+          duration: 2000 // 2 seconds
+        });
         return false;
       }
     } catch (error) {
       console.error('Error during expert logout:', error);
-      toast.error('Failed to log out as expert. Please try again.');
+      toast.error('Failed to log out as expert. Please try again.', {
+        duration: 2000 // 2 seconds
+      });
       return false;
     } finally {
       setIsLoggingOut(false);
     }
   };
 
-  // Handle full logout (both user and expert)
+  // Handle full logout (both user and expert) with 2-second toast
   const handleFullLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
     
@@ -135,8 +146,9 @@ const Navbar = () => {
       const success = await fullLogout();
       
       if (success) {
-        toast.success('Successfully logged out of all accounts');
-        // Determine primary account type for the logout page
+        toast.success('Successfully logged out of all accounts', {
+          duration: 2000 // 2 seconds
+        });
         const primaryType = typedSessionType === 'expert' ? 'expert' : 'user';
         navigate('/logout', { state: { userType: primaryType } });
       }
@@ -144,7 +156,9 @@ const Navbar = () => {
       return success;
     } catch (error) {
       console.error('Error during full logout:', error);
-      toast.error('Failed to log out. Please try again.');
+      toast.error('Failed to log out. Please try again.', {
+        duration: 2000 // 2 seconds
+      });
       return false;
     } finally {
       setIsLoggingOut(false);
@@ -162,7 +176,9 @@ const Navbar = () => {
   console.log("Navbar rendering. Auth state:", {
     isAuthenticated,
     isExpertAuthenticated,
-    sessionType: typedSessionType
+    sessionType: typedSessionType,
+    currentUser: !!currentUser,
+    currentExpert: !!currentExpert
   });
 
   return (
