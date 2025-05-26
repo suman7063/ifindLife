@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
 import { Container } from '@/components/ui/container';
 import { Card } from '@/components/ui/card';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 import ReferralsList from '@/components/user/ReferralsList';
 import ReferralCard from '@/components/user/ReferralCard';
 import { supabase } from '@/lib/supabase';

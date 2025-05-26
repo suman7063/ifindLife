@@ -1,8 +1,7 @@
-
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 
 const UserEnrolledCourses: React.FC = () => {
   const { currentUser, isAuthenticated } = useUserAuth();

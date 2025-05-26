@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,7 +5,7 @@ import { UserProfile, ReferralSettings } from '@/types/supabase';
 import { getReferralLink, copyReferralLink, fetchReferralSettings } from '@/utils/referralUtils';
 import { Link } from 'react-router-dom';
 import { Gift, Share, Copy } from 'lucide-react';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 import { toast } from 'sonner';
 
 interface ReferralDashboardCardProps {

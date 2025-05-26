@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 
 export const useAuthLogoutEffects = (
   isAuthenticated: boolean, 

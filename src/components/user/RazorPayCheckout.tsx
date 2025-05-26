@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/lib/supabase';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 
 declare global {
   interface Window {

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Program } from '@/types/programs';
 import Navbar from '@/components/Navbar';
@@ -6,7 +5,7 @@ import Footer from '@/components/Footer';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { supabase } from '@/lib/supabase';
 import ProgramList from '@/components/programs/ProgramList';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 import { Loader2 } from 'lucide-react';
 import PageHeader from '@/components/common/PageHeader';
 

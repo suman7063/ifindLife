@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { useUserAuth } from '@/contexts/UserAuthContext';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 import ProfilePictureUploader from '@/components/common/ProfilePictureUploader';
 import { toast } from 'sonner';
 

@@ -1,111 +1,82 @@
-
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUserAuth } from '@/contexts/UserAuthContext';
 import { supabase } from '@/lib/supabase';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
+
+interface DashboardData {
+  totalAppointments: number;
+  upcomingAppointments: number;
+  favoriteExperts: number;
+  walletBalance: number;
+  recentTransactions: any[];
+  isLoading: boolean;
+}
 
 export const useDashboardState = () => {
-  const { currentUser, isAuthenticated, logout, authLoading, user } = useUserAuth();
-  const navigate = useNavigate();
-  const [isRechargeDialogOpen, setIsRechargeDialogOpen] = useState(false);
-  const [dashboardLoading, setDashboardLoading] = useState(true);
-  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const { currentUser } = useUserAuth();
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    totalAppointments: 0,
+    upcomingAppointments: 0,
+    favoriteExperts: 0,
+    walletBalance: 0,
+    recentTransactions: [],
+    isLoading: true
+  });
 
   useEffect(() => {
-    console.log("Dashboard loading status:", {
-      authLoading,
-      isAuthenticated,
-      hasCurrentUser: !!currentUser,
-      hasUser: !!user,
-      dashboardLoading
-    });
-    
-    // Set a more reasonable maximum loading time (5 seconds)
-    const maxLoadingTimer = setTimeout(() => {
-      if (dashboardLoading) {
-        console.log("Dashboard max loading time reached, forcing display");
-        setDashboardLoading(false);
-        setLoadingTimedOut(true);
-      }
-    }, 5000);
+    const fetchDashboardData = async () => {
+      if (!currentUser?.id) return;
 
-    // If we have user data, stop loading after a short delay to ensure everything is ready
-    if (user || currentUser) {
-      console.log("User data available, stopping dashboard loading soon");
-      
-      // Add a small delay to allow other data to load
-      const userDataTimer = setTimeout(() => {
-        setDashboardLoading(false);
-      }, 1000);
-      
-      return () => {
-        clearTimeout(userDataTimer);
-        clearTimeout(maxLoadingTimer);
-      };
-    }
-    
-    // Only redirect to login if truly not authenticated and not in loading state
-    if (!isAuthenticated && !authLoading && !user) {
-      console.log("Not authenticated, redirecting to login");
-      navigate('/user-login');
-    }
+      try {
+        setDashboardData(prev => ({ ...prev, isLoading: true }));
 
-    return () => clearTimeout(maxLoadingTimer);
-  }, [isAuthenticated, navigate, currentUser, authLoading, user, dashboardLoading]);
+        // Fetch appointments count
+        const { data: appointments, error: appointmentsError } = await supabase
+          .from('appointments')
+          .select('id, status')
+          .eq('user_id', currentUser.id);
 
-  // Check if there's a session but no profile, which could indicate a database error
-  useEffect(() => {
-    const checkForOrphanedSession = async () => {
-      if (!currentUser && !authLoading && dashboardLoading) {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          console.log("Session exists but no profile found, attempting to fetch profile");
-          
-          // Try to refresh the page to trigger a new profile fetch
-          if (!loadingTimedOut) {
-            setLoadingTimedOut(true);
-          }
-        }
+        if (appointmentsError) throw appointmentsError;
+
+        // Fetch favorites count
+        const { data: favorites, error: favoritesError } = await supabase
+          .from('user_favorites')
+          .select('id')
+          .eq('user_id', currentUser.id);
+
+        if (favoritesError) throw favoritesError;
+
+        // Fetch recent transactions
+        const { data: transactions, error: transactionsError } = await supabase
+          .from('user_transactions')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('date', { ascending: false })
+          .limit(5);
+
+        if (transactionsError) throw transactionsError;
+
+        // Calculate stats
+        const totalAppointments = appointments?.length || 0;
+        const upcomingAppointments = appointments?.filter(
+          apt => apt.status === 'scheduled' || apt.status === 'confirmed'
+        ).length || 0;
+
+        setDashboardData({
+          totalAppointments,
+          upcomingAppointments,
+          favoriteExperts: favorites?.length || 0,
+          walletBalance: currentUser.wallet_balance || 0,
+          recentTransactions: transactions || [],
+          isLoading: false
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        setDashboardData(prev => ({ ...prev, isLoading: false }));
       }
     };
-    
-    checkForOrphanedSession();
-  }, [currentUser, authLoading, dashboardLoading, loadingTimedOut]);
 
-  const handleOpenRechargeDialog = () => {
-    setIsRechargeDialogOpen(true);
-  };
+    fetchDashboardData();
+  }, [currentUser]);
 
-  const handleCloseRechargeDialog = () => {
-    setIsRechargeDialogOpen(false);
-  };
-
-  const handlePaymentSuccess = () => {
-    setIsRechargeDialogOpen(false);
-    setIsProcessingPayment(false);
-  };
-
-  const handlePaymentCancel = () => {
-    setIsProcessingPayment(false);
-  };
-
-  return {
-    currentUser,
-    isAuthenticated,
-    authLoading,
-    user,
-    dashboardLoading,
-    loadingTimedOut,
-    isRechargeDialogOpen,
-    isProcessingPayment,
-    logout,
-    handleOpenRechargeDialog,
-    handleCloseRechargeDialog,
-    handlePaymentSuccess,
-    handlePaymentCancel,
-    setIsProcessingPayment
-  };
+  return dashboardData;
 };
-
-export default useDashboardState;

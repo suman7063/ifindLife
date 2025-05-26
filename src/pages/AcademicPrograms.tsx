@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Program } from '@/types/programs';
 import Navbar from '@/components/Navbar';
@@ -7,7 +6,7 @@ import PageHeader from '@/components/common/PageHeader';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { supabase } from '@/lib/supabase';
 import ProgramCard from '@/components/programs/ProgramCard';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 
 const AcademicProgramsPage: React.FC = () => {
   const [programs, setPrograms] = useState<Program[]>([]);

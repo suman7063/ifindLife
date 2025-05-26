@@ -1,8 +1,7 @@
-
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useUserAuth } from '@/hooks/useUserAuth';
+import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 import { ProgramCategory } from '@/types/programs';
 import { useWellnessPrograms } from '@/hooks/useWellnessPrograms';
 import WellnessProgramsHeader from '@/components/programs/WellnessProgramsHeader';
