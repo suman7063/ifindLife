@@ -16,7 +16,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 const SimpleNavbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated, userProfile, logout } = useAuth();
+  const { isAuthenticated, userProfile, expertProfile, logout } = useAuth();
 
   // Handle scroll effect
   useEffect(() => {
@@ -37,6 +37,11 @@ const SimpleNavbar = () => {
   };
 
   const navbarBg = isScrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-transparent';
+
+  // Determine if user has any authentication
+  const hasAnyAuth = Boolean(isAuthenticated && (userProfile || expertProfile));
+  const isExpert = Boolean(expertProfile);
+  const isUser = Boolean(userProfile && !expertProfile);
 
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-200 ${navbarBg}`}>
@@ -161,10 +166,12 @@ const SimpleNavbar = () => {
             </NavigationMenu>
 
             {/* Auth Section */}
-            {isAuthenticated ? (
+            {hasAnyAuth ? (
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" asChild>
-                  <Link to="/user-dashboard">Dashboard</Link>
+                  <Link to={isExpert ? "/expert-dashboard" : "/user-dashboard"}>
+                    Dashboard
+                  </Link>
                 </Button>
                 <Button variant="outline" onClick={handleLogout}>
                   Logout
@@ -172,9 +179,32 @@ const SimpleNavbar = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" asChild>
-                  <Link to="/user-login">Login</Link>
-                </Button>
+                {/* Login Menu with both options */}
+                <NavigationMenu>
+                  <NavigationMenuList>
+                    <NavigationMenuItem>
+                      <NavigationMenuTrigger>Login</NavigationMenuTrigger>
+                      <NavigationMenuContent className="min-w-[180px]">
+                        <ul className="grid w-full gap-1 p-2">
+                          <li>
+                            <NavigationMenuLink asChild>
+                              <Link to="/user-login" className="block w-full p-2 text-sm hover:bg-accent rounded-md">
+                                User Login
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                          <li>
+                            <NavigationMenuLink asChild>
+                              <Link to="/expert-login" className="block w-full p-2 text-sm hover:bg-accent rounded-md">
+                                Expert Login
+                              </Link>
+                            </NavigationMenuLink>
+                          </li>
+                        </ul>
+                      </NavigationMenuContent>
+                    </NavigationMenuItem>
+                  </NavigationMenuList>
+                </NavigationMenu>
                 <Button variant="default" asChild>
                   <Link to="/user-signup">Sign Up</Link>
                 </Button>
@@ -242,10 +272,10 @@ const SimpleNavbar = () => {
               </Link>
 
               <div className="pt-4 border-t">
-                {isAuthenticated ? (
+                {hasAnyAuth ? (
                   <div className="space-y-2">
                     <Link
-                      to="/user-dashboard"
+                      to={isExpert ? "/expert-dashboard" : "/user-dashboard"}
                       className="block w-full text-left py-2 px-4 bg-primary text-primary-foreground rounded-md font-medium"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
@@ -261,12 +291,20 @@ const SimpleNavbar = () => {
                   </div>
                 ) : (
                   <div className="space-y-2">
+                    <div className="text-sm font-medium text-gray-600 mb-2">Login Options:</div>
                     <Link
                       to="/user-login"
-                      className="block w-full text-center py-2 px-4 border border-primary text-primary rounded-md font-medium"
+                      className="block w-full text-center py-2 px-4 border border-primary text-primary rounded-md font-medium mb-2"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      Login
+                      User Login
+                    </Link>
+                    <Link
+                      to="/expert-login"
+                      className="block w-full text-center py-2 px-4 border border-primary text-primary rounded-md font-medium mb-2"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      Expert Login
                     </Link>
                     <Link
                       to="/user-signup"
