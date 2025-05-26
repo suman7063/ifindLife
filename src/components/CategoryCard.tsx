@@ -20,13 +20,21 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
   textColor = 'text-gray-800',
   cardStyle = 'program'
 }) => {
+  // Get accent color based on title
+  const getAccentColor = (title: string) => {
+    if (title.includes('QuickEase')) return 'bg-ifind-aqua';
+    if (title.includes('Resilience')) return 'bg-ifind-teal';
+    if (title.includes('Super Human')) return 'bg-ifind-purple';
+    return 'bg-ifind-aqua';
+  };
+
   // Different styles for programs vs sessions
   const cardClasses = cardStyle === 'program'
-    ? `${color} rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 h-full`
+    ? `${color} rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 h-full border border-gray-200`
     : "bg-white/80 backdrop-filter backdrop-blur-sm rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 p-6 h-full";
   
   const iconClasses = cardStyle === 'program'
-    ? `w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-white/20`
+    ? `w-16 h-16 rounded-full flex items-center justify-center mb-4 ${getAccentColor(title)}`
     : `${color} w-12 h-12 rounded-full flex items-center justify-center mb-3`;
 
   const titleClasses = cardStyle === 'program'
@@ -37,7 +45,6 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     ? `text-sm ${textColor}/90`
     : 'text-sm text-gray-600';
 
-  // Return a plain div instead of a Link to prevent navigation
   return (
     <div className={cardClasses}>
       <div className={iconClasses}>

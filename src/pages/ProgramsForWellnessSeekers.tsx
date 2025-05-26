@@ -22,11 +22,21 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     programsByCategory
   } = useWellnessPrograms();
 
-  // Handle hash navigation for issue-based sessions
+  // Handle hash navigation for specific categories
   useEffect(() => {
-    if (location.hash === '#issue-based') {
+    const hash = location.hash.replace('#', '');
+    if (hash === 'quick-ease') {
+      setSelectedCategory('quick-ease');
+    } else if (hash === 'resilience-building') {
+      setSelectedCategory('resilience-building');
+    } else if (hash === 'super-human') {
+      setSelectedCategory('super-human');
+    } else if (hash === 'issue-based') {
       setSelectedCategory('issue-based');
-      // Scroll to the programs section after a small delay
+    }
+    
+    // Scroll to the programs section after a small delay
+    if (hash) {
       setTimeout(() => {
         const programsSection = document.getElementById('programs-section');
         if (programsSection) {
@@ -36,7 +46,7 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     }
   }, [location.hash, setSelectedCategory]);
 
-  // Define all possible category options with explicit typing including issue-based
+  // Define all possible category options with explicit typing
   const allCategoryOptions: { value: ProgramCategory | 'all' | 'favorites', label: string }[] = [
     { value: 'all', label: 'All Programs' },
     { value: 'quick-ease', label: 'QuickEase' },
