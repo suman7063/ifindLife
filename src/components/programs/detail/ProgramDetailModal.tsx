@@ -41,10 +41,19 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
 
   const {
     isBookingDialogOpen,
+    bookingData,
+    isSubmitting,
     openBookingDialog,
     closeBookingDialog,
+    updateBookingData,
+    submitBooking,
     handleBookingComplete
   } = useProgramBooking();
+
+  const handleSubmitBooking = async () => {
+    if (!programData) return false;
+    return await submitBooking(programData.id);
+  };
 
   if (loading) {
     return (
@@ -116,12 +125,15 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Booking Dialog */}
+      {/* Enhanced Booking Dialog */}
       <ProgramBookingDialog
         isOpen={isBookingDialogOpen}
         onClose={closeBookingDialog}
         programData={programData}
-        onBookingComplete={handleBookingComplete}
+        bookingData={bookingData}
+        onBookingDataUpdate={updateBookingData}
+        onSubmitBooking={handleSubmitBooking}
+        isSubmitting={isSubmitting}
       />
     </>
   );

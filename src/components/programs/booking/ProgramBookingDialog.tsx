@@ -1,158 +1,132 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, User } from 'lucide-react';
+import { Calendar, X } from 'lucide-react';
 import { ProgramDetail } from '@/types/programDetail';
-import { useToast } from '@/hooks/use-toast';
+import BookingCalendar from './BookingCalendar';
+import TimeSlotSelector from './TimeSlotSelector';
+import BookingNotes from './BookingNotes';
+import { BookingFormData } from './useProgramBooking';
 
 interface ProgramBookingDialogProps {
   isOpen: boolean;
   onClose: () => void;
   programData: ProgramDetail;
-  onBookingComplete: () => void;
+  bookingData: BookingFormData;
+  onBookingDataUpdate: (updates: Partial<BookingFormData>) => void;
+  onSubmitBooking: () => Promise<boolean>;
+  isSubmitting: boolean;
 }
 
 const ProgramBookingDialog: React.FC<ProgramBookingDialogProps> = ({
   isOpen,
   onClose,
   programData,
-  onBookingComplete
+  bookingData,
+  onBookingDataUpdate,
+  onSubmitBooking,
+  isSubmitting
 }) => {
-  const { toast } = useToast();
-  const [selectedDate, setSelectedDate] = useState<string>('');
-  const [selectedTime, setSelectedTime] = useState<string>('');
-  const [isBooking, setIsBooking] = useState(false);
-
-  const availableDates = [
-    '2024-12-01',
-    '2024-12-02',
-    '2024-12-03',
-    '2024-12-04',
-    '2024-12-05'
-  ];
-
-  const availableTimes = [
-    '09:00',
-    '10:00',
-    '11:00',
-    '14:00',
-    '15:00',
-    '16:00'
-  ];
-
-  const handleBooking = async () => {
-    if (!selectedDate || !selectedTime) {
-      toast({
-        title: "Missing Information",
-        description: "Please select both date and time for your session.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsBooking(true);
-    try {
-      // TODO: Implement actual booking API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      toast({
-        title: "Booking Confirmed",
-        description: `Your session is booked for ${selectedDate} at ${selectedTime}`,
-      });
-      
-      onBookingComplete();
+  const handleSubmit = async () => {
+    const success = await onSubmitBooking();
+    if (success) {
       onClose();
-    } catch (error) {
-      toast({
-        title: "Booking Failed",
-        description: "Failed to book your session. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsBooking(false);
     }
   };
 
+  const isFormValid = bookingData.selectedDate && bookingData.selectedTime;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Book Session - {programData.title}
-          </DialogTitle>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-0">
+        <DialogHeader className="p-6 pb-4 border-b">
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-ifind-teal" />
+              Book Individual Session
+            </DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <p className="text-sm text-gray-600 mt-2">{programData.title}</p>
         </DialogHeader>
         
-        <div className="space-y-6">
-          {/* Program Summary */}
-          <div className="bg-gray-50 p-4 rounded-lg">
+        <div className="p-6 space-y-6 overflow-y-auto">
+          {/* Expert Info */}
+          <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center gap-3">
               <img 
                 src={programData.expert.photo} 
                 alt={programData.expert.name}
-                className="w-10 h-10 rounded-full object-cover"
+                className="w-12 h-12 rounded-full object-cover"
               />
               <div>
                 <p className="font-medium">{programData.expert.name}</p>
                 <p className="text-sm text-gray-600">{programData.expert.experience} experience</p>
+                <p className="text-sm text-gray-500">
+                  Session Duration: {programData.courseStructure.sessionDuration}
+                </p>
               </div>
             </div>
-            <p className="text-sm text-gray-700 mt-2">
-              Session Duration: {programData.courseStructure.sessionDuration}
-            </p>
           </div>
 
           {/* Date Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Select Date</label>
-            <div className="grid grid-cols-3 gap-2">
-              {availableDates.map((date) => (
-                <Button
-                  key={date}
-                  variant={selectedDate === date ? "default" : "outline"}
-                  className="text-sm"
-                  onClick={() => setSelectedDate(date)}
-                >
-                  {new Date(date).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric' 
-                  })}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <BookingCalendar
+            selectedDate={bookingData.selectedDate}
+            onDateSelect={(date) => onBookingDataUpdate({ selectedDate: date })}
+          />
 
           {/* Time Selection */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Select Time</label>
-            <div className="grid grid-cols-3 gap-2">
-              {availableTimes.map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "default" : "outline"}
-                  className="text-sm"
-                  onClick={() => setSelectedTime(time)}
-                >
-                  {time}
-                </Button>
-              ))}
-            </div>
-          </div>
+          <TimeSlotSelector
+            selectedTime={bookingData.selectedTime}
+            onTimeSelect={(time) => onBookingDataUpdate({ selectedTime: time })}
+            selectedDate={bookingData.selectedDate}
+          />
 
-          {/* Booking Actions */}
-          <div className="flex gap-3 pt-4">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleBooking} 
-              disabled={isBooking || !selectedDate || !selectedTime}
-              className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90"
-            >
-              {isBooking ? "Booking..." : "Confirm Booking"}
-            </Button>
+          {/* Notes */}
+          <BookingNotes
+            notes={bookingData.notes || ''}
+            onNotesChange={(notes) => onBookingDataUpdate({ notes })}
+          />
+
+          {/* Pricing Info */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex justify-between items-center">
+              <span className="font-medium">Session Price:</span>
+              <span className="text-lg font-bold text-green-700">
+                ₹{programData.pricing.individual.perSession}
+              </span>
+            </div>
+            <p className="text-sm text-green-600 mt-1">
+              One-time payment • No recurring charges
+            </p>
           </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="border-t p-6 flex gap-3">
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            className="flex-1"
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit}
+            disabled={!isFormValid || isSubmitting}
+            className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90"
+          >
+            {isSubmitting ? "Booking..." : "Confirm Booking"}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
