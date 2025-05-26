@@ -4,8 +4,11 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ProgramDetail } from '@/types/programDetail';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Heart, ShoppingCart, Calendar, X } from 'lucide-react';
 import ProgramDetailTabs from './ProgramDetailTabs';
 import ProgramDetailContent from './ProgramDetailContent';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface ProgramDetailModalProps {
   isOpen: boolean;
@@ -26,6 +29,105 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   loading = false,
   error = null
 }) => {
+  const { user, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const [isWishlisted, setIsWishlisted] = React.useState(false);
+  const [isEnrolling, setIsEnrolling] = React.useState(false);
+
+  const handleWishlistToggle = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to add programs to your wishlist.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // TODO: Implement wishlist API call
+      setIsWishlisted(!isWishlisted);
+      toast({
+        title: isWishlisted ? "Removed from Wishlist" : "Added to Wishlist",
+        description: isWishlisted 
+          ? "Program removed from your wishlist" 
+          : "Program added to your wishlist",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update wishlist. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleEnrollNow = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to enroll in programs.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!programData) return;
+
+    setIsEnrolling(true);
+    try {
+      // TODO: Implement enrollment API call
+      toast({
+        title: "Enrollment Initiated",
+        description: "Redirecting to payment...",
+      });
+      
+      // Simulate enrollment process
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // TODO: Redirect to payment or show payment modal
+      console.log('Enrolling in program:', programData.id);
+    } catch (error) {
+      toast({
+        title: "Enrollment Failed",
+        description: "Failed to start enrollment. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEnrolling(false);
+    }
+  };
+
+  const handleBookConsultation = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication Required",
+        description: "Please log in to book consultations.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!programData) return;
+
+    try {
+      // TODO: Implement booking API call
+      toast({
+        title: "Consultation Booking",
+        description: "Opening booking calendar...",
+      });
+      
+      // TODO: Open booking modal or redirect to booking page
+      console.log('Booking consultation for program:', programData.id);
+    } catch (error) {
+      toast({
+        title: "Booking Failed",
+        description: "Failed to open booking. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -84,7 +186,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
               onClick={onClose}
               className="h-8 w-8 flex-shrink-0"
             >
-              <span className="h-4 w-4">×</span>
+              <X className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -106,15 +208,62 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
           </ScrollArea>
         </div>
 
-        {/* Footer CTAs - Fixed */}
+        {/* Enhanced Footer CTAs - Fixed */}
         <div className="border-t p-6 pt-4 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90">
-              Book Now (₹{programData.pricing.individual.perSession})
-            </Button>
-            <Button variant="outline" className="flex-1">
-              Add to Wishlist
-            </Button>
+          <div className="flex flex-col gap-4">
+            {/* Primary Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90 flex items-center gap-2"
+                onClick={handleEnrollNow}
+                disabled={isEnrolling}
+              >
+                <ShoppingCart className="h-4 w-4" />
+                {isEnrolling ? "Enrolling..." : `Enroll Now (₹${programData.pricing.individual.perSession})`}
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1 flex items-center gap-2"
+                onClick={handleBookConsultation}
+              >
+                <Calendar className="h-4 w-4" />
+                Book Consultation
+              </Button>
+            </div>
+            
+            {/* Secondary Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button 
+                variant="outline" 
+                className="flex-1 flex items-center gap-2"
+                onClick={handleWishlistToggle}
+              >
+                <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+                {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+              </Button>
+              <Button variant="ghost" className="flex-1">
+                Share Program
+              </Button>
+            </div>
+
+            {/* Package Deal Notice */}
+            {programData.pricing.individual.discount && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <p className="text-sm text-green-700 text-center">
+                  💰 Save {programData.pricing.individual.discount.percentage}% with full program booking - 
+                  {programData.pricing.individual.discount.conditions}
+                </p>
+              </div>
+            )}
+
+            {/* Authentication Notice */}
+            {!isAuthenticated && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <p className="text-sm text-blue-700 text-center">
+                  📝 Please log in to enroll in programs and access exclusive features
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
