@@ -49,7 +49,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-0 gap-0" hideCloseButton>
+        <DialogContent className="sm:max-w-[1200px] max-h-[95vh] p-0 gap-0" hideCloseButton>
           <div className="flex items-center justify-center h-96">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ifind-teal"></div>
           </div>
@@ -79,7 +79,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col" hideCloseButton>
+        <DialogContent className="sm:max-w-[1200px] h-[95vh] p-0 gap-0 flex flex-col" hideCloseButton>
           {/* Header */}
           <ProgramModalHeader 
             programData={programData} 
