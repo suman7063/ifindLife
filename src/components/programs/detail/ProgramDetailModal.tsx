@@ -2,7 +2,6 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ProgramDetail } from '@/types/programDetail';
-import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ProgramDetailTabs from './ProgramDetailTabs';
@@ -30,7 +29,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   if (loading) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-0 gap-0">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-0 gap-0" hideCloseButton>
           <div className="flex items-center justify-center h-96">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-ifind-teal"></div>
           </div>
@@ -42,7 +41,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   if (error) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[500px] p-6">
+        <DialogContent className="sm:max-w-[500px] p-6" hideCloseButton>
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-2">Error Loading Program</h3>
             <p className="text-gray-600 mb-4">{error}</p>
@@ -59,7 +58,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col">
+      <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col" hideCloseButton>
         {/* Header - Fixed */}
         <div className="border-b p-6 pb-4 flex-shrink-0">
           <div className="flex items-start justify-between">
@@ -85,7 +84,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
               onClick={onClose}
               className="h-8 w-8 flex-shrink-0"
             >
-              <X className="h-4 w-4" />
+              <span className="h-4 w-4">×</span>
             </Button>
           </div>
         </div>
@@ -111,13 +110,10 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         <div className="border-t p-6 pt-4 flex-shrink-0">
           <div className="flex flex-col sm:flex-row gap-3">
             <Button className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90">
-              Book Session (₹{programData.pricing.individual.perSession})
+              Book Now (₹{programData.pricing.individual.perSession})
             </Button>
             <Button variant="outline" className="flex-1">
-              Contact Expert
-            </Button>
-            <Button variant="ghost" className="flex-1">
-              Save for Later
+              Add to Wishlist
             </Button>
           </div>
         </div>
