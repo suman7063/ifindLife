@@ -2,13 +2,14 @@
 import React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ProgramDetail } from '@/types/programDetail';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Heart, ShoppingCart, X, Share } from 'lucide-react';
 import ProgramDetailTabs from './ProgramDetailTabs';
 import ProgramDetailContent from './ProgramDetailContent';
-import { useUserAuth } from '@/contexts/auth/hooks/useUserAuth';
-import { useToast } from '@/hooks/use-toast';
+import ProgramModalHeader from './modal/ProgramModalHeader';
+import ProgramModalFooter from './modal/ProgramModalFooter';
+import ProgramBookingDialog from '../booking/ProgramBookingDialog';
+import { useProgramModalActions } from './modal/useProgramModalActions';
+import { useProgramBooking } from '../booking/useProgramBooking';
 
 interface ProgramDetailModalProps {
   isOpen: boolean;
@@ -29,101 +30,20 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   loading = false,
   error = null
 }) => {
-  const { currentUser, isAuthenticated } = useUserAuth();
-  const { toast } = useToast();
-  const [isWishlisted, setIsWishlisted] = React.useState(false);
-  const [isEnrolling, setIsEnrolling] = React.useState(false);
+  const {
+    isWishlisted,
+    isEnrolling,
+    handleWishlistToggle,
+    handleEnrollNow,
+    isAuthenticated
+  } = useProgramModalActions(programData);
 
-  const handleWishlistToggle = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to add programs to your wishlist.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      // TODO: Implement wishlist API call
-      setIsWishlisted(!isWishlisted);
-      toast({
-        title: isWishlisted ? "Removed from Wishlist" : "Added to Wishlist",
-        description: isWishlisted 
-          ? "Program removed from your wishlist" 
-          : "Program added to your wishlist",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update wishlist. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleEnrollNow = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to enroll in programs.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!programData) return;
-
-    setIsEnrolling(true);
-    try {
-      // TODO: Implement enrollment API call
-      toast({
-        title: "Enrollment Initiated",
-        description: "Redirecting to payment...",
-      });
-      
-      // Simulate enrollment process
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // TODO: Redirect to payment or show payment modal
-      console.log('Enrolling in program:', programData.id);
-    } catch (error) {
-      toast({
-        title: "Enrollment Failed",
-        description: "Failed to start enrollment. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsEnrolling(false);
-    }
-  };
-
-  const handleShareProgram = async () => {
-    if (!programData) return;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: programData.title,
-          text: programData.description,
-          url: window.location.href,
-        });
-      } else {
-        // Fallback to copying URL to clipboard
-        await navigator.clipboard.writeText(window.location.href);
-        toast({
-          title: "Link Copied",
-          description: "Program link copied to clipboard",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Share Failed",
-        description: "Failed to share program. Please try again.",
-        variant: "destructive"
-      });
-    }
-  };
+  const {
+    isBookingDialogOpen,
+    openBookingDialog,
+    closeBookingDialog,
+    handleBookingComplete
+  } = useProgramBooking();
 
   if (loading) {
     return (
@@ -156,112 +76,53 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col" hideCloseButton>
-        {/* Header - Fixed */}
-        <div className="border-b p-6 pb-4 flex-shrink-0">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl font-bold text-gray-900">{programData.title}</h2>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={handleShareProgram}
-                    className="h-8 w-8"
-                  >
-                    <Share className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={onClose}
-                    className="h-8 w-8"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <img 
-                    src={programData.expert.photo} 
-                    alt={programData.expert.name}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                  <div>
-                    <p className="font-medium text-sm">{programData.expert.name}</p>
-                    <p className="text-xs text-gray-500">{programData.expert.experience} experience</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[900px] h-[90vh] p-0 gap-0 flex flex-col" hideCloseButton>
+          {/* Header */}
+          <ProgramModalHeader 
+            programData={programData} 
+            onClose={onClose} 
+          />
+
+          {/* Tabs */}
+          <div className="flex-shrink-0">
+            <ProgramDetailTabs activeTab={activeTab} onTabChange={onTabChange} />
           </div>
-        </div>
 
-        {/* Tabs - Fixed */}
-        <div className="flex-shrink-0">
-          <ProgramDetailTabs activeTab={activeTab} onTabChange={onTabChange} />
-        </div>
-
-        {/* Content - Scrollable */}
-        <div className="flex-1 overflow-hidden">
-          <ScrollArea className="h-full w-full">
-            <div className="h-full">
-              <ProgramDetailContent 
-                programData={programData} 
-                activeTab={activeTab} 
-              />
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* Simplified Footer CTAs - Fixed */}
-        <div className="border-t p-6 pt-4 flex-shrink-0">
-          <div className="flex flex-col gap-4">
-            {/* Primary Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90 flex items-center gap-2"
-                onClick={handleEnrollNow}
-                disabled={isEnrolling}
-              >
-                <ShoppingCart className="h-4 w-4" />
-                {isEnrolling ? "Enrolling..." : `Enroll Now (₹${programData.pricing.individual.perSession})`}
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1 flex items-center gap-2"
-                onClick={handleWishlistToggle}
-              >
-                <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
-                {isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-              </Button>
-            </div>
-
-            {/* Package Deal Notice */}
-            {programData.pricing.individual.discount && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <p className="text-sm text-green-700 text-center">
-                  💰 Save {programData.pricing.individual.discount.percentage}% with full program booking - 
-                  {programData.pricing.individual.discount.conditions}
-                </p>
+          {/* Content */}
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full w-full">
+              <div className="h-full">
+                <ProgramDetailContent 
+                  programData={programData} 
+                  activeTab={activeTab} 
+                />
               </div>
-            )}
-
-            {/* Authentication Notice */}
-            {!isAuthenticated && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-700 text-center">
-                  📝 Please log in to enroll in programs and access exclusive features
-                </p>
-              </div>
-            )}
+            </ScrollArea>
           </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+
+          {/* Footer */}
+          <ProgramModalFooter
+            programData={programData}
+            isAuthenticated={isAuthenticated}
+            isWishlisted={isWishlisted}
+            isEnrolling={isEnrolling}
+            onEnrollNow={handleEnrollNow}
+            onWishlistToggle={handleWishlistToggle}
+            onBookSession={openBookingDialog}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Booking Dialog */}
+      <ProgramBookingDialog
+        isOpen={isBookingDialogOpen}
+        onClose={closeBookingDialog}
+        programData={programData}
+        onBookingComplete={handleBookingComplete}
+      />
+    </>
   );
 };
 
