@@ -1,8 +1,6 @@
 
 import React from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface BookingCalendarProps {
   selectedDate: string;
@@ -50,28 +48,38 @@ const BookingCalendar: React.FC<BookingCalendarProps> = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h3 className="text-sm font-medium mb-2">Select Date</h3>
-        <div className="border rounded-lg p-3">
-          <Calendar
-            mode="single"
-            selected={selectedDateObj}
-            onSelect={handleDateSelect}
-            disabled={(date) => !isDateAvailable(date) || date < minDate || (maxDate && date > maxDate)}
-            initialFocus
-            className="w-full"
-          />
-        </div>
-      </div>
+    <div className="w-full">
+      <Calendar
+        mode="single"
+        selected={selectedDateObj}
+        onSelect={handleDateSelect}
+        disabled={(date) => !isDateAvailable(date) || date < minDate || (maxDate && date > maxDate)}
+        initialFocus
+        className="w-full"
+        classNames={{
+          months: "flex flex-col sm:flex-row space-y-2 sm:space-x-2 sm:space-y-0",
+          month: "space-y-2",
+          caption: "flex justify-center pt-1 relative items-center",
+          caption_label: "text-sm font-medium",
+          table: "w-full border-collapse space-y-1",
+          head_row: "flex",
+          head_cell: "text-muted-foreground rounded-md w-7 font-normal text-xs",
+          row: "flex w-full mt-1",
+          cell: "relative p-0 text-center text-xs focus-within:relative focus-within:z-20 [&:has([aria-selected])]:bg-accent",
+          day: "h-7 w-7 p-0 font-normal aria-selected:opacity-100 hover:bg-accent hover:text-accent-foreground",
+          day_selected: "bg-ifind-teal text-white hover:bg-ifind-teal hover:text-white focus:bg-ifind-teal focus:text-white",
+          day_today: "bg-accent text-accent-foreground",
+          day_outside: "text-muted-foreground opacity-50",
+          day_disabled: "text-muted-foreground opacity-50",
+        }}
+      />
       
       {selectedDate && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-          <p className="text-sm text-green-700">
+        <div className="bg-green-50 border border-green-200 rounded p-2 mt-2">
+          <p className="text-xs text-green-700">
             Selected: {new Date(selectedDate).toLocaleDateString('en-US', { 
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
+              weekday: 'short',
+              month: 'short',
               day: 'numeric'
             })}
           </p>

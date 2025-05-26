@@ -40,23 +40,24 @@ const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
     return (
       <div className="space-y-2">
         <h3 className="text-sm font-medium">Select Time</h3>
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
-          <Clock className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Please select a date first</p>
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+          <Clock className="h-6 w-6 text-gray-400 mx-auto mb-1" />
+          <p className="text-xs text-gray-500">Please select a date first</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <h3 className="text-sm font-medium">Select Time</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
         {timeSlots.map((slot) => (
           <Button
             key={slot.time}
             variant={selectedTime === slot.time ? "default" : "outline"}
-            className={`text-sm ${
+            size="sm"
+            className={`text-xs h-8 ${
               !slot.available 
                 ? 'opacity-50 cursor-not-allowed' 
                 : selectedTime === slot.time 
@@ -72,9 +73,9 @@ const TimeSlotSelector: React.FC<TimeSlotSelectorProps> = ({
       </div>
       
       {selectedTime && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-700">
-            Selected time: {timeSlots.find(slot => slot.time === selectedTime)?.label || selectedTime}
+        <div className="bg-blue-50 border border-blue-200 rounded p-2">
+          <p className="text-xs text-blue-700">
+            Selected: {timeSlots.find(slot => slot.time === selectedTime)?.label || selectedTime}
           </p>
         </div>
       )}
