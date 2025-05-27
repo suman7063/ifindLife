@@ -40,5 +40,17 @@ export function adaptToSupabaseUserProfile(profile: UnifiedUserProfile | null): 
 export function ensureUserProfileCompatibility(profile: any): SupabaseUserProfile | null {
   if (!profile) return null;
   
-  return adaptToSupabaseUserProfile(profile);
+  // Ensure all required arrays are present
+  const compatibleProfile = {
+    ...profile,
+    reviews: profile.reviews || [],
+    reports: profile.reports || [],
+    transactions: profile.transactions || [],
+    referrals: profile.referrals || [],
+    enrolled_courses: profile.enrolled_courses || [],
+    favorite_experts: profile.favorite_experts || [],
+    favorite_programs: profile.favorite_programs || []
+  };
+  
+  return adaptToSupabaseUserProfile(compatibleProfile);
 }

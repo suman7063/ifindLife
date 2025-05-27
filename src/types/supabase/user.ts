@@ -69,10 +69,10 @@ export interface UserProfile {
   favorite_experts: string[] | number[];  // Updated to match unified type
   favorite_programs: string[] | number[]; // Updated to match unified type
   enrolled_courses: Course[];
-  reviews: Review[];
-  reports: Report[];
-  transactions: UserTransaction[];
-  referrals: Referral[];
+  reviews: Review[]; // Made required to match expectations
+  reports: Report[]; // Made required to match expectations
+  transactions: UserTransaction[]; // Made required to match expectations
+  referrals: Referral[]; // Made required to match expectations
   // Add these for improved type compatibility
   profilePicture?: string | null;
   walletBalance?: number;

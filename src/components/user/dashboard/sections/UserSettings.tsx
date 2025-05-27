@@ -1,17 +1,13 @@
 
 import React from 'react';
-import { UserProfile } from '@/types/supabase/user';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Settings, Bell, Shield, Lock } from 'lucide-react';
 import UserProfileManagement from '../UserProfileManagement';
 import PasswordChangeForm from '../security/PasswordChangeForm';
 
-interface UserSettingsProps {
-  user: UserProfile | null;
-}
-
-const UserSettings: React.FC<UserSettingsProps> = ({ user }) => {
+// Remove the user prop since UserProfileManagement now gets data from auth context
+const UserSettings: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
@@ -29,7 +25,7 @@ const UserSettings: React.FC<UserSettingsProps> = ({ user }) => {
         </TabsList>
         
         <TabsContent value="personal">
-          <UserProfileManagement user={user} />
+          <UserProfileManagement />
         </TabsContent>
         
         <TabsContent value="security">

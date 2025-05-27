@@ -5,6 +5,7 @@ import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 import ProfilePictureCard from './profile/ProfilePictureCard';
 import PersonalInfoForm from './profile/PersonalInfoForm';
 
+// Remove the user prop and get data directly from auth context
 const UserProfileManagement: React.FC = () => {
   const { userProfile } = useAuth();
   const user = ensureUserProfileCompatibility(userProfile);

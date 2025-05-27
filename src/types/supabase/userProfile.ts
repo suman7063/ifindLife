@@ -17,10 +17,10 @@ export interface UserProfile {
   favorite_experts: string[];
   favorite_programs: number[] | string[];
   enrolled_courses: any[];
-  reviews?: any[];
-  reports?: any[];
-  transactions?: any[];
-  referrals?: any[];
+  reviews: any[]; // Made required to match expectations
+  reports: any[]; // Made required to match expectations
+  transactions: any[]; // Made required to match expectations
+  referrals: any[]; // Made required to match expectations
   
   // Camel case aliases for backward compatibility
   profilePicture?: string;

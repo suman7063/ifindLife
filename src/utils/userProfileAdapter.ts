@@ -3,7 +3,7 @@ import { UserProfile } from '@/types/database/unified';
 import { UserTransaction } from '@/types/supabase/tables';
 
 /**
- * Adapts database user data to UserProfile type
+ * Adapts database user data to UserProfile type with all required properties
  * Handles both users and profiles tables
  */
 export function adaptUserProfile(data: any): UserProfile {
@@ -23,7 +23,7 @@ export function adaptUserProfile(data: any): UserProfile {
     referral_link: data.referral_link || '',
     referred_by: data.referred_by,
     
-    // Initialize arrays to prevent null errors
+    // Initialize arrays to prevent null errors - ensure all required properties
     transactions: data.transactions || [],
     reviews: data.reviews || [],
     reports: data.reports || [],

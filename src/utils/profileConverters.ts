@@ -2,7 +2,7 @@
 import { AuthContextType } from '@/contexts/auth/AuthContext';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
-// Convert user data from database to UserProfile
+// Convert user data from database to UserProfile with all required properties
 export function convertUserToUserProfile(userData: any): UserProfile | null {
   if (!userData) return null;
   
@@ -20,7 +20,7 @@ export function convertUserToUserProfile(userData: any): UserProfile | null {
     referred_by: userData.referred_by,
     referral_code: userData.referral_code,
     referral_link: userData.referral_link,
-    // Include the properties that were added to the UserProfile interface
+    // Ensure all required properties are present with default values
     favorite_experts: userData.favorite_experts || [],
     favorite_programs: userData.favorite_programs || [],
     enrolled_courses: userData.enrolled_courses || [],
