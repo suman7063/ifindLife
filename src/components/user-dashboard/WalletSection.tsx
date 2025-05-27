@@ -1,21 +1,31 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 
-interface WalletSectionProps {
-  user?: any;
-}
+const WalletSection: React.FC = () => {
+  const { userProfile } = useAuth();
+  const currentUser = ensureUserProfileCompatibility(userProfile);
 
-const WalletSection: React.FC<WalletSectionProps> = ({ user }) => {
+  const walletBalance = currentUser?.walletBalance || currentUser?.wallet_balance || 0;
+  const currency = currentUser?.currency || 'USD';
+
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Your Wallet</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          Your current balance: $0.00
+        <p className="text-lg font-semibold mb-2">
+          Current balance: {currency === 'USD' ? '$' : '₹'}{walletBalance.toFixed(2)}
         </p>
-        {/* Wallet transactions and balance would go here */}
+        <p className="text-sm text-muted-foreground">
+          {currentUser?.transactions && currentUser.transactions.length > 0 
+            ? `${currentUser.transactions.length} recent transactions`
+            : 'No recent transactions'
+          }
+        </p>
       </CardContent>
     </Card>
   );

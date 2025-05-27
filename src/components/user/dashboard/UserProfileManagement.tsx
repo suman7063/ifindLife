@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import { UserProfile } from '@/types/supabase/user';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 import ProfilePictureCard from './profile/ProfilePictureCard';
 import PersonalInfoForm from './profile/PersonalInfoForm';
 
-interface UserProfileManagementProps {
-  user: UserProfile | null;
-}
-
-const UserProfileManagement: React.FC<UserProfileManagementProps> = ({ user }) => {
+const UserProfileManagement: React.FC = () => {
+  const { userProfile } = useAuth();
+  const user = ensureUserProfileCompatibility(userProfile);
+  
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',

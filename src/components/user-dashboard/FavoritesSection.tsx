@@ -1,21 +1,31 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 
-interface FavoritesSectionProps {
-  user?: any;
-}
+const FavoritesSection: React.FC = () => {
+  const { userProfile } = useAuth();
+  const currentUser = ensureUserProfileCompatibility(userProfile);
 
-const FavoritesSection: React.FC<FavoritesSectionProps> = ({ user }) => {
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Your Favorites</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          You haven't added any experts to your favorites yet.
-        </p>
+        {currentUser?.favoriteExperts && currentUser.favoriteExperts.length > 0 ? (
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">
+              You have {currentUser.favoriteExperts.length} favorite experts
+            </p>
+            {/* Favorite experts list would go here */}
+          </div>
+        ) : (
+          <p className="text-muted-foreground">
+            You haven't added any experts to your favorites yet.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

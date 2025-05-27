@@ -1,22 +1,31 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 
-interface ConsultationsSectionProps {
-  user?: any;
-}
+const ConsultationsSection: React.FC = () => {
+  const { userProfile } = useAuth();
+  const currentUser = ensureUserProfileCompatibility(userProfile);
 
-const ConsultationsSection: React.FC<ConsultationsSectionProps> = ({ user }) => {
   return (
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Your Consultations</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground">
-          You don't have any upcoming consultations.
-        </p>
-        {/* Consultation listings would go here */}
+        {currentUser?.enrolled_courses && currentUser.enrolled_courses.length > 0 ? (
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">
+              You have {currentUser.enrolled_courses.length} enrolled courses
+            </p>
+            {/* Consultation listings would go here */}
+          </div>
+        ) : (
+          <p className="text-muted-foreground">
+            You don't have any upcoming consultations.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

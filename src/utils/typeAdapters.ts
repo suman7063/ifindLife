@@ -22,7 +22,15 @@ export function adaptToSupabaseUserProfile(profile: UnifiedUserProfile | null): 
     reports: profile.reports || [],
     transactions: profile.transactions || [],
     referrals: profile.referrals || [],
-    enrolled_courses: profile.enrolled_courses || []
+    enrolled_courses: profile.enrolled_courses || [],
+    
+    // Add camelCase aliases with proper type conversion
+    favoriteExperts: Array.isArray(profile.favorite_experts) 
+      ? profile.favorite_experts.map(expert => String(expert))
+      : [],
+    profilePicture: profile.profile_picture || '',
+    walletBalance: profile.wallet_balance || 0,
+    referralCode: profile.referral_code || ''
   };
 }
 

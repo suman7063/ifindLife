@@ -1,13 +1,15 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/database/unified'; // Use the unified type
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { UserProfile } from '@/types/database/unified';
 
-export const useProfileActions = (userId: string | undefined) => {
+export const useProfileActions = () => {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const updateUserProfile = async (updates: Partial<UserProfile>): Promise<boolean> => {
-    if (!userId) return false;
+    if (!user?.id) return false;
     
     setLoading(true);
     try {
@@ -15,7 +17,7 @@ export const useProfileActions = (userId: string | undefined) => {
       const { data: userData } = await supabase
         .from('users')
         .select('id')
-        .eq('id', userId)
+        .eq('id', user.id)
         .single();
 
       const table = userData ? 'users' : 'profiles';
@@ -24,7 +26,7 @@ export const useProfileActions = (userId: string | undefined) => {
       const { error } = await supabase
         .from(table)
         .update(updates)
-        .eq('id', userId);
+        .eq('id', user.id);
         
       if (error) throw error;
       
