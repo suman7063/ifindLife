@@ -9,6 +9,7 @@ import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -27,11 +28,11 @@ const Navbar = () => {
     isLoading
   } = useAuth();
 
-  // Derive authentication states
+  // Derive authentication states with proper type conversion
   const isUserAuthenticated = Boolean(isAuthenticated && role === 'user' && userProfile);
   const isExpertAuthenticated = Boolean(isAuthenticated && role === 'expert' && expertProfile);
   const hasDualSessions = Boolean(userProfile && expertProfile && isAuthenticated);
-  const currentUser = userProfile;
+  const currentUser = ensureUserProfileCompatibility(userProfile);
 
   // Set up session timeout (4 hours = 4 * 60 * 60 * 1000 ms)
   const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
