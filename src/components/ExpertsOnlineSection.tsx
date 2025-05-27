@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { useAuth } from '@/contexts/auth/AuthContext';
 
 interface Expert {
   id: string;
@@ -19,7 +19,7 @@ interface Expert {
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuthSynchronization();
+  const { isAuthenticated } = useAuth();
 
   // Sample experts data with IDs that match existing expert pages
   const experts: Expert[] = [{

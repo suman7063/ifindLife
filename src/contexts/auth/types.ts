@@ -28,7 +28,7 @@ export interface AuthState {
   walletBalance: number;
   profile: any | null; // For backward compatibility
   sessionType: SessionType;
-  hasUserAccount: boolean; // Added the missing property
+  hasUserAccount: boolean;
 }
 
 // Add the initialAuthState that was missing
@@ -44,7 +44,7 @@ export const initialAuthState: AuthState = {
   walletBalance: 0,
   profile: null,
   sessionType: 'none',
-  hasUserAccount: false // Initialize with default value
+  hasUserAccount: false
 };
 
 export interface AuthContextType extends AuthState {

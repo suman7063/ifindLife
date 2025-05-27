@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { toast } from 'sonner';
-import { useAuthSynchronization } from '@/hooks/useAuthSynchronization';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -16,19 +16,22 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Always call hooks in the same order
+  // Use direct auth context
   const { 
     isAuthenticated, 
-    isExpertAuthenticated,
-    isUserAuthenticated,
-    currentUser, 
-    currentExpert,
-    userLogout,
-    expertLogout,
-    fullLogout,
-    hasDualSessions,
-    sessionType
-  } = useAuthSynchronization();
+    userProfile,
+    expertProfile,
+    role,
+    logout,
+    sessionType,
+    isLoading
+  } = useAuth();
+
+  // Derive authentication states
+  const isUserAuthenticated = Boolean(isAuthenticated && role === 'user' && userProfile);
+  const isExpertAuthenticated = Boolean(isAuthenticated && role === 'expert' && expertProfile);
+  const hasDualSessions = Boolean(userProfile && expertProfile && isAuthenticated);
+  const currentUser = userProfile;
 
   // Set up session timeout (4 hours = 4 * 60 * 60 * 1000 ms)
   const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
@@ -41,7 +44,7 @@ const Navbar = () => {
   // Use session timeout hook only if user is authenticated
   useSessionTimeout(
     SESSION_TIMEOUT, 
-    isAuthenticated || isExpertAuthenticated ? handleSessionTimeout : () => {}
+    isAuthenticated ? handleSessionTimeout : () => {}
   );
 
   // Scroll effect
@@ -59,15 +62,6 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
-  // Ensure sessionType is one of the allowed values
-  const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
-    if (type === 'user' || type === 'expert' || type === 'none' || type === 'dual') {
-      return type;
-    }
-    console.warn(`Invalid session type detected: ${type}. Defaulting to 'none'`);
-    return 'none';
-  };
-
   // Handle user logout with 2-second toast
   const handleUserLogout = async (): Promise<boolean> => {
     if (isLoggingOut) return false;
@@ -75,26 +69,26 @@ const Navbar = () => {
     try {
       setIsLoggingOut(true);
       console.log("Navbar: Initiating user logout...");
-      const success = await userLogout();
+      const success = await logout();
       
       if (success) {
         console.log("Navbar: User logout successful");
         toast.success('Successfully logged out', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         navigate('/logout', { state: { userType: 'user' } });
         return true;
       } else {
         console.error("Navbar: User logout failed");
         toast.error('Logout failed. Please try again.', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
     } catch (error) {
       console.error('Error during user logout:', error);
       toast.error('Failed to log out. Please try again.', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       return false;
     } finally {
@@ -109,26 +103,26 @@ const Navbar = () => {
     try {
       setIsLoggingOut(true);
       console.log("Navbar: Initiating expert logout...");
-      const success = await expertLogout();
+      const success = await logout();
       
       if (success) {
         console.log("Navbar: Expert logout completed");
         toast.success('Successfully logged out as expert', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         navigate('/logout', { state: { userType: 'expert' } });
         return true;
       } else {
         console.error("Navbar: Expert logout failed");
         toast.error('Failed to log out as expert. Please try again.', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
     } catch (error) {
       console.error('Error during expert logout:', error);
       toast.error('Failed to log out as expert. Please try again.', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       return false;
     } finally {
@@ -143,13 +137,13 @@ const Navbar = () => {
     try {
       setIsLoggingOut(true);
       console.log("Navbar: Initiating full logout...");
-      const success = await fullLogout();
+      const success = await logout();
       
       if (success) {
         toast.success('Successfully logged out of all accounts', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
-        const primaryType = typedSessionType === 'expert' ? 'expert' : 'user';
+        const primaryType = role === 'expert' ? 'expert' : 'user';
         navigate('/logout', { state: { userType: primaryType } });
       }
       
@@ -157,7 +151,7 @@ const Navbar = () => {
     } catch (error) {
       console.error('Error during full logout:', error);
       toast.error('Failed to log out. Please try again.', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       return false;
     } finally {
@@ -171,6 +165,14 @@ const Navbar = () => {
   };
 
   // Safely cast sessionType to the valid union type
+  const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
+    if (type === 'user' || type === 'expert' || type === 'none' || type === 'dual') {
+      return type;
+    }
+    console.warn(`Invalid session type detected: ${type}. Defaulting to 'none'`);
+    return 'none';
+  };
+
   const typedSessionType = getValidSessionType(sessionType);
 
   // Enhanced authentication state logging for debugging
@@ -180,12 +182,9 @@ const Navbar = () => {
     isExpertAuthenticated: Boolean(isExpertAuthenticated),
     sessionType: typedSessionType,
     currentUser: !!currentUser,
-    currentExpert: !!currentExpert,
+    expertProfile: !!expertProfile,
     hasDualSessions: Boolean(hasDualSessions),
-    authTypes: {
-      isAuthenticatedType: typeof isAuthenticated,
-      isExpertAuthenticatedType: typeof isExpertAuthenticated
-    }
+    role
   });
 
   return (
