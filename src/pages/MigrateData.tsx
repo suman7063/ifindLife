@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from "@/components/ui/progress";
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { runMigrations } from '@/utils/migrateToSupabase';
 
@@ -37,7 +37,7 @@ const MigrateData = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <main className="flex-1 container py-16 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardHeader>

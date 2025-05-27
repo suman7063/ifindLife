@@ -7,24 +7,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface LoginTabProps {
   onLogin: (email: string, password: string) => Promise<boolean>;
-  loading?: boolean;
+  loading: boolean;
   isLoggingIn: boolean;
-  loginError?: string | null;
-  socialLoading?: string | null;
-  authLoading?: boolean;
-  setSocialLoading?: (provider: string | null) => void;
-  onSwitchToRegister: () => void; // Added missing property
+  loginError: string | null;
+  socialLoading: string | null;
+  authLoading: boolean;
+  setSocialLoading: (provider: string | null) => void;
 }
 
 const LoginTab: React.FC<LoginTabProps> = ({
   onLogin,
-  loading = false,
+  loading,
   isLoggingIn,
-  loginError = null,
-  socialLoading = null,
-  authLoading = false,
-  setSocialLoading = () => {},
-  onSwitchToRegister
+  loginError,
+  socialLoading,
+  authLoading,
+  setSocialLoading
 }) => {
   return (
     <div className="space-y-4">

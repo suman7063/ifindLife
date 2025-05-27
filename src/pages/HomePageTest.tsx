@@ -1,6 +1,6 @@
 
 import React from 'react';
-import Navbar from '../components/Navbar';
+import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';

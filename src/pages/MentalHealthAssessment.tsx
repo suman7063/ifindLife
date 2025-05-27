@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AssessmentIntro from '@/components/assessment/AssessmentIntro';
 import AssessmentQuestions from '@/components/assessment/AssessmentQuestions';
@@ -96,7 +97,7 @@ const MentalHealthAssessment = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <main className="flex-1 bg-gray-50">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">

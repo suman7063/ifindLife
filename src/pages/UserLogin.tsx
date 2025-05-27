@@ -6,6 +6,8 @@ import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -20,14 +22,10 @@ const UserLogin: React.FC = () => {
         console.log('UserLogin: Checking for existing session...');
         const { data } = await supabase.auth.getSession();
         
-        if (data.session?.user) {
+        if (data.session) {
           console.log('UserLogin: Existing session found, redirecting to dashboard');
-          // Make sure the redirect actually happens
           navigate('/user-dashboard', { replace: true });
-          return;
         }
-        
-        console.log('UserLogin: No existing session found');
       } catch (error) {
         console.error('UserLogin: Error checking session:', error);
       } finally {
@@ -42,7 +40,7 @@ const UserLogin: React.FC = () => {
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password', {
-        duration: 2000
+        duration: 2000 // Fixed: 2 seconds duration
       });
       return false;
     }
@@ -59,9 +57,9 @@ const UserLogin: React.FC = () => {
         .maybeSingle();
         
       if (userError) {
-        console.error('UserLogin: Error checking user:', userError);
+        console.error('Error checking user:', userError);
         toast.error('An error occurred while checking user', {
-          duration: 2000
+          duration: 2000 // Fixed: 2 seconds duration
         });
         return false;
       }
@@ -73,16 +71,16 @@ const UserLogin: React.FC = () => {
       });
       
       if (error) {
-        console.error('UserLogin: Login error:', error);
+        console.error('Login error:', error);
         toast.error(error.message || 'Invalid email or password', {
-          duration: 2000
+          duration: 2000 // Fixed: 2 seconds duration
         });
         return false;
       }
       
       if (!data.user || !data.session) {
         toast.error('Login failed. Please try again.', {
-          duration: 2000
+          duration: 2000 // Fixed: 2 seconds duration
         });
         return false;
       }
@@ -91,18 +89,17 @@ const UserLogin: React.FC = () => {
       localStorage.setItem('sessionType', 'user');
       
       toast.success('Login successful!', {
-        duration: 2000
+        duration: 2000 // Fixed: 2 seconds duration
       });
       
-      console.log('UserLogin: Login successful, navigating to dashboard');
-      // Make sure the redirect actually happens
+      // Navigate to dashboard
       navigate('/user-dashboard', { replace: true });
       
       return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
       toast.error('An unexpected error occurred', {
-        duration: 2000
+        duration: 2000 // Fixed: 2 seconds duration
       });
       return false;
     } finally {
@@ -120,20 +117,24 @@ const UserLogin: React.FC = () => {
   }
   
   return (
-    <div className="py-12 bg-gray-50 min-h-screen flex items-center justify-center">
-      <Card className="max-w-md w-full shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome to iFindLife</CardTitle>
-          <p className="text-muted-foreground mt-2">
-            Log in or create an account to connect with experts
-          </p>
-        </CardHeader>
-        
-        <CardContent>
-          <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
-        </CardContent>
-      </Card>
-    </div>
+    <>
+      <Navbar />
+      <div className="py-12 bg-gray-50 min-h-screen flex items-center justify-center">
+        <Card className="max-w-md w-full shadow-lg">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Welcome to iFindLife</CardTitle>
+            <p className="text-muted-foreground mt-2">
+              Log in or create an account to connect with experts
+            </p>
+          </CardHeader>
+          
+          <CardContent>
+            <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
+          </CardContent>
+        </Card>
+      </div>
+      <Footer />
+    </>
   );
 };
 

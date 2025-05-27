@@ -1,12 +1,13 @@
+
 import React from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Separator } from '@/components/ui/separator';
 
 const PrivacyPolicy = () => {
   return (
     <>
-      <NewNavbar />
+      <Navbar />
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <h1 className="text-3xl font-bold mb-6">Privacy Policy</h1>
         <p className="text-gray-500 mb-8">Last updated: {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>

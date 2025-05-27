@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent } from '@/components/ui/card';
@@ -18,7 +19,7 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <main className="flex-1 py-16">
         <Container>
           <div className="max-w-6xl mx-auto">

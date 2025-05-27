@@ -1,6 +1,5 @@
-
 import React from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 
@@ -9,7 +8,7 @@ const UserEnrolledCourses: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <main className="flex-1 container py-12">
         <h1 className="text-3xl font-bold mb-6">Your Enrolled Courses</h1>
         

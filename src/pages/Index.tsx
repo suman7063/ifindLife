@@ -1,6 +1,6 @@
 
 import React from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
 import WhatWeDoSection from '@/components/WhatWeDoSection';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -36,7 +36,7 @@ const SectionLoadingFallback = () => (
 const Index = () => {
   return (
     <div className="min-h-screen flex flex-col home-page">
-      <NewNavbar />
+      <Navbar />
       <main className="flex-1">
         {/* Section 1: Hero Banner with enhanced slider and service cards */}
         <EnhancedHero />

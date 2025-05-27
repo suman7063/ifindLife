@@ -1,6 +1,5 @@
-
 import React, { useEffect } from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
 import { ProgramCategory } from '@/types/programs';
@@ -62,7 +61,7 @@ const ProgramsForWellnessSeekers: React.FC = () => {
 
   return (
     <>
-      <NewNavbar />
+      <Navbar />
       
       <WellnessProgramsHeader
         selectedCategory={selectedCategory}

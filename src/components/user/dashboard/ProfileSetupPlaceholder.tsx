@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { User } from '@supabase/supabase-js';
 import { Loader2 } from 'lucide-react';
@@ -20,7 +20,7 @@ const ProfileSetupPlaceholder: React.FC<ProfileSetupPlaceholderProps> = ({
 }) => {
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <main className="flex-1 py-10">
         <div className="container max-w-6xl">
           <div className="mb-8">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AboutHeroSection from '@/components/about/AboutHeroSection';
 import MissionSection from '@/components/about/MissionSection';
@@ -10,7 +10,7 @@ import ValuesSection from '@/components/about/ValuesSection';
 const AboutUs = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       
       <main className="flex-1">
         <AboutHeroSection 

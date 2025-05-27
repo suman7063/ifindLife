@@ -1,6 +1,6 @@
 
 import React from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 const UserRegister: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <main className="flex-1 py-16 container">
         <div className="max-w-md mx-auto">
           <Card className="border-ifind-lavender/20 shadow-xl">

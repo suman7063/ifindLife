@@ -1,7 +1,6 @@
-
 import React, { useEffect, useState } from 'react';
 import { Program } from '@/types/programs';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
@@ -55,7 +54,7 @@ const BusinessProgramsPage: React.FC = () => {
   
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <PageHeader 
         title="Programs for Businesses" 
         subtitle="Dedicated mental health and wellness solutions to support your organization and employees"

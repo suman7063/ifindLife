@@ -1,6 +1,6 @@
 
 import React from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/common/PageHeader';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import ExpertRegistrationForm from '@/components/expert/ExpertRegistrationForm';
 const ExpertRegister: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       <PageHeader 
         title="Expert Registration" 
         subtitle="Join our network of mental health professionals" 

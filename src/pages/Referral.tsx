@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Navigate } from 'react-router-dom';
@@ -9,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { fetchReferralSettings, fetchUserReferrals } from '@/utils/referralUtils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
-import Navbar from '../components/Navbar';
+import Navbar from '@/components/Navbar';
 
 const Referral: React.FC = () => {
   const { userProfile, isAuthenticated } = useAuth();

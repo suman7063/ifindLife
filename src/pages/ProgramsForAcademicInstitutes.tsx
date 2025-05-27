@@ -1,6 +1,7 @@
+
 import React from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Program } from '@/types/programs';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { addSamplePrograms } from '@/utils/sampleProgramsData';
 import { supabase } from '@/lib/supabase';
@@ -83,7 +83,7 @@ const ProgramsForBusiness: React.FC = () => {
   
   return (
     <>
-      <NewNavbar />
+      <Navbar />
       <PageHeader 
         title="Programs For Businesses" 
         subtitle="Dedicated mental health and wellness solutions to support your organization and employees"

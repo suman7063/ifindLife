@@ -1,5 +1,6 @@
+
 import React from 'react';
-import NewNavbar from '@/components/NewNavbar';
+import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -197,7 +198,7 @@ const IssueBasedSessions = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <NewNavbar />
+      <Navbar />
       
       <main className="flex-1">
         {/* Hero Section */}

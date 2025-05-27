@@ -2,65 +2,27 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
 
 /**
  * Hook to provide a unified interface for authentication across user and expert roles
  */
 export const useAuthSynchronization = () => {
   const auth = useAuth();
+  const [initialized, setInitialized] = useState(false);
   
   // Set up derived state with proper boolean defaults
-  const [authState, setAuthState] = useState({
-    user: null,
-    session: null,
-    loading: true,
-    isAuthenticated: false,
-    isUserAuthenticated: false,
-    isExpertAuthenticated: false,
-    currentUser: null,
-    currentExpert: null,
-    isAuthInitialized: false,
-    hasDualSessions: false,
-    sessionType: 'none' as 'none' | 'user' | 'expert' | 'dual'
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
+  const [isExpertAuthenticated, setIsExpertAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentExpert, setCurrentExpert] = useState<any>(null);
+  const [isAuthInitialized, setIsAuthInitialized] = useState(false);
+  const [hasDualSessions, setHasDualSessions] = useState(false);
+  const [sessionType, setSessionType] = useState<'none' | 'user' | 'expert' | 'dual'>('none');
   
-  // Set up auth state change listener for real-time updates
+  // Initialize all state based on auth context
   useEffect(() => {
-    console.log('useAuthSynchronization: Setting up auth state listener');
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('useAuthSynchronization: Auth state changed:', { event, session: !!session });
-        
-        const newState = {
-          user: session?.user || null,
-          session: session,
-          loading: false,
-          isAuthenticated: Boolean(session?.user),
-          isUserAuthenticated: Boolean(session?.user && auth.role === 'user'),
-          isExpertAuthenticated: Boolean(session?.user && auth.role === 'expert'),
-          currentUser: auth.userProfile || null,
-          currentExpert: auth.expertProfile || null,
-          isAuthInitialized: true,
-          hasDualSessions: Boolean(auth.userProfile && auth.expertProfile),
-          sessionType: auth.sessionType || 'none'
-        };
-        
-        console.log('useAuthSynchronization: Updated auth state:', newState);
-        setAuthState(newState);
-      }
-    );
-    
-    return () => {
-      console.log('useAuthSynchronization: Cleaning up auth listener');
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  // Initialize state based on auth context
-  useEffect(() => {
-    console.log('useAuthSynchronization: Processing auth context state:', {
+    console.log('useAuthSynchronization: Processing auth state:', {
       authIsAuthenticated: auth.isAuthenticated,
       authRole: auth.role,
       userProfile: !!auth.userProfile,
@@ -73,23 +35,47 @@ export const useAuthSynchronization = () => {
     const hasUserProfile = Boolean(auth.userProfile);
     const hasExpertProfile = Boolean(auth.expertProfile);
     
-    const newState = {
-      user: auth.user || null,
-      session: auth.session || null,
-      loading: auth.isLoading,
+    // Set user authentication state
+    setIsAuthenticated(authIsAuthenticated);
+    setCurrentUser(auth.userProfile || null);
+    setCurrentExpert(auth.expertProfile || null);
+    
+    // Determine specific authentication state
+    setIsUserAuthenticated(authIsAuthenticated && auth.role === 'user' && hasUserProfile);
+    setIsExpertAuthenticated(authIsAuthenticated && auth.role === 'expert' && hasExpertProfile);
+    
+    // Check for dual sessions
+    setHasDualSessions(hasUserProfile && hasExpertProfile && authIsAuthenticated);
+    
+    // Initialize session type from auth context
+    if (auth.sessionType && auth.sessionType !== 'none') {
+      setSessionType(auth.sessionType);
+    } else {
+      // Fallback determination of session type
+      if (hasUserProfile && hasExpertProfile) {
+        setSessionType('dual');
+      } else if (hasUserProfile && auth.role === 'user') {
+        setSessionType('user');
+      } else if (hasExpertProfile && auth.role === 'expert') {
+        setSessionType('expert');
+      } else {
+        setSessionType('none');
+      }
+    }
+    
+    // Mark auth as initialized once loading is complete
+    if (!auth.isLoading) {
+      setIsAuthInitialized(true);
+      setInitialized(true);
+    }
+
+    console.log('useAuthSynchronization: Updated state:', {
       isAuthenticated: authIsAuthenticated,
       isUserAuthenticated: authIsAuthenticated && auth.role === 'user' && hasUserProfile,
       isExpertAuthenticated: authIsAuthenticated && auth.role === 'expert' && hasExpertProfile,
-      currentUser: auth.userProfile || null,
-      currentExpert: auth.expertProfile || null,
-      isAuthInitialized: !auth.isLoading,
-      hasDualSessions: hasUserProfile && hasExpertProfile && authIsAuthenticated,
-      sessionType: auth.sessionType || (hasUserProfile && hasExpertProfile ? 'dual' : hasUserProfile ? 'user' : hasExpertProfile ? 'expert' : 'none')
-    };
-
-    console.log('useAuthSynchronization: Setting state from auth context:', newState);
-    setAuthState(newState);
-  }, [auth.isAuthenticated, auth.role, auth.userProfile, auth.expertProfile, auth.isLoading, auth.sessionType, auth.user, auth.session]);
+      sessionType: auth.sessionType || 'none'
+    });
+  }, [auth.isAuthenticated, auth.role, auth.userProfile, auth.expertProfile, auth.isLoading, auth.sessionType]);
   
   // Handle user logout
   const userLogout = async (): Promise<boolean> => {
@@ -101,9 +87,9 @@ export const useAuthSynchronization = () => {
       } else {
         console.warn("useAuthSynchronization: User logout returned false");
       }
-      return Boolean(success);
+      return Boolean(success); // Ensure boolean return
     } catch (error) {
-      console.error('useAuthSynchronization: User logout error:', error);
+      console.error('User logout error:', error);
       toast.error('Error logging out');
       return false;
     }
@@ -119,9 +105,9 @@ export const useAuthSynchronization = () => {
       } else {
         console.warn("useAuthSynchronization: Expert logout returned false");
       }
-      return Boolean(success);
+      return Boolean(success); // Ensure boolean return
     } catch (error) {
-      console.error('useAuthSynchronization: Expert logout error:', error);
+      console.error('Expert logout error:', error);
       toast.error('Error logging out');
       return false;
     }
@@ -137,9 +123,9 @@ export const useAuthSynchronization = () => {
       } else {
         console.warn("useAuthSynchronization: Full logout returned false");
       }
-      return Boolean(success);
+      return Boolean(success); // Ensure boolean return
     } catch (error) {
-      console.error('useAuthSynchronization: Full logout error:', error);
+      console.error('Full logout error:', error);
       toast.error('Error logging out');
       return false;
     }
@@ -147,7 +133,15 @@ export const useAuthSynchronization = () => {
 
   return {
     // Auth state - all properly converted to booleans
-    ...authState,
+    isAuthenticated,
+    isUserAuthenticated,
+    isExpertAuthenticated,
+    currentUser,
+    currentExpert,
+    isAuthInitialized,
+    hasDualSessions,
+    sessionType,
+    isLoading: Boolean(auth.isLoading),
     
     // Auth actions
     userLogout,

@@ -1,6 +1,7 @@
+
 import React, { useEffect, lazy, Suspense } from 'react';
-import Navbar from '../components/Navbar';
-import Hero from '@/components/hero';
+import Navbar from '@/components/Navbar';
+import Hero from '@/components/hero'; // Updated to use the hero index component
 import ServicesSection from '@/components/ServicesSection';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
