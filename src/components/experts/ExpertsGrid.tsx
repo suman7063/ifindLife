@@ -1,20 +1,26 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExpertCard from '../expert-card';
+import ExpertDetailModal from '../expert-card/ExpertDetailModal';
 import { ExpertCardData } from '../expert-card/types';
+import { toast } from 'sonner';
 
 interface ExpertsGridProps {
   experts?: ExpertCardData[];
   loading?: boolean;
-  onResetFilters?: () => void; // Add this prop to match usage in Experts.tsx
+  onResetFilters?: () => void;
 }
 
 const ExpertsGrid: React.FC<ExpertsGridProps> = ({ 
   experts = [], 
   loading = false,
-  onResetFilters // Not used in this component but accepted for compatibility
+  onResetFilters
 }) => {
   const navigate = useNavigate();
+  const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
   // Default experts if none provided
   const defaultExperts: ExpertCardData[] = experts.length > 0 ? experts : [
@@ -59,8 +65,42 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
     }
   ];
 
-  const handleViewExpert = (expertId: string | number) => {
-    navigate(`/experts/${expertId}`);
+  const handleExpertCardClick = (expert: ExpertCardData) => {
+    setSelectedExpert(expert);
+    setIsModalOpen(true);
+  };
+
+  const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
+    console.log(`Connecting to ${expert.name} via ${type}`);
+    toast.success(`Initiating ${type} call with ${expert.name}...`);
+    // Here you would integrate with Agora SDK for video/voice calls
+  };
+
+  const handleBookNow = (expert: ExpertCardData) => {
+    console.log(`Booking session with ${expert.name}`);
+    toast.info(`Opening booking interface for ${expert.name}...`);
+    // Here you would open the booking modal similar to the program booking
+  };
+
+  const handleShowConnectOptions = (expertId: string, show: boolean) => {
+    setExpertConnectOptions(prev => ({
+      ...prev,
+      [expertId]: show
+    }));
+  };
+
+  const handleModalConnectNow = (type: 'video' | 'voice') => {
+    if (selectedExpert) {
+      handleConnectNow(selectedExpert, type);
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleModalBookNow = () => {
+    if (selectedExpert) {
+      handleBookNow(selectedExpert);
+      setIsModalOpen(false);
+    }
   };
 
   if (loading) {
@@ -94,16 +134,33 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {defaultExperts.map((expert) => (
-        <ExpertCard
-          key={expert.id.toString()}
-          expert={expert}
-          onClick={() => handleViewExpert(expert.id)}
-          className="h-full"
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {defaultExperts.map((expert) => (
+          <ExpertCard
+            key={expert.id.toString()}
+            expert={expert}
+            onClick={() => handleExpertCardClick(expert)}
+            onConnectNow={(type) => handleConnectNow(expert, type)}
+            onBookNow={() => handleBookNow(expert)}
+            showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
+            onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+            className="h-full"
+          />
+        ))}
+      </div>
+
+      <ExpertDetailModal
+        expert={selectedExpert}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedExpert(null);
+        }}
+        onConnectNow={handleModalConnectNow}
+        onBookNow={handleModalBookNow}
+      />
+    </>
   );
 };
 

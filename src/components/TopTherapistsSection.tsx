@@ -1,9 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExpertCard from './expert-card';
+import ExpertDetailModal from './expert-card/ExpertDetailModal';
 import { ExpertCardData } from './expert-card/types';
 import { Button } from './ui/button';
+import { toast } from 'sonner';
 
 interface TopTherapistsSectionProps {
   experts?: ExpertCardData[];
@@ -11,6 +13,9 @@ interface TopTherapistsSectionProps {
 
 const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [] }) => {
   const navigate = useNavigate();
+  const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
   // Default experts if none provided
   const defaultExperts: ExpertCardData[] = experts.length > 0 ? experts : [
@@ -55,41 +60,92 @@ const TopTherapistsSection: React.FC<TopTherapistsSectionProps> = ({ experts = [
     }
   ];
 
-  const handleViewExpert = (expertId: string | number) => {
-    navigate(`/experts/${expertId}`);
+  const handleExpertCardClick = (expert: ExpertCardData) => {
+    setSelectedExpert(expert);
+    setIsModalOpen(true);
+  };
+
+  const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
+    console.log(`Connecting to ${expert.name} via ${type}`);
+    toast.success(`Initiating ${type} call with ${expert.name}...`);
+    // Here you would integrate with Agora SDK for video/voice calls
+  };
+
+  const handleBookNow = (expert: ExpertCardData) => {
+    console.log(`Booking session with ${expert.name}`);
+    toast.info(`Opening booking interface for ${expert.name}...`);
+    // Here you would open the booking modal similar to the program booking
+  };
+
+  const handleShowConnectOptions = (expertId: string, show: boolean) => {
+    setExpertConnectOptions(prev => ({
+      ...prev,
+      [expertId]: show
+    }));
+  };
+
+  const handleModalConnectNow = (type: 'video' | 'voice') => {
+    if (selectedExpert) {
+      handleConnectNow(selectedExpert, type);
+      setIsModalOpen(false);
+    }
+  };
+
+  const handleModalBookNow = () => {
+    if (selectedExpert) {
+      handleBookNow(selectedExpert);
+      setIsModalOpen(false);
+    }
   };
 
   return (
-    <section className="py-12 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="mb-10">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 text-left">Our Top Therapists</h2>
-          <p className="text-lg text-gray-600 max-w-2xl text-left">
-            Connect with our highly qualified and experienced therapists who are ready to support you on your wellness journey.
-          </p>
-        </div>
+    <>
+      <section className="py-12 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="mb-10">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4 text-left">Our Top Therapists</h2>
+            <p className="text-lg text-gray-600 max-w-2xl text-left">
+              Connect with our highly qualified and experienced therapists who are ready to support you on your wellness journey.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {defaultExperts.map((expert) => (
-            <ExpertCard
-              key={expert.id.toString()}
-              expert={expert}
-              onClick={() => handleViewExpert(expert.id)}
-              className="h-full"
-            />
-          ))}
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {defaultExperts.map((expert) => (
+              <ExpertCard
+                key={expert.id.toString()}
+                expert={expert}
+                onClick={() => handleExpertCardClick(expert)}
+                onConnectNow={(type) => handleConnectNow(expert, type)}
+                onBookNow={() => handleBookNow(expert)}
+                showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
+                onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+                className="h-full"
+              />
+            ))}
+          </div>
 
-        <div className="text-center mt-10">
-          <Button
-            onClick={() => navigate('/experts')}
-            className="bg-primary hover:bg-primary/90"
-          >
-            View All Therapists
-          </Button>
+          <div className="text-center mt-10">
+            <Button
+              onClick={() => navigate('/experts')}
+              className="bg-primary hover:bg-primary/90"
+            >
+              View All Therapists
+            </Button>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <ExpertDetailModal
+        expert={selectedExpert}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedExpert(null);
+        }}
+        onConnectNow={handleModalConnectNow}
+        onBookNow={handleModalBookNow}
+      />
+    </>
   );
 };
 

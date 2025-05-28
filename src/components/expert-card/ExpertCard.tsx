@@ -4,16 +4,34 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-react';
+import { Star, Video, Phone } from 'lucide-react';
 import { ExpertCardData } from './types';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export interface ExpertCardProps {
   expert: ExpertCardData;
   onClick?: () => void;
   className?: string;
+  onConnectNow?: (type: 'video' | 'voice') => void;
+  onBookNow?: () => void;
+  showConnectOptions?: boolean;
+  onShowConnectOptions?: (show: boolean) => void;
 }
 
-const ExpertCard: React.FC<ExpertCardProps> = ({ expert, onClick, className = '' }) => {
+const ExpertCard: React.FC<ExpertCardProps> = ({ 
+  expert, 
+  onClick, 
+  className = '',
+  onConnectNow,
+  onBookNow,
+  showConnectOptions = false,
+  onShowConnectOptions
+}) => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
   // Default values for missing props
   const expertName = expert.name || 'Unnamed Expert';
   const avatarUrl = expert.profilePicture || '';
@@ -33,10 +51,52 @@ const ExpertCard: React.FC<ExpertCardProps> = ({ expert, onClick, className = ''
     .join('')
     .toUpperCase()
     .substring(0, 2);
+
+  const handleConnectNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.error('Please login to connect with experts');
+      navigate('/user-login');
+      return;
+    }
+
+    if (status !== 'online') {
+      toast.error('Expert is currently offline');
+      return;
+    }
+
+    if (onShowConnectOptions) {
+      onShowConnectOptions(true);
+    }
+  };
+
+  const handleBookNow = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      toast.error('Please login to book sessions');
+      navigate('/user-login');
+      return;
+    }
+
+    if (onBookNow) {
+      onBookNow();
+    }
+  };
+
+  const handleConnectOption = (type: 'video' | 'voice') => {
+    if (onConnectNow) {
+      onConnectNow(type);
+    }
+    if (onShowConnectOptions) {
+      onShowConnectOptions(false);
+    }
+  };
   
   return (
     <Card 
-      className={`overflow-hidden transition-all hover:shadow-lg ${className}`}
+      className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${className}`}
       onClick={onClick}
     >
       <CardContent className="p-4">
@@ -81,24 +141,66 @@ const ExpertCard: React.FC<ExpertCardProps> = ({ expert, onClick, className = ''
                 <p className="text-muted-foreground">Price</p>
                 <p className="font-medium">${price}/session</p>
               </div>
-              <div>
-                <p className="text-muted-foreground">Wait Time</p>
-                <p className="font-medium">{waitTime}</p>
-              </div>
             </div>
           </div>
         </div>
       </CardContent>
       
       <CardFooter className="bg-muted/50 px-4 py-3">
-        <Button 
-          variant="secondary" 
-          size="sm" 
-          className="w-full"
-          onClick={onClick}
-        >
-          View Profile
-        </Button>
+        <div className="w-full space-y-2">
+          {/* Connect Options */}
+          {showConnectOptions && (
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
+                className="flex-1 flex items-center gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConnectOption('video');
+                }}
+              >
+                <Video className="h-4 w-4" />
+                Video Call
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 flex items-center gap-2"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleConnectOption('voice');
+                }}
+              >
+                <Phone className="h-4 w-4" />
+                Voice Call
+              </Button>
+            </div>
+          )}
+          
+          {/* Main Action Buttons */}
+          {!showConnectOptions && (
+            <div className="flex gap-2">
+              <Button
+                variant={status === 'online' ? 'default' : 'secondary'}
+                size="sm"
+                className="flex-1"
+                onClick={handleConnectNow}
+                disabled={status !== 'online'}
+              >
+                Connect Now
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={handleBookNow}
+              >
+                Book Now
+              </Button>
+            </div>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );
