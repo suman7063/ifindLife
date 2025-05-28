@@ -119,6 +119,37 @@ export const useAuthActions = (state: any, refreshCallback: () => void) => {
     }
   }, [state.user?.id, refreshCallback]);
 
+  const updateExpertProfile = useCallback(async (updates: any): Promise<boolean> => {
+    if (!state.user?.id) {
+      toast.error('No user logged in');
+      return false;
+    }
+
+    try {
+      // Get expert profile first to get the expert ID
+      const expertProfile = await expertRepository.getExpertByAuthId(state.user.id);
+      if (!expertProfile) {
+        toast.error('Expert profile not found');
+        return false;
+      }
+
+      const success = await expertRepository.updateExpert(expertProfile.id, updates);
+      
+      if (success) {
+        toast.success('Expert profile updated successfully');
+        refreshCallback();
+      } else {
+        toast.error('Failed to update expert profile');
+      }
+      
+      return success;
+    } catch (error: any) {
+      console.error('Update expert profile error:', error);
+      toast.error('Failed to update expert profile');
+      return false;
+    }
+  }, [state.user?.id, refreshCallback]);
+
   const updatePassword = useCallback(async (password: string): Promise<boolean> => {
     try {
       const { error } = await supabase.auth.updateUser({ password });
@@ -199,6 +230,7 @@ export const useAuthActions = (state: any, refreshCallback: () => void) => {
     signup,
     logout,
     updateProfile,
+    updateExpertProfile,
     updatePassword,
     refreshProfile,
     addToFavorites,
