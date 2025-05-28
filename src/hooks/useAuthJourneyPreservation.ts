@@ -4,10 +4,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 export type PendingAction = {
-  type: 'favorite' | 'book' | 'call' | 'navigate' | string;
+  type: 'favorite' | 'book' | 'call' | 'connect' | 'navigate' | string;
   id?: string | number;
   data?: {
     path?: string;
+    expertName?: string;
+    callType?: 'video' | 'voice';
+    action?: string;
     [key: string]: any;
   };
 };
@@ -28,6 +31,7 @@ export const useAuthJourneyPreservation = () => {
         try {
           const action = JSON.parse(pendingActionStr);
           setPendingAction(action);
+          console.log('Found pending action:', action);
         } catch (error) {
           console.error('Error parsing pending action:', error);
           sessionStorage.removeItem('pendingAction');
@@ -36,6 +40,7 @@ export const useAuthJourneyPreservation = () => {
       
       // If authenticated and has return path, navigate there
       if (isAuthenticated && returnPath && location.pathname.includes('/login')) {
+        console.log('Authenticated with return path, navigating to:', returnPath);
         sessionStorage.removeItem('returnPath');
         navigate(returnPath, { replace: true });
       }
@@ -44,6 +49,7 @@ export const useAuthJourneyPreservation = () => {
 
   // Save current journey state before redirecting to login
   const saveJourneyAndRedirect = (action: PendingAction) => {
+    console.log('Saving journey and redirecting to login:', action);
     sessionStorage.setItem('pendingAction', JSON.stringify(action));
     sessionStorage.setItem('returnPath', location.pathname);
     navigate('/user-login', { replace: false });
@@ -51,16 +57,23 @@ export const useAuthJourneyPreservation = () => {
 
   // Execute pending action after authentication
   const executePendingAction = () => {
-    if (!pendingAction) return false;
+    const pendingActionStr = sessionStorage.getItem('pendingAction');
+    if (!pendingActionStr) return null;
     
-    // Logic to execute different types of actions
-    const pendingActionData = pendingAction;
-    
-    // Clear the pending action
-    sessionStorage.removeItem('pendingAction');
-    setPendingAction(null);
-    
-    return pendingActionData;
+    try {
+      const action = JSON.parse(pendingActionStr);
+      console.log('Executing pending action:', action);
+      
+      // Clear the pending action immediately
+      sessionStorage.removeItem('pendingAction');
+      setPendingAction(null);
+      
+      return action;
+    } catch (error) {
+      console.error('Error executing pending action:', error);
+      sessionStorage.removeItem('pendingAction');
+      return null;
+    }
   };
 
   return {

@@ -6,6 +6,7 @@ import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -14,6 +15,7 @@ const UserLogin: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { executePendingAction } = useAuthJourneyPreservation();
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -23,7 +25,17 @@ const UserLogin: React.FC = () => {
         const { data } = await supabase.auth.getSession();
         
         if (data.session) {
-          console.log('UserLogin: Existing session found, redirecting to dashboard');
+          console.log('UserLogin: Existing session found, checking for pending actions...');
+          
+          // Check for pending actions first
+          const pendingAction = executePendingAction();
+          if (pendingAction) {
+            console.log('UserLogin: Found pending action, redirecting appropriately...');
+            // Let the auth system handle the redirect based on pending action
+            return;
+          }
+          
+          console.log('UserLogin: No pending action, redirecting to dashboard');
           navigate('/user-dashboard', { replace: true });
         }
       } catch (error) {
@@ -34,13 +46,13 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate]);
+  }, [navigate, executePendingAction]);
 
   // Handle login form submission
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       return false;
     }
@@ -59,7 +71,7 @@ const UserLogin: React.FC = () => {
       if (userError) {
         console.error('Error checking user:', userError);
         toast.error('An error occurred while checking user', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
@@ -73,14 +85,14 @@ const UserLogin: React.FC = () => {
       if (error) {
         console.error('Login error:', error);
         toast.error(error.message || 'Invalid email or password', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
       
       if (!data.user || !data.session) {
         toast.error('Login failed. Please try again.', {
-          duration: 2000 // Fixed: 2 seconds duration
+          duration: 2000
         });
         return false;
       }
@@ -89,17 +101,26 @@ const UserLogin: React.FC = () => {
       localStorage.setItem('sessionType', 'user');
       
       toast.success('Login successful!', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       
-      // Navigate to dashboard
-      navigate('/user-dashboard', { replace: true });
+      // Check for pending actions before redirecting
+      setTimeout(() => {
+        const pendingAction = executePendingAction();
+        if (pendingAction) {
+          console.log('UserLogin: Found pending action after login, letting auth system handle redirect');
+          // Don't navigate manually - let the auth system and components handle it
+        } else {
+          console.log('UserLogin: No pending action, redirecting to dashboard');
+          navigate('/user-dashboard', { replace: true });
+        }
+      }, 1000);
       
       return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
       toast.error('An unexpected error occurred', {
-        duration: 2000 // Fixed: 2 seconds duration
+        duration: 2000
       });
       return false;
     } finally {
