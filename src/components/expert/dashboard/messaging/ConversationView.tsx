@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { useMessaging } from '@/hooks/messaging';
+import useMessaging from '@/hooks/messaging';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

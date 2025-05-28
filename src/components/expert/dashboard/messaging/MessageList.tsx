@@ -4,7 +4,7 @@ import { Message } from '@/types/database/unified';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
-import { useMessaging } from '@/hooks/messaging';
+import useMessaging from '@/hooks/messaging';
 import { adaptMessage } from '@/utils/userProfileAdapter';
 
 interface MessageListProps {

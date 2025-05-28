@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import MessageList from '@/components/messaging/MessageList';
 import MessageThread from '@/components/messaging/MessageThread';
-import { useMessaging } from '@/hooks/messaging';
+import useMessaging from '@/hooks/messaging';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
 const MessagingTab: React.FC = () => {

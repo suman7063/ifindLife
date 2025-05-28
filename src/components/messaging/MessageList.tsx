@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useMessaging } from '@/hooks/messaging';
+import useMessaging from '@/hooks/messaging';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
