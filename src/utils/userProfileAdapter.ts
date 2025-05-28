@@ -1,84 +1,49 @@
 
 import { UserProfile } from '@/types/database/unified';
-import { UserTransaction } from '@/types/supabase/tables';
 
-/**
- * Adapts database user data to UserProfile type with all required properties
- * Handles both users and profiles tables
- */
-export function adaptUserProfile(data: any): UserProfile {
+// Adapter to ensure user profile compatibility across different formats
+export function adaptUserProfile(userData: any): UserProfile | null {
+  if (!userData) return null;
+  
   return {
-    id: data.id,
-    name: data.name || '',
-    email: data.email || '',
-    phone: data.phone || '',
-    city: data.city || '',
-    country: data.country || '',
-    profile_picture: data.profile_picture || '',
-    wallet_balance: data.wallet_balance || 0,
-    currency: data.currency || 'USD',
-    created_at: data.created_at || new Date().toISOString(),
-    updated_at: data.updated_at,
-    referral_code: data.referral_code || '',
-    referral_link: data.referral_link || '',
-    referred_by: data.referred_by,
-    
-    // Initialize arrays to prevent null errors - ensure all required properties
-    transactions: data.transactions || [],
-    reviews: data.reviews || [],
-    reports: data.reports || [],
-    favorite_experts: data.favorite_experts || [],
-    favorite_programs: Array.isArray(data.favorite_programs) 
-      ? data.favorite_programs.map(String)
-      : [],
-    enrolled_courses: data.enrolled_courses || [],
-    referrals: data.referrals || [],
-    
-    // Add camelCase aliases
-    profilePicture: data.profile_picture,
-    walletBalance: data.wallet_balance,
-    favoriteExperts: data.favorite_experts,
-    enrolledCourses: data.enrolled_courses,
-    referralCode: data.referral_code
+    id: userData.id,
+    name: userData.name || '',
+    email: userData.email || '',
+    phone: userData.phone || '',
+    country: userData.country || '',
+    city: userData.city || '',
+    currency: userData.currency || 'USD',
+    profile_picture: userData.profile_picture || userData.profilePicture || '',
+    wallet_balance: userData.wallet_balance || userData.walletBalance || 0,
+    created_at: userData.created_at || new Date().toISOString(),
+    updated_at: userData.updated_at,
+    referred_by: userData.referred_by || null,
+    referral_code: userData.referral_code || userData.referralCode || '',
+    referral_link: userData.referral_link || userData.referralLink || '',
+    favorite_experts: userData.favorite_experts || userData.favoriteExperts || [],
+    favorite_programs: userData.favorite_programs || userData.favoritePrograms || [],
+    enrolled_courses: userData.enrolled_courses || userData.enrolledCourses || [],
+    reviews: userData.reviews || [],
+    reports: userData.reports || [],
+    transactions: userData.transactions || [],
+    referrals: userData.referrals || []
   };
 }
 
-/**
- * Get profile picture URL from any user profile format
- */
-export function getProfilePicture(userProfile: any): string {
-  return userProfile?.profile_picture || userProfile?.profilePicture || '';
+// Helper to get user display name safely
+export function getUserDisplayName(profile: UserProfile | null): string {
+  if (!profile) return 'User';
+  return profile.name || profile.email || 'User';
 }
 
-/**
- * Adapts transaction data to ensure consistent properties
- */
-export function adaptTransaction(transaction: any): UserTransaction {
-  return {
-    id: transaction.id,
-    user_id: transaction.user_id,
-    amount: transaction.amount,
-    date: transaction.date || transaction.created_at,
-    type: transaction.type || 'payment',
-    currency: transaction.currency || 'USD',
-    description: transaction.description || '',
-    transaction_type: transaction.transaction_type || transaction.type || 'payment'
-  };
+// Helper to get wallet balance safely
+export function getWalletBalance(profile: UserProfile | null): number {
+  if (!profile) return 0;
+  return profile.wallet_balance || 0;
 }
 
-/**
- * Adapts review data for consistent access
- */
-export function adaptReview(review: any): any {
-  return {
-    id: review.id,
-    user_id: review.user_id,
-    expert_id: review.expert_id,
-    rating: review.rating,
-    comment: review.comment || '',
-    date: review.date || review.created_at,
-    verified: review.verified || false,
-    expert_name: review.expert_name || '',
-    user_name: review.user_name || ''
-  };
+// Helper to get profile picture safely
+export function getProfilePicture(profile: UserProfile | null): string {
+  if (!profile) return '';
+  return profile.profile_picture || '';
 }

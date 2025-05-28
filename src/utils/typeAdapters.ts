@@ -1,56 +1,99 @@
 
-import { UserProfile as UnifiedUserProfile } from '@/types/database/unified';
-import { UserProfile as SupabaseUserProfile } from '@/types/supabase/userProfile';
+import { UserProfile as UserProfileA } from '@/types/supabase/user';
+import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
+import { UserProfile } from '@/types/database/unified';
 
-/**
- * Converts a unified UserProfile to a Supabase UserProfile format
- * This helps resolve type compatibility issues between different profile type definitions
- */
-export function adaptToSupabaseUserProfile(profile: UnifiedUserProfile | null): SupabaseUserProfile | null {
+// Ensure user profile compatibility for components expecting different formats
+export function ensureUserProfileCompatibility(profile: any): UserProfileA | null {
   if (!profile) return null;
   
+  // If it's already in the expected format, return as is
+  if ('profilePicture' in profile || 'walletBalance' in profile) {
+    return profile as UserProfileA;
+  }
+  
+  // Convert from unified format to UserProfileA
   return {
-    ...profile,
-    favorite_experts: Array.isArray(profile.favorite_experts) 
-      ? profile.favorite_experts.map(expert => String(expert))
-      : [],
-    favorite_programs: Array.isArray(profile.favorite_programs)
-      ? profile.favorite_programs.map(program => String(program))
-      : [],
-    // Ensure all required properties are present with proper types
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    phone: profile.phone,
+    country: profile.country,
+    city: profile.city,
+    currency: profile.currency,
+    profile_picture: profile.profile_picture,
+    wallet_balance: profile.wallet_balance,
+    created_at: profile.created_at,
+    referred_by: profile.referred_by,
+    referral_code: profile.referral_code,
+    referral_link: profile.referral_link,
+    favorite_experts: profile.favorite_experts || [],
+    favorite_programs: profile.favorite_programs || [],
+    enrolled_courses: profile.enrolled_courses || [],
     reviews: profile.reviews || [],
     reports: profile.reports || [],
     transactions: profile.transactions || [],
     referrals: profile.referrals || [],
-    enrolled_courses: profile.enrolled_courses || [],
-    
-    // Add camelCase aliases with proper type conversion
-    favoriteExperts: Array.isArray(profile.favorite_experts) 
-      ? profile.favorite_experts.map(expert => String(expert))
-      : [],
-    profilePicture: profile.profile_picture || '',
-    walletBalance: profile.wallet_balance || 0,
-    referralCode: profile.referral_code || ''
+    // Add camel case aliases
+    profilePicture: profile.profile_picture,
+    walletBalance: profile.wallet_balance,
+    favoriteExperts: profile.favorite_experts || []
   };
 }
 
-/**
- * Ensures type compatibility for user profiles across different contexts
- */
-export function ensureUserProfileCompatibility(profile: any): SupabaseUserProfile | null {
+// Convert to UserProfileB format
+export function toUserProfileB(profile: any): UserProfileB | null {
   if (!profile) return null;
   
-  // Ensure all required arrays are present
-  const compatibleProfile = {
-    ...profile,
+  return {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    phone: profile.phone,
+    country: profile.country,
+    city: profile.city,
+    currency: profile.currency,
+    profile_picture: profile.profile_picture || profile.profilePicture,
+    wallet_balance: profile.wallet_balance || profile.walletBalance,
+    created_at: profile.created_at,
+    referred_by: profile.referred_by,
+    referral_code: profile.referral_code || profile.referralCode,
+    referral_link: profile.referral_link || profile.referralLink,
+    favorite_experts: profile.favorite_experts || profile.favoriteExperts || [],
+    favorite_programs: profile.favorite_programs || profile.favoritePrograms || [],
+    enrolled_courses: profile.enrolled_courses || profile.enrolledCourses || [],
     reviews: profile.reviews || [],
     reports: profile.reports || [],
     transactions: profile.transactions || [],
-    referrals: profile.referrals || [],
-    enrolled_courses: profile.enrolled_courses || [],
-    favorite_experts: profile.favorite_experts || [],
-    favorite_programs: profile.favorite_programs || []
+    referrals: profile.referrals || []
   };
+}
+
+// Convert to unified format
+export function toUnifiedProfile(profile: any): UserProfile | null {
+  if (!profile) return null;
   
-  return adaptToSupabaseUserProfile(compatibleProfile);
+  return {
+    id: profile.id,
+    name: profile.name,
+    email: profile.email,
+    phone: profile.phone,
+    country: profile.country,
+    city: profile.city,
+    currency: profile.currency,
+    profile_picture: profile.profile_picture || profile.profilePicture,
+    wallet_balance: profile.wallet_balance || profile.walletBalance,
+    created_at: profile.created_at,
+    updated_at: profile.updated_at,
+    referred_by: profile.referred_by,
+    referral_code: profile.referral_code || profile.referralCode,
+    referral_link: profile.referral_link || profile.referralLink,
+    favorite_experts: profile.favorite_experts || profile.favoriteExperts || [],
+    favorite_programs: profile.favorite_programs || profile.favoritePrograms || [],
+    enrolled_courses: profile.enrolled_courses || profile.enrolledCourses || [],
+    reviews: profile.reviews || [],
+    reports: profile.reports || [],
+    transactions: profile.transactions || [],
+    referrals: profile.referrals || []
+  };
 }
