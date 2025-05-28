@@ -1,277 +1,105 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { AuthState, AuthUser, UserRole, SessionType, initialAuthState } from '@/contexts/auth/types';
 import { userRepository } from '@/repositories/userRepository';
 import { expertRepository } from '@/repositories/expertRepository';
+import { AuthState, initialAuthState, UserRole, SessionType } from '../types';
 
-export const useAuthState = (): AuthState => {
+export const useAuthState = () => {
   const [state, setState] = useState<AuthState>(initialAuthState);
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   useEffect(() => {
-    // Ensure we have sessionType in localStorage before proceeding
-    const existingSessionType = localStorage.getItem('sessionType');
-    if (!existingSessionType) {
-      localStorage.setItem('sessionType', 'user');
-      console.log('useAuthState: Setting default sessionType as user');
-    }
+    let mounted = true;
 
-    let isMounted = true;
-    let authSubscription: { unsubscribe: () => void } | null = null;
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state change event:', event, session ? 'Session exists' : 'No session');
+        
+        if (!mounted) return;
 
-    // First, perform initial auth check
-    const checkAuth = async () => {
-      try {
-        console.log('useAuthState: Initial auth check');
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Initial auth check error:', error);
-          if (isMounted) {
-            setState({
-              ...initialAuthState,
-              error,
-              isLoading: false
-            });
-            setInitialCheckDone(true);
-          }
-          return;
-        }
-        
-        if (data.session) {
-          console.log('Initial auth check: Session found');
-          
-          // Process user data from session
-          const sessionType = localStorage.getItem('sessionType') || 'user';
-          console.log('Using session type:', sessionType);
-          
-          // Create basic auth user
-          const authUser: AuthUser = {
-            id: data.session.user.id,
-            email: data.session.user.email || '',
-            role: sessionType as UserRole
-          };
-          
-          // Update state with basic auth data first
-          if (isMounted) {
-            setState(prevState => ({
-              ...prevState,
-              user: authUser,
-              session: data.session,
-              isAuthenticated: true,
-              role: sessionType as UserRole,
-              sessionType: sessionType as SessionType,
-              isLoading: true // Still loading profiles
-            }));
-          }
-          
+        if (session?.user) {
           try {
-            // Load user profile if needed
+            // Get session type from localStorage or default to 'user'
+            const sessionType = localStorage.getItem('sessionType') as SessionType || 'user';
+            
+            // Fetch profiles based on session type
             let userProfile = null;
             let expertProfile = null;
-            let walletBalance = 0;
-            let hasUserAccount = false;
-            
-            if (sessionType === 'user' || sessionType === 'dual') {
-              userProfile = await userRepository.getUser(data.session.user.id);
-              if (userProfile) {
-                hasUserAccount = true;
-                walletBalance = userProfile?.wallet_balance || 0;
-              }
-            }
-            
+            let role: UserRole = 'user';
+
             if (sessionType === 'expert' || sessionType === 'dual') {
-              expertProfile = await expertRepository.getExpertByAuthId(data.session.user.id);
-              // Check if user has both accounts
-              if (sessionType === 'expert' && expertProfile) {
-                // Let's check if they have a user account as well
-                const userCheck = await userRepository.getUser(data.session.user.id);
-                hasUserAccount = !!userCheck;
+              expertProfile = await expertRepository.getExpertByAuthId(session.user.id);
+              if (expertProfile) {
+                role = 'expert';
               }
             }
-            
-            console.log('Loaded profiles:', { 
-              hasUserProfile: !!userProfile, 
-              hasExpertProfile: !!expertProfile,
-              hasUserAccount,
-              sessionType
+
+            if (sessionType === 'user' || sessionType === 'dual' || !expertProfile) {
+              userProfile = await userRepository.getUser(session.user.id);
+              if (userProfile && !expertProfile) {
+                role = 'user';
+              }
+            }
+
+            // Determine final session type
+            let finalSessionType: SessionType = 'none';
+            if (userProfile && expertProfile) {
+              finalSessionType = 'dual';
+            } else if (expertProfile) {
+              finalSessionType = 'expert';
+            } else if (userProfile) {
+              finalSessionType = 'user';
+            }
+
+            setState({
+              user: {
+                id: session.user.id,
+                email: session.user.email || '',
+                role
+              },
+              userProfile,
+              expertProfile,
+              profile: userProfile || expertProfile, // For backward compatibility
+              isAuthenticated: true,
+              isLoading: false,
+              role,
+              session,
+              error: null,
+              walletBalance: userProfile?.wallet_balance || 0,
+              sessionType: finalSessionType,
+              hasUserAccount: !!userProfile
             });
-            
-            // Finally update with full profile data
-            if (isMounted) {
-              setState(prevState => ({
-                ...prevState,
-                userProfile,
-                expertProfile,
-                profile: userProfile, // Backward compatibility
-                walletBalance,
-                hasUserAccount,
-                isLoading: false
-              }));
-              setInitialCheckDone(true);
-            }
+
           } catch (error) {
-            console.error('Error loading profiles:', error);
-            if (isMounted) {
-              setState(prevState => ({
-                ...prevState,
-                error: error as Error,
-                isLoading: false
-              }));
-              setInitialCheckDone(true);
-            }
+            console.error('Error fetching user profiles:', error);
+            setState(prev => ({
+              ...prev,
+              isLoading: false,
+              error: error as Error
+            }));
           }
         } else {
-          console.log('Initial auth check: No session found');
-          if (isMounted) {
-            setState({
-              ...initialAuthState,
-              isLoading: false
-            });
-            setInitialCheckDone(true);
-          }
-        }
-      } catch (error) {
-        console.error('Error checking auth:', error);
-        if (isMounted) {
+          // No session - reset to initial state
           setState({
             ...initialAuthState,
-            error: error as Error,
             isLoading: false
           });
-          setInitialCheckDone(true);
         }
       }
-    };
-    
-    // Run initial check first
-    checkAuth();
-    
-    // Only set up the auth state change listener after the initial check
-    setTimeout(() => {
-      if (!isMounted) return;
-      
-      // Then define the auth state change listener
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(
-        async (event, session) => {
-          console.log('Auth state changed:', event);
-          
-          // Skip processing if initial check is not done to prevent race condition
-          if (!initialCheckDone) return;
-          
-          if (event === 'SIGNED_OUT') {
-            console.log('Auth event: User signed out');
-            localStorage.removeItem('sessionType');
-            if (isMounted) {
-              setState({
-                ...initialAuthState,
-                isLoading: false
-              });
-            }
-            return;
-          }
-          
-          if (session) {
-            console.log('Auth event: Session available');
-            // Process user data from session
-            const sessionType = localStorage.getItem('sessionType') || 'user';
-            
-            // Create basic auth user
-            const authUser: AuthUser = {
-              id: session.user.id,
-              email: session.user.email || '',
-              role: sessionType as UserRole
-            };
-            
-            // Update state with basic auth data first
-            if (isMounted) {
-              setState(prevState => ({
-                ...prevState,
-                user: authUser,
-                session,
-                isAuthenticated: true,
-                isLoading: true, // Still loading profiles
-                role: sessionType as UserRole,
-                sessionType: sessionType as SessionType
-              }));
-            }
-            
-            // Use setTimeout to avoid blocking the auth state change event
-            setTimeout(async () => {
-              if (!isMounted) return;
-              
-              try {
-                // Load user profile if needed
-                let userProfile = null;
-                let expertProfile = null;
-                let walletBalance = 0;
-                let hasUserAccount = false;
-                
-                if (sessionType === 'user' || sessionType === 'dual') {
-                  userProfile = await userRepository.getUser(session.user.id);
-                  if (userProfile) {
-                    hasUserAccount = true;
-                    walletBalance = userProfile?.wallet_balance || 0;
-                  }
-                }
-                
-                if (sessionType === 'expert' || sessionType === 'dual') {
-                  expertProfile = await expertRepository.getExpertByAuthId(session.user.id);
-                  // Check if user has both accounts
-                  if (sessionType === 'expert' && expertProfile) {
-                    // Let's check if they have a user account as well
-                    const userCheck = await userRepository.getUser(session.user.id);
-                    hasUserAccount = !!userCheck;
-                  }
-                }
-                
-                // Finally update with full profile data
-                if (isMounted) {
-                  setState(prevState => ({
-                    ...prevState,
-                    userProfile,
-                    expertProfile,
-                    profile: userProfile, // Backward compatibility
-                    walletBalance,
-                    hasUserAccount,
-                    isLoading: false
-                  }));
-                }
-              } catch (error) {
-                console.error('Error loading profiles:', error);
-                if (isMounted) {
-                  setState(prevState => ({
-                    ...prevState,
-                    error: error as Error,
-                    isLoading: false
-                  }));
-                }
-              }
-            }, 0);
-          } else {
-            console.log('Auth event: No session available');
-            if (isMounted) {
-              setState({
-                ...initialAuthState,
-                isLoading: false
-              });
-            }
-          }
-        }
-      );
-      
-      authSubscription = subscription;
-    }, 100); // Small delay to ensure initial check completes first
-    
-    // Cleanup function to unsubscribe and prevent memory leaks
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session ? 'Session exists' : 'No session');
+      // The onAuthStateChange will handle this, so we don't need to duplicate logic here
+    });
+
     return () => {
-      isMounted = false;
-      if (authSubscription) {
-        authSubscription.unsubscribe();
-      }
+      mounted = false;
+      subscription.unsubscribe();
     };
-  }, [initialCheckDone]); // Only re-run if initialCheckDone changes
+  }, []);
 
   return state;
 };

@@ -1,74 +1,96 @@
 
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/database/unified';
-import { convertUserToUserProfile } from '@/utils/profileConverters';
+import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
-export interface UserRepository {
-  getUser(id: string): Promise<UserProfile | null>;
-  getUserByEmail(email: string): Promise<UserProfile | null>;
-  updateUser(id: string, updates: Partial<UserProfile>): Promise<boolean>;
-}
-
-export const userRepository: UserRepository = {
-  /**
-   * Get a user by ID
-   */
-  async getUser(id: string): Promise<UserProfile | null> {
+export const userRepository = {
+  async getUser(userId: string): Promise<UserProfile | null> {
     try {
-      const { data, error } = await supabase
+      console.log(`Fetching user profile for ID: ${userId}`);
+      
+      // Try users table first
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
-        .eq('id', id)
+        .eq('id', userId)
         .single();
-      
-      if (error) {
-        console.error('Error fetching user:', error);
-        return null;
+
+      if (userData && !userError) {
+        console.log('User found in users table:', userData);
+        return adaptUserProfile(userData);
       }
-      
-      return convertUserToUserProfile(data);
+
+      // Try profiles table if not found in users
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (profileData && !profileError) {
+        console.log('User found in profiles table:', profileData);
+        return adaptUserProfile(profileData);
+      }
+
+      console.log('User not found in either table');
+      return null;
     } catch (error) {
-      console.error('Repository error in getUser:', error);
+      console.error('Error fetching user:', error);
       return null;
     }
   },
-  
-  /**
-   * Update a user's profile
-   */
-  async updateUser(id: string, updates: Partial<UserProfile>): Promise<boolean> {
+
+  async updateUser(userId: string, updates: Partial<UserProfile>): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', id);
+      console.log(`Updating user ${userId} with:`, updates);
       
-      return !error;
+      // Check which table has the user
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      const table = userData ? 'users' : 'profiles';
+      console.log(`Updating in table: ${table}`);
+      
+      const { error } = await supabase
+        .from(table)
+        .update(updates)
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating user:', error);
+        return false;
+      }
+
+      console.log('User updated successfully');
+      return true;
     } catch (error) {
-      console.error('Repository error in updateUser:', error);
+      console.error('Error updating user:', error);
       return false;
     }
   },
-  
-  /**
-   * Get a user by email
-   */
-  async getUserByEmail(email: string): Promise<UserProfile | null> {
+
+  async createUser(userData: Partial<UserProfile>): Promise<UserProfile | null> {
     try {
+      console.log('Creating user with data:', userData);
+      
       const { data, error } = await supabase
         .from('users')
-        .select('*')
-        .eq('email', email)
+        .insert(userData)
+        .select()
         .single();
-      
+
       if (error) {
-        console.error('Error fetching user by email:', error);
+        console.error('Error creating user:', error);
         return null;
       }
-      
-      return convertUserToUserProfile(data);
+
+      console.log('User created successfully:', data);
+      return adaptUserProfile(data);
     } catch (error) {
-      console.error('Repository error in getUserByEmail:', error);
+      console.error('Error creating user:', error);
       return null;
     }
   }

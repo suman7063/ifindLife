@@ -15,22 +15,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Create a refresh callback
   const refreshCallback = useCallback(() => {
     console.log('Auth state refresh triggered');
+    // The refresh will be handled by the auth state listener
   }, []);
   
   // Get actions from hook
   const actions = useAuthActions(state, refreshCallback);
   
-  // Verify login function exists
+  // Verify login function exists and log initialization
   useEffect(() => {
-    if (!actions.login || typeof actions.login !== 'function') {
-      console.error('AuthProvider: login function is missing or not a function:', {
-        loginExists: !!actions.login,
-        loginType: typeof actions.login
-      });
-    } else {
-      console.log('AuthProvider: login function initialized correctly');
-    }
-  }, [actions.login]);
+    console.log('AuthProvider: Initializing with state:', {
+      isAuthenticated: state.isAuthenticated,
+      isLoading: state.isLoading,
+      role: state.role,
+      hasUserProfile: !!state.userProfile,
+      hasExpertProfile: !!state.expertProfile,
+      sessionType: state.sessionType
+    });
+
+    console.log('AuthProvider: Actions initialized:', {
+      hasLogin: !!actions.login,
+      loginType: typeof actions.login,
+      hasSignup: !!actions.signup,
+      hasLogout: !!actions.logout
+    });
+  }, [state, actions]);
   
   // Combine state and actions
   const value = {
@@ -39,13 +47,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     hasUserAccount: state.hasUserAccount || false
   };
 
-  console.log('AuthProvider rendering with values:', {
-    isAuthenticated: value.isAuthenticated,
-    isLoading: value.isLoading,
-    role: value.role,
-    hasLogin: !!value.login,
-    loginType: typeof value.login
-  });
+  console.log('AuthProvider rendering with login function:', !!value.login);
 
   return (
     <AuthContext.Provider value={value}>
