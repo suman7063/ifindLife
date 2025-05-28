@@ -5,20 +5,13 @@ import useMessaging from '@/hooks/messaging';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Conversation } from '@/hooks/messaging/types';
 
 interface MessageListProps {
   userId: string;
   onSelectConversation: (userId: string, userName: string) => void;
   selectedUserId?: string;
 }
-
-type Conversation = {
-  userId: string;
-  userName: string;
-  lastMessage: string;
-  timestamp: Date;
-  unread: number;
-};
 
 const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation, selectedUserId }) => {
   const { getConversations } = useMessaging();
@@ -75,30 +68,30 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
           ) : (
             conversations.map((conversation) => (
               <div
-                key={conversation.userId}
+                key={conversation.id}
                 className={`flex items-center gap-3 p-3 rounded-md cursor-pointer hover:bg-gray-100 mb-1 ${
-                  selectedUserId === conversation.userId ? 'bg-gray-100' : ''
+                  selectedUserId === conversation.id ? 'bg-gray-100' : ''
                 }`}
-                onClick={() => onSelectConversation(conversation.userId, conversation.userName)}
+                onClick={() => onSelectConversation(conversation.id, conversation.name)}
               >
                 <Avatar>
-                  <AvatarImage src="" alt={conversation.userName} />
-                  <AvatarFallback>{getInitials(conversation.userName)}</AvatarFallback>
+                  <AvatarImage src={conversation.profilePicture || ""} alt={conversation.name} />
+                  <AvatarFallback>{getInitials(conversation.name)}</AvatarFallback>
                 </Avatar>
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center">
-                    <h4 className="font-medium truncate">{conversation.userName}</h4>
+                    <h4 className="font-medium truncate">{conversation.name}</h4>
                     <span className="text-xs text-gray-500">
-                      {conversation.timestamp.toLocaleDateString()}
+                      {new Date(conversation.lastMessageDate).toLocaleDateString()}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500 truncate">{conversation.lastMessage}</p>
+                  <p className="text-sm text-gray-500 truncate">{conversation.lastMessage || 'No messages yet'}</p>
                 </div>
                 
-                {conversation.unread > 0 && (
+                {conversation.unreadCount && conversation.unreadCount > 0 && (
                   <div className="bg-primary text-white text-xs font-medium rounded-full h-5 w-5 flex items-center justify-center">
-                    {conversation.unread}
+                    {conversation.unreadCount}
                   </div>
                 )}
               </div>
