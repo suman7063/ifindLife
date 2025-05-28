@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
 import { useMessaging } from '@/hooks/messaging';
+import { adaptMessage } from '@/utils/userProfileAdapter';
 
 interface MessageListProps {
   userId: string;
@@ -34,25 +35,28 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
             No messages yet
           </div>
         ) : (
-          messagesList.map((msg: Message) => (
-            <div
-              key={msg.id}
-              className={`max-w-[80%] p-3 rounded-lg ${
-                msg.isMine
-                  ? 'ml-auto bg-primary text-white rounded-br-none'
-                  : 'bg-gray-100 rounded-bl-none'
-              }`}
-            >
-              <p>{msg.content}</p>
+          messagesList.map((msg: Message) => {
+            const adaptedMsg = adaptMessage(msg, userId);
+            return (
               <div
-                className={`text-xs mt-1 ${
-                  msg.isMine ? 'text-primary-foreground/70' : 'text-gray-500'
+                key={adaptedMsg.id}
+                className={`max-w-[80%] p-3 rounded-lg ${
+                  adaptedMsg.isMine
+                    ? 'ml-auto bg-primary text-white rounded-br-none'
+                    : 'bg-gray-100 rounded-bl-none'
                 }`}
               >
-                {msg.timestamp?.toLocaleTimeString() || new Date(msg.created_at).toLocaleTimeString()}
+                <p>{adaptedMsg.content}</p>
+                <div
+                  className={`text-xs mt-1 ${
+                    adaptedMsg.isMine ? 'text-primary-foreground/70' : 'text-gray-500'
+                  }`}
+                >
+                  {adaptedMsg.timestamp?.toLocaleTimeString() || new Date(adaptedMsg.created_at).toLocaleTimeString()}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

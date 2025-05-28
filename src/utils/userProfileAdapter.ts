@@ -20,7 +20,10 @@ export function adaptUserProfile(userData: any): UserProfile | null {
     referred_by: userData.referred_by || null,
     referral_code: userData.referral_code || userData.referralCode || '',
     referral_link: userData.referral_link || userData.referralLink || '',
-    favorite_experts: userData.favorite_experts || userData.favoriteExperts || [],
+    // Ensure favorite_experts is always a string array
+    favorite_experts: Array.isArray(userData.favorite_experts) 
+      ? userData.favorite_experts.map(String) 
+      : (userData.favoriteExperts || []).map(String),
     favorite_programs: userData.favorite_programs || userData.favoritePrograms || [],
     enrolled_courses: userData.enrolled_courses || userData.enrolledCourses || [],
     reviews: userData.reviews || [],
@@ -71,5 +74,16 @@ export function adaptReview(review: any): any {
     expert_name: review.expert_name || review.expertName || 'Unknown Expert',
     expertId: review.expertId || review.expert_id,
     expert_id: review.expert_id || review.expertId
+  };
+}
+
+// Adapter for messages to include expected properties
+export function adaptMessage(message: any, currentUserId?: string): any {
+  if (!message) return null;
+  
+  return {
+    ...message,
+    isMine: currentUserId ? message.sender_id === currentUserId : false,
+    timestamp: message.created_at ? new Date(message.created_at) : new Date()
   };
 }

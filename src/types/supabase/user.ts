@@ -66,7 +66,7 @@ export interface UserProfile {
   referred_by: string | null;
   referral_code: string;
   referral_link: string;
-  favorite_experts: string[]; // Fixed to be consistently string[]
+  favorite_experts: string[]; // Made consistent - always string array
   favorite_programs: string[] | number[];
   enrolled_courses: Course[];
   reviews: Review[]; // Made required to match expectations

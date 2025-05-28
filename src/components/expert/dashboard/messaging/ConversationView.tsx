@@ -9,6 +9,7 @@ import { Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { adaptMessage } from '@/utils/userProfileAdapter';
 
 interface ConversationViewProps {
   userId: string;
@@ -104,7 +105,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {conversationMessages.map((message) => {
-          const isOwnMessage = message.isMine || message.sender_id === user?.id;
+          const adaptedMessage = adaptMessage(message, user?.id);
+          const isOwnMessage = adaptedMessage.isMine || message.sender_id === user?.id;
           
           return (
             <div
@@ -133,8 +135,8 @@ const ConversationView: React.FC<ConversationViewProps> = ({
                       isOwnMessage ? 'text-right' : ''
                     }`}
                   >
-                    {message.timestamp 
-                      ? format(message.timestamp, 'p') 
+                    {adaptedMessage.timestamp 
+                      ? format(adaptedMessage.timestamp, 'p') 
                       : format(new Date(message.created_at), 'p')}
                   </div>
                 </div>

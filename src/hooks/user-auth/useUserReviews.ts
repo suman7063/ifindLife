@@ -15,9 +15,10 @@ export const useUserReviews = (
     }
 
     try {
+      const expertId = reviewData.expert_id || reviewData.expertId;
       const newReview = {
         user_id: currentUser.id,
-        expert_id: parseInt(String(reviewData.expertId), 10), // Convert to number for database
+        expert_id: parseInt(String(expertId), 10), // Convert to number for database
         rating: reviewData.rating,
         comment: reviewData.comment,
         date: new Date().toISOString(),
@@ -47,7 +48,7 @@ export const useUserReviews = (
       // Optimistically update the local state
       const adaptedReview: Review = {
         id: newId,
-        expert_id: reviewData.expertId, // Using expert_id property to match our unified type
+        expert_id: expertId, // Using expert_id property to match our unified type
         user_id: currentUser.id,
         rating: reviewData.rating,
         comment: reviewData.comment,

@@ -7,6 +7,8 @@ export interface NewReview {
   comment?: string;
   date: string;
   verified?: boolean;
+  // Add alias for backward compatibility
+  expertId?: number | string;
 }
 
 export interface NewReport {
@@ -16,6 +18,8 @@ export interface NewReport {
   details?: string;
   date: string;
   status: string;
+  // Add alias for backward compatibility
+  expertId?: number | string;
 }
 
 export interface NewTransaction {

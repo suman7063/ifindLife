@@ -15,7 +15,7 @@ export interface UserProfile {
   referred_by: string | null;
   referral_code: string;
   referral_link: string;
-  favorite_experts: string[] | number[];
+  favorite_experts: string[]; // Made consistent - always string array
   favorite_programs: string[] | number[];
   enrolled_courses: any[];
   reviews: any[];
@@ -61,4 +61,7 @@ export interface Message {
   read: boolean;
   created_at: string;
   updated_at?: string;
+  // Add missing properties that components expect
+  isMine?: boolean;
+  timestamp?: Date;
 }
