@@ -5,6 +5,13 @@ import { userRepository } from '@/repositories/userRepository';
 import { expertRepository } from '@/repositories/expertRepository';
 import { AuthState, initialAuthState, UserRole, SessionType } from '../types';
 
+// Helper function to determine session type
+const determineSessionType = (userProfile: any, expertProfile: any): SessionType => {
+  if (expertProfile) return 'expert';
+  if (userProfile) return 'user';
+  return 'none'; // Don't use undefined
+};
+
 export const useAuthState = () => {
   const [state, setState] = useState<AuthState>(initialAuthState);
 
@@ -20,37 +27,46 @@ export const useAuthState = () => {
 
         if (session?.user) {
           try {
-            // Get session type from localStorage or default to 'user'
-            const sessionType = localStorage.getItem('sessionType') as SessionType || 'user';
+            // Get session type from localStorage or determine from profiles
+            let sessionType = localStorage.getItem('sessionType') as SessionType;
             
-            // Fetch profiles based on session type
+            // Fetch profiles to determine proper session type
             let userProfile = null;
             let expertProfile = null;
             let role: UserRole = 'user';
 
-            if (sessionType === 'expert' || sessionType === 'dual') {
-              expertProfile = await expertRepository.getExpertByAuthId(session.user.id);
-              if (expertProfile) {
-                role = 'expert';
-              }
+            // Always try to fetch both profiles to determine proper session type
+            const [userResult, expertResult] = await Promise.allSettled([
+              userRepository.getUser(session.user.id),
+              expertRepository.getExpertByAuthId(session.user.id)
+            ]);
+
+            if (userResult.status === 'fulfilled') {
+              userProfile = userResult.value;
+            }
+            if (expertResult.status === 'fulfilled') {
+              expertProfile = expertResult.value;
             }
 
-            if (sessionType === 'user' || sessionType === 'dual' || !expertProfile) {
-              userProfile = await userRepository.getUser(session.user.id);
-              if (userProfile && !expertProfile) {
-                role = 'user';
-              }
+            // Determine proper session type based on available profiles
+            const actualSessionType = determineSessionType(userProfile, expertProfile);
+            
+            // Update localStorage with correct session type
+            localStorage.setItem('sessionType', actualSessionType);
+            
+            // Set role based on session type
+            if (actualSessionType === 'expert' && expertProfile) {
+              role = 'expert';
+            } else if (actualSessionType === 'user' && userProfile) {
+              role = 'user';
             }
 
-            // Determine final session type
-            let finalSessionType: SessionType = 'none';
-            if (userProfile && expertProfile) {
-              finalSessionType = 'dual';
-            } else if (expertProfile) {
-              finalSessionType = 'expert';
-            } else if (userProfile) {
-              finalSessionType = 'user';
-            }
+            console.log('Auth profiles loaded:', {
+              userProfile: !!userProfile,
+              expertProfile: !!expertProfile,
+              sessionType: actualSessionType,
+              role
+            });
 
             setState({
               user: {
@@ -67,7 +83,7 @@ export const useAuthState = () => {
               session,
               error: null,
               walletBalance: userProfile?.wallet_balance || 0,
-              sessionType: finalSessionType,
+              sessionType: actualSessionType,
               hasUserAccount: !!userProfile
             });
 
@@ -76,14 +92,17 @@ export const useAuthState = () => {
             setState(prev => ({
               ...prev,
               isLoading: false,
-              error: error as Error
+              error: error as Error,
+              sessionType: 'none'
             }));
           }
         } else {
           // No session - reset to initial state
+          localStorage.removeItem('sessionType');
           setState({
             ...initialAuthState,
-            isLoading: false
+            isLoading: false,
+            sessionType: 'none'
           });
         }
       }
@@ -100,6 +119,19 @@ export const useAuthState = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Add debugging for auth state changes
+  useEffect(() => {
+    console.log('Auth state updated:', {
+      hasUser: !!state.user,
+      hasSession: !!state.session,
+      sessionType: state.sessionType,
+      userProfile: !!state.userProfile,
+      expertProfile: !!state.expertProfile,
+      isLoading: state.isLoading,
+      isAuthenticated: state.isAuthenticated
+    });
+  }, [state.user, state.session, state.sessionType, state.userProfile, state.expertProfile, state.isLoading, state.isAuthenticated]);
 
   return state;
 };

@@ -18,7 +18,7 @@ export type PendingAction = {
 export const useAuthJourneyPreservation = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user, session, sessionType } = useAuth();
   const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   // Check for pending actions in sessionStorage
@@ -38,14 +38,17 @@ export const useAuthJourneyPreservation = () => {
         }
       }
       
+      // Properly check if user is authenticated before redirecting
+      const isProperlyAuthenticated = user && session && sessionType && sessionType !== 'none' && isAuthenticated;
+      
       // If authenticated and has return path, navigate there
-      if (isAuthenticated && returnPath && location.pathname.includes('/login')) {
+      if (isProperlyAuthenticated && returnPath && location.pathname.includes('/login')) {
         console.log('Authenticated with return path, navigating to:', returnPath);
         sessionStorage.removeItem('returnPath');
         navigate(returnPath, { replace: true });
       }
     }
-  }, [isAuthenticated, isLoading, navigate, location]);
+  }, [isAuthenticated, isLoading, navigate, location, user, session, sessionType]);
 
   // Save current journey state before redirecting to login
   const saveJourneyAndRedirect = (action: PendingAction) => {

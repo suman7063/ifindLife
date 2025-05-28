@@ -25,12 +25,14 @@ const Navbar = () => {
     role,
     logout,
     sessionType,
-    isLoading
+    isLoading,
+    user,
+    session
   } = useAuth();
 
-  // Derive authentication states with proper type conversion
-  const isUserAuthenticated = Boolean(isAuthenticated && role === 'user' && userProfile);
-  const isExpertAuthenticated = Boolean(isAuthenticated && role === 'expert' && expertProfile);
+  // Properly check authentication state
+  const isUserAuthenticated = Boolean(isAuthenticated && role === 'user' && userProfile && user && session);
+  const isExpertAuthenticated = Boolean(isAuthenticated && role === 'expert' && expertProfile && user && session);
   const hasDualSessions = Boolean(userProfile && expertProfile && isAuthenticated);
   const currentUser = ensureUserProfileCompatibility(userProfile);
 
@@ -165,27 +167,21 @@ const Navbar = () => {
     return scrolled ? 'bg-background/90' : 'bg-transparent';
   };
 
-  // Safely cast sessionType to the valid union type
-  const getValidSessionType = (type: any): 'user' | 'expert' | 'none' | 'dual' => {
-    if (type === 'user' || type === 'expert' || type === 'none' || type === 'dual') {
-      return type;
-    }
-    console.warn(`Invalid session type detected: ${type}. Defaulting to 'none'`);
-    return 'none';
-  };
-
-  const typedSessionType = getValidSessionType(sessionType);
+  // Safely handle session type - use 'none' as default instead of showing warning
+  const validSessionType = sessionType || 'none';
 
   // Enhanced authentication state logging for debugging
   console.log("Navbar rendering. Auth state:", {
     isAuthenticated: Boolean(isAuthenticated),
     isUserAuthenticated: Boolean(isUserAuthenticated),
     isExpertAuthenticated: Boolean(isExpertAuthenticated),
-    sessionType: typedSessionType,
+    sessionType: validSessionType,
     currentUser: !!currentUser,
     expertProfile: !!expertProfile,
     hasDualSessions: Boolean(hasDualSessions),
-    role
+    role,
+    hasUser: !!user,
+    hasSession: !!session
   });
 
   return (
@@ -224,7 +220,7 @@ const Navbar = () => {
             hasExpertProfile={Boolean(isExpertAuthenticated)}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={typedSessionType}
+            sessionType={validSessionType as 'none' | 'user' | 'expert' | 'dual'}
             isLoggingOut={isLoggingOut}
           />
           
@@ -234,7 +230,7 @@ const Navbar = () => {
             hasExpertProfile={Boolean(isExpertAuthenticated)}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={typedSessionType}
+            sessionType={validSessionType as 'none' | 'user' | 'expert' | 'dual'}
             isLoggingOut={isLoggingOut}
           />
         </div>

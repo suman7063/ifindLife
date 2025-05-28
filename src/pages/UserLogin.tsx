@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -16,16 +17,27 @@ const UserLogin: React.FC = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { executePendingAction } = useAuthJourneyPreservation();
+  const { user, session, sessionType, isAuthenticated } = useAuth();
 
   // Check for existing session on component mount
   useEffect(() => {
     const checkSession = async () => {
       try {
         console.log('UserLogin: Checking for existing session...');
-        const { data } = await supabase.auth.getSession();
         
-        if (data.session) {
-          console.log('UserLogin: Existing session found, checking for pending actions...');
+        // Properly check if user is authenticated
+        const isProperlyAuthenticated = user && session && sessionType && sessionType !== 'none';
+        
+        console.log('UserLogin: Auth check result:', {
+          user: !!user,
+          session: !!session,
+          sessionType,
+          isAuthenticated,
+          isProperlyAuthenticated
+        });
+        
+        if (isProperlyAuthenticated) {
+          console.log('UserLogin: User is properly authenticated, checking for pending actions...');
           
           // Check for pending actions first
           const pendingAction = executePendingAction();
@@ -37,6 +49,8 @@ const UserLogin: React.FC = () => {
           
           console.log('UserLogin: No pending action, redirecting to dashboard');
           navigate('/user-dashboard', { replace: true });
+        } else {
+          console.log('UserLogin: User not authenticated, staying on login page');
         }
       } catch (error) {
         console.error('UserLogin: Error checking session:', error);
@@ -46,7 +60,7 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate, executePendingAction]);
+  }, [navigate, executePendingAction, user, session, sessionType, isAuthenticated]);
 
   // Handle login form submission
   const handleLogin = async (email: string, password: string): Promise<boolean> => {

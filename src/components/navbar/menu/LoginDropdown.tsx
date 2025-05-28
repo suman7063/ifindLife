@@ -20,20 +20,27 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
   isAuthenticated, 
   hasExpertProfile 
 }) => {
-  console.log('LoginDropdown render state:', {
-    isAuthenticated,
-    hasExpertProfile,
-    isAuthenticatedType: typeof isAuthenticated,
-    hasExpertProfileType: typeof hasExpertProfile,
-    shouldShow: !isAuthenticated && !hasExpertProfile
-  });
-  
   // Convert undefined values to false for proper boolean logic
   const isUserAuthenticated = Boolean(isAuthenticated);
   const isExpertAuthenticated = Boolean(hasExpertProfile);
   
+  // Properly check if user is authenticated
+  const shouldShowLogin = !isUserAuthenticated && !isExpertAuthenticated;
+  
+  console.log('LoginDropdown auth check:', {
+    isAuthenticated,
+    hasExpertProfile,
+    isUserAuthenticated,
+    isExpertAuthenticated,
+    shouldShowLogin,
+    types: {
+      isAuthenticatedType: typeof isAuthenticated,
+      hasExpertProfileType: typeof hasExpertProfile
+    }
+  });
+  
   // If user is authenticated in any way, don't show login dropdown
-  if (isUserAuthenticated || isExpertAuthenticated) {
+  if (!shouldShowLogin) {
     console.log('LoginDropdown: User is authenticated, not showing dropdown');
     return null;
   }
