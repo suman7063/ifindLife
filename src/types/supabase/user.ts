@@ -66,8 +66,8 @@ export interface UserProfile {
   referred_by: string | null;
   referral_code: string;
   referral_link: string;
-  favorite_experts: string[] | number[];  // Updated to match unified type
-  favorite_programs: string[] | number[]; // Updated to match unified type
+  favorite_experts: string[]; // Fixed to be consistently string[]
+  favorite_programs: string[] | number[];
   enrolled_courses: Course[];
   reviews: Review[]; // Made required to match expectations
   reports: Report[]; // Made required to match expectations
@@ -76,5 +76,5 @@ export interface UserProfile {
   // Add these for improved type compatibility
   profilePicture?: string | null;
   walletBalance?: number;
-  favoriteExperts?: string[] | number[];
+  favoriteExperts?: string[];
 }

@@ -47,3 +47,29 @@ export function getProfilePicture(profile: UserProfile | null): string {
   if (!profile) return '';
   return profile.profile_picture || '';
 }
+
+// Adapter for transactions to ensure consistent property names
+export function adaptTransaction(transaction: any): any {
+  if (!transaction) return null;
+  
+  return {
+    ...transaction,
+    // Ensure both formats are available
+    date: transaction.date || transaction.created_at,
+    created_at: transaction.created_at || transaction.date,
+    type: transaction.type || transaction.transaction_type,
+    transaction_type: transaction.transaction_type || transaction.type
+  };
+}
+
+// Adapter for reviews to ensure consistent property names
+export function adaptReview(review: any): any {
+  if (!review) return null;
+  
+  return {
+    ...review,
+    expert_name: review.expert_name || review.expertName || 'Unknown Expert',
+    expertId: review.expertId || review.expert_id,
+    expert_id: review.expert_id || review.expertId
+  };
+}

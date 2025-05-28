@@ -21,7 +21,7 @@ export const useProfileTypeAdapter = () => {
       referred_by: profile.referred_by,
       referral_code: profile.referral_code,
       referral_link: profile.referral_link,
-      favorite_experts: profile.favorite_experts || [],
+      favorite_experts: Array.isArray(profile.favorite_experts) ? profile.favorite_experts.map(String) : [],
       favorite_programs: profile.favorite_programs || [],
       enrolled_courses: profile.enrolled_courses || [],
       reviews: profile.reviews || [],
@@ -31,12 +31,30 @@ export const useProfileTypeAdapter = () => {
       // Add camel case aliases for backward compatibility
       profilePicture: profile.profile_picture,
       walletBalance: profile.wallet_balance,
-      favoriteExperts: profile.favorite_experts || []
+      favoriteExperts: Array.isArray(profile.favorite_experts) ? profile.favorite_experts.map(String) : []
     };
   };
 
   const toTypeB = (profile: UserProfileA | UserProfile | null): UserProfileB | null => {
     if (!profile) return null;
+    
+    // Handle the different property name formats
+    const getProfilePicture = (p: any) => {
+      return p.profile_picture || p.profilePicture || '';
+    };
+    
+    const getWalletBalance = (p: any) => {
+      return p.wallet_balance || p.walletBalance || 0;
+    };
+    
+    const getFavoriteExperts = (p: any) => {
+      const experts = p.favorite_experts || p.favoriteExperts || [];
+      return Array.isArray(experts) ? experts : [];
+    };
+    
+    const getEnrolledCourses = (p: any) => {
+      return p.enrolled_courses || p.enrolledCourses || [];
+    };
     
     return {
       id: profile.id,
@@ -46,15 +64,15 @@ export const useProfileTypeAdapter = () => {
       country: profile.country,
       city: profile.city,
       currency: profile.currency,
-      profile_picture: 'profile_picture' in profile ? profile.profile_picture : profile.profilePicture,
-      wallet_balance: 'wallet_balance' in profile ? profile.wallet_balance : profile.walletBalance,
+      profile_picture: getProfilePicture(profile),
+      wallet_balance: getWalletBalance(profile),
       created_at: profile.created_at,
       referred_by: profile.referred_by,
       referral_code: profile.referral_code,
       referral_link: profile.referral_link,
-      favorite_experts: 'favorite_experts' in profile ? profile.favorite_experts : profile.favoriteExperts || [],
+      favorite_experts: getFavoriteExperts(profile),
       favorite_programs: profile.favorite_programs || [],
-      enrolled_courses: 'enrolled_courses' in profile ? profile.enrolled_courses : profile.enrolledCourses || [],
+      enrolled_courses: getEnrolledCourses(profile),
       reviews: profile.reviews || [],
       reports: profile.reports || [],
       transactions: profile.transactions || [],

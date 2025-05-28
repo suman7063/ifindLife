@@ -52,3 +52,13 @@ export interface AuthUser {
   email: string;
   role: 'user' | 'expert' | 'admin' | null;
 }
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  updated_at?: string;
+}
