@@ -1,34 +1,34 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 
 const ExpertDashboard = () => {
   const navigate = useNavigate();
   const [redirectAttempted, setRedirectAttempted] = useState(false);
   
-  // CRITICAL FIX: Use ONLY useExpertAuth for consistency
-  const expertAuth = useExpertAuth();
+  // Use unified auth context
+  const { isAuthenticated, sessionType, expert, isLoading } = useUnifiedAuth();
   
-  console.log('ExpertDashboard - Expert auth state:', {
-    isAuthenticated: expertAuth.isAuthenticated,
-    hasExpertProfile: !!expertAuth.currentExpert,
-    role: expertAuth.role,
-    isLoading: expertAuth.isLoading,
+  console.log('ExpertDashboard - Unified auth state:', {
+    isAuthenticated,
+    sessionType,
+    hasExpertProfile: !!expert,
+    isLoading,
     redirectAttempted
   });
 
   useEffect(() => {
     // Wait for loading to complete
-    if (expertAuth.isLoading) {
+    if (isLoading) {
       console.log('ExpertDashboard: Still loading, waiting...');
       return;
     }
 
     // Check authentication status
-    if (!expertAuth.isAuthenticated || !expertAuth.currentExpert) {
+    if (!isAuthenticated || sessionType !== 'expert' || !expert) {
       if (!redirectAttempted) {
-        console.log('ExpertDashboard: Not authenticated, redirecting to expert login');
+        console.log('ExpertDashboard: Not authenticated as expert, redirecting to expert login');
         setRedirectAttempted(true);
         navigate('/expert-login');
       }
@@ -38,10 +38,10 @@ const ExpertDashboard = () => {
     // If we get here, expert is authenticated and has profile
     console.log('ExpertDashboard: Expert is authenticated and has profile, showing dashboard');
     
-  }, [expertAuth.isAuthenticated, expertAuth.currentExpert, expertAuth.isLoading, navigate, redirectAttempted]);
+  }, [isAuthenticated, sessionType, expert, isLoading, navigate, redirectAttempted]);
 
   // Show loading state while authentication is being checked
-  if (expertAuth.isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -53,7 +53,7 @@ const ExpertDashboard = () => {
   }
 
   // Show loading state during redirect
-  if (!expertAuth.isAuthenticated || !expertAuth.currentExpert) {
+  if (!isAuthenticated || sessionType !== 'expert' || !expert) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -73,7 +73,7 @@ const ExpertDashboard = () => {
           <div className="px-4 py-5 sm:p-6">
             <h1 className="text-2xl font-bold text-gray-900">Expert Dashboard</h1>
             <p className="mt-1 text-sm text-gray-600">
-              Welcome back! Manage your expert services and consultations.
+              Welcome back, {expert.name || expert.email}! Manage your expert services and consultations.
             </p>
           </div>
         </div>
@@ -97,7 +97,7 @@ const ExpertDashboard = () => {
                       Profile Status
                     </dt>
                     <dd className="text-lg font-medium text-gray-900">
-                      Verified Expert
+                      {expert.status === 'approved' ? 'Verified Expert' : expert.status || 'Pending'}
                     </dd>
                   </dl>
                 </div>
@@ -181,11 +181,12 @@ const ExpertDashboard = () => {
         {/* Debug Info (Remove in production) */}
         <div className="mt-8 bg-gray-100 rounded-lg p-4 text-xs text-gray-600">
           <strong>Debug Info:</strong><br/>
-          Authenticated: {expertAuth.isAuthenticated ? 'Yes' : 'No'}<br/>
-          Has Profile: {expertAuth.currentExpert ? 'Yes' : 'No'}<br/>
-          Role: {expertAuth.role || 'None'}<br/>
-          Loading: {expertAuth.isLoading ? 'Yes' : 'No'}<br/>
-          Redirect Attempted: {redirectAttempted ? 'Yes' : 'No'}
+          Authenticated: {isAuthenticated ? 'Yes' : 'No'}<br/>
+          Session Type: {sessionType || 'None'}<br/>
+          Has Expert Profile: {expert ? 'Yes' : 'No'}<br/>
+          Loading: {isLoading ? 'Yes' : 'No'}<br/>
+          Redirect Attempted: {redirectAttempted ? 'Yes' : 'No'}<br/>
+          Expert Status: {expert?.status || 'N/A'}
         </div>
       </div>
     </div>

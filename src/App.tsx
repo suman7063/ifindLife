@@ -4,8 +4,6 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './AppRoutes';
 import { Toaster } from 'sonner';
 import { UnifiedAuthProvider } from './contexts/auth/UnifiedAuthContext';
-import { UserAuthProvider } from './contexts/auth/UserAuthProvider';
-import { AdminAuthProvider } from './contexts/admin-auth/AdminAuthProvider';
 import EmergencyFallback from './components/EmergencyFallback';
 
 // Add React debugging at app level
@@ -18,12 +16,8 @@ const App: React.FC = () => {
       <Router>
         <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
           <UnifiedAuthProvider>
-            <UserAuthProvider>
-              <AdminAuthProvider>
-                <AppRoutes />
-                <Toaster position="top-right" />
-              </AdminAuthProvider>
-            </UserAuthProvider>
+            <AppRoutes />
+            <Toaster position="top-right" />
           </UnifiedAuthProvider>
         </Suspense>
       </Router>

@@ -29,6 +29,7 @@ import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import ProgramsDemo from '@/pages/ProgramsDemo';
+import Earnings from './pages/Earnings';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -88,6 +89,9 @@ const AppRoutes = () => {
       
       {/* Programs Demo Route */}
       <Route path="/programs-demo" element={<ProgramsDemo />} />
+      
+      {/* Add the earnings route */}
+      <Route path="/earnings" element={<Earnings />} />
     </Routes>
   );
 };

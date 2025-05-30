@@ -5,7 +5,7 @@ import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -16,22 +16,24 @@ const ExpertLogin: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const expertAuth = useExpertAuth();
+  const { isAuthenticated, sessionType, expert, isLoading, login } = useUnifiedAuth();
   const [hasRedirected, setHasRedirected] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  console.log('ExpertLogin: Auth state (no Agora):', {
-    isAuthenticated: expertAuth.isAuthenticated,
-    hasExpertProfile: !!expertAuth.currentExpert,
-    isLoading: expertAuth.isLoading
+  console.log('ExpertLogin: Unified auth state:', {
+    isAuthenticated,
+    sessionType,
+    hasExpertProfile: !!expert,
+    isLoading
   });
 
-  // Check for existing authentication - pure auth logic only
+  // Check for existing authentication
   useEffect(() => {
     console.log('ExpertLogin: Auth state check:', {
-      isAuthenticated: expertAuth.isAuthenticated,
-      hasExpertProfile: !!expertAuth.currentExpert,
-      isLoading: expertAuth.isLoading
+      isAuthenticated,
+      sessionType,
+      hasExpertProfile: !!expert,
+      isLoading
     });
 
     // Check status from URL parameters
@@ -43,13 +45,13 @@ const ExpertLogin: React.FC = () => {
     }
 
     // Wait for auth loading to complete
-    if (expertAuth.isLoading) {
+    if (isLoading) {
       console.log('ExpertLogin: Still loading auth state...');
       return;
     }
 
-    // Only redirect if authenticated AND has expert profile AND hasn't redirected yet
-    if (expertAuth.isAuthenticated && expertAuth.currentExpert && !hasRedirected && !isRedirecting) {
+    // Only redirect if authenticated as expert AND has expert profile AND hasn't redirected yet
+    if (isAuthenticated && sessionType === 'expert' && expert && !hasRedirected && !isRedirecting) {
       console.log('ExpertLogin: Already authenticated as expert, redirecting to dashboard');
       setHasRedirected(true);
       setIsRedirecting(true);
@@ -59,32 +61,21 @@ const ExpertLogin: React.FC = () => {
         navigate('/expert-dashboard');
       }, 100);
     }
-  }, [expertAuth.isAuthenticated, expertAuth.currentExpert, expertAuth.isLoading, navigate, searchParams, hasRedirected, isRedirecting]);
+  }, [isAuthenticated, sessionType, expert, isLoading, navigate, searchParams, hasRedirected, isRedirecting]);
 
-  // Handle login with proper error handling - no Agora dependencies
+  // Handle login with unified auth
   const handleLogin = async (email: string, password: string) => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      console.log('ExpertLogin: Attempting login (auth only):', email);
+      console.log('ExpertLogin: Attempting login with unified auth:', email);
       
-      if (typeof expertAuth.login !== 'function') {
-        console.error('ExpertLogin: Login function not available');
-        setLoginError('Authentication service is not available. Please try again later.');
-        toast.error('Authentication service is not available. Please try again later.');
-        return false;
-      }
-      
-      const success = await expertAuth.login(email, password);
+      const success = await login('expert', { email, password, asExpert: true });
       
       if (success) {
         console.log('Expert login successful, will redirect shortly');
         toast.success('Login successful!');
-        
-        // Set session type to ensure consistency
-        localStorage.setItem('sessionType', 'expert');
-        localStorage.setItem('preferredRole', 'expert');
         
         // Add a small delay to allow auth state to update
         setTimeout(() => {
@@ -109,7 +100,7 @@ const ExpertLogin: React.FC = () => {
   };
 
   // Show loading while auth is being checked or during redirect
-  if (expertAuth.isLoading || isRedirecting) {
+  if (isLoading || isRedirecting) {
     return (
       <>
         <Navbar />
@@ -153,16 +144,6 @@ const ExpertLogin: React.FC = () => {
                   isLoggingIn={isLoggingIn}
                   loginError={loginError}
                 />
-              </div>
-
-              {/* Debug Info */}
-              <div className="mt-4 bg-gray-100 rounded-lg p-4 text-xs text-gray-600">
-                <strong>Debug Info:</strong><br/>
-                Authenticated: {expertAuth.isAuthenticated ? 'Yes' : 'No'}<br/>
-                Has Expert Profile: {expertAuth.currentExpert ? 'Yes' : 'No'}<br/>
-                Is Loading: {expertAuth.isLoading ? 'Yes' : 'No'}<br/>
-                Has Redirected: {hasRedirected ? 'Yes' : 'No'}<br/>
-                Is Redirecting: {isRedirecting ? 'Yes' : 'No'}
               </div>
             </div>
           </div>
