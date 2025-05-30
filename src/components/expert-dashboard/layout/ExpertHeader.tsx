@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Bell, LogOut } from 'lucide-react';
@@ -11,12 +11,23 @@ interface ExpertHeaderProps {
   expert?: any; // Optional expert object
 }
 
-const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert }) => {
-  const { logout, expertProfile } = useAuth();
+const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
+  const { logout, expert } = useUnifiedAuth();
   const navigate = useNavigate();
   
-  // Use provided expert or fallback to expertProfile from context
-  const displayExpert = expert || expertProfile;
+  // Use provided expert or fallback to expert from unified auth context
+  const displayExpert = propExpert || expert;
+  
+  // Generate proper initials from expert name
+  const getInitials = (name?: string) => {
+    if (!name) return 'E';
+    return name
+      .split(' ')
+      .map(part => part.charAt(0))
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
   
   const handleLogout = async () => {
     try {
@@ -54,9 +65,9 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert }) => {
         
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={displayExpert?.avatar_url || displayExpert?.profile_picture} alt={displayExpert?.name} />
+            <AvatarImage src={displayExpert?.profile_picture} alt={displayExpert?.name} />
             <AvatarFallback className="bg-ifind-teal text-white">
-              {displayExpert?.name?.charAt(0) || 'E'}
+              {getInitials(displayExpert?.name)}
             </AvatarFallback>
           </Avatar>
         </div>

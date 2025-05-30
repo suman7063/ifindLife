@@ -21,7 +21,9 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface SidebarLinkProps {
   href: string;
@@ -49,18 +51,30 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ href, icon, children, isActiv
 
 const ExpertSidebar = () => {
   const location = useLocation();
-  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const { logout } = useUnifiedAuth();
   
   // Function to check if a path is active
   const isActive = (path: string) => {
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Successfully logged out');
+      navigate('/expert-login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out. Please try again.');
+    }
+  };
+
   const sidebarContent = (
     <div className="flex flex-col h-full">
       <div className="p-6">
         <div className="flex items-center">
-          <img src="/ifindlife-logo.png" alt="iFind Life Logo" className="h-8" />
+          <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFind Life Logo" className="h-8" />
           <h1 className="text-xl font-bold ml-2">Expert Portal</h1>
         </div>
       </div>
@@ -132,22 +146,6 @@ const ExpertSidebar = () => {
           >
             Report User
           </SidebarLink>
-          
-          <SidebarLink
-            href="/expert-dashboard/analytics"
-            icon={<PieChart className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/analytics")}
-          >
-            Analytics
-          </SidebarLink>
-          
-          <SidebarLink
-            href="/expert-dashboard/settings"
-            icon={<Settings className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/settings")}
-          >
-            Settings
-          </SidebarLink>
         </div>
       </ScrollArea>
       
@@ -155,7 +153,7 @@ const ExpertSidebar = () => {
         <Button
           variant="ghost"
           className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50"
-          onClick={logout}
+          onClick={handleLogout}
         >
           <LogOut className="mr-2 h-5 w-5" />
           <span>Log Out</span>
