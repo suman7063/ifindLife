@@ -43,13 +43,12 @@ export const useAuthState = () => {
       hasUserAccount: !!userProfile
     };
     
-    console.log('Auth state being set:', {
+    console.log('useAuthState: Updating auth state:', {
       hasUser: !!user,
       hasSession: !!session,
       sessionType,
       isAuthenticated,
-      userEmail: user?.email,
-      newStateKeys: Object.keys(newState)
+      userEmail: user?.email
     });
     
     setState(newState);
@@ -62,7 +61,7 @@ export const useAuthState = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state change event:', event, session ? 'Session exists' : 'No session');
+        console.log('useAuthState: Auth state change event:', event);
         
         if (!mounted) return;
 
@@ -72,7 +71,7 @@ export const useAuthState = () => {
             updateAuthState(session.user, session, null, null, true);
 
             // Get session type from localStorage or determine from profiles
-            let sessionType = localStorage.getItem('sessionType') as SessionType;
+            const storedSessionType = localStorage.getItem('sessionType') as SessionType;
             
             // Fetch profiles to determine proper session type
             let userProfile = null;
@@ -91,25 +90,33 @@ export const useAuthState = () => {
               expertProfile = expertResult.value;
             }
 
-            // Determine proper session type based on available profiles
-            const actualSessionType = determineSessionType(userProfile, expertProfile);
+            // Determine proper session type based on available profiles and stored preference
+            let actualSessionType = determineSessionType(userProfile, expertProfile);
+            
+            // If we have a stored preference and the corresponding profile exists, use it
+            if (storedSessionType === 'expert' && expertProfile) {
+              actualSessionType = 'expert';
+            } else if (storedSessionType === 'user' && userProfile) {
+              actualSessionType = 'user';
+            }
             
             // Update localStorage with correct session type
             if (actualSessionType !== 'none') {
               localStorage.setItem('sessionType', actualSessionType);
             }
 
-            console.log('Auth profiles loaded:', {
+            console.log('useAuthState: Profiles loaded:', {
               userProfile: !!userProfile,
               expertProfile: !!expertProfile,
-              sessionType: actualSessionType
+              storedSessionType,
+              actualSessionType
             });
 
             // Final state update with all data
             updateAuthState(session.user, session, userProfile, expertProfile, false);
 
           } catch (error) {
-            console.error('Error fetching user profiles:', error);
+            console.error('useAuthState: Error fetching user profiles:', error);
             updateAuthState(session.user, session, null, null, false);
           }
         } else {
@@ -124,10 +131,10 @@ export const useAuthState = () => {
     const initializeAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Initial session check:', session ? 'Session exists' : 'No session');
+        console.log('useAuthState: Initial session check:', session ? 'Session exists' : 'No session');
         // The onAuthStateChange will handle this, so we don't need to duplicate logic here
       } catch (error) {
-        console.error('Error checking initial session:', error);
+        console.error('useAuthState: Error checking initial session:', error);
         setState(prev => ({
           ...prev,
           isLoading: false,
@@ -143,19 +150,6 @@ export const useAuthState = () => {
       subscription.unsubscribe();
     };
   }, []);
-
-  // Add debugging for auth state changes
-  useEffect(() => {
-    console.log('Auth state updated:', {
-      hasUser: !!state.user,
-      hasSession: !!state.session,
-      sessionType: state.sessionType,
-      userProfile: !!state.userProfile,
-      expertProfile: !!state.expertProfile,
-      isLoading: state.isLoading,
-      isAuthenticated: state.isAuthenticated
-    });
-  }, [state.user, state.session, state.sessionType, state.userProfile, state.expertProfile, state.isLoading, state.isAuthenticated]);
 
   return state;
 };

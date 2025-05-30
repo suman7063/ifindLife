@@ -15,34 +15,31 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Create a refresh callback
   const refreshCallback = useCallback(() => {
     console.log('Auth state refresh triggered');
-    // The refresh will be handled by the auth state listener
+    // Force a re-render by updating a timestamp or similar mechanism
+    // The auth state listener will handle the actual refresh
   }, []);
   
   // Get actions from hook
   const actions = useAuthActions(authState, refreshCallback);
   
-  // Verify login function exists and log initialization
+  // Log auth state changes for debugging
   useEffect(() => {
-    console.log('AuthProvider: Initializing with state:', {
+    console.log('AuthProvider: Auth state updated:', {
       isAuthenticated: authState.isAuthenticated,
       isLoading: authState.isLoading,
       role: authState.role,
+      sessionType: authState.sessionType,
+      hasUser: !!authState.user,
+      hasSession: !!authState.session,
       hasUserProfile: !!authState.userProfile,
-      hasExpertProfile: !!authState.expertProfile,
-      sessionType: authState.sessionType
+      hasExpertProfile: !!authState.expertProfile
     });
-
-    console.log('AuthProvider: Actions initialized:', {
-      hasLogin: !!actions.login,
-      loginType: typeof actions.login,
-      hasSignup: !!actions.signup,
-      hasLogout: !!actions.logout
-    });
-  }, [authState, actions]);
+  }, [authState]);
   
   // Combine state and actions with proper memoization
   const contextValue = useMemo(() => {
     const value = {
+      // Auth state
       user: authState.user,
       session: authState.session,
       userProfile: authState.userProfile,
@@ -55,22 +52,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       error: authState.error,
       walletBalance: authState.walletBalance,
       hasUserAccount: authState.hasUserAccount,
+      
+      // Auth actions
       ...actions
     };
 
-    console.log('Auth context providing value:', {
-      hasUser: !!value.user,
-      hasSession: !!value.session,
-      sessionType: value.sessionType,
-      isAuthenticated: value.isAuthenticated,
-      isLoading: value.isLoading,
-      hasLoginFunction: !!value.login
-    });
-
+    console.log('AuthProvider: Context value created with login function:', !!value.login);
     return value;
   }, [authState, actions]);
-
-  console.log('AuthProvider rendering with login function:', !!contextValue.login);
 
   return (
     <AuthContext.Provider value={contextValue}>
