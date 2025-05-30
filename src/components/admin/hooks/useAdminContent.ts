@@ -17,23 +17,23 @@ export const useAdminContent = () => {
   const ERROR_RESET_TIME = 30000; // 30 seconds
 
   // Stabilized refresh function with circuit breaker
-  const refreshData = useCallback(async () => {
-    console.log('useAdminContent: Starting data refresh...');
+  const refreshData = useCallback(async (forceRefresh = false) => {
+    console.log('useAdminContent: Starting data refresh...', { forceRefresh });
     
-    // Circuit breaker logic
+    // Circuit breaker logic - but allow force refresh
     const now = Date.now();
     if (now - lastErrorTimeRef.current > ERROR_RESET_TIME) {
       errorCountRef.current = 0;
     }
     
-    if (errorCountRef.current >= MAX_ERRORS) {
+    if (!forceRefresh && errorCountRef.current >= MAX_ERRORS) {
       console.log('useAdminContent: Circuit breaker triggered, too many errors');
       setError('Too many errors occurred. Please refresh the page manually.');
       setLoading(false);
       return;
     }
     
-    if (loading && dataLoadedOnce) {
+    if (!forceRefresh && loading && dataLoadedOnce) {
       console.log('useAdminContent: Already loading data, skipping refresh');
       return;
     }
@@ -42,7 +42,7 @@ export const useAdminContent = () => {
     setError(null);
 
     try {
-      // Load services with simplified query (no RLS issues now)
+      // Load services
       console.log('useAdminContent: Fetching services...');
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
@@ -54,7 +54,7 @@ export const useAdminContent = () => {
         throw new Error(`Services: ${servicesError.message}`);
       }
 
-      // Load experts (both approved and pending)
+      // Load expert accounts (both approved and pending) - this is the main table for expert applications
       console.log('useAdminContent: Fetching expert accounts...');
       const { data: expertsData, error: expertsError } = await supabase
         .from('expert_accounts')
@@ -62,8 +62,9 @@ export const useAdminContent = () => {
         .order('created_at', { ascending: false });
 
       if (expertsError) {
-        console.error('useAdminContent: Experts error:', expertsError);
-        throw new Error(`Expert accounts: ${expertsError.message}`);
+        console.error('useAdminContent: Expert accounts error:', expertsError);
+        // Don't throw error here, just log it and continue with empty array
+        console.warn('useAdminContent: Could not fetch expert accounts, continuing with empty array');
       }
 
       // Load testimonials
@@ -75,7 +76,8 @@ export const useAdminContent = () => {
 
       if (testimonialsError) {
         console.error('useAdminContent: Testimonials error:', testimonialsError);
-        throw new Error(`Testimonials: ${testimonialsError.message}`);
+        // Don't throw error here, just log it
+        console.warn('useAdminContent: Could not fetch testimonials, continuing with empty array');
       }
 
       console.log('useAdminContent: Data loaded successfully:', {
@@ -100,15 +102,23 @@ export const useAdminContent = () => {
     } finally {
       setLoading(false);
     }
-  }, [loading, dataLoadedOnce]); // Removed unnecessary dependencies
+  }, [loading, dataLoadedOnce]);
 
-  // Load data once on mount - with dependency array fixed
+  // Load data once on mount
   useEffect(() => {
     if (!dataLoadedOnce && errorCountRef.current < MAX_ERRORS) {
       console.log('useAdminContent: Initial data load');
       refreshData();
     }
-  }, [dataLoadedOnce]); // Only depend on dataLoadedOnce, not refreshData
+  }, [dataLoadedOnce]);
+
+  // Force refresh function for manual refresh
+  const forceRefresh = useCallback(() => {
+    console.log('useAdminContent: Force refresh requested');
+    setDataLoadedOnce(false);
+    errorCountRef.current = 0; // Reset error count
+    refreshData(true);
+  }, [refreshData]);
 
   return {
     experts,
@@ -119,6 +129,7 @@ export const useAdminContent = () => {
     setTestimonials,
     loading,
     error,
-    refreshData
+    refreshData,
+    forceRefresh
   };
 };

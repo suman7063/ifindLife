@@ -46,7 +46,8 @@ const Admin = () => {
     testimonials, setTestimonials,
     loading: contentLoading,
     error,
-    refreshData
+    refreshData,
+    forceRefresh
   } = useAdminContent();
 
   // Enhanced retry functionality with circuit breaker
@@ -55,12 +56,21 @@ const Admin = () => {
       setRetryCount(prev => prev + 1);
       setCriticalError(null);
       toast.info(`Retrying data load (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
-      refreshData();
+      forceRefresh();
     } else {
       setCriticalError("Maximum retry attempts reached. Please refresh the page manually.");
       toast.error("Maximum retry attempts reached");
     }
-  }, [retryCount, refreshData, MAX_RETRIES]);
+  }, [retryCount, forceRefresh, MAX_RETRIES]);
+
+  // Handle force refresh from user action
+  const handleForceRefresh = useCallback(() => {
+    console.log('Admin: Force refresh requested by user');
+    setRetryCount(0);
+    setCriticalError(null);
+    toast.info('Refreshing data...');
+    forceRefresh();
+  }, [forceRefresh]);
 
   // Handle critical errors
   const handleCriticalError = useCallback(() => {
@@ -195,7 +205,7 @@ const Admin = () => {
           testimonials={testimonials}
           setTestimonials={setTestimonials}
           error={error}
-          onRefresh={refreshData}
+          onRefresh={handleForceRefresh}
         />
       )}
     </AdminDashboardLayout>
