@@ -20,33 +20,27 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
   isAuthenticated, 
   hasExpertProfile 
 }) => {
-  // Convert to proper booleans and add detailed logging
-  const isUserAuthenticated = Boolean(isAuthenticated);
-  const isExpertAuthenticated = Boolean(hasExpertProfile);
-  
-  // User is authenticated if they have ANY valid authentication
-  const hasAnyAuthentication = isUserAuthenticated || isExpertAuthenticated;
-  
-  console.log('LoginDropdown received props:', {
-    isAuthenticated,
-    hasExpertProfile,
-    isUserAuthenticated,
-    isExpertAuthenticated,
-    hasAnyAuthentication,
-    propsTypes: {
-      isAuthenticated: typeof isAuthenticated,
-      hasExpertProfile: typeof hasExpertProfile
-    }
+  // Enhanced auth state logging for debugging
+  console.log('LoginDropdown detailed auth check:', {
+    isAuthenticated: Boolean(isAuthenticated),
+    hasExpertProfile: Boolean(hasExpertProfile),
+    authType: typeof isAuthenticated,
+    expertType: typeof hasExpertProfile,
+    timestamp: new Date().toISOString()
   });
+
+  // Check multiple authentication criteria - user has ANY valid authentication
+  const hasAnyAuthentication = Boolean(isAuthenticated) || Boolean(hasExpertProfile);
   
-  console.log('LoginDropdown final decision:', { 
+  console.log('LoginDropdown authentication decision:', { 
     hasAnyAuthentication,
-    shouldShowLogin: !hasAnyAuthentication 
+    shouldShowLogin: !hasAnyAuthentication,
+    finalDecision: hasAnyAuthentication ? 'HIDE_LOGIN' : 'SHOW_LOGIN'
   });
   
   // If user has any authentication, don't show login dropdown
   if (hasAnyAuthentication) {
-    console.log('LoginDropdown: User has authentication, not showing dropdown');
+    console.log('LoginDropdown: User has authentication, hiding login dropdown');
     return null;
   }
   

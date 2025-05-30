@@ -19,13 +19,13 @@ const UserLogin: React.FC = () => {
   const { executePendingAction } = useAuthJourneyPreservation();
   const authState = useAuth();
 
-  console.log('UserLogin auth check:', {
+  console.log('UserLogin: Current auth state:', {
     hasUser: !!authState?.user,
     hasSession: !!authState?.session,
     sessionType: authState?.sessionType,
     isAuthenticated: authState?.isAuthenticated,
     isLoading: authState?.isLoading,
-    authStateKeys: authState ? Object.keys(authState) : 'null'
+    userEmail: authState?.user?.email
   });
 
   // Check for existing session on component mount
@@ -40,11 +40,16 @@ const UserLogin: React.FC = () => {
           return;
         }
         
-        // Properly check if user is authenticated using multiple criteria
-        const isProperlyAuthenticated = authState?.isAuthenticated || 
-          (authState?.user && authState?.session && authState?.sessionType && authState?.sessionType !== 'none');
+        // Enhanced authentication check
+        const isProperlyAuthenticated = !!(
+          authState?.user && 
+          authState?.session && 
+          authState?.sessionType && 
+          authState?.sessionType !== 'none' && 
+          authState?.isAuthenticated
+        );
         
-        console.log('UserLogin: Auth check result:', {
+        console.log('UserLogin: Enhanced auth check result:', {
           user: !!authState?.user,
           session: !!authState?.session,
           sessionType: authState?.sessionType,
@@ -61,13 +66,12 @@ const UserLogin: React.FC = () => {
             const pendingAction = executePendingAction();
             if (pendingAction) {
               console.log('UserLogin: Found pending action, executing:', pendingAction);
-              // Let the auth system handle the redirect based on pending action
               return;
             }
             
             console.log('UserLogin: No pending action, redirecting to dashboard');
             navigate('/user-dashboard', { replace: true });
-          }, 100); // Small delay to ensure state is fully updated
+          }, 100);
         } else {
           console.log('UserLogin: User not authenticated, staying on login page');
         }
@@ -79,38 +83,22 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate, executePendingAction, authState?.user, authState?.session, authState?.sessionType, authState?.isAuthenticated, authState?.isLoading]);
+  }, [navigate, executePendingAction, authState]);
 
-  // Handle login form submission
+  // Handle login form submission with enhanced logging
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
-      toast.error('Please enter both email and password', {
-        duration: 2000
-      });
+      toast.error('Please enter both email and password', { duration: 2000 });
       return false;
     }
     
     try {
       setIsLoggingIn(true);
-      console.log('UserLogin: Attempting login with:', email);
-      
-      // First check if user exists in the users table
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .maybeSingle();
-        
-      if (userError) {
-        console.error('Error checking user:', userError);
-        toast.error('An error occurred while checking user', {
-          duration: 2000
-        });
-        return false;
-      }
+      console.log('UserLogin: Attempting login with enhanced flow:', email);
       
       // Set session type before login attempt
       localStorage.setItem('sessionType', 'user');
+      console.log('UserLogin: Session type set to user');
       
       // Proceed with login
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -119,42 +107,35 @@ const UserLogin: React.FC = () => {
       });
       
       if (error) {
-        console.error('Login error:', error);
-        toast.error(error.message || 'Invalid email or password', {
-          duration: 2000
-        });
+        console.error('UserLogin: Login error:', error);
+        toast.error(error.message || 'Invalid email or password', { duration: 2000 });
         return false;
       }
       
       if (!data.user || !data.session) {
-        toast.error('Login failed. Please try again.', {
-          duration: 2000
-        });
+        console.error('UserLogin: No user or session returned');
+        toast.error('Login failed. Please try again.', { duration: 2000 });
         return false;
       }
       
-      toast.success('Login successful!', {
-        duration: 2000
-      });
+      console.log('UserLogin: Login successful, user ID:', data.user.id);
+      toast.success('Login successful!', { duration: 2000 });
       
-      // Wait for auth state to update, then check for pending actions
+      // Wait longer for auth state to fully update
       setTimeout(() => {
         const pendingAction = executePendingAction();
         if (pendingAction) {
           console.log('UserLogin: Found pending action after login, executing:', pendingAction);
-          // The useAuthJourneyPreservation hook will handle the redirect
         } else {
           console.log('UserLogin: No pending action, redirecting to dashboard');
           navigate('/user-dashboard', { replace: true });
         }
-      }, 1500); // Allow time for auth state to fully update
+      }, 2000); // Increased wait time for auth state to propagate
       
       return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
-      toast.error('An unexpected error occurred', {
-        duration: 2000
-      });
+      toast.error('An unexpected error occurred', { duration: 2000 });
       return false;
     } finally {
       setIsLoggingIn(false);
@@ -177,7 +158,7 @@ const UserLogin: React.FC = () => {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Redirecting...</span>
+        <span className="ml-2">Redirecting to dashboard...</span>
       </div>
     );
   }

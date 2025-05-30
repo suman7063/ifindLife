@@ -1,152 +1,98 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-import { Expert } from '@/components/admin/experts/types';
-import { useExpertsData } from './useExpertsData';
-import { useServicesData, ServiceCategory } from './useServicesData';
-import { useTestimonialsData, Testimonial } from './testimonials';
-import { loadContentFromLocalStorage, saveContentToLocalStorage } from './utils/dataLoaders';
+import { supabase } from '@/lib/supabase';
 
-interface AdminContent {
-  experts: Expert[];
-  services: ServiceCategory[];
-  testimonials: Testimonial[];
-  loading: boolean;
-}
-
-export const useAdminContent = (): AdminContent & {
-  setExperts: React.Dispatch<React.SetStateAction<Expert[]>>;
-  setServices: React.Dispatch<React.SetStateAction<ServiceCategory[]>>;
-  setTestimonials: React.Dispatch<React.SetStateAction<Testimonial[]>>;
-  error?: string | null;
-  refreshData: () => void;
-} => {
+export const useAdminContent = () => {
+  const [experts, setExperts] = useState([]);
+  const [services, setServices] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [initialData, setInitialData] = useState<{
-    experts: Expert[];
-    services: ServiceCategory[];
-    testimonials: Testimonial[];
-  }>({
-    experts: [],
-    services: [],
-    testimonials: []
-  });
+  const [dataLoadedOnce, setDataLoadedOnce] = useState(false);
 
-  // Function to force refresh data
-  const refreshData = useCallback(() => {
-    toast.info("Refreshing data...");
-    setRefreshTrigger(prev => prev + 1);
-  }, []);
-
-  // Load content from localStorage and Supabase on initial mount
-  useEffect(() => {
-    const loadContent = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        // Try to load content from localStorage
-        const parsedContent = loadContentFromLocalStorage();
-        
-        if (parsedContent) {
-          setInitialData({
-            experts: parsedContent.experts || [],
-            services: parsedContent.services || [],
-            testimonials: parsedContent.testimonials || []
-          });
-        }
-      } catch (err) {
-        console.error('Error loading content:', err);
-        const errorMessage = err instanceof Error ? err.message : 'Error loading initial content';
-        setError(errorMessage);
-        toast.error('Error loading content');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Stabilized refresh function
+  const refreshData = useCallback(async () => {
+    console.log('useAdminContent: Starting data refresh...');
     
-    loadContent();
-  }, [refreshTrigger]); // Add refreshTrigger to dependencies
-
-  // Use the smaller hooks with the update callback
-  const { 
-    experts, 
-    setExperts, 
-    loading: expertsLoading, 
-    error: expertsError 
-  } = useExpertsData(
-    initialData.experts, 
-    loading,
-    (newExperts) => updateContent({ experts: newExperts })
-  );
-  
-  const { 
-    services, 
-    setServices, 
-    loading: servicesLoading, 
-    error: servicesError 
-  } = useServicesData(
-    initialData.services,
-    (newServices) => updateContent({ services: newServices })
-  );
-  
-  // Use the testimonials hook
-  const testimonialsHook = useTestimonialsData(
-    initialData.testimonials,
-    (newTestimonials) => updateContent({ testimonials: newTestimonials })
-  );
-  
-  // Create update callback for content changes
-  const updateContent = useCallback((newContent: Partial<AdminContent>) => {
-    if (loading) return;
-    
-    // Create a merged content object
-    const content = {
-      experts: newContent.experts || experts,
-      services: newContent.services || services,
-      testimonials: newContent.testimonials || testimonialsHook.testimonials
-    };
-    
-    // Save to localStorage with error handling
-    try {
-      saveContentToLocalStorage(content);
-    } catch (e) {
-      console.error("Failed to save content to localStorage:", e);
-      toast.error("Failed to save changes locally");
+    if (loading && dataLoadedOnce) {
+      console.log('useAdminContent: Already loading data, skipping refresh');
+      return;
     }
-  }, [loading, experts, services, testimonialsHook.testimonials]);
 
-  // Update overall loading state
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Load services
+      console.log('useAdminContent: Fetching services...');
+      const { data: servicesData, error: servicesError } = await supabase
+        .from('services')
+        .select('*')
+        .order('id', { ascending: true });
+
+      if (servicesError) {
+        console.error('useAdminContent: Services error:', servicesError);
+        throw new Error(`Services: ${servicesError.message}`);
+      }
+
+      // Load experts (both approved and pending)
+      console.log('useAdminContent: Fetching expert accounts...');
+      const { data: expertsData, error: expertsError } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (expertsError) {
+        console.error('useAdminContent: Experts error:', expertsError);
+        throw new Error(`Expert accounts: ${expertsError.message}`);
+      }
+
+      // Load testimonials
+      console.log('useAdminContent: Fetching testimonials...');
+      const { data: testimonialsData, error: testimonialsError } = await supabase
+        .from('testimonials')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (testimonialsError) {
+        console.error('useAdminContent: Testimonials error:', testimonialsError);
+        throw new Error(`Testimonials: ${testimonialsError.message}`);
+      }
+
+      console.log('useAdminContent: Data loaded successfully:', {
+        services: servicesData?.length || 0,
+        experts: expertsData?.length || 0,
+        testimonials: testimonialsData?.length || 0
+      });
+
+      setServices(servicesData || []);
+      setExperts(expertsData || []);
+      setTestimonials(testimonialsData || []);
+      setDataLoadedOnce(true);
+
+    } catch (error: any) {
+      console.error('useAdminContent: Error loading data:', error);
+      setError(error.message || 'Failed to load admin data');
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, dataLoadedOnce]);
+
+  // Load data once on mount
   useEffect(() => {
-    setLoading(expertsLoading || servicesLoading);
-    
-    // Set error if any loading hook has an error - Convert all errors to strings
-    if (expertsError) setError(String(expertsError));
-    else if (servicesError) setError(String(servicesError));
-    else if (testimonialsHook.error) setError(String(testimonialsHook.error));
-    else setError(null);
-  }, [expertsLoading, servicesLoading, expertsError, servicesError, testimonialsHook.error]);
-
-  // Save content to localStorage whenever it changes
-  useEffect(() => {
-    if (loading) return;
-
-    updateContent({
-      experts,
-      services,
-      testimonials: testimonialsHook.testimonials
-    });
-  }, [experts, services, testimonialsHook.testimonials, loading, updateContent]);
+    if (!dataLoadedOnce) {
+      console.log('useAdminContent: Initial data load');
+      refreshData();
+    }
+  }, [refreshData, dataLoadedOnce]);
 
   return {
     experts,
     setExperts,
     services,
     setServices,
-    testimonials: testimonialsHook.testimonials,
-    setTestimonials: testimonialsHook.setTestimonials,
+    testimonials,
+    setTestimonials,
     loading,
     error,
     refreshData

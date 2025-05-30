@@ -29,23 +29,21 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
-  // Convert undefined values to proper booleans for reliable checking
+  // Enhanced logging for debugging
+  console.log('NavbarDesktopLinks render with enhanced state:', {
+    isAuthenticated: Boolean(isAuthenticated),
+    hasCurrentUser: Boolean(currentUser),
+    hasExpertProfile: Boolean(hasExpertProfile),
+    sessionType,
+    isLoggingOut,
+    currentUserEmail: currentUser?.email || 'null',
+    timestamp: new Date().toISOString()
+  });
+
+  // Convert to proper booleans for reliable checking
   const isUserAuthenticated = Boolean(isAuthenticated);
   const isExpertAuthenticated = Boolean(hasExpertProfile);
   const hasUserData = Boolean(currentUser);
-  
-  console.log('NavbarDesktopLinks render state:', {
-    isAuthenticated,
-    isUserAuthenticated,
-    currentUser: !!currentUser,
-    hasExpertProfile,
-    isExpertAuthenticated,
-    sessionType,
-    authTypes: {
-      isAuthenticatedType: typeof isAuthenticated,
-      hasExpertProfileType: typeof hasExpertProfile
-    }
-  });
   
   // Wait for auth to finish loading if needed
   if (sessionType === undefined) {
@@ -75,21 +73,21 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     );
   }
   
-  // Determine which auth UI to show
+  // Determine which auth UI to show with priority logic
   let authComponent;
   
   if (isExpertAuthenticated) {
-    console.log('NavbarDesktopLinks: Showing expert menu');
+    console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
     authComponent = <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
   } else if (isUserAuthenticated && hasUserData) {
-    console.log('NavbarDesktopLinks: Showing user avatar');
+    console.log('NavbarDesktopLinks: Showing user avatar for authenticated user');
     authComponent = <NavbarUserAvatar 
       currentUser={currentUser} 
       onLogout={userLogout} 
       isLoggingOut={isLoggingOut} 
     />;
   } else {
-    console.log('NavbarDesktopLinks: Showing login dropdown');
+    console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
     authComponent = <LoginDropdown 
       isAuthenticated={isUserAuthenticated} 
       hasExpertProfile={isExpertAuthenticated} 

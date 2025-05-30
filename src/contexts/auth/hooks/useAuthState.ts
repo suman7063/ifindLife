@@ -43,12 +43,15 @@ export const useAuthState = () => {
       hasUserAccount: !!userProfile
     };
     
-    console.log('useAuthState: Updating auth state:', {
+    console.log('useAuthState: Updating auth state with final decision:', {
       hasUser: !!user,
       hasSession: !!session,
       sessionType,
       isAuthenticated,
-      userEmail: user?.email
+      userEmail: user?.email,
+      hasUserProfile: !!userProfile,
+      hasExpertProfile: !!expertProfile,
+      timestamp: new Date().toISOString()
     });
     
     setState(newState);
@@ -61,7 +64,7 @@ export const useAuthState = () => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('useAuthState: Auth state change event:', event);
+        console.log('useAuthState: Auth state change event:', event, 'Session exists:', !!session);
         
         if (!mounted) return;
 
@@ -70,24 +73,30 @@ export const useAuthState = () => {
             // Set loading state first
             updateAuthState(session.user, session, null, null, true);
 
-            // Get session type from localStorage or determine from profiles
+            // Get session type from localStorage
             const storedSessionType = localStorage.getItem('sessionType') as SessionType;
+            console.log('useAuthState: Stored session type:', storedSessionType);
             
-            // Fetch profiles to determine proper session type
+            // Fetch profiles based on session type or both if unknown
             let userProfile = null;
             let expertProfile = null;
 
-            // Always try to fetch both profiles to determine proper session type
-            const [userResult, expertResult] = await Promise.allSettled([
-              userRepository.getUser(session.user.id),
-              expertRepository.getExpertByAuthId(session.user.id)
-            ]);
-
-            if (userResult.status === 'fulfilled') {
-              userProfile = userResult.value;
+            if (!storedSessionType || storedSessionType === 'user') {
+              try {
+                userProfile = await userRepository.getUser(session.user.id);
+                console.log('useAuthState: User profile loaded:', !!userProfile);
+              } catch (error) {
+                console.log('useAuthState: No user profile found');
+              }
             }
-            if (expertResult.status === 'fulfilled') {
-              expertProfile = expertResult.value;
+
+            if (!storedSessionType || storedSessionType === 'expert') {
+              try {
+                expertProfile = await expertRepository.getExpertByAuthId(session.user.id);
+                console.log('useAuthState: Expert profile loaded:', !!expertProfile);
+              } catch (error) {
+                console.log('useAuthState: No expert profile found');
+              }
             }
 
             // Determine proper session type based on available profiles and stored preference
@@ -105,7 +114,7 @@ export const useAuthState = () => {
               localStorage.setItem('sessionType', actualSessionType);
             }
 
-            console.log('useAuthState: Profiles loaded:', {
+            console.log('useAuthState: Final profile resolution:', {
               userProfile: !!userProfile,
               expertProfile: !!expertProfile,
               storedSessionType,
@@ -121,6 +130,7 @@ export const useAuthState = () => {
           }
         } else {
           // No session - reset to initial state
+          console.log('useAuthState: No session, resetting state');
           localStorage.removeItem('sessionType');
           updateAuthState(null, null, null, null, false);
         }

@@ -1,12 +1,8 @@
 
-import React, { ReactNode, createContext, useContext, useState, useEffect } from 'react';
+import React, { ReactNode, createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AdminUser, AdminRole, AdminPermissions } from './types';
 import { testCredentials } from './constants';
-
-// Add React debugging
-console.log('AdminAuthProvider - React available:', !!React);
-console.log('AdminAuthProvider - createContext available:', !!createContext);
 
 interface AdminAuthContextType {
   isAuthenticated: boolean;
@@ -78,10 +74,11 @@ const createAdminUser = (userData: Partial<AdminUser> & { id: string; username: 
 export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   console.log('AdminAuthProvider rendering...');
   
-  // State management directly in provider to avoid hook issues
+  // State management with stable initialization
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
+  const [checkCompleted, setCheckCompleted] = useState<boolean>(false);
   
   // Mock admin users for testing
   const [adminUsers] = useState<AdminUser[]>([
@@ -97,48 +94,63 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     })
   ]);
 
-  // Check authentication status on mount
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        console.log('Checking admin auth status...');
-        const { data } = await supabase.auth.getSession();
+  // Stabilized auth check function with useCallback
+  const checkAuthStatus = useCallback(async () => {
+    if (checkCompleted) {
+      console.log('AdminAuthProvider: Auth check already completed, skipping');
+      return;
+    }
+
+    try {
+      console.log('AdminAuthProvider: Starting auth status check...');
+      const { data } = await supabase.auth.getSession();
+      
+      if (data.session && data.session.user.email?.includes('@ifindlife.com')) {
+        console.log('AdminAuthProvider: Valid admin session found');
+        const adminUser = createAdminUser({
+          id: data.session.user.id,
+          username: 'IFLsuperadmin',
+          email: data.session.user.email,
+          role: 'super_admin',
+          permissions: DEFAULT_PERMISSIONS,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString()
+        });
         
-        if (data.session && data.session.user.email?.includes('@ifindlife.com')) {
-          const adminUser = createAdminUser({
-            id: data.session.user.id,
-            username: 'IFLsuperadmin',
-            email: data.session.user.email,
-            role: 'super_admin',
-            permissions: DEFAULT_PERMISSIONS,
-            isActive: true,
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString()
-          });
-          
-          setCurrentUser(adminUser);
-          setIsAuthenticated(true);
-          console.log('Admin authenticated successfully');
-        }
-      } catch (error) {
-        console.error('Error checking admin auth status:', error);
-      } finally {
-        setIsLoading(false);
+        setCurrentUser(adminUser);
+        setIsAuthenticated(true);
+        console.log('AdminAuthProvider: Admin authenticated successfully');
+      } else {
+        console.log('AdminAuthProvider: No valid admin session found');
+        setCurrentUser(null);
+        setIsAuthenticated(false);
       }
-    };
-    
+    } catch (error) {
+      console.error('AdminAuthProvider: Error checking auth status:', error);
+      setCurrentUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
+      setCheckCompleted(true);
+      console.log('AdminAuthProvider: Auth check completed');
+    }
+  }, [checkCompleted]);
+
+  // Check authentication status on mount - only once
+  useEffect(() => {
     checkAuthStatus();
-  }, []);
+  }, [checkAuthStatus]);
 
   const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {
-    console.log(`AdminAuth: Login attempt for ${usernameOrEmail}`);
+    console.log(`AdminAuthProvider: Login attempt for ${usernameOrEmail}`);
     
     try {
       const normalizedInput = usernameOrEmail.toLowerCase();
       
       if (normalizedInput === testCredentials.iflsuperadmin.username.toLowerCase() && 
          password === testCredentials.iflsuperadmin.password) {
-        console.log(`AdminAuth: Test credential match found for ${usernameOrEmail}`);
+        console.log(`AdminAuthProvider: Test credential match found for ${usernameOrEmail}`);
         
         const email = `${testCredentials.iflsuperadmin.username}@ifindlife.com`;
         
@@ -148,8 +160,8 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
         });
         
         if (error) {
-          console.error('AdminAuth: Supabase auth error for test account:', error);
-          console.log('AdminAuth: Using mock authentication for test account');
+          console.error('AdminAuthProvider: Supabase auth error for test account:', error);
+          console.log('AdminAuthProvider: Using mock authentication for test account');
           
           // Mock authentication for test account
           const adminUser = createAdminUser({
@@ -168,7 +180,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
           return true;
         }
         
-        console.log('AdminAuth: Test account login successful with Supabase');
+        console.log('AdminAuthProvider: Test account login successful with Supabase');
         
         const adminUser = createAdminUser({
           id: data.user.id,
@@ -186,10 +198,10 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
         return true;
       }
       
-      console.log('AdminAuth: Invalid credentials - only IFLsuperadmin is allowed');
+      console.log('AdminAuthProvider: Invalid credentials - only IFLsuperadmin is allowed');
       return false;
     } catch (error) {
-      console.error('AdminAuth: Login error:', error);
+      console.error('AdminAuthProvider: Login error:', error);
       return false;
     }
   };
@@ -204,9 +216,10 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
       
       setCurrentUser(null);
       setIsAuthenticated(false);
+      setCheckCompleted(false); // Reset to allow re-authentication
       return true;
     } catch (error) {
-      console.error('AdminAuth: Logout error:', error);
+      console.error('AdminAuthProvider: Logout error:', error);
       return false;
     }
   };
@@ -227,19 +240,19 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   };
 
   const addAdmin = (admin: Partial<AdminUser>): void => {
-    console.log('Add admin called:', admin);
+    console.log('AdminAuthProvider: Add admin called:', admin);
   };
 
   const removeAdmin = (adminId: string): void => {
-    console.log('Remove admin called:', adminId);
+    console.log('AdminAuthProvider: Remove admin called:', adminId);
   };
 
   const updateAdminPermissions = (adminId: string, permissions: AdminPermissions): void => {
-    console.log('Update admin permissions called:', adminId, permissions);
+    console.log('AdminAuthProvider: Update admin permissions called:', adminId, permissions);
   };
 
   const updateAdminRole = (adminId: string, role: AdminRole): boolean => {
-    console.log('Update admin role called:', adminId, role);
+    console.log('AdminAuthProvider: Update admin role called:', adminId, role);
     return true;
   };
 
@@ -258,6 +271,13 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     updateAdminPermissions,
     updateAdminRole
   };
+
+  console.log('AdminAuthProvider: Providing context with state:', {
+    isAuthenticated,
+    isLoading,
+    hasCurrentUser: !!currentUser,
+    checkCompleted
+  });
 
   return (
     <AdminAuthContext.Provider value={value}>
