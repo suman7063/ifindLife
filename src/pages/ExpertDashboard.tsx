@@ -6,7 +6,7 @@ import DashboardHome from '@/components/expert-dashboard/pages/DashboardHome';
 import ProfilePage from '@/components/expert-dashboard/pages/ProfilePage';
 import SchedulePage from '@/components/expert-dashboard/pages/SchedulePage';
 import ClientsPage from '@/components/expert-dashboard/pages/ClientsPage';
-import MessagingTab from '@/components/expert/dashboard/MessagingTab';
+import MessagingPage from '@/components/expert-dashboard/pages/MessagingPage';
 import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
@@ -56,7 +56,7 @@ const ExpertDashboard = () => {
         <Route path="clients" element={<ClientsPage />} />
         
         {/* Messaging */}
-        <Route path="messages" element={<MessagingTab />} />
+        <Route path="messages" element={<MessagingPage />} />
         
         {/* Service Offering Management with Pricing Control */}
         <Route path="services" element={<ServicesPage />} />
