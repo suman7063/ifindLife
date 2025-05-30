@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Index from './pages/Index';
@@ -30,6 +31,7 @@ import Blog from './pages/Blog';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import ProgramsDemo from '@/pages/ProgramsDemo';
 import Earnings from './pages/Earnings';
+import { AdminAuthProvider } from '@/contexts/admin-auth/AdminAuthProvider';
 
 const AppRoutes = () => {
   const { isAuthenticated, isLoading, role } = useAuth();
@@ -40,7 +42,6 @@ const AppRoutes = () => {
       <Route path="/about" element={<AboutUs />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/services" element={<Services />} />
-      {/* Individual Service Detail Pages */}
       <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
       <Route path="/experts" element={<Experts />} />
       <Route path="/expert/:id" element={<ExpertDetail />} />
@@ -56,12 +57,10 @@ const AppRoutes = () => {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
       
-      {/* Support Routes */}
       <Route path="/faqs" element={<FAQs />} />
       <Route path="/faq" element={<FAQs />} />
       <Route path="/blog" element={<Blog />} />
       
-      {/* User Dashboard - accessible only to authenticated users */}
       <Route 
         path="/user-dashboard" 
         element={<UserDashboardPages />}
@@ -71,26 +70,25 @@ const AppRoutes = () => {
         element={<UserDashboardPages />}
       />
       
-      {/* Expert Dashboard - accessible only to authenticated experts */}
       <Route 
         path="/expert-dashboard" 
         element={<ExpertDashboard />}
       />
       
-      {/* Admin Routes - accessible only to authenticated admins */}
-      <Route path="/admin-login" element={<AdminLogin />} />
+      {/* Admin Routes with AdminAuthProvider */}
+      <Route 
+        path="/admin-login" 
+        element={
+          <AdminAuthProvider>
+            <AdminLogin />
+          </AdminAuthProvider>
+        } 
+      />
       <Route path="/admin/*" element={<Admin />} />
       
-      {/* Logout Page */}
       <Route path="/logout" element={<LogoutPage />} />
-      
-      {/* Not Found Route - catch-all for unmatched routes */}
       <Route path="*" element={<NotFound />} />
-      
-      {/* Programs Demo Route */}
       <Route path="/programs-demo" element={<ProgramsDemo />} />
-      
-      {/* Add the earnings route */}
       <Route path="/earnings" element={<Earnings />} />
     </Routes>
   );

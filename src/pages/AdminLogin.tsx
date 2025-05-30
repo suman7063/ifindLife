@@ -6,24 +6,16 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 import { toast } from 'sonner';
-import { testCredentials } from '@/contexts/admin-auth/constants';
 
 const AdminLogin = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { isAuthenticated, currentUser, isLoading, login } = useAuth();
   const navigate = useNavigate();
-  
-  console.log('AdminLogin component rendered', { 
-    isAuthenticated, 
-    currentUser: currentUser?.username,
-    hasLoginFunction: typeof login === 'function',
-    isLoading
-  });
 
   // Redirect if already logged in
   useEffect(() => {
     if (!isLoading && isAuthenticated && currentUser) {
-      console.log('User is already authenticated as', currentUser?.role, 'redirecting to admin panel');
+      console.log('User is already authenticated as admin, redirecting to admin panel');
       navigate('/admin');
     }
   }, [isAuthenticated, navigate, currentUser, isLoading]);
@@ -45,31 +37,6 @@ const AdminLogin = () => {
         toast.error('Authentication service unavailable');
         return false;
       }
-      
-      // Special handling for IFLsuperadmin (case insensitive)
-      const normalizedUsername = username.toLowerCase();
-      
-      // Debug - check if it's our allowed user
-      if (normalizedUsername === 'iflsuperadmin') {
-        console.log('Admin login: Test account detected:', normalizedUsername);
-        
-        // Get expected password for debugging
-        const expectedPassword = testCredentials.iflsuperadmin.password;
-        
-        console.log(`DEBUG - Password check for ${normalizedUsername}:`, {
-          expected: expectedPassword,
-          provided: password,
-          match: password === expectedPassword
-        });
-      } else {
-        console.log('Admin login: Only IFLsuperadmin is allowed to log in');
-        toast.error('Invalid username. Only IFLsuperadmin can access the admin panel.');
-        setIsLoggingIn(false);
-        return false;
-      }
-      
-      // Add logs to track login process
-      console.log('Admin login: Starting login process with username:', username);
       
       const success = await login(username, password);
       
@@ -97,7 +64,6 @@ const AdminLogin = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Simplified header without extra padding/margin */}
       <div className="bg-gradient-to-r from-ifind-aqua to-ifind-teal py-12">
         <div className="container mx-auto px-4">
           <div className="text-center">
@@ -107,7 +73,6 @@ const AdminLogin = () => {
         </div>
       </div>
       
-      {/* Main content with reduced top padding */}
       <main className="flex-1 py-6 flex items-center justify-center bg-gray-50">
         <div className="container max-w-md">
           <AdminLoginContent 
