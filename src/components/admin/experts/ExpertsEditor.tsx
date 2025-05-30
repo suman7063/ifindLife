@@ -1,12 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import ExpertCard from './expert-card';
 import AddExpertForm from './form/AddExpertForm';
+import ApprovedExpertsList from './ApprovedExpertsList';
 import { Expert } from './types';
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, Plus } from "lucide-react";
 
 type ExpertsEditorProps = {
   experts: Expert[];
@@ -23,14 +23,24 @@ const ExpertsEditor: React.FC<ExpertsEditorProps> = ({
   error = null,
   onRefresh
 }) => {
+  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+
   const handleRefresh = () => {
-    // Call parent refresh if available, otherwise reload the page
     if (onRefresh) {
       onRefresh();
     } else {
-      // Force reload the page to refresh all data
       window.location.reload();
     }
+  };
+
+  const handleEditExpert = (expert: Expert) => {
+    setSelectedExpert(expert);
+  };
+
+  const handleViewDetails = (expert: Expert) => {
+    // For now, just log the expert details
+    console.log('View expert details:', expert);
   };
   
   if (loading) {
@@ -59,51 +69,44 @@ const ExpertsEditor: React.FC<ExpertsEditorProps> = ({
   }
   
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-xl font-semibold">Edit Experts</h2>
+          <h2 className="text-2xl font-semibold">Experts Management</h2>
           <p className="text-muted-foreground">
-            {experts.length} experts available
+            Manage approved experts and their information
           </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleRefresh}>
             <RefreshCw className="h-4 w-4 mr-2" /> Refresh
           </Button>
-          <Dialog>
+          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
             <DialogTrigger asChild>
-              <Button variant="outline">Add New Expert</Button>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" /> Add New Expert
+              </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg">
               <DialogHeader>
                 <DialogTitle>Add New Expert</DialogTitle>
               </DialogHeader>
               <AddExpertForm 
-                onAdd={(newExpert) => setExperts([...experts, newExpert])} 
+                onAdd={(newExpert) => {
+                  setExperts([...experts, newExpert]);
+                  setShowAddDialog(false);
+                }} 
               />
             </DialogContent>
           </Dialog>
         </div>
       </div>
       
-      <div className="space-y-4">
-        {experts.length > 0 ? (
-          experts.map((expert, index) => (
-            <ExpertCard 
-              key={index}
-              expert={expert}
-              index={index}
-              experts={experts}
-              setExperts={setExperts}
-            />
-          ))
-        ) : (
-          <Card className="p-8 text-center">
-            <p className="text-muted-foreground">No experts available. Add an expert to get started.</p>
-          </Card>
-        )}
-      </div>
+      <ApprovedExpertsList 
+        experts={experts}
+        onEditExpert={handleEditExpert}
+        onViewDetails={handleViewDetails}
+      />
     </div>
   );
 };
