@@ -32,6 +32,16 @@ const Navbar = () => {
   const hasExpertProfile = sessionType === 'expert' && !!expert;
   const hasAdminProfile = sessionType === 'admin' && !!admin;
 
+  // Convert sessionType to match expected interface
+  const convertSessionType = (type: 'user' | 'admin' | 'expert' | null): 'user' | 'expert' | 'none' | 'dual' => {
+    if (!type) return 'none';
+    if (type === 'admin') return 'user'; // Treat admin as user for navbar purposes
+    if (type === 'expert') return 'expert';
+    return 'user';
+  };
+
+  const navbarSessionType = convertSessionType(sessionType);
+
   // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -77,6 +87,7 @@ const Navbar = () => {
   console.log("Navbar rendering. Unified auth state:", {
     isAuthenticated: Boolean(isAuthenticated),
     sessionType,
+    navbarSessionType,
     isLoading: Boolean(isLoading),
     hasCurrentUser: Boolean(currentUser),
     hasExpertProfile: Boolean(hasExpertProfile),
@@ -119,7 +130,7 @@ const Navbar = () => {
             hasExpertProfile={Boolean(hasExpertProfile)}
             userLogout={handleLogout}
             expertLogout={handleLogout}
-            sessionType={sessionType || 'none'}
+            sessionType={navbarSessionType}
             isLoggingOut={false}
           />
           
@@ -129,7 +140,7 @@ const Navbar = () => {
             hasExpertProfile={Boolean(hasExpertProfile)}
             userLogout={handleLogout}
             expertLogout={handleLogout}
-            sessionType={sessionType || 'none'}
+            sessionType={navbarSessionType}
             isLoggingOut={false}
           />
         </div>

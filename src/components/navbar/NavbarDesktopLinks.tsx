@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import NavbarUserAvatar from './NavbarUserAvatar';
 import NavbarExpertMenu from './NavbarExpertMenu';
-import { useExpertAuth } from '@/hooks/useExpertAuth';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -30,33 +30,35 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
-  // Get expert authentication state directly
-  const expertAuth = useExpertAuth();
+  // Get unified auth state for more accurate authentication checks
+  const unifiedAuth = useUnifiedAuth();
   
-  // Enhanced logging for debugging with expert auth
-  console.log('NavbarDesktopLinks render with expert auth state:', {
+  // Enhanced logging for debugging
+  console.log('NavbarDesktopLinks render with unified auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
     hasCurrentUser: Boolean(currentUser),
     hasExpertProfile: Boolean(hasExpertProfile),
     sessionType,
     isLoggingOut,
-    // Expert auth state
-    expertIsAuthenticated: Boolean(expertAuth.isAuthenticated),
-    expertHasProfile: Boolean(expertAuth.currentExpert),
-    expertRole: expertAuth.role,
-    expertLoading: Boolean(expertAuth.isLoading),
+    // Unified auth state
+    unifiedIsAuthenticated: Boolean(unifiedAuth.isAuthenticated),
+    unifiedSessionType: unifiedAuth.sessionType,
+    unifiedHasExpert: Boolean(unifiedAuth.expert),
+    unifiedHasAdmin: Boolean(unifiedAuth.admin),
+    unifiedHasUser: Boolean(unifiedAuth.user),
     currentUserEmail: currentUser?.email || 'null',
     timestamp: new Date().toISOString()
   });
 
   // Convert to proper booleans for reliable checking
   const isUserAuthenticated = Boolean(isAuthenticated);
-  const isExpertAuthenticated = Boolean(expertAuth.isAuthenticated && expertAuth.currentExpert);
+  const isExpertAuthenticated = Boolean(unifiedAuth.sessionType === 'expert' && unifiedAuth.expert);
+  const isAdminAuthenticated = Boolean(unifiedAuth.sessionType === 'admin' && unifiedAuth.admin);
   const hasUserData = Boolean(currentUser);
   
   // Wait for auth to finish loading if needed
-  if (sessionType === undefined || expertAuth.isLoading) {
-    console.log('NavbarDesktopLinks: Session type undefined or expert auth loading, showing loading state');
+  if (sessionType === undefined || unifiedAuth.isLoading) {
+    console.log('NavbarDesktopLinks: Session type undefined or unified auth loading, showing loading state');
     return (
       <div className="hidden md:flex items-center space-x-1">
         <Button variant="ghost" asChild>
@@ -88,8 +90,8 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   if (isExpertAuthenticated) {
     console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
     authComponent = <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
-  } else if (isUserAuthenticated && hasUserData) {
-    console.log('NavbarDesktopLinks: Showing user avatar for authenticated user');
+  } else if (isAdminAuthenticated || (isUserAuthenticated && hasUserData)) {
+    console.log('NavbarDesktopLinks: Showing user avatar for authenticated user/admin');
     authComponent = <NavbarUserAvatar 
       currentUser={currentUser} 
       onLogout={userLogout} 
@@ -98,7 +100,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   } else {
     console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
     authComponent = <LoginDropdown 
-      isAuthenticated={isUserAuthenticated || isExpertAuthenticated} 
+      isAuthenticated={isUserAuthenticated || isExpertAuthenticated || isAdminAuthenticated} 
       hasExpertProfile={isExpertAuthenticated} 
     />;
   }
