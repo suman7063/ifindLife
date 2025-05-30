@@ -29,7 +29,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   showConnectOptions = false,
   onShowConnectOptions
 }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, session, sessionType } = useAuth();
   const { saveJourneyAndRedirect, executePendingAction } = useAuthJourneyPreservation();
 
   // Default values for missing props
@@ -52,26 +52,34 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
     .toUpperCase()
     .substring(0, 2);
 
+  // Properly check authentication state
+  const isProperlyAuthenticated = user && session && sessionType && sessionType !== 'none' && isAuthenticated;
+
   // Execute pending action after authentication
   React.useEffect(() => {
-    if (isAuthenticated) {
-      const pendingAction = executePendingAction();
-      if (pendingAction) {
-        console.log('Executing pending action after login:', pendingAction);
-        
-        if (pendingAction.type === 'connect' && pendingAction.data?.callType && onConnectNow) {
-          onConnectNow(pendingAction.data.callType as 'video' | 'voice');
-        } else if (pendingAction.type === 'book' && onBookNow) {
-          onBookNow();
+    if (isProperlyAuthenticated) {
+      // Small delay to ensure auth state is fully stabilized
+      const timeoutId = setTimeout(() => {
+        const pendingAction = executePendingAction();
+        if (pendingAction && pendingAction.id === expert.id) {
+          console.log('Executing pending action for expert:', pendingAction);
+          
+          if (pendingAction.type === 'connect' && pendingAction.data?.callType && onConnectNow) {
+            onConnectNow(pendingAction.data.callType as 'video' | 'voice');
+          } else if (pendingAction.type === 'book' && onBookNow) {
+            onBookNow();
+          }
         }
-      }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [isAuthenticated, executePendingAction, onConnectNow, onBookNow]);
+  }, [isProperlyAuthenticated, executePendingAction, onConnectNow, onBookNow, expert.id]);
 
   const handleConnectNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (!isAuthenticated) {
+    if (!isProperlyAuthenticated) {
       toast.info('Please login to connect with experts');
       saveJourneyAndRedirect({
         type: 'connect',
@@ -97,7 +105,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   const handleBookNow = (e: React.MouseEvent) => {
     e.stopPropagation();
     
-    if (!isAuthenticated) {
+    if (!isProperlyAuthenticated) {
       toast.info('Please login to book sessions');
       saveJourneyAndRedirect({
         type: 'book',
@@ -116,7 +124,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   };
 
   const handleConnectOption = (type: 'video' | 'voice') => {
-    if (!isAuthenticated) {
+    if (!isProperlyAuthenticated) {
       toast.info('Please login to connect with experts');
       saveJourneyAndRedirect({
         type: 'connect',

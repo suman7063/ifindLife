@@ -45,7 +45,11 @@ export const useAuthJourneyPreservation = () => {
       if (isProperlyAuthenticated && returnPath && location.pathname.includes('/login')) {
         console.log('Authenticated with return path, navigating to:', returnPath);
         sessionStorage.removeItem('returnPath');
-        navigate(returnPath, { replace: true });
+        
+        // Small delay to ensure auth state is fully updated
+        setTimeout(() => {
+          navigate(returnPath, { replace: true });
+        }, 100);
       }
     }
   }, [isAuthenticated, isLoading, navigate, location, user, session, sessionType]);
@@ -67,14 +71,16 @@ export const useAuthJourneyPreservation = () => {
       const action = JSON.parse(pendingActionStr);
       console.log('Executing pending action:', action);
       
-      // Clear the pending action immediately
+      // Clear the pending action immediately to prevent re-execution
       sessionStorage.removeItem('pendingAction');
+      sessionStorage.removeItem('returnPath');
       setPendingAction(null);
       
       return action;
     } catch (error) {
       console.error('Error executing pending action:', error);
       sessionStorage.removeItem('pendingAction');
+      sessionStorage.removeItem('returnPath');
       return null;
     }
   };

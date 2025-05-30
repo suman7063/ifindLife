@@ -17,7 +17,7 @@ const UserLogin: React.FC = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { executePendingAction } = useAuthJourneyPreservation();
-  const { user, session, sessionType, isAuthenticated } = useAuth();
+  const { user, session, sessionType, isAuthenticated, isLoading: authLoading } = useAuth();
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -25,30 +25,39 @@ const UserLogin: React.FC = () => {
       try {
         console.log('UserLogin: Checking for existing session...');
         
+        // Wait for auth state to stabilize
+        if (authLoading) {
+          console.log('UserLogin: Auth still loading, waiting...');
+          return;
+        }
+        
         // Properly check if user is authenticated
-        const isProperlyAuthenticated = user && session && sessionType && sessionType !== 'none';
+        const isProperlyAuthenticated = user && session && sessionType && sessionType !== 'none' && isAuthenticated;
         
         console.log('UserLogin: Auth check result:', {
           user: !!user,
           session: !!session,
           sessionType,
           isAuthenticated,
-          isProperlyAuthenticated
+          isProperlyAuthenticated,
+          authLoading
         });
         
         if (isProperlyAuthenticated) {
           console.log('UserLogin: User is properly authenticated, checking for pending actions...');
           
-          // Check for pending actions first
-          const pendingAction = executePendingAction();
-          if (pendingAction) {
-            console.log('UserLogin: Found pending action, redirecting appropriately...');
-            // Let the auth system handle the redirect based on pending action
-            return;
-          }
-          
-          console.log('UserLogin: No pending action, redirecting to dashboard');
-          navigate('/user-dashboard', { replace: true });
+          // Execute pending action if it exists
+          setTimeout(() => {
+            const pendingAction = executePendingAction();
+            if (pendingAction) {
+              console.log('UserLogin: Found pending action, executing:', pendingAction);
+              // Let the auth system handle the redirect based on pending action
+              return;
+            }
+            
+            console.log('UserLogin: No pending action, redirecting to dashboard');
+            navigate('/user-dashboard', { replace: true });
+          }, 100); // Small delay to ensure state is fully updated
         } else {
           console.log('UserLogin: User not authenticated, staying on login page');
         }
@@ -60,7 +69,7 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate, executePendingAction, user, session, sessionType, isAuthenticated]);
+  }, [navigate, executePendingAction, user, session, sessionType, isAuthenticated, authLoading]);
 
   // Handle login form submission
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -90,6 +99,9 @@ const UserLogin: React.FC = () => {
         return false;
       }
       
+      // Set session type before login attempt
+      localStorage.setItem('sessionType', 'user');
+      
       // Proceed with login
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -111,24 +123,21 @@ const UserLogin: React.FC = () => {
         return false;
       }
       
-      // Set session type
-      localStorage.setItem('sessionType', 'user');
-      
       toast.success('Login successful!', {
         duration: 2000
       });
       
-      // Check for pending actions before redirecting
+      // Wait for auth state to update, then check for pending actions
       setTimeout(() => {
         const pendingAction = executePendingAction();
         if (pendingAction) {
-          console.log('UserLogin: Found pending action after login, letting auth system handle redirect');
-          // Don't navigate manually - let the auth system and components handle it
+          console.log('UserLogin: Found pending action after login, executing:', pendingAction);
+          // The useAuthJourneyPreservation hook will handle the redirect
         } else {
           console.log('UserLogin: No pending action, redirecting to dashboard');
           navigate('/user-dashboard', { replace: true });
         }
-      }, 1000);
+      }, 1500); // Allow time for auth state to fully update
       
       return true;
     } catch (error: any) {
@@ -142,7 +151,7 @@ const UserLogin: React.FC = () => {
     }
   };
   
-  if (isCheckingAuth) {
+  if (isCheckingAuth || authLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />

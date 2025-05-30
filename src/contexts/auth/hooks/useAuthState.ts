@@ -9,7 +9,7 @@ import { AuthState, initialAuthState, UserRole, SessionType } from '../types';
 const determineSessionType = (userProfile: any, expertProfile: any): SessionType => {
   if (expertProfile) return 'expert';
   if (userProfile) return 'user';
-  return 'none'; // Don't use undefined
+  return 'none';
 };
 
 export const useAuthState = () => {
@@ -27,6 +27,20 @@ export const useAuthState = () => {
 
         if (session?.user) {
           try {
+            // Set loading state first
+            setState(prev => ({
+              ...prev,
+              isLoading: true,
+              session,
+              user: {
+                id: session.user.id,
+                email: session.user.email || '',
+                role: 'user' // Default role, will be updated based on profiles
+              },
+              isAuthenticated: true,
+              error: null
+            }));
+
             // Get session type from localStorage or determine from profiles
             let sessionType = localStorage.getItem('sessionType') as SessionType;
             
@@ -52,7 +66,9 @@ export const useAuthState = () => {
             const actualSessionType = determineSessionType(userProfile, expertProfile);
             
             // Update localStorage with correct session type
-            localStorage.setItem('sessionType', actualSessionType);
+            if (actualSessionType !== 'none') {
+              localStorage.setItem('sessionType', actualSessionType);
+            }
             
             // Set role based on session type
             if (actualSessionType === 'expert' && expertProfile) {
@@ -68,6 +84,7 @@ export const useAuthState = () => {
               role
             });
 
+            // Final state update with all data
             setState({
               user: {
                 id: session.user.id,
@@ -109,10 +126,22 @@ export const useAuthState = () => {
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session check:', session ? 'Session exists' : 'No session');
-      // The onAuthStateChange will handle this, so we don't need to duplicate logic here
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('Initial session check:', session ? 'Session exists' : 'No session');
+        // The onAuthStateChange will handle this, so we don't need to duplicate logic here
+      } catch (error) {
+        console.error('Error checking initial session:', error);
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: error as Error
+        }));
+      }
+    };
+
+    initializeAuth();
 
     return () => {
       mounted = false;
