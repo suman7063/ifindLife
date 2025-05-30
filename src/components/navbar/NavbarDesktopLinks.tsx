@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import NavbarUserAvatar from './NavbarUserAvatar';
 import NavbarExpertMenu from './NavbarExpertMenu';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
 import {
   NavigationMenu,
   NavigationMenuList,
@@ -29,25 +30,33 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
-  // Enhanced logging for debugging
-  console.log('NavbarDesktopLinks render with enhanced state:', {
+  // Get expert authentication state directly
+  const expertAuth = useExpertAuth();
+  
+  // Enhanced logging for debugging with expert auth
+  console.log('NavbarDesktopLinks render with expert auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
     hasCurrentUser: Boolean(currentUser),
     hasExpertProfile: Boolean(hasExpertProfile),
     sessionType,
     isLoggingOut,
+    // Expert auth state
+    expertIsAuthenticated: Boolean(expertAuth.isAuthenticated),
+    expertHasProfile: Boolean(expertAuth.currentExpert),
+    expertRole: expertAuth.role,
+    expertLoading: Boolean(expertAuth.isLoading),
     currentUserEmail: currentUser?.email || 'null',
     timestamp: new Date().toISOString()
   });
 
   // Convert to proper booleans for reliable checking
   const isUserAuthenticated = Boolean(isAuthenticated);
-  const isExpertAuthenticated = Boolean(hasExpertProfile);
+  const isExpertAuthenticated = Boolean(expertAuth.isAuthenticated && expertAuth.currentExpert);
   const hasUserData = Boolean(currentUser);
   
   // Wait for auth to finish loading if needed
-  if (sessionType === undefined) {
-    console.log('NavbarDesktopLinks: Session type undefined, showing loading state');
+  if (sessionType === undefined || expertAuth.isLoading) {
+    console.log('NavbarDesktopLinks: Session type undefined or expert auth loading, showing loading state');
     return (
       <div className="hidden md:flex items-center space-x-1">
         <Button variant="ghost" asChild>
@@ -89,7 +98,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   } else {
     console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
     authComponent = <LoginDropdown 
-      isAuthenticated={isUserAuthenticated} 
+      isAuthenticated={isUserAuthenticated || isExpertAuthenticated} 
       hasExpertProfile={isExpertAuthenticated} 
     />;
   }
