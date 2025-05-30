@@ -27,7 +27,7 @@ const AddressInfoStep = () => {
           <FormItem>
             <FormLabel>Street Address</FormLabel>
             <FormControl>
-              <Input placeholder="123 Main St" {...field} />
+              <Input placeholder="123 Main Street" {...field} />
             </FormControl>
             <FormMessage />
           </FormItem>
