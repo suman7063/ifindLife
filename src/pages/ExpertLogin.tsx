@@ -5,7 +5,7 @@ import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
-import { useExpertAuth } from '@/hooks/expert-auth/useExpertAuth';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
@@ -16,27 +16,22 @@ const ExpertLogin: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  // Authentication state - no Agora dependencies here
-  const [authLoaded, setAuthLoaded] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Load authentication hook after component mount
-  const { isAuthenticated, currentExpert, login } = useExpertAuth();
-  
-  // Mark auth as loaded after initial render
-  useEffect(() => {
-    setAuthLoaded(true);
-    setIsLoading(false);
-  }, []);
-  
+  const expertAuth = useExpertAuth();
+  const [hasRedirected, setHasRedirected] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  console.log('ExpertLogin: Auth state (no Agora):', {
+    isAuthenticated: expertAuth.isAuthenticated,
+    hasExpertProfile: !!expertAuth.currentExpert,
+    isLoading: expertAuth.isLoading
+  });
+
   // Check for existing authentication - pure auth logic only
   useEffect(() => {
-    if (!authLoaded) return;
-    
-    console.log('ExpertLogin: Auth state (no Agora):', {
-      isAuthenticated,
-      hasExpertProfile: !!currentExpert,
-      isLoading
+    console.log('ExpertLogin: Auth state check:', {
+      isAuthenticated: expertAuth.isAuthenticated,
+      hasExpertProfile: !!expertAuth.currentExpert,
+      isLoading: expertAuth.isLoading
     });
 
     // Check status from URL parameters
@@ -47,12 +42,24 @@ const ExpertLogin: React.FC = () => {
       toast.error('Your expert account application has been disapproved.');
     }
 
-    // Redirect if already authenticated
-    if (!isLoading && isAuthenticated && currentExpert) {
-      console.log('Already authenticated as expert, redirecting to dashboard');
-      navigate('/expert-dashboard', { replace: true });
+    // Wait for auth loading to complete
+    if (expertAuth.isLoading) {
+      console.log('ExpertLogin: Still loading auth state...');
+      return;
     }
-  }, [isAuthenticated, currentExpert, isLoading, navigate, searchParams, authLoaded]);
+
+    // Only redirect if authenticated AND has expert profile AND hasn't redirected yet
+    if (expertAuth.isAuthenticated && expertAuth.currentExpert && !hasRedirected && !isRedirecting) {
+      console.log('ExpertLogin: Already authenticated as expert, redirecting to dashboard');
+      setHasRedirected(true);
+      setIsRedirecting(true);
+      
+      // Add small delay to prevent infinite loops
+      setTimeout(() => {
+        navigate('/expert-dashboard');
+      }, 100);
+    }
+  }, [expertAuth.isAuthenticated, expertAuth.currentExpert, expertAuth.isLoading, navigate, searchParams, hasRedirected, isRedirecting]);
 
   // Handle login with proper error handling - no Agora dependencies
   const handleLogin = async (email: string, password: string) => {
@@ -62,14 +69,14 @@ const ExpertLogin: React.FC = () => {
       
       console.log('ExpertLogin: Attempting login (auth only):', email);
       
-      if (typeof login !== 'function') {
+      if (typeof expertAuth.login !== 'function') {
         console.error('ExpertLogin: Login function not available');
         setLoginError('Authentication service is not available. Please try again later.');
         toast.error('Authentication service is not available. Please try again later.');
         return false;
       }
       
-      const success = await login(email, password);
+      const success = await expertAuth.login(email, password);
       
       if (success) {
         console.log('Expert login successful, will redirect shortly');
@@ -101,6 +108,30 @@ const ExpertLogin: React.FC = () => {
     }
   };
 
+  // Show loading while auth is being checked or during redirect
+  if (expertAuth.isLoading || isRedirecting) {
+    return (
+      <>
+        <Navbar />
+        
+        <main className="py-8 md:py-12 bg-gray-50 min-h-screen">
+          <Container>
+            <div className="flex justify-center">
+              <div className="w-full max-w-lg">
+                <div className="bg-white rounded-lg shadow-md p-6 md:p-8 flex flex-col items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                  <p>{isRedirecting ? 'Redirecting to dashboard...' : 'Checking authentication...'}</p>
+                </div>
+              </div>
+            </div>
+          </Container>
+        </main>
+        
+        <Footer />
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar />
@@ -109,27 +140,30 @@ const ExpertLogin: React.FC = () => {
         <Container>
           <div className="flex justify-center">
             <div className="w-full max-w-lg">
-              {isLoading ? (
-                <div className="bg-white rounded-lg shadow-md p-6 md:p-8 flex flex-col items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                  <p>Loading authentication service...</p>
+              <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+                <div className="mb-6 text-center">
+                  <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
+                  <p className="text-gray-600">Login or join as an expert</p>
                 </div>
-              ) : (
-                <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
-                  <div className="mb-6 text-center">
-                    <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
-                    <p className="text-gray-600">Login or join as an expert</p>
-                  </div>
-                  
-                  <ExpertLoginTabs
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    onLogin={handleLogin}
-                    isLoggingIn={isLoggingIn}
-                    loginError={loginError}
-                  />
-                </div>
-              )}
+                
+                <ExpertLoginTabs
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  onLogin={handleLogin}
+                  isLoggingIn={isLoggingIn}
+                  loginError={loginError}
+                />
+              </div>
+
+              {/* Debug Info */}
+              <div className="mt-4 bg-gray-100 rounded-lg p-4 text-xs text-gray-600">
+                <strong>Debug Info:</strong><br/>
+                Authenticated: {expertAuth.isAuthenticated ? 'Yes' : 'No'}<br/>
+                Has Expert Profile: {expertAuth.currentExpert ? 'Yes' : 'No'}<br/>
+                Is Loading: {expertAuth.isLoading ? 'Yes' : 'No'}<br/>
+                Has Redirected: {hasRedirected ? 'Yes' : 'No'}<br/>
+                Is Redirecting: {isRedirecting ? 'Yes' : 'No'}
+              </div>
             </div>
           </div>
         </Container>
