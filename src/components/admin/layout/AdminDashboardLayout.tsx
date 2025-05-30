@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   SidebarProvider, 
   SidebarInset,
@@ -28,21 +28,31 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   setActiveTab
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { logout, isSuperAdmin, currentUser } = useAuth();
   
   const handleTabChange = (tab: string) => {
+    console.log('AdminDashboardLayout: Changing tab to', tab);
+    
     if (setActiveTab) {
       setActiveTab(tab);
-      
-      // Navigate to the appropriate route based on tab
-      navigate(`/admin/${tab}`);
     }
+    
+    // Navigate to the appropriate route based on tab
+    const newPath = `/admin/${tab}`;
+    console.log('AdminDashboardLayout: Navigating to', newPath);
+    navigate(newPath);
   };
   
-  const handleLogout = () => {
-    logout();
-    toast.success('Successfully logged out');
-    navigate('/admin-login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Successfully logged out');
+      navigate('/admin-login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to log out');
+    }
   };
 
   // Check if current user is a super admin
@@ -51,12 +61,15 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
   // Get user permissions for display
   const userPermissions = getUserPermissions(currentUser);
 
+  // Get current tab from URL if activeTab is not provided
+  const currentTab = activeTab || location.pathname.split('/')[2] || 'overview';
+
   return (
     <div className="min-h-screen flex flex-col">
       <SidebarProvider>
-        <div className="flex-1 flex w-full pt-16"> {/* Added top padding to prevent header overlap */}
+        <div className="flex-1 flex w-full"> 
           <AdminSidebar 
-            activeTab={activeTab} 
+            activeTab={currentTab} 
             onTabChange={handleTabChange}
             onLogout={handleLogout}
             isSuperAdmin={userIsSuperAdmin}
@@ -64,10 +77,10 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             userPermissions={(currentUser?.permissions || {}) as Record<string, boolean>}
           />
           
-          <SidebarInset className="relative w-full"> {/* Added w-full to ensure content takes full width */}
+          <SidebarInset className="relative w-full">
             <div className="sticky top-0 z-10 flex items-center justify-between h-16 px-6 bg-background border-b">
               <h2 className="text-xl font-semibold">
-                {getTabTitle(activeTab || 'overview')}
+                {getTabTitle(currentTab)}
               </h2>
               
               {/* Display user role badge */}

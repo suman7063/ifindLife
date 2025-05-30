@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminDashboard from './AdminDashboard';
 import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
 import { ServicesEditor } from '@/components/admin/services';
@@ -17,76 +17,63 @@ import AdminAnalytics from '@/components/admin/analytics/AdminAnalytics';
 import AdminReports from '@/components/admin/reports/AdminReports';
 import AdminUsersList from '@/components/admin/users/AdminUsersList';
 import ContentSearchManager from '@/components/admin/content/ContentSearchManager';
+import { useAdminContentData } from '@/components/admin/hooks/useAdminContent';
 
-interface AdminRoutesProps {
-  isSuperAdmin: boolean;
-  loading: boolean;
-  experts: any[];
-  setExperts: React.Dispatch<React.SetStateAction<any[]>>;
-  services: any[];
-  setServices: React.Dispatch<React.SetStateAction<any[]>>;
-  testimonials: any[];
-  setTestimonials: React.Dispatch<React.SetStateAction<any[]>>;
-  error: string | null;
-  onRefresh: () => void;
-}
+const AdminRoutes: React.FC = () => {
+  const { 
+    experts, 
+    setExperts, 
+    services, 
+    setServices, 
+    testimonials, 
+    setTestimonials, 
+    loading, 
+    error, 
+    onRefresh 
+  } = useAdminContentData();
 
-const AdminRoutes: React.FC<AdminRoutesProps> = ({ 
-  isSuperAdmin,
-  loading,
-  experts,
-  setExperts,
-  services,
-  setServices,
-  testimonials,
-  setTestimonials,
-  error,
-  onRefresh
-}) => {
-  const location = useLocation();
-  const path = location.pathname.split('/');
-  const currentTab = path.length > 2 ? path[2] : 'overview';
-  
-  const renderContent = () => {
-    switch (currentTab) {
-      case 'overview':
-        return <AdminDashboard />;
-      case 'analytics':
-        return <AdminAnalytics />;
-      case 'reports':
-        return <AdminReports />;
-      case 'content':
-        return <ContentSearchManager />;
-      case 'experts':
-        return <ExpertsEditor experts={experts} setExperts={setExperts} loading={loading} error={error} onRefresh={onRefresh} />;
-      case 'expertApprovals':
-        return <ExpertApprovals />;
-      case 'services':
-        return <ServicesEditor categories={services} setCategories={setServices} loading={loading} error={error} onRefresh={onRefresh} />;
-      case 'testimonials':
-        return <TestimonialsEditor testimonials={testimonials} setTestimonials={setTestimonials} />;
-      case 'programs':
-        return <ProgramsEditor />;
-      case 'sessions':
-        return <SessionsEditor />;
-      case 'blog':
-        return <BlogEditor />;
-      case 'contact':
-        return <ContactSubmissionsTable />;
-      case 'referrals':
-        return <ReferralSettingsEditor />;
-      case 'adminUsers':
-        return <AdminUsersManager />;
-      case 'users':
-        return <AdminUsersList />;
-      case 'settings':
-        return <AdminSettings />;
-      default:
-        return <AdminDashboard />;
-    }
-  };
-
-  return renderContent();
+  return (
+    <Routes>
+      <Route path="/overview" element={<AdminDashboard />} />
+      <Route path="/analytics" element={<AdminAnalytics />} />
+      <Route path="/reports" element={<AdminReports />} />
+      <Route path="/content" element={<ContentSearchManager />} />
+      <Route path="/experts" element={
+        <ExpertsEditor 
+          experts={experts} 
+          setExperts={setExperts} 
+          loading={loading} 
+          error={error} 
+          onRefresh={onRefresh} 
+        />
+      } />
+      <Route path="/expertApprovals" element={<ExpertApprovals />} />
+      <Route path="/services" element={
+        <ServicesEditor 
+          categories={services} 
+          setCategories={setServices} 
+          loading={loading} 
+          error={error} 
+          onRefresh={onRefresh} 
+        />
+      } />
+      <Route path="/testimonials" element={
+        <TestimonialsEditor 
+          testimonials={testimonials} 
+          setTestimonials={setTestimonials} 
+        />
+      } />
+      <Route path="/programs" element={<ProgramsEditor />} />
+      <Route path="/sessions" element={<SessionsEditor />} />
+      <Route path="/blog" element={<BlogEditor />} />
+      <Route path="/contact" element={<ContactSubmissionsTable />} />
+      <Route path="/referrals" element={<ReferralSettingsEditor />} />
+      <Route path="/adminUsers" element={<AdminUsersManager />} />
+      <Route path="/users" element={<AdminUsersList />} />
+      <Route path="/settings" element={<AdminSettings />} />
+      <Route path="*" element={<Navigate to="/admin/overview" replace />} />
+    </Routes>
+  );
 };
 
 export default AdminRoutes;

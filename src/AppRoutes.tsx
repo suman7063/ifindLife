@@ -75,7 +75,7 @@ const AppRoutes = () => {
         element={<ExpertDashboard />}
       />
       
-      {/* Admin Routes with AdminAuthProvider */}
+      {/* Admin Routes - Updated to handle nested routing properly */}
       <Route 
         path="/admin-login" 
         element={
