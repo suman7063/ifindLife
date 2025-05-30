@@ -47,6 +47,55 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     }
   });
   
+  // Wait for auth to finish loading if needed
+  if (sessionType === undefined) {
+    console.log('NavbarDesktopLinks: Session type undefined, showing loading state');
+    return (
+      <div className="hidden md:flex items-center space-x-1">
+        <Button variant="ghost" asChild>
+          <Link to="/">Home</Link>
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link to="/about">About</Link>
+        </Button>
+        <Button variant="ghost" asChild>
+          <Link to="/experts">Experts</Link>
+        </Button>
+        
+        <NavigationMenu>
+          <NavigationMenuList>
+            <ProgramsMenu />
+            <ServicesMenu />
+            <SupportMenu />
+          </NavigationMenuList>
+        </NavigationMenu>
+        
+        <div className="px-3 py-2 text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+  
+  // Determine which auth UI to show
+  let authComponent;
+  
+  if (isExpertAuthenticated) {
+    console.log('NavbarDesktopLinks: Showing expert menu');
+    authComponent = <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
+  } else if (isUserAuthenticated && hasUserData) {
+    console.log('NavbarDesktopLinks: Showing user avatar');
+    authComponent = <NavbarUserAvatar 
+      currentUser={currentUser} 
+      onLogout={userLogout} 
+      isLoggingOut={isLoggingOut} 
+    />;
+  } else {
+    console.log('NavbarDesktopLinks: Showing login dropdown');
+    authComponent = <LoginDropdown 
+      isAuthenticated={isUserAuthenticated} 
+      hasExpertProfile={isExpertAuthenticated} 
+    />;
+  }
+  
   return (
     <div className="hidden md:flex items-center space-x-1">
       <Button variant="ghost" asChild>
@@ -67,21 +116,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         </NavigationMenuList>
       </NavigationMenu>
       
-      {/* Show appropriate authentication UI based on state */}
-      {isExpertAuthenticated ? (
-        <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />
-      ) : isUserAuthenticated && hasUserData ? (
-        <NavbarUserAvatar 
-          currentUser={currentUser} 
-          onLogout={userLogout} 
-          isLoggingOut={isLoggingOut} 
-        />
-      ) : (
-        <LoginDropdown 
-          isAuthenticated={isUserAuthenticated} 
-          hasExpertProfile={isExpertAuthenticated} 
-        />
-      )}
+      {authComponent}
     </div>
   );
 };

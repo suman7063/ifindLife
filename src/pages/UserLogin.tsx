@@ -17,7 +17,16 @@ const UserLogin: React.FC = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { executePendingAction } = useAuthJourneyPreservation();
-  const { user, session, sessionType, isAuthenticated, isLoading: authLoading } = useAuth();
+  const authState = useAuth();
+
+  console.log('UserLogin auth check:', {
+    hasUser: !!authState?.user,
+    hasSession: !!authState?.session,
+    sessionType: authState?.sessionType,
+    isAuthenticated: authState?.isAuthenticated,
+    isLoading: authState?.isLoading,
+    authStateKeys: authState ? Object.keys(authState) : 'null'
+  });
 
   // Check for existing session on component mount
   useEffect(() => {
@@ -26,21 +35,22 @@ const UserLogin: React.FC = () => {
         console.log('UserLogin: Checking for existing session...');
         
         // Wait for auth state to stabilize
-        if (authLoading) {
+        if (authState?.isLoading) {
           console.log('UserLogin: Auth still loading, waiting...');
           return;
         }
         
-        // Properly check if user is authenticated
-        const isProperlyAuthenticated = user && session && sessionType && sessionType !== 'none' && isAuthenticated;
+        // Properly check if user is authenticated using multiple criteria
+        const isProperlyAuthenticated = authState?.isAuthenticated || 
+          (authState?.user && authState?.session && authState?.sessionType && authState?.sessionType !== 'none');
         
         console.log('UserLogin: Auth check result:', {
-          user: !!user,
-          session: !!session,
-          sessionType,
-          isAuthenticated,
+          user: !!authState?.user,
+          session: !!authState?.session,
+          sessionType: authState?.sessionType,
+          isAuthenticated: authState?.isAuthenticated,
           isProperlyAuthenticated,
-          authLoading
+          authLoading: authState?.isLoading
         });
         
         if (isProperlyAuthenticated) {
@@ -69,7 +79,7 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate, executePendingAction, user, session, sessionType, isAuthenticated, authLoading]);
+  }, [navigate, executePendingAction, authState?.user, authState?.session, authState?.sessionType, authState?.isAuthenticated, authState?.isLoading]);
 
   // Handle login form submission
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -151,11 +161,23 @@ const UserLogin: React.FC = () => {
     }
   };
   
-  if (isCheckingAuth || authLoading) {
+  // Show loading while checking auth
+  if (isCheckingAuth || authState?.isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">Checking authentication...</span>
+      </div>
+    );
+  }
+
+  // If user is authenticated, show redirect message
+  if (authState?.isAuthenticated && !authState?.isLoading) {
+    console.log('UserLogin: User is authenticated, should redirect');
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Redirecting...</span>
       </div>
     );
   }

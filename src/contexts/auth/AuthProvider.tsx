@@ -1,5 +1,5 @@
 
-import React, { ReactNode, useCallback, useEffect } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { AuthContext } from './AuthContext';
 import { useAuthState } from './hooks/useAuthState';
 import { useAuthActions } from './hooks/useAuthActions';
@@ -10,7 +10,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Get state from hook
-  const state = useAuthState();
+  const authState = useAuthState();
   
   // Create a refresh callback
   const refreshCallback = useCallback(() => {
@@ -19,17 +19,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
   
   // Get actions from hook
-  const actions = useAuthActions(state, refreshCallback);
+  const actions = useAuthActions(authState, refreshCallback);
   
   // Verify login function exists and log initialization
   useEffect(() => {
     console.log('AuthProvider: Initializing with state:', {
-      isAuthenticated: state.isAuthenticated,
-      isLoading: state.isLoading,
-      role: state.role,
-      hasUserProfile: !!state.userProfile,
-      hasExpertProfile: !!state.expertProfile,
-      sessionType: state.sessionType
+      isAuthenticated: authState.isAuthenticated,
+      isLoading: authState.isLoading,
+      role: authState.role,
+      hasUserProfile: !!authState.userProfile,
+      hasExpertProfile: !!authState.expertProfile,
+      sessionType: authState.sessionType
     });
 
     console.log('AuthProvider: Actions initialized:', {
@@ -38,19 +38,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       hasSignup: !!actions.signup,
       hasLogout: !!actions.logout
     });
-  }, [state, actions]);
+  }, [authState, actions]);
   
-  // Combine state and actions
-  const value = {
-    ...state,
-    ...actions,
-    hasUserAccount: state.hasUserAccount || false
-  };
+  // Combine state and actions with proper memoization
+  const contextValue = useMemo(() => {
+    const value = {
+      user: authState.user,
+      session: authState.session,
+      userProfile: authState.userProfile,
+      expertProfile: authState.expertProfile,
+      profile: authState.profile,
+      sessionType: authState.sessionType,
+      isLoading: authState.isLoading,
+      isAuthenticated: authState.isAuthenticated,
+      role: authState.role,
+      error: authState.error,
+      walletBalance: authState.walletBalance,
+      hasUserAccount: authState.hasUserAccount,
+      ...actions
+    };
 
-  console.log('AuthProvider rendering with login function:', !!value.login);
+    console.log('Auth context providing value:', {
+      hasUser: !!value.user,
+      hasSession: !!value.session,
+      sessionType: value.sessionType,
+      isAuthenticated: value.isAuthenticated,
+      isLoading: value.isLoading,
+      hasLoginFunction: !!value.login
+    });
+
+    return value;
+  }, [authState, actions]);
+
+  console.log('AuthProvider rendering with login function:', !!contextValue.login);
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
