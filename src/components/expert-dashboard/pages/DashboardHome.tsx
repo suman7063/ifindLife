@@ -16,12 +16,12 @@ import {
   CheckCircle,
   ArrowRight
 } from 'lucide-react';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { Link } from 'react-router-dom';
 import { format } from 'date-fns';
 
 const DashboardHome = () => {
-  const { expertProfile } = useAuth();
+  const { expert } = useUnifiedAuth();
   const [stats, setStats] = useState({
     totalEarnings: 1250.00,
     pendingPayouts: 800.00,
@@ -43,20 +43,20 @@ const DashboardHome = () => {
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Welcome back, {expertProfile?.name || 'Expert'}!</h1>
+            <h1 className="text-3xl font-bold">Welcome back, {expert?.name || 'Expert'}!</h1>
             <p className="text-blue-100 mt-2">{today}</p>
             <p className="text-blue-100">Ready to help your clients achieve their wellness goals?</p>
           </div>
           <div className="flex items-center space-x-3">
             <Avatar className="h-16 w-16 border-2 border-white">
-              <AvatarImage src={expertProfile?.profile_picture} alt={expertProfile?.name} />
+              <AvatarImage src={expert?.profile_picture} alt={expert?.name} />
               <AvatarFallback className="bg-white text-blue-600 text-xl font-bold">
-                {expertProfile?.name?.charAt(0) || 'E'}
+                {expert?.name?.charAt(0) || 'E'}
               </AvatarFallback>
             </Avatar>
             <div className="text-right">
               <Badge variant="secondary" className="bg-green-500 text-white">
-                {expertProfile?.status === 'approved' ? 'Verified Expert' : expertProfile?.status || 'Pending'}
+                {expert?.status === 'approved' ? 'Verified Expert' : expert?.status || 'Pending'}
               </Badge>
             </div>
           </div>

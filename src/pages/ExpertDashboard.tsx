@@ -19,7 +19,8 @@ const ExpertDashboard = () => {
     isAuthenticated,
     sessionType,
     hasExpertProfile: !!expert,
-    isLoading
+    isLoading,
+    expertStatus: expert?.status
   });
 
   // Show loading state while authentication is being checked
@@ -34,7 +35,7 @@ const ExpertDashboard = () => {
     );
   }
 
-  // Handle unauthorized access
+  // Handle unauthorized access - ExpertDashboardLayout will handle the redirect
   if (!isAuthenticated || sessionType !== 'expert' || !expert) {
     return <Navigate to="/expert-login" replace />;
   }
