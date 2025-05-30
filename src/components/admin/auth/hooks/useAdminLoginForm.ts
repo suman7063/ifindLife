@@ -19,6 +19,7 @@ export const useAdminLoginForm = ({ onLogin, onLoginSuccess }: UseAdminLoginForm
     // Clear error message when user changes inputs
     if (errorMessage) {
       setErrorMessage(null);
+      setDebugInfo(null);
     }
   }, [username, password]);
 
@@ -32,55 +33,55 @@ export const useAdminLoginForm = ({ onLogin, onLoginSuccess }: UseAdminLoginForm
       return;
     }
     
-    // Debug logs
-    console.log('Admin login form submitted with username:', username);
-    console.log('Available login methods:', {
-      propLogin: !!onLogin
-    });
+    console.log('Admin login form submitted with:', { username, passwordLength: password.length });
     
     try {
       setIsSubmitting(true);
       
-      // Only allow IFLsuperadmin to log in
-      const normalizedUsername = username.toLowerCase();
-      if (normalizedUsername !== testCredentials.iflsuperadmin.username.toLowerCase()) {
-        setErrorMessage('Login failed. Only IFLsuperadmin can log in.');
-        setDebugInfo('Only IFLsuperadmin is allowed to log in.');
-        setIsSubmitting(false);
+      // Normalize username for comparison
+      const normalizedUsername = username.trim().toLowerCase();
+      const expectedUsername = testCredentials.iflsuperadmin.username.toLowerCase();
+      const expectedPassword = testCredentials.iflsuperadmin.password;
+      
+      console.log('Credential check:', {
+        provided: { username: normalizedUsername, password },
+        expected: { username: expectedUsername, password: expectedPassword },
+        usernameMatch: normalizedUsername === expectedUsername,
+        passwordMatch: password === expectedPassword
+      });
+      
+      // Check credentials locally first
+      if (normalizedUsername !== expectedUsername) {
+        setErrorMessage('Invalid username. Only IFLsuperadmin can log in.');
+        setDebugInfo(`Expected username: ${testCredentials.iflsuperadmin.username}`);
+        return;
+      }
+      
+      if (password !== expectedPassword) {
+        setErrorMessage('Invalid password. Please check your credentials.');
+        setDebugInfo(`Expected password: ${expectedPassword}`);
         return;
       }
       
       // Try to use the provided login function
       if (typeof onLogin === 'function') {
-        console.log(`Trying onLogin with username: "${username}" and password length: ${password.length}`);
-        
-        // For debugging - show expected password for IFLsuperadmin
-        if (normalizedUsername === 'iflsuperadmin') {
-          const expectedPassword = testCredentials.iflsuperadmin.password;
-          console.log(`DEBUG - Expected password for ${normalizedUsername}: "${expectedPassword}"`);
-          console.log(`DEBUG - Password match: ${password === expectedPassword ? 'YES' : 'NO'}`);
-        }
+        console.log('Calling onLogin function with validated credentials');
         
         const success = await onLogin(username, password);
-        console.log('Using provided login function, result:', success);
+        console.log('Login function result:', success);
         
         if (success) {
+          console.log('Login successful, calling onLoginSuccess');
           onLoginSuccess();
           return;
         } else {
-          // Login failed - show error with helpful information
-          setErrorMessage('Login failed. Please check your credentials. Only IFLsuperadmin can log in.');
-          
-          // Add more helpful debug info
-          if (normalizedUsername === 'iflsuperadmin') {
-            setDebugInfo(`For IFLsuperadmin, try the password: "${testCredentials.iflsuperadmin.password}"`);
-          } else {
-            setDebugInfo('Only IFLsuperadmin is allowed to log in.');
-          }
+          setErrorMessage('Login failed. Please try again.');
+          setDebugInfo('The login function returned false despite valid credentials.');
         }
       } else {
         console.error('No login function available');
         setErrorMessage('Authentication service is not available');
+        setDebugInfo('onLogin function is not provided or is not a function');
       }
     } catch (error) {
       console.error('Login error:', error);

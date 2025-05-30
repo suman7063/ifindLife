@@ -3,6 +3,7 @@ import React, { ReactNode, createContext, useContext, useState, useEffect, useCa
 import { supabase } from '@/lib/supabase';
 import { AdminUser, AdminRole, AdminPermissions } from './types';
 import { testCredentials } from './constants';
+import { toast } from 'sonner';
 
 interface AdminAuthContextType {
   isAuthenticated: boolean;
@@ -78,7 +79,6 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [checkCompleted, setCheckCompleted] = useState<boolean>(false);
   
   // Mock admin users for testing
   const [adminUsers] = useState<AdminUser[]>([
@@ -94,80 +94,24 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     })
   ]);
 
-  // Stabilized auth check function with useCallback
-  const checkAuthStatus = useCallback(async () => {
-    if (checkCompleted) {
-      console.log('AdminAuthProvider: Auth check already completed, skipping');
-      return;
-    }
-
+  // Check for existing admin session in localStorage
+  const checkLocalAuth = useCallback(() => {
     try {
-      console.log('AdminAuthProvider: Starting auth status check...');
-      const { data } = await supabase.auth.getSession();
-      
-      if (data.session && data.session.user.email?.includes('@ifindlife.com')) {
-        console.log('AdminAuthProvider: Valid admin session found');
-        const adminUser = createAdminUser({
-          id: data.session.user.id,
-          username: 'IFLsuperadmin',
-          email: data.session.user.email,
-          role: 'super_admin',
-          permissions: DEFAULT_PERMISSIONS,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          lastLogin: new Date().toISOString()
-        });
+      const adminSession = localStorage.getItem('adminSession');
+      if (adminSession) {
+        const session = JSON.parse(adminSession);
+        console.log('AdminAuthProvider: Found local admin session:', session);
         
-        setCurrentUser(adminUser);
-        setIsAuthenticated(true);
-        console.log('AdminAuthProvider: Admin authenticated successfully');
-      } else {
-        console.log('AdminAuthProvider: No valid admin session found');
-        setCurrentUser(null);
-        setIsAuthenticated(false);
-      }
-    } catch (error) {
-      console.error('AdminAuthProvider: Error checking auth status:', error);
-      setCurrentUser(null);
-      setIsAuthenticated(false);
-    } finally {
-      setIsLoading(false);
-      setCheckCompleted(true);
-      console.log('AdminAuthProvider: Auth check completed');
-    }
-  }, [checkCompleted]);
-
-  // Check authentication status on mount - only once
-  useEffect(() => {
-    checkAuthStatus();
-  }, [checkAuthStatus]);
-
-  const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {
-    console.log(`AdminAuthProvider: Login attempt for ${usernameOrEmail}`);
-    
-    try {
-      const normalizedInput = usernameOrEmail.toLowerCase();
-      
-      if (normalizedInput === testCredentials.iflsuperadmin.username.toLowerCase() && 
-         password === testCredentials.iflsuperadmin.password) {
-        console.log(`AdminAuthProvider: Test credential match found for ${usernameOrEmail}`);
+        // Validate session is still valid (not expired)
+        const sessionTime = new Date(session.timestamp).getTime();
+        const now = new Date().getTime();
+        const maxAge = 24 * 60 * 60 * 1000; // 24 hours
         
-        const email = `${testCredentials.iflsuperadmin.username}@ifindlife.com`;
-        
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        });
-        
-        if (error) {
-          console.error('AdminAuthProvider: Supabase auth error for test account:', error);
-          console.log('AdminAuthProvider: Using mock authentication for test account');
-          
-          // Mock authentication for test account
+        if (now - sessionTime < maxAge) {
           const adminUser = createAdminUser({
-            id: '1',
-            username: 'IFLsuperadmin',
-            email: email,
+            id: session.id || '1',
+            username: session.username,
+            email: session.email,
             role: 'super_admin',
             permissions: DEFAULT_PERMISSIONS,
             isActive: true,
@@ -177,15 +121,54 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
           
           setCurrentUser(adminUser);
           setIsAuthenticated(true);
+          console.log('AdminAuthProvider: Restored admin session');
           return true;
+        } else {
+          // Session expired, clear it
+          localStorage.removeItem('adminSession');
+          console.log('AdminAuthProvider: Admin session expired, cleared');
         }
-        
-        console.log('AdminAuthProvider: Test account login successful with Supabase');
+      }
+    } catch (error) {
+      console.error('AdminAuthProvider: Error checking local auth:', error);
+      localStorage.removeItem('adminSession');
+    }
+    return false;
+  }, []);
+
+  // Initial auth check
+  useEffect(() => {
+    console.log('AdminAuthProvider: Starting initial auth check...');
+    
+    // Check localStorage first for admin session
+    const hasLocalAuth = checkLocalAuth();
+    
+    if (!hasLocalAuth) {
+      // No local session found
+      setCurrentUser(null);
+      setIsAuthenticated(false);
+    }
+    
+    setIsLoading(false);
+    console.log('AdminAuthProvider: Initial auth check completed');
+  }, [checkLocalAuth]);
+
+  const login = async (usernameOrEmail: string, password: string): Promise<boolean> => {
+    console.log(`AdminAuthProvider: Login attempt for ${usernameOrEmail}`);
+    
+    try {
+      setIsLoading(true);
+      const normalizedInput = usernameOrEmail.toLowerCase().trim();
+      
+      // Check test credentials
+      if (normalizedInput === testCredentials.iflsuperadmin.username.toLowerCase() && 
+         password === testCredentials.iflsuperadmin.password) {
+        console.log(`AdminAuthProvider: Test credential match found for ${usernameOrEmail}`);
         
         const adminUser = createAdminUser({
-          id: data.user.id,
+          id: '1',
           username: 'IFLsuperadmin',
-          email: data.user.email || email,
+          email: 'iflsuperadmin@ifindlife.com',
           role: 'super_admin',
           permissions: DEFAULT_PERMISSIONS,
           isActive: true,
@@ -193,33 +176,52 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
           lastLogin: new Date().toISOString()
         });
         
+        // Store admin session in localStorage
+        const adminSession = {
+          id: adminUser.id,
+          username: adminUser.username,
+          email: adminUser.email,
+          timestamp: new Date().toISOString()
+        };
+        localStorage.setItem('adminSession', JSON.stringify(adminSession));
+        
         setCurrentUser(adminUser);
         setIsAuthenticated(true);
+        
+        console.log('AdminAuthProvider: Admin login successful');
+        toast.success('Successfully logged in as administrator');
         return true;
       }
       
       console.log('AdminAuthProvider: Invalid credentials - only IFLsuperadmin is allowed');
+      toast.error('Invalid credentials. Only IFLsuperadmin can log in.');
       return false;
     } catch (error) {
       console.error('AdminAuthProvider: Login error:', error);
+      toast.error('An error occurred during login');
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const logout = async (): Promise<boolean> => {
     try {
-      const { error } = await supabase.auth.signOut();
+      console.log('AdminAuthProvider: Logging out admin');
       
-      if (error) {
-        throw error;
-      }
+      // Clear localStorage
+      localStorage.removeItem('adminSession');
       
+      // Clear state
       setCurrentUser(null);
       setIsAuthenticated(false);
-      setCheckCompleted(false); // Reset to allow re-authentication
+      
+      console.log('AdminAuthProvider: Admin logout successful');
+      toast.success('Logged out successfully');
       return true;
     } catch (error) {
       console.error('AdminAuthProvider: Logout error:', error);
+      toast.error('Logout failed');
       return false;
     }
   };
@@ -276,7 +278,7 @@ export const AdminAuthProvider: React.FC<{ children: ReactNode }> = ({ children 
     isAuthenticated,
     isLoading,
     hasCurrentUser: !!currentUser,
-    checkCompleted
+    currentUsername: currentUser?.username
   });
 
   return (
