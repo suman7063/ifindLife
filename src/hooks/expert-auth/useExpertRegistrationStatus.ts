@@ -8,9 +8,10 @@ export const useExpertRegistrationStatus = () => {
     try {
       console.log('useExpertRegistrationStatus: Ensuring expert account has proper status');
       
-      // Create expert profile with guaranteed pending status
+      // Create expert profile with guaranteed pending status and both user_id and auth_id
       const expertProfileData = {
         auth_id: expertData.auth_id,
+        user_id: expertData.auth_id, // Set both for compatibility
         email: expertData.email,
         status: 'pending', // Ensure this is always set for admin visibility
         verified: false,

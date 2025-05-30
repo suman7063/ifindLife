@@ -163,6 +163,7 @@ export type Database = {
           specialization: string | null
           state: string | null
           status: string | null
+          user_id: string | null
           verified: boolean | null
         }
         Insert: {
@@ -185,6 +186,7 @@ export type Database = {
           specialization?: string | null
           state?: string | null
           status?: string | null
+          user_id?: string | null
           verified?: boolean | null
         }
         Update: {
@@ -207,6 +209,7 @@ export type Database = {
           specialization?: string | null
           state?: string | null
           status?: string | null
+          user_id?: string | null
           verified?: boolean | null
         }
         Relationships: []

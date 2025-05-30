@@ -42,7 +42,7 @@ export const useAdminContent = () => {
     setError(null);
 
     try {
-      // Load services
+      // Load services first (most reliable)
       console.log('useAdminContent: Fetching services...');
       const { data: servicesData, error: servicesError } = await supabase
         .from('services')
@@ -54,7 +54,7 @@ export const useAdminContent = () => {
         throw new Error(`Services: ${servicesError.message}`);
       }
 
-      // Load expert accounts (both approved and pending) - this is the main table for expert applications
+      // Load expert accounts (RLS disabled for easier access)
       console.log('useAdminContent: Fetching expert accounts...');
       const { data: expertsData, error: expertsError } = await supabase
         .from('expert_accounts')
@@ -63,8 +63,8 @@ export const useAdminContent = () => {
 
       if (expertsError) {
         console.error('useAdminContent: Expert accounts error:', expertsError);
-        // Don't throw error here, just log it and continue with empty array
         console.warn('useAdminContent: Could not fetch expert accounts, continuing with empty array');
+        // Continue without throwing error
       }
 
       // Load testimonials
@@ -76,7 +76,6 @@ export const useAdminContent = () => {
 
       if (testimonialsError) {
         console.error('useAdminContent: Testimonials error:', testimonialsError);
-        // Don't throw error here, just log it
         console.warn('useAdminContent: Could not fetch testimonials, continuing with empty array');
       }
 

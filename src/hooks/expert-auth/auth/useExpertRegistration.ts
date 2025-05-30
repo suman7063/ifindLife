@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ExpertRegistrationData } from '../types';
 import { toast } from 'sonner';
-import { handleAuthError } from '@/utils/authUtils';
 
 export const useExpertRegistration = (
   setLoading: (loading: boolean) => void
@@ -49,7 +48,7 @@ export const useExpertRegistration = (
       if (authError) {
         console.error('Registration auth error:', authError);
         setRegistrationError(authError.message);
-        handleAuthError(authError, 'Registration failed');
+        toast.error(authError.message);
         return false;
       }
       
@@ -70,9 +69,10 @@ export const useExpertRegistration = (
         ? String(data.experience) 
         : (data.experience || '');
 
-      // Create expert profile
+      // Create expert profile with both auth_id and user_id for compatibility
       const expertData = {
         auth_id: authData.user.id,
+        user_id: authData.user.id, // Set both for compatibility
         name: data.name,
         email: data.email,
         phone: data.phone || '',
@@ -96,7 +96,7 @@ export const useExpertRegistration = (
       if (profileError) {
         console.error('Registration profile error:', profileError);
         setRegistrationError(profileError.message);
-        handleAuthError(profileError, 'Failed to create expert profile');
+        toast.error('Failed to create expert profile: ' + profileError.message);
         
         // Clean up - sign out the created auth account
         await supabase.auth.signOut();
@@ -108,12 +108,12 @@ export const useExpertRegistration = (
       // Sign out and let the component handle the redirect
       await supabase.auth.signOut();
       
-      toast.success('Registration successful! Please log in with your credentials.');
+      toast.success('Registration successful! Your application is pending approval. Please log in with your credentials.');
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
       setRegistrationError(error.message || 'An unexpected error occurred during registration');
-      handleAuthError(error, 'An unexpected error occurred during registration');
+      toast.error('Registration error: ' + (error.message || 'Unknown error'));
       return false;
     } finally {
       setLoading(false);

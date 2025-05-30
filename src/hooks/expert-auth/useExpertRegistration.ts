@@ -67,9 +67,10 @@ export const useExpertRegistration = (
         ? String(data.experience) 
         : (data.experience || '');
 
-      // Create expert profile
+      // Create expert profile with both auth_id and user_id
       const expertData = {
         auth_id: authData.user.id,
+        user_id: authData.user.id, // Set both for compatibility
         name: data.name,
         email: data.email,
         phone: data.phone || '',
@@ -105,7 +106,7 @@ export const useExpertRegistration = (
       // Sign out and let the component handle the redirect
       await supabase.auth.signOut();
       
-      toast.success('Registration successful! Please log in with your credentials.');
+      toast.success('Registration successful! Your application is pending approval. Please log in with your credentials.');
       return true;
     } catch (error: any) {
       console.error('Registration error:', error);
