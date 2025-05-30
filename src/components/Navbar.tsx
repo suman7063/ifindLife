@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useExpertAuth } from '@/hooks/useExpertAuth';
 import { useSessionTimeout } from '@/hooks/useSessionTimeout';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -17,7 +17,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
-  // Use direct auth context
+  // Use both auth contexts
   const { 
     isAuthenticated, 
     userProfile,
@@ -30,11 +30,19 @@ const Navbar = () => {
     session
   } = useAuth();
 
-  // Properly check authentication state
+  // Get expert authentication state directly
+  const expertAuth = useExpertAuth();
+
+  // Combine authentication states with expert auth taking precedence
   const isUserAuthenticated = Boolean(isAuthenticated && role === 'user' && userProfile && user && session);
-  const isExpertAuthenticated = Boolean(isAuthenticated && role === 'expert' && expertProfile && user && session);
+  const isExpertAuthenticated = Boolean(expertAuth.isAuthenticated && expertAuth.currentExpert);
   const hasDualSessions = Boolean(userProfile && expertProfile && isAuthenticated);
   const currentUser = ensureUserProfileCompatibility(userProfile);
+
+  // Determine final authentication state - expert auth takes precedence
+  const finalIsAuthenticated = isExpertAuthenticated || isUserAuthenticated;
+  const finalSessionType = isExpertAuthenticated ? 'expert' : (isUserAuthenticated ? 'user' : 'none');
+  const finalHasExpertProfile = isExpertAuthenticated;
 
   // Set up session timeout (4 hours = 4 * 60 * 60 * 1000 ms)
   const SESSION_TIMEOUT = 4 * 60 * 60 * 1000; // 4 hours
@@ -47,7 +55,7 @@ const Navbar = () => {
   // Use session timeout hook only if user is authenticated
   useSessionTimeout(
     SESSION_TIMEOUT, 
-    isAuthenticated ? handleSessionTimeout : () => {}
+    finalIsAuthenticated ? handleSessionTimeout : () => {}
   );
 
   // Scroll effect
@@ -106,7 +114,7 @@ const Navbar = () => {
     try {
       setIsLoggingOut(true);
       console.log("Navbar: Initiating expert logout...");
-      const success = await logout();
+      const success = await expertAuth.logout();
       
       if (success) {
         console.log("Navbar: Expert logout completed");
@@ -146,7 +154,7 @@ const Navbar = () => {
         toast.success('Successfully logged out of all accounts', {
           duration: 2000
         });
-        const primaryType = role === 'expert' ? 'expert' : 'user';
+        const primaryType = finalSessionType === 'expert' ? 'expert' : 'user';
         navigate('/logout', { state: { userType: primaryType } });
       }
       
@@ -167,19 +175,22 @@ const Navbar = () => {
     return scrolled ? 'bg-background/90' : 'bg-transparent';
   };
 
-  // Safely handle session type - use 'none' as default instead of showing warning
-  const validSessionType = sessionType || 'none';
-
   // Enhanced authentication state logging for debugging
-  console.log("Navbar rendering. Auth state:", {
-    isAuthenticated: Boolean(isAuthenticated),
-    isUserAuthenticated: Boolean(isUserAuthenticated),
-    isExpertAuthenticated: Boolean(isExpertAuthenticated),
-    sessionType: validSessionType,
+  console.log("Navbar rendering. Combined auth state:", {
+    // Original auth states
+    originalIsAuthenticated: Boolean(isAuthenticated),
+    originalSessionType: sessionType,
+    // Expert auth states
+    expertIsAuthenticated: Boolean(expertAuth.isAuthenticated),
+    expertHasProfile: Boolean(expertAuth.currentExpert),
+    expertLoading: Boolean(expertAuth.isLoading),
+    // Final combined states
+    finalIsAuthenticated: Boolean(finalIsAuthenticated),
+    finalSessionType,
+    finalHasExpertProfile: Boolean(finalHasExpertProfile),
+    // Other states
     currentUser: !!currentUser,
-    expertProfile: !!expertProfile,
     hasDualSessions: Boolean(hasDualSessions),
-    role,
     hasUser: !!user,
     hasSession: !!session
   });
@@ -215,22 +226,22 @@ const Navbar = () => {
           </Link>
           
           <NavbarDesktopLinks 
-            isAuthenticated={Boolean(isUserAuthenticated)}
+            isAuthenticated={Boolean(finalIsAuthenticated)}
             currentUser={currentUser}
-            hasExpertProfile={Boolean(isExpertAuthenticated)}
+            hasExpertProfile={Boolean(finalHasExpertProfile)}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={validSessionType as 'none' | 'user' | 'expert' | 'dual'}
+            sessionType={finalSessionType as 'none' | 'user' | 'expert' | 'dual'}
             isLoggingOut={isLoggingOut}
           />
           
           <NavbarMobileMenu 
-            isAuthenticated={Boolean(isUserAuthenticated)}
+            isAuthenticated={Boolean(finalIsAuthenticated)}
             currentUser={currentUser}
-            hasExpertProfile={Boolean(isExpertAuthenticated)}
+            hasExpertProfile={Boolean(finalHasExpertProfile)}
             userLogout={handleUserLogout}
             expertLogout={handleExpertLogout}
-            sessionType={validSessionType as 'none' | 'user' | 'expert' | 'dual'}
+            sessionType={finalSessionType as 'none' | 'user' | 'expert' | 'dual'}
             isLoggingOut={isLoggingOut}
           />
         </div>
