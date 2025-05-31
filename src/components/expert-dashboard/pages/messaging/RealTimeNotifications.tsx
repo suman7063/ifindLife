@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -286,7 +285,6 @@ const RealTimeNotifications: React.FC = () => {
                         id={key}
                         checked={value}
                         onCheckedChange={(checked) => updateSetting(key as keyof NotificationSettings, checked)}
-                        size="sm"
                       />
                       <Label htmlFor={key} className="text-xs capitalize">
                         {key}
