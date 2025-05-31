@@ -10,6 +10,7 @@ import MessagingPage from '@/components/expert-dashboard/pages/MessagingPage';
 import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
+import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 
 const ExpertDashboard = () => {
@@ -35,7 +36,7 @@ const ExpertDashboard = () => {
     );
   }
 
-  // Handle unauthorized access - ExpertDashboardLayout will handle the redirect
+  // Handle unauthorized access
   if (!isAuthenticated || sessionType !== 'expert' || !expert) {
     return <Navigate to="/expert-login" replace />;
   }
@@ -63,6 +64,9 @@ const ExpertDashboard = () => {
         
         {/* Earnings Tracking and Payout Management */}
         <Route path="earnings" element={<EarningsPage />} />
+        
+        {/* Advanced Analytics Dashboard */}
+        <Route path="analytics" element={<AnalyticsPage />} />
         
         {/* User Reporting System for Inappropriate Behavior */}
         <Route path="reports" element={<ReportPage />} />

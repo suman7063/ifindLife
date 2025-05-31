@@ -2,11 +2,13 @@
 import React from 'react';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import WelcomeSection from './dashboard/WelcomeSection';
-import StatsGrid from './dashboard/StatsGrid';
+import DashboardMetrics from './dashboard/DashboardMetrics';
 import QuickActionsCard from './dashboard/QuickActionsCard';
 import RecentActivityCard from './dashboard/RecentActivityCard';
-import PerformanceOverviewCard from './dashboard/PerformanceOverviewCard';
-import AnalyticsCard from './dashboard/AnalyticsCard';
+import AdvancedStatsCard from './dashboard/AdvancedStatsCard';
+import RevenueChart from './dashboard/RevenueChart';
+import ClientEngagementCard from './dashboard/ClientEngagementCard';
+import QuickInsightsCard from './dashboard/QuickInsightsCard';
 
 const DashboardHome = () => {
   const { expert } = useUnifiedAuth();
@@ -17,16 +19,29 @@ const DashboardHome = () => {
   return (
     <div className="space-y-6">
       <WelcomeSection expertName={expertName} expertStatus={expertStatus} />
-      <StatsGrid />
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Enhanced Metrics Grid */}
+      <DashboardMetrics />
+      
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        {/* Quick Actions */}
         <QuickActionsCard />
-        <AnalyticsCard />
+        
+        {/* Quick Insights */}
+        <QuickInsightsCard />
+        
+        {/* Advanced Stats */}
+        <AdvancedStatsCard />
       </div>
 
+      {/* Revenue Analytics */}
+      <RevenueChart />
+
+      {/* Client Engagement and Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ClientEngagementCard />
         <RecentActivityCard />
-        <PerformanceOverviewCard />
       </div>
     </div>
   );

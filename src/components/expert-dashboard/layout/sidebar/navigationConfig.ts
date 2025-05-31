@@ -1,64 +1,77 @@
 
-import {
-  LayoutDashboard,
-  Calendar,
-  Users,
-  MessageSquare,
-  Wallet,
-  UserCircle,
-  AlertCircle,
-  Briefcase,
+import { 
+  Home, 
+  User, 
+  Calendar, 
+  Users, 
+  MessageSquare, 
+  Briefcase, 
+  DollarSign,
+  BarChart3,
+  Flag,
+  type LucideIcon
 } from 'lucide-react';
 
 export interface NavigationItem {
+  name: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  badge?: string;
+  icon: LucideIcon;
+  description: string;
 }
 
 export const navigationItems: NavigationItem[] = [
   {
-    href: "/expert-dashboard",
-    icon: LayoutDashboard,
-    label: "Dashboard"
+    name: 'Dashboard',
+    href: '/expert-dashboard',
+    icon: Home,
+    description: 'Overview and quick stats'
   },
   {
-    href: "/expert-dashboard/profile",
-    icon: UserCircle,
-    label: "Profile"
+    name: 'Analytics', 
+    href: '/expert-dashboard/analytics',
+    icon: BarChart3,
+    description: 'Detailed performance insights'
   },
   {
-    href: "/expert-dashboard/schedule",
+    name: 'Profile',
+    href: '/expert-dashboard/profile',
+    icon: User,
+    description: 'Manage your professional profile'
+  },
+  {
+    name: 'Schedule',
+    href: '/expert-dashboard/schedule',
     icon: Calendar,
-    label: "Schedule",
-    badge: "8"
+    description: 'Manage appointments and availability'
   },
   {
-    href: "/expert-dashboard/clients",
+    name: 'Clients',
+    href: '/expert-dashboard/clients',
     icon: Users,
-    label: "Clients",
-    badge: "12"
+    description: 'View and manage your clients'
   },
   {
-    href: "/expert-dashboard/services",
-    icon: Briefcase,
-    label: "Services"
-  },
-  {
-    href: "/expert-dashboard/messages",
+    name: 'Messages',
+    href: '/expert-dashboard/messages',
     icon: MessageSquare,
-    label: "Messages",
-    badge: "3"
+    description: 'Communicate with clients'
   },
   {
-    href: "/expert-dashboard/earnings",
-    icon: Wallet,
-    label: "Earnings"
+    name: 'Services',
+    href: '/expert-dashboard/services',
+    icon: Briefcase,
+    description: 'Manage your service offerings'
   },
   {
-    href: "/expert-dashboard/reports",
-    icon: AlertCircle,
-    label: "Report User"
+    name: 'Earnings',
+    href: '/expert-dashboard/earnings',
+    icon: DollarSign,
+    description: 'Track earnings and payouts'
+  },
+  {
+    name: 'Reports',
+    href: '/expert-dashboard/reports',
+    icon: Flag,
+    description: 'Handle user reports'
   }
 ];
