@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -6,6 +7,7 @@ import NavbarExpertMenu from './NavbarExpertMenu';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown } from './menu';
+
 interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
   currentUser: any;
@@ -15,6 +17,7 @@ interface NavbarDesktopLinksProps {
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   isLoggingOut: boolean;
 }
+
 const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   isAuthenticated,
   currentUser,
@@ -37,6 +40,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     // Unified auth state
     unifiedIsAuthenticated: Boolean(unifiedAuth.isAuthenticated),
     unifiedSessionType: unifiedAuth.sessionType,
+    unifiedIsLoading: Boolean(unifiedAuth.isLoading),
     unifiedHasExpert: Boolean(unifiedAuth.expert),
     unifiedHasAdmin: Boolean(unifiedAuth.admin),
     unifiedHasUser: Boolean(unifiedAuth.user),
@@ -50,24 +54,35 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   const isAdminAuthenticated = Boolean(unifiedAuth.sessionType === 'admin' && unifiedAuth.admin);
   const hasUserData = Boolean(currentUser);
 
-  // Wait for auth to finish loading if needed
-  if (sessionType === undefined || unifiedAuth.isLoading) {
-    console.log('NavbarDesktopLinks: Session type undefined or unified auth loading, showing loading state');
-    return <div className="hidden md:flex items-center space-x-1">
-        <Button variant="ghost" asChild>
+  // Don't show loading state here - let the parent handle it
+  if (unifiedAuth.isLoading) {
+    return <div className="hidden md:flex items-center space-x-6">
+        <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
           <Link to="/">Home</Link>
-        </Button>
-        <Button variant="ghost" asChild>
-          <Link to="/about">About</Link>
-        </Button>
-        <Button variant="ghost" asChild>
-          <Link to="/experts">Experts</Link>
         </Button>
         
         <NavigationMenu>
           <NavigationMenuList>
-            <ProgramsMenu />
             <ServicesMenu />
+          </NavigationMenuList>
+        </NavigationMenu>
+        
+        <NavigationMenu>
+          <NavigationMenuList>
+            <ProgramsMenu />
+          </NavigationMenuList>
+        </NavigationMenu>
+        
+        <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
+          <Link to="/experts">Experts</Link>
+        </Button>
+        
+        <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
+          <Link to="/about">About Us</Link>
+        </Button>
+        
+        <NavigationMenu>
+          <NavigationMenuList>
             <SupportMenu />
           </NavigationMenuList>
         </NavigationMenu>
@@ -81,13 +96,17 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   if (isExpertAuthenticated) {
     console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
     authComponent = <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
-  } else if (isAdminAuthenticated || isUserAuthenticated && hasUserData) {
+  } else if (isAdminAuthenticated || (isUserAuthenticated && hasUserData)) {
     console.log('NavbarDesktopLinks: Showing user avatar for authenticated user/admin');
     authComponent = <NavbarUserAvatar currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
   } else {
     console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
-    authComponent = <LoginDropdown isAuthenticated={isUserAuthenticated || isExpertAuthenticated || isAdminAuthenticated} hasExpertProfile={isExpertAuthenticated} />;
+    authComponent = <LoginDropdown 
+      isAuthenticated={isUserAuthenticated || isExpertAuthenticated || isAdminAuthenticated} 
+      hasExpertProfile={isExpertAuthenticated} 
+    />;
   }
+
   return <div className="hidden md:flex items-center space-x-6">
       <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
         <Link to="/">Home</Link>
@@ -122,4 +141,5 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       {authComponent}
     </div>;
 };
+
 export default NavbarDesktopLinks;

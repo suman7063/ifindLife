@@ -167,10 +167,11 @@ const Navbar = () => {
     isLoading: Boolean(isLoading),
     hasCurrentUser: Boolean(currentUser),
     hasExpertProfile: Boolean(hasExpertProfile),
-    hasAdminProfile: Boolean(hasAdminProfile)
+    hasAdminProfile: Boolean(hasAdminProfile),
+    timestamp: new Date().toISOString()
   });
 
-  // Show loading state
+  // Show loading state only briefly
   if (isLoading) {
     return <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
@@ -181,6 +182,8 @@ const Navbar = () => {
         </div>
       </div>;
   }
+
+  // Normal navbar - shows appropriate state based on authentication
   return <>
       <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
@@ -188,9 +191,25 @@ const Navbar = () => {
             <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-16" />
           </Link>
           
-          <NavbarDesktopLinks isAuthenticated={Boolean(isAuthenticated)} currentUser={currentUser} hasExpertProfile={Boolean(hasExpertProfile)} userLogout={handleLogout} expertLogout={handleLogout} sessionType={navbarSessionType} isLoggingOut={false} />
+          <NavbarDesktopLinks 
+            isAuthenticated={Boolean(isAuthenticated)} 
+            currentUser={currentUser} 
+            hasExpertProfile={Boolean(hasExpertProfile)} 
+            userLogout={handleLogout} 
+            expertLogout={handleLogout} 
+            sessionType={navbarSessionType} 
+            isLoggingOut={false} 
+          />
           
-          <NavbarMobileMenu isAuthenticated={Boolean(isAuthenticated)} currentUser={currentUser} hasExpertProfile={Boolean(hasExpertProfile)} userLogout={handleLogout} expertLogout={handleLogout} sessionType={navbarSessionType} isLoggingOut={false} />
+          <NavbarMobileMenu 
+            isAuthenticated={Boolean(isAuthenticated)} 
+            currentUser={currentUser} 
+            hasExpertProfile={Boolean(hasExpertProfile)} 
+            userLogout={handleLogout} 
+            expertLogout={handleLogout} 
+            sessionType={navbarSessionType} 
+            isLoggingOut={false} 
+          />
         </div>
       </div>
     </>;

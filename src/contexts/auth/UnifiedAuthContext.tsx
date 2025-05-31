@@ -33,6 +33,7 @@ const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(und
 export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [sessionType, setSessionType] = useState<'user' | 'admin' | 'expert' | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
   
   const [user, setUser] = useState<UserProfile | null>(null);
   const [admin, setAdmin] = useState<AdminProfile | null>(null);
@@ -46,17 +47,39 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
     const initializeAuth = async () => {
       try {
+        console.log('UnifiedAuth: Initializing auth state...');
+        
         // Get current session
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('UnifiedAuth: Error getting session:', error);
+          if (mounted) {
+            setIsLoading(false);
+            setHasInitialized(true);
+          }
+          return;
+        }
         
         if (session?.user && mounted) {
+          console.log('UnifiedAuth: Session found, loading profiles...');
           await loadUserProfiles(session.user);
+        } else {
+          console.log('UnifiedAuth: No session found, setting not authenticated state');
+          if (mounted) {
+            setUser(null);
+            setAdmin(null);
+            setExpert(null);
+            setSessionType(null);
+            setIsLoading(false);
+            setHasInitialized(true);
+          }
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
-      } finally {
+        console.error('UnifiedAuth: Error initializing auth:', error);
         if (mounted) {
           setIsLoading(false);
+          setHasInitialized(true);
         }
       }
     };
@@ -68,19 +91,21 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       async (event, session) => {
         if (!mounted) return;
 
-        console.log('Auth state changed:', { event, hasSession: !!session, userId: session?.user?.id });
+        console.log('UnifiedAuth: Auth state changed:', { event, hasSession: !!session, userId: session?.user?.id });
         
         if (session?.user) {
+          setIsLoading(true);
           await loadUserProfiles(session.user);
         } else {
           // Clear all profile states
+          console.log('UnifiedAuth: Clearing auth state (no session)');
           setUser(null);
           setAdmin(null);
           setExpert(null);
           setSessionType(null);
+          setIsLoading(false);
+          setHasInitialized(true);
         }
-        
-        setIsLoading(false);
       }
     );
 
@@ -92,21 +117,23 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const loadUserProfiles = async (authUser: User) => {
     try {
-      console.log('Loading user profiles for:', authUser.id);
+      console.log('UnifiedAuth: Loading user profiles for:', authUser.id);
       
       // Check stored session type preference
       const storedSessionType = localStorage.getItem('sessionType') as 'user' | 'admin' | 'expert' | null;
-      console.log('Stored session type:', storedSessionType);
+      console.log('UnifiedAuth: Stored session type:', storedSessionType);
       
       // Try to load expert profile first if stored type is expert
       if (storedSessionType === 'expert') {
         const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
         if (expertProfile) {
-          console.log('Expert profile loaded:', expertProfile);
+          console.log('UnifiedAuth: Expert profile loaded:', expertProfile);
           setExpert(expertProfile);
           setSessionType('expert');
           setUser(null);
           setAdmin(null);
+          setIsLoading(false);
+          setHasInitialized(true);
           return;
         }
       }
@@ -115,11 +142,13 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (storedSessionType === 'admin') {
         const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
         if (adminProfile) {
-          console.log('Admin profile loaded:', adminProfile);
+          console.log('UnifiedAuth: Admin profile loaded:', adminProfile);
           setAdmin(adminProfile);
           setSessionType('admin');
           setUser(null);
           setExpert(null);
+          setIsLoading(false);
+          setHasInitialized(true);
           return;
         }
       }
@@ -127,11 +156,13 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Try to load user profile
       const userProfile = await userRepository.getUserByAuthId(authUser.id);
       if (userProfile) {
-        console.log('User profile loaded:', userProfile);
+        console.log('UnifiedAuth: User profile loaded:', userProfile);
         setUser(userProfile);
         setSessionType('user');
         setAdmin(null);
         setExpert(null);
+        setIsLoading(false);
+        setHasInitialized(true);
         return;
       }
       
@@ -139,41 +170,52 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (!storedSessionType) {
         const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
         if (expertProfile) {
-          console.log('Expert profile loaded (no preference):', expertProfile);
+          console.log('UnifiedAuth: Expert profile loaded (no preference):', expertProfile);
           setExpert(expertProfile);
           setSessionType('expert');
           localStorage.setItem('sessionType', 'expert');
+          setIsLoading(false);
+          setHasInitialized(true);
           return;
         }
         
         const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
         if (adminProfile) {
-          console.log('Admin profile loaded (no preference):', adminProfile);
+          console.log('UnifiedAuth: Admin profile loaded (no preference):', adminProfile);
           setAdmin(adminProfile);
           setSessionType('admin');
           localStorage.setItem('sessionType', 'admin');
+          setIsLoading(false);
+          setHasInitialized(true);
           return;
         }
         
         const userProfile = await userRepository.getUserByAuthId(authUser.id);
         if (userProfile) {
-          console.log('User profile loaded (no preference):', userProfile);
+          console.log('UnifiedAuth: User profile loaded (no preference):', userProfile);
           setUser(userProfile);
           setSessionType('user');
           localStorage.setItem('sessionType', 'user');
+          setIsLoading(false);
+          setHasInitialized(true);
           return;
         }
       }
       
-      console.log('No profiles found for user:', authUser.id);
+      console.log('UnifiedAuth: No profiles found for user:', authUser.id);
+      // Even if no profiles found, we should stop loading
+      setIsLoading(false);
+      setHasInitialized(true);
     } catch (error) {
-      console.error('Error loading user profiles:', error);
+      console.error('UnifiedAuth: Error loading user profiles:', error);
+      setIsLoading(false);
+      setHasInitialized(true);
     }
   };
 
   const login = async (type: 'user' | 'admin' | 'expert', credentials: any): Promise<boolean> => {
     try {
-      console.log(`Attempting ${type} login:`, credentials.email);
+      console.log(`UnifiedAuth: Attempting ${type} login:`, credentials.email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
@@ -181,7 +223,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
 
       if (error) {
-        console.error('Login error:', error);
+        console.error('UnifiedAuth: Login error:', error);
         return false;
       }
 
@@ -197,7 +239,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('UnifiedAuth: Login error:', error);
       return false;
     }
   };
@@ -215,13 +257,28 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setAdmin(null);
       setExpert(null);
       setSessionType(null);
+      setIsLoading(false);
+      setHasInitialized(true);
       
-      console.log('Logout completed');
+      console.log('UnifiedAuth: Logout completed');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('UnifiedAuth: Logout error:', error);
       throw error;
     }
   };
+
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading && !hasInitialized) {
+        console.log('UnifiedAuth: Force completing loading after timeout');
+        setIsLoading(false);
+        setHasInitialized(true);
+      }
+    }, 3000); // 3 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [isLoading, hasInitialized]);
 
   const value = {
     isAuthenticated,
