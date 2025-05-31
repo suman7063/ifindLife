@@ -1,10 +1,9 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface SidebarNavItemProps {
   href: string;
@@ -14,32 +13,33 @@ interface SidebarNavItemProps {
   badge?: string;
 }
 
-const SidebarNavItem: React.FC<SidebarNavItemProps> = ({ 
-  href, 
-  icon, 
-  children, 
-  isActive = false, 
-  badge 
-}) => (
-  <Button
-    variant={isActive ? "secondary" : "ghost"}
-    className={cn(
-      "w-full justify-start",
-      isActive ? "bg-muted font-medium" : "font-normal"
-    )}
-    asChild
-  >
-    <Link to={href} className="flex items-center">
-      <span className="mr-2">{icon}</span>
-      <span className="flex-1">{children}</span>
-      {badge && (
-        <Badge variant="secondary" className="ml-auto text-xs">
-          {badge}
-        </Badge>
+const SidebarNavItem: React.FC<SidebarNavItemProps> = ({
+  href,
+  icon,
+  children,
+  isActive = false,
+  badge
+}) => {
+  return (
+    <Button
+      asChild
+      variant={isActive ? "secondary" : "ghost"}
+      className={cn(
+        "w-full justify-start h-10 px-3",
+        isActive && "bg-secondary text-secondary-foreground"
       )}
-      {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
-    </Link>
-  </Button>
-);
+    >
+      <Link to={href} className="flex items-center gap-3">
+        {icon}
+        <span className="flex-1 text-left">{children}</span>
+        {badge && (
+          <Badge variant="secondary" className="ml-auto">
+            {badge}
+          </Badge>
+        )}
+      </Link>
+    </Button>
+  );
+};
 
 export default SidebarNavItem;

@@ -10,8 +10,8 @@ const SidebarNavigation: React.FC = () => {
   
   // Function to check if a path is active - improved logic
   const isActive = (path: string) => {
-    if (path === "/expert/dashboard") {
-      return location.pathname === "/expert/dashboard";
+    if (path === "/expert-dashboard") {
+      return location.pathname === "/expert-dashboard";
     }
     return location.pathname.startsWith(path);
   };
@@ -24,7 +24,7 @@ const SidebarNavigation: React.FC = () => {
             key={item.href}
             href={item.href}
             icon={<item.icon className="h-5 w-5" />}
-            isActive={isActive(item.href) && (item.href === "/expert/dashboard" ? location.pathname === "/expert/dashboard" : true)}
+            isActive={isActive(item.href)}
             badge={item.badge}
           >
             {item.label}
