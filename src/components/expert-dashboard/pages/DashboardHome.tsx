@@ -9,6 +9,7 @@ import AdvancedStatsCard from './dashboard/AdvancedStatsCard';
 import RevenueChart from './dashboard/RevenueChart';
 import ClientEngagementCard from './dashboard/ClientEngagementCard';
 import QuickInsightsCard from './dashboard/QuickInsightsCard';
+import NotificationCenter from './dashboard/NotificationCenter';
 
 const DashboardHome = () => {
   const { expert } = useUnifiedAuth();
@@ -38,11 +39,14 @@ const DashboardHome = () => {
       {/* Revenue Analytics */}
       <RevenueChart />
 
-      {/* Client Engagement and Activity */}
+      {/* Notifications and Activity Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <NotificationCenter />
         <ClientEngagementCard />
-        <RecentActivityCard />
       </div>
+
+      {/* Recent Activity */}
+      <RecentActivityCard />
     </div>
   );
 };
