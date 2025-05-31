@@ -4,8 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Bell, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
+import NotificationCenter from '../components/NotificationCenter';
 
 interface ExpertHeaderProps {
   expert?: any;
@@ -18,7 +19,7 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
   // Use provided expert or fallback to expert from unified auth context
   const displayExpert = propExpert || expert;
   
-  // Generate proper initials from expert name - Fix Issue 2
+  // Generate proper initials from expert name
   const getInitials = (name?: string) => {
     if (!name || typeof name !== 'string') return 'EX';
     
@@ -56,16 +57,7 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
       </div>
       
       <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative"
-        >
-          <Bell className="h-5 w-5" />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-            2
-          </span>
-        </Button>
+        <NotificationCenter />
         
         <Button variant="outline" size="sm" onClick={handleLogout}>
           <LogOut className="h-4 w-4 mr-2" /> Sign Out

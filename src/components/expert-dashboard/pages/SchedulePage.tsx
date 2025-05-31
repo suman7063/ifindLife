@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Plus, Settings } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import CalendarWidget from './schedule/CalendarWidget';
 
 const SchedulePage = () => {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -63,21 +64,10 @@ const SchedulePage = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar View */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Calendar className="h-5 w-5 mr-2" />
-              Calendar View
-            </CardTitle>
-            <CardDescription>Manage your availability and appointments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-96 bg-gray-50 rounded-lg flex items-center justify-center">
-              <p className="text-gray-500">Calendar component will be implemented here</p>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Calendar Widget */}
+        <div className="lg:col-span-2">
+          <CalendarWidget />
+        </div>
 
         {/* Today's Schedule */}
         <Card>

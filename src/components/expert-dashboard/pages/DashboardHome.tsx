@@ -6,6 +6,7 @@ import StatsGrid from './dashboard/StatsGrid';
 import QuickActionsCard from './dashboard/QuickActionsCard';
 import RecentActivityCard from './dashboard/RecentActivityCard';
 import PerformanceOverviewCard from './dashboard/PerformanceOverviewCard';
+import AnalyticsCard from './dashboard/AnalyticsCard';
 
 const DashboardHome = () => {
   const { expert } = useUnifiedAuth();
@@ -20,10 +21,13 @@ const DashboardHome = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <QuickActionsCard />
-        <RecentActivityCard />
+        <AnalyticsCard />
       </div>
 
-      <PerformanceOverviewCard />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentActivityCard />
+        <PerformanceOverviewCard />
+      </div>
     </div>
   );
 };
