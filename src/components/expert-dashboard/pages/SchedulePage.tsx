@@ -2,6 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SessionManager from './sessions/SessionManager';
+import AvailabilityManagement from '@/components/expert/availability/AvailabilityManagement';
 
 const SchedulePage: React.FC = () => {
   return (
@@ -13,22 +14,19 @@ const SchedulePage: React.FC = () => {
         </p>
       </div>
       
-      <Tabs defaultValue="sessions" className="w-full">
+      <Tabs defaultValue="availability" className="w-full">
         <TabsList>
+          <TabsTrigger value="availability">Availability Management</TabsTrigger>
           <TabsTrigger value="sessions">Session Management</TabsTrigger>
-          <TabsTrigger value="availability">Availability</TabsTrigger>
           <TabsTrigger value="calendar">Calendar View</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="sessions">
-          <SessionManager />
+        <TabsContent value="availability">
+          <AvailabilityManagement />
         </TabsContent>
 
-        <TabsContent value="availability">
-          <div className="text-center py-12 text-gray-500">
-            <h3 className="text-lg font-medium mb-2">Availability Management</h3>
-            <p>Set your available hours and time slots</p>
-          </div>
+        <TabsContent value="sessions">
+          <SessionManager />
         </TabsContent>
 
         <TabsContent value="calendar">
