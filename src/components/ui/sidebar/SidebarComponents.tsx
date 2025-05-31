@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useSidebar } from "./SidebarProvider"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
@@ -591,9 +592,6 @@ const SidebarMenuSubButton = React.forwardRef<
 })
 SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
 
-// Import Tooltip components that are referenced but not imported
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-
 export {
   Sidebar,
   SidebarContent,
@@ -614,9 +612,7 @@ export {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarProvider,
   SidebarRail,
   SidebarSeparator,
   SidebarTrigger,
-  useSidebar,
 }

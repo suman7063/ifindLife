@@ -1,7 +1,4 @@
 
-// Export all sidebar components from this index file
+// Export all sidebar components from their respective files
 export * from './SidebarProvider';
 export * from './SidebarComponents';
-export * from './SidebarMenu';
-export * from './SidebarSubMenu';
-export * from './SidebarUtils';
