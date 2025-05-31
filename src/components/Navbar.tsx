@@ -154,9 +154,9 @@ const Navbar = () => {
     }
   };
 
-  // Updated to have consistent light background across all pages
+  // Updated to have consistent white background
   const getNavbarBackground = () => {
-    return scrolled ? 'bg-background/90' : 'bg-transparent';
+    return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   };
 
   // Enhanced authentication state logging for debugging
@@ -172,20 +172,20 @@ const Navbar = () => {
 
   // Show loading state
   if (isLoading) {
-    return <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
-        <div className="container-fluid px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
+    return <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-8" />
+            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-10" />
           </Link>
           <div className="text-gray-500">Loading...</div>
         </div>
       </div>;
   }
   return <>
-      <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
-        <div className="container-fluid px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
+      <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-14 object-fill" />
+            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-10" />
           </Link>
           
           <NavbarDesktopLinks isAuthenticated={Boolean(isAuthenticated)} currentUser={currentUser} hasExpertProfile={Boolean(hasExpertProfile)} userLogout={handleLogout} expertLogout={handleLogout} sessionType={navbarSessionType} isLoggingOut={false} />

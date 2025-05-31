@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -106,21 +105,33 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   }
   
   return (
-    <div className="hidden md:flex items-center space-x-1">
-      <Button variant="ghost" asChild>
+    <div className="hidden md:flex items-center space-x-8">
+      <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
         <Link to="/">Home</Link>
-      </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/about">About</Link>
-      </Button>
-      <Button variant="ghost" asChild>
-        <Link to="/experts">Experts</Link>
       </Button>
       
       <NavigationMenu>
         <NavigationMenuList>
-          <ProgramsMenu />
           <ServicesMenu />
+        </NavigationMenuList>
+      </NavigationMenu>
+      
+      <NavigationMenu>
+        <NavigationMenuList>
+          <ProgramsMenu />
+        </NavigationMenuList>
+      </NavigationMenu>
+      
+      <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
+        <Link to="/experts">Experts</Link>
+      </Button>
+      
+      <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
+        <Link to="/about">About Us</Link>
+      </Button>
+      
+      <NavigationMenu>
+        <NavigationMenuList>
           <SupportMenu />
         </NavigationMenuList>
       </NavigationMenu>

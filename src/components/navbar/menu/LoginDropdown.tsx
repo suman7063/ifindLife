@@ -50,7 +50,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     <NavigationMenu>
       <NavigationMenuList>
         <NavigationMenuItem>
-          <NavigationMenuTrigger className="text-sm font-medium">
+          <NavigationMenuTrigger className="text-gray-700 hover:text-gray-900 font-medium">
             Login
           </NavigationMenuTrigger>
           <NavigationMenuContent className="min-w-[220px] bg-white border border-gray-200 shadow-lg z-50">
