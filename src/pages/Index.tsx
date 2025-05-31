@@ -46,20 +46,20 @@ const Index = () => {
           <IntroductionSection />
         </div>
         
-        {/* Section 3: IFL Programs for Individuals (What We Do) */}
+        {/* Section 3: Experts Currently Online - Moved up after Introduction */}
+        <ExpertsOnlineSection />
+        
+        {/* Section 4: IFL Programs for Individuals (What We Do) - Moved down */}
         <WhatWeDoSection />
         
-        {/* Section 4: How Can We Help You Today */}
+        {/* Section 5: How Can We Help You Today */}
         <HomepageIssueSessions />
         
-        {/* Section 5: Join Our Mindfulness Community */}
+        {/* Section 6: Join Our Mindfulness Community */}
         <MindfulnessCommunitySection />
         
-        {/* Section 6: Programs for Organizations (Services Section) */}
+        {/* Section 7: Programs for Organizations (Services Section) */}
         <ServicesSection />
-        
-        {/* Section 7: Experts Currently Online - Import directly to avoid dynamic import issues */}
-        <ExpertsOnlineSection />
         
         {/* Section 8: Why Choose Us */}
         <Suspense fallback={<SectionLoadingFallback />}>

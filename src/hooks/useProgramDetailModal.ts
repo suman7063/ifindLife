@@ -1,12 +1,21 @@
 
-import { useState, useCallback } from 'react';
-import { ProgramDetail } from '@/types/programDetail';
-import { getProgramDetail } from '@/data/programDetailsData';
+import { useState } from 'react';
+
+interface ProgramData {
+  title: string;
+  description: string;
+  overview: string;
+  benefits: string[];
+  features: string[];
+  duration: string;
+  format: string;
+  price: string;
+}
 
 interface ModalState {
   isOpen: boolean;
-  programData: ProgramDetail | null;
-  activeTab: 'structure' | 'coverage' | 'outcomes' | 'pricing' | 'reviews';
+  programData: ProgramData | null;
+  activeTab: string;
   loading: boolean;
   error: string | null;
 }
@@ -15,49 +24,37 @@ export const useProgramDetailModal = () => {
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     programData: null,
-    activeTab: 'structure',
+    activeTab: 'overview',
     loading: false,
     error: null
   });
 
-  const openModal = useCallback((programId: string) => {
-    setModalState(prev => ({ ...prev, loading: true, error: null }));
-    
-    try {
-      const programData = getProgramDetail(programId);
-      if (!programData) {
-        throw new Error('Program not found');
-      }
-      
-      setModalState({
-        isOpen: true,
-        programData,
-        activeTab: 'structure',
-        loading: false,
-        error: null
-      });
-    } catch (error) {
-      setModalState(prev => ({
-        ...prev,
-        loading: false,
-        error: error instanceof Error ? error.message : 'Failed to load program details'
-      }));
-    }
-  }, []);
+  const openModal = (programId: string, programData?: ProgramData) => {
+    setModalState({
+      isOpen: true,
+      programData: programData || null,
+      activeTab: 'overview',
+      loading: !programData,
+      error: null
+    });
+  };
 
-  const closeModal = useCallback(() => {
+  const closeModal = () => {
     setModalState({
       isOpen: false,
       programData: null,
-      activeTab: 'structure',
+      activeTab: 'overview',
       loading: false,
       error: null
     });
-  }, []);
+  };
 
-  const switchTab = useCallback((tab: ModalState['activeTab']) => {
-    setModalState(prev => ({ ...prev, activeTab: tab }));
-  }, []);
+  const switchTab = (tab: string) => {
+    setModalState(prev => ({
+      ...prev,
+      activeTab: tab
+    }));
+  };
 
   return {
     modalState,

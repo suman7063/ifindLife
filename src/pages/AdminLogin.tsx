@@ -67,19 +67,17 @@ const AdminLogin = () => {
   // Show loading while checking auth state
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col">
-        <main className="flex-1 flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Checking authentication...</p>
-          </div>
-        </main>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <div className="bg-gradient-to-r from-ifind-aqua to-ifind-teal py-12">
         <div className="container mx-auto px-4">
           <div className="text-center">
@@ -89,7 +87,7 @@ const AdminLogin = () => {
         </div>
       </div>
       
-      <main className="flex-1 py-6 flex items-center justify-center">
+      <div className="py-6 flex items-center justify-center">
         <div className="container max-w-md">
           <AdminLoginContent 
             onLoginSuccess={handleLoginSuccess} 
@@ -97,7 +95,7 @@ const AdminLogin = () => {
             isLoggingIn={isLoggingIn}
           />
         </div>
-      </main>
+      </div>
     </div>
   );
 };
