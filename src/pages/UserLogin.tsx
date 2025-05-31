@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -17,15 +17,14 @@ const UserLogin: React.FC = () => {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { executePendingAction } = useAuthJourneyPreservation();
-  const authState = useAuth();
+  const { isAuthenticated, sessionType, user, isLoading: authLoading } = useUnifiedAuth();
 
-  console.log('UserLogin: Current auth state:', {
-    hasUser: !!authState?.user,
-    hasSession: !!authState?.session,
-    sessionType: authState?.sessionType,
-    isAuthenticated: authState?.isAuthenticated,
-    isLoading: authState?.isLoading,
-    userEmail: authState?.user?.email
+  console.log('UserLogin: Current unified auth state:', {
+    isAuthenticated: Boolean(isAuthenticated),
+    sessionType,
+    hasUser: Boolean(user),
+    authLoading: Boolean(authLoading),
+    userEmail: user?.email
   });
 
   // Check for existing session on component mount
@@ -35,27 +34,24 @@ const UserLogin: React.FC = () => {
         console.log('UserLogin: Checking for existing session...');
         
         // Wait for auth state to stabilize
-        if (authState?.isLoading) {
+        if (authLoading) {
           console.log('UserLogin: Auth still loading, waiting...');
           return;
         }
         
-        // Enhanced authentication check
-        const isProperlyAuthenticated = !!(
-          authState?.user && 
-          authState?.session && 
-          authState?.sessionType && 
-          authState?.sessionType !== 'none' && 
-          authState?.isAuthenticated
+        // Enhanced authentication check using unified auth
+        const isProperlyAuthenticated = Boolean(
+          isAuthenticated && 
+          sessionType === 'user' && 
+          user
         );
         
         console.log('UserLogin: Enhanced auth check result:', {
-          user: !!authState?.user,
-          session: !!authState?.session,
-          sessionType: authState?.sessionType,
-          isAuthenticated: authState?.isAuthenticated,
+          isAuthenticated: Boolean(isAuthenticated),
+          sessionType,
+          hasUser: Boolean(user),
           isProperlyAuthenticated,
-          authLoading: authState?.isLoading
+          authLoading: Boolean(authLoading)
         });
         
         if (isProperlyAuthenticated) {
@@ -83,7 +79,7 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate, executePendingAction, authState]);
+  }, [navigate, executePendingAction, isAuthenticated, sessionType, user, authLoading]);
 
   // Handle login form submission with enhanced logging
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -143,23 +139,31 @@ const UserLogin: React.FC = () => {
   };
   
   // Show loading while checking auth
-  if (isCheckingAuth || authState?.isLoading) {
+  if (isCheckingAuth || authLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Checking authentication...</span>
-      </div>
+      <>
+        <Navbar />
+        <div className="flex justify-center items-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Checking authentication...</span>
+        </div>
+        <Footer />
+      </>
     );
   }
 
   // If user is authenticated, show redirect message
-  if (authState?.isAuthenticated && !authState?.isLoading) {
+  if (isAuthenticated && sessionType === 'user' && user && !authLoading) {
     console.log('UserLogin: User is authenticated, should redirect');
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Redirecting to dashboard...</span>
-      </div>
+      <>
+        <Navbar />
+        <div className="flex justify-center items-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <span className="ml-2">Redirecting to dashboard...</span>
+        </div>
+        <Footer />
+      </>
     );
   }
   

@@ -2,8 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/admin-auth';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import AdminLoginContent from '@/components/admin/auth/AdminLoginContent';
 import { toast } from 'sonner';
 
@@ -70,22 +68,18 @@ const AdminLogin = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col">
-        <Navbar />
         <main className="flex-1 flex items-center justify-center bg-gray-50">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
             <p className="mt-4 text-gray-600">Checking authentication...</p>
           </div>
         </main>
-        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <div className="bg-gradient-to-r from-ifind-aqua to-ifind-teal py-12">
         <div className="container mx-auto px-4">
           <div className="text-center">
@@ -95,7 +89,7 @@ const AdminLogin = () => {
         </div>
       </div>
       
-      <main className="flex-1 py-6 flex items-center justify-center bg-gray-50">
+      <main className="flex-1 py-6 flex items-center justify-center">
         <div className="container max-w-md">
           <AdminLoginContent 
             onLoginSuccess={handleLoginSuccess} 
@@ -104,7 +98,6 @@ const AdminLogin = () => {
           />
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
