@@ -17,6 +17,7 @@ export interface NavigationItem {
   href: string;
   icon: LucideIcon;
   description: string;
+  badge?: string;
 }
 
 export const navigationItems: NavigationItem[] = [
@@ -54,7 +55,8 @@ export const navigationItems: NavigationItem[] = [
     name: 'Messages',
     href: '/expert-dashboard/messages',
     icon: MessageSquare,
-    description: 'Communicate with clients'
+    description: 'Communicate with clients',
+    badge: '3'
   },
   {
     name: 'Services',

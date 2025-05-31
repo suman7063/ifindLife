@@ -27,7 +27,7 @@ const SidebarNavigation: React.FC = () => {
             isActive={isActive(item.href)}
             badge={item.badge}
           >
-            {item.label}
+            {item.name}
           </SidebarNavItem>
         ))}
       </div>
