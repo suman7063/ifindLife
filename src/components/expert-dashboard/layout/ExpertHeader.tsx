@@ -1,79 +1,105 @@
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
-import { toast } from 'sonner';
-import NotificationCenter from '../components/NotificationCenter';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import RealTimeNotifications from '../pages/messaging/RealTimeNotifications';
+import { 
+  Search, 
+  Settings, 
+  HelpCircle, 
+  Calendar,
+  MessageSquare,
+  Video
+} from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-interface ExpertHeaderProps {
-  expert?: any;
-}
+const ExpertHeader: React.FC = () => {
+  const { expert } = useUnifiedAuth();
 
-const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
-  const { logout, expert } = useUnifiedAuth();
-  const navigate = useNavigate();
-  
-  // Use provided expert or fallback to expert from unified auth context
-  const displayExpert = propExpert || expert;
-  
-  // Generate proper initials from expert name
-  const getInitials = (name?: string) => {
-    if (!name || typeof name !== 'string') return 'EX';
-    
-    const trimmedName = name.trim();
-    if (!trimmedName) return 'EX';
-    
-    const nameParts = trimmedName.split(' ').filter(part => part.length > 0);
-    
-    if (nameParts.length === 0) return 'EX';
-    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
-    
-    return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
-  };
-  
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success('Successfully logged out');
-      navigate('/expert-login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Failed to log out. Please try again.');
-    }
-  };
-  
-  const expertName = displayExpert?.name || displayExpert?.full_name || 'Expert';
-  const expertEmail = displayExpert?.email || displayExpert?.contact_email || '';
-  const expertInitials = getInitials(expertName);
-  
   return (
-    <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
-      <div>
-        <h1 className="text-2xl font-semibold text-ifind-teal">Expert Dashboard</h1>
-        <p className="text-sm text-gray-500">Welcome back, {expertName}</p>
-      </div>
-      
-      <div className="flex items-center gap-4">
-        <NotificationCenter />
+    <header className="border-b bg-white px-6 py-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h2 className="text-xl font-semibold">Expert Dashboard</h2>
+          {expert?.status === 'approved' && (
+            <Badge variant="default" className="bg-green-100 text-green-800">
+              Active
+            </Badge>
+          )}
+        </div>
         
-        <Button variant="outline" size="sm" onClick={handleLogout}>
-          <LogOut className="h-4 w-4 mr-2" /> Sign Out
-        </Button>
-        
-        <div className="flex items-center gap-3">
-          <div className="text-right text-sm hidden md:block">
-            <p className="font-medium">{expertName}</p>
-            {expertEmail && <p className="text-gray-500">{expertEmail}</p>}
-          </div>
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={displayExpert?.profile_picture || displayExpert?.image_url} alt={expertName} />
-            <AvatarFallback className="bg-ifind-teal text-white">
-              {expertInitials}
-            </AvatarFallback>
-          </Avatar>
+        <div className="flex items-center gap-4">
+          {/* Quick Actions */}
+          <Button variant="ghost" size="icon">
+            <Search className="h-5 w-5" />
+          </Button>
+          
+          <Button variant="ghost" size="icon">
+            <Calendar className="h-5 w-5" />
+          </Button>
+          
+          <Button variant="ghost" size="icon">
+            <MessageSquare className="h-5 w-5" />
+          </Button>
+          
+          <Button variant="ghost" size="icon">
+            <Video className="h-5 w-5" />
+          </Button>
+          
+          {/* Notifications */}
+          <RealTimeNotifications />
+          
+          {/* Settings and Help */}
+          <Button variant="ghost" size="icon">
+            <Settings className="h-5 w-5" />
+          </Button>
+          
+          <Button variant="ghost" size="icon">
+            <HelpCircle className="h-5 w-5" />
+          </Button>
+          
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage 
+                    src={expert?.profile_picture || ''} 
+                    alt={expert?.name || 'Expert'} 
+                  />
+                  <AvatarFallback>
+                    {expert?.name?.charAt(0) || 'E'}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56" align="end" forceMount>
+              <div className="flex flex-col space-y-1 p-2">
+                <p className="text-sm font-medium leading-none">
+                  {expert?.name || 'Expert'}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {expert?.email}
+                </p>
+              </div>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                Profile Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                Billing
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                Support
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                Log out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>
