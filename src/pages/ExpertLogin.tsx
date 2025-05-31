@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
+import Navbar from '@/components/Navbar';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { toast } from 'sonner';
@@ -138,79 +139,56 @@ const ExpertLogin: React.FC = () => {
   // Show loading while auth is being checked
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        {/* Left Panel with Logo */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-purple-700 flex-col justify-center items-center p-12">
-          <div className="text-center mb-8">
-            <img 
-              src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
-              alt="iFindLife" 
-              className="h-16 mx-auto mb-6" 
-            />
-            <h1 className="text-4xl font-bold text-white mb-4">Expert Portal</h1>
-            <p className="text-xl text-blue-100">Connect with clients and grow your practice</p>
-          </div>
-        </div>
+      <>
+        <Navbar />
         
-        {/* Right Panel */}
-        <div className="flex-1 flex items-center justify-center p-8">
-          <div className="w-full max-w-md">
-            <div className="bg-white rounded-lg shadow-md p-8 flex flex-col items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-              <p>Checking authentication...</p>
+        <main className="py-8 md:py-12 bg-gray-50 min-h-screen">
+          <Container>
+            <div className="flex justify-center">
+              <div className="w-full max-w-lg">
+                <div className="bg-white rounded-lg shadow-md p-6 md:p-8 flex flex-col items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                  <p>Checking authentication...</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </Container>
+        </main>
+        
+        <Footer />
+      </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Left Panel with Logo */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-600 to-purple-700 flex-col justify-center items-center p-12">
-        <div className="text-center mb-8">
-          <img 
-            src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
-            alt="iFindLife" 
-            className="h-16 mx-auto mb-6" 
-          />
-          <h1 className="text-4xl font-bold text-white mb-4">Expert Portal</h1>
-          <p className="text-xl text-blue-100">Connect with clients and grow your practice</p>
-        </div>
-      </div>
+    <>
+      <Navbar />
       
-      {/* Right Panel */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-lg shadow-md p-8">
-            {/* Mobile Logo - only show on small screens */}
-            <div className="lg:hidden text-center mb-6">
-              <img 
-                src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
-                alt="iFindLife" 
-                className="h-12 mx-auto mb-4" 
-              />
+      <main className="py-8 md:py-12 bg-gray-50 min-h-screen">
+        <Container>
+          <div className="flex justify-center">
+            <div className="w-full max-w-lg">
+              <div className="bg-white rounded-lg shadow-md p-6 md:p-8">
+                <div className="mb-6 text-center">
+                  <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
+                  <p className="text-gray-600">Login or join as an expert</p>
+                </div>
+                
+                <ExpertLoginTabs
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  onLogin={handleLogin}
+                  isLoggingIn={isLoggingIn}
+                  loginError={loginError}
+                />
+              </div>
             </div>
-            
-            <div className="mb-6 text-center">
-              <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
-              <p className="text-gray-600">Login or join as an expert</p>
-            </div>
-            
-            <ExpertLoginTabs
-              activeTab={activeTab}
-              setActiveTab={setActiveTab}
-              onLogin={handleLogin}
-              isLoggingIn={isLoggingIn}
-              loginError={loginError}
-            />
           </div>
-        </div>
-      </div>
+        </Container>
+      </main>
       
       <Footer />
-    </div>
+    </>
   );
 };
 
