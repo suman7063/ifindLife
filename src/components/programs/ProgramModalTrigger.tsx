@@ -16,7 +16,7 @@ interface ProgramModalTriggerProps {
     image: string;
     category: string;
   };
-  onOpenModal: (programId: string) => void;
+  onOpenModal: (programId: string, programData?: any) => void;
 }
 
 const ProgramModalTrigger: React.FC<ProgramModalTriggerProps> = ({ 
@@ -24,7 +24,29 @@ const ProgramModalTrigger: React.FC<ProgramModalTriggerProps> = ({
   onOpenModal 
 }) => {
   const handleViewDetails = () => {
-    onOpenModal(program.id);
+    // Convert program data to the expected format for the modal
+    const programData = {
+      title: program.title,
+      description: program.description,
+      overview: program.description,
+      benefits: [
+        "Evidence-based therapeutic techniques",
+        "Personalized treatment approach",
+        "24/7 crisis support availability",
+        "Progress tracking and monitoring"
+      ],
+      features: [
+        "Individual therapy sessions",
+        "Group therapy options",
+        "Digital resources and tools",
+        "Expert guidance and support"
+      ],
+      duration: program.duration,
+      format: "Individual & Group Sessions",
+      price: `₹${program.price.toLocaleString()}`
+    };
+    
+    onOpenModal(program.id, programData);
   };
 
   return (
