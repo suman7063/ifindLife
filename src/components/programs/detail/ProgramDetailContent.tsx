@@ -21,11 +21,11 @@ const ProgramDetailContent: React.FC<ProgramDetailContentProps> = ({
       case 'structure':
         return <CourseStructureSection courseStructure={programData.courseStructure} />;
       case 'coverage':
-        return <CoverageSection coverage={programData.coverage} />;
+        return <CoverageSection whatItCovers={programData.whatItCovers} coverage={programData.coverage} />;
       case 'outcomes':
         return <OutcomesSection expectedOutcomes={programData.expectedOutcomes} />;
       case 'pricing':
-        return <PricingSection pricing={programData.pricing} duration={programData.duration} />;
+        return <PricingSection pricing={programData.pricing} />;
       case 'reviews':
         return <ReviewsSection reviews={programData.reviews} />;
       default:

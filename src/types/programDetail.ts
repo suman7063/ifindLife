@@ -7,6 +7,7 @@ export interface ProgramDetail {
     name: string;
     photo: string;
     experience: string;
+    credentials?: string[];
   };
   courseStructure: {
     totalSessions: number;
@@ -19,13 +20,45 @@ export interface ProgramDetail {
       description: string;
       topics: string[];
     }[];
+    modules?: {
+      week: number;
+      title: string;
+      description: string;
+      topics: string[];
+    }[];
+  };
+  coverage?: {
+    mainTopics: string[];
+    techniques: string[];
+    tools: string[];
+    skills: string[];
   };
   whatItCovers: string[];
-  expectedOutcomes: string[];
+  expectedOutcomes: {
+    shortTerm?: string[];
+    mediumTerm?: string[];
+    longTerm?: string[];
+    successMetrics?: string[];
+  } | string[];
+  duration?: {
+    programLength: string;
+    timeCommitment: string;
+    flexibility: string;
+  };
   pricing: {
+    currency?: string;
     individual: {
       perSession: number;
       totalCost: number;
+      packagePrice?: number;
+      discount?: {
+        percentage: number;
+        conditions: string;
+      };
+    };
+    group?: {
+      perPerson: number;
+      minParticipants: number;
     };
   };
   reviews: {
@@ -37,6 +70,15 @@ export interface ProgramDetail {
       rating: number;
       comment: string;
       date: string;
+      verified?: boolean;
+    }[];
+    featured?: {
+      id: string;
+      userName: string;
+      rating: number;
+      comment: string;
+      date: string;
+      verified?: boolean;
     }[];
   };
 }

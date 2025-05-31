@@ -25,6 +25,11 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
     );
   };
 
+  // Use featured reviews if available, otherwise fall back to regular reviews
+  const displayReviews = reviews.featured && reviews.featured.length > 0 
+    ? reviews.featured 
+    : reviews.reviews.slice(0, 3);
+
   return (
     <div className="space-y-6">
       {/* Rating Overview */}
@@ -49,7 +54,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
       <div>
         <h3 className="text-lg font-semibold mb-4">Recent Reviews</h3>
         <div className="space-y-4">
-          {reviews.featured.map((review) => (
+          {displayReviews.map((review) => (
             <div key={review.id} className="border rounded-lg p-4">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
@@ -68,7 +73,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ reviews }) => {
                     <div className="flex items-center gap-2">
                       {renderStars(review.rating)}
                       <span className="text-sm text-gray-500">
-                        {new Date(review.date).toLocaleDateString()}
+                        {review.date}
                       </span>
                     </div>
                   </div>

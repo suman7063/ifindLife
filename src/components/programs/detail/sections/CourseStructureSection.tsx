@@ -8,6 +8,9 @@ interface CourseStructureSectionProps {
 }
 
 const CourseStructureSection: React.FC<CourseStructureSectionProps> = ({ courseStructure }) => {
+  // Use modules if available, otherwise fall back to weeklyBreakdown
+  const breakdown = courseStructure.modules || courseStructure.weeklyBreakdown;
+  
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
@@ -38,7 +41,7 @@ const CourseStructureSection: React.FC<CourseStructureSectionProps> = ({ courseS
       <div>
         <h3 className="text-lg font-semibold mb-4">Weekly Breakdown</h3>
         <div className="space-y-4">
-          {courseStructure.modules.map((module) => (
+          {breakdown.map((module) => (
             <div key={module.week} className="border rounded-lg p-4">
               <div className="flex items-start gap-4">
                 <div className="bg-ifind-teal text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-medium">

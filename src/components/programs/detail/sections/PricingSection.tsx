@@ -5,10 +5,9 @@ import { ProgramDetail } from '@/types/programDetail';
 
 interface PricingSectionProps {
   pricing: ProgramDetail['pricing'];
-  duration: ProgramDetail['duration'];
 }
 
-const PricingSection: React.FC<PricingSectionProps> = ({ pricing, duration }) => {
+const PricingSection: React.FC<PricingSectionProps> = ({ pricing }) => {
   const currencySymbol = pricing.currency === 'INR' ? '₹' : '$';
 
   return (
@@ -78,26 +77,18 @@ const PricingSection: React.FC<PricingSectionProps> = ({ pricing, duration }) =>
         </div>
       </div>
 
-      {/* Duration Information */}
+      {/* Total Cost Information */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Program Duration & Commitment</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-gray-50 rounded-lg p-4">
-            <Calendar className="h-6 w-6 text-ifind-teal mb-2" />
-            <p className="text-sm text-gray-600">Program Length</p>
-            <p className="font-semibold">{duration.programLength}</p>
+        <h3 className="text-lg font-semibold mb-4">Program Investment</h3>
+        <div className="bg-gray-50 rounded-lg p-6">
+          <div className="text-3xl font-bold text-ifind-teal mb-2">
+            ₹{pricing.individual.totalCost.toLocaleString()}
           </div>
-          
-          <div className="bg-gray-50 rounded-lg p-4">
-            <Clock className="h-6 w-6 text-ifind-teal mb-2" />
-            <p className="text-sm text-gray-600">Time Commitment</p>
-            <p className="font-semibold">{duration.timeCommitment}</p>
-          </div>
-          
-          <div className="bg-gray-50 rounded-lg p-4">
-            <Calendar className="h-6 w-6 text-ifind-teal mb-2" />
-            <p className="text-sm text-gray-600">Flexibility</p>
-            <p className="font-semibold">{duration.flexibility}</p>
+          <p className="text-gray-600 mb-4">Complete program cost</p>
+          <div className="space-y-2 text-sm text-gray-600">
+            <p>• Individual therapy sessions</p>
+            <p>• ₹{pricing.individual.perSession.toLocaleString()} per session</p>
+            <p>• Comprehensive program materials included</p>
           </div>
         </div>
       </div>
