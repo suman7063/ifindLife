@@ -4,144 +4,88 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Bell, 
-  Calendar, 
-  MessageSquare, 
-  Star, 
-  DollarSign, 
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  X
-} from 'lucide-react';
-
-interface Notification {
-  id: string;
-  type: 'message' | 'appointment' | 'review' | 'payment' | 'system';
-  title: string;
-  description: string;
-  time: Date;
-  isRead: boolean;
-  priority: 'low' | 'medium' | 'high';
-  actionUrl?: string;
-}
+import { Bell, Calendar, MessageSquare, Users, AlertTriangle, CheckCircle } from 'lucide-react';
 
 const NotificationCenter: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([
+  const [notifications, setNotifications] = useState([
     {
-      id: '1',
-      type: 'message',
-      title: 'New message from Sarah Johnson',
-      description: 'Thank you for the session yesterday. I feel much better!',
-      time: new Date(Date.now() - 300000),
-      isRead: false,
-      priority: 'medium'
+      id: 1,
+      type: 'urgent',
+      title: 'Emergency Session Request',
+      message: 'Sarah Johnson needs immediate support',
+      time: '5 min ago',
+      read: false,
+      icon: AlertTriangle
     },
     {
-      id: '2',
+      id: 2,
       type: 'appointment',
-      title: 'Upcoming appointment reminder',
-      description: 'Session with Michael Chen in 30 minutes',
-      time: new Date(Date.now() - 600000),
-      isRead: false,
-      priority: 'high'
+      title: 'Upcoming Session',
+      message: 'Session with Michael Chen in 30 minutes',
+      time: '25 min ago',
+      read: false,
+      icon: Calendar
     },
     {
-      id: '3',
-      type: 'review',
-      title: 'New 5-star review',
-      description: 'Emily Davis left you a positive review',
-      time: new Date(Date.now() - 1800000),
-      isRead: true,
-      priority: 'low'
+      id: 3,
+      type: 'message',
+      title: 'New Message',
+      message: 'Emma Davis sent you a follow-up question',
+      time: '1 hour ago',
+      read: true,
+      icon: MessageSquare
     },
     {
-      id: '4',
-      type: 'payment',
-      title: 'Payment received',
-      description: 'Payment of $85 received from Robert Wilson',
-      time: new Date(Date.now() - 3600000),
-      isRead: false,
-      priority: 'medium'
+      id: 4,
+      type: 'client',
+      title: 'New Client Registration',
+      message: 'John Smith completed registration',
+      time: '2 hours ago',
+      read: true,
+      icon: Users
     },
     {
-      id: '5',
-      type: 'system',
-      title: 'Profile verification required',
-      description: 'Please update your professional certification',
-      time: new Date(Date.now() - 7200000),
-      isRead: false,
-      priority: 'high'
+      id: 5,
+      type: 'success',
+      title: 'Session Completed',
+      message: 'Successfully completed session with Lisa Park',
+      time: '3 hours ago',
+      read: true,
+      icon: CheckCircle
     }
   ]);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id 
-          ? { ...notification, isRead: true }
-          : notification
+  const markAsRead = (id: number) => {
+    setNotifications(prev =>
+      prev.map(notification =>
+        notification.id === id ? { ...notification, read: true } : notification
       )
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, isRead: true }))
+    setNotifications(prev =>
+      prev.map(notification => ({ ...notification, read: true }))
     );
   };
 
-  const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
-  };
-
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationColor = (type: string) => {
     switch (type) {
-      case 'message':
-        return <MessageSquare className="h-4 w-4 text-blue-500" />;
+      case 'urgent':
+        return 'border-l-red-500 bg-red-50';
       case 'appointment':
-        return <Calendar className="h-4 w-4 text-green-500" />;
-      case 'review':
-        return <Star className="h-4 w-4 text-yellow-500" />;
-      case 'payment':
-        return <DollarSign className="h-4 w-4 text-green-500" />;
-      case 'system':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return 'border-l-blue-500 bg-blue-50';
+      case 'message':
+        return 'border-l-green-500 bg-green-50';
+      case 'client':
+        return 'border-l-purple-500 bg-purple-50';
+      case 'success':
+        return 'border-l-emerald-500 bg-emerald-50';
       default:
-        return <Bell className="h-4 w-4 text-gray-500" />;
+        return 'border-l-gray-500 bg-gray-50';
     }
-  };
-
-  const getPriorityColor = (priority: Notification['priority']) => {
-    switch (priority) {
-      case 'high':
-        return 'border-l-red-500';
-      case 'medium':
-        return 'border-l-yellow-500';
-      case 'low':
-        return 'border-l-green-500';
-      default:
-        return 'border-l-gray-300';
-    }
-  };
-
-  const formatTime = (date: Date) => {
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-    
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return date.toLocaleDateString();
-  };
-
-  const filterNotifications = (type?: string) => {
-    if (!type || type === 'all') return notifications;
-    return notifications.filter(n => n.type === type);
   };
 
   return (
@@ -153,7 +97,7 @@ const NotificationCenter: React.FC = () => {
               <Bell className="h-5 w-5" />
               Notifications
               {unreadCount > 0 && (
-                <Badge variant="destructive" className="ml-2">
+                <Badge variant="destructive" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
                   {unreadCount}
                 </Badge>
               )}
@@ -162,83 +106,48 @@ const NotificationCenter: React.FC = () => {
           </div>
           {unreadCount > 0 && (
             <Button variant="outline" size="sm" onClick={markAllAsRead}>
-              <CheckCircle className="h-4 w-4 mr-1" />
               Mark all read
             </Button>
           )}
         </div>
       </CardHeader>
       <CardContent>
-        <Tabs defaultValue="all" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="message">Messages</TabsTrigger>
-            <TabsTrigger value="appointment">Appointments</TabsTrigger>
-            <TabsTrigger value="review">Reviews</TabsTrigger>
-            <TabsTrigger value="payment">Payments</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
-          </TabsList>
-
-          {['all', 'message', 'appointment', 'review', 'payment', 'system'].map((filter) => (
-            <TabsContent key={filter} value={filter}>
-              <ScrollArea className="h-[400px]">
-                <div className="space-y-2">
-                  {filterNotifications(filter === 'all' ? undefined : filter).map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-3 border-l-4 bg-white border rounded-lg transition-colors hover:bg-gray-50 ${
-                        getPriorityColor(notification.priority)
-                      } ${!notification.isRead ? 'bg-blue-50' : ''}`}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3 flex-1">
-                          {getNotificationIcon(notification.type)}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className={`text-sm font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
-                                {notification.title}
-                              </h4>
-                              {!notification.isRead && (
-                                <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 mt-1">
-                              {notification.description}
-                            </p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <span className="text-xs text-gray-500 flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                {formatTime(notification.time)}
-                              </span>
-                              {!notification.isRead && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-xs h-6 px-2"
-                                  onClick={() => markAsRead(notification.id)}
-                                >
-                                  Mark as read
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => removeNotification(notification.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
+        <ScrollArea className="h-80">
+          <div className="space-y-3">
+            {notifications.map((notification) => {
+              const Icon = notification.icon;
+              return (
+                <div
+                  key={notification.id}
+                  className={`p-3 rounded-lg border-l-4 cursor-pointer transition-colors ${
+                    notification.read ? 'bg-gray-50' : getNotificationColor(notification.type)
+                  }`}
+                  onClick={() => !notification.read && markAsRead(notification.id)}
+                >
+                  <div className="flex items-start gap-3">
+                    <Icon className={`h-5 w-5 mt-0.5 ${
+                      notification.type === 'urgent' ? 'text-red-500' :
+                      notification.type === 'appointment' ? 'text-blue-500' :
+                      notification.type === 'message' ? 'text-green-500' :
+                      notification.type === 'client' ? 'text-purple-500' :
+                      'text-emerald-500'
+                    }`} />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">{notification.title}</h4>
+                        {!notification.read && (
+                          <div className="h-2 w-2 bg-blue-500 rounded-full"></div>
+                        )}
                       </div>
+                      <p className="text-sm text-gray-600 mt-1">{notification.message}</p>
+                      <p className="text-xs text-gray-500 mt-2">{notification.time}</p>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </ScrollArea>
-            </TabsContent>
-          ))}
-        </Tabs>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );

@@ -1,6 +1,9 @@
 
 import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar, MessageSquare, Users, TrendingUp } from 'lucide-react';
 
 interface WelcomeSectionProps {
   expertName: string;
@@ -8,45 +11,71 @@ interface WelcomeSectionProps {
 }
 
 const WelcomeSection: React.FC<WelcomeSectionProps> = ({ expertName, expertStatus }) => {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending Review</Badge>;
+      case 'suspended':
+        return <Badge className="bg-red-100 text-red-800">Suspended</Badge>;
+      default:
+        return <Badge variant="secondary">Unknown</Badge>;
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Welcome back, {expertName}!
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Here's what's happening with your consultations today.
-          </p>
-          <div className="mt-4 flex items-center gap-3">
-            <Badge variant={expertStatus === 'approved' ? 'default' : 'secondary'}>
-              {expertStatus === 'approved' ? 'Verified Expert' : expertStatus || 'Pending'}
-            </Badge>
-            {expertStatus === 'approved' && (
-              <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                Available for bookings
-              </Badge>
-            )}
+    <Card className="mb-6">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl">Welcome back, {expertName}!</CardTitle>
+            <CardDescription className="text-lg mt-1">
+              Here's what's happening with your practice today
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-3">
+            {getStatusBadge(expertStatus)}
+            <Button>
+              <Calendar className="h-4 w-4 mr-2" />
+              Schedule Session
+            </Button>
           </div>
         </div>
-        <div className="hidden md:block">
-          <div className="text-right text-sm text-gray-600">
-            <p>{new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}</p>
-            <p className="font-medium text-gray-800">
-              {new Date().toLocaleTimeString('en-US', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}
-            </p>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+            <Users className="h-8 w-8 text-blue-600" />
+            <div>
+              <div className="text-sm text-gray-600">Active Clients</div>
+              <div className="text-xl font-semibold">12</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+            <Calendar className="h-8 w-8 text-green-600" />
+            <div>
+              <div className="text-sm text-gray-600">Today's Sessions</div>
+              <div className="text-xl font-semibold">4</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+            <MessageSquare className="h-8 w-8 text-purple-600" />
+            <div>
+              <div className="text-sm text-gray-600">Unread Messages</div>
+              <div className="text-xl font-semibold">7</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-3 bg-orange-50 rounded-lg">
+            <TrendingUp className="h-8 w-8 text-orange-600" />
+            <div>
+              <div className="text-sm text-gray-600">This Month</div>
+              <div className="text-xl font-semibold">$2,450</div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
