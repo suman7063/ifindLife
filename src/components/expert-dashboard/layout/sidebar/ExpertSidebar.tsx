@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -83,7 +82,7 @@ const ExpertSidebar = () => {
       <div className="p-6">
         <div className="flex items-center">
           <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFind Life Logo" className="h-8" />
-          <h1 className="text-xl font-bold ml-2">Expert Portal</h1>
+          {/* Removed the "Expert Portal" text to fix logo squeezing */}
         </div>
         
         {/* Expert Profile Summary */}

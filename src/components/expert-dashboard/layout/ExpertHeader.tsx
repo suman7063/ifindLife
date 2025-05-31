@@ -18,7 +18,7 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
   // Use provided expert or fallback to expert from unified auth context
   const displayExpert = propExpert || expert;
   
-  // Generate proper initials from expert name
+  // Generate proper initials from expert name - Fix Issue 2
   const getInitials = (name?: string) => {
     if (!name || typeof name !== 'string') return 'EX';
     
@@ -46,6 +46,7 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
   
   const expertName = displayExpert?.name || displayExpert?.full_name || 'Expert';
   const expertEmail = displayExpert?.email || displayExpert?.contact_email || '';
+  const expertInitials = getInitials(expertName);
   
   return (
     <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
@@ -78,7 +79,7 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
           <Avatar className="h-9 w-9">
             <AvatarImage src={displayExpert?.profile_picture || displayExpert?.image_url} alt={expertName} />
             <AvatarFallback className="bg-ifind-teal text-white">
-              {getInitials(expertName)}
+              {expertInitials}
             </AvatarFallback>
           </Avatar>
         </div>
