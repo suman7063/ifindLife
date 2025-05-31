@@ -34,13 +34,10 @@ const SectionLoadingFallback = () => (
 );
 
 const Index = () => {
-  // Add debugging to ensure component is rendering
-  console.log('Index page rendering - navbar should be visible');
-  
   return (
     <div className="min-h-screen flex flex-col home-page">
       <Navbar />
-      <main className="flex-1" style={{ paddingTop: '80px' }}>
+      <main className="flex-1">
         {/* Section 1: Hero Banner with enhanced slider and service cards */}
         <EnhancedHero />
         

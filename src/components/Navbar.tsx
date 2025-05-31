@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
@@ -89,7 +88,6 @@ const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfil
   }
   return null;
 };
-
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
@@ -172,12 +170,9 @@ const Navbar = () => {
     hasAdminProfile: Boolean(hasAdminProfile)
   });
 
-  // Add debugging for navbar visibility
-  console.log("Navbar: Component is rendering, should be visible");
-
   // Show loading state
   if (isLoading) {
-    return <div className={`fixed top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`} style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999 }}>
+    return <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
           <Link to="/" className="flex items-center">
             <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-10" />
@@ -186,9 +181,8 @@ const Navbar = () => {
         </div>
       </div>;
   }
-
   return <>
-      <div className={`fixed top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`} style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, display: 'block' }}>
+      <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
           <Link to="/" className="flex items-center">
             <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-16" />
@@ -201,5 +195,4 @@ const Navbar = () => {
       </div>
     </>;
 };
-
 export default Navbar;
