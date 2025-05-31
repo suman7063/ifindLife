@@ -2,6 +2,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import ExpertSidebar from './sidebar/ExpertSidebar';
 import ExpertHeader from './ExpertHeader';
+import MobileResponsiveWrapper from './MobileResponsiveWrapper';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import DashboardLoader from '../../expert/dashboard/DashboardLoader';
@@ -110,18 +111,18 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   }, [isLoading, isAuthenticated, sessionType, navigate]);
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <MobileResponsiveWrapper className="bg-gray-50">
       {/* Sidebar */}
       <ExpertSidebar />
       
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         <ExpertHeader />
-        <div className="flex-1 p-8 overflow-auto">
+        <div className="flex-1 p-4 md:p-8 overflow-auto">
           {children}
         </div>
       </div>
-    </div>
+    </MobileResponsiveWrapper>
   );
 };
 
