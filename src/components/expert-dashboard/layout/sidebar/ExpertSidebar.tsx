@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -60,8 +61,8 @@ const ExpertSidebar = () => {
   
   // Function to check if a path is active - improved logic
   const isActive = (path: string) => {
-    if (path === "/expert-dashboard") {
-      return location.pathname === "/expert-dashboard";
+    if (path === "/expert/dashboard") {
+      return location.pathname === "/expert/dashboard";
     }
     return location.pathname.startsWith(path);
   };
@@ -81,8 +82,7 @@ const ExpertSidebar = () => {
     <div className="flex flex-col h-full">
       <div className="p-6">
         <div className="flex items-center">
-          <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFind Life Logo" className="h-8" />
-          {/* Removed the "Expert Portal" text to fix logo squeezing */}
+          <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFind Life Logo" className="h-12 w-auto" />
         </div>
         
         {/* Expert Profile Summary */}
@@ -104,68 +104,68 @@ const ExpertSidebar = () => {
       <ScrollArea className="flex-1 px-4 py-6">
         <div className="space-y-2">
           <SidebarLink
-            href="/expert-dashboard"
+            href="/expert/dashboard"
             icon={<LayoutDashboard className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard") && location.pathname === "/expert-dashboard"}
+            isActive={isActive("/expert/dashboard") && location.pathname === "/expert/dashboard"}
           >
             Dashboard
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/profile"
+            href="/expert/dashboard/profile"
             icon={<UserCircle className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/profile")}
+            isActive={isActive("/expert/dashboard/profile")}
           >
             Profile
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/schedule"
+            href="/expert/dashboard/schedule"
             icon={<Calendar className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/schedule")}
+            isActive={isActive("/expert/dashboard/schedule")}
             badge="8"
           >
             Schedule
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/clients"
+            href="/expert/dashboard/clients"
             icon={<Users className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/clients")}
+            isActive={isActive("/expert/dashboard/clients")}
             badge="12"
           >
             Clients
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/services"
+            href="/expert/dashboard/services"
             icon={<Briefcase className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/services")}
+            isActive={isActive("/expert/dashboard/services")}
           >
             Services
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/messages"
+            href="/expert/dashboard/messages"
             icon={<MessageSquare className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/messages")}
+            isActive={isActive("/expert/dashboard/messages")}
             badge="3"
           >
             Messages
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/earnings"
+            href="/expert/dashboard/earnings"
             icon={<Wallet className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/earnings")}
+            isActive={isActive("/expert/dashboard/earnings")}
           >
             Earnings
           </SidebarLink>
           
           <SidebarLink
-            href="/expert-dashboard/reports"
+            href="/expert/dashboard/reports"
             icon={<AlertCircle className="h-5 w-5" />}
-            isActive={isActive("/expert-dashboard/reports")}
+            isActive={isActive("/expert/dashboard/reports")}
           >
             Report User
           </SidebarLink>
