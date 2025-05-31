@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
@@ -11,19 +10,19 @@ import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unifi
 const isUserProfile = (profile: any): profile is UserProfile => {
   return profile && 'wallet_balance' in profile && 'currency' in profile;
 };
-
 const isExpertProfile = (profile: any): profile is ExpertProfile => {
   return profile && 'specialization' in profile && 'experience' in profile;
 };
-
 const isAdminProfile = (profile: any): profile is AdminProfile => {
   return profile && 'role' in profile && !('wallet_balance' in profile) && !('specialization' in profile);
 };
 
 // Helper function to get common properties safely
 const getCommonProfileProps = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
-  if (!profile) return { name: '', email: '' };
-  
+  if (!profile) return {
+    name: '',
+    email: ''
+  };
   return {
     name: profile.name || '',
     email: profile.email || '',
@@ -34,13 +33,10 @@ const getCommonProfileProps = (profile: UserProfile | ExpertProfile | AdminProfi
 // Helper function to create a compatible currentUser object for NavbarDesktopLinks
 const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
   if (!profile) return null;
-  
   const commonProps = getCommonProfileProps(profile);
-  
   if (isUserProfile(profile)) {
     return profile; // Already compatible
   }
-  
   if (isExpertProfile(profile)) {
     // Create a UserProfile-like object for compatibility
     return {
@@ -48,9 +44,11 @@ const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfil
       phone: profile.phone || '',
       country: profile.country || '',
       city: profile.city || '',
-      currency: 'USD', // Default currency for experts
+      currency: 'USD',
+      // Default currency for experts
       profile_picture: profile.profile_picture || '',
-      wallet_balance: 0, // Experts don't have wallet balance in navbar context
+      wallet_balance: 0,
+      // Experts don't have wallet balance in navbar context
       created_at: profile.created_at || '',
       updated_at: profile.created_at || '',
       referred_by: null,
@@ -65,7 +63,6 @@ const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfil
       referrals: []
     } as UserProfile;
   }
-  
   if (isAdminProfile(profile)) {
     // Create a UserProfile-like object for compatibility
     return {
@@ -89,34 +86,29 @@ const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfil
       referrals: []
     } as UserProfile;
   }
-  
   return null;
 };
-
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Use unified auth context
-  const { 
-    isAuthenticated, 
-    sessionType, 
-    user, 
-    admin, 
-    expert, 
+  const {
+    isAuthenticated,
+    sessionType,
+    user,
+    admin,
+    expert,
     isLoading,
-    logout 
+    logout
   } = useUnifiedAuth();
 
   // Determine current user based on session type
-  const currentProfile = sessionType === 'expert' ? expert : 
-                        sessionType === 'admin' ? admin : 
-                        sessionType === 'user' ? user : null;
+  const currentProfile = sessionType === 'expert' ? expert : sessionType === 'admin' ? admin : sessionType === 'user' ? user : null;
 
   // Create compatible user object for navbar components
   const currentUser = createCompatibleUser(currentProfile);
-
   const hasExpertProfile = sessionType === 'expert' && !!expert;
   const hasAdminProfile = sessionType === 'admin' && !!admin;
 
@@ -127,7 +119,6 @@ const Navbar = () => {
     if (type === 'expert') return 'expert';
     return 'user';
   };
-
   const navbarSessionType = convertSessionType(sessionType);
 
   // Scroll effect
@@ -138,7 +129,6 @@ const Navbar = () => {
         setScrolled(isScrolled);
       }
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -151,14 +141,10 @@ const Navbar = () => {
       console.log("Navbar: Initiating logout...");
       await logout();
       console.log("Navbar: Logout successful");
-      
       showLogoutSuccessToast();
-      
+
       // Redirect based on session type
-      const redirectPath = sessionType === 'expert' ? '/expert-login' : 
-                          sessionType === 'admin' ? '/admin-login' : 
-                          '/user-login';
-      
+      const redirectPath = sessionType === 'expert' ? '/expert-login' : sessionType === 'admin' ? '/admin-login' : '/user-login';
       navigate(redirectPath);
       return true;
     } catch (error) {
@@ -186,57 +172,27 @@ const Navbar = () => {
 
   // Show loading state
   if (isLoading) {
-    return (
-      <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
+    return <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
         <div className="container-fluid px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img 
-              src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
-              alt="iFindLife" 
-              className="h-8" 
-            />
+            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-8" />
           </Link>
           <div className="text-gray-500">Loading...</div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <>
+  return <>
       <div className={`sticky top-0 w-full backdrop-blur-md z-50 transition-colors ${getNavbarBackground()} shadow-sm`}>
         <div className="container-fluid px-4 sm:px-6 lg:px-8 flex h-24 items-center justify-between">
           <Link to="/" className="flex items-center">
-            <img 
-              src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
-              alt="iFindLife" 
-              className="h-8" 
-            />
+            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-12" />
           </Link>
           
-          <NavbarDesktopLinks 
-            isAuthenticated={Boolean(isAuthenticated)}
-            currentUser={currentUser}
-            hasExpertProfile={Boolean(hasExpertProfile)}
-            userLogout={handleLogout}
-            expertLogout={handleLogout}
-            sessionType={navbarSessionType}
-            isLoggingOut={false}
-          />
+          <NavbarDesktopLinks isAuthenticated={Boolean(isAuthenticated)} currentUser={currentUser} hasExpertProfile={Boolean(hasExpertProfile)} userLogout={handleLogout} expertLogout={handleLogout} sessionType={navbarSessionType} isLoggingOut={false} />
           
-          <NavbarMobileMenu 
-            isAuthenticated={Boolean(isAuthenticated)}
-            currentUser={currentUser}
-            hasExpertProfile={Boolean(hasExpertProfile)}
-            userLogout={handleLogout}
-            expertLogout={handleLogout}
-            sessionType={navbarSessionType}
-            isLoggingOut={false}
-          />
+          <NavbarMobileMenu isAuthenticated={Boolean(isAuthenticated)} currentUser={currentUser} hasExpertProfile={Boolean(hasExpertProfile)} userLogout={handleLogout} expertLogout={handleLogout} sessionType={navbarSessionType} isLoggingOut={false} />
         </div>
       </div>
-    </>
-  );
+    </>;
 };
-
 export default Navbar;
