@@ -1,20 +1,10 @@
 
 import { useState } from 'react';
-
-interface ProgramData {
-  title: string;
-  description: string;
-  overview: string;
-  benefits: string[];
-  features: string[];
-  duration: string;
-  format: string;
-  price: string;
-}
+import { ProgramDetail } from '@/types/programDetail';
 
 interface ModalState {
   isOpen: boolean;
-  programData: ProgramData | null;
+  programData: ProgramDetail | null;
   activeTab: string;
   loading: boolean;
   error: string | null;
@@ -24,16 +14,16 @@ export const useProgramDetailModal = () => {
   const [modalState, setModalState] = useState<ModalState>({
     isOpen: false,
     programData: null,
-    activeTab: 'overview',
+    activeTab: 'course-structure',
     loading: false,
     error: null
   });
 
-  const openModal = (programId: string, programData?: ProgramData) => {
+  const openModal = (programId: string, programData?: ProgramDetail) => {
     setModalState({
       isOpen: true,
       programData: programData || null,
-      activeTab: 'overview',
+      activeTab: 'course-structure',
       loading: !programData,
       error: null
     });
@@ -43,7 +33,7 @@ export const useProgramDetailModal = () => {
     setModalState({
       isOpen: false,
       programData: null,
-      activeTab: 'overview',
+      activeTab: 'course-structure',
       loading: false,
       error: null
     });

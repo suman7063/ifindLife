@@ -1,4 +1,423 @@
+import { ProgramDetail } from '@/types/programDetail';
 
+export const programDetailData: Record<string, ProgramDetail> = {
+  depression: {
+    id: 'depression',
+    title: 'Depression Management Program',
+    description: 'Comprehensive support for managing depression symptoms and improving mood',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 12,
+      sessionDuration: '60 minutes',
+      frequency: 'Weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Understanding Depression',
+          description: 'Learn about depression, its symptoms, and how it affects daily life.',
+          topics: ['Depression basics', 'Symptom recognition', 'Impact assessment', 'Goal setting']
+        },
+        {
+          week: 2,
+          title: 'Cognitive Behavioral Techniques',
+          description: 'Introduction to CBT methods for managing negative thought patterns.',
+          topics: ['Thought identification', 'Cognitive restructuring', 'Behavioral activation', 'Mood tracking']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Evidence-based therapeutic techniques',
+      'Personalized treatment approach',
+      '24/7 crisis support availability',
+      'Progress tracking and monitoring',
+      'Peer support group access',
+      'Medication management guidance'
+    ],
+    expectedOutcomes: [
+      'Improved mood regulation and emotional stability',
+      'Enhanced coping strategies for daily challenges',
+      'Better understanding of depression triggers',
+      'Increased motivation and energy levels',
+      'Stronger social connections and support network'
+    ],
+    pricing: {
+      individual: {
+        perSession: 2500,
+        totalCost: 30000
+      }
+    },
+    reviews: {
+      averageRating: 4.8,
+      totalReviews: 127,
+      reviews: [
+        {
+          id: '1',
+          userName: 'Sarah K.',
+          rating: 5,
+          comment: 'This program completely changed my life. Dr. Sharma is incredibly understanding and professional.',
+          date: '2 weeks ago'
+        }
+      ]
+    }
+  },
+  anxiety: {
+    id: 'anxiety',
+    title: 'Anxiety Management Program',
+    description: 'Tools and techniques to help manage anxiety and worry effectively',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 10,
+      sessionDuration: '60 minutes',
+      frequency: 'Weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Understanding Anxiety',
+          description: 'Learn about anxiety disorders and their impact on daily life.',
+          topics: ['Anxiety basics', 'Trigger identification', 'Physical symptoms', 'Goal setting']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Anxiety trigger identification',
+      'Panic attack prevention techniques',
+      'Stress reduction strategies',
+      'Confidence building exercises',
+      'Sleep improvement methods',
+      'Social anxiety support'
+    ],
+    expectedOutcomes: [
+      'Reduced anxiety levels and panic attacks',
+      'Better stress management skills',
+      'Improved sleep quality',
+      'Enhanced social confidence',
+      'Effective coping mechanisms'
+    ],
+    pricing: {
+      individual: {
+        perSession: 2200,
+        totalCost: 22000
+      }
+    },
+    reviews: {
+      averageRating: 4.7,
+      totalReviews: 96,
+      reviews: []
+    }
+  },
+  stress: {
+    id: 'stress',
+    title: 'Stress Management Program',
+    description: 'Effective strategies to cope with and reduce stress in daily life',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 8,
+      sessionDuration: '60 minutes',
+      frequency: 'Weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Stress Assessment',
+          description: 'Identify stress sources and understand their impact.',
+          topics: ['Stress identification', 'Impact assessment', 'Coping evaluation', 'Goal setting']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Stress identification and assessment',
+      'Time management optimization',
+      'Work-life balance strategies',
+      'Physical stress relief techniques',
+      'Emotional regulation skills',
+      'Burnout prevention methods'
+    ],
+    expectedOutcomes: [
+      'Better stress management skills',
+      'Improved work-life balance',
+      'Enhanced emotional regulation',
+      'Increased productivity',
+      'Better physical health'
+    ],
+    pricing: {
+      individual: {
+        perSession: 2000,
+        totalCost: 16000
+      }
+    },
+    reviews: {
+      averageRating: 4.6,
+      totalReviews: 84,
+      reviews: []
+    }
+  },
+  sleep: {
+    id: 'sleep',
+    title: 'Sleep Improvement Program',
+    description: 'Help with improving sleep quality and addressing insomnia',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 8,
+      sessionDuration: '60 minutes',
+      frequency: 'Weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Sleep Assessment',
+          description: 'Evaluate current sleep patterns and identify issues.',
+          topics: ['Sleep diary', 'Pattern analysis', 'Issue identification', 'Goal setting']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Sleep pattern analysis',
+      'Insomnia treatment protocols',
+      'Sleep hygiene education',
+      'Relaxation technique training',
+      'Sleep environment optimization',
+      'Circadian rhythm regulation'
+    ],
+    expectedOutcomes: [
+      'Improved sleep quality and duration',
+      'Reduced time to fall asleep',
+      'Better energy levels during the day',
+      'Enhanced mood and cognitive function',
+      'Healthier sleep habits'
+    ],
+    pricing: {
+      individual: {
+        perSession: 2300,
+        totalCost: 18400
+      }
+    },
+    reviews: {
+      averageRating: 4.8,
+      totalReviews: 67,
+      reviews: []
+    }
+  },
+  relationships: {
+    id: 'relationships',
+    title: 'Relationship Counseling Program',
+    description: 'Guidance for building healthy and fulfilling relationships',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 12,
+      sessionDuration: '60 minutes',
+      frequency: 'Weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Relationship Assessment',
+          description: 'Evaluate current relationship patterns and communication styles.',
+          topics: ['Relationship evaluation', 'Communication assessment', 'Conflict analysis', 'Goal setting']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Communication skill development',
+      'Conflict resolution strategies',
+      'Trust building exercises',
+      'Emotional intimacy enhancement',
+      'Boundary setting techniques',
+      'Relationship maintenance tools'
+    ],
+    expectedOutcomes: [
+      'Improved communication with partners',
+      'Better conflict resolution skills',
+      'Stronger emotional connections',
+      'Healthier relationship boundaries',
+      'Enhanced relationship satisfaction'
+    ],
+    pricing: {
+      individual: {
+        perSession: 2800,
+        totalCost: 33600
+      }
+    },
+    reviews: {
+      averageRating: 4.9,
+      totalReviews: 112,
+      reviews: []
+    }
+  },
+  trauma: {
+    id: 'trauma',
+    title: 'Trauma & PTSD Recovery Program',
+    description: 'Support for healing from trauma and managing PTSD symptoms',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 16,
+      sessionDuration: '60 minutes',
+      frequency: 'Weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Trauma Understanding',
+          description: 'Understand trauma responses and begin healing journey.',
+          topics: ['Trauma education', 'Safety establishment', 'Coping skills', 'Goal setting']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Trauma-informed therapeutic approaches',
+      'PTSD symptom management',
+      'Safety and grounding techniques',
+      'Memory processing support',
+      'Emotional regulation training',
+      'Post-traumatic growth facilitation'
+    ],
+    expectedOutcomes: [
+      'Reduced trauma symptoms',
+      'Improved emotional regulation',
+      'Better coping mechanisms',
+      'Enhanced sense of safety',
+      'Post-traumatic growth'
+    ],
+    pricing: {
+      individual: {
+        perSession: 3200,
+        totalCost: 51200
+      }
+    },
+    reviews: {
+      averageRating: 4.8,
+      totalReviews: 43,
+      reviews: []
+    }
+  },
+  grief: {
+    id: 'grief',
+    title: 'Grief & Loss Support Program',
+    description: 'Compassionate support for navigating grief and loss',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 10,
+      sessionDuration: '60 minutes',
+      frequency: 'Bi-weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Understanding Grief',
+          description: 'Learn about the grief process and different types of loss.',
+          topics: ['Grief stages', 'Loss types', 'Emotional processing', 'Support planning']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Grief stage understanding',
+      'Emotional processing support',
+      'Memorial and ritual guidance',
+      'Complicated grief treatment',
+      'Support group participation',
+      'Meaning-making assistance'
+    ],
+    expectedOutcomes: [
+      'Healthy grief processing',
+      'Emotional healing and acceptance',
+      'Meaningful memorial practices',
+      'Renewed sense of purpose',
+      'Stronger support networks'
+    ],
+    pricing: {
+      individual: {
+        perSession: 2600,
+        totalCost: 26000
+      }
+    },
+    reviews: {
+      averageRating: 4.9,
+      totalReviews: 78,
+      reviews: []
+    }
+  },
+  'self-esteem': {
+    id: 'self-esteem',
+    title: 'Self-Esteem Building Program',
+    description: 'Help with building confidence and improving self-image',
+    expert: {
+      name: 'Dr. Priya Sharma',
+      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
+      experience: '8 years experience'
+    },
+    courseStructure: {
+      totalSessions: 10,
+      sessionDuration: '60 minutes',
+      frequency: 'Weekly',
+      format: 'Individual',
+      weeklyBreakdown: [
+        {
+          week: 1,
+          title: 'Self-Assessment',
+          description: 'Evaluate current self-esteem levels and identify areas for growth.',
+          topics: ['Self-evaluation', 'Strength identification', 'Challenge assessment', 'Goal setting']
+        }
+      ]
+    },
+    whatItCovers: [
+      'Self-awareness development',
+      'Negative thought pattern interruption',
+      'Confidence building exercises',
+      'Self-compassion training',
+      'Personal strength identification',
+      'Goal setting and achievement'
+    ],
+    expectedOutcomes: [
+      'Improved self-confidence',
+      'Better self-image and acceptance',
+      'Enhanced assertiveness skills',
+      'Stronger sense of self-worth',
+      'Increased motivation and drive'
+    ],
+    pricing: {
+      individual: {
+        perSession: 2400,
+        totalCost: 24000
+      }
+    },
+    reviews: {
+      averageRating: 4.7,
+      totalReviews: 92,
+      reviews: []
+    }
+  }
+};
+
+// Keep the old data structure for backward compatibility
 export const programData = {
   depression: {
     title: "Depression Support Program",

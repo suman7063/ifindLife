@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useProgramDetailModal } from '@/hooks/useProgramDetailModal';
 import ProgramDetailModal from '@/components/programs/detail/ProgramDetailModal';
-import { programData } from '@/data/programData';
+import { programDetailData } from '@/data/programData';
 
 const HomepageIssueSessions: React.FC = () => {
   const {
@@ -84,7 +84,7 @@ const HomepageIssueSessions: React.FC = () => {
 
   const handleSessionClick = (sessionId: string) => {
     // Get program data for the session
-    const sessionData = programData[sessionId as keyof typeof programData];
+    const sessionData = programDetailData[sessionId as keyof typeof programDetailData];
     if (sessionData) {
       openModal(sessionId, sessionData);
     }
