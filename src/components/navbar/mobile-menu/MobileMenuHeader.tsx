@@ -12,7 +12,7 @@ const MobileMenuHeader: React.FC = () => {
         <img 
           src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
           alt="iFindLife" 
-          className="h-8 transform scale-150 origin-left" 
+          className="h-8" 
         />
       </Link>
       <SheetClose asChild>
