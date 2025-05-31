@@ -70,8 +70,9 @@ const AppRoutes = () => {
         element={<UserDashboardPages />}
       />
       
+      {/* Fixed: Added /* wildcard pattern to allow nested routes */}
       <Route 
-        path="/expert-dashboard" 
+        path="/expert-dashboard/*" 
         element={<ExpertDashboard />}
       />
       
