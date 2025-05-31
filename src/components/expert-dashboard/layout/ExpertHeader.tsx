@@ -8,7 +8,7 @@ import { Bell, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ExpertHeaderProps {
-  expert?: any; // Optional expert object
+  expert?: any;
 }
 
 const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
@@ -20,13 +20,17 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
   
   // Generate proper initials from expert name
   const getInitials = (name?: string) => {
-    if (!name) return 'E';
-    return name
-      .split(' ')
-      .map(part => part.charAt(0))
-      .join('')
-      .toUpperCase()
-      .substring(0, 2);
+    if (!name || typeof name !== 'string') return 'EX';
+    
+    const trimmedName = name.trim();
+    if (!trimmedName) return 'EX';
+    
+    const nameParts = trimmedName.split(' ').filter(part => part.length > 0);
+    
+    if (nameParts.length === 0) return 'EX';
+    if (nameParts.length === 1) return nameParts[0].charAt(0).toUpperCase();
+    
+    return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
   };
   
   const handleLogout = async () => {
@@ -40,11 +44,14 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
     }
   };
   
+  const expertName = displayExpert?.name || displayExpert?.full_name || 'Expert';
+  const expertEmail = displayExpert?.email || displayExpert?.contact_email || '';
+  
   return (
     <header className="bg-white border-b border-gray-200 p-4 flex justify-between items-center sticky top-0 z-10">
       <div>
         <h1 className="text-2xl font-semibold text-ifind-teal">Expert Dashboard</h1>
-        <p className="text-sm text-gray-500">Welcome back, {displayExpert?.name || 'Expert'}</p>
+        <p className="text-sm text-gray-500">Welcome back, {expertName}</p>
       </div>
       
       <div className="flex items-center gap-4">
@@ -64,10 +71,14 @@ const ExpertHeader: React.FC<ExpertHeaderProps> = ({ expert: propExpert }) => {
         </Button>
         
         <div className="flex items-center gap-3">
+          <div className="text-right text-sm hidden md:block">
+            <p className="font-medium">{expertName}</p>
+            {expertEmail && <p className="text-gray-500">{expertEmail}</p>}
+          </div>
           <Avatar className="h-9 w-9">
-            <AvatarImage src={displayExpert?.profile_picture} alt={displayExpert?.name} />
+            <AvatarImage src={displayExpert?.profile_picture || displayExpert?.image_url} alt={expertName} />
             <AvatarFallback className="bg-ifind-teal text-white">
-              {getInitials(displayExpert?.name)}
+              {getInitials(expertName)}
             </AvatarFallback>
           </Avatar>
         </div>

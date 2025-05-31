@@ -6,12 +6,10 @@ import { Button } from '@/components/ui/button';
 import {
   LayoutDashboard,
   Calendar,
-  Settings,
   Users,
   MessageSquare,
   Wallet,
   LogOut,
-  PieChart,
   ChevronRight,
   Menu,
   UserCircle,
@@ -21,6 +19,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
+import { Badge } from '@/components/ui/badge';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -30,9 +29,10 @@ interface SidebarLinkProps {
   icon: React.ReactNode;
   children: React.ReactNode;
   isActive?: boolean;
+  badge?: string;
 }
 
-const SidebarLink: React.FC<SidebarLinkProps> = ({ href, icon, children, isActive = false }) => (
+const SidebarLink: React.FC<SidebarLinkProps> = ({ href, icon, children, isActive = false, badge }) => (
   <Button
     variant={isActive ? "secondary" : "ghost"}
     className={cn(
@@ -43,7 +43,12 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ href, icon, children, isActiv
   >
     <Link to={href} className="flex items-center">
       <span className="mr-2">{icon}</span>
-      <span>{children}</span>
+      <span className="flex-1">{children}</span>
+      {badge && (
+        <Badge variant="secondary" className="ml-auto text-xs">
+          {badge}
+        </Badge>
+      )}
       {isActive && <ChevronRight className="ml-auto h-4 w-4" />}
     </Link>
   </Button>
@@ -52,11 +57,14 @@ const SidebarLink: React.FC<SidebarLinkProps> = ({ href, icon, children, isActiv
 const ExpertSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useUnifiedAuth();
+  const { logout, expert } = useUnifiedAuth();
   
-  // Function to check if a path is active
+  // Function to check if a path is active - improved logic
   const isActive = (path: string) => {
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    if (path === "/expert-dashboard") {
+      return location.pathname === "/expert-dashboard";
+    }
+    return location.pathname.startsWith(path);
   };
 
   const handleLogout = async () => {
@@ -77,6 +85,19 @@ const ExpertSidebar = () => {
           <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFind Life Logo" className="h-8" />
           <h1 className="text-xl font-bold ml-2">Expert Portal</h1>
         </div>
+        
+        {/* Expert Profile Summary */}
+        {expert && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <p className="text-sm font-medium truncate">{expert.name || expert.full_name || 'Expert'}</p>
+            <Badge 
+              variant={expert.status === 'approved' ? 'default' : 'secondary'}
+              className="mt-1"
+            >
+              {expert.status === 'approved' ? 'Verified' : expert.status || 'Pending'}
+            </Badge>
+          </div>
+        )}
       </div>
       
       <Separator />
@@ -103,6 +124,7 @@ const ExpertSidebar = () => {
             href="/expert-dashboard/schedule"
             icon={<Calendar className="h-5 w-5" />}
             isActive={isActive("/expert-dashboard/schedule")}
+            badge="8"
           >
             Schedule
           </SidebarLink>
@@ -111,6 +133,7 @@ const ExpertSidebar = () => {
             href="/expert-dashboard/clients"
             icon={<Users className="h-5 w-5" />}
             isActive={isActive("/expert-dashboard/clients")}
+            badge="12"
           >
             Clients
           </SidebarLink>
@@ -127,6 +150,7 @@ const ExpertSidebar = () => {
             href="/expert-dashboard/messages"
             icon={<MessageSquare className="h-5 w-5" />}
             isActive={isActive("/expert-dashboard/messages")}
+            badge="3"
           >
             Messages
           </SidebarLink>
