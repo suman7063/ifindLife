@@ -45,6 +45,16 @@ export interface ExpertProfile {
   verified?: boolean;
   status?: string;
   created_at?: string;
+  hourly_rate?: number;
+}
+
+export interface AdminProfile {
+  id: string;
+  auth_id?: string;
+  name?: string;
+  email: string;
+  role: string;
+  created_at?: string;
 }
 
 export interface AuthUser {

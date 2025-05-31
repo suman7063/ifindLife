@@ -5,54 +5,26 @@ import { ExpertProfile } from '@/types/database/unified';
 export const expertRepository = {
   async getExpertByAuthId(authId: string): Promise<ExpertProfile | null> {
     try {
-      console.log(`Fetching expert profile for auth ID: ${authId}`);
-      
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', authId)
-        .single();
+        .maybeSingle();
 
       if (error) {
-        console.log('No expert profile found:', error.message);
+        console.error('Error fetching expert by auth ID:', error);
         return null;
       }
 
-      console.log('Expert profile found:', data);
-      return data as ExpertProfile;
+      return data;
     } catch (error) {
-      console.error('Error fetching expert:', error);
-      return null;
-    }
-  },
-
-  async getExpert(expertId: string): Promise<ExpertProfile | null> {
-    try {
-      console.log(`Fetching expert profile for ID: ${expertId}`);
-      
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('id', expertId)
-        .single();
-
-      if (error) {
-        console.log('Expert profile not found:', error.message);
-        return null;
-      }
-
-      console.log('Expert profile found:', data);
-      return data as ExpertProfile;
-    } catch (error) {
-      console.error('Error fetching expert:', error);
+      console.error('Error in getExpertByAuthId:', error);
       return null;
     }
   },
 
   async updateExpert(expertId: string, updates: Partial<ExpertProfile>): Promise<boolean> {
     try {
-      console.log(`Updating expert ${expertId} with:`, updates);
-      
       const { error } = await supabase
         .from('expert_accounts')
         .update(updates)
@@ -63,18 +35,15 @@ export const expertRepository = {
         return false;
       }
 
-      console.log('Expert updated successfully');
       return true;
     } catch (error) {
-      console.error('Error updating expert:', error);
+      console.error('Error in updateExpert:', error);
       return false;
     }
   },
 
   async createExpert(expertData: Partial<ExpertProfile>): Promise<ExpertProfile | null> {
     try {
-      console.log('Creating expert with data:', expertData);
-      
       const { data, error } = await supabase
         .from('expert_accounts')
         .insert(expertData)
@@ -86,10 +55,9 @@ export const expertRepository = {
         return null;
       }
 
-      console.log('Expert created successfully:', data);
-      return data as ExpertProfile;
+      return data;
     } catch (error) {
-      console.error('Error creating expert:', error);
+      console.error('Error in createExpert:', error);
       return null;
     }
   }

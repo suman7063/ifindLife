@@ -1,97 +1,67 @@
 
 import { supabase } from '@/lib/supabase';
 import { UserProfile } from '@/types/database/unified';
-import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
 export const userRepository = {
-  async getUser(userId: string): Promise<UserProfile | null> {
+  async getUser(userId: string): Promise<UserProfile> {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  },
+
+  async getUserByAuthId(authId: string): Promise<UserProfile | null> {
     try {
-      console.log(`Fetching user profile for ID: ${userId}`);
-      
-      // Try users table first
-      const { data: userData, error: userError } = await supabase
+      const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('id', authId)
+        .maybeSingle();
 
-      if (userData && !userError) {
-        console.log('User found in users table:', userData);
-        return adaptUserProfile(userData);
+      if (error) {
+        console.error('Error fetching user by auth ID:', error);
+        return null;
       }
 
-      // Try profiles table if not found in users
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (profileData && !profileError) {
-        console.log('User found in profiles table:', profileData);
-        return adaptUserProfile(profileData);
-      }
-
-      console.log('User not found in either table');
-      return null;
+      return data;
     } catch (error) {
-      console.error('Error fetching user:', error);
+      console.error('Error in getUserByAuthId:', error);
       return null;
     }
   },
 
   async updateUser(userId: string, updates: Partial<UserProfile>): Promise<boolean> {
     try {
-      console.log(`Updating user ${userId} with:`, updates);
-      
-      // Check which table has the user
-      const { data: userData } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', userId)
-        .single();
-
-      const table = userData ? 'users' : 'profiles';
-      console.log(`Updating in table: ${table}`);
-      
       const { error } = await supabase
-        .from(table)
+        .from('users')
         .update(updates)
         .eq('id', userId);
 
-      if (error) {
-        console.error('Error updating user:', error);
-        return false;
-      }
-
-      console.log('User updated successfully');
-      return true;
+      return !error;
     } catch (error) {
       console.error('Error updating user:', error);
       return false;
     }
   },
 
-  async createUser(userData: Partial<UserProfile>): Promise<UserProfile | null> {
-    try {
-      console.log('Creating user with data:', userData);
-      
-      const { data, error } = await supabase
-        .from('users')
-        .insert(userData)
-        .select()
-        .single();
+  async createUser(userData: Partial<UserProfile>): Promise<UserProfile> {
+    const { data, error } = await supabase
+      .from('users')
+      .insert(userData)
+      .select()
+      .single();
 
-      if (error) {
-        console.error('Error creating user:', error);
-        return null;
-      }
-
-      console.log('User created successfully:', data);
-      return adaptUserProfile(data);
-    } catch (error) {
-      console.error('Error creating user:', error);
-      return null;
+    if (error) {
+      throw error;
     }
+
+    return data;
   }
 };
