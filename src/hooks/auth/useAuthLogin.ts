@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { toast } from 'sonner';
+import { showLoginSuccessToast, showLoginErrorToast } from '@/utils/toastConfig';
 
 export const useAuthLogin = (
   setLoading: (loading: boolean) => void,
@@ -27,19 +27,19 @@ export const useAuthLogin = (
 
       if (error) {
         console.error('Login error:', error.message);
-        toast.error(`Login failed: ${error.message}`);
+        showLoginErrorToast(error.message);
         setLoginError(error.message);
         return false;
       }
 
       // Set the session
       setSession(data.session);
-      toast.success('Login successful');
+      showLoginSuccessToast();
       
       return true;
     } catch (error: any) {
       console.error('Login error:', error);
-      toast.error(`Login failed: ${error.message || 'Unknown error'}`);
+      showLoginErrorToast(error.message);
       setLoginError(error.message || 'Unknown error');
       return false;
     } finally {

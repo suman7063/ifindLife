@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 
 export const useExpertLogout = (
   setExpert: (expert: null) => void,
@@ -14,7 +14,7 @@ export const useExpertLogout = (
       
       if (error) {
         console.error('Logout error:', error);
-        toast.error(error.message);
+        showLogoutErrorToast();
         return false;
       }
       
@@ -22,7 +22,7 @@ export const useExpertLogout = (
       
       setExpert(null);
       setIsUserLoggedIn(false);
-      toast.success('Logged out successfully');
+      showLogoutSuccessToast();
       
       // Always redirect to home page after logout
       window.location.href = '/';
@@ -30,7 +30,7 @@ export const useExpertLogout = (
       return true;
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('An error occurred during logout.');
+      showLogoutErrorToast();
       return false;
     } finally {
       setLoading(false);

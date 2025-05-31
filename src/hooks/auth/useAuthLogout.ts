@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 
 export const useAuthLogout = () => {
   const [logoutError, setLogoutError] = useState<string | null>(null);
@@ -17,16 +17,16 @@ export const useAuthLogout = () => {
 
       if (error) {
         console.error('Logout error:', error.message);
-        toast.error(`Logout failed: ${error.message}`);
+        showLogoutErrorToast();
         setLogoutError(error.message);
         return false;
       }
 
-      toast.success('Logged out successfully');
+      showLogoutSuccessToast();
       return true;
     } catch (error: any) {
       console.error('Logout error:', error);
-      toast.error(`Logout failed: ${error.message || 'Unknown error'}`);
+      showLogoutErrorToast();
       setLogoutError(error.message || 'Unknown error');
       return false;
     }

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
-import { toast } from 'sonner';
+import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
@@ -57,12 +57,14 @@ const Navbar = () => {
     };
   }, [scrolled]);
 
-  // Handle logout
+  // Handle logout with consistent messaging
   const handleLogout = async (): Promise<boolean> => {
     try {
       console.log("Navbar: Initiating logout...");
       await logout();
       console.log("Navbar: Logout successful");
+      
+      showLogoutSuccessToast();
       
       // Redirect based on session type
       const redirectPath = sessionType === 'expert' ? '/expert-login' : 
@@ -73,7 +75,7 @@ const Navbar = () => {
       return true;
     } catch (error) {
       console.error('Error during logout:', error);
-      toast.error('Failed to log out. Please try again.');
+      showLogoutErrorToast();
       return false;
     }
   };

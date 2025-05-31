@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { toast } from 'sonner';
+import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 
 interface NavbarExpertMenuProps {
   onLogout: () => Promise<boolean>;
@@ -38,21 +38,15 @@ const NavbarExpertMenu: React.FC<NavbarExpertMenuProps> = ({
       
       if (success) {
         console.log("NavbarExpertMenu: Expert logout successful");
-        toast.success('Successfully logged out as expert', {
-          duration: 2000 // 2 seconds
-        });
+        showLogoutSuccessToast();
         navigate('/logout', { state: { userType: 'expert' } });
       } else {
         console.error("NavbarExpertMenu: Expert logout failed");
-        toast.error('Failed to log out as expert. Please try again.', {
-          duration: 2000 // 2 seconds
-        });
+        showLogoutErrorToast();
       }
     } catch (error) {
       console.error('Error during expert logout:', error);
-      toast.error('Failed to log out as expert. Please try again.', {
-        duration: 2000 // 2 seconds
-      });
+      showLogoutErrorToast();
     } finally {
       setIsLoggingOut(false);
     }

@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { 
   DropdownMenu,
@@ -20,11 +20,11 @@ const LoginDropdown: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success('Successfully logged out');
+      showLogoutSuccessToast();
       navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Failed to log out');
+      showLogoutErrorToast();
     }
   };
 

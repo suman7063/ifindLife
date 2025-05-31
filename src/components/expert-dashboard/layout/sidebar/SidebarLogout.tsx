@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { LogOut } from 'lucide-react';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
-import { toast } from 'sonner';
+import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 
 const SidebarLogout: React.FC = () => {
   const navigate = useNavigate();
@@ -13,11 +13,11 @@ const SidebarLogout: React.FC = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      toast.success('Successfully logged out');
+      showLogoutSuccessToast();
       navigate('/expert-login');
     } catch (error) {
       console.error('Logout error:', error);
-      toast.error('Failed to log out. Please try again.');
+      showLogoutErrorToast();
     }
   };
 
