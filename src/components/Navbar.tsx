@@ -5,8 +5,6 @@ import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -105,7 +103,7 @@ const Navbar = () => {
             <img 
               src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
               alt="iFindLife" 
-              className="h-14 transform scale-150 origin-left" 
+              className="h-28 transform scale-150 origin-left" 
             />
           </Link>
           <div className="text-gray-500">Loading...</div>
@@ -122,7 +120,7 @@ const Navbar = () => {
             <img 
               src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
               alt="iFindLife" 
-              className="h-14 transform scale-150 origin-left" 
+              className="h-28 transform scale-150 origin-left" 
             />
           </Link>
           

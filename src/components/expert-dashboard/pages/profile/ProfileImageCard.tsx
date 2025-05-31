@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Star, Clock } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Camera, Star } from 'lucide-react';
+import { ExpertProfile } from '@/types/database/unified';
 
 interface ProfileImageCardProps {
-  expert: any;
+  expert: ExpertProfile | null;
   name: string;
   experienceYears: number;
 }
@@ -16,42 +18,92 @@ const ProfileImageCard: React.FC<ProfileImageCardProps> = ({
   name,
   experienceYears
 }) => {
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !expert) return;
+
+    setIsUploadingImage(true);
+    try {
+      // TODO: Implement image upload functionality
+      console.log('Image upload functionality to be implemented');
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile Picture</CardTitle>
+        <CardTitle>Profile Photo</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col items-center space-y-4">
-        <Avatar className="h-32 w-32">
-          <AvatarImage src={expert?.profile_picture || expert?.image_url} alt={name} />
-          <AvatarFallback className="text-2xl">
-            {name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : 'EX'}
-          </AvatarFallback>
-        </Avatar>
-        
-        <div className="text-center">
-          <h3 className="font-semibold text-lg">{name}</h3>
-          <Badge variant={expert?.status === 'approved' ? 'default' : 'secondary'}>
-            {expert?.status === 'approved' ? 'Verified Expert' : expert?.status || 'Pending'}
-          </Badge>
+        <div className="relative">
+          <Avatar className="w-24 h-24">
+            <AvatarImage 
+              src={expert?.profile_picture || ''} 
+              alt={name || 'Expert'} 
+            />
+            <AvatarFallback className="text-lg">
+              {getInitials(name || 'E')}
+            </AvatarFallback>
+          </Avatar>
+          <label htmlFor="profile-image" className="absolute bottom-0 right-0 cursor-pointer">
+            <div className="bg-primary text-white p-1 rounded-full">
+              <Camera className="w-4 h-4" />
+            </div>
+            <input
+              id="profile-image"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleImageUpload}
+              disabled={isUploadingImage}
+            />
+          </label>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 w-full text-sm">
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Star className="h-4 w-4 text-yellow-500" />
-              <span className="font-medium">4.8</span>
-            </div>
-            <p className="text-muted-foreground">Rating</p>
+        <div className="text-center space-y-2">
+          <h3 className="font-semibold text-lg">{name || 'Expert Name'}</h3>
+          <div className="flex items-center justify-center gap-2">
+            <Badge variant="secondary">
+              {experienceYears} years experience
+            </Badge>
+            {expert?.status === 'approved' && (
+              <Badge variant="default" className="bg-green-100 text-green-800">
+                Verified Expert
+              </Badge>
+            )}
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1">
-              <Clock className="h-4 w-4 text-blue-500" />
-              <span className="font-medium">{experienceYears}+</span>
-            </div>
-            <p className="text-muted-foreground">Years Exp.</p>
+          
+          <div className="flex items-center justify-center gap-1">
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            <span className="text-sm text-gray-600">
+              {expert?.average_rating || 0} ({expert?.reviews_count || 0} reviews)
+            </span>
           </div>
         </div>
+
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={() => document.getElementById('profile-image')?.click()}
+          disabled={isUploadingImage}
+        >
+          {isUploadingImage ? 'Uploading...' : 'Change Photo'}
+        </Button>
       </CardContent>
     </Card>
   );

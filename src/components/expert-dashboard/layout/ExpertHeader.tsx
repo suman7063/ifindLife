@@ -1,79 +1,71 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
-import RealTimeNotifications from '../pages/messaging/RealTimeNotifications';
-import { 
-  Search, 
-  Settings, 
-  HelpCircle, 
-  Calendar,
-  MessageSquare,
-  Video
-} from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ExternalLink, LayoutDashboard, LogOut } from 'lucide-react';
+import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
+import { useNavigate } from 'react-router-dom';
 
 const ExpertHeader: React.FC = () => {
-  const { expert } = useUnifiedAuth();
+  const { expert, logout } = useUnifiedAuth();
+  const navigate = useNavigate();
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      showLogoutSuccessToast();
+      navigate('/expert-login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      showLogoutErrorToast();
+    }
+  };
 
   return (
     <header className="border-b bg-white px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
+          {/* Double the logo size */}
+          <Link to="/" className="flex items-center">
+            <img 
+              src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" 
+              alt="iFindLife" 
+              className="h-28 transform scale-150 origin-left" 
+            />
+          </Link>
+          <div className="border-l h-8 mx-2"></div>
           <h2 className="text-xl font-semibold">Expert Dashboard</h2>
-          {expert?.status === 'approved' && (
-            <Badge variant="default" className="bg-green-100 text-green-800">
-              Active
-            </Badge>
-          )}
         </div>
         
         <div className="flex items-center gap-4">
-          {/* Quick Actions */}
-          <Button variant="ghost" size="icon">
-            <Search className="h-5 w-5" />
-          </Button>
-          
-          <Button variant="ghost" size="icon">
-            <Calendar className="h-5 w-5" />
-          </Button>
-          
-          <Button variant="ghost" size="icon">
-            <MessageSquare className="h-5 w-5" />
-          </Button>
-          
-          <Button variant="ghost" size="icon">
-            <Video className="h-5 w-5" />
-          </Button>
-          
-          {/* Notifications */}
-          <RealTimeNotifications />
-          
-          {/* Settings and Help */}
-          <Button variant="ghost" size="icon">
-            <Settings className="h-5 w-5" />
-          </Button>
-          
-          <Button variant="ghost" size="icon">
-            <HelpCircle className="h-5 w-5" />
-          </Button>
-          
-          {/* User Menu */}
+          {/* Expert Profile Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage 
                     src={expert?.profile_picture || ''} 
                     alt={expert?.name || 'Expert'} 
                   />
-                  <AvatarFallback>
-                    {expert?.name?.charAt(0) || 'E'}
+                  <AvatarFallback className="bg-primary text-white text-sm">
+                    {getInitials(expert?.name || 'E')}
                   </AvatarFallback>
                 </Avatar>
-              </Button>
+                <span className="text-sm font-medium hidden sm:block">
+                  {expert?.name || 'Expert'}
+                </span>
+              </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="flex flex-col space-y-1 p-2">
@@ -85,18 +77,22 @@ const ExpertHeader: React.FC = () => {
                 </p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                Profile Settings
+              <DropdownMenuItem asChild>
+                <Link to="/" className="flex items-center cursor-pointer">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  iFindLife Website
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                Billing
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                Support
+              <DropdownMenuItem asChild>
+                <Link to="/expert-dashboard" className="flex items-center cursor-pointer">
+                  <LayoutDashboard className="w-4 h-4 mr-2" />
+                  Dashboard
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                Log out
+              <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,250 +1,88 @@
 
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { ExpertProfile, UserProfile, AdminProfile } from '@/types/database/unified';
+import { expertRepository } from '@/repositories/expertRepository';
+import { userRepository } from '@/repositories/userRepository';
+import { adminRepository } from '@/repositories/adminRepository';
 
-interface AuthState {
-  user: any;
-  admin: any;
-  expert: any;
+interface UnifiedAuthContextType {
+  // Auth state
+  isAuthenticated: boolean;
   isLoading: boolean;
   sessionType: 'user' | 'admin' | 'expert' | null;
-  isAuthenticated: boolean;
-}
-
-interface AuthContextType extends AuthState {
-  login: (type: string, credentials: any) => Promise<boolean>;
-  logout: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
-const authReducer = (state: AuthState, action: any): AuthState => {
-  switch (action.type) {
-    case 'SET_LOADING':
-      return { ...state, isLoading: action.payload };
-    case 'SET_USER':
-      return { 
-        ...state, 
-        user: action.payload, 
-        sessionType: action.payload ? 'user' : null,
-        isLoading: false,
-        isAuthenticated: !!action.payload
-      };
-    case 'SET_ADMIN':
-      return { 
-        ...state, 
-        admin: action.payload, 
-        sessionType: action.payload ? 'admin' : null,
-        isLoading: false,
-        isAuthenticated: !!action.payload
-      };
-    case 'SET_EXPERT':
-      return { 
-        ...state, 
-        expert: action.payload, 
-        sessionType: action.payload ? 'expert' : null,
-        isLoading: false,
-        isAuthenticated: !!action.payload
-      };
-    case 'LOGOUT':
-      return { 
-        user: null, 
-        admin: null, 
-        expert: null, 
-        isLoading: false, 
-        sessionType: null,
-        isAuthenticated: false
-      };
-    default:
-      return state;
-  }
-};
-
-// Helper functions for auth checking
-async function checkUserAuth() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
-    
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('auth_id', session.user.id)
-      .single();
-    
-    if (profile) {
-      return { ...session.user, profile };
-    }
-    return null;
-  } catch (error) {
-    console.error('User auth check failed:', error);
-    return null;
-  }
-}
-
-async function checkAdminAuth() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
-    
-    // Check if user has admin role
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('auth_id', session.user.id)
-      .eq('role', 'admin')
-      .single();
-    
-    if (profile) {
-      return { ...session.user, profile };
-    }
-    return null;
-  } catch (error) {
-    console.error('Admin auth check failed:', error);
-    return null;
-  }
-}
-
-async function checkExpertAuth() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) return null;
-    
-    const { data: expert } = await supabase
-      .from('expert_accounts')
-      .select('*')
-      .eq('auth_id', session.user.id)
-      .eq('status', 'approved')
-      .single();
-    
-    if (expert) {
-      return { ...session.user, expert };
-    }
-    return null;
-  } catch (error) {
-    console.error('Expert auth check failed:', error);
-    return null;
-  }
-}
-
-async function performLogin(type: string, credentials: any) {
-  const { email, password, asExpert } = credentials;
   
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
-    
-    if (error) throw error;
-    if (!data.session) throw new Error('No session created');
-    
-    // Set session type preference
-    localStorage.setItem('sessionType', type);
-    localStorage.setItem('preferredRole', type);
-    
-    // Check which type of account this is
-    if (type === 'expert' || asExpert) {
-      const expert = await checkExpertAuth();
-      if (expert) return expert;
-    }
-    
-    if (type === 'admin') {
-      const admin = await checkAdminAuth();
-      if (admin) return admin;
-    }
-    
-    // Default to user
-    const user = await checkUserAuth();
-    return user;
-    
-  } catch (error) {
-    console.error(`${type} login failed:`, error);
-    throw error;
-  }
+  // User profiles
+  user: UserProfile | null;
+  admin: AdminProfile | null;
+  expert: ExpertProfile | null;
+  
+  // Auth methods
+  login: (type: 'user' | 'admin' | 'expert', credentials: any) => Promise<boolean>;
+  logout: () => Promise<void>;
+  
+  // Profile setters for updates
+  setUser: (user: UserProfile | null) => void;
+  setAdmin: (admin: AdminProfile | null) => void;
+  setExpert: (expert: ExpertProfile | null) => void;
 }
+
+const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(undefined);
 
 export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, dispatch] = useReducer(authReducer, {
-    user: null,
-    admin: null,
-    expert: null,
-    isLoading: true,
-    sessionType: null,
-    isAuthenticated: false
-  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [sessionType, setSessionType] = useState<'user' | 'admin' | 'expert' | null>(null);
+  
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [admin, setAdmin] = useState<AdminProfile | null>(null);
+  const [expert, setExpert] = useState<ExpertProfile | null>(null);
 
-  // Single auth check on mount - prevents infinite loops
+  const isAuthenticated = Boolean(user || admin || expert);
+
+  // Initialize auth state
   useEffect(() => {
     let mounted = true;
-    
-    const checkAuth = async () => {
+
+    const initializeAuth = async () => {
       try {
-        console.log('UnifiedAuth: Starting auth check');
-        dispatch({ type: 'SET_LOADING', payload: true });
+        // Get current session
+        const { data: { session } } = await supabase.auth.getSession();
         
-        // Get preferred session type
-        const preferredType = localStorage.getItem('sessionType') || 
-                             localStorage.getItem('preferredRole');
-        
-        // Check auth types based on preference
-        let authResult = null;
-        
-        if (preferredType === 'expert') {
-          authResult = await checkExpertAuth();
-          if (authResult && mounted) {
-            dispatch({ type: 'SET_EXPERT', payload: authResult });
-            console.log('UnifiedAuth: Expert auth found');
-            return;
-          }
+        if (session?.user && mounted) {
+          await loadUserProfiles(session.user);
         }
-        
-        if (preferredType === 'admin') {
-          authResult = await checkAdminAuth();
-          if (authResult && mounted) {
-            dispatch({ type: 'SET_ADMIN', payload: authResult });
-            console.log('UnifiedAuth: Admin auth found');
-            return;
-          }
-        }
-        
-        // Fallback to user auth
-        authResult = await checkUserAuth();
-        if (authResult && mounted) {
-          dispatch({ type: 'SET_USER', payload: authResult });
-          console.log('UnifiedAuth: User auth found');
-          return;
-        }
-        
-        // No auth found
-        if (mounted) {
-          dispatch({ type: 'SET_LOADING', payload: false });
-          console.log('UnifiedAuth: No authentication found');
-        }
-        
       } catch (error) {
-        console.error('UnifiedAuth: Auth check failed:', error);
+        console.error('Error initializing auth:', error);
+      } finally {
         if (mounted) {
-          dispatch({ type: 'SET_LOADING', payload: false });
+          setIsLoading(false);
         }
       }
     };
 
+    initializeAuth();
+
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('UnifiedAuth: Auth state changed:', event);
-        if (event === 'SIGNED_OUT') {
-          dispatch({ type: 'LOGOUT' });
-        } else if (event === 'SIGNED_IN' && session) {
-          // Re-check auth after sign in
-          checkAuth();
+        if (!mounted) return;
+
+        console.log('Auth state changed:', { event, hasSession: !!session, userId: session?.user?.id });
+        
+        if (session?.user) {
+          await loadUserProfiles(session.user);
+        } else {
+          // Clear all profile states
+          setUser(null);
+          setAdmin(null);
+          setExpert(null);
+          setSessionType(null);
         }
+        
+        setIsLoading(false);
       }
     );
-
-    checkAuth();
 
     return () => {
       mounted = false;
@@ -252,67 +90,164 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
     };
   }, []);
 
-  const login = async (type: string, credentials: any): Promise<boolean> => {
+  const loadUserProfiles = async (authUser: User) => {
     try {
-      dispatch({ type: 'SET_LOADING', payload: true });
-      console.log(`UnifiedAuth: Attempting ${type} login`);
+      console.log('Loading user profiles for:', authUser.id);
       
-      const result = await performLogin(type, credentials);
+      // Check stored session type preference
+      const storedSessionType = localStorage.getItem('sessionType') as 'user' | 'admin' | 'expert' | null;
+      console.log('Stored session type:', storedSessionType);
       
-      if (result) {
-        dispatch({ type: `SET_${type.toUpperCase()}`, payload: result });
-        console.log(`UnifiedAuth: ${type} login successful`);
-        return true;
+      // Try to load expert profile first if stored type is expert
+      if (storedSessionType === 'expert') {
+        const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
+        if (expertProfile) {
+          console.log('Expert profile loaded:', expertProfile);
+          setExpert(expertProfile);
+          setSessionType('expert');
+          setUser(null);
+          setAdmin(null);
+          return;
+        }
       }
       
-      dispatch({ type: 'SET_LOADING', payload: false });
-      return false;
+      // Try to load admin profile
+      if (storedSessionType === 'admin') {
+        const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
+        if (adminProfile) {
+          console.log('Admin profile loaded:', adminProfile);
+          setAdmin(adminProfile);
+          setSessionType('admin');
+          setUser(null);
+          setExpert(null);
+          return;
+        }
+      }
       
+      // Try to load user profile
+      const userProfile = await userRepository.getUserByAuthId(authUser.id);
+      if (userProfile) {
+        console.log('User profile loaded:', userProfile);
+        setUser(userProfile);
+        setSessionType('user');
+        setAdmin(null);
+        setExpert(null);
+        return;
+      }
+      
+      // If no stored preference, try expert first, then admin, then user
+      if (!storedSessionType) {
+        const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
+        if (expertProfile) {
+          console.log('Expert profile loaded (no preference):', expertProfile);
+          setExpert(expertProfile);
+          setSessionType('expert');
+          localStorage.setItem('sessionType', 'expert');
+          return;
+        }
+        
+        const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
+        if (adminProfile) {
+          console.log('Admin profile loaded (no preference):', adminProfile);
+          setAdmin(adminProfile);
+          setSessionType('admin');
+          localStorage.setItem('sessionType', 'admin');
+          return;
+        }
+        
+        const userProfile = await userRepository.getUserByAuthId(authUser.id);
+        if (userProfile) {
+          console.log('User profile loaded (no preference):', userProfile);
+          setUser(userProfile);
+          setSessionType('user');
+          localStorage.setItem('sessionType', 'user');
+          return;
+        }
+      }
+      
+      console.log('No profiles found for user:', authUser.id);
     } catch (error) {
-      console.error(`UnifiedAuth: ${type} login failed:`, error);
-      dispatch({ type: 'SET_LOADING', payload: false });
-      toast.error('Login failed. Please try again.');
+      console.error('Error loading user profiles:', error);
+    }
+  };
+
+  const login = async (type: 'user' | 'admin' | 'expert', credentials: any): Promise<boolean> => {
+    try {
+      console.log(`Attempting ${type} login:`, credentials.email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        return false;
+      }
+
+      if (data.user) {
+        // Store the login type preference
+        localStorage.setItem('sessionType', type);
+        
+        // Load the specific profile type
+        await loadUserProfiles(data.user);
+        
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
       return false;
     }
   };
 
   const logout = async (): Promise<void> => {
     try {
-      console.log('UnifiedAuth: Logging out');
-      await supabase.auth.signOut();
+      // Clear stored session type
       localStorage.removeItem('sessionType');
-      localStorage.removeItem('preferredRole');
-      dispatch({ type: 'LOGOUT' });
-      toast.success('Logged out successfully');
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Clear all states
+      setUser(null);
+      setAdmin(null);
+      setExpert(null);
+      setSessionType(null);
+      
+      console.log('Logout completed');
     } catch (error) {
-      console.error('UnifiedAuth: Logout failed:', error);
-      toast.error('Logout failed');
+      console.error('Logout error:', error);
+      throw error;
     }
   };
 
-  const contextValue = {
-    ...state,
+  const value = {
+    isAuthenticated,
+    isLoading,
+    sessionType,
+    user,
+    admin,
+    expert,
     login,
-    logout
+    logout,
+    setUser,
+    setAdmin,
+    setExpert
   };
 
-  console.log('UnifiedAuth: Current state:', {
-    isLoading: state.isLoading,
-    sessionType: state.sessionType,
-    isAuthenticated: state.isAuthenticated
-  });
-
   return (
-    <AuthContext.Provider value={contextValue}>
+    <UnifiedAuthContext.Provider value={value}>
       {children}
-    </AuthContext.Provider>
+    </UnifiedAuthContext.Provider>
   );
 };
 
 export const useUnifiedAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useUnifiedAuth must be used within UnifiedAuthProvider');
+  const context = useContext(UnifiedAuthContext);
+  if (context === undefined) {
+    throw new Error('useUnifiedAuth must be used within a UnifiedAuthProvider');
   }
   return context;
 };

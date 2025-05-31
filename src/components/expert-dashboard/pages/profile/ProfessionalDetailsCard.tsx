@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { DollarSign, Save, X } from 'lucide-react';
+import { DollarSign, Save, X, Loader2 } from 'lucide-react';
 
 interface ProfessionalDetailsCardProps {
   formData: {
@@ -16,6 +16,7 @@ interface ProfessionalDetailsCardProps {
   onFormDataChange: (updater: (prev: any) => any) => void;
   onSave: () => void;
   onCancel: () => void;
+  isSaving?: boolean;
 }
 
 const ProfessionalDetailsCard: React.FC<ProfessionalDetailsCardProps> = ({
@@ -23,7 +24,8 @@ const ProfessionalDetailsCard: React.FC<ProfessionalDetailsCardProps> = ({
   isEditing,
   onFormDataChange,
   onSave,
-  onCancel
+  onCancel,
+  isSaving = false
 }) => {
   return (
     <Card className="lg:col-span-3">
@@ -74,11 +76,24 @@ const ProfessionalDetailsCard: React.FC<ProfessionalDetailsCardProps> = ({
 
         {isEditing && (
           <div className="flex gap-2 mt-4">
-            <Button onClick={onSave} className="flex items-center gap-2">
-              <Save className="h-4 w-4" />
-              Save Changes
+            <Button 
+              onClick={onSave} 
+              className="flex items-center gap-2"
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
-            <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              onClick={onCancel} 
+              className="flex items-center gap-2"
+              disabled={isSaving}
+            >
               <X className="h-4 w-4" />
               Cancel
             </Button>
