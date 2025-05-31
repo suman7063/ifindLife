@@ -5,6 +5,93 @@ import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unified';
+
+// Type guard functions
+const isUserProfile = (profile: any): profile is UserProfile => {
+  return profile && 'wallet_balance' in profile && 'currency' in profile;
+};
+
+const isExpertProfile = (profile: any): profile is ExpertProfile => {
+  return profile && 'specialization' in profile && 'experience' in profile;
+};
+
+const isAdminProfile = (profile: any): profile is AdminProfile => {
+  return profile && 'role' in profile && !('wallet_balance' in profile) && !('specialization' in profile);
+};
+
+// Helper function to get common properties safely
+const getCommonProfileProps = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
+  if (!profile) return { name: '', email: '' };
+  
+  return {
+    name: profile.name || '',
+    email: profile.email || '',
+    id: profile.id || ''
+  };
+};
+
+// Helper function to create a compatible currentUser object for NavbarDesktopLinks
+const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
+  if (!profile) return null;
+  
+  const commonProps = getCommonProfileProps(profile);
+  
+  if (isUserProfile(profile)) {
+    return profile; // Already compatible
+  }
+  
+  if (isExpertProfile(profile)) {
+    // Create a UserProfile-like object for compatibility
+    return {
+      ...commonProps,
+      phone: profile.phone || '',
+      country: profile.country || '',
+      city: profile.city || '',
+      currency: 'USD', // Default currency for experts
+      profile_picture: profile.profile_picture || '',
+      wallet_balance: 0, // Experts don't have wallet balance in navbar context
+      created_at: profile.created_at || '',
+      updated_at: profile.created_at || '',
+      referred_by: null,
+      referral_code: '',
+      referral_link: '',
+      favorite_experts: [],
+      favorite_programs: [],
+      enrolled_courses: [],
+      reviews: [],
+      reports: [],
+      transactions: [],
+      referrals: []
+    } as UserProfile;
+  }
+  
+  if (isAdminProfile(profile)) {
+    // Create a UserProfile-like object for compatibility
+    return {
+      ...commonProps,
+      phone: '',
+      country: '',
+      city: '',
+      currency: 'USD',
+      profile_picture: '',
+      wallet_balance: 0,
+      created_at: profile.created_at || '',
+      updated_at: profile.created_at || '',
+      referred_by: null,
+      referral_code: '',
+      referral_link: '',
+      favorite_experts: [],
+      favorite_programs: [],
+      enrolled_courses: [],
+      reviews: [],
+      reports: [],
+      referrals: []
+    } as UserProfile;
+  }
+  
+  return null;
+};
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -23,9 +110,12 @@ const Navbar = () => {
   } = useUnifiedAuth();
 
   // Determine current user based on session type
-  const currentUser = sessionType === 'expert' ? expert : 
-                     sessionType === 'admin' ? admin : 
-                     sessionType === 'user' ? user : null;
+  const currentProfile = sessionType === 'expert' ? expert : 
+                        sessionType === 'admin' ? admin : 
+                        sessionType === 'user' ? user : null;
+
+  // Create compatible user object for navbar components
+  const currentUser = createCompatibleUser(currentProfile);
 
   const hasExpertProfile = sessionType === 'expert' && !!expert;
   const hasAdminProfile = sessionType === 'admin' && !!admin;
