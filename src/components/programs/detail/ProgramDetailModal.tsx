@@ -47,6 +47,24 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
     return await submitBooking(programData.id);
   };
 
+  // Helper function to get outcomes as array
+  const getOutcomesArray = (expectedOutcomes: ProgramDetail['expectedOutcomes']) => {
+    if (Array.isArray(expectedOutcomes)) {
+      return expectedOutcomes;
+    }
+    
+    // If it's an object structure, combine all outcomes
+    if (expectedOutcomes && typeof expectedOutcomes === 'object') {
+      const combined: string[] = [];
+      if (expectedOutcomes.shortTerm) combined.push(...expectedOutcomes.shortTerm);
+      if (expectedOutcomes.mediumTerm) combined.push(...expectedOutcomes.mediumTerm);
+      if (expectedOutcomes.longTerm) combined.push(...expectedOutcomes.longTerm);
+      return combined;
+    }
+    
+    return [];
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -171,7 +189,7 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                 <TabsContent value="expected-outcomes" className="space-y-4">
                   <h3 className="text-lg font-semibold mb-4">Expected Outcomes</h3>
                   <ul className="space-y-3">
-                    {programData.expectedOutcomes.map((outcome, index) => (
+                    {getOutcomesArray(programData.expectedOutcomes).map((outcome, index) => (
                       <li key={index} className="flex items-start gap-3">
                         <span className="text-green-500 mt-1">→</span>
                         <span className="text-gray-700">{outcome}</span>
