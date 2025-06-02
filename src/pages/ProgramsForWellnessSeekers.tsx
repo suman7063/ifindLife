@@ -123,17 +123,17 @@ const ProgramsForWellnessSeekers: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section - Brand Colors */}
-      <div className="bg-gradient-to-br from-ifind-aqua/10 to-ifind-teal/10 py-16">
+      {/* Hero Section - Muted Purple Theme */}
+      <div className="bg-gradient-to-br from-ifind-purple/10 to-ifind-purple/20 py-16">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold text-ifind-charcoal mb-4">
               Programs for Wellness Seekers
             </h1>
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-600 mb-8 text-center">
               Discover comprehensive programs designed to support your mental health journey and personal growth
             </p>
-            <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">
+            <Button className="bg-ifind-purple hover:bg-ifind-purple/90 text-white">
               Start Your Journey
             </Button>
           </div>
@@ -152,7 +152,7 @@ const ProgramsForWellnessSeekers: React.FC = () => {
             <TabsContent value="wellness" className="space-y-8">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-3">General Wellness Programs</h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-gray-600 max-w-2xl mx-auto text-center">
                   Comprehensive programs focused on overall mental wellness and personal development
                 </p>
               </div>
@@ -162,35 +162,35 @@ const ProgramsForWellnessSeekers: React.FC = () => {
                 <Button
                   variant={selectedCategory === 'all' ? 'default' : 'outline'}
                   onClick={() => setSelectedCategory('all')}
-                  className={selectedCategory === 'all' ? 'bg-ifind-teal hover:bg-ifind-teal/90 text-white' : 'border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10'}
+                  className={selectedCategory === 'all' ? 'bg-ifind-purple hover:bg-ifind-purple/90 text-white' : 'border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10'}
                 >
                   All Programs
                 </Button>
                 <Button
                   variant={selectedCategory === 'quick-ease' ? 'default' : 'outline'}
                   onClick={() => setSelectedCategory('quick-ease')}
-                  className={selectedCategory === 'quick-ease' ? 'bg-ifind-teal hover:bg-ifind-teal/90 text-white' : 'border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10'}
+                  className={selectedCategory === 'quick-ease' ? 'bg-ifind-purple hover:bg-ifind-purple/90 text-white' : 'border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10'}
                 >
                   Quick-Ease Programs
                 </Button>
                 <Button
                   variant={selectedCategory === 'resilience-building' ? 'default' : 'outline'}
                   onClick={() => setSelectedCategory('resilience-building')}
-                  className={selectedCategory === 'resilience-building' ? 'bg-ifind-teal hover:bg-ifind-teal/90 text-white' : 'border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10'}
+                  className={selectedCategory === 'resilience-building' ? 'bg-ifind-purple hover:bg-ifind-purple/90 text-white' : 'border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10'}
                 >
                   Resilience Building Programs
                 </Button>
                 <Button
                   variant={selectedCategory === 'super-human' ? 'default' : 'outline'}
                   onClick={() => setSelectedCategory('super-human')}
-                  className={selectedCategory === 'super-human' ? 'bg-ifind-teal hover:bg-ifind-teal/90 text-white' : 'border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10'}
+                  className={selectedCategory === 'super-human' ? 'bg-ifind-purple hover:bg-ifind-purple/90 text-white' : 'border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10'}
                 >
                   Super Human Programs
                 </Button>
                 <Button
                   variant={selectedCategory === 'favorites' ? 'default' : 'outline'}
                   onClick={() => setSelectedCategory('favorites')}
-                  className={selectedCategory === 'favorites' ? 'bg-ifind-teal hover:bg-ifind-teal/90 text-white' : 'border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10'}
+                  className={selectedCategory === 'favorites' ? 'bg-ifind-purple hover:bg-ifind-purple/90 text-white' : 'border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10'}
                 >
                   Favorite Programs
                 </Button>
@@ -199,7 +199,7 @@ const ProgramsForWellnessSeekers: React.FC = () => {
               {/* Category Title */}
               {selectedCategory !== 'all' && (
                 <div className="text-center mb-6">
-                  <h3 className="text-xl font-semibold text-ifind-aqua">
+                  <h3 className="text-xl font-semibold text-ifind-purple">
                     {getCategoryDisplayName(selectedCategory)}
                   </h3>
                 </div>
@@ -220,7 +220,7 @@ const ProgramsForWellnessSeekers: React.FC = () => {
             <TabsContent value="issue-based" className="space-y-8" id="issue-based">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bold mb-3">Issue-Based Support Programs</h2>
-                <p className="text-gray-600 max-w-2xl mx-auto">
+                <p className="text-gray-600 max-w-2xl mx-auto text-center">
                   Targeted programs designed to address specific mental health challenges with expert guidance
                 </p>
               </div>
@@ -241,14 +241,14 @@ const ProgramsForWellnessSeekers: React.FC = () => {
           {/* Call to Action */}
           <div className="mt-16 text-center bg-ifind-offwhite rounded-lg p-8">
             <h3 className="text-2xl font-bold mb-4">Not Sure Which Program is Right for You?</h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-6 text-center">
               Take our mental health assessment to get personalized program recommendations
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">
+              <Button className="bg-ifind-purple hover:bg-ifind-purple/90 text-white">
                 Take Assessment
               </Button>
-              <Button variant="outline" className="border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10">
+              <Button variant="outline" className="border-ifind-purple text-ifind-purple hover:bg-ifind-purple/10">
                 Talk to an Expert
               </Button>
             </div>

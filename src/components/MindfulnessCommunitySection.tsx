@@ -1,52 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import NewsletterSubscription from '@/components/newsletter/NewsletterSubscription';
 
 const MindfulnessCommunitySection = () => {
-  const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleNewsletterSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !email.trim()) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
-
-    setIsSubmitting(true);
-    
-    try {
-      const { error } = await supabase
-        .from('newsletter_subscriptions')
-        .insert([{ email, created_at: new Date().toISOString() }]);
-      
-      if (error) {
-        if (error.code === '23505') { // Unique constraint violation
-          toast.info('You are already subscribed to our newsletter!');
-        } else {
-          console.error('Newsletter subscription error:', error);
-          throw new Error(error.message);
-        }
-      } else {
-        toast.success('Successfully subscribed to our newsletter!');
-        setEmail('');
-      }
-    } catch (error: any) {
-      console.error('Failed to subscribe:', error);
-      toast.error(`Failed to subscribe: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleWhatsAppJoin = () => {
     // Open WhatsApp group link in new tab
-    window.open('https://chat.whatsapp.com/your-group-link', '_blank');
-    toast.success('Redirecting to WhatsApp group...');
+    window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank');
   };
 
   return (
@@ -87,24 +47,11 @@ const MindfulnessCommunitySection = () => {
                 Join our email list to receive daily mindfulness practices and activities directly to 
                 your inbox. Start your day with intention and clarity.
               </p>
-              <form onSubmit={handleNewsletterSubmit} className="flex gap-2">
-                <Input 
-                  type="email" 
-                  placeholder="Your email address" 
-                  className="flex-1 text-sm"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isSubmitting}
-                  required
-                />
-                <Button 
-                  type="submit"
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 text-sm"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Joining...' : 'Join'}
-                </Button>
-              </form>
+              <NewsletterSubscription 
+                placeholder="Your email address"
+                buttonLabel="Join"
+                className="flex gap-2"
+              />
             </div>
 
             {/* WhatsApp Community */}

@@ -108,16 +108,17 @@ const ExpertsOnlineSection: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {experts.map(expert => (
-              <ExpertCard
-                key={expert.id}
-                expert={expert}
-                onClick={() => handleExpertCardClick(expert)}
-                onConnectNow={(type) => handleConnectNow(expert, type)}
-                onBookNow={() => handleBookNow(expert)}
-                showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
-                onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
-                className="h-full"
-              />
+              <div key={expert.id} className="flex">
+                <ExpertCard
+                  expert={expert}
+                  onClick={() => handleExpertCardClick(expert)}
+                  onConnectNow={(type) => handleConnectNow(expert, type)}
+                  onBookNow={() => handleBookNow(expert)}
+                  showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
+                  onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+                  className="w-full"
+                />
+              </div>
             ))}
           </div>
           
