@@ -12,4 +12,18 @@ export interface ExpertCardData {
   experience: number;
   price: number;
   waitTime: string;
+  // Additional optional properties for compatibility
+  title?: string;
+  rating?: number;
+  reviewCount?: number;
+}
+
+export interface ExpertActionsProps {
+  expert: ExpertCardData;
+  onClick?: (expertId: string) => void;
+}
+
+export interface ExpertInfoProps {
+  expert: ExpertCardData;
+  showRating?: boolean;
 }
