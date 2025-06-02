@@ -4,7 +4,7 @@ import { useParams, Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, Calendar, User, Tag } from 'lucide-react';
+import { ChevronLeft, Calendar, User, Tag, Clock } from 'lucide-react';
 import { BlogPost as BlogPostType } from '@/types/blog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { sampleBlogPosts } from '@/data/blogData';
@@ -16,20 +16,16 @@ const BlogPost = () => {
   const [relatedPosts, setRelatedPosts] = useState<BlogPostType[]>([]);
 
   useEffect(() => {
-    // Simulate fetching post data
+    window.scrollTo(0, 0);
     setLoading(true);
     
-    // Find the post with matching slug
     const foundPost = sampleBlogPosts.find(post => post.slug === slug);
     
     if (foundPost) {
       setPost(foundPost);
-      
-      // Get related posts from the same category (excluding current post)
       const related = sampleBlogPosts
         .filter(p => p.category === foundPost.category && p.id !== foundPost.id)
         .slice(0, 3);
-      
       setRelatedPosts(related);
     }
     
@@ -76,14 +72,47 @@ const BlogPost = () => {
     );
   }
 
+  const fullContent = `
+    ${post.content}
+
+    ## Understanding the Core Concepts
+
+    Mental health is a complex topic that requires careful consideration and professional guidance. This article explores the fundamental aspects that can help you on your journey to better well-being.
+
+    ### Key Points to Remember
+
+    1. **Self-awareness is crucial** - Understanding your emotions and triggers is the first step toward positive change.
+    2. **Professional support matters** - Don't hesitate to seek help from qualified mental health professionals.
+    3. **Consistency in practice** - Small, regular steps often lead to more sustainable improvements than dramatic changes.
+    4. **Community support** - Connecting with others who understand your journey can provide invaluable encouragement.
+
+    ## Practical Applications
+
+    The strategies discussed in this article can be applied in various aspects of daily life. Whether you're dealing with work stress, relationship challenges, or personal growth goals, these principles remain relevant.
+
+    ### Building Your Support System
+
+    Creating a strong support network is essential for long-term mental wellness. This includes:
+
+    - Professional therapists or counselors
+    - Trusted friends and family members
+    - Support groups or communities
+    - Mental health resources and tools
+
+    ## Moving Forward
+
+    Remember that mental health is an ongoing journey, not a destination. Be patient with yourself as you implement these strategies and celebrate small victories along the way.
+
+    If you're struggling with mental health challenges, don't hesitate to reach out to our expert team at iFindLife. We're here to support you every step of the way.
+  `;
+
   return (
     <>
       <Navbar />
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="container mx-auto px-4 sm:px-6">
-          {/* Back button */}
           <div className="mb-8">
-            <Button variant="ghost" asChild className="text-ifind-purple">
+            <Button variant="ghost" asChild className="text-ifind-teal hover:text-ifind-teal/80">
               <Link to="/blog">
                 <ChevronLeft className="mr-2 h-4 w-4" />
                 Back to all articles
@@ -91,7 +120,6 @@ const BlogPost = () => {
             </Button>
           </div>
           
-          {/* Article header */}
           <article className="max-w-4xl mx-auto bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="h-96 relative overflow-hidden">
               <img 
@@ -102,13 +130,13 @@ const BlogPost = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end">
                 <div className="p-8">
                   <div className="mb-4">
-                    <span className="inline-block bg-ifind-purple text-white px-3 py-1 rounded-full text-sm font-medium">
+                    <span className="inline-block bg-ifind-teal text-white px-3 py-1 rounded-full text-sm font-medium">
                       {post.category}
                     </span>
                   </div>
                   <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">{post.title}</h1>
-                  <div className="flex items-center text-white/90 text-sm">
-                    <div className="flex items-center mr-4">
+                  <div className="flex items-center text-white/90 text-sm space-x-4">
+                    <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
                       {post.date}
                     </div>
@@ -118,43 +146,71 @@ const BlogPost = () => {
                         {post.author}
                       </div>
                     )}
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      5 min read
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Article content */}
             <div className="p-8">
               <div className="prose prose-lg max-w-none">
-                {/* This would be your rich text content */}
-                <p className="lead text-lg text-gray-700">{post.summary}</p>
-                <div className="my-8">
-                  <p className="mb-4">{post.content}</p>
-                  <p className="mb-4">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                  <h2 className="text-2xl font-bold mt-8 mb-4">Key Takeaways</h2>
-                  <ul className="list-disc list-inside mb-4">
-                    <li className="mb-2">Understand your emotions and their triggers</li>
-                    <li className="mb-2">Practice self-regulation techniques</li>
-                    <li className="mb-2">Develop empathy for others' feelings</li>
-                    <li className="mb-2">Build stronger relationships through emotional awareness</li>
-                  </ul>
-                  <p className="mb-4">Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                <p className="text-xl text-gray-700 mb-8 font-medium leading-relaxed">{post.summary}</p>
+                
+                <div className="whitespace-pre-line text-gray-800 leading-relaxed space-y-6">
+                  {fullContent.split('\n\n').map((paragraph, index) => {
+                    if (paragraph.startsWith('##')) {
+                      return <h2 key={index} className="text-2xl font-bold mt-8 mb-4 text-gray-900">{paragraph.replace('## ', '')}</h2>;
+                    } else if (paragraph.startsWith('###')) {
+                      return <h3 key={index} className="text-xl font-semibold mt-6 mb-3 text-gray-900">{paragraph.replace('### ', '')}</h3>;
+                    } else if (paragraph.includes('1. **') || paragraph.includes('2. **')) {
+                      return (
+                        <div key={index} className="space-y-3">
+                          {paragraph.split('\n').map((line, lineIndex) => {
+                            if (line.trim().match(/^\d+\./)) {
+                              return <div key={lineIndex} className="flex items-start space-x-3">
+                                <span className="flex-shrink-0 w-6 h-6 bg-ifind-teal text-white rounded-full flex items-center justify-center text-sm font-medium mt-0.5">
+                                  {line.trim().charAt(0)}
+                                </span>
+                                <p className="text-gray-700">{line.replace(/^\d+\.\s\*\*(.*?)\*\*\s-\s/, '$1 - ')}</p>
+                              </div>;
+                            }
+                            return null;
+                          })}
+                        </div>
+                      );
+                    } else if (paragraph.includes('- ')) {
+                      return (
+                        <ul key={index} className="space-y-2 ml-6">
+                          {paragraph.split('\n').filter(line => line.includes('- ')).map((item, itemIndex) => (
+                            <li key={itemIndex} className="flex items-start space-x-2">
+                              <span className="w-2 h-2 bg-ifind-aqua rounded-full mt-2 flex-shrink-0"></span>
+                              <span className="text-gray-700">{item.replace('- ', '')}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    } else {
+                      return <p key={index} className="text-gray-700 mb-4 leading-relaxed">{paragraph}</p>;
+                    }
+                  })}
                 </div>
               </div>
               
-              {/* Tags */}
               <div className="mt-8 pt-6 border-t border-gray-200">
                 <div className="flex items-center">
                   <Tag className="h-4 w-4 text-gray-500 mr-2" />
                   <div className="flex flex-wrap gap-2">
                     <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                      {post.category}
+                    </span>
+                    <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
                       Mental Health
                     </span>
                     <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
                       Wellness
-                    </span>
-                    <span className="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
-                      Self-Improvement
                     </span>
                   </div>
                 </div>
@@ -162,7 +218,6 @@ const BlogPost = () => {
             </div>
           </article>
           
-          {/* Related articles */}
           {relatedPosts.length > 0 && (
             <section className="max-w-4xl mx-auto mt-12">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Articles</h2>
@@ -172,6 +227,7 @@ const BlogPost = () => {
                     key={relatedPost.id} 
                     to={`/blog/${relatedPost.slug}`}
                     className="group"
+                    onClick={() => window.scrollTo(0, 0)}
                   >
                     <div className="bg-white rounded-lg shadow-sm overflow-hidden h-full">
                       <div className="h-40 overflow-hidden">
@@ -183,7 +239,7 @@ const BlogPost = () => {
                       </div>
                       <div className="p-4">
                         <span className="text-sm text-gray-500">{relatedPost.date}</span>
-                        <h3 className="font-semibold text-gray-900 group-hover:text-ifind-aqua transition-colors">
+                        <h3 className="font-semibold text-gray-900 group-hover:text-ifind-aqua transition-colors mt-1">
                           {relatedPost.title}
                         </h3>
                       </div>

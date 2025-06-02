@@ -4,18 +4,24 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import { sampleBlogPosts } from '@/data/blogData';
+import { Link } from 'react-router-dom';
 
 const Blog = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Get unique categories from blog posts
   const categories = ['All', ...Array.from(new Set(sampleBlogPosts.map(post => post.category)))];
 
-  // Filter posts based on selected category
-  const filteredPosts = selectedCategory === 'All' 
-    ? sampleBlogPosts 
-    : sampleBlogPosts.filter(post => post.category === selectedCategory);
+  const filteredPosts = sampleBlogPosts.filter(post => {
+    const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
+    const matchesSearch = post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         post.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         post.content.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -28,74 +34,91 @@ const Blog = () => {
                 Mental Health Blog
               </h1>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Insights, tips, and expert advice on mental health, wellness, and personal growth.
+                Expert insights, practical tips, and evidence-based guidance for your mental health journey.
               </p>
             </div>
 
-            {/* Category Filter Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-6 py-2 rounded-full transition-colors ${
-                    selectedCategory === category
-                      ? 'bg-ifind-aqua text-white'
-                      : 'bg-white text-gray-600 border border-gray-300 hover:border-ifind-aqua hover:text-ifind-aqua'
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+            <div className="mb-8 space-y-6">
+              <div className="relative max-w-md mx-auto">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search articles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-4">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-6 py-2 rounded-full transition-colors ${
+                      selectedCategory === category
+                        ? 'bg-ifind-aqua text-white'
+                        : 'bg-white text-gray-600 border border-gray-300 hover:border-ifind-aqua hover:text-ifind-aqua'
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Blog Posts Grid */}
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredPosts.map((post) => (
-                <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer">
-                  <div className="relative h-48 overflow-hidden">
-                    <img 
-                      src={post.imageUrl} 
-                      alt={post.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute top-4 left-4">
-                      <span className="bg-ifind-aqua text-white px-3 py-1 rounded-full text-sm font-medium">
-                        {post.category}
-                      </span>
+                <Link
+                  key={post.id}
+                  to={`/blog/${post.slug}`}
+                  onClick={() => window.scrollTo(0, 0)}
+                >
+                  <Card className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer h-full">
+                    <div className="relative h-48 overflow-hidden">
+                      <img 
+                        src={post.imageUrl} 
+                        alt={post.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute top-4 left-4">
+                        <span className="bg-ifind-aqua text-white px-3 py-1 rounded-full text-sm font-medium">
+                          {post.category}
+                        </span>
+                      </div>
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                      <p className="text-white text-sm mb-1">{post.date}</p>
-                      <h3 className="text-white font-bold text-lg leading-tight">
+                    <CardContent className="p-6 flex flex-col flex-1">
+                      <div className="flex items-center text-sm text-gray-500 mb-3">
+                        <span>{post.date}</span>
+                        {post.author && (
+                          <>
+                            <span className="mx-2">•</span>
+                            <span>{post.author}</span>
+                          </>
+                        )}
+                      </div>
+                      <h3 className="font-bold text-lg leading-tight mb-3 group-hover:text-ifind-aqua transition-colors flex-1">
                         {post.title}
                       </h3>
-                    </div>
-                  </div>
-                  <CardContent className="p-4">
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {post.summary}
-                    </p>
-                    {post.author && (
-                      <p className="text-xs text-gray-500">
-                        By {post.author}
+                      <p className="text-gray-600 text-sm line-clamp-3">
+                        {post.summary}
                       </p>
-                    )}
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
 
             {filteredPosts.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-600">
-                  No blog posts found for the selected category.
+                  No articles found matching your search criteria.
                 </p>
               </div>
             )}
 
             <div className="text-center mt-12">
               <p className="text-gray-600">
-                More blog posts coming soon. Stay tuned for expert insights and mental health tips.
+                Looking for more personalized guidance? <Link to="/experts" className="text-ifind-aqua hover:underline">Connect with our mental health experts</Link>.
               </p>
             </div>
           </div>

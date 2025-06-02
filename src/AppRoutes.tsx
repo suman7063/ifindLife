@@ -28,6 +28,7 @@ import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
 import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
 import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 import MentalHealthAssessment from './pages/MentalHealthAssessment';
 import ProgramsDemo from '@/pages/ProgramsDemo';
 import Earnings from './pages/Earnings';
@@ -60,6 +61,7 @@ const AppRoutes = () => {
       <Route path="/faqs" element={<FAQs />} />
       <Route path="/faq" element={<FAQs />} />
       <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
       
       <Route 
         path="/user-dashboard" 
@@ -70,13 +72,11 @@ const AppRoutes = () => {
         element={<UserDashboardPages />}
       />
       
-      {/* Fixed: Added /* wildcard pattern to allow nested routes */}
       <Route 
         path="/expert-dashboard/*" 
         element={<ExpertDashboard />}
       />
       
-      {/* Admin Routes - Updated to handle nested routing properly */}
       <Route 
         path="/admin-login" 
         element={

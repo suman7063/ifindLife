@@ -6,14 +6,13 @@ import { Button } from '@/components/ui/button';
 import { sampleBlogPosts } from '@/data/blogData';
 
 const BlogSection = () => {
-  // Get the first 3 blog posts for the homepage
   const featuredPosts = sampleBlogPosts.slice(0, 3);
 
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-center mx-0">From The Blog</h2>
+          <h2 className="text-3xl font-bold text-center mx-0">From The Blog</h2>
           <Button variant="ghost" asChild className="text-ifind-aqua">
             <Link 
               to="/blog" 
@@ -33,7 +32,7 @@ const BlogSection = () => {
               className="block group"
               onClick={() => window.scrollTo(0, 0)}
             >
-              <div className="overflow-hidden rounded-lg shadow-sm">
+              <div className="overflow-hidden rounded-lg shadow-sm bg-white border border-gray-100 hover:shadow-md transition-shadow">
                 <div className="h-48 overflow-hidden">
                   <img 
                     src={post.imageUrl} 
@@ -43,13 +42,16 @@ const BlogSection = () => {
                 </div>
                 <div className="p-4">
                   <div className="flex items-center text-sm text-gray-500 mb-2">
-                    <span>{post.category}</span>
+                    <span className="bg-ifind-aqua/10 text-ifind-aqua px-2 py-1 rounded-full text-xs font-medium">
+                      {post.category}
+                    </span>
                     <span className="mx-2">•</span>
                     <span>{post.date}</span>
                   </div>
-                  <h3 className="font-semibold text-lg group-hover:text-ifind-aqua transition-colors text-left">
+                  <h3 className="font-semibold text-lg group-hover:text-ifind-aqua transition-colors text-left line-clamp-2">
                     {post.title}
                   </h3>
+                  <p className="text-gray-600 text-sm mt-2 line-clamp-2">{post.summary}</p>
                 </div>
               </div>
             </Link>
