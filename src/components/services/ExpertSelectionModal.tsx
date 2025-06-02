@@ -160,8 +160,8 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
                       onClick={() => handleExpertCardClick(expert)}
                       onConnectNow={(type) => handleConnectNow(expert, type)}
                       onBookNow={() => handleBookNow(expert)}
-                      showConnectOptions={expertConnectOptions[expert.id] || false}
-                      onShowConnectOptions={(show) => handleShowConnectOptions(expert.id, show)}
+                      showConnectOptions={expertConnectOptions[String(expert.id)] || false}
+                      onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
                       className="h-full"
                     />
                   ))}
@@ -186,8 +186,8 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
                       onClick={() => handleExpertCardClick(expert)}
                       onConnectNow={(type) => handleConnectNow(expert, type)}
                       onBookNow={() => handleBookNow(expert)}
-                      showConnectOptions={expertConnectOptions[expert.id] || false}
-                      onShowConnectOptions={(show) => handleShowConnectOptions(expert.id, show)}
+                      showConnectOptions={expertConnectOptions[String(expert.id)] || false}
+                      onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
                       className="h-full"
                     />
                   ))}
