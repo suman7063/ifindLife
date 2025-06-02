@@ -1,13 +1,21 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Briefcase, TrendingUp, Shield, Users, Phone, Mail } from 'lucide-react';
+import LeadCaptureForm from '@/components/forms/LeadCaptureForm';
 
 const ProgramsForBusiness: React.FC = () => {
+  const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
+
+  // Ensure page loads from top
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const programs = [
     {
       title: "Employee Assistance Program (EAP)",
@@ -34,22 +42,22 @@ const ProgramsForBusiness: React.FC = () => {
 
   const benefits = [
     {
-      icon: <TrendingUp className="h-8 w-8 text-ifind-teal" />,
+      icon: <TrendingUp className="h-8 w-8 text-blue-600" />,
       title: "Increased Productivity",
       description: "Employees with better mental health are more productive, creative, and engaged at work."
     },
     {
-      icon: <Shield className="h-8 w-8 text-ifind-teal" />,
+      icon: <Shield className="h-8 w-8 text-blue-600" />,
       title: "Reduced Absenteeism",
       description: "Mental health support significantly reduces sick days and improves employee retention."
     },
     {
-      icon: <Users className="h-8 w-8 text-ifind-teal" />,
+      icon: <Users className="h-8 w-8 text-blue-600" />,
       title: "Better Team Dynamics",
       description: "Improved communication and collaboration through enhanced emotional intelligence."
     },
     {
-      icon: <Briefcase className="h-8 w-8 text-ifind-teal" />,
+      icon: <Briefcase className="h-8 w-8 text-blue-600" />,
       title: "Employer Brand Enhancement",
       description: "Attract and retain top talent by demonstrating commitment to employee wellbeing."
     }
@@ -70,8 +78,8 @@ const ProgramsForBusiness: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-green-50 to-teal-100 py-16">
+      {/* Hero Section - Blue Theme */}
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 py-16">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -80,8 +88,11 @@ const ProgramsForBusiness: React.FC = () => {
             <p className="text-xl text-gray-600 mb-8">
               Comprehensive workplace mental health programs to enhance employee wellbeing, productivity, and create a positive work culture
             </p>
-            <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
-              Get Custom Quote
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => setIsLeadFormOpen(true)}
+            >
+              Inquire Now
             </Button>
           </div>
         </Container>
@@ -99,9 +110,9 @@ const ProgramsForBusiness: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {programs.map((program, index) => (
-              <Card key={index} className="h-full">
+              <Card key={index} className="h-full border-blue-200">
                 <CardHeader>
-                  <CardTitle className="text-xl">{program.title}</CardTitle>
+                  <CardTitle className="text-xl text-blue-800">{program.title}</CardTitle>
                   <CardDescription>{program.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -110,7 +121,7 @@ const ProgramsForBusiness: React.FC = () => {
                     <ul className="space-y-1">
                       {program.features.map((feature, idx) => (
                         <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-ifind-teal rounded-full"></span>
+                          <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
                           {feature}
                         </li>
                       ))}
@@ -123,8 +134,11 @@ const ProgramsForBusiness: React.FC = () => {
                     <div className="mb-4">
                       <span className="text-sm text-gray-500">{program.duration}</span>
                     </div>
-                    <Button className="w-full bg-ifind-teal hover:bg-ifind-teal/90">
-                      Request Demo
+                    <Button 
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      onClick={() => setIsLeadFormOpen(true)}
+                    >
+                      Inquire Now
                     </Button>
                   </div>
                 </CardContent>
@@ -172,7 +186,7 @@ const ProgramsForBusiness: React.FC = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {industries.map((industry, index) => (
-              <div key={index} className="text-center p-4 bg-white rounded-lg shadow-sm border">
+              <div key={index} className="text-center p-4 bg-white rounded-lg shadow-sm border border-blue-200">
                 <span className="text-gray-700 font-medium">{industry}</span>
               </div>
             ))}
@@ -180,19 +194,19 @@ const ProgramsForBusiness: React.FC = () => {
         </Container>
       </div>
 
-      {/* Contact Section */}
-      <div className="py-16 bg-ifind-teal text-white">
+      {/* Contact Section - Blue Theme */}
+      <div className="py-16 bg-blue-600 text-white">
         <Container>
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Workplace?</h2>
-            <p className="text-teal-100 mb-8">
+            <p className="text-blue-100 mb-8">
               Let's discuss how our mental health programs can benefit your organization and employees
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="flex items-center justify-center gap-3">
                 <Phone className="h-5 w-5" />
-                <span>+91 98765 43210</span>
+                <span>+91 9355966925</span>
               </div>
               <div className="flex items-center justify-center gap-3">
                 <Mail className="h-5 w-5" />
@@ -201,10 +215,17 @@ const ProgramsForBusiness: React.FC = () => {
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-white text-ifind-teal hover:bg-gray-100">
-                Schedule Consultation
+              <Button 
+                className="bg-white text-blue-600 hover:bg-gray-100"
+                onClick={() => setIsLeadFormOpen(true)}
+              >
+                Inquire Now
               </Button>
-              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-ifind-teal">
+              <Button 
+                variant="outline" 
+                className="border-white text-white hover:bg-white hover:text-blue-600"
+                onClick={() => setIsLeadFormOpen(true)}
+              >
                 Download Case Studies
               </Button>
             </div>
@@ -213,6 +234,13 @@ const ProgramsForBusiness: React.FC = () => {
       </div>
 
       <Footer />
+
+      <LeadCaptureForm
+        open={isLeadFormOpen}
+        onOpenChange={setIsLeadFormOpen}
+        title="Business Mental Health Solutions Inquiry"
+        type="business"
+      />
     </div>
   );
 };

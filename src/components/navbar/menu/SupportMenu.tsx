@@ -9,6 +9,11 @@ import {
 } from "@/components/ui/navigation-menu";
 
 const SupportMenu = () => {
+  const handleLinkClick = () => {
+    // Scroll to top when navigating
+    setTimeout(() => window.scrollTo(0, 0), 100);
+  };
+
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger>Support</NavigationMenuTrigger>
@@ -19,6 +24,7 @@ const SupportMenu = () => {
               <Link 
                 to="/contact" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                onClick={handleLinkClick}
               >
                 Contact Us
               </Link>
@@ -29,6 +35,7 @@ const SupportMenu = () => {
               <Link 
                 to="/faqs" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                onClick={handleLinkClick}
               >
                 FAQs
               </Link>
@@ -39,6 +46,7 @@ const SupportMenu = () => {
               <Link 
                 to="/blog" 
                 className="block w-full p-2 text-sm hover:bg-accent rounded-md text-left"
+                onClick={handleLinkClick}
               >
                 Blog
               </Link>

@@ -1,13 +1,21 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GraduationCap, Users, BookOpen, Target, Phone, Mail } from 'lucide-react';
+import LeadCaptureForm from '@/components/forms/LeadCaptureForm';
 
 const ProgramsForAcademicInstitutes: React.FC = () => {
+  const [isLeadFormOpen, setIsLeadFormOpen] = useState(false);
+
+  // Ensure page loads from top
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const programs = [
     {
       title: "Student Mental Health Support",
@@ -34,22 +42,22 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
 
   const benefits = [
     {
-      icon: <GraduationCap className="h-8 w-8 text-ifind-teal" />,
+      icon: <GraduationCap className="h-8 w-8 text-purple-600" />,
       title: "Improved Academic Performance",
       description: "Students with better mental health show improved focus, learning capacity, and academic achievement."
     },
     {
-      icon: <Users className="h-8 w-8 text-ifind-teal" />,
+      icon: <Users className="h-8 w-8 text-purple-600" />,
       title: "Enhanced Campus Community",
       description: "Create a supportive environment where students and staff feel valued and understood."
     },
     {
-      icon: <Target className="h-8 w-8 text-ifind-teal" />,
+      icon: <Target className="h-8 w-8 text-purple-600" />,
       title: "Reduced Dropout Rates",
       description: "Mental health support significantly reduces student dropout rates and improves retention."
     },
     {
-      icon: <BookOpen className="h-8 w-8 text-ifind-teal" />,
+      icon: <BookOpen className="h-8 w-8 text-purple-600" />,
       title: "Faculty Development",
       description: "Support educators in managing their own well-being to better serve their students."
     }
@@ -59,8 +67,8 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+      {/* Hero Section - Purple Theme */}
+      <div className="bg-gradient-to-br from-purple-50 to-purple-100 py-16">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -69,8 +77,11 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
             <p className="text-xl text-gray-600 mb-8">
               Comprehensive mental health solutions for schools, colleges, and universities to support students, faculty, and staff
             </p>
-            <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
-              Request Consultation
+            <Button 
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => setIsLeadFormOpen(true)}
+            >
+              Inquire Now
             </Button>
           </div>
         </Container>
@@ -88,9 +99,9 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {programs.map((program, index) => (
-              <Card key={index} className="h-full">
+              <Card key={index} className="h-full border-purple-200">
                 <CardHeader>
-                  <CardTitle className="text-xl">{program.title}</CardTitle>
+                  <CardTitle className="text-xl text-purple-800">{program.title}</CardTitle>
                   <CardDescription>{program.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -99,7 +110,7 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
                     <ul className="space-y-1">
                       {program.features.map((feature, idx) => (
                         <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-ifind-teal rounded-full"></span>
+                          <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
                           {feature}
                         </li>
                       ))}
@@ -110,8 +121,11 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
                       <span className="font-semibold">{program.price}</span>
                       <span className="text-sm text-gray-500">{program.duration}</span>
                     </div>
-                    <Button className="w-full mt-4 bg-ifind-teal hover:bg-ifind-teal/90">
-                      Learn More
+                    <Button 
+                      className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
+                      onClick={() => setIsLeadFormOpen(true)}
+                    >
+                      Inquire Now
                     </Button>
                   </div>
                 </CardContent>
@@ -147,31 +161,38 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
         </Container>
       </div>
 
-      {/* Contact Section */}
-      <div className="py-16">
+      {/* Contact Section - Purple Theme */}
+      <div className="py-16 bg-purple-600 text-white">
         <Container>
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-            <p className="text-gray-600 mb-8">
+            <p className="text-purple-100 mb-8">
               Contact us to discuss how we can create a customized mental health program for your institution
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="flex items-center justify-center gap-3">
-                <Phone className="h-5 w-5 text-ifind-teal" />
-                <span>+91 98765 43210</span>
+                <Phone className="h-5 w-5" />
+                <span>+91 9355966925</span>
               </div>
               <div className="flex items-center justify-center gap-3">
-                <Mail className="h-5 w-5 text-ifind-teal" />
+                <Mail className="h-5 w-5" />
                 <span>academic@ifindlove.com</span>
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
-                Schedule Consultation
+              <Button 
+                className="bg-white text-purple-600 hover:bg-gray-100"
+                onClick={() => setIsLeadFormOpen(true)}
+              >
+                Inquire Now
               </Button>
-              <Button variant="outline">
+              <Button 
+                variant="outline" 
+                className="border-white text-white hover:bg-white hover:text-purple-600"
+                onClick={() => setIsLeadFormOpen(true)}
+              >
                 Download Brochure
               </Button>
             </div>
@@ -180,6 +201,13 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
       </div>
 
       <Footer />
+
+      <LeadCaptureForm
+        open={isLeadFormOpen}
+        onOpenChange={setIsLeadFormOpen}
+        title="Academic Institution Mental Health Programs Inquiry"
+        type="academic"
+      />
     </div>
   );
 };
