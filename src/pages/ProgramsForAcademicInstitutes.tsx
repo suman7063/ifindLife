@@ -42,22 +42,22 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
 
   const benefits = [
     {
-      icon: <GraduationCap className="h-8 w-8 text-ifind-teal" />,
+      icon: <GraduationCap className="h-8 w-8 text-ifind-aqua" />,
       title: "Improved Academic Performance",
       description: "Students with better mental health show improved focus, learning capacity, and academic achievement."
     },
     {
-      icon: <Users className="h-8 w-8 text-ifind-teal" />,
+      icon: <Users className="h-8 w-8 text-ifind-aqua" />,
       title: "Enhanced Campus Community",
       description: "Create a supportive environment where students and staff feel valued and understood."
     },
     {
-      icon: <Target className="h-8 w-8 text-ifind-teal" />,
+      icon: <Target className="h-8 w-8 text-ifind-aqua" />,
       title: "Reduced Dropout Rates",
       description: "Mental health support significantly reduces student dropout rates and improves retention."
     },
     {
-      icon: <BookOpen className="h-8 w-8 text-ifind-teal" />,
+      icon: <BookOpen className="h-8 w-8 text-ifind-aqua" />,
       title: "Faculty Development",
       description: "Support educators in managing their own well-being to better serve their students."
     }
@@ -67,8 +67,8 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section - Updated to use Soft Teal and Aqua Blue */}
-      <div className="bg-gradient-to-br from-ifind-teal/10 to-ifind-aqua/10 py-16">
+      {/* Hero Section - Brand Color Theme */}
+      <div className="bg-gradient-to-br from-ifind-aqua/10 to-ifind-teal/10 py-16">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -78,7 +78,7 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
               Comprehensive mental health solutions for schools, colleges, and universities to support students, faculty, and staff
             </p>
             <Button 
-              className="bg-ifind-teal hover:bg-ifind-teal/90 text-white"
+              className="bg-ifind-aqua hover:bg-ifind-aqua/90 text-white"
               onClick={() => setIsLeadFormOpen(true)}
             >
               Inquire Now
@@ -161,7 +161,7 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
         </Container>
       </div>
 
-      {/* Contact Section - Updated to use Aqua Blue */}
+      {/* Contact Section - Brand Color Theme */}
       <div className="py-16 bg-ifind-aqua text-white">
         <Container>
           <div className="max-w-3xl mx-auto text-center">

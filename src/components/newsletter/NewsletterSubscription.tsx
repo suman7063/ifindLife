@@ -67,7 +67,7 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder={placeholder} 
-        className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-500"
+        className="bg-white border-gray-300"
         disabled={isSubmitting}
         required
         aria-label="Email for newsletter"
