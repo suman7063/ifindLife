@@ -4,192 +4,183 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Clock, Users, BookOpen, GraduationCap } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { GraduationCap, Users, BookOpen, Target, Phone, Mail } from 'lucide-react';
 
-const ProgramsForAcademicInstitutes = () => {
-  const academicPrograms = [
+const ProgramsForAcademicInstitutes: React.FC = () => {
+  const programs = [
     {
-      id: 1,
-      title: "Student Stress Management Program",
-      description: "Comprehensive program designed to help students manage academic stress, exam anxiety, and maintain mental wellness during their studies.",
-      category: "Stress Management",
-      duration: "8 weeks",
-      sessions: 16,
-      price: 299.99,
-      image: "/lovable-uploads/program-exam.jpg",
-      features: [
-        "Exam anxiety reduction techniques",
-        "Time management skills",
-        "Mindfulness practices for students",
-        "Group sessions and peer support"
-      ],
-      targetAudience: "High school and college students",
-      expert: "Dr. Sarah Johnson"
+      title: "Student Mental Health Support",
+      description: "Comprehensive mental health programs for students dealing with academic stress, anxiety, and social pressures.",
+      features: ["Individual counseling", "Group therapy sessions", "Crisis intervention", "Stress management workshops"],
+      price: "Contact for pricing",
+      duration: "Ongoing support"
     },
     {
-      id: 2,
-      title: "Academic Performance Enhancement",
-      description: "Evidence-based program to improve focus, concentration, and academic performance through mental wellness techniques.",
-      category: "Performance Enhancement",
-      duration: "10 weeks",
-      sessions: 20,
-      price: 399.99,
-      image: "/lovable-uploads/program-time.jpg",
-      features: [
-        "Cognitive enhancement techniques",
-        "Memory improvement strategies",
-        "Focus and attention training",
-        "Study optimization methods"
-      ],
-      targetAudience: "University students and researchers",
-      expert: "Prof. Michael Chen"
+      title: "Faculty Wellness Program",
+      description: "Support programs for teachers and faculty members to manage work-related stress and maintain work-life balance.",
+      features: ["Burnout prevention", "Work-life balance coaching", "Peer support groups", "Mental health resources"],
+      price: "Contact for pricing",
+      duration: "Quarterly programs"
     },
     {
-      id: 3,
-      title: "Educator Wellness Program",
-      description: "Specialized program for teachers and educators to manage burnout, stress, and maintain mental wellness while supporting students.",
-      category: "Educator Support",
-      duration: "6 weeks",
-      sessions: 12,
-      price: 249.99,
-      image: "/lovable-uploads/program-leadership.jpg",
-      features: [
-        "Burnout prevention strategies",
-        "Classroom stress management",
-        "Work-life balance techniques",
-        "Student support strategies"
-      ],
-      targetAudience: "Teachers and educational staff",
-      expert: "Dr. Emily Rodriguez"
+      title: "Campus-wide Mental Health Initiative",
+      description: "Institutional programs to create a mentally healthy campus environment with awareness and prevention.",
+      features: ["Mental health awareness campaigns", "Training programs", "Policy development", "Resource centers"],
+      price: "Contact for pricing",
+      duration: "Annual programs"
+    }
+  ];
+
+  const benefits = [
+    {
+      icon: <GraduationCap className="h-8 w-8 text-ifind-teal" />,
+      title: "Improved Academic Performance",
+      description: "Students with better mental health show improved focus, learning capacity, and academic achievement."
+    },
+    {
+      icon: <Users className="h-8 w-8 text-ifind-teal" />,
+      title: "Enhanced Campus Community",
+      description: "Create a supportive environment where students and staff feel valued and understood."
+    },
+    {
+      icon: <Target className="h-8 w-8 text-ifind-teal" />,
+      title: "Reduced Dropout Rates",
+      description: "Mental health support significantly reduces student dropout rates and improves retention."
+    },
+    {
+      icon: <BookOpen className="h-8 w-8 text-ifind-teal" />,
+      title: "Faculty Development",
+      description: "Support educators in managing their own well-being to better serve their students."
     }
   ];
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      <Container className="py-12">
-        <div className="space-y-8">
-          {/* Header Section */}
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-gray-900">Programs for Academic Institutes</h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Specialized mental wellness programs designed for educational institutions, students, and educators to enhance academic performance and well-being.
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
+        <Container>
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Mental Health Programs for Academic Institutes
+            </h1>
+            <p className="text-xl text-gray-600 mb-8">
+              Comprehensive mental health solutions for schools, colleges, and universities to support students, faculty, and staff
+            </p>
+            <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
+              Request Consultation
+            </Button>
+          </div>
+        </Container>
+      </div>
+
+      {/* Programs Section */}
+      <div className="py-16">
+        <Container>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Our Academic Programs</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Tailored mental health programs designed specifically for educational institutions
             </p>
           </div>
-
-          {/* Stats Section */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 py-8">
-            <div className="text-center">
-              <div className="flex justify-center mb-2">
-                <GraduationCap className="h-8 w-8 text-ifind-teal" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">500+</h3>
-              <p className="text-gray-600">Students Helped</p>
-            </div>
-            <div className="text-center">
-              <div className="flex justify-center mb-2">
-                <Users className="h-8 w-8 text-ifind-teal" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">50+</h3>
-              <p className="text-gray-600">Institutions</p>
-            </div>
-            <div className="text-center">
-              <div className="flex justify-center mb-2">
-                <BookOpen className="h-8 w-8 text-ifind-teal" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">15+</h3>
-              <p className="text-gray-600">Program Modules</p>
-            </div>
-            <div className="text-center">
-              <div className="flex justify-center mb-2">
-                <Clock className="h-8 w-8 text-ifind-teal" />
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900">95%</h3>
-              <p className="text-gray-600">Success Rate</p>
-            </div>
-          </div>
-
-          {/* Programs Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-1 gap-8">
-            {academicPrograms.map((program) => (
-              <Card key={program.id} className="overflow-hidden">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="lg:order-2">
-                    <img 
-                      src={program.image} 
-                      alt={program.title}
-                      className="w-full h-64 lg:h-full object-cover"
-                    />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {programs.map((program, index) => (
+              <Card key={index} className="h-full">
+                <CardHeader>
+                  <CardTitle className="text-xl">{program.title}</CardTitle>
+                  <CardDescription>{program.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Features:</h4>
+                    <ul className="space-y-1">
+                      {program.features.map((feature, idx) => (
+                        <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-ifind-teal rounded-full"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <div className="lg:order-1 p-6">
-                    <CardHeader className="p-0 mb-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="inline-flex items-center rounded-md bg-ifind-aqua/10 px-2 py-1 text-xs font-medium text-ifind-aqua ring-1 ring-inset ring-ifind-aqua/20">
-                          {program.category}
-                        </span>
-                      </div>
-                      <CardTitle className="text-2xl">{program.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 space-y-4">
-                      <p className="text-gray-600">{program.description}</p>
-                      
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-semibold">Duration:</span> {program.duration}
-                        </div>
-                        <div>
-                          <span className="font-semibold">Sessions:</span> {program.sessions}
-                        </div>
-                        <div>
-                          <span className="font-semibold">Target:</span> {program.targetAudience}
-                        </div>
-                        <div>
-                          <span className="font-semibold">Expert:</span> {program.expert}
-                        </div>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold mb-2">Program Features:</h4>
-                        <ul className="list-disc list-inside space-y-1 text-sm text-gray-600">
-                          {program.features.map((feature, index) => (
-                            <li key={index}>{feature}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="flex items-center justify-between pt-4">
-                        <div>
-                          <span className="text-2xl font-bold text-ifind-teal">${program.price}</span>
-                          <span className="text-gray-500 ml-1">per program</span>
-                        </div>
-                        <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
-                          Enroll Now
-                        </Button>
-                      </div>
-                    </CardContent>
+                  <div className="pt-4 border-t">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">{program.price}</span>
+                      <span className="text-sm text-gray-500">{program.duration}</span>
+                    </div>
+                    <Button className="w-full mt-4 bg-ifind-teal hover:bg-ifind-teal/90">
+                      Learn More
+                    </Button>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             ))}
           </div>
+        </Container>
+      </div>
 
-          {/* CTA Section */}
-          <div className="bg-gradient-to-r from-ifind-aqua/10 to-ifind-lavender/10 rounded-lg p-8 text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Institution?</h2>
-            <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
-              Join hundreds of educational institutions that have already implemented our mental wellness programs and seen remarkable improvements in student and educator well-being.
+      {/* Benefits Section */}
+      <div className="py-16 bg-gray-50">
+        <Container>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Why Choose Our Academic Programs?</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Evidence-based programs that create lasting positive impact on your educational community
             </p>
-            <Button size="lg" className="bg-ifind-teal hover:bg-ifind-teal/90">
-              Contact Us for Institutional Programs
-            </Button>
           </div>
-        </div>
-      </Container>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  {benefit.icon}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
+                  <p className="text-gray-600">{benefit.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </div>
+
+      {/* Contact Section */}
+      <div className="py-16">
+        <Container>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+            <p className="text-gray-600 mb-8">
+              Contact us to discuss how we can create a customized mental health program for your institution
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div className="flex items-center justify-center gap-3">
+                <Phone className="h-5 w-5 text-ifind-teal" />
+                <span>+91 98765 43210</span>
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <Mail className="h-5 w-5 text-ifind-teal" />
+                <span>academic@ifindlove.com</span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
+                Schedule Consultation
+              </Button>
+              <Button variant="outline">
+                Download Brochure
+              </Button>
+            </div>
+          </div>
+        </Container>
+      </div>
 
       <Footer />
-    </>
+    </div>
   );
 };
 

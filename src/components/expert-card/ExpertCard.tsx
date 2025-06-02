@@ -191,7 +191,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
               </div>
               <div>
                 <p className="text-muted-foreground">Price</p>
-                <p className="font-medium">${price}/session</p>
+                <p className="font-medium">₹{price}/session</p>
               </div>
             </div>
           </div>
@@ -200,51 +200,55 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
       
       <CardFooter className="bg-muted/50 px-4 py-3">
         <div className="w-full space-y-2">
-          {/* Connect Options */}
-          {showConnectOptions && (
+          <div className="text-xs text-muted-foreground text-center">
+            {status === 'online' ? `Available Now` : waitTime}
+          </div>
+          
+          {/* Connect Options - shown when showConnectOptions is true */}
+          {showConnectOptions && status === 'online' && (
             <div className="flex gap-2">
               <Button
-                variant="default"
                 size="sm"
-                className="flex-1 flex items-center gap-2"
+                variant="outline"
+                className="flex-1"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleConnectOption('video');
                 }}
               >
-                <Video className="h-4 w-4" />
-                Video Call
+                <Video className="h-3 w-3 mr-1" />
+                Video
               </Button>
               <Button
-                variant="outline"
                 size="sm"
-                className="flex-1 flex items-center gap-2"
+                variant="outline"
+                className="flex-1"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleConnectOption('voice');
                 }}
               >
-                <Phone className="h-4 w-4" />
-                Voice Call
+                <Phone className="h-3 w-3 mr-1" />
+                Voice
               </Button>
             </div>
           )}
           
-          {/* Main Action Buttons */}
+          {/* Default buttons when connect options are not shown */}
           {!showConnectOptions && (
             <div className="flex gap-2">
               <Button
-                variant={status === 'online' ? 'default' : 'secondary'}
                 size="sm"
+                variant={status === 'online' ? 'default' : 'outline'}
                 className="flex-1"
                 onClick={handleConnectNow}
                 disabled={status !== 'online'}
               >
-                Connect Now
+                {status === 'online' ? 'Connect Now' : 'Offline'}
               </Button>
               <Button
-                variant="outline"
                 size="sm"
+                variant="outline"
                 className="flex-1"
                 onClick={handleBookNow}
               >

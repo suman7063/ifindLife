@@ -1,122 +1,219 @@
-import React, { useEffect, useState } from 'react';
-import { Program } from '@/types/programs';
+
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { addSamplePrograms } from '@/utils/sampleProgramsData';
-import { supabase } from '@/lib/supabase';
-import ProgramList from '@/components/programs/ProgramList';
-import { useUserAuth } from '@/hooks/user-auth/useUserAuth';
-import { Loader2 } from 'lucide-react';
-import PageHeader from '@/components/common/PageHeader';
+import { Container } from '@/components/ui/container';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Briefcase, TrendingUp, Shield, Users, Phone, Mail } from 'lucide-react';
 
 const ProgramsForBusiness: React.FC = () => {
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [authError, setAuthError] = useState<boolean>(false);
-  
-  // Try to use auth context, but handle case where it might not be available
-  let currentUser = null;
-  let isAuthenticated = false;
-  
-  try {
-    // Use optional chaining to safely access the auth context
-    const auth = useUserAuth();
-    currentUser = auth?.currentUser;
-    isAuthenticated = auth?.isAuthenticated || false;
-  } catch (error) {
-    console.error('Auth context not available:', error);
-    setAuthError(true);
-  }
+  const programs = [
+    {
+      title: "Employee Assistance Program (EAP)",
+      description: "Comprehensive mental health support for your employees with 24/7 access to counselors and resources.",
+      features: ["24/7 helpline", "Individual counseling", "Work-life balance support", "Crisis intervention"],
+      price: "From ₹500/employee/month",
+      duration: "Annual contracts"
+    },
+    {
+      title: "Leadership Wellness Coaching",
+      description: "Specialized programs for executives and managers to maintain mental wellness while leading teams effectively.",
+      features: ["Executive coaching", "Stress management", "Decision-making support", "Leadership development"],
+      price: "From ₹25,000/month",
+      duration: "6-12 month programs"
+    },
+    {
+      title: "Workplace Mental Health Training",
+      description: "Training programs to create mentally healthy workplaces and improve team dynamics.",
+      features: ["Manager training", "Team workshops", "Mental health awareness", "Policy development"],
+      price: "From ₹15,000/session",
+      duration: "Custom duration"
+    }
+  ];
 
-  // Fetch business programs
-  useEffect(() => {
-    const fetchPrograms = async () => {
-      try {
-        setIsLoading(true);
-        console.log('Fetching business programs...');
-        
-        // First ensure we have sample business programs in the database
-        await addSamplePrograms('business');
-        
-        // Then fetch all business programs
-        const { data, error } = await supabase
-          .from('programs')
-          .select('*')
-          .eq('programType', 'business')
-          .order('title');
-          
-        if (error) {
-          console.error('Error fetching business programs:', error);
-          return;
-        }
-        
-        console.log('Business programs fetched:', data);
-        
-        if (data) {
-          // Convert the data to Program type explicitly
-          const formattedPrograms: Program[] = data.map(program => ({
-            id: program.id,
-            title: program.title,
-            description: program.description,
-            duration: program.duration,
-            sessions: program.sessions,
-            price: program.price,
-            image: program.image,
-            category: program.category as Program['category'],
-            programType: program.programType as Program['programType'],
-            enrollments: program.enrollments || 0,
-            created_at: program.created_at
-          }));
-          
-          setPrograms(formattedPrograms);
-          console.log('Business programs set to state:', formattedPrograms);
-        }
-      } catch (error) {
-        console.error('Error in business programs fetch:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchPrograms();
-  }, []);
-  
+  const benefits = [
+    {
+      icon: <TrendingUp className="h-8 w-8 text-ifind-teal" />,
+      title: "Increased Productivity",
+      description: "Employees with better mental health are more productive, creative, and engaged at work."
+    },
+    {
+      icon: <Shield className="h-8 w-8 text-ifind-teal" />,
+      title: "Reduced Absenteeism",
+      description: "Mental health support significantly reduces sick days and improves employee retention."
+    },
+    {
+      icon: <Users className="h-8 w-8 text-ifind-teal" />,
+      title: "Better Team Dynamics",
+      description: "Improved communication and collaboration through enhanced emotional intelligence."
+    },
+    {
+      icon: <Briefcase className="h-8 w-8 text-ifind-teal" />,
+      title: "Employer Brand Enhancement",
+      description: "Attract and retain top talent by demonstrating commitment to employee wellbeing."
+    }
+  ];
+
+  const industries = [
+    "Technology & IT",
+    "Healthcare",
+    "Financial Services",
+    "Manufacturing",
+    "Retail & E-commerce",
+    "Education",
+    "Government",
+    "Non-profit Organizations"
+  ];
+
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Navbar />
-      <PageHeader 
-        title="Programs For Businesses" 
-        subtitle="Dedicated mental health and wellness solutions to support your organization and employees"
-      />
-      <div className="container mx-auto px-4 sm:px-6 py-8">        
-        <div className="my-6">
-          <h2 className="text-xl font-semibold mb-4 text-ifind-purple">
-            Mental Wellness Solutions for Organizations
-          </h2>
-          <p className="text-gray-700 mb-6">
-            Our specialized programs for businesses provide comprehensive mental health support 
-            for employees and leadership teams. Enhance workplace wellness and productivity with 
-            our evidence-based approaches to mental wellbeing in organizational settings.
-          </p>
-        </div>
-        
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-ifind-purple" />
+      
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-green-50 to-teal-100 py-16">
+        <Container>
+          <div className="max-w-4xl mx-auto text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Mental Health Solutions for Businesses
+            </h1>
+            <p className="text-xl text-gray-600 mb-8">
+              Comprehensive workplace mental health programs to enhance employee wellbeing, productivity, and create a positive work culture
+            </p>
+            <Button className="bg-ifind-teal hover:bg-ifind-teal/90">
+              Get Custom Quote
+            </Button>
           </div>
-        ) : (
-          <ProgramList 
-            programs={programs}
-            isLoading={isLoading}
-            currentUser={currentUser}
-            isAuthenticated={isAuthenticated}
-            emptyMessage="No business programs are currently available."
-          />
-        )}
+        </Container>
       </div>
-      <div className="mb-36"></div>
+
+      {/* Programs Section */}
+      <div className="py-16">
+        <Container>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Our Business Programs</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Scalable mental health solutions designed for organizations of all sizes
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {programs.map((program, index) => (
+              <Card key={index} className="h-full">
+                <CardHeader>
+                  <CardTitle className="text-xl">{program.title}</CardTitle>
+                  <CardDescription>{program.description}</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Features:</h4>
+                    <ul className="space-y-1">
+                      {program.features.map((feature, idx) => (
+                        <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
+                          <span className="w-2 h-2 bg-ifind-teal rounded-full"></span>
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="pt-4 border-t">
+                    <div className="mb-2">
+                      <span className="font-semibold text-lg">{program.price}</span>
+                    </div>
+                    <div className="mb-4">
+                      <span className="text-sm text-gray-500">{program.duration}</span>
+                    </div>
+                    <Button className="w-full bg-ifind-teal hover:bg-ifind-teal/90">
+                      Request Demo
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </div>
+
+      {/* Benefits Section */}
+      <div className="py-16 bg-gray-50">
+        <Container>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Why Invest in Employee Mental Health?</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              The business case for workplace mental health is clear - happier employees drive better business outcomes
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  {benefit.icon}
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-2">{benefit.title}</h3>
+                  <p className="text-gray-600">{benefit.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </div>
+
+      {/* Industries Section */}
+      <div className="py-16">
+        <Container>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold mb-4">Industries We Serve</h2>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Our programs are tailored to meet the specific needs of various industries
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {industries.map((industry, index) => (
+              <div key={index} className="text-center p-4 bg-white rounded-lg shadow-sm border">
+                <span className="text-gray-700 font-medium">{industry}</span>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </div>
+
+      {/* Contact Section */}
+      <div className="py-16 bg-ifind-teal text-white">
+        <Container>
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Workplace?</h2>
+            <p className="text-teal-100 mb-8">
+              Let's discuss how our mental health programs can benefit your organization and employees
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              <div className="flex items-center justify-center gap-3">
+                <Phone className="h-5 w-5" />
+                <span>+91 98765 43210</span>
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <Mail className="h-5 w-5" />
+                <span>business@ifindlove.com</span>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button className="bg-white text-ifind-teal hover:bg-gray-100">
+                Schedule Consultation
+              </Button>
+              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-ifind-teal">
+                Download Case Studies
+              </Button>
+            </div>
+          </div>
+        </Container>
+      </div>
+
       <Footer />
-    </>
+    </div>
   );
 };
 
