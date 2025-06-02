@@ -109,7 +109,10 @@ const Footer = () => {
             <p className="text-ifind-offwhite/80 mb-4">
               Subscribe to get mental wellness tips and updates.
             </p>
-            <NewsletterSubscription />
+            <NewsletterSubscription 
+              className="footer-newsletter"
+              placeholder="Your email"
+            />
           </div>
         </div>
         

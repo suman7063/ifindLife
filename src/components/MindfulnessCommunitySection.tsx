@@ -45,7 +45,7 @@ const MindfulnessCommunitySection = () => {
 
   const handleWhatsAppJoin = () => {
     // Open WhatsApp group link in new tab
-    window.open('https://chat.whatsapp.com/your-group-link', '_blank');
+    window.open('https://chat.whatsapp.com/GFmwLYoqPa3K712xEJqEEO', '_blank');
     toast.success('Redirecting to WhatsApp group...');
   };
 
@@ -91,7 +91,7 @@ const MindfulnessCommunitySection = () => {
                 <Input 
                   type="email" 
                   placeholder="Your email address" 
-                  className="flex-1 text-sm"
+                  className="flex-1 text-sm text-gray-900"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isSubmitting}
