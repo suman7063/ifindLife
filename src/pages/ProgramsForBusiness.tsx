@@ -42,22 +42,22 @@ const ProgramsForBusiness: React.FC = () => {
 
   const benefits = [
     {
-      icon: <TrendingUp className="h-8 w-8 text-blue-600" />,
+      icon: <TrendingUp className="h-8 w-8 text-ifind-teal" />,
       title: "Increased Productivity",
       description: "Employees with better mental health are more productive, creative, and engaged at work."
     },
     {
-      icon: <Shield className="h-8 w-8 text-blue-600" />,
+      icon: <Shield className="h-8 w-8 text-ifind-teal" />,
       title: "Reduced Absenteeism",
       description: "Mental health support significantly reduces sick days and improves employee retention."
     },
     {
-      icon: <Users className="h-8 w-8 text-blue-600" />,
+      icon: <Users className="h-8 w-8 text-ifind-teal" />,
       title: "Better Team Dynamics",
       description: "Improved communication and collaboration through enhanced emotional intelligence."
     },
     {
-      icon: <Briefcase className="h-8 w-8 text-blue-600" />,
+      icon: <Briefcase className="h-8 w-8 text-ifind-teal" />,
       title: "Employer Brand Enhancement",
       description: "Attract and retain top talent by demonstrating commitment to employee wellbeing."
     }
@@ -78,8 +78,8 @@ const ProgramsForBusiness: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section - Blue Theme */}
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 py-16">
+      {/* Hero Section - Brand Color Theme */}
+      <div className="bg-gradient-to-br from-ifind-teal/10 to-ifind-aqua/10 py-16">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -89,7 +89,7 @@ const ProgramsForBusiness: React.FC = () => {
               Comprehensive workplace mental health programs to enhance employee wellbeing, productivity, and create a positive work culture
             </p>
             <Button 
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-ifind-teal hover:bg-ifind-teal/90 text-white"
               onClick={() => setIsLeadFormOpen(true)}
             >
               Inquire Now
@@ -110,18 +110,18 @@ const ProgramsForBusiness: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {programs.map((program, index) => (
-              <Card key={index} className="h-full border-blue-200">
+              <Card key={index} className="h-full border-ifind-aqua/30 flex flex-col">
                 <CardHeader>
-                  <CardTitle className="text-xl text-blue-800">{program.title}</CardTitle>
+                  <CardTitle className="text-xl text-ifind-charcoal">{program.title}</CardTitle>
                   <CardDescription>{program.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  <div className="flex-1">
                     <h4 className="font-semibold mb-2">Features:</h4>
                     <ul className="space-y-1">
                       {program.features.map((feature, idx) => (
                         <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+                          <span className="w-2 h-2 bg-ifind-aqua rounded-full"></span>
                           {feature}
                         </li>
                       ))}
@@ -135,7 +135,7 @@ const ProgramsForBusiness: React.FC = () => {
                       <span className="text-sm text-gray-500">{program.duration}</span>
                     </div>
                     <Button 
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      className="w-full bg-ifind-aqua hover:bg-ifind-aqua/90 text-white"
                       onClick={() => setIsLeadFormOpen(true)}
                     >
                       Inquire Now
@@ -149,7 +149,7 @@ const ProgramsForBusiness: React.FC = () => {
       </div>
 
       {/* Benefits Section */}
-      <div className="py-16 bg-gray-50">
+      <div className="py-16 bg-ifind-offwhite">
         <Container>
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Why Invest in Employee Mental Health?</h2>
@@ -186,7 +186,7 @@ const ProgramsForBusiness: React.FC = () => {
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {industries.map((industry, index) => (
-              <div key={index} className="text-center p-4 bg-white rounded-lg shadow-sm border border-blue-200">
+              <div key={index} className="text-center p-4 bg-white rounded-lg shadow-sm border border-ifind-teal/20">
                 <span className="text-gray-700 font-medium">{industry}</span>
               </div>
             ))}
@@ -194,12 +194,12 @@ const ProgramsForBusiness: React.FC = () => {
         </Container>
       </div>
 
-      {/* Contact Section - Blue Theme */}
-      <div className="py-16 bg-blue-600 text-white">
+      {/* Contact Section - Brand Color Theme */}
+      <div className="py-16 bg-ifind-teal text-white">
         <Container>
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Transform Your Workplace?</h2>
-            <p className="text-blue-100 mb-8">
+            <p className="text-white/90 mb-8">
               Let's discuss how our mental health programs can benefit your organization and employees
             </p>
             
@@ -210,20 +210,20 @@ const ProgramsForBusiness: React.FC = () => {
               </div>
               <div className="flex items-center justify-center gap-3">
                 <Mail className="h-5 w-5" />
-                <span>business@ifindlove.com</span>
+                <span>business@ifindlife.com</span>
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                className="bg-white text-blue-600 hover:bg-gray-100"
+                className="bg-white text-ifind-teal hover:bg-gray-100"
                 onClick={() => setIsLeadFormOpen(true)}
               >
                 Inquire Now
               </Button>
               <Button 
                 variant="outline" 
-                className="border-white text-white hover:bg-white hover:text-blue-600"
+                className="border-white text-white hover:bg-white hover:text-ifind-teal"
                 onClick={() => setIsLeadFormOpen(true)}
               >
                 Download Case Studies

@@ -42,22 +42,22 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
 
   const benefits = [
     {
-      icon: <GraduationCap className="h-8 w-8 text-purple-600" />,
+      icon: <GraduationCap className="h-8 w-8 text-ifind-aqua" />,
       title: "Improved Academic Performance",
       description: "Students with better mental health show improved focus, learning capacity, and academic achievement."
     },
     {
-      icon: <Users className="h-8 w-8 text-purple-600" />,
+      icon: <Users className="h-8 w-8 text-ifind-aqua" />,
       title: "Enhanced Campus Community",
       description: "Create a supportive environment where students and staff feel valued and understood."
     },
     {
-      icon: <Target className="h-8 w-8 text-purple-600" />,
+      icon: <Target className="h-8 w-8 text-ifind-aqua" />,
       title: "Reduced Dropout Rates",
       description: "Mental health support significantly reduces student dropout rates and improves retention."
     },
     {
-      icon: <BookOpen className="h-8 w-8 text-purple-600" />,
+      icon: <BookOpen className="h-8 w-8 text-ifind-aqua" />,
       title: "Faculty Development",
       description: "Support educators in managing their own well-being to better serve their students."
     }
@@ -67,8 +67,8 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       
-      {/* Hero Section - Purple Theme */}
-      <div className="bg-gradient-to-br from-purple-50 to-purple-100 py-16">
+      {/* Hero Section - Brand Color Theme */}
+      <div className="bg-gradient-to-br from-ifind-aqua/10 to-ifind-teal/10 py-16">
         <Container>
           <div className="max-w-4xl mx-auto text-center">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -78,7 +78,7 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
               Comprehensive mental health solutions for schools, colleges, and universities to support students, faculty, and staff
             </p>
             <Button 
-              className="bg-purple-600 hover:bg-purple-700"
+              className="bg-ifind-aqua hover:bg-ifind-aqua/90 text-white"
               onClick={() => setIsLeadFormOpen(true)}
             >
               Inquire Now
@@ -99,30 +99,30 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {programs.map((program, index) => (
-              <Card key={index} className="h-full border-purple-200">
+              <Card key={index} className="h-full border-ifind-teal/30 flex flex-col">
                 <CardHeader>
-                  <CardTitle className="text-xl text-purple-800">{program.title}</CardTitle>
+                  <CardTitle className="text-xl text-ifind-charcoal">{program.title}</CardTitle>
                   <CardDescription>{program.description}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
+                <CardContent className="space-y-4 flex-1 flex flex-col">
+                  <div className="flex-1">
                     <h4 className="font-semibold mb-2">Features:</h4>
                     <ul className="space-y-1">
                       {program.features.map((feature, idx) => (
                         <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
-                          <span className="w-2 h-2 bg-purple-600 rounded-full"></span>
+                          <span className="w-2 h-2 bg-ifind-teal rounded-full"></span>
                           {feature}
                         </li>
                       ))}
                     </ul>
                   </div>
                   <div className="pt-4 border-t">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mb-4">
                       <span className="font-semibold">{program.price}</span>
                       <span className="text-sm text-gray-500">{program.duration}</span>
                     </div>
                     <Button 
-                      className="w-full mt-4 bg-purple-600 hover:bg-purple-700"
+                      className="w-full bg-ifind-teal hover:bg-ifind-teal/90 text-white"
                       onClick={() => setIsLeadFormOpen(true)}
                     >
                       Inquire Now
@@ -136,7 +136,7 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
       </div>
 
       {/* Benefits Section */}
-      <div className="py-16 bg-gray-50">
+      <div className="py-16 bg-ifind-offwhite">
         <Container>
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Why Choose Our Academic Programs?</h2>
@@ -161,12 +161,12 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
         </Container>
       </div>
 
-      {/* Contact Section - Purple Theme */}
-      <div className="py-16 bg-purple-600 text-white">
+      {/* Contact Section - Brand Color Theme */}
+      <div className="py-16 bg-ifind-aqua text-white">
         <Container>
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
-            <p className="text-purple-100 mb-8">
+            <p className="text-white/90 mb-8">
               Contact us to discuss how we can create a customized mental health program for your institution
             </p>
             
@@ -177,20 +177,20 @@ const ProgramsForAcademicInstitutes: React.FC = () => {
               </div>
               <div className="flex items-center justify-center gap-3">
                 <Mail className="h-5 w-5" />
-                <span>academic@ifindlove.com</span>
+                <span>academic@ifindlife.com</span>
               </div>
             </div>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
-                className="bg-white text-purple-600 hover:bg-gray-100"
+                className="bg-white text-ifind-aqua hover:bg-gray-100"
                 onClick={() => setIsLeadFormOpen(true)}
               >
                 Inquire Now
               </Button>
               <Button 
                 variant="outline" 
-                className="border-white text-white hover:bg-white hover:text-purple-600"
+                className="border-white text-white hover:bg-white hover:text-ifind-aqua"
                 onClick={() => setIsLeadFormOpen(true)}
               >
                 Download Brochure
