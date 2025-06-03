@@ -1,128 +1,120 @@
 
-import { useState, useRef, useCallback } from 'react';
-import { calculateCallCost } from '@/utils/agoraService';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-export const useCallTimer = (expertPrice: number) => {
+export const useCallTimer = (pricePerMinute: number) => {
   const [duration, setDuration] = useState(0);
-  const [cost, setCost] = useState(0);
-  const [isExtending, setIsExtending] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [remainingTime, setRemainingTime] = useState(15 * 60); // 15 minutes in seconds
-  const [remainingFreeTime, setRemainingFreeTime] = useState(15 * 60); // 15 minutes in seconds
-  
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const initialSlot = 15 * 60; // 15 minutes in seconds
-  const initialSlotMinutes = initialSlot / 60; // Convert to minutes for calculation
+  const [isExtending, setIsExtending] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<Date | null>(null);
+  const pausedTimeRef = useRef<number>(0);
 
-  const startTimer = useCallback(() => {
-    setIsPaused(false);
-    startTimers();
-  }, []);
+  // Free tier: first 15 minutes are free
+  const FREE_MINUTES = 15;
+  const freeSeconds = FREE_MINUTES * 60;
 
-  const pauseTimer = useCallback(() => {
-    setIsPaused(true);
-    stopTimers();
-  }, []);
-
-  const resumeTimer = useCallback(() => {
-    setIsPaused(false);
-    startTimers();
-  }, []);
-
-  const resetTimer = useCallback(() => {
-    stopTimers();
-    setDuration(0);
-    setCost(0);
-    setRemainingTime(initialSlot);
-    setRemainingFreeTime(initialSlot);
-    setIsExtending(false);
-    setIsPaused(false);
-  }, [initialSlot]);
-
-  const startTimers = useCallback(() => {
-    durationTimerRef.current = setInterval(() => {
-      setDuration(prev => {
-        const newDuration = prev + 1;
-        
-        if (newDuration > initialSlot) {
-          setCost(calculateCallCost(newDuration, expertPrice, initialSlotMinutes));
-        }
-        
-        return newDuration;
-      });
-    }, 1000);
-
-    timerRef.current = setInterval(() => {
-      setRemainingTime(prev => {
-        if (prev <= 1) {
-          setIsExtending(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-      
-      setRemainingFreeTime(prev => {
-        if (prev <= 1) return 0;
-        return prev - 1;
-      });
-    }, 1000);
-  }, [expertPrice, initialSlot, initialSlotMinutes]);
-
-  const stopTimers = useCallback(() => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    
-    if (durationTimerRef.current) {
-      clearInterval(durationTimerRef.current);
-      durationTimerRef.current = null;
-    }
-  }, []);
-
-  const extendCall = useCallback(() => {
-    setRemainingTime(prev => prev + 15 * 60);
-    setRemainingFreeTime(prev => prev + 15 * 60);
-    setIsExtending(false);
-  }, []);
-
-  const calculateFinalCost = useCallback((): number => {
-    if (duration <= initialSlot) {
-      return 0;
-    }
-    
-    return calculateCallCost(duration, expertPrice, initialSlotMinutes);
-  }, [duration, expertPrice, initialSlot, initialSlotMinutes]);
+  const cost = Math.max(0, (duration - freeSeconds) / 60) * pricePerMinute;
+  const remainingTime = Math.max(0, freeSeconds - duration);
 
   const formatTime = useCallback((seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
+    const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     
-    return [
-      hours.toString().padStart(2, '0'),
-      minutes.toString().padStart(2, '0'),
-      secs.toString().padStart(2, '0')
-    ].join(':');
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }, []);
+
+  const startTimer = useCallback(() => {
+    if (intervalRef.current) return;
+    
+    startTimeRef.current = new Date();
+    setIsPaused(false);
+    
+    intervalRef.current = setInterval(() => {
+      setDuration(prev => prev + 1);
+    }, 1000);
+  }, []);
+
+  const pauseTimer = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsPaused(true);
+    pausedTimeRef.current = duration;
+  }, [duration]);
+
+  const resumeTimer = useCallback(() => {
+    if (isPaused) {
+      startTimer();
+    }
+  }, [isPaused, startTimer]);
+
+  const stopTimer = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsPaused(false);
+  }, []);
+
+  const resetTimer = useCallback(() => {
+    stopTimer();
+    setDuration(0);
+    startTimeRef.current = null;
+    pausedTimeRef.current = 0;
+  }, [stopTimer]);
+
+  const extendCall = useCallback(async (additionalMinutes: number = 15) => {
+    setIsExtending(true);
+    
+    // Simulate extension process
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    setIsExtending(false);
+    return true;
+  }, []);
+
+  // Combined start function for both timer and other systems
+  const startTimers = useCallback(() => {
+    startTimer();
+  }, [startTimer]);
+
+  const stopTimers = useCallback(() => {
+    stopTimer();
+  }, [stopTimer]);
+
+  const calculateFinalCost = useCallback(() => {
+    return cost;
+  }, [cost]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
   }, []);
 
   return {
     duration,
     cost,
     remainingTime,
-    remainingFreeTime,
     isPaused,
     isExtending,
+    formatTime,
     startTimer,
     pauseTimer,
     resumeTimer,
+    stopTimer,
     resetTimer,
+    extendCall,
     startTimers,
     stopTimers,
-    extendCall,
-    calculateFinalCost,
-    formatTime,
-    initialSlotMinutes
+    calculateFinalCost
   };
 };
