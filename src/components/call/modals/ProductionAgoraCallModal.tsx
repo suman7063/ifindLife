@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { toast } from 'sonner';
@@ -11,7 +12,8 @@ import CallErrorMessage from './CallErrorMessage';
 import { CallQualityIndicator, useCallQuality } from '../quality/CallQualityIndicator';
 import { CallRecordingControls, useCallRecording } from '../recording/CallRecordingControls';
 import { CallAnalytics, useCallAnalytics } from '../analytics/CallAnalytics';
-import { useCallSession } from '@/hooks/call/useCallSession';
+import { CallSecurity, useCallSecurity } from '../security/CallSecurity';
+import { useCallSession } from '../session/CallSessionManager';
 import { useCallTimer } from '@/hooks/call/useCallTimer';
 import { useCallOperations } from '@/hooks/call/useCallOperations';
 import { useCallState } from '@/hooks/call/useCallState';
@@ -49,6 +51,19 @@ const ProductionAgoraCallModal: React.FC<ProductionAgoraCallModalProps> = ({
     shareRecording 
   } = useCallRecording();
   const { analyticsData, updateAnalytics, resetAnalytics } = useCallAnalytics();
+  const { 
+    isSecureConnection,
+    encryptionEnabled, 
+    recordingConsent, 
+    toggleRecordingConsent 
+  } = useCallSecurity();
+  
+  // Session management
+  const { 
+    currentSession, 
+    createSession, 
+    endSession 
+  } = useCallSession();
   
   // Existing hooks
   const { callState, setCallState, initializeCall, endCall } = useCallState();
@@ -61,12 +76,6 @@ const ProductionAgoraCallModal: React.FC<ProductionAgoraCallModalProps> = ({
     stopTimers,
     calculateFinalCost
   } = useCallTimer(expert.price);
-
-  const {
-    currentSession,
-    createCallSession,
-    endCallSession
-  } = useCallSession();
 
   const {
     callType,
@@ -116,7 +125,7 @@ const ProductionAgoraCallModal: React.FC<ProductionAgoraCallModalProps> = ({
       setCallStatus('connecting');
       
       // Create call session
-      const session = await createCallSession(
+      const session = await createSession(
         expert.id,
         selectedType,
         userProfile?.id || ''
@@ -160,7 +169,7 @@ const ProductionAgoraCallModal: React.FC<ProductionAgoraCallModalProps> = ({
       const result = await finishCall();
       
       if (result.success && currentSession) {
-        await endCallSession(currentSession.id, duration, result.cost || 0);
+        await endSession(currentSession.id, duration, result.cost || 0);
         
         setCallStatus('ended');
         toast.success(`Call ended. Duration: ${formatTime(duration)}${result.cost > 0 ? `, Cost: ₹${result.cost.toFixed(2)}` : ''}`);
@@ -227,16 +236,25 @@ const ProductionAgoraCallModal: React.FC<ProductionAgoraCallModalProps> = ({
 
     return (
       <>
-        {/* Quality and Recording indicators */}
-        <div className="flex justify-between items-center mb-4">
-          <CallQualityIndicator quality={quality} />
-          <CallRecordingControls
-            isRecording={isRecording}
-            onStartRecording={startRecording}
-            onStopRecording={stopRecording}
-            onDownload={downloadRecording}
-            onShare={shareRecording}
-            recordingDuration={recordingDuration}
+        {/* Quality, Recording, and Security indicators */}
+        <div className="flex justify-between items-start mb-4 space-x-4">
+          <div className="flex space-x-2">
+            <CallQualityIndicator quality={quality} />
+            <CallRecordingControls
+              isRecording={isRecording}
+              onStartRecording={startRecording}
+              onStopRecording={stopRecording}
+              onDownload={downloadRecording}
+              onShare={shareRecording}
+              recordingDuration={recordingDuration}
+            />
+          </div>
+          <CallSecurity
+            isSecureConnection={isSecureConnection}
+            encryptionEnabled={encryptionEnabled}
+            recordingConsent={recordingConsent}
+            onToggleRecordingConsent={toggleRecordingConsent}
+            className="w-64"
           />
         </div>
 
@@ -275,7 +293,7 @@ const ProductionAgoraCallModal: React.FC<ProductionAgoraCallModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[900px] p-0 overflow-hidden">
         <div className="p-4">
           <AgoraCallModalHeader
             callStatus={callStatus}

@@ -3,11 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Users, TrendingUp, Wifi } from 'lucide-react';
+import { CallQuality } from '../quality/CallQualityIndicator';
 
 export interface CallAnalyticsData {
   duration: number;
   participants: number;
-  averageQuality: 'excellent' | 'good' | 'fair' | 'poor';
+  averageQuality: CallQuality;
   peakParticipants: number;
   networkIssues: number;
   costSavings?: number;
@@ -32,12 +33,13 @@ export const CallAnalytics: React.FC<CallAnalyticsProps> = ({
     return `${mins}m`;
   };
 
-  const getQualityColor = (quality: string) => {
+  const getQualityColor = (quality: CallQuality) => {
     switch (quality) {
       case 'excellent': return 'bg-green-100 text-green-800';
       case 'good': return 'bg-blue-100 text-blue-800';
       case 'fair': return 'bg-yellow-100 text-yellow-800';
       case 'poor': return 'bg-red-100 text-red-800';
+      case 'disconnected': return 'bg-gray-100 text-gray-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
