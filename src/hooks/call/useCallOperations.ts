@@ -1,6 +1,6 @@
-
 import { useState, useCallback } from 'react';
-import { CallState } from '@/utils/agoraService';
+import { CallState, joinCall } from '@/utils/agoraService';
+import { useAgoraConfig } from '@/components/call/config/AgoraConfig';
 import { toast } from 'sonner';
 
 export const useCallOperations = (
@@ -15,9 +15,11 @@ export const useCallOperations = (
   const [callError, setCallError] = useState<string | null>(null);
   const [hasVideoPermission, setHasVideoPermission] = useState(true);
   const [hasMicrophonePermission, setHasMicrophonePermission] = useState(true);
+  
+  const { config } = useAgoraConfig();
 
   const startCall = useCallback(async (type: 'audio' | 'video' = 'video') => {
-    console.log(`Starting ${type} call with expert ID: ${expertId}`);
+    console.log(`Starting ${type} call with expert ID: ${expertId} using App ID: ${config.appId}`);
     setCallType(type);
     setCallError(null);
 
@@ -27,18 +29,33 @@ export const useCallOperations = (
         return false;
       }
 
-      // In a real implementation, you would connect to the Agora channel here
-      // For this example, we'll just simulate a successful connection
-      toast.success(`${type} call started`);
+      if (!config.appId) {
+        toast.error('Agora App ID not configured. Please check configuration.');
+        return false;
+      }
+
+      // Generate channel name
+      const channelName = `call_${expertId}_${Date.now()}`;
+
+      // Join the call using the configured App ID
+      const { localAudioTrack, localVideoTrack } = await joinCall({
+        channelName,
+        callType: type,
+        appId: config.appId
+      }, callState.client);
+
+      toast.success(`${type} call connected successfully`);
       
       // Start call timer
       startTimers();
       
-      // Set join status
+      // Update call state
       setCallState(prev => ({
         ...prev,
         isJoined: true,
-        isVideoEnabled: type === 'video'
+        isVideoEnabled: type === 'video',
+        localAudioTrack,
+        localVideoTrack
       }));
       
       return true;
@@ -48,7 +65,7 @@ export const useCallOperations = (
       toast.error('Failed to start call');
       return false;
     }
-  }, [callState.client, expertId, setCallState, startTimers]);
+  }, [callState.client, expertId, setCallState, startTimers, config.appId]);
 
   const endCall = useCallback(async () => {
     try {

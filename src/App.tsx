@@ -7,6 +7,8 @@ import { Toaster } from '@/components/ui/toaster';
 import AppRoutes from './AppRoutes';
 import { UnifiedAuthProvider } from '@/contexts/auth/UnifiedAuthContext';
 import { FavoritesProvider } from '@/contexts/favorites';
+import { AgoraConfigProvider } from '@/components/call/config/AgoraConfig';
+import { CallSessionProvider } from '@/components/call/session/CallSessionManager';
 import EmergencyFallback from '@/components/EmergencyFallback';
 
 function App() {
@@ -20,10 +22,14 @@ function App() {
             <Suspense fallback={<div>Loading...</div>}>
               <UnifiedAuthProvider>
                 <FavoritesProvider>
-                  <div className="min-h-screen bg-background font-sans antialiased">
-                    <Toaster />
-                    <AppRoutes />
-                  </div>
+                  <AgoraConfigProvider appId="9b3ad657507642f98a52d47893780e8e">
+                    <CallSessionProvider>
+                      <div className="min-h-screen bg-background font-sans antialiased">
+                        <Toaster />
+                        <AppRoutes />
+                      </div>
+                    </CallSessionProvider>
+                  </AgoraConfigProvider>
                 </FavoritesProvider>
               </UnifiedAuthProvider>
             </Suspense>

@@ -24,6 +24,7 @@ export interface CallState {
 export interface CallSettings {
   channelName: string;
   callType: CallType;
+  appId?: string;
 }
 
 // Create Agora client
@@ -42,8 +43,7 @@ export const joinCall = async (
   localAudioTrack: IMicrophoneAudioTrack | null;
   localVideoTrack: ICameraVideoTrack | null;
 }> => {
-  const { channelName, callType } = settings;
-  const appId = ''; // Your Agora App ID here
+  const { channelName, callType, appId = '9b3ad657507642f98a52d47893780e8e' } = settings;
   const userId = `user-${Math.floor(Math.random() * 1000000)}`;
   
   // For demo purposes only - in production get this from server
@@ -52,7 +52,7 @@ export const joinCall = async (
   try {
     // Join the channel
     await client.join(appId, channelName, token, userId);
-    console.log('Joined channel:', channelName);
+    console.log('Joined channel:', channelName, 'with App ID:', appId);
     
     // Create local audio track
     const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
