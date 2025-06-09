@@ -1,15 +1,15 @@
 
 import React from 'react';
 import { useCallModal } from '../context/CallModalProvider';
+import { useCallEndHandler } from '@/hooks/call/useCallEndHandler';
+import { useCallExtensionHandler } from '@/hooks/call/useCallExtensionHandler';
+import { useCallSessionHandler } from '@/hooks/call/useCallSessionHandler';
 import EnhancedCallTypeSelector from '../../enhanced/EnhancedCallTypeSelector';
 import AgoraCallContent from '../../AgoraCallContent';
 import AgoraCallControls from '../../AgoraCallControls';
 import CallAuthMessage from '../CallAuthMessage';
 import CallErrorMessage from '../CallErrorMessage';
 import EnhancedCallTimer from '../../timer/EnhancedCallTimer';
-import CallSessionHandler from '../handlers/CallSessionHandler';
-import CallExtensionHandler from '../handlers/CallExtensionHandler';
-import CallEndHandler from '../handlers/CallEndHandler';
 
 interface CallModalContentProps {
   expert: {
@@ -37,9 +37,9 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
     handleToggleChatPanel
   } = useCallModal();
 
-  const sessionHandler = CallSessionHandler({ expert });
-  const extensionHandler = CallExtensionHandler();
-  const endHandler = CallEndHandler({ onClose });
+  const { handleEndCall } = useCallEndHandler({ onClose });
+  const { handleExtendCall } = useCallExtensionHandler();
+  const { handleCallStarted } = useCallSessionHandler({ expert });
 
   if (!isAuthenticated && !authLoading) {
     return <CallAuthMessage expertName={expert.name} onClose={onClose} />;
@@ -56,7 +56,7 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
     return (
       <EnhancedCallTypeSelector 
         expert={expert} 
-        onCallStarted={sessionHandler.handleCallStarted}
+        onCallStarted={handleCallStarted}
       />
     );
   }
@@ -82,7 +82,7 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
           remainingTime={timerData.remainingTime}
           isOvertime={timerData.isOvertime}
           isInWarningPeriod={timerData.isInWarningPeriod}
-          onExtendCall={extensionHandler.handleExtendCall}
+          onExtendCall={handleExtendCall}
           formatTime={timerData.formatTime}
           pricePerMinute={expert.price}
           walletBalance={userProfile?.wallet_balance || 0}
@@ -112,7 +112,7 @@ export const CallModalContent: React.FC<CallModalContentProps> = ({ expert, onCl
             isFullscreen={false}
             onToggleMute={callOperations.handleToggleMute}
             onToggleVideo={callOperations.handleToggleVideo}
-            onEndCall={endHandler.handleEndCall}
+            onEndCall={handleEndCall}
             onExtendCall={() => {}} // Extension handled by timer component
             onToggleChat={handleToggleChatPanel}
             onToggleFullscreen={() => {}}

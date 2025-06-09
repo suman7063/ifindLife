@@ -1,9 +1,8 @@
 
-import React from 'react';
+import { useCallModal } from '@/components/call/modals/context/CallModalProvider';
 import { toast } from 'sonner';
-import { useCallModal } from '../context/CallModalProvider';
 
-interface CallSessionHandlerProps {
+interface UseCallSessionHandlerProps {
   expert: {
     id: number;
     name: string;
@@ -12,7 +11,7 @@ interface CallSessionHandlerProps {
   };
 }
 
-export const CallSessionHandler: React.FC<CallSessionHandlerProps> = ({ expert }) => {
+export const useCallSessionHandler = ({ expert }: UseCallSessionHandlerProps) => {
   const {
     setCurrentSessionId,
     setCallStatus,
@@ -57,8 +56,5 @@ export const CallSessionHandler: React.FC<CallSessionHandlerProps> = ({ expert }
     }
   };
 
-  // Return the handler function for use by other components
   return { handleCallStarted };
 };
-
-export default CallSessionHandler;

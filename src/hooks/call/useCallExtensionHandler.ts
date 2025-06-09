@@ -1,9 +1,8 @@
 
-import React from 'react';
+import { useCallModal } from '@/components/call/modals/context/CallModalProvider';
 import { toast } from 'sonner';
-import { useCallModal } from '../context/CallModalProvider';
 
-export const CallExtensionHandler: React.FC = () => {
+export const useCallExtensionHandler = () => {
   const {
     userProfile,
     processWalletPayment,
@@ -37,5 +36,3 @@ export const CallExtensionHandler: React.FC = () => {
 
   return { handleExtendCall };
 };
-
-export default CallExtensionHandler;

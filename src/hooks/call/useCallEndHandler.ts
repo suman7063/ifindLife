@@ -1,13 +1,12 @@
 
-import React from 'react';
+import { useCallModal } from '@/components/call/modals/context/CallModalProvider';
 import { toast } from 'sonner';
-import { useCallModal } from '../context/CallModalProvider';
 
-interface CallEndHandlerProps {
+interface UseCallEndHandlerProps {
   onClose: () => void;
 }
 
-export const CallEndHandler: React.FC<CallEndHandlerProps> = ({ onClose }) => {
+export const useCallEndHandler = ({ onClose }: UseCallEndHandlerProps) => {
   const {
     currentSessionId,
     endCallSession,
@@ -47,5 +46,3 @@ export const CallEndHandler: React.FC<CallEndHandlerProps> = ({ onClose }) => {
 
   return { handleEndCall };
 };
-
-export default CallEndHandler;
