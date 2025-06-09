@@ -112,6 +112,105 @@ export type Database = {
           },
         ]
       }
+      call_pricing: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          duration_minutes: number
+          id: string
+          price_inr: number
+          price_usd: number
+          tier: string | null
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          duration_minutes: number
+          id?: string
+          price_inr: number
+          price_usd: number
+          tier?: string | null
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          duration_minutes?: number
+          id?: string
+          price_inr?: number
+          price_usd?: number
+          tier?: string | null
+        }
+        Relationships: []
+      }
+      call_sessions: {
+        Row: {
+          analytics_data: Json | null
+          call_type: string
+          channel_name: string
+          cost: number | null
+          created_at: string | null
+          currency: string | null
+          duration: number | null
+          end_time: string | null
+          expert_id: number
+          id: string
+          payment_method: string | null
+          pricing_tier: string | null
+          rating: number | null
+          recording_url: string | null
+          review: string | null
+          selected_duration: number | null
+          start_time: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analytics_data?: Json | null
+          call_type: string
+          channel_name: string
+          cost?: number | null
+          created_at?: string | null
+          currency?: string | null
+          duration?: number | null
+          end_time?: string | null
+          expert_id: number
+          id: string
+          payment_method?: string | null
+          pricing_tier?: string | null
+          rating?: number | null
+          recording_url?: string | null
+          review?: string | null
+          selected_duration?: number | null
+          start_time?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analytics_data?: Json | null
+          call_type?: string
+          channel_name?: string
+          cost?: number | null
+          created_at?: string | null
+          currency?: string | null
+          duration?: number | null
+          end_time?: string | null
+          expert_id?: number
+          id?: string
+          payment_method?: string | null
+          pricing_tier?: string | null
+          rating?: number | null
+          recording_url?: string | null
+          review?: string | null
+          selected_duration?: number | null
+          start_time?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string | null
@@ -949,6 +1048,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_geolocations: {
+        Row: {
+          country_code: string | null
+          country_name: string | null
+          currency: string | null
+          detected_at: string | null
+          id: string
+          ip_address: unknown | null
+          user_id: string | null
+        }
+        Insert: {
+          country_code?: string | null
+          country_name?: string | null
+          currency?: string | null
+          detected_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_id?: string | null
+        }
+        Update: {
+          country_code?: string | null
+          country_name?: string | null
+          currency?: string | null
+          detected_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_reports: {
         Row: {

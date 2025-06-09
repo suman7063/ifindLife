@@ -1,8 +1,7 @@
 
 import React from 'react';
-import LazyAgoraCallModal from './call/LazyAgoraCallModal';
+import EnhancedAgoraCallModal from './call/modals/EnhancedAgoraCallModal';
 
-// This is now a simple wrapper that uses lazy loading
 interface AgoraCallModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -15,5 +14,5 @@ interface AgoraCallModalProps {
 }
 
 export default function AgoraCallModal(props: AgoraCallModalProps) {
-  return <LazyAgoraCallModal {...props} />;
+  return <EnhancedAgoraCallModal {...props} />;
 }
