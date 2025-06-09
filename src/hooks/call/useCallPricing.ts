@@ -32,6 +32,8 @@ export const useCallPricing = () => {
         .order('duration_minutes');
 
       if (error) throw error;
+      
+      console.log('Fetched pricing data:', data);
       setPricingOptions(data || []);
     } catch (error) {
       console.error('Error fetching pricing:', error);
@@ -49,7 +51,7 @@ export const useCallPricing = () => {
         .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
         .order('detected_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (existingGeo?.currency) {
         setUserCurrency(existingGeo.currency as 'USD' | 'INR');

@@ -32,7 +32,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
   expert,
 }) => {
   const { isAuthenticated, isLoading: authLoading, userProfile } = useAuth();
-  const [callStatus, setCallStatus] = useState<'selecting' | 'connecting' | 'connected' | 'ended' | 'error'>('selecting');
+  const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
@@ -68,7 +68,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
   useEffect(() => {
     if (!isOpen) {
       setTimeout(() => {
-        setCallStatus('selecting');
+        setCallStatus('choosing');
         setErrorMessage(null);
         setShowChat(false);
         setCurrentSessionId(null);
@@ -137,7 +137,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
   };
 
   const handleRetry = () => {
-    setCallStatus('selecting');
+    setCallStatus('choosing');
     setErrorMessage(null);
   };
 
@@ -157,7 +157,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
       />;
     }
 
-    if (callStatus === 'selecting') {
+    if (callStatus === 'choosing') {
       return (
         <EnhancedCallTypeSelector 
           expert={expert} 
