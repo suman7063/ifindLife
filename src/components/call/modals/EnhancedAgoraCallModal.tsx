@@ -123,8 +123,10 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
 
   const handleExtendCall = async (extensionMinutes: number, cost: number): Promise<boolean> => {
     try {
+      const currency = userProfile?.currency as 'USD' | 'INR' || 'USD';
+      
       // Process payment for extension
-      const paymentSuccess = await processWalletPayment(cost, userProfile?.currency || 'USD');
+      const paymentSuccess = await processWalletPayment(cost, currency);
       
       if (paymentSuccess) {
         // Extend the call timer

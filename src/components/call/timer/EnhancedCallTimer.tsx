@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Clock, Plus, AlertTriangle, ExclamationTriangle } from 'lucide-react';
+import { Clock, Plus, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import ExtensionConfirmationModal from '../extension/ExtensionConfirmationModal';
 
@@ -101,7 +101,7 @@ export const EnhancedCallTimer: React.FC<EnhancedCallTimerProps> = ({
             {/* Warning Alert for Last 3 Minutes */}
             {isInWarningPeriod && !isOvertime && (
               <div className="flex items-center space-x-2 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 rounded-lg">
-                <ExclamationTriangle className="h-5 w-5 text-orange-600" />
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
                 <div className="flex-1">
                   <p className="text-sm font-medium text-orange-800 dark:text-orange-200">
                     Call ending in {Math.ceil(remainingTime / 60)} minute{Math.ceil(remainingTime / 60) !== 1 ? 's' : ''}
