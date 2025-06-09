@@ -22,7 +22,7 @@ function App() {
             <Suspense fallback={<div>Loading...</div>}>
               <UnifiedAuthProvider>
                 <FavoritesProvider>
-                  <AgoraConfigProvider appId="9b3ad657507642f98a52d47893780e8e">
+                  <AgoraConfigProvider appId="711352125">
                     <CallSessionProvider>
                       <div className="min-h-screen bg-background font-sans antialiased">
                         <Toaster />

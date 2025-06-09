@@ -10,10 +10,11 @@ import AgoraCallModalHeader from './AgoraCallModalHeader';
 import CallAuthMessage from './CallAuthMessage';
 import CallErrorMessage from './CallErrorMessage';
 import EnhancedCallTimer from '../timer/EnhancedCallTimer';
-import { useCallTimer } from '@/hooks/call/useCallTimer';
+import { useEnhancedCallTimer } from '@/hooks/call/useEnhancedCallTimer';
 import { useCallOperations } from '@/hooks/call/useCallOperations';
 import { useCallState } from '@/hooks/call/useCallState';
 import { useEnhancedCallSession } from '@/hooks/call/useEnhancedCallSession';
+import { useCallPricing } from '@/hooks/call/useCallPricing';
 
 interface EnhancedAgoraCallModalProps {
   isOpen: boolean;
@@ -36,17 +37,26 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showChat, setShowChat] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
-  const [selectedDurationMinutes, setSelectedDurationMinutes] = useState<number>(60);
 
-  const { currentSession, endCallSession } = useEnhancedCallSession();
+  const { formatPrice } = useCallPricing();
+  const { currentSession, endCallSession, processWalletPayment } = useEnhancedCallSession();
   const { callState, setCallState, initializeCall, endCall } = useCallState();
+  
   const {
     duration,
+    selectedDurationMinutes,
+    extensionMinutes,
+    remainingTime,
+    isOvertime,
+    isInWarningPeriod,
     formatTime,
     startTimers,
     stopTimers,
-    calculateFinalCost
-  } = useCallTimer(expert.price);
+    calculateFinalCost,
+    extendCall,
+    setSelectedDurationMinutes,
+    getTimerStatus
+  } = useEnhancedCallTimer(expert.price);
 
   const {
     callType,
@@ -111,6 +121,29 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
     }
   };
 
+  const handleExtendCall = async (extensionMinutes: number, cost: number): Promise<boolean> => {
+    try {
+      // Process payment for extension
+      const paymentSuccess = await processWalletPayment(cost, userProfile?.currency || 'USD');
+      
+      if (paymentSuccess) {
+        // Extend the call timer
+        const extensionSuccess = await extendCall(extensionMinutes);
+        
+        if (extensionSuccess) {
+          toast.success(`Call extended by ${extensionMinutes} minutes`);
+          return true;
+        }
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Extension failed:', error);
+      toast.error('Failed to extend call');
+      return false;
+    }
+  };
+
   const handleEndCall = async () => {
     try {
       const result = await finishCall();
@@ -119,7 +152,10 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
         await endCallSession(currentSessionId, duration, result.cost || 0);
         
         setCallStatus('ended');
-        toast.success(`Call ended. Duration: ${formatTime(duration)}${result.cost > 0 ? `, Cost: $${result.cost.toFixed(2)}` : ''}`);
+        const timerStatus = getTimerStatus();
+        const statusMessage = timerStatus === 'overtime' ? ' (overtime charges applied)' : '';
+        
+        toast.success(`Call ended. Duration: ${formatTime(duration)}${result.cost > 0 ? `, Cost: ${formatPrice(result.cost)}${statusMessage}` : ''}`);
         
         setTimeout(() => {
           onClose();
@@ -178,12 +214,20 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
 
     return (
       <>
-        {/* Enhanced Timer */}
+        {/* Enhanced Timer with Extension Support */}
         <div className="mb-4">
           <EnhancedCallTimer
             duration={duration}
             selectedDurationMinutes={selectedDurationMinutes}
+            extensionMinutes={extensionMinutes}
+            remainingTime={remainingTime}
+            isOvertime={isOvertime}
+            isInWarningPeriod={isInWarningPeriod}
+            onExtendCall={handleExtendCall}
             formatTime={formatTime}
+            pricePerMinute={expert.price}
+            walletBalance={userProfile?.wallet_balance || 0}
+            formatPrice={formatPrice}
           />
         </div>
 
@@ -192,8 +236,8 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
           callStatus={callStatus}
           showChat={showChat}
           duration={duration}
-          remainingTime={0}
-          cost={0}
+          remainingTime={remainingTime}
+          cost={calculateFinalCost()}
           formatTime={formatTime}
           expertPrice={expert.price}
           userName={userProfile?.name || 'You'}
@@ -210,7 +254,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
               onToggleMute={handleToggleMute}
               onToggleVideo={handleToggleVideo}
               onEndCall={handleEndCall}
-              onExtendCall={() => {}}
+              onExtendCall={() => {}} // Extension handled by timer component
               onToggleChat={handleToggleChatPanel}
               onToggleFullscreen={() => {}}
             />
@@ -227,7 +271,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
           <AgoraCallModalHeader
             callStatus={callStatus}
             expertName={expert.name}
-            currency="$"
+            currency={userProfile?.currency || '$'}
             expertPrice={expert.price}
           />
           
