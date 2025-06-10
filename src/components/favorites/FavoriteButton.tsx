@@ -4,6 +4,8 @@ import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
+import { toast } from 'sonner';
 
 interface FavoriteButtonProps {
   isFavorite: boolean;
@@ -13,6 +15,9 @@ interface FavoriteButtonProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   tooltipText?: string;
+  expertId?: number;
+  expertName?: string;
+  requireAuth?: boolean;
 }
 
 const FavoriteButton: React.FC<FavoriteButtonProps> = ({
@@ -22,8 +27,13 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
   className,
   size = 'md',
   showText = false,
-  tooltipText
+  tooltipText,
+  expertId,
+  expertName,
+  requireAuth = true
 }) => {
+  const { requireAuthForExpert, isAuthenticated } = useAuthRedirectSystem();
+
   const sizeClasses = {
     sm: 'h-8 w-8',
     md: 'h-10 w-10',
@@ -34,6 +44,21 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
     sm: 'h-4 w-4',
     md: 'h-5 w-5',
     lg: 'h-6 w-6'
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Check authentication if required
+    if (requireAuth && expertId && expertName) {
+      if (!requireAuthForExpert(expertId, expertName, 'favorite')) {
+        return; // User will be redirected to login
+      }
+    }
+
+    // Execute the original onClick if authenticated
+    onClick(e);
   };
   
   const button = (
@@ -47,7 +72,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
         isFavorite ? 'text-red-500 hover:text-red-600' : 'text-muted-foreground hover:text-foreground',
         className
       )}
-      onClick={onClick}
+      onClick={handleClick}
       disabled={isLoading}
     >
       <Heart 
@@ -56,7 +81,14 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
           isFavorite ? 'fill-red-500' : ''
         )} 
       />
-      <span className="sr-only">{isFavorite ? 'Remove from favorites' : 'Add to favorites'}</span>
+      <span className="sr-only">
+        {isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      </span>
+      {showText && (
+        <span className="ml-2 text-sm">
+          {isFavorite ? 'Favorited' : 'Favorite'}
+        </span>
+      )}
     </Button>
   );
   

@@ -6,17 +6,15 @@ import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuthJourneyPreservation } from '@/hooks/useAuthJourneyPreservation';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import AuthRedirectSystem from '@/utils/authRedirectSystem';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { executePendingAction } = useAuthJourneyPreservation();
   const { isAuthenticated, sessionType, user, isLoading: authLoading } = useUnifiedAuth();
 
   console.log('UserLogin: Current unified auth state:', {
@@ -55,18 +53,16 @@ const UserLogin: React.FC = () => {
         });
         
         if (isProperlyAuthenticated) {
-          console.log('UserLogin: User is properly authenticated, checking for pending actions...');
+          console.log('UserLogin: User is properly authenticated, handling redirect...');
           
-          // Execute pending action if it exists
-          setTimeout(() => {
-            const pendingAction = executePendingAction();
-            if (pendingAction) {
-              console.log('UserLogin: Found pending action, executing:', pendingAction);
-              return;
-            }
+          // Execute pending redirect/action
+          setTimeout(async () => {
+            const redirectExecuted = await AuthRedirectSystem.executeRedirect();
             
-            console.log('UserLogin: No pending action, redirecting to dashboard');
-            navigate('/user-dashboard', { replace: true });
+            if (!redirectExecuted) {
+              console.log('UserLogin: No redirect data, going to dashboard');
+              navigate('/user-dashboard', { replace: true });
+            }
           }, 100);
         } else {
           console.log('UserLogin: User not authenticated, staying on login page');
@@ -79,7 +75,7 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate, executePendingAction, isAuthenticated, sessionType, user, authLoading]);
+  }, [navigate, isAuthenticated, sessionType, user, authLoading]);
 
   // Handle login form submission with enhanced logging
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
@@ -91,6 +87,12 @@ const UserLogin: React.FC = () => {
     try {
       setIsLoggingIn(true);
       console.log('UserLogin: Attempting login with enhanced flow:', email);
+      
+      // Check if we have redirect data to show appropriate message
+      const redirectData = AuthRedirectSystem.getRedirect();
+      if (redirectData) {
+        toast.info(`Logging you in to ${redirectData.action || 'continue'}...`);
+      }
       
       // Set session type before login attempt
       localStorage.setItem('sessionType', 'user');
@@ -117,17 +119,7 @@ const UserLogin: React.FC = () => {
       console.log('UserLogin: Login successful, user ID:', data.user.id);
       toast.success('Login successful!', { duration: 2000 });
       
-      // Wait longer for auth state to fully update
-      setTimeout(() => {
-        const pendingAction = executePendingAction();
-        if (pendingAction) {
-          console.log('UserLogin: Found pending action after login, executing:', pendingAction);
-        } else {
-          console.log('UserLogin: No pending action, redirecting to dashboard');
-          navigate('/user-dashboard', { replace: true });
-        }
-      }, 2000); // Increased wait time for auth state to propagate
-      
+      // Auth state change will trigger redirect handling
       return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
@@ -160,12 +152,18 @@ const UserLogin: React.FC = () => {
         <Navbar />
         <div className="flex justify-center items-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Redirecting to dashboard...</span>
+          <span className="ml-2">Processing your request...</span>
         </div>
         <Footer />
       </>
     );
   }
+
+  // Get redirect context for UI messaging
+  const redirectData = AuthRedirectSystem.getRedirect();
+  const actionMessage = redirectData 
+    ? `Login to ${redirectData.action || 'continue'} ${redirectData.expertName ? `with ${redirectData.expertName}` : ''}`
+    : 'Login to access your account';
   
   return (
     <>
@@ -175,8 +173,13 @@ const UserLogin: React.FC = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Welcome to iFindLife</CardTitle>
             <p className="text-muted-foreground mt-2">
-              Log in or create an account to connect with experts
+              {actionMessage}
             </p>
+            {redirectData && (
+              <p className="text-sm text-primary mt-1">
+                You'll be returned to complete your action after logging in
+              </p>
+            )}
           </CardHeader>
           
           <CardContent>
