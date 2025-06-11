@@ -6,7 +6,7 @@ import NavbarUserAvatar from './NavbarUserAvatar';
 import NavbarExpertMenu from './NavbarExpertMenu';
 import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
-import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown } from './menu';
+import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown, AssessmentMenu } from './menu';
 
 interface NavbarDesktopLinksProps {
   isAuthenticated: boolean;
@@ -73,6 +73,12 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
           </NavigationMenuList>
         </NavigationMenu>
         
+        <NavigationMenu>
+          <NavigationMenuList>
+            <AssessmentMenu />
+          </NavigationMenuList>
+        </NavigationMenu>
+        
         <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
           <Link to="/experts">Experts</Link>
         </Button>
@@ -121,6 +127,12 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       <NavigationMenu>
         <NavigationMenuList>
           <ProgramsMenu />
+        </NavigationMenuList>
+      </NavigationMenu>
+      
+      <NavigationMenu>
+        <NavigationMenuList>
+          <AssessmentMenu />
         </NavigationMenuList>
       </NavigationMenu>
       
