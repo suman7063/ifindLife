@@ -69,13 +69,13 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         
         <NavigationMenu>
           <NavigationMenuList>
-            <ProgramsMenu />
+            <AssessmentMenu />
           </NavigationMenuList>
         </NavigationMenu>
         
         <NavigationMenu>
           <NavigationMenuList>
-            <AssessmentMenu />
+            <ProgramsMenu />
           </NavigationMenuList>
         </NavigationMenu>
         
@@ -126,13 +126,13 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       
       <NavigationMenu>
         <NavigationMenuList>
-          <ProgramsMenu />
+          <AssessmentMenu />
         </NavigationMenuList>
       </NavigationMenu>
       
       <NavigationMenu>
         <NavigationMenuList>
-          <AssessmentMenu />
+          <ProgramsMenu />
         </NavigationMenuList>
       </NavigationMenu>
       

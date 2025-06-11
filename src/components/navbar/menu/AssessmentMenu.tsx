@@ -12,23 +12,23 @@ const AssessmentMenu = () => {
   return (
     <NavigationMenuItem>
       <NavigationMenuTrigger className="text-gray-700 hover:text-gray-900 font-medium">
-        Assessment
+        Assessments
       </NavigationMenuTrigger>
       <NavigationMenuContent>
-        <div className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-1 lg:w-[600px]">
-          <div className="grid gap-1">
+        <div className="w-[400px] p-4 bg-white">
+          <div className="grid gap-3">
             <h4 className="text-sm font-medium leading-none text-gray-900 mb-3">
               Wellness Assessments
             </h4>
             <div className="grid gap-2">
               <Link
                 to="/mental-health-assessment"
-                className="flex items-center gap-3 rounded-md p-3 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                className="flex items-center gap-3 rounded-md p-3 text-sm leading-none no-underline outline-none transition-colors hover:bg-gray-50 focus:bg-gray-50"
               >
                 <Brain className="h-5 w-5 text-blue-600" />
                 <div className="space-y-1">
                   <div className="text-sm font-medium leading-none">Mental Wellness</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                  <p className="line-clamp-2 text-sm leading-snug text-gray-600">
                     Assess your mental health and get personalized recommendations
                   </p>
                 </div>
@@ -36,12 +36,12 @@ const AssessmentMenu = () => {
               
               <Link
                 to="/emotional-wellness-assessment"
-                className="flex items-center gap-3 rounded-md p-3 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                className="flex items-center gap-3 rounded-md p-3 text-sm leading-none no-underline outline-none transition-colors hover:bg-gray-50 focus:bg-gray-50"
               >
                 <Heart className="h-5 w-5 text-red-500" />
                 <div className="space-y-1">
                   <div className="text-sm font-medium leading-none">Emotional Wellness</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                  <p className="line-clamp-2 text-sm leading-snug text-gray-600">
                     Understand your emotional patterns and coping strategies
                   </p>
                 </div>
@@ -49,12 +49,12 @@ const AssessmentMenu = () => {
               
               <Link
                 to="/spiritual-wellness-assessment"
-                className="flex items-center gap-3 rounded-md p-3 text-sm leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                className="flex items-center gap-3 rounded-md p-3 text-sm leading-none no-underline outline-none transition-colors hover:bg-gray-50 focus:bg-gray-50"
               >
                 <Sparkles className="h-5 w-5 text-purple-600" />
                 <div className="space-y-1">
                   <div className="text-sm font-medium leading-none">Spiritual Wellness</div>
-                  <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                  <p className="line-clamp-2 text-sm leading-snug text-gray-600">
                     Explore your spiritual connections and inner peace
                   </p>
                 </div>

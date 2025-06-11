@@ -27,22 +27,11 @@ const MobileMenuSections = () => {
               { title: 'Programs for Academic Institutes', href: '/programs-for-academic-institutes' },
             ]}
           />
-          
-          <MobileAccordionItem
-            title="Programs"
-            value="programs"
-            items={[
-              { title: 'All Programs', href: '/programs' },
-              { title: 'For Wellness Seekers', href: '/programs-for-wellness-seekers' },
-              { title: 'For Business', href: '/programs-for-business' },
-              { title: 'For Academic Institutes', href: '/programs-for-academic-institutes' },
-            ]}
-          />
         </Accordion>
 
         <Collapsible>
           <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
-            <span>Assessment</span>
+            <span>Assessments</span>
             <ChevronDown className="h-4 w-4" />
           </CollapsibleTrigger>
           <CollapsibleContent className="ml-4 space-y-1">
@@ -69,6 +58,19 @@ const MobileMenuSections = () => {
             </Link>
           </CollapsibleContent>
         </Collapsible>
+        
+        <Accordion type="single" collapsible>
+          <MobileAccordionItem
+            title="Programs"
+            value="programs"
+            items={[
+              { title: 'All Programs', href: '/programs' },
+              { title: 'For Wellness Seekers', href: '/programs-for-wellness-seekers' },
+              { title: 'For Business', href: '/programs-for-business' },
+              { title: 'For Academic Institutes', href: '/programs-for-academic-institutes' },
+            ]}
+          />
+        </Accordion>
         
         <Link 
           to="/experts" 
