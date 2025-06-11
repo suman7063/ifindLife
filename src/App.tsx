@@ -12,14 +12,7 @@ import { CallSessionProvider } from '@/components/call/session/CallSessionManage
 import EmergencyFallback from '@/components/EmergencyFallback';
 
 function App() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: 1,
-        refetchOnWindowFocus: false,
-      },
-    },
-  });
+  const queryClient = new QueryClient();
 
   return (
     <EmergencyFallback>
