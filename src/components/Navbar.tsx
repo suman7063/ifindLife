@@ -179,7 +179,7 @@ const Navbar = () => {
             <Link to="/" className="flex items-center">
               <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-10" />
             </Link>
-            <span className="absolute -top-1 -right-8 bg-gray-500 text-white text-xs px-1.5 py-0.5 rounded text-[10px] font-medium">
+            <span className="absolute -top-1 -right-6 bg-gray-400 text-white text-[8px] px-1 py-0.5 rounded font-medium">
               BETA
             </span>
           </div>
@@ -196,7 +196,7 @@ const Navbar = () => {
             <Link to="/" className="flex items-center">
               <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-16" />
             </Link>
-            <span className="absolute -top-1 -right-8 bg-gray-500 text-white text-xs px-1.5 py-0.5 rounded text-[10px] font-medium">
+            <span className="absolute -top-1 -right-6 bg-gray-400 text-white text-[8px] px-1 py-0.5 rounded font-medium">
               BETA
             </span>
           </div>

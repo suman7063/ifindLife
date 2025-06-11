@@ -56,7 +56,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
 
   // Don't show loading state here - let the parent handle it
   if (unifiedAuth.isLoading) {
-    return <div className="hidden md:flex items-center space-x-6">
+    return <div className="hidden md:flex items-center space-x-4">
         <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
           <Link to="/">Home</Link>
         </Button>
@@ -113,7 +113,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     />;
   }
 
-  return <div className="hidden md:flex items-center space-x-6">
+  return <div className="hidden md:flex items-center space-x-4">
       <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
         <Link to="/">Home</Link>
       </Button>

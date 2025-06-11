@@ -15,7 +15,7 @@ const AssessmentMenu = () => {
         Assessments
       </NavigationMenuTrigger>
       <NavigationMenuContent>
-        <div className="w-[400px] p-4 bg-white">
+        <div className="w-[400px] p-4 bg-white shadow-lg border border-gray-200 rounded-md">
           <div className="grid gap-3">
             <h4 className="text-sm font-medium leading-none text-gray-900 mb-3">
               Wellness Assessments
