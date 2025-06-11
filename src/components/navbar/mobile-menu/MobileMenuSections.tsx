@@ -2,6 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Accordion } from '@/components/ui/accordion';
 import { ChevronDown, Brain, Heart, Sparkles } from 'lucide-react';
 import MobileAccordionItem from './MobileAccordionItem';
 
@@ -16,24 +17,28 @@ const MobileMenuSections = () => {
           Home
         </Link>
         
-        <MobileAccordionItem
-          title="Services"
-          items={[
-            { title: 'Therapy Sessions', href: '/services' },
-            { title: 'Programs for Business', href: '/programs-for-business' },
-            { title: 'Programs for Academic Institutes', href: '/programs-for-academic-institutes' },
-          ]}
-        />
-        
-        <MobileAccordionItem
-          title="Programs"
-          items={[
-            { title: 'All Programs', href: '/programs' },
-            { title: 'For Wellness Seekers', href: '/programs-for-wellness-seekers' },
-            { title: 'For Business', href: '/programs-for-business' },
-            { title: 'For Academic Institutes', href: '/programs-for-academic-institutes' },
-          ]}
-        />
+        <Accordion type="single" collapsible>
+          <MobileAccordionItem
+            title="Services"
+            value="services"
+            items={[
+              { title: 'Therapy Sessions', href: '/services' },
+              { title: 'Programs for Business', href: '/programs-for-business' },
+              { title: 'Programs for Academic Institutes', href: '/programs-for-academic-institutes' },
+            ]}
+          />
+          
+          <MobileAccordionItem
+            title="Programs"
+            value="programs"
+            items={[
+              { title: 'All Programs', href: '/programs' },
+              { title: 'For Wellness Seekers', href: '/programs-for-wellness-seekers' },
+              { title: 'For Business', href: '/programs-for-business' },
+              { title: 'For Academic Institutes', href: '/programs-for-academic-institutes' },
+            ]}
+          />
+        </Accordion>
 
         <Collapsible>
           <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-md">
@@ -79,14 +84,17 @@ const MobileMenuSections = () => {
           About Us
         </Link>
         
-        <MobileAccordionItem
-          title="Support"
-          items={[
-            { title: 'FAQ', href: '/faqs' },
-            { title: 'Contact Us', href: '/contact' },
-            { title: 'Blog', href: '/blog' },
-          ]}
-        />
+        <Accordion type="single" collapsible>
+          <MobileAccordionItem
+            title="Support"
+            value="support"
+            items={[
+              { title: 'FAQ', href: '/faqs' },
+              { title: 'Contact Us', href: '/contact' },
+              { title: 'Blog', href: '/blog' },
+            ]}
+          />
+        </Accordion>
       </div>
     </div>
   );
