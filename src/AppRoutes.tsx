@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AdminAuthProvider } from '@/contexts/admin-auth/AdminAuthProvider';
@@ -7,15 +8,15 @@ import Home from '@/pages/Home';
 import UserLogin from '@/pages/UserLogin';
 import ExpertLogin from '@/pages/ExpertLogin';
 import AdminLogin from '@/pages/AdminLogin';
-import UserDashboard from '@/pages/UserDashboard';
+import UserDashboardPages from '@/pages/UserDashboardPages';
 import ExpertDashboard from '@/pages/ExpertDashboard';
 import Admin from '@/pages/Admin';
 
 // Other pages
 import Login from '@/pages/Login';
-import FindExperts from '@/pages/FindExperts';
+import Experts from '@/pages/Experts';
 import Services from '@/pages/Services';
-import About from '@/pages/About';
+import AboutUs from '@/pages/AboutUs';
 import Contact from '@/pages/Contact';
 import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import TermsOfService from '@/pages/TermsOfService';
@@ -25,9 +26,9 @@ const AppRoutes: React.FC = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
-      <Route path="/find-experts" element={<FindExperts />} />
+      <Route path="/find-experts" element={<Experts />} />
       <Route path="/services" element={<Services />} />
-      <Route path="/about" element={<About />} />
+      <Route path="/about" element={<AboutUs />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
@@ -39,7 +40,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/admin-login" element={<AdminLogin />} />
       
       {/* Dashboard Routes */}
-      <Route path="/user-dashboard/*" element={<UserDashboard />} />
+      <Route path="/user-dashboard/*" element={<UserDashboardPages />} />
       <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
       
       {/* Admin Routes - Scoped with AdminAuthProvider */}
