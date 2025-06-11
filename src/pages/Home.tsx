@@ -6,6 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, Star, Shield, Clock } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import Hero from '@/components/Hero';
+import ServicesSection from '@/components/ServicesSection';
+import TestimonialsSection from '@/components/TestimonialsSection';
+import WhyChooseUsSection from '@/components/WhyChooseUsSection';
 
 const Home: React.FC = () => {
   return (
@@ -13,23 +17,14 @@ const Home: React.FC = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-5xl font-bold mb-6">Find Life-Changing Experts</h1>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Connect with verified professionals who can transform your personal and professional life through expert guidance and mentorship.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-              <Link to="/find-experts">Find Experts</Link>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-blue-600">
-              <Link to="/expert-login">Become an Expert</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
+      <Hero />
+      
+      {/* Services Section */}
+      <ServicesSection />
+      
+      {/* Why Choose Us Section */}
+      <WhyChooseUsSection />
+      
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -85,6 +80,9 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
 
       {/* CTA Section */}
       <section className="py-16 bg-white">
