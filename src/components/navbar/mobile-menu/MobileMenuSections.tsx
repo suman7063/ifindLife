@@ -36,21 +36,21 @@ const MobileMenuSections = () => {
           </CollapsibleTrigger>
           <CollapsibleContent className="ml-4 space-y-1">
             <Link 
-              to="/mental-health-assessment" 
+              to="/mental-health-assessment?type=mental" 
               className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
             >
               <Brain className="h-4 w-4 text-blue-600" />
               Mental Wellness
             </Link>
             <Link 
-              to="/emotional-wellness-assessment" 
+              to="/mental-health-assessment?type=emotional" 
               className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
             >
               <Heart className="h-4 w-4 text-red-500" />
               Emotional Wellness
             </Link>
             <Link 
-              to="/spiritual-wellness-assessment" 
+              to="/mental-health-assessment?type=spiritual" 
               className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
             >
               <Sparkles className="h-4 w-4 text-purple-600" />
