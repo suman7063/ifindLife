@@ -4,11 +4,12 @@ import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CallErrorMessageProps {
-  errorMessage: string | null;
+  error: string;
   onRetry: () => void;
+  onClose: () => void;
 }
 
-const CallErrorMessage: React.FC<CallErrorMessageProps> = ({ errorMessage, onRetry }) => {
+const CallErrorMessage: React.FC<CallErrorMessageProps> = ({ error, onRetry, onClose }) => {
   return (
     <div className="flex flex-col items-center justify-center p-6 text-center space-y-6">
       <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
@@ -18,7 +19,7 @@ const CallErrorMessage: React.FC<CallErrorMessageProps> = ({ errorMessage, onRet
       <div className="space-y-2">
         <h3 className="text-xl font-medium">Call Error</h3>
         <p className="text-muted-foreground">
-          {errorMessage || "We couldn't establish a call connection. Please try again."}
+          {error || "We couldn't establish a call connection. Please try again."}
         </p>
       </div>
       
