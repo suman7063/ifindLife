@@ -13,13 +13,16 @@ import {
 
 interface AgoraCallControlsProps {
   callState: any;
+  callType?: 'audio' | 'video';
+  isExtending?: boolean;
+  isFullscreen?: boolean;
   onToggleMute: () => void;
   onToggleVideo: () => void;
   onEndCall: () => void;
-  onToggleChat: () => void;
-  onExtendCall: () => void;
-  showChat: boolean;
-  isExtending: boolean;
+  onToggleChat?: () => void;
+  onExtendCall?: () => void;
+  onToggleFullscreen?: () => void;
+  showChat?: boolean;
 }
 
 interface AgoraCallControlButtonProps {
@@ -58,13 +61,16 @@ const AgoraCallControlButton: React.FC<AgoraCallControlButtonProps> = ({
 
 const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
   callState,
+  callType,
+  isExtending = false,
+  isFullscreen = false,
   onToggleMute,
   onToggleVideo,
   onEndCall,
   onExtendCall,
   onToggleChat,
-  showChat,
-  isExtending
+  onToggleFullscreen,
+  showChat = false
 }) => {
   return (
     <div className="flex justify-center items-center space-x-4 p-2 bg-background/80 rounded-lg backdrop-blur-sm">
@@ -86,14 +92,16 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
             title={callState.isVideoEnabled ? "Turn off camera" : "Turn on camera"}
           />
           
-          <AgoraCallControlButton
-            onClick={onToggleChat}
-            active={showChat}
-            icon={<MessageCircle className="h-5 w-5" />}
-            title="Toggle chat"
-          />
+          {onToggleChat && (
+            <AgoraCallControlButton
+              onClick={onToggleChat}
+              active={showChat}
+              icon={<MessageCircle className="h-5 w-5" />}
+              title="Toggle chat"
+            />
+          )}
           
-          {!isExtending && (
+          {onExtendCall && !isExtending && (
             <AgoraCallControlButton
               onClick={onExtendCall}
               icon={<PlusCircle className="h-5 w-5 text-green-600" />}

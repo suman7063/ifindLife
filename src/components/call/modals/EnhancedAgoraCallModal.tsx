@@ -127,13 +127,15 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
     setShowExtensionModal(true);
   };
 
-  const handleConfirmExtension = async (additionalMinutes: number) => {
+  const handleConfirmExtension = async (extensionMinutes: number, cost: number): Promise<boolean> => {
     try {
       setIsExtending(true);
-      await extendCall(additionalMinutes);
+      await extendCall(extensionMinutes);
       setShowExtensionModal(false);
+      return true;
     } catch (error) {
       console.error('Error extending call:', error);
+      return false;
     } finally {
       setIsExtending(false);
     }
@@ -156,7 +158,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="sm:max-w-md">
           <CallErrorMessage 
-            error={callError} 
+            errorMessage={callError} 
             onRetry={() => setCallStatus('choosing')} 
             onClose={onClose} 
           />
@@ -182,6 +184,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
             <AgoraCallTypeSelector
               callType={callType}
               onCallTypeChange={setCallType}
+              expert={expert}
               expertPrice={expert.price}
               onStartCall={handleStartCall}
             />
@@ -205,6 +208,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
               {callStatus === 'connected' && (
                 <AgoraCallControls
                   callState={callState}
+                  callType={callType === 'video' ? 'video' : 'audio'}
                   onToggleMute={handleToggleMute}
                   onToggleVideo={handleToggleVideo}
                   onEndCall={handleEndCall}
