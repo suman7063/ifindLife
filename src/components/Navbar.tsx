@@ -32,26 +32,26 @@ const getCommonProfileProps = (profile: UserProfile | ExpertProfile | AdminProfi
 };
 
 // Helper function to create a compatible currentUser object for NavbarDesktopLinks
-const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
-  if (!profile) return null;
-  const commonProps = getCommonProfileProps(profile);
-  if (isUserProfile(profile)) {
-    return profile; // Already compatible
+const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: ExpertProfile | null, adminProfile: AdminProfile | null, sessionType: 'user' | 'expert' | 'admin' | null): UserProfile | null => {
+  // Return the appropriate profile based on session type
+  if (sessionType === 'user' && userProfile) {
+    return userProfile;
   }
-  if (isExpertProfile(profile)) {
+  
+  if (sessionType === 'expert' && expertProfile) {
     // Create a UserProfile-like object for compatibility
     return {
-      ...commonProps,
-      phone: profile.phone || '',
-      country: profile.country || '',
-      city: profile.city || '',
-      currency: 'USD',
-      // Default currency for experts
-      profile_picture: profile.profile_picture || '',
-      wallet_balance: 0,
-      // Experts don't have wallet balance in navbar context
-      created_at: profile.created_at || '',
-      updated_at: profile.created_at || '',
+      id: expertProfile.id,
+      name: expertProfile.name || '',
+      email: expertProfile.email || '',
+      phone: expertProfile.phone || '',
+      country: expertProfile.country || '',
+      city: expertProfile.city || '',
+      currency: 'USD', // Default currency for experts
+      profile_picture: expertProfile.profile_picture || '',
+      wallet_balance: 0, // Experts don't have wallet balance in navbar context
+      created_at: expertProfile.created_at || '',
+      updated_at: expertProfile.created_at || '',
       referred_by: null,
       referral_code: '',
       referral_link: '',
@@ -64,18 +64,21 @@ const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfil
       referrals: []
     } as UserProfile;
   }
-  if (isAdminProfile(profile)) {
+  
+  if (sessionType === 'admin' && adminProfile) {
     // Create a UserProfile-like object for compatibility
     return {
-      ...commonProps,
+      id: adminProfile.id,
+      name: adminProfile.name || '',
+      email: adminProfile.email || '',
       phone: '',
       country: '',
       city: '',
       currency: 'USD',
       profile_picture: '',
       wallet_balance: 0,
-      created_at: profile.created_at || '',
-      updated_at: profile.created_at || '',
+      created_at: adminProfile.created_at || '',
+      updated_at: adminProfile.created_at || '',
       referred_by: null,
       referral_code: '',
       referral_link: '',
@@ -84,9 +87,11 @@ const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfil
       enrolled_courses: [],
       reviews: [],
       reports: [],
+      transactions: [],
       referrals: []
     } as UserProfile;
   }
+  
   return null;
 };
 
@@ -102,15 +107,15 @@ const Navbar = () => {
     user,
     admin,
     expert,
+    userProfile,
+    expertProfile,
+    adminProfile,
     isLoading,
     logout
   } = useEnhancedUnifiedAuth();
 
-  // Determine current user based on session type
-  const currentProfile = sessionType === 'expert' ? expert : sessionType === 'admin' ? admin : sessionType === 'user' ? user : null;
-
   // Create compatible user object for navbar components
-  const currentUser = createCompatibleUser(currentProfile);
+  const currentUser = createCompatibleUser(userProfile, expertProfile, adminProfile, sessionType);
   const hasExpertProfile = sessionType === 'expert' && !!expert;
   const hasAdminProfile = sessionType === 'admin' && !!admin;
 
