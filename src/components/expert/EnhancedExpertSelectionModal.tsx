@@ -3,28 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { useAuthProtection } from '@/utils/authProtection';
-import ExpertCard from '@/components/expert-card/ExpertCard';
 import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
-import { Lock, Shield } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface Expert {
-  id: number;
-  name: string;
-  imageUrl: string;
-  price: number;
-  specialization: string;
-  experience: string;
-  rating: number;
-  reviews: number;
-}
-
-interface EnhancedExpertSelectionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onExpertSelected: (expertId: number) => void;
-  serviceTitle: string;
-}
+import { Expert, EnhancedExpertSelectionModalProps } from './types';
+import { mockExperts } from './mockData';
+import AuthRequiredDialog from './AuthRequiredDialog';
+import AuthProtectionIndicator from './AuthProtectionIndicator';
+import ExpertGrid from './ExpertGrid';
 
 const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> = ({
   isOpen,
@@ -37,30 +24,6 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [showCallModal, setShowCallModal] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
-
-  // Mock experts data (in real app, this would come from an API)
-  const experts: Expert[] = [
-    {
-      id: 1,
-      name: "Dr. Sarah Johnson",
-      imageUrl: "/lovable-uploads/expert1.jpg",
-      price: 150,
-      specialization: "Life Coaching",
-      experience: "10+ years",
-      rating: 4.9,
-      reviews: 245
-    },
-    {
-      id: 2,
-      name: "Mark Thompson",
-      imageUrl: "/lovable-uploads/expert2.jpg",
-      price: 120,
-      specialization: "Career Guidance",
-      experience: "8+ years",
-      rating: 4.8,
-      reviews: 189
-    }
-  ];
 
   // Start protection when modal opens
   useEffect(() => {
@@ -128,26 +91,14 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
     // Don't immediately close the expert selection - let user choose
   };
 
+  // Show auth required dialog if not authenticated
   if (!isAuthenticated) {
     return (
-      <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Authentication Required</DialogTitle>
-          </DialogHeader>
-          <div className="text-center space-y-4">
-            <p>Please log in to select an expert for "{serviceTitle}"</p>
-            <button 
-              onClick={() => {
-                window.location.href = '/user-login';
-              }}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-primary/90"
-            >
-              Login
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AuthRequiredDialog
+        isOpen={isOpen}
+        onClose={handleClose}
+        serviceTitle={serviceTitle}
+      />
     );
   }
 
@@ -162,60 +113,18 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
             </DialogTitle>
           </DialogHeader>
 
-          {/* Auth Protection Status */}
-          {isAuthProtected() && (
-            <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg mb-4">
-              <Lock className="h-5 w-5 text-green-600" />
-              <div>
-                <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                  Secure Session Active
-                </p>
-                <p className="text-xs text-green-600 dark:text-green-300">
-                  Your authentication is protected during this expert selection
-                </p>
-              </div>
-            </div>
-          )}
+          <AuthProtectionIndicator
+            isAuthProtected={isAuthProtected()}
+            serviceTitle={serviceTitle}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {experts.map((expert) => (
-              <div key={expert.id} className="relative">
-                <ExpertCard
-                  expert={{
-                    id: expert.id.toString(),
-                    name: expert.name,
-                    profilePicture: expert.imageUrl,
-                    specialization: expert.specialization,
-                    experience: parseInt(expert.experience),
-                    averageRating: expert.rating,
-                    reviewsCount: expert.reviews,
-                    price: expert.price,
-                    verified: true,
-                    status: 'online',
-                    waitTime: 'Available Now'
-                  }}
-                  onConnectNow={(type) => handleStartCall(expert)}
-                  onClick={() => handleExpertCardClick(expert)}
-                />
-                
-                {/* Show protection indicator for selected expert */}
-                {selectedExpert?.id === expert.id && isAuthProtected() && (
-                  <div className="absolute top-2 right-2">
-                    <div className="bg-green-100 border border-green-300 rounded-full p-1">
-                      <Lock className="h-4 w-4 text-green-600" />
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {experts.length === 0 && (
-            <div className="text-center py-8">
-              <p className="text-gray-500">No experts available for this service at the moment.</p>
-              <p className="text-sm text-gray-400 mt-2">Please try again later.</p>
-            </div>
-          )}
+          <ExpertGrid
+            experts={mockExperts}
+            selectedExpert={selectedExpert}
+            isAuthProtected={isAuthProtected()}
+            onExpertCardClick={handleExpertCardClick}
+            onStartCall={handleStartCall}
+          />
         </DialogContent>
       </Dialog>
 
