@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { useAuthProtection } from '@/utils/authProtection';
-import ExpertCard from './ExpertCard';
+import ExpertCard from '@/components/expert-card/ExpertCard';
 import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
 import { Lock, Shield } from 'lucide-react';
 import { toast } from 'sonner';
@@ -181,11 +181,21 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
             {experts.map((expert) => (
               <div key={expert.id} className="relative">
                 <ExpertCard
-                  expert={expert}
-                  onCardClick={() => handleExpertCardClick(expert)}
-                  onCallClick={() => handleStartCall(expert)}
-                  onChatClick={() => handleExpertCardClick(expert)}
-                  showActions={true}
+                  expert={{
+                    id: expert.id,
+                    name: expert.name,
+                    profilePicture: expert.imageUrl,
+                    specialization: expert.specialization,
+                    experience: parseInt(expert.experience),
+                    averageRating: expert.rating,
+                    reviewsCount: expert.reviews,
+                    price: expert.price,
+                    verified: true,
+                    status: 'online',
+                    waitTime: 'Available Now'
+                  }}
+                  onConnectNow={(type) => handleStartCall(expert)}
+                  onClick={() => handleExpertCardClick(expert)}
                 />
                 
                 {/* Show protection indicator for selected expert */}

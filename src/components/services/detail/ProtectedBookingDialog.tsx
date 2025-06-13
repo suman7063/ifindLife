@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { useAuthProtection } from '@/utils/authProtection';
-import ExpertSelectionModal from '@/components/expert/ExpertSelectionModal';
+import EnhancedExpertSelectionModal from '@/components/expert/EnhancedExpertSelectionModal';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Lock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -168,7 +168,7 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
 
       {/* Expert Selection Modal with Auth Protection */}
       {showExpertSelection && (
-        <ExpertSelectionModal
+        <EnhancedExpertSelectionModal
           isOpen={showExpertSelection}
           onClose={() => {
             setShowExpertSelection(false);

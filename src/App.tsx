@@ -1,17 +1,18 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Home from './pages/Home';
+import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
-import UserSignup from './pages/UserSignup';
+import UserSignup from './pages/UserRegister';
 import ExpertLogin from './pages/ExpertLogin';
-import ExpertSignup from './pages/ExpertSignup';
+import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
-import UserDashboard from './pages/UserDashboard';
+import UserDashboard from './pages/UserDashboardPages';
 import AdminLogin from './pages/AdminLogin';
-import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboard from './pages/admin/Testing';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
-import ProgramDetailPage from './pages/program/ProgramDetailPage';
-import ContactUs from './pages/ContactUs';
+import ProgramDetailPage from './pages/ProgramDetail';
+import ContactUs from './pages/Contact';
 import AboutUs from './pages/AboutUs';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
