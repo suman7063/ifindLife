@@ -6,7 +6,7 @@ import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import AuthRedirectSystem from '@/utils/authRedirectSystem';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -15,9 +15,9 @@ const UserLogin: React.FC = () => {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { isAuthenticated, sessionType, user, isLoading: authLoading } = useUnifiedAuth();
+  const { isAuthenticated, sessionType, user, isLoading: authLoading } = useEnhancedUnifiedAuth();
 
-  console.log('UserLogin: Current unified auth state:', {
+  console.log('UserLogin: Current enhanced unified auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
     sessionType,
     hasUser: Boolean(user),
