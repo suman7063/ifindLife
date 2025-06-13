@@ -1,42 +1,53 @@
-
-import React, { Suspense } from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Home from './pages/Home';
+import UserLogin from './pages/UserLogin';
+import UserSignup from './pages/UserSignup';
+import ExpertLogin from './pages/ExpertLogin';
+import ExpertSignup from './pages/ExpertSignup';
+import ExpertDashboard from './pages/ExpertDashboard';
+import UserDashboard from './pages/UserDashboard';
+import AdminLogin from './pages/AdminLogin';
+import AdminDashboard from './pages/AdminDashboard';
+import ServiceDetailPage from './pages/service/ServiceDetailPage';
+import ProgramDetailPage from './pages/program/ProgramDetailPage';
+import ContactUs from './pages/ContactUs';
+import AboutUs from './pages/AboutUs';
+import TermsOfService from './pages/TermsOfService';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import NotFound from './pages/NotFound';
+import LogoutPage from './pages/LogoutPage';
 import { Toaster } from '@/components/ui/toaster';
-import AppRoutes from './AppRoutes';
-import { UnifiedAuthProvider } from '@/contexts/auth/UnifiedAuthContext';
-import { FavoritesProvider } from '@/contexts/favorites';
-import { AgoraConfigProvider } from '@/components/call/config/AgoraConfig';
-import { CallSessionProvider } from '@/components/call/session/CallSessionManager';
-import EmergencyFallback from '@/components/EmergencyFallback';
+import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 
 function App() {
-  const queryClient = new QueryClient();
-
   return (
-    <EmergencyFallback>
-      <Router>
-        <HelmetProvider>
-          <QueryClientProvider client={queryClient}>
-            <Suspense fallback={<div>Loading...</div>}>
-              <UnifiedAuthProvider>
-                <FavoritesProvider>
-                  <AgoraConfigProvider appId="711352125">
-                    <CallSessionProvider>
-                      <div className="min-h-screen bg-background font-sans antialiased">
-                        <Toaster />
-                        <AppRoutes />
-                      </div>
-                    </CallSessionProvider>
-                  </AgoraConfigProvider>
-                </FavoritesProvider>
-              </UnifiedAuthProvider>
-            </Suspense>
-          </QueryClientProvider>
-        </HelmetProvider>
-      </Router>
-    </EmergencyFallback>
+    <EnhancedUnifiedAuthProvider>
+      <div className="min-h-screen bg-background font-sans antialiased">
+        <Router>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/user-login" element={<UserLogin />} />
+            <Route path="/user-signup" element={<UserSignup />} />
+            <Route path="/expert-login" element={<ExpertLogin />} />
+            <Route path="/expert-signup" element={<ExpertSignup />} />
+            <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
+            <Route path="/user-dashboard/*" element={<UserDashboard />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+            <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
+            <Route path="/program/:programId" element={<ProgramDetailPage />} />
+            <Route path="/contact-us" element={<ContactUs />} />
+            <Route path="/about-us" element={<AboutUs />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/logout" element={<LogoutPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
+        <Toaster />
+      </div>
+    </EnhancedUnifiedAuthProvider>
   );
 }
 
