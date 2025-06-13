@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -50,11 +50,11 @@ const ExpertLogin: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const { isAuthenticated, sessionType, expert, isLoading, login } = useUnifiedAuth();
+  const { isAuthenticated, sessionType, expert, isLoading, login } = useEnhancedUnifiedAuth();
   const [hasRedirected, setHasRedirected] = useState(false);
 
   // Enhanced debug logging to compare with ExpertDashboardLayout
-  console.log('ExpertLogin - Unified auth state:', {
+  console.log('ExpertLogin - Enhanced unified auth state:', {
     isAuthenticated,
     sessionType,
     hasExpertProfile: !!expert,
@@ -97,15 +97,15 @@ const ExpertLogin: React.FC = () => {
     }
   }, [isAuthenticated, sessionType, expert, isLoading, navigate, searchParams, hasRedirected]);
 
-  // Handle login with unified auth
+  // Handle login with enhanced unified auth
   const handleLogin = async (email: string, password: string) => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      console.log('ExpertLogin: Attempting login with unified auth:', email);
+      console.log('ExpertLogin: Attempting login with enhanced unified auth:', email);
       
-      const success = await login('expert', { email, password, asExpert: true });
+      const success = await login(email, password, { asExpert: true });
       
       if (success) {
         console.log('Expert login successful, will redirect shortly');
