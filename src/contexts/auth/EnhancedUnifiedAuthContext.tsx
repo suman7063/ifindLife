@@ -17,10 +17,14 @@ interface EnhancedUnifiedAuthContextType {
   sessionType: SessionType;
   error: string | null;
 
-  // Profile data
+  // Profile data - individual profiles
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
   adminProfile: AdminProfile | null;
+
+  // Profile data - current active profiles (for backward compatibility)
+  admin: AdminProfile | null;
+  expert: ExpertProfile | null;
 
   // Auth actions with protection
   login: (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }) => Promise<boolean>;
@@ -247,6 +251,10 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
     };
   }, [handleAuthStateChange]);
 
+  // Compute current active profiles based on session type for backward compatibility
+  const currentAdmin = sessionType === 'admin' ? adminProfile : null;
+  const currentExpert = sessionType === 'expert' ? expertProfile : null;
+
   const value: EnhancedUnifiedAuthContextType = {
     // Core auth state
     isAuthenticated,
@@ -256,10 +264,14 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
     sessionType,
     error,
 
-    // Profile data
+    // Profile data - individual profiles
     userProfile,
     expertProfile,
     adminProfile,
+
+    // Profile data - current active profiles (for backward compatibility)
+    admin: currentAdmin,
+    expert: currentExpert,
 
     // Auth actions
     login,
