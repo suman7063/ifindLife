@@ -182,7 +182,7 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
               <div key={expert.id} className="relative">
                 <ExpertCard
                   expert={{
-                    id: expert.id,
+                    id: expert.id.toString(),
                     name: expert.name,
                     profilePicture: expert.imageUrl,
                     specialization: expert.specialization,
