@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import NavbarUserAvatar from './NavbarUserAvatar';
 import NavbarExpertMenu from './NavbarExpertMenu';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { NavigationMenu, NavigationMenuList } from "@/components/ui/navigation-menu";
 import { ProgramsMenu, ServicesMenu, SupportMenu, LoginDropdown, AssessmentMenu } from './menu';
 
@@ -27,35 +27,35 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   sessionType,
   isLoggingOut
 }) => {
-  // Get unified auth state for more accurate authentication checks
-  const unifiedAuth = useUnifiedAuth();
+  // Get enhanced unified auth state for more accurate authentication checks
+  const enhancedAuth = useEnhancedUnifiedAuth();
 
   // Enhanced logging for debugging
-  console.log('NavbarDesktopLinks render with unified auth state:', {
+  console.log('NavbarDesktopLinks render with enhanced unified auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
     hasCurrentUser: Boolean(currentUser),
     hasExpertProfile: Boolean(hasExpertProfile),
     sessionType,
     isLoggingOut,
-    // Unified auth state
-    unifiedIsAuthenticated: Boolean(unifiedAuth.isAuthenticated),
-    unifiedSessionType: unifiedAuth.sessionType,
-    unifiedIsLoading: Boolean(unifiedAuth.isLoading),
-    unifiedHasExpert: Boolean(unifiedAuth.expert),
-    unifiedHasAdmin: Boolean(unifiedAuth.admin),
-    unifiedHasUser: Boolean(unifiedAuth.user),
+    // Enhanced auth state
+    enhancedIsAuthenticated: Boolean(enhancedAuth.isAuthenticated),
+    enhancedSessionType: enhancedAuth.sessionType,
+    enhancedIsLoading: Boolean(enhancedAuth.isLoading),
+    enhancedHasExpert: Boolean(enhancedAuth.expert),
+    enhancedHasAdmin: Boolean(enhancedAuth.admin),
+    enhancedHasUser: Boolean(enhancedAuth.user),
     currentUserEmail: currentUser?.email || 'null',
     timestamp: new Date().toISOString()
   });
 
   // Convert to proper booleans for reliable checking
   const isUserAuthenticated = Boolean(isAuthenticated);
-  const isExpertAuthenticated = Boolean(unifiedAuth.sessionType === 'expert' && unifiedAuth.expert);
-  const isAdminAuthenticated = Boolean(unifiedAuth.sessionType === 'admin' && unifiedAuth.admin);
+  const isExpertAuthenticated = Boolean(enhancedAuth.sessionType === 'expert' && enhancedAuth.expert);
+  const isAdminAuthenticated = Boolean(enhancedAuth.sessionType === 'admin' && enhancedAuth.admin);
   const hasUserData = Boolean(currentUser);
 
   // Don't show loading state here - let the parent handle it
-  if (unifiedAuth.isLoading) {
+  if (enhancedAuth.isLoading) {
     return <div className="hidden md:flex items-center space-x-4">
         <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
           <Link to="/">Home</Link>

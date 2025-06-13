@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unified';
 
 // Type guard functions
@@ -88,12 +89,13 @@ const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfil
   }
   return null;
 };
+
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Use unified auth context
+  // Use enhanced unified auth context
   const {
     isAuthenticated,
     sessionType,
@@ -102,7 +104,7 @@ const Navbar = () => {
     expert,
     isLoading,
     logout
-  } = useUnifiedAuth();
+  } = useEnhancedUnifiedAuth();
 
   // Determine current user based on session type
   const currentProfile = sessionType === 'expert' ? expert : sessionType === 'admin' ? admin : sessionType === 'user' ? user : null;
@@ -160,7 +162,7 @@ const Navbar = () => {
   };
 
   // Enhanced authentication state logging for debugging
-  console.log("Navbar rendering. Unified auth state:", {
+  console.log("Navbar rendering. Enhanced unified auth state:", {
     isAuthenticated: Boolean(isAuthenticated),
     sessionType,
     navbarSessionType,
@@ -224,4 +226,5 @@ const Navbar = () => {
       </div>
     </>;
 };
+
 export default Navbar;
