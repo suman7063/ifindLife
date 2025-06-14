@@ -6,6 +6,10 @@ import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unifi
 import { authProtection, useAuthProtection } from '@/utils/authProtection';
 import { toast } from 'sonner';
 
+// Debug React availability
+console.log('EnhancedUnifiedAuthContext - React:', !!React);
+console.log('EnhancedUnifiedAuthContext - useState:', !!useState);
+
 type SessionType = 'user' | 'expert' | 'admin' | null;
 
 interface EnhancedUnifiedAuthContextType {
@@ -51,18 +55,21 @@ interface EnhancedUnifiedAuthProviderProps {
 }
 
 export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderProps> = ({ children }) => {
-  // Core auth state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [sessionType, setSessionType] = useState<SessionType>(null);
-  const [error, setError] = useState<string | null>(null);
+  // Debug hook calls
+  console.log('EnhancedUnifiedAuthProvider rendering...');
+  
+  // Core auth state - using React.useState to be explicit
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [sessionType, setSessionType] = React.useState<SessionType>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   // Profile state
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
-  const [adminProfile, setAdminProfile] = useState<AdminProfile | null>(null);
+  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
+  const [expertProfile, setExpertProfile] = React.useState<ExpertProfile | null>(null);
+  const [adminProfile, setAdminProfile] = React.useState<AdminProfile | null>(null);
 
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
@@ -282,6 +289,13 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
     endAuthProtection: endProtection,
     isAuthProtected: isProtected
   };
+
+  console.log('🔒 EnhancedUnifiedAuthProvider providing value:', { 
+    isAuthenticated, 
+    isLoading, 
+    hasUser: !!user, 
+    sessionType 
+  });
 
   return (
     <EnhancedUnifiedAuthContext.Provider value={value}>
