@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
-
 const WhatWeDoSection = () => {
   const programs = [{
     title: "QuickEase Programs",
@@ -43,9 +41,7 @@ const WhatWeDoSection = () => {
           </div>
         </div>
   }];
-
-  return (
-    <section className="py-16 bg-white">
+  return <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
         <div className="mb-4">
           <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">IFL Programs for Individuals</h2>
@@ -53,8 +49,7 @@ const WhatWeDoSection = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-          {programs.map((program, index) => (
-            <Link key={index} to={program.href} className="block">
+          {programs.map((program, index) => <Link key={index} to={program.href} className="block">
               <div className={`${program.color} ${program.borderColor} border-l-4 rounded-lg p-8 h-full hover:shadow-lg transition-all duration-300 text-center border border-gray-200`}>
                 <div className="flex justify-center">
                   {program.icon}
@@ -62,12 +57,9 @@ const WhatWeDoSection = () => {
                 <h3 className={`font-semibold text-xl mb-4 ${program.accentColor}`}>{program.title}</h3>
                 <p className="text-gray-600">{program.description}</p>
               </div>
-            </Link>
-          ))}
+            </Link>)}
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default WhatWeDoSection;
