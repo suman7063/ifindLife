@@ -1,92 +1,157 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star, MapPin, Calendar, Phone, Mail } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Star, MapPin, Clock, Search, Filter } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+
+interface Expert {
+  id: string;
+  name: string;
+  specialization: string;
+  experience: string;
+  bio: string;
+  average_rating: number;
+  reviews_count: number;
+  profile_picture: string;
+  city: string;
+  country: string;
+}
 
 const Experts = () => {
-  const experts = [
+  const [experts, setExperts] = useState<Expert[]>([]);
+  const [filteredExperts, setFilteredExperts] = useState<Expert[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSpecialty, setSelectedSpecialty] = useState('All');
+  const [loading, setLoading] = useState(true);
+
+  // Sample experts data in case database is empty
+  const sampleExperts: Expert[] = [
     {
-      id: 1,
-      name: "Dr. Sarah Johnson",
-      specialization: "Clinical Psychology",
-      experience: "8+ years",
-      rating: 4.8,
-      reviews: 124,
-      location: "New York, NY",
-      image: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop",
-      bio: "Specializes in anxiety, depression, and cognitive behavioral therapy with a compassionate approach.",
-      languages: ["English", "Spanish"],
-      availability: "Available Today"
+      id: '1',
+      name: 'Dr. Sarah Johnson',
+      specialization: 'Clinical Psychology',
+      experience: '8 years',
+      bio: 'Specialized in anxiety, depression, and trauma therapy. Passionate about helping individuals find their path to mental wellness.',
+      average_rating: 4.9,
+      reviews_count: 127,
+      profile_picture: '/lovable-uploads/50267abc-f35e-4528-a0cf-90d80e5e5f84.png',
+      city: 'New York',
+      country: 'USA'
     },
     {
-      id: 2,
-      name: "Dr. Michael Chen",
-      specialization: "Marriage & Family Therapy",
-      experience: "12+ years",
-      rating: 4.9,
-      reviews: 89,
-      location: "Los Angeles, CA",
-      image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=2070&auto=format&fit=crop",
-      bio: "Expert in relationship counseling and family dynamics with multicultural sensitivity.",
-      languages: ["English", "Mandarin"],
-      availability: "Available Tomorrow"
+      id: '2',
+      name: 'Dr. Michael Chen',
+      specialization: 'Relationship Counseling',
+      experience: '12 years',
+      bio: 'Expert in couples therapy and family counseling. Helping relationships thrive through evidence-based approaches.',
+      average_rating: 4.8,
+      reviews_count: 89,
+      profile_picture: '/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png',
+      city: 'Los Angeles',
+      country: 'USA'
     },
     {
-      id: 3,
-      name: "Dr. Lisa Thompson",
-      specialization: "Trauma & PTSD Therapy",
-      experience: "10+ years",
-      rating: 4.7,
-      reviews: 156,
-      location: "Chicago, IL",
-      image: "https://images.unsplash.com/photo-1594824947933-d0501ba2fe65?q=80&w=2070&auto=format&fit=crop",
-      bio: "Specialized in trauma recovery and EMDR therapy for healing and resilience building.",
-      languages: ["English"],
-      availability: "Available This Week"
+      id: '3',
+      name: 'Dr. Emily Rodriguez',
+      specialization: 'Life Coaching',
+      experience: '6 years',
+      bio: 'Empowering individuals to achieve their goals through personalized coaching strategies and mindfulness practices.',
+      average_rating: 4.7,
+      reviews_count: 156,
+      profile_picture: '/lovable-uploads/58321caf-3b5b-4a9d-91a1-44514ae2000b.png',
+      city: 'Chicago',
+      country: 'USA'
     },
     {
-      id: 4,
-      name: "Dr. James Wilson",
-      specialization: "Addiction Counseling",
-      experience: "15+ years",
-      rating: 4.6,
-      reviews: 203,
-      location: "Miami, FL",
-      image: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?q=80&w=2070&auto=format&fit=crop",
-      bio: "Comprehensive addiction treatment and recovery support with holistic approaches.",
-      languages: ["English", "French"],
-      availability: "Available Today"
-    },
-    {
-      id: 5,
-      name: "Dr. Emma Rodriguez",
-      specialization: "Child & Adolescent Psychology",
-      experience: "9+ years",
-      rating: 4.8,
-      reviews: 97,
-      location: "Austin, TX",
-      image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=2070&auto=format&fit=crop",
-      bio: "Dedicated to helping children and teens navigate emotional and behavioral challenges.",
-      languages: ["English", "Spanish"],
-      availability: "Available Tomorrow"
-    },
-    {
-      id: 6,
-      name: "Dr. David Clarke",
-      specialization: "Mindfulness & Meditation",
-      experience: "11+ years",
-      rating: 4.9,
-      reviews: 142,
-      location: "Seattle, WA",
-      image: "https://images.unsplash.com/photo-1607990281513-2c110a25bd8c?q=80&w=2070&auto=format&fit=crop",
-      bio: "Integrates mindfulness practices with traditional therapy for holistic healing.",
-      languages: ["English"],
-      availability: "Available This Week"
+      id: '4',
+      name: 'Dr. James Wilson',
+      specialization: 'Stress Management',
+      experience: '10 years',
+      bio: 'Specialist in workplace stress, burnout prevention, and executive coaching for high-performing professionals.',
+      average_rating: 4.9,
+      reviews_count: 203,
+      profile_picture: '/lovable-uploads/6c427c55-7a38-4dad-8c60-cc782cbc5bd7.png',
+      city: 'Seattle',
+      country: 'USA'
     }
   ];
+
+  useEffect(() => {
+    fetchExperts();
+  }, []);
+
+  useEffect(() => {
+    filterExperts();
+  }, [experts, searchTerm, selectedSpecialty]);
+
+  const fetchExperts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('experts')
+        .select('*')
+        .limit(20);
+
+      if (error) {
+        console.error('Error fetching experts:', error);
+        setExperts(sampleExperts);
+      } else if (data && data.length > 0) {
+        setExperts(data);
+      } else {
+        setExperts(sampleExperts);
+      }
+    } catch (error) {
+      console.error('Error fetching experts:', error);
+      setExperts(sampleExperts);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterExperts = () => {
+    let filtered = experts;
+
+    if (searchTerm) {
+      filtered = filtered.filter(expert =>
+        expert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        expert.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        expert.bio.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedSpecialty !== 'All') {
+      filtered = filtered.filter(expert =>
+        expert.specialization.toLowerCase().includes(selectedSpecialty.toLowerCase())
+      );
+    }
+
+    setFilteredExperts(filtered);
+  };
+
+  const specialties = ['All', 'Clinical Psychology', 'Relationship Counseling', 'Life Coaching', 'Stress Management', 'Trauma Therapy'];
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 py-20">
+          <Container>
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading experts...</p>
+            </div>
+          </Container>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   return (
     <>
@@ -96,48 +161,32 @@ const Experts = () => {
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Mental Health Experts</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Connect with qualified professionals who are here to support your wellness journey. Our licensed therapists and counselors are ready to help you achieve your mental health goals.
+              Connect with qualified professionals who are here to support your wellness journey. All our experts are licensed and experienced in their specialties.
             </p>
           </div>
 
-          {/* Search and Filter Section */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search by name</label>
-                <input 
-                  type="text" 
-                  placeholder="Search experts..." 
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ifind-aqua"
+          {/* Search and Filter */}
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  placeholder="Search by name, specialty, or expertise..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Specialization</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ifind-aqua">
-                  <option>All Specializations</option>
-                  <option>Clinical Psychology</option>
-                  <option>Marriage & Family Therapy</option>
-                  <option>Trauma & PTSD</option>
-                  <option>Addiction Counseling</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ifind-aqua">
-                  <option>All Locations</option>
-                  <option>New York, NY</option>
-                  <option>Los Angeles, CA</option>
-                  <option>Chicago, IL</option>
-                  <option>Miami, FL</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
-                <select className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-ifind-aqua">
-                  <option>Any Time</option>
-                  <option>Available Today</option>
-                  <option>Available Tomorrow</option>
-                  <option>Available This Week</option>
+              <div className="flex items-center gap-2">
+                <Filter className="h-4 w-4 text-gray-600" />
+                <select
+                  value={selectedSpecialty}
+                  onChange={(e) => setSelectedSpecialty(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 bg-white"
+                >
+                  {specialties.map(specialty => (
+                    <option key={specialty} value={specialty}>{specialty}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -145,73 +194,90 @@ const Experts = () => {
 
           {/* Experts Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {experts.map((expert) => (
-              <div key={expert.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="h-64 overflow-hidden">
-                  <img 
-                    src={expert.image} 
-                    alt={expert.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-3">
-                    <h3 className="text-xl font-semibold text-gray-900">{expert.name}</h3>
-                    <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">
-                      {expert.availability}
+            {filteredExperts.map((expert) => (
+              <Card key={expert.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                <CardHeader className="text-center pb-4">
+                  <div className="relative w-24 h-24 mx-auto mb-4">
+                    <img
+                      src={expert.profile_picture || '/lovable-uploads/50267abc-f35e-4528-a0cf-90d80e5e5f84.png'}
+                      alt={expert.name}
+                      className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
+                    />
+                  </div>
+                  <CardTitle className="text-xl font-semibold">{expert.name}</CardTitle>
+                  <CardDescription>
+                    <Badge variant="secondary" className="mb-2">
+                      {expert.specialization}
+                    </Badge>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-gray-500" />
+                      {expert.experience} experience
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4 text-gray-500" />
+                      {expert.city}
                     </span>
                   </div>
-                  
-                  <p className="text-ifind-aqua font-medium mb-2">{expert.specialization}</p>
-                  <p className="text-gray-600 text-sm mb-3">{expert.bio}</p>
-                  
-                  <div className="flex items-center mb-3">
+
+                  <div className="flex items-center justify-center gap-2">
                     <div className="flex items-center">
-                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                      <span className="ml-1 text-sm font-medium">{expert.rating}</span>
-                      <span className="ml-1 text-sm text-gray-500">({expert.reviews} reviews)</span>
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-4 w-4 ${i < Math.floor(expert.average_rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                        />
+                      ))}
                     </div>
+                    <span className="text-sm font-medium">{expert.average_rating}</span>
+                    <span className="text-sm text-gray-500">({expert.reviews_count} reviews)</span>
                   </div>
-                  
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    <span>{expert.location}</span>
-                    <span className="ml-4">{expert.experience} experience</span>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-600">
-                      Languages: {expert.languages.join(', ')}
-                    </p>
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button className="flex-1 bg-ifind-aqua hover:bg-ifind-aqua/90 text-white">
-                      Book Session
-                    </Button>
-                    <Button variant="outline" className="flex-1">
-                      View Profile
+
+                  <p className="text-gray-600 text-sm line-clamp-3">{expert.bio}</p>
+
+                  <div className="space-y-2">
+                    <Link to={`/expert/${expert.id}`}>
+                      <Button className="w-full bg-ifind-teal hover:bg-ifind-teal/90">
+                        View Profile
+                      </Button>
+                    </Link>
+                    <Button variant="outline" className="w-full border-ifind-aqua text-ifind-aqua hover:bg-ifind-aqua hover:text-white">
+                      Book Consultation
                     </Button>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ))}
           </div>
 
+          {filteredExperts.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">
+                No experts found matching your criteria. Please try different search terms or filters.
+              </p>
+            </div>
+          )}
+
           {/* Call to Action */}
-          <div className="text-center mt-12">
-            <p className="text-gray-600 mb-4">
-              Can't find the right expert for you? Let us help you find the perfect match.
+          <div className="text-center bg-white rounded-lg p-8 shadow-md mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Can't Find the Right Expert?</h2>
+            <p className="text-gray-600 mb-6">
+              Our team can help match you with the perfect mental health professional based on your specific needs.
             </p>
-            <div className="flex justify-center gap-4">
-              <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">
-                <Phone className="mr-2 h-4 w-4" />
-                Call Us: +91 9355966925
-              </Button>
-              <Button variant="outline">
-                <Mail className="mr-2 h-4 w-4" />
-                Email: connect@ifindlife.com
-              </Button>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link to="/contact">
+                <Button className="bg-ifind-aqua hover:bg-ifind-teal text-white">
+                  Get Personalized Matching
+                </Button>
+              </Link>
+              <Link to="/mental-health-assessment">
+                <Button variant="outline" className="border-ifind-teal text-ifind-teal hover:bg-ifind-teal hover:text-white">
+                  Take Assessment First
+                </Button>
+              </Link>
             </div>
           </div>
         </Container>

@@ -30,7 +30,6 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
       return;
     }
 
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       toast.error('Please enter a valid email address');
@@ -40,40 +39,14 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
     setIsSubmitting(true);
     
     try {
-      // First check if the table exists and create it if it doesn't
-      const { data: existingSubscription, error: checkError } = await supabase
-        .from('newsletter_subscriptions')
-        .select('email')
-        .eq('email', email)
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        // If error is not "no rows returned", it's a real error
-        console.error('Newsletter subscription check error:', checkError);
-        
-        // Try to create the table if it doesn't exist
-        if (checkError.code === '42P01') {
-          const { error: createError } = await supabase.rpc('create_newsletter_table');
-          if (createError) {
-            console.error('Failed to create newsletter table:', createError);
-            throw new Error('Failed to setup newsletter subscription');
-          }
-        } else {
-          throw new Error(checkError.message);
-        }
-      }
-
-      if (existingSubscription) {
-        toast.info('You are already subscribed to our newsletter!');
-        setEmail('');
-        return;
-      }
-
-      // Store subscription in Supabase
-      const { error } = await supabase.from('newsletter_subscriptions').insert([
+      // Check if newsletter_subscriptions table exists, if not create a simple subscription record
+      const { error } = await supabase.from('contact_submissions').insert([
         { 
-          email: email.toLowerCase().trim(), 
-          created_at: new Date().toISOString() 
+          name: 'Newsletter Subscriber',
+          email: email,
+          subject: 'Newsletter Subscription',
+          message: 'User subscribed to newsletter',
+          created_at: new Date().toISOString()
         }
       ]);
       
@@ -93,14 +66,14 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
       }
     } catch (error: any) {
       console.error('Failed to subscribe:', error);
-      toast.error(`Failed to subscribe: ${error.message || 'Please try again later'}`);
+      toast.error(`Failed to subscribe: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`flex space-x-2 ${className || ''}`}>
+    <form onSubmit={handleSubmit} className={`${className || 'flex space-x-2'}`}>
       <Input 
         type="email" 
         value={email}

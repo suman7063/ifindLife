@@ -3,68 +3,73 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Heart, Brain, Users, Clock, Star, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const Services = () => {
   const services = [
     {
-      id: 'heart2heart-listening',
-      title: 'Heart2Heart Listening Sessions',
-      description: 'A unique space where you can express yourself freely while being deeply heard without judgment or interruption.',
-      details: 'Our Heart2Heart Listening Sessions provide a unique opportunity to be truly heard in a non-judgmental, supportive environment. Unlike traditional therapy...',
-      icon: '💙',
-      color: 'bg-blue-100',
-      buttonColor: 'bg-blue-500 hover:bg-blue-600',
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=2088&auto=format&fit=crop'
-    },
-    {
       id: 'therapy-sessions',
       title: 'Therapy Sessions',
-      description: 'Professional therapy sessions to help you navigate life\'s challenges, manage mental health concerns, and enhance personal growth.',
-      details: 'Our therapy sessions provide a safe, confidential space where you can explore your thoughts and feelings with a licensed professional. Using evidence-...',
-      icon: '💜',
-      color: 'bg-purple-100',
-      buttonColor: 'bg-purple-500 hover:bg-purple-600',
-      image: 'https://images.unsplash.com/photo-1551601651-2a8555f1a136?q=80&w=2070&auto=format&fit=crop'
+      description: 'Professional one-on-one therapy sessions with licensed mental health professionals.',
+      icon: <Brain className="h-8 w-8 text-blue-600" />,
+      features: ['Individual counseling', 'Couples therapy', 'Group sessions', 'Crisis intervention'],
+      duration: '50-90 minutes',
+      price: 'From $80',
+      color: 'bg-blue-50 border-blue-200'
     },
     {
-      id: 'guided-meditations',
-      title: 'Guided Meditations',
-      description: 'Expertly led meditation sessions to reduce stress, increase mindfulness, and cultivate inner peace and mental clarity.',
-      details: 'Our guided meditation sessions help you cultivate mindfulness, reduce stress, and enhance overall well-being. Led by experienced meditation instructors...',
-      icon: '🧘',
-      color: 'bg-teal-100',
-      buttonColor: 'bg-teal-500 hover:bg-teal-600',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop'
-    },
-    {
-      id: 'offline-retreats',
-      title: 'Offline Retreats',
-      description: 'Immersive wellness experiences in nature to disconnect from technology and reconnect with yourself and others.',
-      details: 'Our Offline Retreats offer a rare opportunity to disconnect from digital distractions and reconnect with yourself, nature, and authentic human connection...',
-      icon: '🌄',
-      color: 'bg-orange-100',
-      buttonColor: 'bg-orange-500 hover:bg-orange-600',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?q=80&w=2070&auto=format&fit=crop'
+      id: 'mindful-listening',
+      title: 'Heart2Heart Listening',
+      description: 'Compassionate listening sessions to help you process your thoughts and feelings.',
+      icon: <Heart className="h-8 w-8 text-red-600" />,
+      features: ['Active listening', 'Emotional support', 'Non-judgmental space', 'Empathetic guidance'],
+      duration: '30-60 minutes',
+      price: 'From $40',
+      color: 'bg-red-50 border-red-200'
     },
     {
       id: 'life-coaching',
       title: 'Life Coaching',
-      description: 'Goal-oriented coaching to help you clarify your vision, overcome obstacles, and achieve personal and professional success.',
-      details: 'Our Life Coaching service helps you bridge the gap between where you are now and where you want to be. Working with a certified coach, you\'ll clarify...',
-      icon: '❤️',
-      color: 'bg-red-100',
-      buttonColor: 'bg-red-500 hover:bg-red-600',
-      image: 'https://images.unsplash.com/photo-1551601651-2a8555f1a136?q=80&w=2070&auto=format&fit=crop'
+      description: 'Goal-oriented coaching to help you achieve your personal and professional objectives.',
+      icon: <Star className="h-8 w-8 text-yellow-600" />,
+      features: ['Goal setting', 'Action planning', 'Accountability', 'Personal development'],
+      duration: '45-75 minutes',
+      price: 'From $60',
+      color: 'bg-yellow-50 border-yellow-200'
+    },
+    {
+      id: 'guided-meditations',
+      title: 'Guided Meditations',
+      description: 'Structured meditation sessions to promote relaxation and mindfulness.',
+      icon: <Clock className="h-8 w-8 text-purple-600" />,
+      features: ['Mindfulness training', 'Stress reduction', 'Sleep improvement', 'Focus enhancement'],
+      duration: '15-45 minutes',
+      price: 'From $25',
+      color: 'bg-purple-50 border-purple-200'
+    },
+    {
+      id: 'group-therapy',
+      title: 'Group Therapy',
+      description: 'Supportive group sessions for shared experiences and mutual healing.',
+      icon: <Users className="h-8 w-8 text-green-600" />,
+      features: ['Peer support', 'Shared experiences', 'Group dynamics', 'Community healing'],
+      duration: '60-90 minutes',
+      price: 'From $35',
+      color: 'bg-green-50 border-green-200'
+    },
+    {
+      id: 'offline-retreats',
+      title: 'Offline Retreats',
+      description: 'Immersive retreat experiences for deep healing and personal growth.',
+      icon: <CheckCircle className="h-8 w-8 text-teal-600" />,
+      features: ['Weekend retreats', 'Wellness workshops', 'Nature therapy', 'Holistic healing'],
+      duration: '1-7 days',
+      price: 'From $200',
+      color: 'bg-teal-50 border-teal-200'
     }
-  ];
-
-  const serviceCategories = [
-    { name: 'Heart2Heart Listening Sessions', color: 'bg-teal-400' },
-    { name: 'Therapy Sessions', color: 'bg-purple-500' },
-    { name: 'Guided Meditations', color: 'bg-blue-500' },
-    { name: 'Offline Retreats', color: 'bg-orange-500' },
-    { name: 'Life Coaching', color: 'bg-red-500' }
   ];
 
   return (
@@ -75,82 +80,69 @@ const Services = () => {
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 mb-4">Our Services</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Comprehensive mental wellness services tailored to your unique needs and journey
+              Discover our comprehensive range of wellness services designed to support your mental, emotional, and spiritual well-being.
             </p>
           </div>
-
-          {/* Service Categories */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
-            {serviceCategories.map((category, index) => (
-              <span key={index} className={`px-4 py-2 rounded-full text-white text-sm ${category.color}`}>
-                {category.name}
-              </span>
-            ))}
-          </div>
-
-          <div className="text-center mb-12">
-            <button className="text-gray-600 hover:text-gray-800">
-              + Explore Our Services
-            </button>
-          </div>
-
-          {/* Services Grid */}
-          <div className="space-y-16">
-            {services.map((service, index) => (
-              <div key={service.id} className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-8`}>
-                <div className="lg:w-1/2">
-                  <div className={`w-12 h-12 ${service.color} rounded-full flex items-center justify-center text-2xl mb-6`}>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            {services.map((service) => (
+              <Card key={service.id} className={`overflow-hidden hover:shadow-lg transition-shadow ${service.color}`}>
+                <CardHeader className="text-center pb-4">
+                  <div className="flex justify-center mb-4">
                     {service.icon}
                   </div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-4">{service.title}</h2>
-                  <p className="text-gray-600 mb-4">{service.description}</p>
-                  <p className="text-gray-600 mb-6">{service.details}</p>
-                  <Button className={`${service.buttonColor} text-white px-6 py-3`}>
-                    Learn More
-                  </Button>
-                </div>
-                <div className="lg:w-1/2">
-                  <img 
-                    src={service.image} 
-                    alt={service.title}
-                    className="w-full h-80 object-cover rounded-lg shadow-lg"
-                  />
-                </div>
-              </div>
+                  <CardTitle className="text-xl font-semibold">{service.title}</CardTitle>
+                  <CardDescription className="text-gray-600">
+                    {service.description}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    {service.features.map((feature, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">Duration:</span>
+                      <span>{service.duration}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium">Starting at:</span>
+                      <span className="font-bold text-ifind-teal">{service.price}</span>
+                    </div>
+                  </div>
+                  
+                  <Link to={`/services/${service.id}`}>
+                    <Button className="w-full bg-ifind-teal hover:bg-ifind-teal/90">
+                      Learn More
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             ))}
           </div>
-
-          {/* Why Choose Our Services */}
-          <div className="mt-20">
-            <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Why Choose Our Services?</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="text-center p-6">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">👨‍⚕️</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-3">Expert Practitioners</h3>
-                <p className="text-gray-600">
-                  Qualified professionals with extensive experience and a passion for helping others.
-                </p>
-              </div>
-              <div className="text-center p-6">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🎯</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-3">Personalized Approach</h3>
-                <p className="text-gray-600">
-                  Tailored solutions designed to meet your unique needs and wellness goals.
-                </p>
-              </div>
-              <div className="text-center p-6">
-                <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">📅</span>
-                </div>
-                <h3 className="text-xl font-semibold mb-3">Flexible Scheduling</h3>
-                <p className="text-gray-600">
-                  Convenient appointment times that work with your busy lifestyle.
-                </p>
-              </div>
+          
+          <div className="text-center bg-white rounded-lg p-8 shadow-md">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Ready to Get Started?</h2>
+            <p className="text-gray-600 mb-6">
+              Take the first step towards better mental health. Our experts are here to guide you on your wellness journey.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link to="/contact">
+                <Button className="bg-ifind-aqua hover:bg-ifind-teal text-white">
+                  Contact Us Today
+                </Button>
+              </Link>
+              <Link to="/mental-health-assessment">
+                <Button variant="outline" className="border-ifind-teal text-ifind-teal hover:bg-ifind-teal hover:text-white">
+                  Take Free Assessment
+                </Button>
+              </Link>
             </div>
           </div>
         </Container>

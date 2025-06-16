@@ -39,28 +39,32 @@ const Contact = () => {
     try {
       const { error } = await supabase
         .from('contact_submissions')
-        .insert([{
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message
-        }]);
+        .insert([
+          {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject,
+            message: formData.message,
+            created_at: new Date().toISOString()
+          }
+        ]);
 
       if (error) {
-        console.error('Contact form submission error:', error);
-        toast.error('Failed to send message. Please try again.');
-      } else {
-        toast.success('Thank you for your message! We\'ll get back to you soon.');
-        setFormData({
-          name: '',
-          email: '',
-          subject: '',
-          message: ''
-        });
+        throw error;
       }
+
+      toast.success('Thank you for your message! We will get back to you within 24 hours.');
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        subject: '',
+        message: ''
+      });
     } catch (error) {
-      console.error('Contact form error:', error);
-      toast.error('An error occurred. Please try again.');
+      console.error('Error submitting contact form:', error);
+      toast.error('Failed to send message. Please try again or contact us directly.');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,7 +89,7 @@ const Contact = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium mb-2">
-                          Your Name
+                          Your Name *
                         </label>
                         <Input 
                           id="name" 
@@ -99,7 +103,7 @@ const Contact = () => {
                       </div>
                       <div>
                         <label htmlFor="email" className="block text-sm font-medium mb-2">
-                          Email Address
+                          Email Address *
                         </label>
                         <Input 
                           id="email" 
@@ -115,7 +119,7 @@ const Contact = () => {
                     </div>
                     <div>
                       <label htmlFor="subject" className="block text-sm font-medium mb-2">
-                        Subject
+                        Subject *
                       </label>
                       <Input 
                         id="subject" 
@@ -129,7 +133,7 @@ const Contact = () => {
                     </div>
                     <div>
                       <label htmlFor="message" className="block text-sm font-medium mb-2">
-                        Your Message
+                        Your Message *
                       </label>
                       <Textarea 
                         id="message" 
