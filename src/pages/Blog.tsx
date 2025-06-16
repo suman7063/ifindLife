@@ -5,8 +5,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, User, Search, Tag } from 'lucide-react';
+import { Calendar, User, Search } from 'lucide-react';
 import { sampleBlogPosts } from '@/data/blogData';
+import NewsletterSubscription from '@/components/newsletter/NewsletterSubscription';
 
 const Blog = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -176,15 +177,12 @@ const Blog = () => {
             <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
               Subscribe to our newsletter to get the latest articles and mental health tips delivered to your inbox.
             </p>
-            <div className="max-w-md mx-auto flex gap-2">
-              <Input 
-                type="email" 
-                placeholder="Enter your email" 
-                className="bg-white"
+            <div className="max-w-md mx-auto">
+              <NewsletterSubscription 
+                placeholder="Enter your email"
+                buttonLabel="Subscribe"
+                className="flex gap-2"
               />
-              <Button className="bg-ifind-aqua hover:bg-ifind-aqua/90 text-white">
-                Subscribe
-              </Button>
             </div>
           </div>
         </section>
