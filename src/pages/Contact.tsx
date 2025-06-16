@@ -1,77 +1,12 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, MapPin } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
-
 const Contact = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: ''
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
-      toast.error('Please fill in all fields');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const { error } = await supabase
-        .from('contact_submissions')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            subject: formData.subject,
-            message: formData.message,
-            created_at: new Date().toISOString()
-          }
-        ]);
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success('Thank you for your message! We will get back to you within 24 hours.');
-      
-      // Reset form
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-    } catch (error) {
-      console.error('Error submitting contact form:', error);
-      toast.error('Failed to send message. Please try again or contact us directly.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  return <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-1">
         <section className="py-16 bg-gray-50">
@@ -85,73 +20,35 @@ const Contact = () => {
               <div className="lg:col-span-2">
                 <div className="bg-white p-8 rounded-lg shadow-md">
                   <h2 className="text-2xl font-semibold mb-6">Send Us a Message</h2>
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <label htmlFor="name" className="block text-sm font-medium mb-2">
-                          Your Name *
+                          Your Name
                         </label>
-                        <Input 
-                          id="name" 
-                          name="name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          placeholder="John Doe" 
-                          required
-                          disabled={isSubmitting}
-                        />
+                        <Input id="name" placeholder="John Doe" />
                       </div>
                       <div>
                         <label htmlFor="email" className="block text-sm font-medium mb-2">
-                          Email Address *
+                          Email Address
                         </label>
-                        <Input 
-                          id="email" 
-                          name="email"
-                          type="email" 
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          placeholder="john@example.com" 
-                          required
-                          disabled={isSubmitting}
-                        />
+                        <Input id="email" type="email" placeholder="john@example.com" />
                       </div>
                     </div>
                     <div>
                       <label htmlFor="subject" className="block text-sm font-medium mb-2">
-                        Subject *
+                        Subject
                       </label>
-                      <Input 
-                        id="subject" 
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleInputChange}
-                        placeholder="How can we help you?" 
-                        required
-                        disabled={isSubmitting}
-                      />
+                      <Input id="subject" placeholder="How can we help you?" />
                     </div>
                     <div>
                       <label htmlFor="message" className="block text-sm font-medium mb-2">
-                        Your Message *
+                        Your Message
                       </label>
-                      <Textarea 
-                        id="message" 
-                        name="message"
-                        rows={6} 
-                        value={formData.message}
-                        onChange={handleInputChange}
-                        placeholder="Enter your message here..." 
-                        required
-                        disabled={isSubmitting}
-                      />
+                      <Textarea id="message" rows={6} placeholder="Enter your message here..." />
                     </div>
-                    <Button 
-                      type="submit" 
-                      className="w-full bg-ifind-aqua hover:bg-ifind-teal"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? 'Sending...' : 'Send Message'}
+                    <Button type="submit" className="w-full bg-ifind-aqua hover:bg-ifind-teal">
+                      Send Message
                     </Button>
                   </form>
                 </div>
@@ -213,8 +110,6 @@ const Contact = () => {
         </section>
       </main>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Contact;
