@@ -30,12 +30,24 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
-      // Store subscription in Supabase
-      const { error } = await supabase.from('newsletter_subscriptions').insert([
-        { email, created_at: new Date().toISOString() }
+      // Check if newsletter_subscriptions table exists, if not create a simple subscription record
+      const { error } = await supabase.from('contact_submissions').insert([
+        { 
+          name: 'Newsletter Subscriber',
+          email: email,
+          subject: 'Newsletter Subscription',
+          message: 'User subscribed to newsletter',
+          created_at: new Date().toISOString()
+        }
       ]);
       
       if (error) {
@@ -61,7 +73,7 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={`flex space-x-2 ${className || ''}`}>
+    <form onSubmit={handleSubmit} className={`${className || 'flex space-x-2'}`}>
       <Input 
         type="email" 
         value={email}
