@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { ArrowRight, Brain, Heart, Clock, Cloud, ShieldAlert, Star } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -6,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useProgramDetailModal } from '@/hooks/useProgramDetailModal';
 import ProgramDetailModal from '@/components/programs/detail/ProgramDetailModal';
 import { programDetailData } from '@/data/programData';
-
 const HomepageIssueSessions: React.FC = () => {
   const {
     modalState,
@@ -81,7 +79,6 @@ const HomepageIssueSessions: React.FC = () => {
     iconColor: 'text-yellow-500',
     href: '/programs-for-wellness-seekers#issue-based'
   }];
-
   const handleSessionClick = (sessionId: string) => {
     // Get program data for the session
     const sessionData = programDetailData[sessionId as keyof typeof programDetailData];
@@ -89,9 +86,7 @@ const HomepageIssueSessions: React.FC = () => {
       openModal(sessionId, sessionData);
     }
   };
-
-  return (
-    <section className="py-12 bg-gray-50">
+  return <section className="py-12 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="mb-10 text-center">
           <h2 className="text-3xl font-bold mb-2">How Can We Help You Today?</h2>
@@ -99,19 +94,13 @@ const HomepageIssueSessions: React.FC = () => {
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {sessions.map(session => (
-            <div 
-              key={session.id} 
-              className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow" 
-              onClick={() => handleSessionClick(session.id)}
-            >
+          {sessions.map(session => <div key={session.id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col items-center text-center cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleSessionClick(session.id)}>
               <div className={`w-12 h-12 ${session.color} rounded-full flex items-center justify-center mb-3`}>
                 {session.icon}
               </div>
               <h3 className="font-medium mb-1">{session.title}</h3>
               <p className="text-sm text-gray-500 line-clamp-2">{session.description}</p>
-            </div>
-          ))}
+            </div>)}
         </div>
         
         <div className="text-center mt-8">
@@ -123,18 +112,8 @@ const HomepageIssueSessions: React.FC = () => {
         </div>
         
         {/* Program Detail Modal */}
-        <ProgramDetailModal 
-          isOpen={modalState.isOpen} 
-          onClose={closeModal} 
-          programData={modalState.programData} 
-          activeTab={modalState.activeTab} 
-          onTabChange={switchTab} 
-          loading={modalState.loading} 
-          error={modalState.error} 
-        />
+        <ProgramDetailModal isOpen={modalState.isOpen} onClose={closeModal} programData={modalState.programData} activeTab={modalState.activeTab} onTabChange={switchTab} loading={modalState.loading} error={modalState.error} />
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HomepageIssueSessions;
