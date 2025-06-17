@@ -1,6 +1,6 @@
 
 export interface BlogPost {
-  id: number;
+  id: string;
   title: string;
   slug: string;
   imageUrl: string;
@@ -9,9 +9,10 @@ export interface BlogPost {
   content: string;
   summary: string;
   author?: string;
+  readTime?: string;
 }
 
 export interface BlogSettings {
-  featuredPosts: number[];
+  featuredPosts: string[];
   categoriesOrder: string[];
 }

@@ -26,6 +26,7 @@ import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes
 import ProgramsForBusiness from './pages/ProgramsForBusiness';
 import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 import UnifiedAssessment from './pages/UnifiedAssessment';
 import { Toaster } from '@/components/ui/toaster';
 
@@ -58,6 +59,10 @@ function App() {
         <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
         <Route path="/program/:programId" element={<ProgramDetailPage />} />
         
+        {/* Blog Routes */}
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+        
         {/* Assessment Routes */}
         <Route path="/mental-health-assessment" element={<UnifiedAssessment />} />
         <Route path="/emotional-wellness-assessment" element={<UnifiedAssessment />} />
@@ -70,7 +75,6 @@ function App() {
         <Route path="/about-us" element={<AboutUs />} />
         <Route path="/faqs" element={<FAQs />} />
         <Route path="/faq" element={<FAQs />} />
-        <Route path="/blog" element={<Blog />} />
         
         {/* Admin Routes */}
         <Route path="/admin-login" element={<AdminLogin />} />
