@@ -3,8 +3,14 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
+import { Button } from '@/components/ui/button';
+import { servicesData } from '@/components/services/detail/servicesData';
+import { Link } from 'react-router-dom';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const Services = () => {
+  const { ref, isVisible } = useScrollAnimation();
+
   return (
     <>
       <Navbar />
@@ -17,40 +23,72 @@ const Services = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-3">Heart2Heart Listening</h3>
-              <p className="text-gray-600 mb-4">
-                Compassionate listening sessions to help you process your thoughts and feelings.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-3">Therapy Sessions</h3>
-              <p className="text-gray-600 mb-4">
-                Professional therapy sessions with licensed mental health professionals.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-3">Life Coaching</h3>
-              <p className="text-gray-600 mb-4">
-                Goal-oriented coaching to help you achieve your personal and professional objectives.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-3">Guided Meditations</h3>
-              <p className="text-gray-600 mb-4">
-                Structured meditation sessions to promote relaxation and mindfulness.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h3 className="text-xl font-semibold mb-3">Offline Retreats</h3>
-              <p className="text-gray-600 mb-4">
-                Immersive retreat experiences for deep healing and personal growth.
-              </p>
+          <div 
+            ref={ref}
+            className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 transition-all duration-1000 ${
+              isVisible ? 'animate-fade-in' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            {servicesData.map((service, index) => (
+              <div 
+                key={service.id}
+                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group hover:scale-105 ${
+                  isVisible ? 'animate-fade-in' : 'opacity-0'
+                }`}
+                style={{ animationDelay: `${index * 150}ms` }}
+              >
+                <div className="relative h-48 overflow-hidden">
+                  <img 
+                    src={service.image} 
+                    alt={service.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className={`absolute top-4 left-4 p-3 rounded-full ${service.color} shadow-lg`}>
+                    {service.icon}
+                  </div>
+                </div>
+                
+                <div className="p-6">
+                  <h3 className={`text-xl font-semibold mb-3 ${service.textColor}`}>
+                    {service.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4 line-clamp-3">
+                    {service.description}
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-500">{service.duration}</span>
+                    <Link to={`/services/${service.id}`}>
+                      <Button 
+                        className={`${service.buttonColor} text-white hover:opacity-90 transition-opacity`}
+                        size="sm"
+                      >
+                        Learn More
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Call to Action Section */}
+          <div className="mt-16 text-center bg-gradient-to-r from-ifind-aqua to-ifind-teal rounded-xl p-8 text-white">
+            <h2 className="text-2xl font-bold mb-4">Ready to Start Your Wellness Journey?</h2>
+            <p className="text-lg mb-6 opacity-90">
+              Choose a service that resonates with you and take the first step towards better mental health.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link to="/user-signup">
+                <Button className="bg-white text-ifind-aqua hover:bg-ifind-offwhite transition-colors">
+                  Get Started Today
+                </Button>
+              </Link>
+              <Link to="/contact">
+                <Button variant="outline" className="border-white text-white hover:bg-white hover:text-ifind-aqua transition-colors">
+                  Contact Us
+                </Button>
+              </Link>
             </div>
           </div>
         </Container>
