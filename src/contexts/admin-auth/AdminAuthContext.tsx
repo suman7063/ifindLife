@@ -1,23 +1,69 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Session } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 
-interface AdminUser {
+// Define types for AdminUser and related interfaces
+export interface AdminUser {
   id: string;
   username: string;
+  email: string;
   role: 'admin' | 'superadmin';
+  permissions: AdminPermissions;
+  lastLogin?: string;
+  createdAt?: string;
 }
 
-interface AdminAuthContextType {
-  currentUser: AdminUser | null;
+export type AdminRole = 'admin' | 'superadmin';
+
+export interface AdminPermissions {
+  canManageUsers?: boolean;
+  canManageExperts?: boolean;
+  canManageContent?: boolean;
+  canManageServices?: boolean;
+  canManagePrograms?: boolean;
+  canViewAnalytics?: boolean;
+  canDeleteContent?: boolean;
+  canApproveExperts?: boolean;
+  canManageBlog?: boolean;
+  canManageTestimonials?: boolean;
+}
+
+export interface AdminAuthContextType {
+  // User and session state
+  user: AdminUser | null;
+  session: Session | null;
+  loading: boolean;
+  error: Error | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-  login: (username: string, password: string) => Promise<boolean>;
+  
+  // Auth methods
+  login: (usernameOrEmail: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
+  
+  // Role checking
+  checkRole: (role: AdminRole) => boolean;
+  
+  // Legacy properties (for backward compatibility)
+  currentUser: AdminUser | null;
+  isSuperAdmin: (user: AdminUser | null) => boolean;
+  adminUsers: AdminUser[];
+  permissions: AdminPermissions;
+  isLoading: boolean;
+  
+  // Admin user management
+  addAdmin: (admin: Omit<AdminUser, 'id' | 'createdAt'>) => void;
+  removeAdmin: (adminId: string) => void;
+  updateAdminPermissions: (adminId: string, permissions: Partial<AdminPermissions>) => void;
+  hasPermission: (user: AdminUser | null, permission: keyof AdminPermissions) => boolean;
+  getAdminById: (id: string) => AdminUser | undefined;
+  updateAdminRole: (adminId: string, role: AdminRole) => void;
 }
 
+// Create the context
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
+// Hook to use the admin auth context
 export const useAdminAuth = () => {
   const context = useContext(AdminAuthContext);
   if (context === undefined) {
@@ -26,16 +72,60 @@ export const useAdminAuth = () => {
   return context;
 };
 
+// Default admin users for demo purposes
+const defaultAdminUsers: AdminUser[] = [
+  {
+    id: 'admin_1',
+    username: 'admin',
+    email: 'admin@ifindlife.com',
+    role: 'superadmin',
+    permissions: {
+      canManageUsers: true,
+      canManageExperts: true,
+      canManageContent: true,
+      canManageServices: true,
+      canManagePrograms: true,
+      canViewAnalytics: true,
+      canDeleteContent: true,
+      canApproveExperts: true,
+      canManageBlog: true,
+      canManageTestimonials: true
+    },
+    lastLogin: new Date().toISOString()
+  },
+  {
+    id: 'admin_2',
+    username: 'superadmin',
+    email: 'superadmin@ifindlife.com',
+    role: 'superadmin',
+    permissions: {
+      canManageUsers: true,
+      canManageExperts: true,
+      canManageContent: true,
+      canManageServices: true,
+      canManagePrograms: true,
+      canViewAnalytics: true,
+      canDeleteContent: true,
+      canApproveExperts: true,
+      canManageBlog: true,
+      canManageTestimonials: true
+    }
+  }
+];
+
 interface AdminAuthProviderProps {
   children: ReactNode;
 }
 
 export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<AdminUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>(defaultAdminUsers);
 
+  // Check for existing admin session
   useEffect(() => {
-    // Check for existing admin session
     const checkSession = () => {
       try {
         const storedUser = localStorage.getItem('adminUser');
@@ -46,7 +136,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
           const expiry = parseInt(sessionExpiry);
           
           if (now < expiry) {
-            setCurrentUser(JSON.parse(storedUser));
+            const adminUser = JSON.parse(storedUser);
+            setUser(adminUser);
           } else {
             // Session expired
             localStorage.removeItem('adminUser');
@@ -58,7 +149,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         localStorage.removeItem('adminUser');
         localStorage.removeItem('adminSessionExpiry');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
@@ -68,6 +159,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
   const login = async (username: string, password: string): Promise<boolean> => {
     try {
       console.log('AdminAuth: Attempting login for:', username);
+      setLoading(true);
+      setError(null);
       
       // Simple credential check - in production, this should be against your backend
       const validCredentials = [
@@ -76,15 +169,40 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         { username: 'test', password: 'test', role: 'admin' as const }
       ];
       
-      const user = validCredentials.find(
+      const credential = validCredentials.find(
         cred => cred.username === username && cred.password === password
       );
       
-      if (user) {
+      if (credential) {
         const adminUser: AdminUser = {
-          id: `admin_${user.username}`,
-          username: user.username,
-          role: user.role
+          id: `admin_${credential.username}`,
+          username: credential.username,
+          email: `${credential.username}@ifindlife.com`,
+          role: credential.role,
+          permissions: credential.role === 'superadmin' ? {
+            canManageUsers: true,
+            canManageExperts: true,
+            canManageContent: true,
+            canManageServices: true,
+            canManagePrograms: true,
+            canViewAnalytics: true,
+            canDeleteContent: true,
+            canApproveExperts: true,
+            canManageBlog: true,
+            canManageTestimonials: true
+          } : {
+            canManageUsers: false,
+            canManageExperts: true,
+            canManageContent: true,
+            canManageServices: true,
+            canManagePrograms: true,
+            canViewAnalytics: true,
+            canDeleteContent: false,
+            canApproveExperts: false,
+            canManageBlog: true,
+            canManageTestimonials: true
+          },
+          lastLogin: new Date().toISOString()
         };
         
         // Set session expiry (24 hours)
@@ -93,7 +211,7 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
         localStorage.setItem('adminUser', JSON.stringify(adminUser));
         localStorage.setItem('adminSessionExpiry', expiryTime.toString());
         
-        setCurrentUser(adminUser);
+        setUser(adminUser);
         
         console.log('AdminAuth: Login successful for:', username);
         toast.success('Admin login successful');
@@ -105,8 +223,11 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
       }
     } catch (error) {
       console.error('AdminAuth: Login error:', error);
+      setError(error as Error);
       toast.error('Login failed. Please try again.');
       return false;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,7 +235,8 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
     try {
       localStorage.removeItem('adminUser');
       localStorage.removeItem('adminSessionExpiry');
-      setCurrentUser(null);
+      setUser(null);
+      setSession(null);
       toast.success('Logged out successfully');
       return true;
     } catch (error) {
@@ -124,12 +246,75 @@ export const AdminAuthProvider: React.FC<AdminAuthProviderProps> = ({ children }
     }
   };
 
+  const checkRole = (role: AdminRole): boolean => {
+    return user?.role === role || user?.role === 'superadmin';
+  };
+
+  const isSuperAdmin = (user: AdminUser | null): boolean => {
+    return user?.role === 'superadmin';
+  };
+
+  const hasPermission = (user: AdminUser | null, permission: keyof AdminPermissions): boolean => {
+    if (!user) return false;
+    if (isSuperAdmin(user)) return true;
+    return user.permissions[permission] === true;
+  };
+
+  const addAdmin = (adminData: Omit<AdminUser, 'id' | 'createdAt'>) => {
+    const newAdmin: AdminUser = {
+      ...adminData,
+      id: `admin_${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    setAdminUsers(prev => [...prev, newAdmin]);
+  };
+
+  const removeAdmin = (adminId: string) => {
+    setAdminUsers(prev => prev.filter(admin => admin.id !== adminId));
+  };
+
+  const updateAdminPermissions = (adminId: string, permissions: Partial<AdminPermissions>) => {
+    setAdminUsers(prev => prev.map(admin => 
+      admin.id === adminId 
+        ? { ...admin, permissions: { ...admin.permissions, ...permissions } }
+        : admin
+    ));
+  };
+
+  const getAdminById = (id: string): AdminUser | undefined => {
+    return adminUsers.find(admin => admin.id === id);
+  };
+
+  const updateAdminRole = (adminId: string, role: AdminRole) => {
+    setAdminUsers(prev => prev.map(admin => 
+      admin.id === adminId ? { ...admin, role } : admin
+    ));
+  };
+
   const value: AdminAuthContextType = {
-    currentUser,
-    isAuthenticated: !!currentUser,
-    isLoading,
+    user,
+    session,
+    loading,
+    error,
+    isAuthenticated: !!user,
     login,
-    logout
+    logout,
+    checkRole,
+    
+    // Legacy properties
+    currentUser: user,
+    isSuperAdmin,
+    adminUsers,
+    permissions: user?.permissions || {},
+    isLoading: loading,
+    
+    // Admin user management
+    addAdmin,
+    removeAdmin,
+    updateAdminPermissions,
+    hasPermission,
+    getAdminById,
+    updateAdminRole
   };
 
   return (
