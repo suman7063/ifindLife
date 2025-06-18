@@ -20,18 +20,18 @@ const MindfulnessCommunitySection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 items-stretch gap-12">
-          {/* Left - Image */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 items-center gap-12">
+          {/* Left - Image with improved sizing */}
           <div className="w-full">
             <img 
               src="/lovable-uploads/7f8f5b16-65a3-4c35-b438-d5269980e6db.png" 
               alt="Happy community members" 
-              className="rounded-lg shadow-lg w-full h-auto" 
+              className="rounded-lg shadow-lg w-full h-64 md:h-80 lg:h-96 object-cover" 
             />
           </div>
           
-          {/* Right - Content - Height matched to image with proper vertical alignment */}
-          <div className="w-full flex flex-col justify-between space-y-6 lg:py-8">
+          {/* Right - Content with proper vertical alignment */}
+          <div className="w-full flex flex-col justify-center space-y-6">
             {/* Daily Activities Newsletter */}
             <div className="bg-white rounded-lg p-6 border border-purple-200 flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
