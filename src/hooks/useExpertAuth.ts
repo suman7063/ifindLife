@@ -2,21 +2,13 @@
 import { useContext } from 'react';
 import { AuthContext } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 export const useExpertAuth = () => {
-  // Instead of throwing an error if auth context isn't available, provide a fallback
-  let auth;
-  
-  try {
-    auth = useContext(AuthContext);
-  } catch (error) {
-    console.error('Error accessing AuthContext:', error);
-    auth = null;
-  }
+  const auth = useContext(AuthContext);
   
   if (!auth) {
     console.error('useExpertAuth must be used within an AuthProvider');
-    // Return a default context with empty values instead of throwing
     return {
       currentExpert: null,
       isAuthenticated: false,
@@ -39,48 +31,44 @@ export const useExpertAuth = () => {
     };
   }
   
-  // Enhanced debug logging - no Agora references
-  console.log('Expert auth state (pure auth):', {
+  console.log('Expert auth state:', {
     isAuthenticated: auth.isAuthenticated,
     hasExpertProfile: !!auth.expertProfile,
     role: auth.role,
     isLoading: auth.isLoading
   });
   
-  // Create a wrapped login function that provides better feedback
   const handleExpertLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password');
       return false;
     }
     
-    // Make sure login function exists in auth context
-    if (!auth.login || typeof auth.login !== 'function') {
-      console.error('Expert login function not available:', { 
-        authAvailable: !!auth,
-        loginType: typeof auth.login,
-        authKeys: Object.keys(auth)
-      });
-      toast.error('Authentication service is temporarily unavailable');
-      return false;
-    }
-    
-    console.log('Expert login function called with:', { email });
     try {
+      console.log('Expert login attempt for:', email);
+      
       // Set session type to expert BEFORE login attempt
       localStorage.setItem('sessionType', 'expert');
       localStorage.setItem('preferredRole', 'expert');
       
-      // Ensure we explicitly set asExpert to true
-      const success = await auth.login(email, password, { asExpert: true });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (success) {
-        console.log('Expert login successful');
-      } else {
-        console.error('Expert login failed');
+      if (error) {
+        console.error('Expert login error:', error);
+        toast.error(error.message || 'Login failed');
+        return false;
       }
       
-      return success;
+      if (data.user) {
+        console.log('Expert login successful');
+        toast.success('Login successful!');
+        return true;
+      }
+      
+      return false;
     } catch (error) {
       console.error('Error during expert login:', error);
       toast.error('An unexpected error occurred during login');

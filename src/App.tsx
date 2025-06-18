@@ -7,7 +7,7 @@ import UserSignup from './pages/UserRegister';
 import ExpertLogin from './pages/ExpertLogin';
 import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
-import UserDashboard from './pages/UserDashboardPages';
+import UserDashboard from './pages/UserDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/admin/Testing';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
@@ -47,7 +47,7 @@ function App() {
         <Route path="/expert-signup" element={<ExpertSignup />} />
         <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
         
-        {/* User Routes */}
+        {/* User Routes - Fixed routing structure */}
         <Route path="/user-login" element={<UserLogin />} />
         <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/user-dashboard/*" element={<UserDashboard />} />
