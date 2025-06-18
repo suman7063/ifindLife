@@ -33,6 +33,7 @@ interface EnhancedUnifiedAuthContextType {
   // Auth actions with protection
   login: (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }) => Promise<boolean>;
   logout: () => Promise<void>;
+  registerExpert: (email: string, password: string, expertData: Partial<ExpertProfile>) => Promise<boolean>;
   
   // Auth protection utilities
   startAuthProtection: (operationId: string, type?: 'video-call' | 'booking' | 'payment') => void;
@@ -189,6 +190,79 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
     }
   };
 
+  // Expert registration method
+  const registerExpert = async (email: string, password: string, expertData: Partial<ExpertProfile>): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // First create the user account with Supabase Auth
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Expert registration error:', error);
+        setError(error.message);
+        toast.error(error.message);
+        return false;
+      }
+
+      if (data.user) {
+        // Convert experience to string if it's a number
+        const experience = typeof expertData.experience === 'number' 
+          ? String(expertData.experience) 
+          : expertData.experience || '';
+
+        // Create expert profile with the auth user id
+        const expertProfileData = {
+          auth_id: data.user.id,
+          email,
+          status: 'pending',
+          verified: false,
+          name: expertData.name || '',
+          phone: expertData.phone || '',
+          address: expertData.address || '',
+          city: expertData.city || '',
+          state: expertData.state || '',
+          country: expertData.country || '',
+          specialization: expertData.specialization || '',
+          experience,
+          bio: expertData.bio || '',
+          profile_picture: expertData.profile_picture || '',
+          selected_services: expertData.selected_services || []
+        };
+
+        const { error: profileError } = await supabase
+          .from('expert_accounts')
+          .insert(expertProfileData);
+
+        if (profileError) {
+          console.error('Expert profile creation error:', profileError);
+          setError(`Failed to create expert profile: ${profileError.message}`);
+          toast.error(`Failed to create expert profile: ${profileError.message}`);
+          return false;
+        }
+
+        // Sign out the user after registration
+        await supabase.auth.signOut();
+        
+        toast.success('Expert account created successfully! Your profile is pending approval.');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Expert registration error:', error);
+      setError('Failed to create expert account. Please try again.');
+      toast.error('Failed to create expert account. Please try again.');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Enhanced logout with protection check
   const logout = async (): Promise<void> => {
     try {
@@ -283,6 +357,7 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
     // Auth actions
     login,
     logout,
+    registerExpert,
 
     // Auth protection
     startAuthProtection: startProtection,
