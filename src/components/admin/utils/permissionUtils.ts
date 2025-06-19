@@ -6,7 +6,7 @@ import { AdminUser, AdminPermissions } from '@/contexts/admin-auth/types';
  */
 export const isSuperAdmin = (user: AdminUser | null): boolean => {
   if (!user) return false;
-  return user.role === 'superadmin' || user.role === 'super_admin';
+  return user.role === 'superadmin'; // Fixed: removed comparison with 'super_admin'
 };
 
 /**

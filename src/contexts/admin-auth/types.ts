@@ -9,6 +9,7 @@ export interface AdminUser {
   permissions: AdminPermissions;
   lastLogin?: string;
   createdAt?: string;
+  isActive?: boolean; // Added missing property
 }
 
 export type AdminRole = 'admin' | 'superadmin';
