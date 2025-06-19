@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { AdminUser, AdminRole } from './types';
+import { AdminUser, AdminRole } from '../types';
 
 export const useAdminSession = () => {
   const [session, setSession] = useState<Session | null>(null);
