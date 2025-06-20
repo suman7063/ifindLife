@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unified';
@@ -55,10 +55,16 @@ interface EnhancedUnifiedAuthProviderProps {
   children: React.ReactNode;
 }
 
-export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderProps> = ({ children }) => {
-  // Debug hook calls
-  console.log('EnhancedUnifiedAuthProvider rendering...');
-  
+// Add render counter for performance monitoring
+let renderCount = 0;
+
+const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProviderProps> = ({ children }) => {
+  // Performance monitoring
+  useEffect(() => {
+    renderCount++;
+    console.log('🔒 AuthProvider render count:', renderCount);
+  });
+
   // Core auth state - using React.useState to be explicit
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -75,9 +81,16 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
 
-  // Enhanced session handler with protection awareness
+  // Enhanced session handler with protection awareness and detailed logging
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
-    console.log('🔒 Enhanced auth state change:', { event, hasSession: !!session, isProtected: authProtection.isProtected() });
+    console.log('🔒 Enhanced auth state change:', {
+      event,
+      hasSession: !!session,
+      isProtected: authProtection.isProtected(),
+      userEmail: session?.user?.email || 'No user',
+      sessionId: session?.access_token?.substring(0, 10) || 'No token',
+      timestamp: new Date().toISOString()
+    });
     
     // If auth is currently protected, be more careful about state changes
     if (authProtection.isProtected() && event === 'SIGNED_OUT') {
@@ -102,10 +115,24 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
         const storedSessionType = localStorage.getItem('sessionType') as SessionType;
         setSessionType(storedSessionType);
         
+        console.log('🔒 Auth state update:', {
+          isAuthenticated: !!session,
+          userType: storedSessionType,
+          userId: session.user.id,
+          isLoading: true
+        });
+        
         // Fetch profile based on session type
         await fetchProfileForUser(session.user.id, storedSessionType);
       } else {
         // Clear all profile state
+        console.log('🔒 Auth state cleared:', {
+          isAuthenticated: false,
+          userType: null,
+          userId: null,
+          isLoading: false
+        });
+        
         setSessionType(null);
         setUserProfile(null);
         setExpertProfile(null);
@@ -129,6 +156,7 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
           .eq('id', userId)
           .single();
         setUserProfile(data);
+        console.log('🔒 User profile loaded:', { hasProfile: !!data, userId });
       } else if (type === 'expert') {
         const { data } = await supabase
           .from('experts')
@@ -136,6 +164,7 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
           .eq('id', userId)
           .single();
         setExpertProfile(data);
+        console.log('🔒 Expert profile loaded:', { hasProfile: !!data, userId });
       } else if (type === 'admin') {
         const { data } = await supabase
           .from('admin_users')
@@ -143,14 +172,15 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
           .eq('id', userId)
           .single();
         setAdminProfile(data);
+        console.log('🔒 Admin profile loaded:', { hasProfile: !!data, userId });
       }
     } catch (error) {
       console.error('🔒 Error fetching profile:', error);
     }
   };
 
-  // Enhanced login with auth protection
-  const login = async (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }): Promise<boolean> => {
+  // Enhanced login with auth protection and detailed logging
+  const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }): Promise<boolean> => {
     const operationId = `login_${Date.now()}`;
     
     try {
@@ -162,23 +192,40 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
       const targetSessionType: SessionType = options?.asExpert ? 'expert' : options?.asAdmin ? 'admin' : 'user';
       localStorage.setItem('sessionType', targetSessionType);
 
+      console.log('🔒 Login attempt:', {
+        email,
+        targetSessionType,
+        operationId,
+        timestamp: new Date().toISOString()
+      });
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
       });
 
       if (error) {
-        console.error('🔒 Login error:', error);
+        console.error('🔒 Login error:', {
+          error: error.message,
+          code: error.status,
+          targetSessionType
+        });
         setError(error.message);
         return false;
       }
 
       if (!data.session) {
+        console.error('🔒 Login failed: No session created');
         setError('Login failed - no session created');
         return false;
       }
 
-      console.log('🔒 Login successful with protection');
+      console.log('🔒 Login successful:', {
+        userId: data.user?.id,
+        email: data.user?.email,
+        targetSessionType,
+        hasSession: !!data.session
+      });
       return true;
     } catch (error) {
       console.error('🔒 Login error:', error);
@@ -188,13 +235,15 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
       setIsLoading(false);
       endProtection(operationId);
     }
-  };
+  }, [startProtection, endProtection]);
 
   // Expert registration method
-  const registerExpert = async (email: string, password: string, expertData: Partial<ExpertProfile>): Promise<boolean> => {
+  const registerExpert = useCallback(async (email: string, password: string, expertData: Partial<ExpertProfile>): Promise<boolean> => {
     try {
       setIsLoading(true);
       setError(null);
+
+      console.log('🔒 Expert registration attempt:', { email });
 
       // First create the user account with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
@@ -203,7 +252,7 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
       });
 
       if (error) {
-        console.error('Expert registration error:', error);
+        console.error('🔒 Expert registration error:', error);
         setError(error.message);
         toast.error(error.message);
         return false;
@@ -239,7 +288,7 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
           .insert(expertProfileData);
 
         if (profileError) {
-          console.error('Expert profile creation error:', profileError);
+          console.error('🔒 Expert profile creation error:', profileError);
           setError(`Failed to create expert profile: ${profileError.message}`);
           toast.error(`Failed to create expert profile: ${profileError.message}`);
           return false;
@@ -248,23 +297,24 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
         // Sign out the user after registration
         await supabase.auth.signOut();
         
+        console.log('🔒 Expert registration successful:', { email });
         toast.success('Expert account created successfully! Your profile is pending approval.');
         return true;
       }
 
       return false;
     } catch (error) {
-      console.error('Expert registration error:', error);
+      console.error('🔒 Expert registration error:', error);
       setError('Failed to create expert account. Please try again.');
       toast.error('Failed to create expert account. Please try again.');
       return false;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  // Enhanced logout with protection check
-  const logout = async (): Promise<void> => {
+  // Enhanced logout with protection check and detailed logging
+  const logout = useCallback(async (): Promise<void> => {
     try {
       // Check if logout is safe
       if (authProtection.isProtected()) {
@@ -282,6 +332,12 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
       }
 
       setIsLoading(true);
+      
+      console.log('🔒 Logout initiated:', {
+        currentSessionType: sessionType,
+        hasUser: !!user,
+        timestamp: new Date().toISOString()
+      });
       
       const { error } = await supabase.auth.signOut();
       
@@ -313,7 +369,7 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [sessionType, user]);
 
   // Initialize auth state
   useEffect(() => {
@@ -333,10 +389,11 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
   }, [handleAuthStateChange]);
 
   // Compute current active profiles based on session type for backward compatibility
-  const currentAdmin = sessionType === 'admin' ? adminProfile : null;
-  const currentExpert = sessionType === 'expert' ? expertProfile : null;
+  const currentAdmin = useMemo(() => sessionType === 'admin' ? adminProfile : null, [sessionType, adminProfile]);
+  const currentExpert = useMemo(() => sessionType === 'expert' ? expertProfile : null, [sessionType, expertProfile]);
 
-  const value: EnhancedUnifiedAuthContextType = {
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo((): EnhancedUnifiedAuthContextType => ({
     // Core auth state
     isAuthenticated,
     isLoading,
@@ -363,18 +420,40 @@ export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderPr
     startAuthProtection: startProtection,
     endAuthProtection: endProtection,
     isAuthProtected: isProtected
-  };
+  }), [
+    isAuthenticated,
+    isLoading,
+    user,
+    session,
+    sessionType,
+    error,
+    userProfile,
+    expertProfile,
+    adminProfile,
+    currentAdmin,
+    currentExpert,
+    login,
+    logout,
+    registerExpert,
+    startProtection,
+    endProtection,
+    isProtected
+  ]);
 
   console.log('🔒 EnhancedUnifiedAuthProvider providing value:', { 
     isAuthenticated, 
     isLoading, 
     hasUser: !!user, 
-    sessionType 
+    sessionType,
+    renderCount
   });
 
   return (
-    <EnhancedUnifiedAuthContext.Provider value={value}>
+    <EnhancedUnifiedAuthContext.Provider value={contextValue}>
       {children}
     </EnhancedUnifiedAuthContext.Provider>
   );
 };
+
+// Wrap the component with React.memo to prevent unnecessary re-renders
+export const EnhancedUnifiedAuthProvider = React.memo(EnhancedUnifiedAuthProviderComponent);
