@@ -123,6 +123,33 @@ const NavbarComponent = () => {
     logout
   } = useEnhancedUnifiedAuth();
 
+  // DEBUG: Add DOM verification effect
+  useEffect(() => {
+    console.log('🔒 Navbar DOM verification - Component mounted');
+    const checkNavbarInDOM = () => {
+      const navElement = document.querySelector('[data-navbar="main"]');
+      console.log('🔒 Navbar DOM element found:', !!navElement);
+      if (navElement) {
+        const computedStyles = window.getComputedStyle(navElement);
+        console.log('🔒 Navbar computed styles:', {
+          display: computedStyles.display,
+          visibility: computedStyles.visibility,
+          opacity: computedStyles.opacity,
+          height: computedStyles.height,
+          width: computedStyles.width,
+          position: computedStyles.position,
+          top: computedStyles.top,
+          zIndex: computedStyles.zIndex,
+          backgroundColor: computedStyles.backgroundColor
+        });
+      }
+    };
+    
+    // Check immediately and after a short delay
+    checkNavbarInDOM();
+    setTimeout(checkNavbarInDOM, 100);
+  }, []);
+
   // Memoize compatible user object for navbar components
   const currentUser = useMemo(() => 
     createCompatibleUser(userProfile, expertProfile, adminProfile, sessionType),
@@ -186,9 +213,11 @@ const NavbarComponent = () => {
     }
   };
 
-  // Memoize navbar background calculation
+  // Enhanced navbar background calculation with debug
   const navbarBackground = useMemo(() => {
-    return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
+    const bgClass = scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
+    console.log('🔒 Navbar background class:', bgClass);
+    return bgClass;
   }, [scrolled]);
 
   // Enhanced authentication state logging for debugging
@@ -205,10 +234,30 @@ const NavbarComponent = () => {
     timestamp: new Date().toISOString()
   });
 
-  // Show loading state only briefly
+  // DEBUG STYLING - Force navbar to be visible
+  const debugStyle = {
+    backgroundColor: '#ffffff',
+    minHeight: '80px',
+    width: '100%',
+    display: 'block',
+    visibility: 'visible',
+    opacity: 1,
+    zIndex: 50,
+    position: 'sticky' as const,
+    top: 0,
+    border: '1px solid #e5e7eb',
+    boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none'
+  };
+
+  // Show enhanced loading state with debug info
   if (isLoading) {
+    console.log('🔒 Navbar showing loading state');
     return (
-      <div className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}>
+      <div 
+        data-navbar="main" 
+        style={debugStyle}
+        className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
           <div className="flex items-center gap-2 relative">
             <Link to="/" className="flex items-center">
@@ -218,15 +267,24 @@ const NavbarComponent = () => {
               BETA
             </span>
           </div>
-          <div className="text-gray-500">Loading...</div>
+          <div className="text-gray-500 flex items-center gap-2">
+            <div className="animate-pulse">Loading...</div>
+            <div className="text-xs text-gray-400">Auth: {navbarRenderCount}</div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Normal navbar - shows appropriate state based on authentication
+  console.log('🔒 Navbar rendering main content');
+
+  // Normal navbar with debug styling - shows appropriate state based on authentication
   return (
-    <div className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}>
+    <div 
+      data-navbar="main"
+      style={debugStyle}
+      className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}
+    >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
         <div className="flex items-center gap-2 relative">
           <Link to="/" className="flex items-center">
@@ -256,6 +314,14 @@ const NavbarComponent = () => {
           sessionType={navbarSessionType} 
           isLoggingOut={false} 
         />
+        
+        {/* DEBUG INFO - Remove this after fixing */}
+        <div className="fixed top-20 right-0 bg-red-100 p-2 text-xs z-50 border border-red-300">
+          <div>Renders: {navbarRenderCount}</div>
+          <div>Auth: {Boolean(isAuthenticated).toString()}</div>
+          <div>Loading: {Boolean(isLoading).toString()}</div>
+          <div>Type: {sessionType || 'none'}</div>
+        </div>
       </div>
     </div>
   );
