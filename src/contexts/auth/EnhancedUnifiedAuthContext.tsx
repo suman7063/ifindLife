@@ -81,6 +81,30 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
 
+  // OPTIMIZED: Batch state updates to reduce re-renders
+  const updateAuthState = useCallback((updates: {
+    session?: Session | null;
+    user?: User | null;
+    isAuthenticated?: boolean;
+    sessionType?: SessionType;
+    userProfile?: UserProfile | null;
+    expertProfile?: ExpertProfile | null;
+    adminProfile?: AdminProfile | null;
+    isLoading?: boolean;
+    error?: string | null;
+  }) => {
+    // Batch all state updates in a single callback
+    setSession(updates.session !== undefined ? updates.session : (prev) => prev);
+    setUser(updates.user !== undefined ? updates.user : (prev) => prev);
+    setIsAuthenticated(updates.isAuthenticated !== undefined ? updates.isAuthenticated : (prev) => prev);
+    setSessionType(updates.sessionType !== undefined ? updates.sessionType : (prev) => prev);
+    setUserProfile(updates.userProfile !== undefined ? updates.userProfile : (prev) => prev);
+    setExpertProfile(updates.expertProfile !== undefined ? updates.expertProfile : (prev) => prev);
+    setAdminProfile(updates.adminProfile !== undefined ? updates.adminProfile : (prev) => prev);
+    setIsLoading(updates.isLoading !== undefined ? updates.isLoading : (prev) => prev);
+    setError(updates.error !== undefined ? updates.error : (prev) => prev);
+  }, []);
+
   // FIXED: Add loading timeout to prevent indefinite loading
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
@@ -118,19 +142,23 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     }
 
     try {
-      setSession(session);
-      setUser(session?.user || null);
-      setIsAuthenticated(!!session);
-      
       if (session?.user) {
         // Determine session type and fetch appropriate profile
         const storedSessionType = localStorage.getItem('sessionType') as SessionType;
-        setSessionType(storedSessionType);
         
         console.log('🔒 Auth state update:', {
           isAuthenticated: !!session,
           userType: storedSessionType,
           userId: session.user.id,
+          isLoading: true
+        });
+        
+        // Initial state update with session data
+        updateAuthState({
+          session,
+          user: session.user,
+          isAuthenticated: !!session,
+          sessionType: storedSessionType,
           isLoading: true
         });
         
@@ -145,19 +173,25 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           isLoading: false
         });
         
-        setSessionType(null);
-        setUserProfile(null);
-        setExpertProfile(null);
-        setAdminProfile(null);
+        updateAuthState({
+          session: null,
+          user: null,
+          isAuthenticated: false,
+          sessionType: null,
+          userProfile: null,
+          expertProfile: null,
+          adminProfile: null,
+          isLoading: false
+        });
       }
     } catch (error) {
       console.error('🔒 Error in auth state change handler:', error);
-      setError('Authentication state error');
-    } finally {
-      // FIXED: Always complete loading after auth state change
-      setIsLoading(false);
+      updateAuthState({
+        error: 'Authentication state error',
+        isLoading: false
+      });
     }
-  }, []);
+  }, [updateAuthState]);
 
   // Fetch profile data for authenticated user
   const fetchProfileForUser = async (userId: string, type: SessionType) => {
@@ -168,7 +202,10 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           .select('*')
           .eq('id', userId)
           .single();
-        setUserProfile(data);
+        updateAuthState({
+          userProfile: data,
+          isLoading: false
+        });
         console.log('🔒 User profile loaded:', { hasProfile: !!data, userId });
       } else if (type === 'expert') {
         const { data } = await supabase
@@ -176,7 +213,10 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           .select('*')
           .eq('id', userId)
           .single();
-        setExpertProfile(data);
+        updateAuthState({
+          expertProfile: data,
+          isLoading: false
+        });
         console.log('🔒 Expert profile loaded:', { hasProfile: !!data, userId });
       } else if (type === 'admin') {
         const { data } = await supabase
@@ -184,11 +224,17 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           .select('*')
           .eq('id', userId)
           .single();
-        setAdminProfile(data);
+        updateAuthState({
+          adminProfile: data,
+          isLoading: false
+        });
         console.log('🔒 Admin profile loaded:', { hasProfile: !!data, userId });
+      } else {
+        updateAuthState({ isLoading: false });
       }
     } catch (error) {
       console.error('🔒 Error fetching profile:', error);
+      updateAuthState({ isLoading: false });
     }
   };
 
@@ -198,8 +244,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     
     try {
       startProtection(operationId, 'booking');
-      setIsLoading(true);
-      setError(null);
+      updateAuthState({ isLoading: true, error: null });
 
       // Determine session type
       const targetSessionType: SessionType = options?.asExpert ? 'expert' : options?.asAdmin ? 'admin' : 'user';
@@ -223,13 +268,13 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           code: error.status,
           targetSessionType
         });
-        setError(error.message);
+        updateAuthState({ error: error.message, isLoading: false });
         return false;
       }
 
       if (!data.session) {
         console.error('🔒 Login failed: No session created');
-        setError('Login failed - no session created');
+        updateAuthState({ error: 'Login failed - no session created', isLoading: false });
         return false;
       }
 
@@ -242,19 +287,17 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
       return true;
     } catch (error) {
       console.error('🔒 Login error:', error);
-      setError('Login failed');
+      updateAuthState({ error: 'Login failed', isLoading: false });
       return false;
     } finally {
-      setIsLoading(false);
       endProtection(operationId);
     }
-  }, [startProtection, endProtection]);
+  }, [startProtection, endProtection, updateAuthState]);
 
   // Expert registration method
   const registerExpert = useCallback(async (email: string, password: string, expertData: Partial<ExpertProfile>): Promise<boolean> => {
     try {
-      setIsLoading(true);
-      setError(null);
+      updateAuthState({ isLoading: true, error: null });
 
       console.log('🔒 Expert registration attempt:', { email });
 
@@ -266,7 +309,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
 
       if (error) {
         console.error('🔒 Expert registration error:', error);
-        setError(error.message);
+        updateAuthState({ error: error.message, isLoading: false });
         toast.error(error.message);
         return false;
       }
@@ -302,7 +345,10 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
 
         if (profileError) {
           console.error('🔒 Expert profile creation error:', profileError);
-          setError(`Failed to create expert profile: ${profileError.message}`);
+          updateAuthState({ 
+            error: `Failed to create expert profile: ${profileError.message}`,
+            isLoading: false 
+          });
           toast.error(`Failed to create expert profile: ${profileError.message}`);
           return false;
         }
@@ -318,13 +364,14 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
       return false;
     } catch (error) {
       console.error('🔒 Expert registration error:', error);
-      setError('Failed to create expert account. Please try again.');
+      updateAuthState({ 
+        error: 'Failed to create expert account. Please try again.',
+        isLoading: false 
+      });
       toast.error('Failed to create expert account. Please try again.');
       return false;
-    } finally {
-      setIsLoading(false);
     }
-  }, []);
+  }, [updateAuthState]);
 
   // Enhanced logout with protection check and detailed logging
   const logout = useCallback(async (): Promise<void> => {
@@ -344,7 +391,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
         }
       }
 
-      setIsLoading(true);
+      updateAuthState({ isLoading: true });
       
       console.log('🔒 Logout initiated:', {
         currentSessionType: sessionType,
@@ -361,13 +408,16 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
       }
 
       // Clear all state
-      setSession(null);
-      setUser(null);
-      setIsAuthenticated(false);
-      setSessionType(null);
-      setUserProfile(null);
-      setExpertProfile(null);
-      setAdminProfile(null);
+      updateAuthState({
+        session: null,
+        user: null,
+        isAuthenticated: false,
+        sessionType: null,
+        userProfile: null,
+        expertProfile: null,
+        adminProfile: null,
+        isLoading: false
+      });
       
       // Clear stored session type
       localStorage.removeItem('sessionType');
@@ -379,10 +429,8 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     } catch (error) {
       console.error('🔒 Logout error:', error);
       toast.error('Logout failed');
-    } finally {
-      setIsLoading(false);
     }
-  }, [sessionType, user]);
+  }, [sessionType, user, updateAuthState]);
 
   // Initialize auth state
   useEffect(() => {
