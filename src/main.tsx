@@ -31,18 +31,20 @@ root.render(
   </StrictMode>
 );
 
-// DEBUG: Additional DOM check after render
+// DEBUG: Additional DOM check after render with proper TypeScript typing
 setTimeout(() => {
   console.log('🔒 Post-render DOM check');
   const navbar = document.querySelector('[data-navbar="main"]');
   console.log('🔒 Navbar element exists:', !!navbar);
   if (navbar) {
+    // Cast to HTMLElement to access offsetHeight and offsetWidth properties
+    const htmlNavbar = navbar as HTMLElement;
     console.log('🔒 Navbar element details:', {
       tagName: navbar.tagName,
       className: navbar.className,
-      offsetHeight: navbar.offsetHeight,
-      offsetWidth: navbar.offsetWidth,
-      visible: navbar.offsetHeight > 0 && navbar.offsetWidth > 0
+      offsetHeight: htmlNavbar.offsetHeight,
+      offsetWidth: htmlNavbar.offsetWidth,
+      visible: htmlNavbar.offsetHeight > 0 && htmlNavbar.offsetWidth > 0
     });
   }
 }, 500);

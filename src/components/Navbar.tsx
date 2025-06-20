@@ -234,8 +234,8 @@ const NavbarComponent = () => {
     timestamp: new Date().toISOString()
   });
 
-  // DEBUG STYLING - Force navbar to be visible
-  const debugStyle = {
+  // DEBUG STYLING - Force navbar to be visible with proper TypeScript typing
+  const debugStyle: React.CSSProperties = {
     backgroundColor: '#ffffff',
     minHeight: '80px',
     width: '100%',
@@ -243,7 +243,7 @@ const NavbarComponent = () => {
     visibility: 'visible',
     opacity: 1,
     zIndex: 50,
-    position: 'sticky' as const,
+    position: 'sticky',
     top: 0,
     border: '1px solid #e5e7eb',
     boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none'
