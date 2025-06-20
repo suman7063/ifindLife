@@ -81,6 +81,18 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
 
+  // FIXED: Add loading timeout to prevent indefinite loading
+  useEffect(() => {
+    const loadingTimeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('🔒 Auth loading timeout reached, forcing completion');
+        setIsLoading(false);
+      }
+    }, 3000); // 3 second timeout
+
+    return () => clearTimeout(loadingTimeout);
+  }, [isLoading]);
+
   // Enhanced session handler with protection awareness and detailed logging
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
     console.log('🔒 Enhanced auth state change:', {
@@ -142,6 +154,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
       console.error('🔒 Error in auth state change handler:', error);
       setError('Authentication state error');
     } finally {
+      // FIXED: Always complete loading after auth state change
       setIsLoading(false);
     }
   }, []);

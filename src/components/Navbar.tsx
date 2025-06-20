@@ -234,28 +234,15 @@ const NavbarComponent = () => {
     timestamp: new Date().toISOString()
   });
 
-  // DEBUG STYLING - Force navbar to be visible with proper TypeScript typing
-  const debugStyle: React.CSSProperties = {
-    backgroundColor: '#ffffff',
-    minHeight: '80px',
-    width: '100%',
-    display: 'block',
-    visibility: 'visible',
-    opacity: 1,
-    zIndex: 50,
-    position: 'sticky',
-    top: 0,
-    border: '1px solid #e5e7eb',
-    boxShadow: scrolled ? '0 1px 3px 0 rgba(0, 0, 0, 0.1)' : 'none'
-  };
+  // FIXED: Show navbar content immediately, don't wait for auth loading
+  // Only show minimal loading state for first few seconds if needed
+  const shouldShowLoadingState = isLoading && navbarRenderCount <= 3;
 
-  // Show enhanced loading state with debug info
-  if (isLoading) {
-    console.log('🔒 Navbar showing loading state');
+  if (shouldShowLoadingState) {
+    console.log('🔒 Navbar showing brief loading state');
     return (
       <div 
         data-navbar="main" 
-        style={debugStyle}
         className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}
       >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
@@ -278,11 +265,10 @@ const NavbarComponent = () => {
 
   console.log('🔒 Navbar rendering main content');
 
-  // Normal navbar with debug styling - shows appropriate state based on authentication
+  // FIXED: Always render main navbar content
   return (
     <div 
       data-navbar="main"
-      style={debugStyle}
       className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
