@@ -32,39 +32,51 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   // Get enhanced unified auth state for more accurate authentication checks
   const enhancedAuth = useEnhancedUnifiedAuth();
 
-  // Memoize auth state to prevent unnecessary re-renders
+  // FIXED: Stable memoization using primitive values only to prevent React Error #310
   const authState = useMemo(() => {
-    const isUserAuthenticated = Boolean(isAuthenticated && !isLoading);
-    const isExpertAuthenticated = Boolean(enhancedAuth.sessionType === 'expert' && enhancedAuth.expert && !isLoading);
-    const isAdminAuthenticated = Boolean(enhancedAuth.sessionType === 'admin' && enhancedAuth.admin && !isLoading);
-    const hasUserData = Boolean(currentUser);
+    // Use only primitive values and null checks to prevent useMemo errors
+    const isUserAuth = Boolean(isAuthenticated && !isLoading);
+    const isExpertAuth = Boolean(enhancedAuth?.sessionType === 'expert' && enhancedAuth?.expert && !isLoading);
+    const isAdminAuth = Boolean(enhancedAuth?.sessionType === 'admin' && enhancedAuth?.admin && !isLoading);
+    const hasUser = Boolean(currentUser);
+    const authLoading = Boolean(isLoading || enhancedAuth?.isLoading);
 
     return {
-      isUserAuthenticated,
-      isExpertAuthenticated,
-      isAdminAuthenticated,
-      hasUserData,
-      isLoading: isLoading || enhancedAuth.isLoading
+      isUserAuthenticated: isUserAuth,
+      isExpertAuthenticated: isExpertAuth,
+      isAdminAuthenticated: isAdminAuth,
+      hasUserData: hasUser,
+      isLoading: authLoading,
+      // Use primitive session type for stable comparison
+      sessionTypeValue: enhancedAuth?.sessionType || 'none'
     };
-  }, [isAuthenticated, isLoading, enhancedAuth.sessionType, enhancedAuth.expert, enhancedAuth.admin, enhancedAuth.isLoading, currentUser]);
+  }, [
+    // FIXED: Use only primitive values as dependencies
+    Boolean(isAuthenticated),
+    Boolean(isLoading),
+    enhancedAuth?.sessionType,
+    Boolean(enhancedAuth?.expert),
+    Boolean(enhancedAuth?.admin),
+    Boolean(enhancedAuth?.isLoading),
+    Boolean(currentUser)
+  ]);
 
-  // Enhanced logging for debugging
-  console.log('NavbarDesktopLinks optimized render with auth state:', {
-    isAuthenticated: Boolean(isAuthenticated),
-    hasCurrentUser: Boolean(currentUser),
-    hasExpertProfile: Boolean(hasExpertProfile),
-    sessionType,
-    isLoggingOut,
-    isLoading,
-    // Enhanced auth state
-    enhancedIsAuthenticated: Boolean(enhancedAuth.isAuthenticated),
-    enhancedSessionType: enhancedAuth.sessionType,
-    enhancedIsLoading: Boolean(enhancedAuth.isLoading),
-    // Computed auth state
-    computedAuthState: authState,
-    currentUserEmail: currentUser?.email || 'null',
-    timestamp: new Date().toISOString()
-  });
+  // Enhanced logging for debugging (only log state changes)
+  const stableLogKey = `${authState.isUserAuthenticated}-${authState.isExpertAuthenticated}-${authState.isLoading}-${authState.sessionTypeValue}`;
+  
+  React.useEffect(() => {
+    console.log('NavbarDesktopLinks auth state stabilized:', {
+      isAuthenticated: authState.isUserAuthenticated,
+      sessionType: authState.sessionTypeValue,
+      isLoading: authState.isLoading,
+      hasCurrentUser: authState.hasUserData,
+      hasExpertProfile: authState.isExpertAuthenticated,
+      hasAdminProfile: authState.isAdminAuthenticated,
+      currentUserEmail: currentUser?.email || 'null',
+      stableKey: stableLogKey,
+      timestamp: new Date().toISOString()
+    });
+  }, [stableLogKey, currentUser?.email, authState]);
 
   // Show loading state to prevent premature "no auth" flash
   if (authState.isLoading) {
@@ -111,7 +123,7 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
     );
   }
 
-  // Memoize auth component determination
+  // FIXED: Stable auth component determination with proper memoization
   const authComponent = useMemo(() => {
     if (authState.isExpertAuthenticated) {
       console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
@@ -126,7 +138,17 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
         hasExpertProfile={authState.isExpertAuthenticated} 
       />;
     }
-  }, [authState, expertLogout, isLoggingOut, userLogout, currentUser]);
+  }, [
+    // FIXED: Use stable primitive dependencies
+    authState.isExpertAuthenticated,
+    authState.isAdminAuthenticated,
+    authState.isUserAuthenticated,
+    authState.hasUserData,
+    expertLogout,
+    userLogout,
+    isLoggingOut,
+    currentUser
+  ]);
 
   return (
     <div className="hidden md:flex items-center space-x-4">
@@ -171,7 +193,17 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   );
 };
 
-// Export memoized component to prevent unnecessary re-renders
-const NavbarDesktopLinks = memo(NavbarDesktopLinksComponent);
+// FIXED: Export properly memoized component to prevent unnecessary re-renders
+const NavbarDesktopLinks = memo(NavbarDesktopLinksComponent, (prevProps, nextProps) => {
+  // Custom comparison to prevent unnecessary re-renders
+  return (
+    prevProps.isAuthenticated === nextProps.isAuthenticated &&
+    prevProps.hasExpertProfile === nextProps.hasExpertProfile &&
+    prevProps.sessionType === nextProps.sessionType &&
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.isLoggingOut === nextProps.isLoggingOut &&
+    prevProps.currentUser?.email === nextProps.currentUser?.email
+  );
+});
 
 export default NavbarDesktopLinks;
