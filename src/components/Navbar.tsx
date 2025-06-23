@@ -10,7 +10,7 @@ import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unifi
 // Add render counter for performance monitoring
 let navbarRenderCount = 0;
 
-// Helper function to create a compatible currentUser object
+// FIXED: Stable helper function moved outside component to prevent recreations
 const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: ExpertProfile | null, adminProfile: AdminProfile | null, sessionType: 'user' | 'expert' | 'admin' | null): UserProfile | null => {
   if (sessionType === 'user' && userProfile) {
     return userProfile;
@@ -85,7 +85,7 @@ const NavbarComponent = () => {
   // Use enhanced unified auth context
   const authState = useEnhancedUnifiedAuth();
 
-  // Memoize authentication state to prevent unnecessary re-renders
+  // FIXED: Stable authentication state to prevent excessive re-renders
   const authMemo = useMemo(() => {
     const isAuthenticated = Boolean(authState.isAuthenticated && authState.user && !authState.isLoading);
     const hasExpertProfile = Boolean(authState.sessionType === 'expert' && authState.expert);
@@ -101,7 +101,7 @@ const NavbarComponent = () => {
     };
   }, [authState.isAuthenticated, authState.user, authState.isLoading, authState.sessionType, authState.expert, authState.admin]);
 
-  // Memoize compatible user object
+  // FIXED: Stable compatible user object
   const currentUser = useMemo(() => 
     createCompatibleUser(authState.userProfile, authState.expertProfile, authState.adminProfile, authState.sessionType),
     [authState.userProfile, authState.expertProfile, authState.adminProfile, authState.sessionType]
@@ -115,21 +115,20 @@ const NavbarComponent = () => {
     return 'user';
   }, [authState.sessionType]);
 
-  // Memoized scroll effect
+  // FIXED: Stable scroll effect with proper cleanup
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
+      setScrolled(isScrolled);
     };
-    window.addEventListener('scroll', handleScroll);
+    
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [scrolled]);
+  }, []);
 
-  // Memoized logout handler
+  // FIXED: Stable logout handler with proper error handling
   const handleLogout = useCallback(async (): Promise<boolean> => {
     try {
       console.log("🔒 Navbar: Initiating logout...", {
@@ -153,27 +152,29 @@ const NavbarComponent = () => {
     }
   }, [authState.logout, authState.sessionType, authState.user, navigate]);
 
-  // Memoized navbar background calculation
+  // Stable navbar background calculation
   const navbarBackground = useMemo(() => {
     return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   }, [scrolled]);
 
-  // Enhanced authentication state logging for debugging
-  console.log("🔒 Navbar rendering. Optimized auth state:", {
-    isAuthenticated: authMemo.isAuthenticated,
-    sessionType: authMemo.sessionType,
-    navbarSessionType,
-    isLoading: authMemo.isLoading,
-    hasCurrentUser: Boolean(currentUser),
-    hasExpertProfile: authMemo.hasExpertProfile,
-    hasAdminProfile: authMemo.hasAdminProfile,
-    userEmail: authMemo.user?.email || 'No user',
-    renderCount: navbarRenderCount,
-    timestamp: new Date().toISOString()
-  });
+  // FIXED: Conditional rendering to prevent excessive re-renders during loading
+  const shouldShowLoadingState = authMemo.isLoading && navbarRenderCount <= 2;
 
-  // Show minimal loading state only for first few renders
-  const shouldShowLoadingState = authMemo.isLoading && navbarRenderCount <= 3;
+  // Enhanced authentication state logging for debugging (only in development)
+  if (process.env.NODE_ENV === 'development') {
+    console.log("🔒 Navbar rendering. Optimized auth state:", {
+      isAuthenticated: authMemo.isAuthenticated,
+      sessionType: authMemo.sessionType,
+      navbarSessionType,
+      isLoading: authMemo.isLoading,
+      hasCurrentUser: Boolean(currentUser),
+      hasExpertProfile: authMemo.hasExpertProfile,
+      hasAdminProfile: authMemo.hasAdminProfile,
+      userEmail: authMemo.user?.email || 'No user',
+      renderCount: navbarRenderCount,
+      timestamp: new Date().toISOString()
+    });
+  }
 
   if (shouldShowLoadingState) {
     console.log('🔒 Navbar showing brief loading state');
@@ -193,7 +194,6 @@ const NavbarComponent = () => {
           </div>
           <div className="text-gray-500 flex items-center gap-2">
             <div className="animate-pulse">Loading...</div>
-            <div className="text-xs text-gray-400">Auth: {navbarRenderCount}</div>
           </div>
         </div>
       </div>
@@ -217,13 +217,6 @@ const NavbarComponent = () => {
           </span>
         </div>
         
-        {/* Debug: Show current auth state */}
-        <div className="hidden lg:flex text-xs text-gray-500 absolute left-1/2 transform -translate-x-1/2">
-          Auth: {authMemo.isAuthenticated ? 'Yes' : 'No'} | 
-          Loading: {authMemo.isLoading ? 'Yes' : 'No'} | 
-          Type: {authMemo.sessionType || 'none'}
-        </div>
-        
         <NavbarDesktopLinks 
           isAuthenticated={authMemo.isAuthenticated} 
           currentUser={currentUser} 
@@ -244,21 +237,12 @@ const NavbarComponent = () => {
           sessionType={navbarSessionType} 
           isLoggingOut={false} 
         />
-        
-        {/* DEBUG INFO - Temporary verification */}
-        <div className="fixed top-20 right-0 bg-green-100 p-2 text-xs z-50 border border-green-300">
-          <div>Renders: {navbarRenderCount}</div>
-          <div>Auth: {authMemo.isAuthenticated.toString()}</div>
-          <div>Loading: {authMemo.isLoading.toString()}</div>
-          <div>Type: {authMemo.sessionType || 'none'}</div>
-          <div>User: {currentUser?.email || 'none'}</div>
-        </div>
       </div>
     </div>
   );
 };
 
-// Export memoized component to prevent unnecessary re-renders
+// FIXED: Proper memoization to prevent unnecessary re-renders
 const Navbar = memo(NavbarComponent);
 
 export default Navbar;
