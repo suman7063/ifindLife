@@ -10,8 +10,8 @@ import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unifi
 // Add render counter for performance monitoring
 let navbarRenderCount = 0;
 
-// Memoized helper function to create a compatible currentUser object
-const createCompatibleUser = memo((userProfile: UserProfile | null, expertProfile: ExpertProfile | null, adminProfile: AdminProfile | null, sessionType: 'user' | 'expert' | 'admin' | null): UserProfile | null => {
+// Helper function to create a compatible currentUser object
+const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: ExpertProfile | null, adminProfile: AdminProfile | null, sessionType: 'user' | 'expert' | 'admin' | null): UserProfile | null => {
   if (sessionType === 'user' && userProfile) {
     return userProfile;
   }
@@ -69,7 +69,7 @@ const createCompatibleUser = memo((userProfile: UserProfile | null, expertProfil
   }
   
   return null;
-});
+};
 
 const NavbarComponent = () => {
   // Performance monitoring
