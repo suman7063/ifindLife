@@ -32,9 +32,8 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   // Get enhanced unified auth state for more accurate authentication checks
   const enhancedAuth = useEnhancedUnifiedAuth();
 
-  // FIXED: Stable memoization using primitive values only to prevent React Error #310
+  // FIXED: Ultra-stable memoization using only primitive values
   const authState = useMemo(() => {
-    // Use only primitive values and null checks to prevent useMemo errors
     const isUserAuth = Boolean(isAuthenticated && !isLoading);
     const isExpertAuth = Boolean(enhancedAuth?.sessionType === 'expert' && enhancedAuth?.expert && !isLoading);
     const isAdminAuth = Boolean(enhancedAuth?.sessionType === 'admin' && enhancedAuth?.admin && !isLoading);
@@ -47,11 +46,9 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
       isAdminAuthenticated: isAdminAuth,
       hasUserData: hasUser,
       isLoading: authLoading,
-      // Use primitive session type for stable comparison
       sessionTypeValue: enhancedAuth?.sessionType || 'none'
     };
   }, [
-    // FIXED: Use only primitive values as dependencies
     Boolean(isAuthenticated),
     Boolean(isLoading),
     enhancedAuth?.sessionType,
@@ -61,24 +58,7 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
     Boolean(currentUser)
   ]);
 
-  // Enhanced logging for debugging (only log state changes)
-  const stableLogKey = `${authState.isUserAuthenticated}-${authState.isExpertAuthenticated}-${authState.isLoading}-${authState.sessionTypeValue}`;
-  
-  React.useEffect(() => {
-    console.log('NavbarDesktopLinks auth state stabilized:', {
-      isAuthenticated: authState.isUserAuthenticated,
-      sessionType: authState.sessionTypeValue,
-      isLoading: authState.isLoading,
-      hasCurrentUser: authState.hasUserData,
-      hasExpertProfile: authState.isExpertAuthenticated,
-      hasAdminProfile: authState.isAdminAuthenticated,
-      currentUserEmail: currentUser?.email || 'null',
-      stableKey: stableLogKey,
-      timestamp: new Date().toISOString()
-    });
-  }, [stableLogKey, currentUser?.email, authState]);
-
-  // Show loading state to prevent premature "no auth" flash
+  // FIXED: Show loading state only briefly to prevent flicker
   if (authState.isLoading) {
     return (
       <div className="hidden md:flex items-center space-x-4">
@@ -123,7 +103,7 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
     );
   }
 
-  // FIXED: Stable auth component determination with proper memoization
+  // FIXED: Ultra-stable auth component determination
   const authComponent = useMemo(() => {
     if (authState.isExpertAuthenticated) {
       console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
@@ -139,7 +119,6 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
       />;
     }
   }, [
-    // FIXED: Use stable primitive dependencies
     authState.isExpertAuthenticated,
     authState.isAdminAuthenticated,
     authState.isUserAuthenticated,
@@ -193,9 +172,8 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   );
 };
 
-// FIXED: Export properly memoized component to prevent unnecessary re-renders
+// FIXED: Proper memoization with stable comparison
 const NavbarDesktopLinks = memo(NavbarDesktopLinksComponent, (prevProps, nextProps) => {
-  // Custom comparison to prevent unnecessary re-renders
   return (
     prevProps.isAuthenticated === nextProps.isAuthenticated &&
     prevProps.hasExpertProfile === nextProps.hasExpertProfile &&
