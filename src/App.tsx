@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Route, Routes, BrowserRouter } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
@@ -50,65 +50,63 @@ function App() {
         <EnhancedUnifiedAuthProvider>
           <TooltipProvider>
             <Toaster />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                
-                {/* Services Routes */}
-                <Route path="/services" element={<Services />} />
-                <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
-                <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
-                
-                {/* Expert Routes */}
-                <Route path="/experts" element={<Experts />} />
-                <Route path="/expert-login" element={<ExpertLogin />} />
-                <Route path="/expert-signup" element={<ExpertSignup />} />
-                <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
-                
-                {/* User Routes - Fixed routing structure */}
-                <Route path="/user-login" element={<UserLogin />} />
-                <Route path="/user-signup" element={<UserSignup />} />
-                <Route path="/user-dashboard/*" element={<UserDashboard />} />
-                
-                {/* Program Routes */}
-                <Route path="/programs" element={<Programs />} />
-                <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
-                <Route path="/programs-for-academic-institutes" element={<ProgramsForAcademicInstitutes />} />
-                <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
-                <Route path="/program/:programId" element={<ProgramDetailPage />} />
-                
-                {/* Assessment Routes */}
-                <Route path="/mental-health-assessment" element={<UnifiedAssessment />} />
-                <Route path="/emotional-wellness-assessment" element={<UnifiedAssessment />} />
-                <Route path="/spiritual-wellness-assessment" element={<UnifiedAssessment />} />
-                
-                {/* Support Routes */}
-                <Route path="/contact" element={<ContactUs />} />
-                <Route path="/contact-us" element={<ContactUs />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/about-us" element={<AboutUs />} />
-                <Route path="/faqs" element={<FAQs />} />
-                <Route path="/faq" element={<FAQs />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/blog/:slug" element={<BlogPost />} />
-                
-                {/* Admin Routes */}
-                <Route path="/admin-login" element={<AdminLogin />} />
-                <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
-                
-                {/* Legal Routes */}
-                <Route path="/terms-of-service" element={<TermsOfService />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                
-                {/* Auth Routes */}
-                <Route path="/logout" element={<LogoutPage />} />
-                
-                {/* Catch-all route */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              
+              {/* Services Routes */}
+              <Route path="/services" element={<Services />} />
+              <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+              <Route path="/service/:serviceId" element={<ServiceDetailPage />} />
+              
+              {/* Expert Routes */}
+              <Route path="/experts" element={<Experts />} />
+              <Route path="/expert-login" element={<ExpertLogin />} />
+              <Route path="/expert-signup" element={<ExpertSignup />} />
+              <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
+              
+              {/* User Routes - Fixed routing structure */}
+              <Route path="/user-login" element={<UserLogin />} />
+              <Route path="/user-signup" element={<UserSignup />} />
+              <Route path="/user-dashboard/*" element={<UserDashboard />} />
+              
+              {/* Program Routes */}
+              <Route path="/programs" element={<Programs />} />
+              <Route path="/programs-for-wellness-seekers" element={<ProgramsForWellnessSeekers />} />
+              <Route path="/programs-for-academic-institutes" element={<ProgramsForAcademicInstitutes />} />
+              <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
+              <Route path="/program/:programId" element={<ProgramDetailPage />} />
+              
+              {/* Assessment Routes */}
+              <Route path="/mental-health-assessment" element={<UnifiedAssessment />} />
+              <Route path="/emotional-wellness-assessment" element={<UnifiedAssessment />} />
+              <Route path="/spiritual-wellness-assessment" element={<UnifiedAssessment />} />
+              
+              {/* Support Routes */}
+              <Route path="/contact" element={<ContactUs />} />
+              <Route path="/contact-us" element={<ContactUs />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/about-us" element={<AboutUs />} />
+              <Route path="/faqs" element={<FAQs />} />
+              <Route path="/faq" element={<FAQs />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              
+              {/* Admin Routes */}
+              <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
+              
+              {/* Legal Routes */}
+              <Route path="/terms-of-service" element={<TermsOfService />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              
+              {/* Auth Routes */}
+              <Route path="/logout" element={<LogoutPage />} />
+              
+              {/* Catch-all route */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
           </TooltipProvider>
         </EnhancedUnifiedAuthProvider>
       </QueryClientProvider>
