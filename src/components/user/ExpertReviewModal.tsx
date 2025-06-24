@@ -14,7 +14,7 @@ import {
 import { toast } from 'sonner';
 
 interface ExpertReviewModalProps {
-  expertId: string | number;
+  expertId: string;
   expertName: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;

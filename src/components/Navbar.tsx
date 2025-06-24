@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, memo, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
@@ -7,13 +7,39 @@ import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfi
 import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unified';
 
-// FIXED: Stable helper function moved outside component
+// Type guard functions
+const isUserProfile = (profile: any): profile is UserProfile => {
+  return profile && 'wallet_balance' in profile && 'currency' in profile;
+};
+const isExpertProfile = (profile: any): profile is ExpertProfile => {
+  return profile && 'specialization' in profile && 'experience' in profile;
+};
+const isAdminProfile = (profile: any): profile is AdminProfile => {
+  return profile && 'role' in profile && !('wallet_balance' in profile) && !('specialization' in profile);
+};
+
+// Helper function to get common properties safely
+const getCommonProfileProps = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
+  if (!profile) return {
+    name: '',
+    email: ''
+  };
+  return {
+    name: profile.name || '',
+    email: profile.email || '',
+    id: profile.id || ''
+  };
+};
+
+// Helper function to create a compatible currentUser object for NavbarDesktopLinks
 const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: ExpertProfile | null, adminProfile: AdminProfile | null, sessionType: 'user' | 'expert' | 'admin' | null): UserProfile | null => {
+  // Return the appropriate profile based on session type
   if (sessionType === 'user' && userProfile) {
     return userProfile;
   }
   
   if (sessionType === 'expert' && expertProfile) {
+    // Create a UserProfile-like object for compatibility
     return {
       id: expertProfile.id,
       name: expertProfile.name || '',
@@ -21,9 +47,9 @@ const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: Ex
       phone: expertProfile.phone || '',
       country: expertProfile.country || '',
       city: expertProfile.city || '',
-      currency: 'USD',
+      currency: 'USD', // Default currency for experts
       profile_picture: expertProfile.profile_picture || '',
-      wallet_balance: 0,
+      wallet_balance: 0, // Experts don't have wallet balance in navbar context
       created_at: expertProfile.created_at || '',
       updated_at: expertProfile.created_at || '',
       referred_by: null,
@@ -40,6 +66,7 @@ const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: Ex
   }
   
   if (sessionType === 'admin' && adminProfile) {
+    // Create a UserProfile-like object for compatibility
     return {
       id: adminProfile.id,
       name: adminProfile.name || '',
@@ -68,88 +95,114 @@ const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: Ex
   return null;
 };
 
-// FIXED: Render tracking for debugging
-const useRenderTracker = (componentName: string) => {
-  const renderCountRef = React.useRef(0);
-  renderCountRef.current += 1;
-  
-  // FIXED: Only log first few renders to prevent spam
-  if (renderCountRef.current <= 3) {
-    console.log(`🔒 ${componentName} render count: ${renderCountRef.current}`);
-  }
-  
-  return renderCountRef.current;
-};
+// Add render counter for performance monitoring
+let navbarRenderCount = 0;
 
 const NavbarComponent = () => {
-  // FIXED: Track renders for debugging
-  const renderCount = useRenderTracker('Navbar');
-  
+  // Performance monitoring
+  useEffect(() => {
+    navbarRenderCount++;
+    console.log('🔒 Navbar render count:', navbarRenderCount);
+  });
+
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // FIXED: Destructure only what we need to minimize dependencies
-  const { 
-    isAuthenticated, 
-    sessionType, 
-    user, 
-    userProfile, 
-    expertProfile, 
-    adminProfile, 
+  // Use enhanced unified auth context
+  const {
+    isAuthenticated,
+    sessionType,
+    user,
+    admin,
+    expert,
+    userProfile,
+    expertProfile,
+    adminProfile,
     isLoading,
-    logout: authLogout 
+    logout
   } = useEnhancedUnifiedAuth();
 
-  // FIXED: Stable compatible user object
+  // DEBUG: Add DOM verification effect
+  useEffect(() => {
+    console.log('🔒 Navbar DOM verification - Component mounted');
+    const checkNavbarInDOM = () => {
+      const navElement = document.querySelector('[data-navbar="main"]');
+      console.log('🔒 Navbar DOM element found:', !!navElement);
+      if (navElement) {
+        const computedStyles = window.getComputedStyle(navElement);
+        console.log('🔒 Navbar computed styles:', {
+          display: computedStyles.display,
+          visibility: computedStyles.visibility,
+          opacity: computedStyles.opacity,
+          height: computedStyles.height,
+          width: computedStyles.width,
+          position: computedStyles.position,
+          top: computedStyles.top,
+          zIndex: computedStyles.zIndex,
+          backgroundColor: computedStyles.backgroundColor
+        });
+      }
+    };
+    
+    // Check immediately and after a short delay
+    checkNavbarInDOM();
+    setTimeout(checkNavbarInDOM, 100);
+  }, []);
+
+  // Memoize compatible user object for navbar components
   const currentUser = useMemo(() => 
     createCompatibleUser(userProfile, expertProfile, adminProfile, sessionType),
     [userProfile, expertProfile, adminProfile, sessionType]
   );
 
-  // FIXED: Stable derived values
-  const authData = useMemo(() => ({
-    isAuthenticated: Boolean(isAuthenticated),
-    hasExpertProfile: Boolean(sessionType === 'expert' && expertProfile),
-    hasAdminProfile: Boolean(sessionType === 'admin' && adminProfile),
-    sessionType,
-    isLoading: Boolean(isLoading)
-  }), [isAuthenticated, sessionType, expertProfile, adminProfile, isLoading]);
+  const hasExpertProfile = useMemo(() => 
+    sessionType === 'expert' && !!expert,
+    [sessionType, expert]
+  );
 
-  // FIXED: Convert sessionType to match expected interface
+  const hasAdminProfile = useMemo(() => 
+    sessionType === 'admin' && !!admin,
+    [sessionType, admin]
+  );
+
+  // Convert sessionType to match expected interface
   const navbarSessionType = useMemo((): 'user' | 'expert' | 'none' | 'dual' => {
     if (!sessionType) return 'none';
-    if (sessionType === 'admin') return 'user';
+    if (sessionType === 'admin') return 'user'; // Treat admin as user for navbar purposes
     if (sessionType === 'expert') return 'expert';
     return 'user';
   }, [sessionType]);
 
-  // FIXED: Stable scroll effect with proper cleanup
+  // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
-      setScrolled(isScrolled);
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
     };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
-  }, []);
+  }, [scrolled]);
 
-  // FIXED: Stable logout handler
-  const handleLogout = useCallback(async (): Promise<boolean> => {
+  // Handle logout with consistent messaging
+  const handleLogout = async (): Promise<boolean> => {
     try {
       console.log("🔒 Navbar: Initiating logout...", {
         sessionType,
-        hasUser: !!user
+        hasUser: !!user,
+        timestamp: new Date().toISOString()
       });
       
-      await authLogout();
+      await logout();
       
       console.log("🔒 Navbar: Logout successful");
       showLogoutSuccessToast();
 
+      // Redirect based on session type
       const redirectPath = sessionType === 'expert' ? '/expert-login' : sessionType === 'admin' ? '/admin-login' : '/user-login';
       navigate(redirectPath);
       return true;
@@ -158,28 +211,34 @@ const NavbarComponent = () => {
       showLogoutErrorToast();
       return false;
     }
-  }, [sessionType, user, authLogout, navigate]);
+  };
 
-  // FIXED: Stable navbar background calculation
+  // Enhanced navbar background calculation with debug
   const navbarBackground = useMemo(() => {
-    return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
+    const bgClass = scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
+    console.log('🔒 Navbar background class:', bgClass);
+    return bgClass;
   }, [scrolled]);
 
-  // Enhanced authentication state logging (development only) - limited logging
-  if (process.env.NODE_ENV === 'development' && renderCount <= 2) {
-    console.log("🔒 Navbar rendering with auth data:", {
-      isAuthenticated: authData.isAuthenticated,
-      sessionType,
-      hasCurrentUser: Boolean(currentUser),
-      hasExpertProfile: authData.hasExpertProfile,
-      hasAdminProfile: authData.hasAdminProfile,
-      userEmail: user?.email || 'No user',
-      renderCount
-    });
-  }
+  // Enhanced authentication state logging for debugging
+  console.log("🔒 Navbar rendering. Enhanced unified auth state:", {
+    isAuthenticated: Boolean(isAuthenticated),
+    sessionType,
+    navbarSessionType,
+    isLoading: Boolean(isLoading),
+    hasCurrentUser: Boolean(currentUser),
+    hasExpertProfile: Boolean(hasExpertProfile),
+    hasAdminProfile: Boolean(hasAdminProfile),
+    userEmail: user?.email || 'No user',
+    renderCount: navbarRenderCount,
+    timestamp: new Date().toISOString()
+  });
 
-  // FIXED: Brief loading state only for initial render
-  if (authData.isLoading && renderCount === 1) {
+  // FIXED: Show navbar content immediately, don't wait for auth loading
+  // Only show minimal loading state for first few seconds if needed
+  const shouldShowLoadingState = isLoading && navbarRenderCount <= 3;
+
+  if (shouldShowLoadingState) {
     console.log('🔒 Navbar showing brief loading state');
     return (
       <div 
@@ -197,6 +256,7 @@ const NavbarComponent = () => {
           </div>
           <div className="text-gray-500 flex items-center gap-2">
             <div className="animate-pulse">Loading...</div>
+            <div className="text-xs text-gray-400">Auth: {navbarRenderCount}</div>
           </div>
         </div>
       </div>
@@ -205,6 +265,7 @@ const NavbarComponent = () => {
 
   console.log('🔒 Navbar rendering main content');
 
+  // FIXED: Always render main navbar content
   return (
     <div 
       data-navbar="main"
@@ -221,34 +282,38 @@ const NavbarComponent = () => {
         </div>
         
         <NavbarDesktopLinks 
-          isAuthenticated={authData.isAuthenticated} 
+          isAuthenticated={Boolean(isAuthenticated)} 
           currentUser={currentUser} 
-          hasExpertProfile={authData.hasExpertProfile} 
-          userLogout={handleLogout} 
-          expertLogout={handleLogout} 
-          sessionType={navbarSessionType} 
-          isLoggingOut={false}
-          isLoading={authData.isLoading}
-        />
-        
-        <NavbarMobileMenu 
-          isAuthenticated={authData.isAuthenticated} 
-          currentUser={currentUser} 
-          hasExpertProfile={authData.hasExpertProfile} 
+          hasExpertProfile={Boolean(hasExpertProfile)} 
           userLogout={handleLogout} 
           expertLogout={handleLogout} 
           sessionType={navbarSessionType} 
           isLoggingOut={false} 
         />
+        
+        <NavbarMobileMenu 
+          isAuthenticated={Boolean(isAuthenticated)} 
+          currentUser={currentUser} 
+          hasExpertProfile={Boolean(hasExpertProfile)} 
+          userLogout={handleLogout} 
+          expertLogout={handleLogout} 
+          sessionType={navbarSessionType} 
+          isLoggingOut={false} 
+        />
+        
+        {/* DEBUG INFO - Remove this after fixing */}
+        <div className="fixed top-20 right-0 bg-red-100 p-2 text-xs z-50 border border-red-300">
+          <div>Renders: {navbarRenderCount}</div>
+          <div>Auth: {Boolean(isAuthenticated).toString()}</div>
+          <div>Loading: {Boolean(isLoading).toString()}</div>
+          <div>Type: {sessionType || 'none'}</div>
+        </div>
       </div>
     </div>
   );
 };
 
-// FIXED: Proper memoization with custom comparison
-const Navbar = memo(NavbarComponent, (prevProps, nextProps) => {
-  // Since this component doesn't take props, only re-render if forced
-  return false; // Always allow re-render but let context value stability prevent unnecessary renders
-});
+// Export memoized component to prevent unnecessary re-renders
+const Navbar = memo(NavbarComponent);
 
 export default Navbar;

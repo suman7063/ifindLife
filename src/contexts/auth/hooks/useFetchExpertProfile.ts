@@ -13,7 +13,6 @@ export const useFetchExpertProfile = () => {
     
     try {
       console.log(`Fetching expert profile for user ID: ${userId}`);
-      // FIXED: Use the updated repository that queries correct table and column
       return await expertRepository.getExpertByAuthId(userId);
     } catch (error) {
       console.error('Error in fetchExpertProfile:', error);

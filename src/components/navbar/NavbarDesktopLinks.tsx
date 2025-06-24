@@ -1,5 +1,5 @@
 
-import React, { useMemo, memo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import NavbarUserAvatar from './NavbarUserAvatar';
@@ -16,68 +16,47 @@ interface NavbarDesktopLinksProps {
   expertLogout: () => Promise<boolean>;
   sessionType: 'none' | 'user' | 'expert' | 'dual';
   isLoggingOut: boolean;
-  isLoading?: boolean;
 }
 
-// FIXED: Render tracking for debugging
-const useRenderTracker = (componentName: string) => {
-  const renderCountRef = React.useRef(0);
-  renderCountRef.current += 1;
-  
-  // FIXED: Only log first few renders
-  if (renderCountRef.current <= 3) {
-    console.log(`🔒 ${componentName} render count: ${renderCountRef.current}`);
-  }
-  
-  return renderCountRef.current;
-};
-
-const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
+const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
   isAuthenticated,
   currentUser,
   hasExpertProfile,
   userLogout,
   expertLogout,
   sessionType,
-  isLoggingOut,
-  isLoading = false
+  isLoggingOut
 }) => {
-  // FIXED: Track renders for debugging
-  const renderCount = useRenderTracker('NavbarDesktopLinks');
-  
   // Get enhanced unified auth state for more accurate authentication checks
   const enhancedAuth = useEnhancedUnifiedAuth();
 
-  // FIXED: Ultra-stable memoization using only primitive values
-  const authState = useMemo(() => {
-    const isUserAuth = Boolean(isAuthenticated && !isLoading);
-    const isExpertAuth = Boolean(enhancedAuth?.sessionType === 'expert' && enhancedAuth?.expert && !isLoading);
-    const isAdminAuth = Boolean(enhancedAuth?.sessionType === 'admin' && enhancedAuth?.admin && !isLoading);
-    const hasUser = Boolean(currentUser);
-    const authLoading = Boolean(isLoading || enhancedAuth?.isLoading);
+  // Enhanced logging for debugging
+  console.log('NavbarDesktopLinks render with enhanced unified auth state:', {
+    isAuthenticated: Boolean(isAuthenticated),
+    hasCurrentUser: Boolean(currentUser),
+    hasExpertProfile: Boolean(hasExpertProfile),
+    sessionType,
+    isLoggingOut,
+    // Enhanced auth state
+    enhancedIsAuthenticated: Boolean(enhancedAuth.isAuthenticated),
+    enhancedSessionType: enhancedAuth.sessionType,
+    enhancedIsLoading: Boolean(enhancedAuth.isLoading),
+    enhancedHasExpert: Boolean(enhancedAuth.expert),
+    enhancedHasAdmin: Boolean(enhancedAuth.admin),
+    enhancedHasUser: Boolean(enhancedAuth.user),
+    currentUserEmail: currentUser?.email || 'null',
+    timestamp: new Date().toISOString()
+  });
 
-    return {
-      isUserAuthenticated: isUserAuth,
-      isExpertAuthenticated: isExpertAuth,
-      isAdminAuthenticated: isAdminAuth,
-      hasUserData: hasUser,
-      isLoading: authLoading,
-      sessionTypeValue: enhancedAuth?.sessionType || 'none'
-    };
-  }, [
-    Boolean(isAuthenticated),
-    Boolean(isLoading),
-    enhancedAuth?.sessionType,
-    Boolean(enhancedAuth?.expert),
-    Boolean(enhancedAuth?.admin),
-    Boolean(enhancedAuth?.isLoading),
-    Boolean(currentUser)
-  ]);
+  // Convert to proper booleans for reliable checking
+  const isUserAuthenticated = Boolean(isAuthenticated);
+  const isExpertAuthenticated = Boolean(enhancedAuth.sessionType === 'expert' && enhancedAuth.expert);
+  const isAdminAuthenticated = Boolean(enhancedAuth.sessionType === 'admin' && enhancedAuth.admin);
+  const hasUserData = Boolean(currentUser);
 
-  // FIXED: Only show loading state for first render to prevent flicker
-  if (authState.isLoading && renderCount === 1) {
-    return (
-      <div className="hidden md:flex items-center space-x-4">
+  // Don't show loading state here - let the parent handle it
+  if (enhancedAuth.isLoading) {
+    return <div className="hidden md:flex items-center space-x-4">
         <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
           <Link to="/">Home</Link>
         </Button>
@@ -114,39 +93,27 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
           </NavigationMenuList>
         </NavigationMenu>
         
-        <div className="px-3 py-2 text-gray-500 animate-pulse">Loading...</div>
-      </div>
-    );
+        <div className="px-3 py-2 text-gray-500">Loading...</div>
+      </div>;
   }
 
-  // FIXED: Ultra-stable auth component determination
-  const authComponent = useMemo(() => {
-    if (authState.isExpertAuthenticated) {
-      console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
-      return <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
-    } else if (authState.isAdminAuthenticated || (authState.isUserAuthenticated && authState.hasUserData)) {
-      console.log('NavbarDesktopLinks: Showing user avatar for authenticated user/admin');
-      return <NavbarUserAvatar currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
-    } else {
-      console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
-      return <LoginDropdown 
-        isAuthenticated={authState.isUserAuthenticated || authState.isExpertAuthenticated || authState.isAdminAuthenticated} 
-        hasExpertProfile={authState.isExpertAuthenticated} 
-      />;
-    }
-  }, [
-    authState.isExpertAuthenticated,
-    authState.isAdminAuthenticated,
-    authState.isUserAuthenticated,
-    authState.hasUserData,
-    expertLogout,
-    userLogout,
-    isLoggingOut,
-    currentUser
-  ]);
+  // Determine which auth UI to show with priority logic
+  let authComponent;
+  if (isExpertAuthenticated) {
+    console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
+    authComponent = <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
+  } else if (isAdminAuthenticated || (isUserAuthenticated && hasUserData)) {
+    console.log('NavbarDesktopLinks: Showing user avatar for authenticated user/admin');
+    authComponent = <NavbarUserAvatar currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
+  } else {
+    console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
+    authComponent = <LoginDropdown 
+      isAuthenticated={isUserAuthenticated || isExpertAuthenticated || isAdminAuthenticated} 
+      hasExpertProfile={isExpertAuthenticated} 
+    />;
+  }
 
-  return (
-    <div className="hidden md:flex items-center space-x-4">
+  return <div className="hidden md:flex items-center space-x-4">
       <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
         <Link to="/">Home</Link>
       </Button>
@@ -184,20 +151,7 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
       </NavigationMenu>
       
       {authComponent}
-    </div>
-  );
+    </div>;
 };
-
-// FIXED: Proper memoization with stable comparison
-const NavbarDesktopLinks = memo(NavbarDesktopLinksComponent, (prevProps, nextProps) => {
-  return (
-    prevProps.isAuthenticated === nextProps.isAuthenticated &&
-    prevProps.hasExpertProfile === nextProps.hasExpertProfile &&
-    prevProps.sessionType === nextProps.sessionType &&
-    prevProps.isLoading === nextProps.isLoading &&
-    prevProps.isLoggingOut === nextProps.isLoggingOut &&
-    prevProps.currentUser?.email === nextProps.currentUser?.email
-  );
-});
 
 export default NavbarDesktopLinks;

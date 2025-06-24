@@ -8,7 +8,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addReview = async (
-    expertId: string | number,
+    expertId: string,
     rating: number,
     comment: string
   ): Promise<boolean> => {
@@ -20,15 +20,12 @@ export const useExpertInteractions = (userId: string | undefined) => {
     try {
       setIsSubmitting(true);
 
-      // Convert expertId to number for database compatibility
-      const expertIdNumber = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
-
       // Check if user has already reviewed this expert
       const { data: existingReviews, error: checkError } = await supabase
         .from('user_reviews')
         .select('*')
         .eq('user_id', userId)
-        .eq('expert_id', expertIdNumber);
+        .eq('expert_id', parseInt(expertId, 10));
 
       if (checkError) {
         console.error('Error checking existing reviews:', checkError);
@@ -43,7 +40,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
 
       // Add new review
       const reviewData = {
-        expert_id: expertIdNumber,
+        expert_id: parseInt(expertId, 10),
         user_id: userId,
         rating,
         comment,
@@ -73,7 +70,7 @@ export const useExpertInteractions = (userId: string | undefined) => {
   };
 
   const reportExpert = async (
-    expertId: string | number,
+    expertId: string,
     reason: string,
     details: string
   ): Promise<boolean> => {
@@ -85,11 +82,8 @@ export const useExpertInteractions = (userId: string | undefined) => {
     try {
       setIsSubmitting(true);
 
-      // Convert expertId to number for database compatibility
-      const expertIdNumber = typeof expertId === 'string' ? parseInt(expertId, 10) : expertId;
-
       const reportData = {
-        expert_id: expertIdNumber,
+        expert_id: parseInt(expertId, 10),
         user_id: userId,
         reason,
         details,
@@ -118,11 +112,11 @@ export const useExpertInteractions = (userId: string | undefined) => {
     }
   };
 
-  const hasTakenServiceFrom = async (expertId: string | number): Promise<boolean> => {
+  const hasTakenServiceFrom = async (expertId: string): Promise<boolean> => {
     return true; // Placeholder for now
   };
 
-  const getExpertShareLink = (expertId: string | number): string => {
+  const getExpertShareLink = (expertId: string): string => {
     return `${window.location.origin}/experts/${expertId}`;
   };
 
