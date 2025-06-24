@@ -11,11 +11,11 @@ interface AgoraCallHookReturn {
   cost: number;
   remainingTime: number;
   callError: string | null;
-  startCall: (expertId: string, serviceType?: string) => Promise<void>;
-  endCall: (reason?: string) => void;
+  startCall: (expertId: string, serviceType?: string) => Promise<boolean>;
+  endCall: (reason?: string) => Promise<{ success: boolean; cost?: number }>;
   handleToggleMute: () => void;
   handleToggleVideo: () => void;
-  extendCall: (minutes: number) => void;
+  extendCall: (minutes: number) => Promise<boolean>;
   formatTime: (seconds: number) => string;
 }
 
@@ -29,11 +29,11 @@ export const useAgoraCall = (): AgoraCallHookReturn => {
   const [remainingTime, setRemainingTime] = useState(0);
   const [callError, setCallError] = useState<string | null>(null);
 
-  const startCall = useCallback(async (expertId: string, serviceType?: string) => {
+  const startCall = useCallback(async (expertId: string, serviceType?: string): Promise<boolean> => {
     if (!isAuthenticated || !user) {
       setCallError('Please log in to start a call');
       toast.error('Please log in to start a call');
-      return;
+      return false;
     }
 
     try {
@@ -48,26 +48,30 @@ export const useAgoraCall = (): AgoraCallHookReturn => {
       setIsInCall(true);
       setCallState('connected');
       toast.success('Call started successfully');
+      return true;
     } catch (error) {
       console.error('Error starting call:', error);
       setCallError('Failed to start call');
       setCallState('error');
       toast.error('Failed to start call');
+      return false;
     } finally {
       setIsConnecting(false);
     }
   }, [isAuthenticated, user]);
 
-  const endCall = useCallback((reason?: string) => {
+  const endCall = useCallback(async (reason?: string): Promise<{ success: boolean; cost?: number }> => {
     setIsInCall(false);
     setIsConnecting(false);
     setCallState('ended');
+    const finalCost = cost;
     setDuration(0);
     setCost(0);
     setRemainingTime(0);
     console.log('Call ended', reason ? `Reason: ${reason}` : '');
     toast.info('Call ended');
-  }, []);
+    return { success: true, cost: finalCost };
+  }, [cost]);
 
   const handleToggleMute = useCallback(() => {
     console.log('Toggle mute');
@@ -79,10 +83,11 @@ export const useAgoraCall = (): AgoraCallHookReturn => {
     // Implementation for video toggle
   }, []);
 
-  const extendCall = useCallback((minutes: number) => {
+  const extendCall = useCallback(async (minutes: number): Promise<boolean> => {
     console.log('Extending call by', minutes, 'minutes');
     setRemainingTime(prev => prev + (minutes * 60));
     // Implementation for call extension
+    return true;
   }, []);
 
   const formatTime = useCallback((seconds: number) => {

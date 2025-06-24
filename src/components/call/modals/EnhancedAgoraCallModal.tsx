@@ -47,7 +47,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
     handleToggleVideo,
     extendCall,
     formatTime
-  } = useAgoraCall(expert.id, expert.price);
+  } = useAgoraCall();
 
   // CRITICAL: Protect authentication during video call
   useEffect(() => {
@@ -86,7 +86,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
       };
       
       setCallStatus('connecting');
-      const success = await startCall(selectedDuration, callType);
+      const success = await startCall(expert.id.toString(), callType);
       
       if (success) {
         setCallStatus('connected');
@@ -130,9 +130,9 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
   const handleConfirmExtension = async (extensionMinutes: number, cost: number): Promise<boolean> => {
     try {
       setIsExtending(true);
-      await extendCall(extensionMinutes);
+      const success = await extendCall(extensionMinutes);
       setShowExtensionModal(false);
-      return true;
+      return success;
     } catch (error) {
       console.error('Error extending call:', error);
       return false;
