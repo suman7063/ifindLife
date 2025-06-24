@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 import AuthRedirectSystem from '@/utils/authRedirectSystem';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { forceAuthRefresh, navigateAfterLogin } from '@/utils/authHelpers';
 
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const UserLogin: React.FC = () => {
     checkSession();
   }, [navigate, isAuthenticated, sessionType, user, authLoading]);
 
-  // Handle login form submission with enhanced logging
+  // Enhanced login handler with force refresh
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password', { duration: 2000 });
@@ -86,7 +87,7 @@ const UserLogin: React.FC = () => {
     
     try {
       setIsLoggingIn(true);
-      console.log('UserLogin: Attempting login with unified flow:', email);
+      console.log('UserLogin: Attempting login with enhanced flow:', email);
       
       // Check if we have redirect data to show appropriate message
       const redirectData = AuthRedirectSystem.getRedirect();
@@ -116,10 +117,27 @@ const UserLogin: React.FC = () => {
         return false;
       }
       
-      console.log('UserLogin: Login successful, user ID:', data.user.id);
+      console.log('✅ UserLogin: Login successful, user ID:', data.user.id);
       toast.success('Login successful!', { duration: 2000 });
       
-      // Auth state change will trigger redirect handling
+      // Force context refresh and navigation
+      console.log('✅ User login successful, forcing context refresh...');
+      
+      // Method 1: Force auth refresh
+      setTimeout(() => {
+        forceAuthRefresh();
+      }, 100);
+      
+      // Method 2: Navigate with forced refresh after delay
+      setTimeout(async () => {
+        const redirectExecuted = await AuthRedirectSystem.executeRedirect();
+        
+        if (!redirectExecuted) {
+          console.log('🚀 Navigating to user dashboard with forced refresh...');
+          navigateAfterLogin('user');
+        }
+      }, 500);
+      
       return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);

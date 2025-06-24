@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 import { toast } from 'sonner';
@@ -143,51 +142,161 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     }
   }, []);
 
-  // Handle auth state changes
-  const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
-    console.log('🔒 Auth state change:', { event, hasSession: !!session });
+  // Determine session type based on available profiles and stored preference
+  const determineSessionType = useCallback(async (user: User): Promise<SessionType> => {
+    const storedType = localStorage.getItem('sessionType') as SessionType;
+    console.log('🔒 Determining session type for user:', user.id, 'stored:', storedType);
 
-    setSession(session);
-    setUser(session?.user || null);
-    setIsAuthenticated(!!session);
-
-    if (session?.user) {
-      // Get stored session type or default to user
-      const storedType = localStorage.getItem('sessionType') as SessionType || 'user';
-      setSessionType(storedType);
-
-      // Fetch appropriate profile
+    try {
+      // If we have a stored preference, try to use it
       if (storedType === 'expert') {
-        await fetchExpertProfile(session.user.id);
-        setUserProfile(null);
-      } else {
-        await fetchUserProfile(session.user.id);
-        setExpertProfile(null);
+        const expertProfile = await fetchExpertProfile(user.id);
+        if (expertProfile) {
+          console.log('✅ Expert profile found, using expert session');
+          return 'expert';
+        }
       }
-    } else {
-      // Clear all state on logout
-      setSessionType(null);
-      setUserProfile(null);
-      setExpertProfile(null);
-      localStorage.removeItem('sessionType');
-    }
 
-    setIsLoading(false);
+      if (storedType === 'user' || !storedType) {
+        const userProfile = await fetchUserProfile(user.id);
+        if (userProfile) {
+          console.log('✅ User profile found, using user session');
+          return 'user';
+        }
+      }
+
+      // Fallback: check both profiles
+      const [userProfile, expertProfile] = await Promise.all([
+        fetchUserProfile(user.id),
+        fetchExpertProfile(user.id)
+      ]);
+
+      if (expertProfile && storedType === 'expert') return 'expert';
+      if (userProfile) return 'user';
+      if (expertProfile) return 'expert';
+
+      console.log('❌ No profiles found for user');
+      return null;
+    } catch (error) {
+      console.error('Error determining session type:', error);
+      return null;
+    }
   }, [fetchUserProfile, fetchExpertProfile]);
 
-  // Initialize auth
+  // Improved auth state change handler
+  const handleAuthStateChange = useCallback(async (event: AuthChangeEvent, session: Session | null) => {
+    console.log('🔒 Auth state change event:', event, session?.user?.id);
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (event === 'SIGNED_IN' && session?.user) {
+        console.log('✅ User signed in, updating state immediately');
+        
+        // Force immediate state update
+        setUser(session.user);
+        setSession(session);
+        setIsAuthenticated(true);
+        
+        // Determine session type
+        const resolvedSessionType = await determineSessionType(session.user);
+        console.log('✅ Session type determined:', resolvedSessionType);
+        
+        setSessionType(resolvedSessionType);
+        
+        // Update localStorage
+        if (resolvedSessionType) {
+          localStorage.setItem('sessionType', resolvedSessionType);
+        }
+        
+        // Force component re-renders with slight delay
+        setTimeout(() => {
+          setIsLoading(false);
+          // Dispatch custom event for components that need immediate updates
+          window.dispatchEvent(new CustomEvent('auth-state-updated', { 
+            detail: { 
+              isAuthenticated: true, 
+              sessionType: resolvedSessionType,
+              user: session.user 
+            } 
+          }));
+        }, 50);
+        
+      } else if (event === 'SIGNED_OUT') {
+        console.log('🔒 User signed out, clearing state');
+        
+        setUser(null);
+        setSession(null);
+        setIsAuthenticated(false);
+        setSessionType(null);
+        setUserProfile(null);
+        setExpertProfile(null);
+        localStorage.removeItem('sessionType');
+        setIsLoading(false);
+        
+        // Dispatch sign out event
+        window.dispatchEvent(new CustomEvent('auth-state-updated', { 
+          detail: { 
+            isAuthenticated: false, 
+            sessionType: null,
+            user: null 
+          } 
+        }));
+      } else {
+        console.log('🔒 Other auth event or no session');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('❌ Auth state change failed:', error);
+      setError(error instanceof Error ? error.message : 'Auth state change failed');
+      setIsLoading(false);
+    }
+  }, [determineSessionType]);
+
+  // Initialize auth with improved event handling
   useEffect(() => {
     console.log('🔒 Initializing auth context');
 
-    // Set up listener
+    // Set up listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      handleAuthStateChange('INITIAL_SESSION', session);
+      console.log('🔒 Initial session check:', session ? 'Session exists' : 'No session');
+      if (session) {
+        handleAuthStateChange('SIGNED_IN', session);
+      } else {
+        setIsLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
+  }, [handleAuthStateChange]);
+
+  // Add custom event listener for force refresh
+  useEffect(() => {
+    const handleAuthRefresh = () => {
+      console.log('🔄 Custom auth refresh triggered');
+      
+      // Force state re-evaluation
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          console.log('🔄 Re-evaluating auth state for user:', user.id);
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+              handleAuthStateChange('SIGNED_IN', session);
+            }
+          });
+        }
+      });
+    };
+    
+    window.addEventListener('auth-refresh', handleAuthRefresh);
+    
+    return () => {
+      window.removeEventListener('auth-refresh', handleAuthRefresh);
+    };
   }, [handleAuthStateChange]);
 
   // Auth actions
@@ -198,6 +307,7 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
 
       const targetType: SessionType = options?.asExpert ? 'expert' : 'user';
       localStorage.setItem('sessionType', targetType);
+      console.log('🔒 Login attempt as:', targetType);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -207,21 +317,24 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
       if (error) {
         setError(error.message);
         toast.error(error.message);
+        setIsLoading(false);
         return false;
       }
 
       if (!data.session) {
         setError('Login failed - no session created');
+        setIsLoading(false);
         return false;
       }
 
+      console.log('✅ Login successful, session created');
+      // The auth state change handler will handle the rest
       return true;
     } catch (error) {
       console.error('Login error:', error);
       setError('Login failed');
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   }, []);
 
@@ -233,15 +346,16 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
       if (error) {
         console.error('Logout error:', error);
         toast.error('Logout failed');
+        setIsLoading(false);
         return false;
       }
 
+      console.log('✅ Logout successful');
       return true;
     } catch (error) {
       console.error('Logout error:', error);
-      return false;
-    } finally {
       setIsLoading(false);
+      return false;
     }
   }, []);
 
