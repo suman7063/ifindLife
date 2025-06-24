@@ -36,6 +36,7 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       unifiedIsAuthenticated: Boolean(unifiedAuth.isAuthenticated),
       unifiedSessionType: unifiedAuth.sessionType,
       unifiedHasUser: Boolean(unifiedAuth.user),
+      unifiedUserProfile: Boolean(unifiedAuth.userProfile),
       unifiedIsLoading: Boolean(unifiedAuth.isLoading),
       propsIsAuthenticated: Boolean(isAuthenticated),
       hasCurrentUser: Boolean(currentUser),
@@ -72,13 +73,16 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     console.log('🔒 Final navbar auth decision:', {
       isHighConfidenceAuth,
       isUnifiedAuthConfident,
-      finalDecision
+      finalDecision,
+      userProfileName: unifiedAuth.userProfile?.name,
+      userEmail: unifiedAuth.user?.email
     });
     
     return finalDecision;
   }, [
     unifiedAuth.isAuthenticated, 
     unifiedAuth.user, 
+    unifiedAuth.userProfile,
     unifiedAuth.sessionType, 
     unifiedAuth.isLoading,
     isAuthenticated, 
@@ -156,11 +160,26 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     authComponent = <NavbarExpertMenu onLogout={expertLogout} isLoggingOut={isLoggingOut} />;
   } else if (isUserAuthenticated) {
     console.log('NavbarDesktopLinks: Showing user avatar for authenticated user');
-    const userForAvatar = currentUser || {
-      name: unifiedAuth.userProfile?.name || 'User',
-      email: unifiedAuth.user?.email || '',
-      id: unifiedAuth.user?.id || ''
+    
+    // Enhanced user data with better fallbacks
+    const userForAvatar = {
+      name: unifiedAuth.userProfile?.name || 
+            unifiedAuth.user?.user_metadata?.name || 
+            unifiedAuth.user?.email?.split('@')[0] || 
+            currentUser?.name || 
+            'User',
+      email: unifiedAuth.userProfile?.email || 
+             unifiedAuth.user?.email || 
+             currentUser?.email || 
+             '',
+      id: unifiedAuth.user?.id || currentUser?.id || '',
+      avatar_url: unifiedAuth.userProfile?.profile_picture || 
+                  unifiedAuth.user?.user_metadata?.avatar_url || 
+                  currentUser?.avatar_url
     };
+    
+    console.log('NavbarDesktopLinks: User avatar data:', userForAvatar);
+    
     authComponent = <NavbarUserAvatar currentUser={userForAvatar} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
   } else {
     console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');

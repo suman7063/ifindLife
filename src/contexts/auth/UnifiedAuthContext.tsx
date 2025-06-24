@@ -98,22 +98,89 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     return () => clearTimeout(timeout);
   }, [isLoading]);
 
-  // Fetch user profile
+  // Fetch user profile with enhanced error handling
   const fetchUserProfile = useCallback(async (userId: string) => {
     try {
-      const { data, error } = await supabase
+      console.log('🔒 Fetching user profile for:', userId);
+      
+      // Try users table first
+      const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
+      if (!userError && userData) {
+        console.log('✅ User profile found in users table:', userData.name);
+        
+        const profile: UserProfile = {
+          id: userData.id,
+          name: userData.name || 'User',
+          email: userData.email || '',
+          phone: userData.phone,
+          country: userData.country,
+          city: userData.city,
+          currency: userData.currency || 'USD',
+          profile_picture: userData.profile_picture,
+          wallet_balance: userData.wallet_balance || 0,
+          created_at: userData.created_at || new Date().toISOString(),
+          updated_at: userData.updated_at || new Date().toISOString(),
+          referred_by: userData.referred_by,
+          referral_code: userData.referral_code || '',
+          referral_link: userData.referral_link || '',
+          favorite_experts: [],
+          favorite_programs: [],
+          enrolled_courses: [],
+          reviews: [],
+          reports: [],
+          transactions: [],
+          referrals: []
+        };
+        
+        setUserProfile(profile);
+        return profile;
       }
 
-      setUserProfile(data);
-      return data;
+      // Try profiles table as fallback
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (!profileError && profileData) {
+        console.log('✅ User profile found in profiles table:', profileData.name);
+        
+        const profile: UserProfile = {
+          id: profileData.id,
+          name: profileData.name || 'User',
+          email: profileData.email || '',
+          phone: profileData.phone,
+          country: profileData.country,
+          city: profileData.city,
+          currency: profileData.currency || 'USD',
+          profile_picture: profileData.profile_picture,
+          wallet_balance: profileData.wallet_balance || 0,
+          created_at: profileData.created_at || new Date().toISOString(),
+          updated_at: profileData.updated_at || new Date().toISOString(),
+          referred_by: null,
+          referral_code: '',
+          referral_link: '',
+          favorite_experts: [],
+          favorite_programs: [],
+          enrolled_courses: [],
+          reviews: [],
+          reports: [],
+          transactions: [],
+          referrals: []
+        };
+        
+        setUserProfile(profile);
+        return profile;
+      }
+
+      console.log('🔒 No existing profile found, creating from auth user');
+      return null;
     } catch (error) {
       console.error('Error in fetchUserProfile:', error);
       return null;
@@ -151,7 +218,7 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     }
   }, []);
 
-  // Updated session type determination with correct database queries
+  // Enhanced session type determination with improved user profile creation
   const determineSessionType = useCallback(async (user: User): Promise<SessionType> => {
     try {
       console.log('🔒 Determining session type for user:', user.id);
@@ -164,9 +231,9 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
       console.log('🔒 Checking expert profile for auth_id:', user.id);
       
       const { data: expertProfile, error: expertError } = await supabase
-        .from('expert_accounts')  // ✅ Correct table
+        .from('expert_accounts')
         .select('*')
-        .eq('auth_id', user.id)   // ✅ Correct column
+        .eq('auth_id', user.id)
         .eq('status', 'approved')
         .maybeSingle();
       
@@ -181,23 +248,135 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
         return 'expert';
       }
       
-      // Check for admin (implement later if needed)
-      // const adminCheck = await checkAdminProfile(user.id);
+      // If not expert, load/create regular user profile
+      console.log('🔒 Loading regular user profile for:', user.id);
       
-      // Default to user if no expert profile
-      console.log('🔒 No expert profile found, defaulting to user session');
+      const existingProfile = await fetchUserProfile(user.id);
+      
+      if (!existingProfile) {
+        // Create basic profile from auth user data
+        console.log('🔒 Creating basic user profile from auth data');
+        
+        const basicProfile: UserProfile = {
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+          email: user.email || '',
+          phone: user.user_metadata?.phone,
+          country: user.user_metadata?.country,
+          city: user.user_metadata?.city,
+          currency: 'USD',
+          profile_picture: user.user_metadata?.avatar_url,
+          wallet_balance: 0,
+          created_at: user.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          referred_by: null,
+          referral_code: '',
+          referral_link: '',
+          favorite_experts: [],
+          favorite_programs: [],
+          enrolled_courses: [],
+          reviews: [],
+          reports: [],
+          transactions: [],
+          referrals: []
+        };
+        
+        setUserProfile(basicProfile);
+        console.log('✅ Basic user profile created:', basicProfile.name);
+      }
+      
       if (!storedSessionType) {
         localStorage.setItem('sessionType', 'user');
       }
       
-      await fetchUserProfile(user.id);
       return storedSessionType || 'user';
       
     } catch (error) {
       console.error('❌ Session type determination failed:', error);
-      return 'user';  // Default fallback
+      
+      // Emergency fallback - create minimal profile
+      const emergencyProfile: UserProfile = {
+        id: user.id,
+        name: user.email?.split('@')[0] || 'User',
+        email: user.email || '',
+        phone: undefined,
+        country: undefined,
+        city: undefined,
+        currency: 'USD',
+        profile_picture: undefined,
+        wallet_balance: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        referred_by: null,
+        referral_code: '',
+        referral_link: '',
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        reports: [],
+        transactions: [],
+        referrals: []
+      };
+      
+      setUserProfile(emergencyProfile);
+      return 'user';
     }
   }, [fetchUserProfile, fetchExpertProfile]);
+
+  // ... keep existing code (improved auth state change handler)
+
+  // Enhanced logout with proper state clearing
+  const logout = useCallback(async (): Promise<boolean> => {
+    try {
+      console.log('🔒 Starting logout process...');
+      setIsLoading(true);
+      
+      // Clear local storage first
+      localStorage.removeItem('sessionType');
+      localStorage.removeItem('userProfile');
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('❌ Logout error:', error);
+        toast.error('Logout failed');
+        setIsLoading(false);
+        return false;
+      }
+
+      console.log('✅ Logout successful');
+      
+      // Clear all state
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      setSessionType(null);
+      setUserProfile(null);
+      setExpertProfile(null);
+      setError(null);
+      setIsLoading(false);
+      
+      return true;
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      
+      // Force clear state even if error occurs
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      setSessionType(null);
+      setUserProfile(null);
+      setExpertProfile(null);
+      setError(null);
+      setIsLoading(false);
+      
+      return false;
+    }
+  }, []);
+
+  // ... keep existing code (improved auth state change handler, login, signup, etc.)
 
   // Improved auth state change handler
   const handleAuthStateChange = useCallback(async (event: AuthChangeEvent, session: Session | null) => {
@@ -349,27 +528,6 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     } catch (error) {
       console.error('Login error:', error);
       setError('Login failed');
-      setIsLoading(false);
-      return false;
-    }
-  }, []);
-
-  const logout = useCallback(async (): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        console.error('Logout error:', error);
-        toast.error('Logout failed');
-        setIsLoading(false);
-        return false;
-      }
-
-      console.log('✅ Logout successful');
-      return true;
-    } catch (error) {
-      console.error('Logout error:', error);
       setIsLoading(false);
       return false;
     }
