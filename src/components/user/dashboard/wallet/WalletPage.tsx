@@ -9,7 +9,7 @@ import TransactionHistoryCard from './TransactionHistoryCard';
 import useTransactions from '@/hooks/dashboard/useTransactions';
 import useRechargeDialog from '@/hooks/dashboard/useRechargeDialog';
 import RechargeDialog from './RechargeDialog';
-import { UserProfile } from '@/types/supabase/user';
+import { UserProfile } from '@/types/database/unified';
 
 const WalletPage: React.FC = () => {
   const { userProfile } = useAuth();

@@ -4,7 +4,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  phone?: string;
+  phone?: string; // Made optional to resolve conflicts
   country?: string;
   city?: string;
   currency: string;
@@ -59,6 +59,24 @@ export interface ExpertProfile {
   website_url?: string;
   created_at?: string;
   updated_at?: string;
+}
+
+export interface AdminProfile {
+  id: string;
+  auth_id: string;
+  email: string;
+  role: string;
+  created_at: string;
+}
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  isMine?: boolean;
 }
 
 export interface AuthState {

@@ -52,29 +52,5 @@ export interface Referral {
   completed_at?: string;
 }
 
-export interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  country: string;
-  city: string;
-  currency: string;
-  profile_picture: string | null;
-  wallet_balance: number;
-  created_at: string;
-  referred_by: string | null;
-  referral_code: string;
-  referral_link: string;
-  favorite_experts: string[]; // Made consistent - always string array
-  favorite_programs: string[] | number[];
-  enrolled_courses: Course[];
-  reviews: Review[]; // Made required to match expectations
-  reports: Report[]; // Made required to match expectations
-  transactions: UserTransaction[]; // Made required to match expectations
-  referrals: Referral[]; // Made required to match expectations
-  // Add these for improved type compatibility
-  profilePicture?: string | null;
-  walletBalance?: number;
-  favoriteExperts?: string[];
-}
+// Re-export the unified UserProfile type
+export { UserProfile } from '@/types/database/unified';
