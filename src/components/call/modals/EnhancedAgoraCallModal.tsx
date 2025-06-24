@@ -37,6 +37,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
 
   const {
     callState,
+    callStatus: hookCallStatus,
     duration,
     cost,
     remainingTime,
@@ -73,6 +74,19 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
       callStatus
     });
   }, [isAuthenticated, userProfile, isOpen, callStatus]);
+
+  // Sync call status from hook
+  useEffect(() => {
+    if (hookCallStatus === 'connecting') {
+      setCallStatus('connecting');
+    } else if (hookCallStatus === 'connected') {
+      setCallStatus('connected');
+    } else if (hookCallStatus === 'ended') {
+      setCallStatus('ended');
+    } else if (hookCallStatus === 'error') {
+      setCallStatus('error');
+    }
+  }, [hookCallStatus]);
 
   const handleStartCall = async (selectedDuration: number) => {
     try {
