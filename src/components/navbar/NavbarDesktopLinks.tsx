@@ -19,6 +19,19 @@ interface NavbarDesktopLinksProps {
   isLoading?: boolean;
 }
 
+// FIXED: Render tracking for debugging
+const useRenderTracker = (componentName: string) => {
+  const renderCountRef = React.useRef(0);
+  renderCountRef.current += 1;
+  
+  // FIXED: Only log first few renders
+  if (renderCountRef.current <= 3) {
+    console.log(`🔒 ${componentName} render count: ${renderCountRef.current}`);
+  }
+  
+  return renderCountRef.current;
+};
+
 const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   isAuthenticated,
   currentUser,
@@ -29,6 +42,9 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   isLoggingOut,
   isLoading = false
 }) => {
+  // FIXED: Track renders for debugging
+  const renderCount = useRenderTracker('NavbarDesktopLinks');
+  
   // Get enhanced unified auth state for more accurate authentication checks
   const enhancedAuth = useEnhancedUnifiedAuth();
 
@@ -58,8 +74,8 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
     Boolean(currentUser)
   ]);
 
-  // FIXED: Show loading state only briefly to prevent flicker
-  if (authState.isLoading) {
+  // FIXED: Only show loading state for first render to prevent flicker
+  if (authState.isLoading && renderCount === 1) {
     return (
       <div className="hidden md:flex items-center space-x-4">
         <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
