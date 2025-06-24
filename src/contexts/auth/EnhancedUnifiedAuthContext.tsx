@@ -51,7 +51,7 @@ interface EnhancedUnifiedAuthProviderProps {
   children: React.ReactNode;
 }
 
-// FIXED: Simplified initial auth state
+// Simplified initial auth state
 const createInitialAuthState = () => ({
   isAuthenticated: false,
   isLoading: true,
@@ -65,7 +65,6 @@ const createInitialAuthState = () => ({
 });
 
 const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProviderProps> = ({ children }) => {
-  // FIXED: Simplified state management
   const [authState, setAuthState] = useState(createInitialAuthState);
   const [isInitialized, setIsInitialized] = useState(false);
   const initRef = useRef(false);
@@ -73,7 +72,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
 
-  // FIXED: Simplified profile fetching
+  // Simplified profile fetching
   const fetchProfileForUser = useCallback(async (userId: string, type: SessionType) => {
     try {
       console.log(`🔒 Fetching ${type} profile for user:`, userId);
@@ -120,7 +119,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     }
   }, []);
 
-  // FIXED: Simplified auth state handler
+  // Simplified auth state handler
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
     console.log('🔒 Auth state change:', event, session ? 'Has session' : 'No session');
     
@@ -172,7 +171,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     }
   }, [fetchProfileForUser]);
 
-  // FIXED: Simplified login function
+  // Login function
   const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }): Promise<boolean> => {
     try {
       setAuthState(prev => ({ ...prev, error: null, isLoading: true }));
@@ -202,7 +201,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     }
   }, []);
 
-  // FIXED: Simplified logout function
+  // Logout function
   const logout = useCallback(async (): Promise<void> => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true }));
@@ -289,7 +288,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     }
   }, []);
 
-  // FIXED: Single initialization effect
+  // Single initialization effect
   useEffect(() => {
     if (initRef.current) return;
     initRef.current = true;
@@ -308,7 +307,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     };
   }, [handleAuthStateChange]);
 
-  // FIXED: Stable computed values
+  // Stable computed values
   const currentAdmin = useMemo(() => 
     authState.sessionType === 'admin' ? authState.adminProfile : null, 
     [authState.sessionType, authState.adminProfile]
@@ -319,7 +318,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     [authState.sessionType, authState.expertProfile]
   );
 
-  // FIXED: Stable context value
+  // Stable context value
   const contextValue = useMemo((): EnhancedUnifiedAuthContextType => ({
     // Core auth state
     isAuthenticated: authState.isAuthenticated,
@@ -365,7 +364,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     isProtected
   ]);
 
-  // FIXED: Show simple loading during initialization
+  // Show simple loading during initialization
   if (!isInitialized) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
