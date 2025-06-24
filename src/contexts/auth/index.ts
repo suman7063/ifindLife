@@ -1,19 +1,11 @@
 
-// Re-export the components from the user auth context
-export { AuthContext, useAuth } from './AuthContext';
-export { AuthProvider } from './AuthProvider';
-export { UserAuthProvider } from './UserAuthProvider';
+// Re-export the unified auth context
+export { useAuth, UnifiedAuthProvider as AuthProvider } from './UnifiedAuthContext';
+export { AuthContext } from './AuthContext';
 
-// Re-export the types
+// Re-export types for backward compatibility
 export type { 
-  AuthContextType, 
-  UserRole, 
-  AuthState, 
-  AuthUser,
-  SessionType
-} from './types';
+  UnifiedAuthContextType as AuthContextType
+} from './UnifiedAuthContext';
 
-// Re-export hooks
-export * from './hooks/useAuthState';
-export * from './hooks/useAuthActions';
-export * from './hooks/useAuthFunctions';
+// Note: Legacy exports removed - using simplified unified auth

@@ -4,10 +4,9 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App.tsx";
 import "./index.css";
-import { EnhancedUnifiedAuthProvider } from "@/contexts/auth/EnhancedUnifiedAuthContext";
+import { UnifiedAuthProvider } from "@/contexts/auth/UnifiedAuthContext";
 
-// DEBUG: Check if main.tsx is loading
-console.log('🔒 main.tsx loading');
+console.log('🔒 main.tsx loading with unified auth');
 
 const rootElement = document.getElementById("root");
 if (!rootElement) {
@@ -16,35 +15,12 @@ if (!rootElement) {
 
 const root = createRoot(rootElement);
 
-// DEBUG: Check DOM structure
-console.log('🔒 Root element found:', rootElement);
-
 root.render(
   <StrictMode>
     <BrowserRouter>
-      <EnhancedUnifiedAuthProvider>
-        <div style={{ minHeight: '100vh', width: '100%' }}>
-          <App />
-        </div>
-      </EnhancedUnifiedAuthProvider>
+      <UnifiedAuthProvider>
+        <App />
+      </UnifiedAuthProvider>
     </BrowserRouter>
   </StrictMode>
 );
-
-// DEBUG: Additional DOM check after render with proper TypeScript typing
-setTimeout(() => {
-  console.log('🔒 Post-render DOM check');
-  const navbar = document.querySelector('[data-navbar="main"]');
-  console.log('🔒 Navbar element exists:', !!navbar);
-  if (navbar) {
-    // Cast to HTMLElement to access offsetHeight and offsetWidth properties
-    const htmlNavbar = navbar as HTMLElement;
-    console.log('🔒 Navbar element details:', {
-      tagName: navbar.tagName,
-      className: navbar.className,
-      offsetHeight: htmlNavbar.offsetHeight,
-      offsetWidth: htmlNavbar.offsetWidth,
-      visible: htmlNavbar.offsetHeight > 0 && htmlNavbar.offsetWidth > 0
-    });
-  }
-}, 500);

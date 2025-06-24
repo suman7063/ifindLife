@@ -1,34 +1,10 @@
-import { createContext, useContext } from 'react';
-import { AuthContextType } from './types';
 
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  userProfile: null,
-  expertProfile: null,
-  isAuthenticated: false,
-  isLoading: true,
-  role: null,
-  login: async () => false,
-  signup: async () => false,
-  logout: async () => false,
-  updateProfile: async () => false,
-  updateExpertProfile: async () => false,
-  updatePassword: async () => false,
-  refreshProfile: async () => {},
-  session: null,
-  error: null,
-  walletBalance: 0,
-  profile: null,
-  sessionType: 'none',
-  hasUserAccount: false
-});
+// Re-export the unified auth context for backward compatibility
+export { useAuth, UnifiedAuthProvider as AuthProvider } from './UnifiedAuthContext';
+export type { UnifiedAuthContextType as AuthContextType } from './UnifiedAuthContext';
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  
-  return context;
-};
+// Create a compatibility context that just re-exports the unified context
+import { createContext } from 'react';
+import type { UnifiedAuthContextType } from './UnifiedAuthContext';
+
+export const AuthContext = createContext<UnifiedAuthContextType | undefined>(undefined);
