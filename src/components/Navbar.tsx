@@ -85,6 +85,18 @@ const NavbarComponent = () => {
     logout: authLogout 
   } = useEnhancedUnifiedAuth();
 
+  // Enhanced logging for navbar state
+  console.log('🔒 Navbar rendering with auth state:', {
+    isAuthenticated: Boolean(isAuthenticated),
+    sessionType,
+    hasUser: Boolean(user),
+    hasUserProfile: Boolean(userProfile),
+    hasExpertProfile: Boolean(expertProfile),
+    hasAdminProfile: Boolean(adminProfile),
+    isLoading: Boolean(isLoading),
+    timestamp: new Date().toISOString()
+  });
+
   // Stable compatible user object
   const currentUser = useMemo(() => 
     createCompatibleUser(userProfile, expertProfile, adminProfile, sessionType),
@@ -110,13 +122,31 @@ const NavbarComponent = () => {
 
   // Stable scroll effect with proper cleanup
   useEffect(() => {
+    console.log('🔒 Navbar mounting, setting up scroll listener');
+    
     const handleScroll = () => {
       const isScrolled = window.scrollY > 10;
       setScrolled(isScrolled);
     };
     
     window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Debug navbar mounting
+    setTimeout(() => {
+      const navbarElement = document.querySelector('[data-navbar="main"]');
+      console.log('🔒 Navbar mounted - element in DOM:', Boolean(navbarElement));
+      if (navbarElement) {
+        const styles = window.getComputedStyle(navbarElement);
+        console.log('🔒 Navbar styles:', {
+          display: styles.display,
+          visibility: styles.visibility,
+          opacity: styles.opacity
+        });
+      }
+    }, 50);
+    
     return () => {
+      console.log('🔒 Navbar unmounting, cleaning up scroll listener');
       window.removeEventListener('scroll', handleScroll);
     };
   }, []);
@@ -149,10 +179,21 @@ const NavbarComponent = () => {
     return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   }, [scrolled]);
 
+  console.log('🔒 Navbar: Final render decision - showing navbar');
+
   return (
     <div 
       data-navbar="main"
       className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}
+      style={{
+        display: 'block',
+        visibility: 'visible',
+        opacity: 1,
+        position: 'sticky',
+        top: 0,
+        width: '100%',
+        zIndex: 50
+      }}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
         <div className="flex items-center gap-2 relative">
