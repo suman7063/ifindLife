@@ -54,7 +54,8 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
 
   // Don't show loading state here - let the parent handle it
   if (unifiedAuth.isLoading) {
-    return <div className="hidden md:flex items-center space-x-4">
+    return (
+      <div className="hidden md:flex items-center space-x-4">
         <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
           <Link to="/">Home</Link>
         </Button>
@@ -92,7 +93,8 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
         </NavigationMenu>
         
         <div className="px-3 py-2 text-gray-500">Loading...</div>
-      </div>;
+      </div>
+    );
   }
 
   // Determine which auth UI to show with priority logic
@@ -105,13 +107,15 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     authComponent = <NavbarUserAvatar currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
   } else {
     console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
+    // Pass proper authentication state - should show login when NOT authenticated
     authComponent = <LoginDropdown 
       isAuthenticated={isUserAuthenticated || isExpertAuthenticated} 
       hasExpertProfile={isExpertAuthenticated} 
     />;
   }
 
-  return <div className="hidden md:flex items-center space-x-4">
+  return (
+    <div className="hidden md:flex items-center space-x-4">
       <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
         <Link to="/">Home</Link>
       </Button>
@@ -149,7 +153,8 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
       </NavigationMenu>
       
       {authComponent}
-    </div>;
+    </div>
+  );
 };
 
 export default NavbarDesktopLinks;
