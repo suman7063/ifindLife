@@ -6,7 +6,7 @@ import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
+import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 import AuthRedirectSystem from '@/utils/authRedirectSystem';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -15,9 +15,9 @@ const UserLogin: React.FC = () => {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { isAuthenticated, sessionType, user, isLoading: authLoading } = useEnhancedUnifiedAuth();
+  const { isAuthenticated, sessionType, user, isLoading: authLoading } = useAuth();
 
-  console.log('UserLogin: Current enhanced unified auth state:', {
+  console.log('UserLogin: Current unified auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
     sessionType,
     hasUser: Boolean(user),
@@ -86,7 +86,7 @@ const UserLogin: React.FC = () => {
     
     try {
       setIsLoggingIn(true);
-      console.log('UserLogin: Attempting login with enhanced flow:', email);
+      console.log('UserLogin: Attempting login with unified flow:', email);
       
       // Check if we have redirect data to show appropriate message
       const redirectData = AuthRedirectSystem.getRedirect();

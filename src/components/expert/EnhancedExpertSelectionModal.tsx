@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
-import { useAuthProtection } from '@/utils/authProtection';
+import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
 import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
@@ -19,24 +18,26 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
   onExpertSelected,
   serviceTitle
 }) => {
-  const { isAuthenticated, sessionType, isAuthProtected } = useEnhancedUnifiedAuth();
-  const { startProtection, endProtection } = useAuthProtection();
+  const { isAuthenticated, sessionType } = useAuth();
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [showCallModal, setShowCallModal] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);
+
+  // Simple auth protection state
+  const [isAuthProtected, setIsAuthProtected] = useState(false);
 
   // Start protection when modal opens
   useEffect(() => {
     if (isOpen && isAuthenticated) {
       const id = `expert_selection_${serviceTitle}_${Date.now()}`;
       setOperationId(id);
-      startProtection(id, 'booking');
+      setIsAuthProtected(true);
       console.log('🔒 Started expert selection protection for:', serviceTitle);
     }
     
     return () => {
       if (operationId) {
-        endProtection(operationId);
+        setIsAuthProtected(false);
         console.log('🔒 Ended expert selection protection');
       }
     };
@@ -51,7 +52,7 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
     }
 
     if (operationId) {
-      endProtection(operationId);
+      setIsAuthProtected(false);
       setOperationId(null);
     }
     
@@ -108,20 +109,20 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
         <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              {isAuthProtected() && <Shield className="h-5 w-5 text-green-600" />}
+              {isAuthProtected && <Shield className="h-5 w-5 text-green-600" />}
               <span>Choose an Expert for {serviceTitle}</span>
             </DialogTitle>
           </DialogHeader>
 
           <AuthProtectionIndicator
-            isAuthProtected={isAuthProtected()}
+            isAuthProtected={isAuthProtected}
             serviceTitle={serviceTitle}
           />
 
           <ExpertGrid
             experts={mockExperts}
             selectedExpert={selectedExpert}
-            isAuthProtected={isAuthProtected()}
+            isAuthProtected={isAuthProtected}
             onExpertCardClick={handleExpertCardClick}
             onStartCall={handleStartCall}
           />

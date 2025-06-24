@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 
 type SessionType = 'user' | 'expert' | null;
 
-interface UnifiedAuthContextType {
+export interface UnifiedAuthContextType {
   // Core state
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -49,6 +49,11 @@ interface UnifiedAuthContextType {
 
   // Computed properties for backward compatibility
   walletBalance: number;
+
+  // Additional properties for compatibility
+  expert: ExpertProfile | null;
+  admin: any | null;
+  isAuthProtected: () => boolean;
 }
 
 const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(undefined);
@@ -387,6 +392,9 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     `${window.location.origin}/experts/${expertId}`, []);
   const getReferralLink = useCallback((): string | null => null, []);
 
+  // Auth protection placeholder
+  const isAuthProtected = useCallback((): boolean => false, []);
+
   // Computed values
   const profile = useMemo(() => {
     if (sessionType === 'expert') return expertProfile;
@@ -445,14 +453,20 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     getReferralLink,
 
     // Computed properties
-    walletBalance
+    walletBalance,
+
+    // Additional compatibility properties
+    expert: expertProfile,
+    admin: null,
+    isAuthProtected
   }), [
     isAuthenticated, isLoading, user, session, sessionType, error,
     userProfile, expertProfile, profile, role, hasUserAccount,
     login, logout, signup, registerExpert,
     updateProfile, updateExpertProfile, updatePassword, updateProfilePicture,
     addToFavorites, removeFromFavorites, rechargeWallet, addReview, reportExpert,
-    hasTakenServiceFrom, getExpertShareLink, getReferralLink, walletBalance
+    hasTakenServiceFrom, getExpertShareLink, getReferralLink, walletBalance,
+    isAuthProtected
   ]);
 
   return (

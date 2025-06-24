@@ -1,79 +1,67 @@
 
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
 import ExpertDashboardLayout from '@/components/expert-dashboard/layout/ExpertDashboardLayout';
 import DashboardHome from '@/components/expert-dashboard/pages/DashboardHome';
 import ProfilePage from '@/components/expert-dashboard/pages/ProfilePage';
-import SchedulePage from '@/components/expert-dashboard/pages/SchedulePage';
-import ClientsPage from '@/components/expert-dashboard/pages/ClientsPage';
-import MessagingPage from '@/components/expert-dashboard/pages/MessagingPage';
-import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
-import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
-import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
-import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
+import LoadingScreen from '@/components/auth/LoadingScreen';
+import { toast } from 'sonner';
 
-const ExpertDashboard = () => {
-  const { isAuthenticated, sessionType, expert, isLoading } = useEnhancedUnifiedAuth();
-  
-  console.log('ExpertDashboard - Enhanced unified auth state:', {
-    isAuthenticated,
+const ExpertDashboard: React.FC = () => {
+  const { isAuthenticated, sessionType, expertProfile, isLoading } = useAuth();
+  const navigate = useNavigate();
+  const [view, setView] = useState<'dashboard' | 'profile' | 'appointments' | 'earnings' | 'settings'>('dashboard');
+
+  console.log('ExpertDashboard: Current auth state:', {
+    isAuthenticated: Boolean(isAuthenticated),
     sessionType,
-    hasExpertProfile: !!expert,
-    isLoading,
-    expertStatus: expert?.status
+    hasExpertProfile: Boolean(expertProfile),
+    isLoading: Boolean(isLoading),
+    expertStatus: expertProfile?.status
   });
 
-  // Show loading state while authentication is being checked
+  useEffect(() => {
+    if (!isLoading) {
+      // Check if expert is authenticated
+      if (!isAuthenticated || sessionType !== 'expert' || !expertProfile) {
+        console.log('ExpertDashboard: Not authenticated as expert, redirecting');
+        toast.error('You must be logged in as an expert to access this page');
+        navigate('/expert-login', { replace: true });
+        return;
+      }
+
+      // Check expert status
+      if (expertProfile.status === 'pending') {
+        toast.info('Your expert account is pending approval');
+      } else if (expertProfile.status === 'rejected') {
+        toast.error('Your expert account has been rejected. Please contact support.');
+      }
+    }
+  }, [isAuthenticated, sessionType, expertProfile, isLoading, navigate]);
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading expert dashboard...</p>
-        </div>
-      </div>
-    );
+    return <LoadingScreen message="Loading expert dashboard..." />;
   }
 
-  // Handle unauthorized access
-  if (!isAuthenticated || sessionType !== 'expert' || !expert) {
-    return <Navigate to="/expert-login" replace />;
+  // If not authenticated as expert, don't render anything (redirect will happen)
+  if (!isAuthenticated || sessionType !== 'expert' || !expertProfile) {
+    return <LoadingScreen message="Redirecting to login..." />;
   }
+
+  const renderContent = () => {
+    switch (view) {
+      case 'profile':
+        return <ProfilePage />;
+      case 'dashboard':
+      default:
+        return <DashboardHome />;
+    }
+  };
 
   return (
     <ExpertDashboardLayout>
-      <Routes>
-        {/* Dashboard Home */}
-        <Route index element={<DashboardHome />} />
-        
-        {/* Professional Profile Management */}
-        <Route path="profile" element={<ProfilePage />} />
-        
-        {/* Consultation Schedule and Availability Management */}
-        <Route path="schedule" element={<SchedulePage />} />
-        
-        {/* Client Management with History and Notes */}
-        <Route path="clients" element={<ClientsPage />} />
-        
-        {/* Messaging */}
-        <Route path="messages" element={<MessagingPage />} />
-        
-        {/* Service Offering Management with Pricing Control */}
-        <Route path="services" element={<ServicesPage />} />
-        
-        {/* Earnings Tracking and Payout Management */}
-        <Route path="earnings" element={<EarningsPage />} />
-        
-        {/* Advanced Analytics Dashboard */}
-        <Route path="analytics" element={<AnalyticsPage />} />
-        
-        {/* User Reporting System for Inappropriate Behavior */}
-        <Route path="reports" element={<ReportPage />} />
-        
-        {/* Fallback route */}
-        <Route path="*" element={<Navigate to="/expert-dashboard" replace />} />
-      </Routes>
+      {renderContent()}
     </ExpertDashboardLayout>
   );
 };
