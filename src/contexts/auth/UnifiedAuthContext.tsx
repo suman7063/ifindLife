@@ -120,18 +120,27 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     }
   }, []);
 
-  // Fetch expert profile
+  // Fetch expert profile with correct query
   const fetchExpertProfile = useCallback(async (userId: string) => {
     try {
+      console.log('🔒 Fetching expert profile for auth_id:', userId);
       const { data, error } = await supabase
         .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
+        .eq('status', 'approved')
         .maybeSingle();
 
       if (error) {
         console.error('Error fetching expert profile:', error);
         return null;
+      }
+
+      if (data) {
+        console.log('✅ Expert profile found:', data.name);
+        console.log('✅ Expert specialties:', data.specialties);
+      } else {
+        console.log('🔒 No approved expert profile found for auth_id:', userId);
       }
 
       setExpertProfile(data);
@@ -142,44 +151,51 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     }
   }, []);
 
-  // Determine session type based on available profiles and stored preference
+  // Updated session type determination with correct database queries
   const determineSessionType = useCallback(async (user: User): Promise<SessionType> => {
-    const storedType = localStorage.getItem('sessionType') as SessionType;
-    console.log('🔒 Determining session type for user:', user.id, 'stored:', storedType);
-
     try {
-      // If we have a stored preference, try to use it
-      if (storedType === 'expert') {
-        const expertProfile = await fetchExpertProfile(user.id);
-        if (expertProfile) {
-          console.log('✅ Expert profile found, using expert session');
-          return 'expert';
-        }
+      console.log('🔒 Determining session type for user:', user.id);
+      
+      // Check stored session type first
+      const storedSessionType = localStorage.getItem('sessionType') as SessionType;
+      console.log('🔒 Stored session type:', storedSessionType);
+      
+      // Check expert profile with CORRECT query
+      console.log('🔒 Checking expert profile for auth_id:', user.id);
+      
+      const { data: expertProfile, error: expertError } = await supabase
+        .from('expert_accounts')  // ✅ Correct table
+        .select('*')
+        .eq('auth_id', user.id)   // ✅ Correct column
+        .eq('status', 'approved')
+        .maybeSingle();
+      
+      if (expertError) {
+        console.log('🔒 Expert profile query error (normal for regular users):', expertError.message);
       }
-
-      if (storedType === 'user' || !storedType) {
-        const userProfile = await fetchUserProfile(user.id);
-        if (userProfile) {
-          console.log('✅ User profile found, using user session');
-          return 'user';
-        }
+      
+      if (!expertError && expertProfile) {
+        console.log('✅ Expert profile found:', expertProfile.name);
+        localStorage.setItem('sessionType', 'expert');
+        await fetchExpertProfile(user.id);
+        return 'expert';
       }
-
-      // Fallback: check both profiles
-      const [userProfile, expertProfile] = await Promise.all([
-        fetchUserProfile(user.id),
-        fetchExpertProfile(user.id)
-      ]);
-
-      if (expertProfile && storedType === 'expert') return 'expert';
-      if (userProfile) return 'user';
-      if (expertProfile) return 'expert';
-
-      console.log('❌ No profiles found for user');
-      return null;
+      
+      // Check for admin (implement later if needed)
+      // const adminCheck = await checkAdminProfile(user.id);
+      
+      // Default to user if no expert profile
+      console.log('🔒 No expert profile found, defaulting to user session');
+      if (!storedSessionType) {
+        localStorage.setItem('sessionType', 'user');
+      }
+      
+      await fetchUserProfile(user.id);
+      return storedSessionType || 'user';
+      
     } catch (error) {
-      console.error('Error determining session type:', error);
-      return null;
+      console.error('❌ Session type determination failed:', error);
+      return 'user';  // Default fallback
     }
   }, [fetchUserProfile, fetchExpertProfile]);
 
@@ -299,7 +315,7 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     };
   }, [handleAuthStateChange]);
 
-  // Auth actions
+  // Updated login with enhanced expert support
   const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean }): Promise<boolean> => {
     try {
       setIsLoading(true);
