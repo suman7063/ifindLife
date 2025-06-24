@@ -12,88 +12,46 @@ interface State {
   hasError: boolean;
   error: Error | null;
   errorInfo: ErrorInfo | null;
-  errorCount: number;
 }
 
 class AuthErrorBoundary extends Component<Props, State> {
-  private errorTimeoutRef: NodeJS.Timeout | null = null;
-
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, errorInfo: null, errorCount: 0 };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<State> {
+  static getDerivedStateFromError(error: Error): State {
     // Update state so the next render will show the fallback UI
-    return { hasError: true, error };
+    return { hasError: true, error, errorInfo: null };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('🔒 Auth Error Boundary caught error:', error, errorInfo);
     
-    // Increment error count to track cascading errors
-    this.setState(prevState => ({
-      error,
-      errorInfo,
-      errorCount: prevState.errorCount + 1
-    }));
-    
-    // Check for specific React errors that indicate auth loops
+    // Check for specific React errors
     if (error.message.includes('Maximum update depth exceeded')) {
-      console.error('🔒 CRITICAL: React Error #300 - Infinite render loop detected in auth system');
-      toast.error('Authentication system error detected. Resetting...');
+      console.error('🔒 CRITICAL: React Error #300 - Infinite render loop detected');
+      toast.error('Authentication system error detected. Refreshing page...');
       
-      // Clear ALL auth-related localStorage to break the loop
-      ['sessionType', 'expertProfile', 'userProfile'].forEach(key => {
-        localStorage.removeItem(key);
-      });
-      
-      // Delayed page refresh to allow error to be logged
-      if (this.errorTimeoutRef) clearTimeout(this.errorTimeoutRef);
-      this.errorTimeoutRef = setTimeout(() => {
+      // Clear auth state and refresh
+      localStorage.removeItem('sessionType');
+      setTimeout(() => {
         window.location.reload();
       }, 2000);
     }
     
-    // Track cascading errors that might indicate auth state loops
-    if (this.state.errorCount >= 3) {
-      console.error('🔒 CRITICAL: Multiple auth errors detected - resetting auth system');
-      toast.error('Multiple authentication errors detected. Please refresh the page.');
-      
-      // Clear auth state and force reload after multiple errors
-      localStorage.clear();
-      if (this.errorTimeoutRef) clearTimeout(this.errorTimeoutRef);
-      this.errorTimeoutRef = setTimeout(() => {
-        window.location.reload();
-      }, 3000);
-    }
-    
-    // Check for auth context errors
-    if (error.message.includes('useEnhancedUnifiedAuth') || error.message.includes('AuthContext')) {
-      console.error('🔒 Auth context error detected:', error.message);
-      toast.error('Authentication context error. Refreshing...');
-      
-      if (this.errorTimeoutRef) clearTimeout(this.errorTimeoutRef);
-      this.errorTimeoutRef = setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-    }
-  }
-
-  componentWillUnmount() {
-    if (this.errorTimeoutRef) {
-      clearTimeout(this.errorTimeoutRef);
-    }
+    this.setState({
+      error,
+      errorInfo
+    });
   }
 
   handleRetry = () => {
     // Clear error state and try again
-    this.setState({ hasError: false, error: null, errorInfo: null, errorCount: 0 });
+    this.setState({ hasError: false, error: null, errorInfo: null });
     
     // Clear potentially corrupted auth state
-    ['sessionType', 'expertProfile', 'userProfile'].forEach(key => {
-      localStorage.removeItem(key);
-    });
+    localStorage.removeItem('sessionType');
     
     // Reload the page to reset everything
     window.location.reload();
@@ -112,29 +70,10 @@ class AuthErrorBoundary extends Component<Props, State> {
                 Something went wrong with the authentication system. This is usually a temporary issue.
               </p>
               
-              {this.state.errorCount >= 2 && (
-                <div className="bg-yellow-50 p-3 rounded border border-yellow-200">
-                  <p className="text-yellow-800 text-sm font-semibold">
-                    Multiple errors detected ({this.state.errorCount})
-                  </p>
-                  <p className="text-yellow-700 text-sm">
-                    The page will auto-refresh to reset the authentication system.
-                  </p>
-                </div>
-              )}
-              
               {process.env.NODE_ENV === 'development' && this.state.error && (
                 <div className="bg-red-50 p-3 rounded text-sm">
                   <p className="font-semibold text-red-800">Error:</p>
                   <p className="text-red-700">{this.state.error.message}</p>
-                  {this.state.error.stack && (
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-red-600">Stack trace</summary>
-                      <pre className="text-xs mt-1 whitespace-pre-wrap text-red-600">
-                        {this.state.error.stack}
-                      </pre>
-                    </details>
-                  )}
                 </div>
               )}
               

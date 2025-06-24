@@ -6,6 +6,10 @@ import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unifi
 import { authProtection, useAuthProtection } from '@/utils/authProtection';
 import { toast } from 'sonner';
 
+// Debug React availability
+console.log('EnhancedUnifiedAuthContext - React:', !!React);
+console.log('EnhancedUnifiedAuthContext - useState:', !!useState);
+
 type SessionType = 'user' | 'expert' | 'admin' | null;
 
 interface EnhancedUnifiedAuthContextType {
@@ -51,73 +55,97 @@ interface EnhancedUnifiedAuthProviderProps {
   children: React.ReactNode;
 }
 
-// FIXED: Initial stable auth state
-const createInitialAuthState = () => ({
-  isAuthenticated: false,
-  isLoading: true,
-  user: null,
-  session: null,
-  sessionType: null as SessionType,
-  error: null,
-  userProfile: null,
-  expertProfile: null,
-  adminProfile: null
-});
+// Add render counter for performance monitoring
+let renderCount = 0;
 
-// FIXED: Deep equality check to prevent unnecessary updates
-const isAuthStateEqual = (prev: any, next: any): boolean => {
-  return (
-    prev.isAuthenticated === next.isAuthenticated &&
-    prev.isLoading === next.isLoading &&
-    prev.user?.id === next.user?.id &&
-    prev.session?.access_token === next.session?.access_token &&
-    prev.sessionType === next.sessionType &&
-    prev.error === next.error &&
-    prev.userProfile?.id === next.userProfile?.id &&
-    prev.expertProfile?.id === next.expertProfile?.id &&
-    prev.adminProfile?.id === next.adminProfile?.id
-  );
+// FIXED: Helper function to prevent state loops during render
+const createStableAuthState = (
+  user: User | null,
+  session: Session | null,
+  sessionType: SessionType,
+  userProfile: UserProfile | null,
+  expertProfile: ExpertProfile | null,
+  adminProfile: AdminProfile | null,
+  isLoading: boolean,
+  error: string | null
+) => {
+  const isAuthenticated = Boolean(user && session && !isLoading);
+  
+  return {
+    isAuthenticated,
+    isLoading,
+    user,
+    session,
+    sessionType,
+    error,
+    userProfile,
+    expertProfile,
+    adminProfile
+  };
 };
 
 const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProviderProps> = ({ children }) => {
-  // FIXED: Critical initialization guard
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [authState, setAuthState] = useState(createInitialAuthState);
-  
-  // FIXED: Processing guards to prevent loops
-  const isProcessingSession = useRef(false);
-  const isUpdatingState = useRef(false);
-  const initializationStarted = useRef(false);
-  
+  // Performance monitoring
+  useEffect(() => {
+    renderCount++;
+    console.log('🔒 AuthProvider render count:', renderCount);
+  });
+
+  // FIXED: Stable auth state to prevent infinite loops
+  const [authState, setAuthState] = useState(() => createStableAuthState(
+    null, null, null, null, null, null, true, null
+  ));
+
+  // FIXED: Prevent state updates during render phase
+  const isUpdatingRef = useRef(false);
+  const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
 
-  // FIXED: Truly stable state update function with deep equality check
+  // FIXED: Safe state update function to prevent cascading updates
   const updateAuthState = useCallback((updates: Partial<typeof authState>) => {
-    if (isUpdatingState.current) {
+    // Prevent updates during render phase
+    if (isUpdatingRef.current) {
       console.log('🔒 Auth state update blocked - already updating');
       return;
     }
 
-    setAuthState(prevState => {
-      const newState = { ...prevState, ...updates };
+    // Clear any pending update
+    if (updateTimeoutRef.current) {
+      clearTimeout(updateTimeoutRef.current);
+    }
+
+    // Batch updates with minimal delay to prevent cascading
+    updateTimeoutRef.current = setTimeout(() => {
+      isUpdatingRef.current = true;
       
-      // CRITICAL: Deep equality check to prevent unnecessary updates
-      if (isAuthStateEqual(prevState, newState)) {
-        console.log('🔒 Auth state update skipped - no actual changes detected');
-        return prevState;
-      }
+      setAuthState(prevState => {
+        const newState = { ...prevState, ...updates };
+        
+        // Only update if state actually changed
+        const hasChanged = Object.keys(updates).some(key => 
+          prevState[key as keyof typeof prevState] !== updates[key as keyof typeof updates]
+        );
+        
+        if (!hasChanged) {
+          console.log('🔒 Auth state update skipped - no changes');
+          isUpdatingRef.current = false;
+          return prevState;
+        }
+        
+        console.log('🔒 Auth state updated:', Object.keys(updates));
+        isUpdatingRef.current = false;
+        return newState;
+      });
       
-      console.log('🔒 Auth state updated with changes:', Object.keys(updates));
-      return newState;
-    });
+      updateTimeoutRef.current = null;
+    }, 10); // Minimal delay to prevent infinite loops
   }, []);
 
-  // FIXED: Stable profile fetching with proper error handling
+  // FIXED: Safe profile fetching with proper error handling
   const fetchProfileForUser = useCallback(async (userId: string, type: SessionType) => {
     try {
-      console.log(`🔒 Fetching ${type} profile for user:`, userId);
-      
       if (type === 'user') {
         const { data, error } = await supabase
           .from('users')
@@ -126,12 +154,13 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           .single();
         
         if (error) {
-          console.log('🔒 No user profile found:', error.message);
-          return null;
+          console.log('🔒 No user profile found:', error);
+          updateAuthState({ userProfile: null, isLoading: false });
+          return;
         }
         
-        console.log('🔒 User profile loaded successfully');
-        return { userProfile: data };
+        updateAuthState({ userProfile: data, isLoading: false });
+        console.log('🔒 User profile loaded:', { hasProfile: !!data, userId });
       } else if (type === 'expert') {
         const { data, error } = await supabase
           .from('experts')
@@ -140,12 +169,13 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           .single();
         
         if (error) {
-          console.log('🔒 No expert profile found:', error.message);
-          return null;
+          console.log('🔒 No expert profile found:', error);
+          updateAuthState({ expertProfile: null, isLoading: false });
+          return;
         }
         
-        console.log('🔒 Expert profile loaded successfully');
-        return { expertProfile: data };
+        updateAuthState({ expertProfile: data, isLoading: false });
+        console.log('🔒 Expert profile loaded:', { hasProfile: !!data, userId });
       } else if (type === 'admin') {
         const { data, error } = await supabase
           .from('admin_users')
@@ -154,51 +184,58 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           .single();
         
         if (error) {
-          console.log('🔒 No admin profile found:', error.message);
-          return null;
+          console.log('🔒 No admin profile found:', error);
+          updateAuthState({ adminProfile: null, isLoading: false });
+          return;
         }
         
-        console.log('🔒 Admin profile loaded successfully');
-        return { adminProfile: data };
+        updateAuthState({ adminProfile: data, isLoading: false });
+        console.log('🔒 Admin profile loaded:', { hasProfile: !!data, userId });
       }
-      
-      return null;
     } catch (error) {
       console.error('🔒 Error fetching profile:', error);
-      return null;
+      updateAuthState({ isLoading: false });
     }
-  }, []);
+  }, [updateAuthState]);
 
-  // FIXED: Optimized session handler with processing guard
+  // FIXED: Enhanced session handler with proper guards against infinite loops
   const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
-    // CRITICAL: Prevent multiple simultaneous processing
-    if (isProcessingSession.current) {
-      console.log('🔒 Session processing already in progress - skipping');
-      return;
-    }
-    
     console.log('🔒 Enhanced auth state change:', {
       event,
       hasSession: !!session,
       isProtected: authProtection.isProtected(),
-      userEmail: session?.user?.email || 'No user'
+      userEmail: session?.user?.email || 'No user',
+      timestamp: new Date().toISOString()
     });
+    
+    // CRITICAL: Prevent state updates during render or when already updating
+    if (isUpdatingRef.current) {
+      console.log('🔒 Auth state change blocked - already updating');
+      return;
+    }
     
     // Prevent cascading updates during protected operations
     if (authProtection.isProtected() && event === 'SIGNED_OUT') {
-      console.log('🔒 WARNING: Logout detected during protected operation - deferring');
-      return;
+      console.log('🔒 WARNING: Logout detected during protected operation');
+      const activeOps = authProtection.getActiveOperations();
+      if (activeOps.length > 0) {
+        console.log('🔒 Delaying auth state clear due to active operations');
+        return;
+      }
     }
-
-    isProcessingSession.current = true;
 
     try {
       if (session?.user) {
+        // Determine session type
         const storedSessionType = localStorage.getItem('sessionType') as SessionType;
         
-        console.log('🔒 Processing auth session for user:', session.user.email);
+        console.log('🔒 Processing auth session:', {
+          userId: session.user.id,
+          sessionType: storedSessionType,
+          isLoading: true
+        });
         
-        // FIXED: Single batch update with basic auth data
+        // FIXED: Single batch update to prevent cascading
         updateAuthState({
           session,
           user: session.user,
@@ -210,25 +247,17 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
         
         // Fetch profile based on session type
         if (storedSessionType) {
-          const profileData = await fetchProfileForUser(session.user.id, storedSessionType);
-          
-          if (profileData) {
-            updateAuthState({
-              ...profileData,
-              isLoading: false
-            });
-          } else {
-            updateAuthState({ isLoading: false });
-          }
+          await fetchProfileForUser(session.user.id, storedSessionType);
         } else {
           updateAuthState({ isLoading: false });
         }
       } else {
-        console.log('🔒 Clearing auth state - no session');
+        // Clear all auth state
+        console.log('🔒 Clearing auth state');
         
         localStorage.removeItem('sessionType');
         
-        // FIXED: Single batch clear
+        // FIXED: Single batch clear to prevent cascading
         updateAuthState({
           session: null,
           user: null,
@@ -247,12 +276,10 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
         error: 'Authentication state error',
         isLoading: false
       });
-    } finally {
-      isProcessingSession.current = false;
     }
   }, [updateAuthState, fetchProfileForUser]);
 
-  // FIXED: Stable login function
+  // FIXED: Stable login function with proper error handling
   const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }): Promise<boolean> => {
     const operationId = `login_${Date.now()}`;
     
@@ -388,16 +415,9 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     }
   }, [updateAuthState]);
 
-  // FIXED: Critical initialization with single-run guard
+  // FIXED: Initialize auth state with proper cleanup
   useEffect(() => {
-    // CRITICAL: Prevent multiple initializations
-    if (initializationStarted.current) {
-      console.log('🔒 Initialization already started - skipping duplicate');
-      return;
-    }
-    
-    initializationStarted.current = true;
-    console.log('🔒 Initializing enhanced unified auth - ONCE');
+    console.log('🔒 Initializing enhanced unified auth');
     
     let mounted = true;
     
@@ -411,17 +431,16 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
       if (mounted) {
         handleAuthStateChange('INITIAL_SESSION', session);
       }
-    }).finally(() => {
-      if (mounted) {
-        setIsInitialized(true);
-      }
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
     };
-  }, []); // CRITICAL: Empty dependency array
+  }, []); // Empty dependency array to prevent re-initialization
 
   // FIXED: Stable computed values
   const currentAdmin = useMemo(() => 
@@ -434,40 +453,36 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     [authState.sessionType, authState.expertProfile]
   );
 
-  // FIXED: Ultra-stable context value with change tracking
-  const contextValue = useMemo((): EnhancedUnifiedAuthContextType => {
-    const value = {
-      // Core auth state
-      isAuthenticated: authState.isAuthenticated,
-      isLoading: authState.isLoading,
-      user: authState.user,
-      session: authState.session,
-      sessionType: authState.sessionType,
-      error: authState.error,
+  // FIXED: Ultra-stable context value with minimal dependencies
+  const contextValue = useMemo((): EnhancedUnifiedAuthContextType => ({
+    // Core auth state
+    isAuthenticated: authState.isAuthenticated,
+    isLoading: authState.isLoading,
+    user: authState.user,
+    session: authState.session,
+    sessionType: authState.sessionType,
+    error: authState.error,
 
-      // Profile data - individual profiles
-      userProfile: authState.userProfile,
-      expertProfile: authState.expertProfile,
-      adminProfile: authState.adminProfile,
+    // Profile data - individual profiles
+    userProfile: authState.userProfile,
+    expertProfile: authState.expertProfile,
+    adminProfile: authState.adminProfile,
 
-      // Profile data - current active profiles (for backward compatibility)
-      admin: currentAdmin,
-      expert: currentExpert,
+    // Profile data - current active profiles (for backward compatibility)
+    admin: currentAdmin,
+    expert: currentExpert,
 
-      // Auth actions - stable references
-      login,
-      logout,
-      registerExpert,
-      
-      // Auth protection - stable references
-      startAuthProtection: startProtection,
-      endAuthProtection: endProtection,
-      isAuthProtected: isProtected
-    };
+    // Auth actions - stable references
+    login,
+    logout,
+    registerExpert,
     
-    console.log('🔒 Creating stable context value');
-    return value;
-  }, [
+    // Auth protection - stable references
+    startAuthProtection: startProtection,
+    endAuthProtection: endProtection,
+    isAuthProtected: isProtected
+  }), [
+    // FIXED: Use individual auth state properties instead of whole object
     authState.isAuthenticated,
     authState.isLoading,
     authState.user,
@@ -487,24 +502,12 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     isProtected
   ]);
 
-  // FIXED: Loading state during initialization
-  if (!isInitialized) {
-    console.log('🔒 Auth provider initializing...');
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Initializing authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  console.log('🔒 Enhanced auth provider rendering with stable state:', { 
+  console.log('🔒 EnhancedUnifiedAuthProvider stable context value:', { 
     isAuthenticated: authState.isAuthenticated, 
     isLoading: authState.isLoading, 
     hasUser: !!authState.user, 
-    sessionType: authState.sessionType
+    sessionType: authState.sessionType,
+    renderCount
   });
 
   return (
