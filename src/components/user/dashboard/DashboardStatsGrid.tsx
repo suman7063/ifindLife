@@ -1,19 +1,24 @@
 
 import React from 'react';
 import StatsCard from './StatsCard';
-import { UserProfile } from '@/types/supabase';
+import { UserProfile } from '@/types/database/unified';
 import { Users, ShoppingBag, MessageSquare, ShieldCheck } from 'lucide-react';
+import { getUserEnrolledCourses, getUserReviews, getUserReports } from '@/utils/profileHelpers';
 
 interface DashboardStatsGridProps {
   userProfile: UserProfile | null;
 }
 
 const DashboardStatsGrid: React.FC<DashboardStatsGridProps> = ({ userProfile }) => {
+  const enrolledCourses = getUserEnrolledCourses(userProfile);
+  const reviews = getUserReviews(userProfile);
+  const reports = getUserReports(userProfile);
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StatsCard
         title="My Courses"
-        value={userProfile?.enrolledCourses?.length || 0}
+        value={enrolledCourses.length}
         description="Courses you've enrolled in"
         icon={Users}
       />
@@ -27,14 +32,14 @@ const DashboardStatsGrid: React.FC<DashboardStatsGridProps> = ({ userProfile }) 
       
       <StatsCard
         title="Reviews Given"
-        value={userProfile?.reviews?.length || 0}
+        value={reviews.length}
         description="Reviews you've submitted"
         icon={MessageSquare}
       />
       
       <StatsCard
         title="Reports Submitted"
-        value={userProfile?.reports?.length || 0}
+        value={reports.length}
         description="Reports you've submitted"
         icon={ShieldCheck}
       />

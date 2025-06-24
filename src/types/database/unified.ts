@@ -4,7 +4,7 @@ export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  phone?: string; // Made optional to resolve conflicts
+  phone?: string;
   country?: string;
   city?: string;
   currency: string;
@@ -22,6 +22,12 @@ export interface UserProfile {
   reports: any[];
   transactions: any[];
   referrals: any[];
+  
+  // Support both naming conventions for backward compatibility
+  walletBalance?: number;
+  favoriteExperts?: any[];
+  enrolledCourses?: any[];
+  profilePicture?: string;
 }
 
 export interface ExpertProfile {

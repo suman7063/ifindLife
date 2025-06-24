@@ -2,11 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/auth/AuthContext';
-import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
+import { getUserFavoriteExperts } from '@/utils/profileHelpers';
 
 const FavoritesSection: React.FC = () => {
   const { userProfile } = useAuth();
-  const currentUser = ensureUserProfileCompatibility(userProfile);
+  const favoriteExperts = getUserFavoriteExperts(userProfile);
 
   return (
     <Card className="w-full">
@@ -14,10 +14,10 @@ const FavoritesSection: React.FC = () => {
         <CardTitle>Your Favorites</CardTitle>
       </CardHeader>
       <CardContent>
-        {currentUser?.favoriteExperts && currentUser.favoriteExperts.length > 0 ? (
+        {favoriteExperts && favoriteExperts.length > 0 ? (
           <div>
             <p className="text-sm text-muted-foreground mb-2">
-              You have {currentUser.favoriteExperts.length} favorite experts
+              You have {favoriteExperts.length} favorite experts
             </p>
             {/* Favorite experts list would go here */}
           </div>

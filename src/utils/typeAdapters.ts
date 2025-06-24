@@ -94,6 +94,11 @@ export function toUnifiedProfile(profile: any): UserProfile | null {
     reviews: profile.reviews || [],
     reports: profile.reports || [],
     transactions: profile.transactions || [],
-    referrals: profile.referrals || []
+    referrals: profile.referrals || [],
+    // Backward compatibility properties
+    walletBalance: profile.wallet_balance || profile.walletBalance,
+    favoriteExperts: profile.favorite_experts || profile.favoriteExperts || [],
+    enrolledCourses: profile.enrolled_courses || profile.enrolledCourses || [],
+    profilePicture: profile.profile_picture || profile.profilePicture
   };
 }

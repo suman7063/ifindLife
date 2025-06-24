@@ -53,4 +53,4 @@ export interface Referral {
 }
 
 // Re-export the unified UserProfile type
-export { UserProfile } from '@/types/database/unified';
+export type { UserProfile } from '@/types/database/unified';
