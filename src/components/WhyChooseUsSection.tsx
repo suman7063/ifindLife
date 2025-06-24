@@ -21,7 +21,10 @@ const WhyChooseUsSection = () => {
       
       <Container className="relative z-10">
         <div className="mb-12 text-center">
-          <h2 className="text-4xl font-bold mb-4 text-gray-800">Why Choose Us</h2>
+          <h2 className="text-4xl font-bold mb-4 text-gray-800">How Can We Help You Today?</h2>
+          <p className="text-lg text-gray-600 text-center max-w-3xl mx-auto">
+            Discover personalized support and guidance through our comprehensive mental wellness services designed to help you thrive.
+          </p>
         </div>
         
         <div className="max-w-5xl mx-auto">
