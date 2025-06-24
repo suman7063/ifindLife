@@ -1,8 +1,7 @@
 
 import { useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
+import { expertRepository } from '@/repositories/expertRepository';
 import { ExpertProfile } from '@/types/database/unified';
-import { expertRepository } from '@/repositories'; // Fixed import path
 
 /**
  * Hook for fetching expert profile data

@@ -1,5 +1,5 @@
 
-import { supabase } from '@/lib/supabase';
+import { expertRepository } from '@/repositories/expertRepository';
 import { ExpertProfile } from '@/types/database/unified';
 
 /**
@@ -10,28 +10,7 @@ export const updateExpertProfile = async (
   updates: Partial<ExpertProfile>
 ): Promise<boolean> => {
   try {
-    // First check which table has the expert's profile
-    const { data: expertData } = await supabase
-      .from('expert_accounts')
-      .select('id')
-      .eq('id', expertId)
-      .maybeSingle();
-
-    const table = expertData ? 'expert_accounts' : 'experts';
-    
-    // Handle experience type - convert to string if needed
-    const processedUpdates = {
-      ...updates,
-      experience: updates.experience !== undefined ? String(updates.experience) : undefined
-    };
-    
-    // Update the appropriate table
-    const { error } = await supabase
-      .from(table)
-      .update(processedUpdates)
-      .eq('id', expertId);
-      
-    return !error;
+    return await expertRepository.updateExpert(expertId, updates);
   } catch (error) {
     console.error('Error updating expert profile:', error);
     return false;
@@ -46,31 +25,13 @@ export const updateExpertProfilePicture = async (
   file: File
 ): Promise<string | null> => {
   try {
-    // Generate a unique filename
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${expertId}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `expert_pictures/${fileName}`;
+    // Note: This would need Supabase Storage setup
+    // For now, return null as storage isn't configured
+    console.log('Profile picture update requested for expert:', expertId);
+    console.log('File:', file.name);
     
-    // Upload file to storage
-    const { error: uploadError } = await supabase.storage
-      .from('avatars')
-      .upload(filePath, file);
-      
-    if (uploadError) throw uploadError;
-    
-    // Get public URL
-    const { data: urlData } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(filePath);
-      
-    const publicUrl = urlData.publicUrl;
-    
-    // Update expert profile with new picture URL
-    const success = await updateExpertProfile(expertId, {
-      profile_picture: publicUrl
-    });
-    
-    return success ? publicUrl : null;
+    // TODO: Implement storage upload when storage buckets are configured
+    return null;
   } catch (error) {
     console.error('Error updating expert profile picture:', error);
     return null;

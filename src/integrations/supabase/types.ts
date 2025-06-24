@@ -245,71 +245,107 @@ export type Database = {
         Row: {
           address: string | null
           auth_id: string | null
+          availability_hours: Json | null
           average_rating: number | null
           bio: string | null
           certificate_urls: string[] | null
+          certifications: string[] | null
           city: string | null
           country: string | null
           created_at: string | null
+          currency: string | null
+          education: string | null
           email: string
           experience: string | null
+          experience_years: number | null
+          hourly_rate: number | null
           id: string
+          languages: string[] | null
+          linkedin_url: string | null
           name: string
           phone: string | null
+          profile_image_url: string | null
           profile_picture: string | null
           reviews_count: number | null
           selected_services: number[] | null
           specialization: string | null
+          specialties: string[] | null
           state: string | null
           status: string | null
+          timezone: string | null
           user_id: string | null
           verified: boolean | null
+          website_url: string | null
         }
         Insert: {
           address?: string | null
           auth_id?: string | null
+          availability_hours?: Json | null
           average_rating?: number | null
           bio?: string | null
           certificate_urls?: string[] | null
+          certifications?: string[] | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string | null
+          education?: string | null
           email: string
           experience?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
           id?: string
+          languages?: string[] | null
+          linkedin_url?: string | null
           name: string
           phone?: string | null
+          profile_image_url?: string | null
           profile_picture?: string | null
           reviews_count?: number | null
           selected_services?: number[] | null
           specialization?: string | null
+          specialties?: string[] | null
           state?: string | null
           status?: string | null
+          timezone?: string | null
           user_id?: string | null
           verified?: boolean | null
+          website_url?: string | null
         }
         Update: {
           address?: string | null
           auth_id?: string | null
+          availability_hours?: Json | null
           average_rating?: number | null
           bio?: string | null
           certificate_urls?: string[] | null
+          certifications?: string[] | null
           city?: string | null
           country?: string | null
           created_at?: string | null
+          currency?: string | null
+          education?: string | null
           email?: string
           experience?: string | null
+          experience_years?: number | null
+          hourly_rate?: number | null
           id?: string
+          languages?: string[] | null
+          linkedin_url?: string | null
           name?: string
           phone?: string | null
+          profile_image_url?: string | null
           profile_picture?: string | null
           reviews_count?: number | null
           selected_services?: number[] | null
           specialization?: string | null
+          specialties?: string[] | null
           state?: string | null
           status?: string | null
+          timezone?: string | null
           user_id?: string | null
           verified?: boolean | null
+          website_url?: string | null
         }
         Relationships: []
       }
