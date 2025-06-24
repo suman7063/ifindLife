@@ -72,7 +72,7 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
 
-  // Simplified profile fetching
+  // Fixed profile fetching function with correct table and column names
   const fetchProfileForUser = useCallback(async (userId: string, type: SessionType) => {
     try {
       console.log(`🔒 Fetching ${type} profile for user:`, userId);
@@ -89,15 +89,27 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
           return { userProfile: data };
         }
       } else if (type === 'expert') {
-        const { data, error } = await supabase
-          .from('experts')
-          .select('*')
-          .eq('id', userId)
-          .single();
+        console.log('🔒 Attempting to fetch from expert_accounts table using auth_id');
         
-        if (!error && data) {
-          console.log('🔒 Expert profile loaded successfully');
+        // ✅ FIXED: Use correct table name and column
+        const { data, error } = await supabase
+          .from('expert_accounts')  // ✅ Correct table name
+          .select('*')
+          .eq('auth_id', userId)    // ✅ Correct column name
+          .eq('status', 'approved') // ✅ Only approved experts
+          .maybeSingle();          // ✅ Use maybeSingle to avoid errors when not found
+        
+        if (error) {
+          console.error('🔒 Expert profile fetch error:', error);
+          return null;
+        }
+        
+        if (data) {
+          console.log('🔒 Expert profile loaded successfully:', data.name);
           return { expertProfile: data };
+        } else {
+          console.log('🔒 No approved expert profile found for user');
+          return null;
         }
       } else if (type === 'admin') {
         const { data, error } = await supabase
@@ -140,13 +152,34 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
         
         // Fetch profile if session type is known
         if (storedSessionType) {
+          console.log('🔒 Fetching profile for session type:', storedSessionType);
           const profileData = await fetchProfileForUser(session.user.id, storedSessionType);
           
-          setAuthState(prev => ({
-            ...prev,
-            ...profileData,
-            isLoading: false
-          }));
+          if (profileData) {
+            console.log('🔒 Profile data loaded:', Object.keys(profileData));
+            setAuthState(prev => ({
+              ...prev,
+              ...profileData,
+              isLoading: false
+            }));
+          } else {
+            console.log('🔒 No profile data found for session type:', storedSessionType);
+            // If expert login but no expert profile found, clear session type
+            if (storedSessionType === 'expert') {
+              localStorage.removeItem('sessionType');
+              setAuthState(prev => ({
+                ...prev,
+                sessionType: null,
+                error: 'No expert profile found',
+                isLoading: false
+              }));
+            } else {
+              setAuthState(prev => ({
+                ...prev,
+                isLoading: false
+              }));
+            }
+          }
         } else {
           setAuthState(prev => ({
             ...prev,
