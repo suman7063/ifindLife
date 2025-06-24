@@ -6,23 +6,36 @@ import { Button } from '@/components/ui/button';
 import { Shield, Lock } from 'lucide-react';
 
 interface ProtectedBookingDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   serviceTitle: string;
-  onProceed: () => void;
+  serviceType: string;
+  onProceed?: () => void;
 }
 
 const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
-  isOpen,
-  onClose,
+  open,
+  onOpenChange,
   serviceTitle,
+  serviceType,
   onProceed
 }) => {
   const { isAuthenticated, sessionType } = useAuth();
 
+  const handleClose = () => {
+    onOpenChange(false);
+  };
+
+  const handleProceed = () => {
+    if (onProceed) {
+      onProceed();
+    }
+    handleClose();
+  };
+
   if (!isAuthenticated) {
     return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
@@ -33,7 +46,7 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
           <div className="space-y-4">
             <p>You need to be logged in to book "{serviceTitle}".</p>
             <div className="flex space-x-2">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={handleClose}>
                 Cancel
               </Button>
               <Button onClick={() => window.location.href = '/user-login'}>
@@ -47,7 +60,7 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
@@ -60,11 +73,14 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
           <p className="text-sm text-muted-foreground">
             Session Type: {sessionType || 'Unknown'}
           </p>
+          <p className="text-sm text-muted-foreground">
+            Service Type: {serviceType}
+          </p>
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button onClick={onProceed}>
+            <Button onClick={handleProceed}>
               Proceed to Booking
             </Button>
           </div>

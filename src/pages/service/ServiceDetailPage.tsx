@@ -28,6 +28,11 @@ const ServiceDetailPage: React.FC = () => {
     console.log('🔒 Book now clicked - starting protected booking flow');
     setIsBookingDialogOpen(true);
   };
+
+  const handleProceedToBooking = () => {
+    console.log('Proceeding to booking for service:', serviceData?.title);
+    // Add booking logic here
+  };
   
   // If service not found, render a placeholder
   if (!serviceData) {
@@ -71,6 +76,7 @@ const ServiceDetailPage: React.FC = () => {
         onOpenChange={setIsBookingDialogOpen}
         serviceTitle={serviceData.title}
         serviceType="service"
+        onProceed={handleProceedToBooking}
       />
       
       <Footer />
