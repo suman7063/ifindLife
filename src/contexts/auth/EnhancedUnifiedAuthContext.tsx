@@ -133,10 +133,12 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
         console.log('🔒 User profile loaded successfully');
         return { userProfile: data };
       } else if (type === 'expert') {
+        // FIXED: Use correct table name and column name for expert profile query
         const { data, error } = await supabase
-          .from('experts')
+          .from('expert_accounts')  // FIXED: Changed from 'experts' to 'expert_accounts'
           .select('*')
-          .eq('id', userId)
+          .eq('auth_id', userId)    // FIXED: Changed from 'id' to 'auth_id'
+          .eq('status', 'approved') // FIXED: Only fetch approved experts
           .single();
         
         if (error) {
