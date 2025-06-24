@@ -107,10 +107,10 @@ const NavbarDesktopLinks: React.FC<NavbarDesktopLinksProps> = ({
     authComponent = <NavbarUserAvatar currentUser={currentUser} onLogout={userLogout} isLoggingOut={isLoggingOut} />;
   } else {
     console.log('NavbarDesktopLinks: No authentication found, showing login dropdown');
-    // Pass proper authentication state - should show login when NOT authenticated
+    // Show login dropdown when user is NOT authenticated
     authComponent = <LoginDropdown 
-      isAuthenticated={isUserAuthenticated || isExpertAuthenticated} 
-      hasExpertProfile={isExpertAuthenticated} 
+      isAuthenticated={false}
+      hasExpertProfile={false} 
     />;
   }
 

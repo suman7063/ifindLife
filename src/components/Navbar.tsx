@@ -124,28 +124,6 @@ const NavbarComponent = () => {
     hasExpertProfile
   });
 
-  // Show loading state only briefly
-  if (isLoading) {
-    return (
-      <div 
-        data-navbar="main" 
-        className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}
-      >
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
-          <div className="flex items-center gap-2 relative">
-            <Link to="/" className="flex items-center">
-              <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-10" />
-            </Link>
-            <span className="absolute -top-1 -right-6 bg-gray-400 text-white text-[8px] px-1 py-0.5 rounded font-medium">
-              BETA
-            </span>
-          </div>
-          <div className="text-gray-500 text-sm">Loading...</div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div 
       data-navbar="main"

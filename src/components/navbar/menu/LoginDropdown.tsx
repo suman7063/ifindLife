@@ -38,7 +38,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     finalDecision: hasAnyAuthentication ? 'HIDE_LOGIN' : 'SHOW_LOGIN'
   });
   
-  // If user has authentication, don't show login dropdown
+  // Only show login dropdown when user is NOT authenticated
   if (hasAnyAuthentication) {
     console.log('LoginDropdown: User has authentication, hiding login dropdown');
     return null;
