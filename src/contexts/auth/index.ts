@@ -1,19 +1,10 @@
 
-// Re-export the components from the user auth context
-export { AuthContext, useAuth } from './AuthContext';
+// Consolidated auth exports to reduce import complexity
 export { AuthProvider } from './AuthProvider';
-export { UserAuthProvider } from './UserAuthProvider';
+export { useAuth } from './AuthContext';
+export { EnhancedUnifiedAuthProvider } from './EnhancedUnifiedAuthContext';
+export { useEnhancedUnifiedAuth } from './EnhancedUnifiedAuthContext';
 
-// Re-export the types
-export type { 
-  AuthContextType, 
-  UserRole, 
-  AuthState, 
-  AuthUser,
-  SessionType
-} from './types';
-
-// Re-export hooks
-export * from './hooks/useAuthState';
-export * from './hooks/useAuthActions';
-export * from './hooks/useAuthFunctions';
+// Admin auth (clean system)
+export { AdminAuthProvider } from '../AdminAuthClean';
+export { useAdminAuthClean } from '../AdminAuthClean';

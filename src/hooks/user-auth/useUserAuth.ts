@@ -2,24 +2,35 @@
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 
+/**
+ * Simplified user authentication hook
+ * Provides backward compatibility while using the unified auth context
+ */
 export const useUserAuth = () => {
   const auth = useAuth();
   
-  // Provide backward compatibility while using the unified auth context
   return {
-    // Direct auth properties
-    ...auth,
+    // Core auth properties
+    isAuthenticated: auth.isAuthenticated,
+    isLoading: auth.isLoading,
+    user: auth.user,
+    userProfile: auth.userProfile,
     
-    // Adapted user profile for backward compatibility
+    // Backward compatibility aliases
     currentUser: ensureUserProfileCompatibility(auth.userProfile),
-    
-    // Alias methods for backward compatibility
     authLoading: auth.isLoading,
     loading: auth.isLoading,
     profileNotFound: !auth.userProfile && !auth.isLoading,
     
-    // User-specific methods
-    user: auth.user,
+    // Auth methods
+    login: auth.login,
+    logout: auth.logout,
+    register: auth.register,
+    updateProfile: auth.updateProfile,
     updateProfilePicture: auth.updateProfilePicture || (async () => null),
+    
+    // User-specific properties
+    walletBalance: auth.walletBalance,
+    error: auth.error,
   };
 };

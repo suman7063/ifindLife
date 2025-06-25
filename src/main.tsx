@@ -3,7 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext'
+import { EnhancedUnifiedAuthProvider } from '@/contexts/auth'
 
 // Debug React availability
 console.log('main.tsx - React:', !!React);
