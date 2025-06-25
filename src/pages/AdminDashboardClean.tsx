@@ -1,6 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+// ✅ CLEAN ADMIN DASHBOARD - ISOLATED FROM UNIFIED SYSTEM
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -12,78 +14,41 @@ import {
   LogOut, 
   UserCheck,
   FileText,
-  MessageCircle
+  MessageCircle,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface AdminSession {
-  id: string;
-  role: string;
-  timestamp: string;
-}
-
 const AdminDashboardClean: React.FC = () => {
   const navigate = useNavigate();
-  const [adminSession, setAdminSession] = useState<AdminSession | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const adminAuth = useAdminAuthClean();
 
   useEffect(() => {
-    const validateAdminSession = () => {
-      try {
-        const sessionData = localStorage.getItem('clean_admin_session');
-        if (!sessionData) {
-          navigate('/admin-login-clean', { replace: true });
-          return;
-        }
-
-        const session: AdminSession = JSON.parse(sessionData);
-        const now = new Date().getTime();
-        const sessionTime = new Date(session.timestamp).getTime();
-        const maxAge = 8 * 60 * 60 * 1000; // 8 hours
-
-        if (now - sessionTime >= maxAge) {
-          localStorage.removeItem('clean_admin_session');
-          toast.error('Admin session expired');
-          navigate('/admin-login-clean', { replace: true });
-          return;
-        }
-
-        setAdminSession(session);
-      } catch (error) {
-        console.error('Error validating admin session:', error);
-        localStorage.removeItem('clean_admin_session');
-        navigate('/admin-login-clean', { replace: true });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    validateAdminSession();
-  }, [navigate]);
-
-  const handleLogout = () => {
-    try {
-      localStorage.removeItem('clean_admin_session');
-      toast.success('Logged out successfully');
+    if (!adminAuth?.isLoading && !adminAuth?.isAuthenticated) {
+      console.log('❌ AdminDashboardClean: Not authenticated, redirecting');
       navigate('/admin-login-clean', { replace: true });
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Logout failed');
+    }
+  }, [adminAuth?.isAuthenticated, adminAuth?.isLoading, navigate]);
+
+  const handleLogout = async () => {
+    if (adminAuth?.logout) {
+      console.log('🔒 AdminDashboardClean: Logout initiated');
+      await adminAuth.logout();
     }
   };
 
-  if (isLoading) {
+  if (adminAuth?.isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <Shield className="h-8 w-8 animate-pulse mx-auto mb-2" />
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-600" />
           <p>Loading admin dashboard...</p>
         </div>
       </div>
     );
   }
 
-  if (!adminSession) {
+  if (!adminAuth?.isAuthenticated || !adminAuth.admin) {
     return null; // Will redirect in useEffect
   }
 
@@ -142,15 +107,15 @@ const AdminDashboardClean: React.FC = () => {
               <Shield className="h-8 w-8 text-blue-600" />
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-sm text-gray-500">iFindLife Administration Portal</p>
+                <p className="text-sm text-gray-500">iFindLife Administration Portal (Clean)</p>
               </div>
             </div>
             
             <div className="flex items-center space-x-4">
               <div className="text-sm text-gray-600">
-                Welcome, <span className="font-medium">{adminSession.id}</span>
+                Welcome, <span className="font-medium">{adminAuth.admin.name || adminAuth.admin.id}</span>
                 <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
-                  {adminSession.role}
+                  {adminAuth.admin.role}
                 </span>
               </div>
               <Button
@@ -172,7 +137,7 @@ const AdminDashboardClean: React.FC = () => {
         <Alert className="mb-8 border-blue-200 bg-blue-50">
           <Shield className="h-4 w-4 text-blue-600" />
           <AlertDescription className="text-blue-800">
-            You are logged in as an administrator. This is a secure area for managing the iFindLife platform.
+            You are logged in as an administrator using the clean authentication system. This is completely isolated from user/expert authentication.
           </AlertDescription>
         </Alert>
 
@@ -225,6 +190,34 @@ const AdminDashboardClean: React.FC = () => {
             <CardContent className="p-4">
               <div className="text-2xl font-bold text-orange-600">--</div>
               <div className="text-sm text-gray-600">Support Tickets</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* System Status */}
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Shield className="h-5 w-5 text-green-600" />
+                <span>Clean Admin System Status</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Isolated Authentication: Active</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>User/Expert Auth: Unaffected</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span>Business Logic: Preserved</span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
