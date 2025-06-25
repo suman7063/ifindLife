@@ -15,7 +15,7 @@ interface FavoriteButtonProps {
   size?: 'sm' | 'md' | 'lg';
   showText?: boolean;
   tooltipText?: string;
-  expertId?: string; // Changed from number to string
+  expertId?: number;
   expertName?: string;
   requireAuth?: boolean;
 }

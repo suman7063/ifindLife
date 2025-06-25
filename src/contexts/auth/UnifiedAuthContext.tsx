@@ -1,477 +1,310 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { UserProfile, ExpertProfile } from '@/types/database/unified';
-import { toast } from 'sonner';
+import { ExpertProfile, UserProfile, AdminProfile } from '@/types/database/unified';
+import { expertRepository } from '@/repositories/expertRepository';
+import { userRepository } from '@/repositories/userRepository';
+import { adminRepository } from '@/repositories/adminRepository';
 
-type SessionType = 'user' | 'expert' | null;
-
-export interface UnifiedAuthContextType {
-  // Core state
+interface UnifiedAuthContextType {
+  // Auth state
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: User | null;
-  session: Session | null;
-  sessionType: SessionType;
-  error: string | null;
-
-  // Profile data
-  userProfile: UserProfile | null;
-  expertProfile: ExpertProfile | null;
-  profile: UserProfile | ExpertProfile | null; // Current active profile
-
-  // Role-based helpers
-  role: 'user' | 'expert' | null;
-  hasUserAccount: boolean;
-
-  // Auth actions
-  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  signup: (email: string, password: string, userData?: any) => Promise<boolean>;
-  registerExpert: (email: string, password: string, expertData: Partial<ExpertProfile>) => Promise<boolean>;
-
-  // Profile actions
-  updateProfile: (updates: Partial<UserProfile | ExpertProfile>) => Promise<boolean>;
-  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
-  updatePassword: (newPassword: string) => Promise<boolean>;
-  updateProfilePicture: (file: File) => Promise<string | null>;
-
-  // User-specific features (with defaults for non-users)
-  addToFavorites: (expertId: number) => Promise<boolean>;
-  removeFromFavorites: (expertId: number) => Promise<boolean>;
-  rechargeWallet: (amount: number) => Promise<boolean>;
-  addReview: (review: any, rating?: number, comment?: string) => Promise<boolean>;
-  reportExpert: (report: any, reason?: string, details?: string) => Promise<boolean>;
-  hasTakenServiceFrom: (id: string | number) => Promise<boolean>;
-  getExpertShareLink: (expertId: string | number) => string;
-  getReferralLink: () => string | null;
-
-  // Computed properties for backward compatibility
-  walletBalance: number;
-
-  // Additional properties for compatibility
+  sessionType: 'user' | 'admin' | 'expert' | null;
+  
+  // User profiles
+  user: UserProfile | null;
+  admin: AdminProfile | null;
   expert: ExpertProfile | null;
-  admin: any | null;
-  isAuthProtected: () => boolean;
+  
+  // Auth methods
+  login: (type: 'user' | 'admin' | 'expert', credentials: any) => Promise<boolean>;
+  logout: () => Promise<void>;
+  
+  // Profile setters for updates
+  setUser: (user: UserProfile | null) => void;
+  setAdmin: (admin: AdminProfile | null) => void;
+  setExpert: (expert: ExpertProfile | null) => void;
 }
 
 const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(UnifiedAuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within a UnifiedAuthProvider');
-  }
-  return context;
-};
-
-interface UnifiedAuthProviderProps {
-  children: React.ReactNode;
-}
-
-let renderCount = 0;
-
-export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ children }) => {
-  renderCount++;
-  console.log('🔒 UnifiedAuthProvider render:', renderCount);
-
-  // Core state
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [sessionType, setSessionType] = useState<SessionType>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [sessionType, setSessionType] = useState<'user' | 'admin' | 'expert' | null>(null);
+  const [hasInitialized, setHasInitialized] = useState(false);
+  
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [admin, setAdmin] = useState<AdminProfile | null>(null);
+  const [expert, setExpert] = useState<ExpertProfile | null>(null);
 
-  // Profile state
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
+  const isAuthenticated = Boolean(user || admin || expert);
 
-  // Loading timeout to prevent infinite loading
+  // Initialize auth state
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (isLoading) {
-        console.log('🔒 Auth loading timeout - completing initialization');
-        setIsLoading(false);
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        console.log('UnifiedAuth: Initializing auth state...');
+        
+        // Get current session
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('UnifiedAuth: Error getting session:', error);
+          if (mounted) {
+            setIsLoading(false);
+            setHasInitialized(true);
+          }
+          return;
+        }
+        
+        if (session?.user && mounted) {
+          console.log('UnifiedAuth: Session found, loading profiles...');
+          await loadUserProfiles(session.user);
+        } else {
+          console.log('UnifiedAuth: No session found, setting not authenticated state');
+          if (mounted) {
+            setUser(null);
+            setAdmin(null);
+            setExpert(null);
+            setSessionType(null);
+            setIsLoading(false);
+            setHasInitialized(true);
+          }
+        }
+      } catch (error) {
+        console.error('UnifiedAuth: Error initializing auth:', error);
+        if (mounted) {
+          setIsLoading(false);
+          setHasInitialized(true);
+        }
       }
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [isLoading]);
+    };
 
-  // Fetch user profile
-  const fetchUserProfile = useCallback(async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+    initializeAuth();
 
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!mounted) return;
+
+        console.log('UnifiedAuth: Auth state changed:', { event, hasSession: !!session, userId: session?.user?.id });
+        
+        if (session?.user) {
+          setIsLoading(true);
+          await loadUserProfiles(session.user);
+        } else {
+          // Clear all profile states
+          console.log('UnifiedAuth: Clearing auth state (no session)');
+          setUser(null);
+          setAdmin(null);
+          setExpert(null);
+          setSessionType(null);
+          setIsLoading(false);
+          setHasInitialized(true);
+        }
       }
+    );
 
-      setUserProfile(data);
-      return data;
-    } catch (error) {
-      console.error('Error in fetchUserProfile:', error);
-      return null;
-    }
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Fetch expert profile
-  const fetchExpertProfile = useCallback(async (userId: string) => {
+  const loadUserProfiles = async (authUser: User) => {
     try {
-      const { data, error } = await supabase
-        .from('expert_accounts')
-        .select('*')
-        .eq('auth_id', userId)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching expert profile:', error);
-        return null;
-      }
-
-      setExpertProfile(data);
-      return data;
-    } catch (error) {
-      console.error('Error in fetchExpertProfile:', error);
-      return null;
-    }
-  }, []);
-
-  // Handle auth state changes
-  const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
-    console.log('🔒 Auth state change:', { event, hasSession: !!session });
-
-    setSession(session);
-    setUser(session?.user || null);
-    setIsAuthenticated(!!session);
-
-    if (session?.user) {
-      // Get stored session type or default to user
-      const storedType = localStorage.getItem('sessionType') as SessionType || 'user';
-      setSessionType(storedType);
-
-      // Fetch appropriate profile
-      if (storedType === 'expert') {
-        await fetchExpertProfile(session.user.id);
-        setUserProfile(null);
-      } else {
-        await fetchUserProfile(session.user.id);
-        setExpertProfile(null);
-      }
-    } else {
-      // Clear all state on logout
-      setSessionType(null);
-      setUserProfile(null);
-      setExpertProfile(null);
-      localStorage.removeItem('sessionType');
-    }
-
-    setIsLoading(false);
-  }, [fetchUserProfile, fetchExpertProfile]);
-
-  // Initialize auth
-  useEffect(() => {
-    console.log('🔒 Initializing auth context');
-
-    // Set up listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
-
-    // Check existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleAuthStateChange('INITIAL_SESSION', session);
-    });
-
-    return () => subscription.unsubscribe();
-  }, [handleAuthStateChange]);
-
-  // Auth actions
-  const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean }): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const targetType: SessionType = options?.asExpert ? 'expert' : 'user';
-      localStorage.setItem('sessionType', targetType);
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-
-      if (error) {
-        setError(error.message);
-        toast.error(error.message);
-        return false;
-      }
-
-      if (!data.session) {
-        setError('Login failed - no session created');
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Login error:', error);
-      setError('Login failed');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const logout = useCallback(async (): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      const { error } = await supabase.auth.signOut();
+      console.log('UnifiedAuth: Loading user profiles for:', authUser.id);
       
-      if (error) {
-        console.error('Logout error:', error);
-        toast.error('Logout failed');
-        return false;
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Logout error:', error);
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const signup = useCallback(async (email: string, password: string, userData?: any): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: userData,
-          emailRedirectTo: `${window.location.origin}/`
+      // Check stored session type preference
+      const storedSessionType = localStorage.getItem('sessionType') as 'user' | 'admin' | 'expert' | null;
+      console.log('UnifiedAuth: Stored session type:', storedSessionType);
+      
+      // Try to load expert profile first if stored type is expert
+      if (storedSessionType === 'expert') {
+        const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
+        if (expertProfile) {
+          console.log('UnifiedAuth: Expert profile loaded:', expertProfile);
+          setExpert(expertProfile);
+          setSessionType('expert');
+          setUser(null);
+          setAdmin(null);
+          setIsLoading(false);
+          setHasInitialized(true);
+          return;
         }
+      }
+      
+      // Try to load admin profile
+      if (storedSessionType === 'admin') {
+        const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
+        if (adminProfile) {
+          console.log('UnifiedAuth: Admin profile loaded:', adminProfile);
+          setAdmin(adminProfile);
+          setSessionType('admin');
+          setUser(null);
+          setExpert(null);
+          setIsLoading(false);
+          setHasInitialized(true);
+          return;
+        }
+      }
+      
+      // Try to load user profile
+      const userProfile = await userRepository.getUserByAuthId(authUser.id);
+      if (userProfile) {
+        console.log('UnifiedAuth: User profile loaded:', userProfile);
+        setUser(userProfile);
+        setSessionType('user');
+        setAdmin(null);
+        setExpert(null);
+        setIsLoading(false);
+        setHasInitialized(true);
+        return;
+      }
+      
+      // If no stored preference, try expert first, then admin, then user
+      if (!storedSessionType) {
+        const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
+        if (expertProfile) {
+          console.log('UnifiedAuth: Expert profile loaded (no preference):', expertProfile);
+          setExpert(expertProfile);
+          setSessionType('expert');
+          localStorage.setItem('sessionType', 'expert');
+          setIsLoading(false);
+          setHasInitialized(true);
+          return;
+        }
+        
+        const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
+        if (adminProfile) {
+          console.log('UnifiedAuth: Admin profile loaded (no preference):', adminProfile);
+          setAdmin(adminProfile);
+          setSessionType('admin');
+          localStorage.setItem('sessionType', 'admin');
+          setIsLoading(false);
+          setHasInitialized(true);
+          return;
+        }
+        
+        const userProfile = await userRepository.getUserByAuthId(authUser.id);
+        if (userProfile) {
+          console.log('UnifiedAuth: User profile loaded (no preference):', userProfile);
+          setUser(userProfile);
+          setSessionType('user');
+          localStorage.setItem('sessionType', 'user');
+          setIsLoading(false);
+          setHasInitialized(true);
+          return;
+        }
+      }
+      
+      console.log('UnifiedAuth: No profiles found for user:', authUser.id);
+      // Even if no profiles found, we should stop loading
+      setIsLoading(false);
+      setHasInitialized(true);
+    } catch (error) {
+      console.error('UnifiedAuth: Error loading user profiles:', error);
+      setIsLoading(false);
+      setHasInitialized(true);
+    }
+  };
+
+  const login = async (type: 'user' | 'admin' | 'expert', credentials: any): Promise<boolean> => {
+    try {
+      console.log(`UnifiedAuth: Attempting ${type} login:`, credentials.email);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: credentials.email,
+        password: credentials.password
       });
 
       if (error) {
-        setError(error.message);
-        toast.error(error.message);
-        return false;
-      }
-
-      toast.success('Account created successfully! Please check your email for verification.');
-      return true;
-    } catch (error) {
-      console.error('Signup error:', error);
-      setError('Signup failed');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const registerExpert = useCallback(async (email: string, password: string, expertData: Partial<ExpertProfile>): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) {
-        setError(error.message);
-        toast.error(error.message);
+        console.error('UnifiedAuth: Login error:', error);
         return false;
       }
 
       if (data.user) {
-        const expertProfileData = {
-          auth_id: data.user.id,
-          email,
-          status: 'pending',
-          verified: false,
-          name: expertData.name || '',
-          phone: expertData.phone || '',
-          address: expertData.address || '',
-          city: expertData.city || '',
-          state: expertData.state || '',
-          country: expertData.country || '',
-          specialization: expertData.specialization || '',
-          experience: typeof expertData.experience === 'number' 
-            ? String(expertData.experience) 
-            : expertData.experience || '',
-          bio: expertData.bio || '',
-          profile_picture: expertData.profile_picture || '',
-          selected_services: expertData.selected_services || []
-        };
-
-        const { error: profileError } = await supabase
-          .from('expert_accounts')
-          .insert(expertProfileData);
-
-        if (profileError) {
-          console.error('Expert profile creation error:', profileError);
-          setError(`Failed to create expert profile: ${profileError.message}`);
-          toast.error(`Failed to create expert profile: ${profileError.message}`);
-          return false;
-        }
-
-        await supabase.auth.signOut();
-        toast.success('Expert account created successfully! Your profile is pending approval.');
+        // Store the login type preference
+        localStorage.setItem('sessionType', type);
+        
+        // Load the specific profile type
+        await loadUserProfiles(data.user);
+        
         return true;
       }
 
       return false;
     } catch (error) {
-      console.error('Expert registration error:', error);
-      setError('Failed to create expert account');
+      console.error('UnifiedAuth: Login error:', error);
       return false;
-    } finally {
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      // Clear stored session type
+      localStorage.removeItem('sessionType');
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Clear all states
+      setUser(null);
+      setAdmin(null);
+      setExpert(null);
+      setSessionType(null);
       setIsLoading(false);
+      setHasInitialized(true);
+      
+      console.log('UnifiedAuth: Logout completed');
+    } catch (error) {
+      console.error('UnifiedAuth: Logout error:', error);
+      throw error;
     }
-  }, []);
+  };
 
-  // Profile update functions with default implementations
-  const updateProfile = useCallback(async (updates: Partial<UserProfile | ExpertProfile>): Promise<boolean> => {
-    if (sessionType === 'expert' && expertProfile) {
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update(updates)
-        .eq('id', expertProfile.id);
-      return !error;
-    } else if (sessionType === 'user' && userProfile) {
-      const { error } = await supabase
-        .from('users')
-        .update(updates)
-        .eq('id', userProfile.id);
-      return !error;
-    }
-    return false;
-  }, [sessionType, userProfile, expertProfile]);
+  // Add timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading && !hasInitialized) {
+        console.log('UnifiedAuth: Force completing loading after timeout');
+        setIsLoading(false);
+        setHasInitialized(true);
+      }
+    }, 3000); // 3 second timeout
 
-  const updateExpertProfile = useCallback(async (updates: Partial<ExpertProfile>): Promise<boolean> => {
-    if (expertProfile) {
-      const { error } = await supabase
-        .from('expert_accounts')
-        .update(updates)
-        .eq('id', expertProfile.id);
-      return !error;
-    }
-    return false;
-  }, [expertProfile]);
+    return () => clearTimeout(timeout);
+  }, [isLoading, hasInitialized]);
 
-  const updatePassword = useCallback(async (newPassword: string): Promise<boolean> => {
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    return !error;
-  }, []);
-
-  const updateProfilePicture = useCallback(async (file: File): Promise<string | null> => {
-    // Default implementation - would need storage setup
-    return null;
-  }, []);
-
-  // User-specific feature defaults
-  const addToFavorites = useCallback(async (expertId: number): Promise<boolean> => false, []);
-  const removeFromFavorites = useCallback(async (expertId: number): Promise<boolean> => false, []);
-  const rechargeWallet = useCallback(async (amount: number): Promise<boolean> => false, []);
-  const addReview = useCallback(async (review: any, rating?: number, comment?: string): Promise<boolean> => false, []);
-  const reportExpert = useCallback(async (report: any, reason?: string, details?: string): Promise<boolean> => false, []);
-  const hasTakenServiceFrom = useCallback(async (id: string | number): Promise<boolean> => false, []);
-  const getExpertShareLink = useCallback((expertId: string | number): string => 
-    `${window.location.origin}/experts/${expertId}`, []);
-  const getReferralLink = useCallback((): string | null => null, []);
-
-  // Auth protection placeholder
-  const isAuthProtected = useCallback((): boolean => false, []);
-
-  // Computed values
-  const profile = useMemo(() => {
-    if (sessionType === 'expert') return expertProfile;
-    if (sessionType === 'user') return userProfile;
-    return null;
-  }, [sessionType, userProfile, expertProfile]);
-
-  const role = useMemo((): 'user' | 'expert' | null => {
-    if (sessionType === 'expert' && expertProfile) return 'expert';
-    if (sessionType === 'user' && userProfile) return 'user';
-    return null;
-  }, [sessionType, userProfile, expertProfile]);
-
-  const hasUserAccount = useMemo(() => !!userProfile, [userProfile]);
-  const walletBalance = useMemo(() => 
-    (userProfile as UserProfile)?.wallet_balance || 0, [userProfile]);
-
-  const contextValue = useMemo((): UnifiedAuthContextType => ({
-    // Core state
+  const value = {
     isAuthenticated,
     isLoading,
-    user,
-    session,
     sessionType,
-    error,
-
-    // Profile data
-    userProfile,
-    expertProfile,
-    profile,
-
-    // Role-based helpers
-    role,
-    hasUserAccount,
-
-    // Auth actions
+    user,
+    admin,
+    expert,
     login,
     logout,
-    signup,
-    registerExpert,
-
-    // Profile actions
-    updateProfile,
-    updateExpertProfile,
-    updatePassword,
-    updateProfilePicture,
-
-    // User-specific features
-    addToFavorites,
-    removeFromFavorites,
-    rechargeWallet,
-    addReview,
-    reportExpert,
-    hasTakenServiceFrom,
-    getExpertShareLink,
-    getReferralLink,
-
-    // Computed properties
-    walletBalance,
-
-    // Additional compatibility properties
-    expert: expertProfile,
-    admin: null,
-    isAuthProtected
-  }), [
-    isAuthenticated, isLoading, user, session, sessionType, error,
-    userProfile, expertProfile, profile, role, hasUserAccount,
-    login, logout, signup, registerExpert,
-    updateProfile, updateExpertProfile, updatePassword, updateProfilePicture,
-    addToFavorites, removeFromFavorites, rechargeWallet, addReview, reportExpert,
-    hasTakenServiceFrom, getExpertShareLink, getReferralLink, walletBalance,
-    isAuthProtected
-  ]);
+    setUser,
+    setAdmin,
+    setExpert
+  };
 
   return (
-    <UnifiedAuthContext.Provider value={contextValue}>
+    <UnifiedAuthContext.Provider value={value}>
       {children}
     </UnifiedAuthContext.Provider>
   );
+};
+
+export const useUnifiedAuth = () => {
+  const context = useContext(UnifiedAuthContext);
+  if (context === undefined) {
+    throw new Error('useUnifiedAuth must be used within a UnifiedAuthProvider');
+  }
+  return context;
 };

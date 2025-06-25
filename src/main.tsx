@@ -1,26 +1,56 @@
 
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App.tsx";
-import "./index.css";
-import { UnifiedAuthProvider } from "@/contexts/auth/UnifiedAuthContext";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App.tsx'
+import './index.css'
 
-console.log('🔒 main.tsx loading with unified auth');
+// Debug React availability
+console.log('main.tsx - React:', !!React);
+console.log('main.tsx - ReactDOM:', !!ReactDOM);
+console.log('main.tsx - React version:', React.version);
 
-const rootElement = document.getElementById("root");
-if (!rootElement) {
-  throw new Error("Root element not found");
+// Only log in development mode
+if (import.meta.env.DEV) {
+  console.log('Main.tsx is executing...')
 }
 
-const root = createRoot(rootElement);
+const rootElement = document.getElementById('root');
 
-root.render(
-  <StrictMode>
-    <BrowserRouter>
-      <UnifiedAuthProvider>
-        <App />
-      </UnifiedAuthProvider>
-    </BrowserRouter>
-  </StrictMode>
-);
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
+
+// Add error handling for React 18 createRoot
+try {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+  
+  // Only log in development mode
+  if (import.meta.env.DEV) {
+    console.log('Root component rendered successfully');
+  }
+} catch (error) {
+  console.error('Failed to render app:', error);
+  
+  // Last resort - direct DOM manipulation
+  rootElement.innerHTML = `
+    <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+      <h1 style="color: #dc3545;">Application Failed to Load</h1>
+      <p>There was a critical error loading the application.</p>
+      <p>Error: ${error instanceof Error ? error.message : 'Unknown error'}</p>
+      <button onclick="window.location.reload()" style="
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      ">Reload Page</button>
+    </div>
+  `;
+}

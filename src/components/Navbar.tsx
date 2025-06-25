@@ -1,31 +1,56 @@
-
-import React, { useState, useEffect, memo, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
-import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
-import { UserProfile } from '@/types/database/unified';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unified';
+
+// Type guard functions
+const isUserProfile = (profile: any): profile is UserProfile => {
+  return profile && 'wallet_balance' in profile && 'currency' in profile;
+};
+const isExpertProfile = (profile: any): profile is ExpertProfile => {
+  return profile && 'specialization' in profile && 'experience' in profile;
+};
+const isAdminProfile = (profile: any): profile is AdminProfile => {
+  return profile && 'role' in profile && !('wallet_balance' in profile) && !('specialization' in profile);
+};
+
+// Helper function to get common properties safely
+const getCommonProfileProps = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
+  if (!profile) return {
+    name: '',
+    email: ''
+  };
+  return {
+    name: profile.name || '',
+    email: profile.email || '',
+    id: profile.id || ''
+  };
+};
 
 // Helper function to create a compatible currentUser object for NavbarDesktopLinks
-const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: any | null, sessionType: 'user' | 'expert' | null): UserProfile | null => {
-  if (sessionType === 'user' && userProfile) {
-    return userProfile;
+const createCompatibleUser = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
+  if (!profile) return null;
+  const commonProps = getCommonProfileProps(profile);
+  if (isUserProfile(profile)) {
+    return profile; // Already compatible
   }
-  
-  if (sessionType === 'expert' && expertProfile) {
+  if (isExpertProfile(profile)) {
+    // Create a UserProfile-like object for compatibility
     return {
-      id: expertProfile.id,
-      name: expertProfile.name || '',
-      email: expertProfile.email || '',
-      phone: expertProfile.phone || '',
-      country: expertProfile.country || '',
-      city: expertProfile.city || '',
+      ...commonProps,
+      phone: profile.phone || '',
+      country: profile.country || '',
+      city: profile.city || '',
       currency: 'USD',
-      profile_picture: expertProfile.profile_picture || '',
+      // Default currency for experts
+      profile_picture: profile.profile_picture || '',
       wallet_balance: 0,
-      created_at: expertProfile.created_at || '',
-      updated_at: expertProfile.created_at || '',
+      // Experts don't have wallet balance in navbar context
+      created_at: profile.created_at || '',
+      updated_at: profile.created_at || '',
       referred_by: null,
       referral_code: '',
       referral_link: '',
@@ -38,42 +63,63 @@ const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: an
       referrals: []
     } as UserProfile;
   }
-  
+  if (isAdminProfile(profile)) {
+    // Create a UserProfile-like object for compatibility
+    return {
+      ...commonProps,
+      phone: '',
+      country: '',
+      city: '',
+      currency: 'USD',
+      profile_picture: '',
+      wallet_balance: 0,
+      created_at: profile.created_at || '',
+      updated_at: profile.created_at || '',
+      referred_by: null,
+      referral_code: '',
+      referral_link: '',
+      favorite_experts: [],
+      favorite_programs: [],
+      enrolled_courses: [],
+      reviews: [],
+      reports: [],
+      referrals: []
+    } as UserProfile;
+  }
   return null;
 };
-
-const NavbarComponent = () => {
+const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Use unified auth context
   const {
     isAuthenticated,
     sessionType,
     user,
-    userProfile,
-    expertProfile,
+    admin,
+    expert,
     isLoading,
     logout
-  } = useAuth();
+  } = useUnifiedAuth();
 
-  // Memoize compatible user object
-  const currentUser = useMemo(() => 
-    createCompatibleUser(userProfile, expertProfile, sessionType),
-    [userProfile, expertProfile, sessionType]
-  );
+  // Determine current user based on session type
+  const currentProfile = sessionType === 'expert' ? expert : sessionType === 'admin' ? admin : sessionType === 'user' ? user : null;
 
-  const hasExpertProfile = useMemo(() => 
-    sessionType === 'expert' && !!expertProfile,
-    [sessionType, expertProfile]
-  );
+  // Create compatible user object for navbar components
+  const currentUser = createCompatibleUser(currentProfile);
+  const hasExpertProfile = sessionType === 'expert' && !!expert;
+  const hasAdminProfile = sessionType === 'admin' && !!admin;
 
   // Convert sessionType to match expected interface
-  const navbarSessionType = useMemo((): 'user' | 'expert' | 'none' | 'dual' => {
-    if (!sessionType) return 'none';
-    if (sessionType === 'expert') return 'expert';
+  const convertSessionType = (type: 'user' | 'admin' | 'expert' | null): 'user' | 'expert' | 'none' | 'dual' => {
+    if (!type) return 'none';
+    if (type === 'admin') return 'user'; // Treat admin as user for navbar purposes
+    if (type === 'expert') return 'expert';
     return 'user';
-  }, [sessionType]);
+  };
+  const navbarSessionType = convertSessionType(sessionType);
 
   // Scroll effect
   useEffect(() => {
@@ -89,78 +135,83 @@ const NavbarComponent = () => {
     };
   }, [scrolled]);
 
-  // Handle logout
+  // Handle logout with consistent messaging
   const handleLogout = async (): Promise<boolean> => {
     try {
-      console.log("🔒 Navbar: Initiating logout...");
-      
-      const success = await logout();
-      
-      if (success) {
-        console.log("🔒 Navbar: Logout successful");
-        showLogoutSuccessToast();
-        const redirectPath = sessionType === 'expert' ? '/expert-login' : '/user-login';
-        navigate(redirectPath);
-        return true;
-      } else {
-        showLogoutErrorToast();
-        return false;
-      }
+      console.log("Navbar: Initiating logout...");
+      await logout();
+      console.log("Navbar: Logout successful");
+      showLogoutSuccessToast();
+
+      // Redirect based on session type
+      const redirectPath = sessionType === 'expert' ? '/expert-login' : sessionType === 'admin' ? '/admin-login' : '/user-login';
+      navigate(redirectPath);
+      return true;
     } catch (error) {
-      console.error('🔒 Navbar: Error during logout:', error);
+      console.error('Error during logout:', error);
       showLogoutErrorToast();
       return false;
     }
   };
 
-  const navbarBackground = useMemo(() => 
-    scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white', [scrolled]);
+  // Updated to have consistent white background
+  const getNavbarBackground = () => {
+    return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
+  };
 
-  console.log("🔒 Navbar state:", {
-    isAuthenticated,
+  // Enhanced authentication state logging for debugging
+  console.log("Navbar rendering. Unified auth state:", {
+    isAuthenticated: Boolean(isAuthenticated),
     sessionType,
-    isLoading,
-    hasCurrentUser: !!currentUser,
-    hasExpertProfile
+    navbarSessionType,
+    isLoading: Boolean(isLoading),
+    hasCurrentUser: Boolean(currentUser),
+    hasExpertProfile: Boolean(hasExpertProfile),
+    hasAdminProfile: Boolean(hasAdminProfile),
+    timestamp: new Date().toISOString()
   });
 
-  return (
-    <div 
-      data-navbar="main"
-      className={`sticky top-0 w-full z-50 transition-colors ${navbarBackground} border-b border-gray-100`}
-    >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
-        <div className="flex items-center gap-2 relative">
+  // Show loading state only briefly
+  if (isLoading) {
+    return <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
+          <Link to="/" className="flex items-center">
+            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-10" />
+          </Link>
+          <div className="text-gray-500">Loading...</div>
+        </div>
+      </div>;
+  }
+
+  // Normal navbar - shows appropriate state based on authentication
+  return <>
+      <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
           <Link to="/" className="flex items-center">
             <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-16" />
           </Link>
-          <span className="absolute -top-1 -right-6 bg-gray-400 text-white text-[8px] px-1 py-0.5 rounded font-medium">
-            BETA
-          </span>
+          
+          <NavbarDesktopLinks 
+            isAuthenticated={Boolean(isAuthenticated)} 
+            currentUser={currentUser} 
+            hasExpertProfile={Boolean(hasExpertProfile)} 
+            userLogout={handleLogout} 
+            expertLogout={handleLogout} 
+            sessionType={navbarSessionType} 
+            isLoggingOut={false} 
+          />
+          
+          <NavbarMobileMenu 
+            isAuthenticated={Boolean(isAuthenticated)} 
+            currentUser={currentUser} 
+            hasExpertProfile={Boolean(hasExpertProfile)} 
+            userLogout={handleLogout} 
+            expertLogout={handleLogout} 
+            sessionType={navbarSessionType} 
+            isLoggingOut={false} 
+          />
         </div>
-        
-        <NavbarDesktopLinks 
-          isAuthenticated={isAuthenticated} 
-          currentUser={currentUser} 
-          hasExpertProfile={hasExpertProfile} 
-          userLogout={handleLogout} 
-          expertLogout={handleLogout} 
-          sessionType={navbarSessionType} 
-          isLoggingOut={false} 
-        />
-        
-        <NavbarMobileMenu 
-          isAuthenticated={isAuthenticated} 
-          currentUser={currentUser} 
-          hasExpertProfile={hasExpertProfile} 
-          userLogout={handleLogout} 
-          expertLogout={handleLogout} 
-          sessionType={navbarSessionType} 
-          isLoggingOut={false} 
-        />
       </div>
-    </div>
-  );
+    </>;
 };
-
-export default memo(NavbarComponent);
+export default Navbar;

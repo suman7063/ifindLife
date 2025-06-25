@@ -1,108 +1,147 @@
 
-import React from 'react';
-import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { toast } from 'sonner';
+import { expertRepository } from '@/repositories/expertRepository';
+import ProfileHeader from './profile/ProfileHeader';
+import ProfileImageCard from './profile/ProfileImageCard';
+import PersonalInformationCard from './profile/PersonalInformationCard';
+import ProfessionalDetailsCard from './profile/ProfessionalDetailsCard';
 
-const ProfilePage: React.FC = () => {
-  const { expertProfile } = useAuth();
+const ProfilePage = () => {
+  const { expert, setExpert } = useUnifiedAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    country: '',
+    location: '',
+    bio: '',
+    specialization: '',
+    experience_years: 0,
+    hourly_rate: 0
+  });
 
-  if (!expertProfile) {
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">No expert profile found</p>
-      </div>
-    );
-  }
+  // Load expert data when component mounts or expert changes
+  useEffect(() => {
+    if (expert) {
+      setFormData({
+        name: expert.name || '',
+        email: expert.email || '',
+        phone: expert.phone || '',
+        address: expert.address || '',
+        city: expert.city || '',
+        state: expert.state || '',
+        country: expert.country || '',
+        location: `${expert.city || ''}, ${expert.state || ''}, ${expert.country || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
+        bio: expert.bio || '',
+        specialization: expert.specialization || '',
+        experience_years: parseInt(expert.experience || '0') || 0,
+        hourly_rate: expert.hourly_rate || 0
+      });
+    }
+  }, [expert]);
+
+  const handleSave = async () => {
+    if (!expert?.id) {
+      toast.error('No expert profile found');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      // Prepare update data
+      const updateData = {
+        name: formData.name,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        state: formData.state,
+        country: formData.country,
+        bio: formData.bio,
+        specialization: formData.specialization,
+        experience: formData.experience_years.toString(),
+        hourly_rate: formData.hourly_rate
+      };
+
+      const success = await expertRepository.updateExpert(expert.id, updateData);
+      
+      if (success) {
+        // Update local expert state
+        const updatedExpert = { ...expert, ...updateData };
+        setExpert(updatedExpert);
+        
+        toast.success('Profile updated successfully');
+        setIsEditing(false);
+      } else {
+        toast.error('Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Reset form data to original expert data
+    if (expert) {
+      setFormData({
+        name: expert.name || '',
+        email: expert.email || '',
+        phone: expert.phone || '',
+        address: expert.address || '',
+        city: expert.city || '',
+        state: expert.state || '',
+        country: expert.country || '',
+        location: `${expert.city || ''}, ${expert.state || ''}, ${expert.country || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
+        bio: expert.bio || '',
+        specialization: expert.specialization || '',
+        experience_years: parseInt(expert.experience || '0') || 0,
+        hourly_rate: expert.hourly_rate || 0
+      });
+    }
+    setIsEditing(false);
+  };
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Expert Profile</h1>
-        <p className="text-muted-foreground">Manage your expert profile information</p>
-      </div>
+      <ProfileHeader
+        isEditing={isEditing}
+        onEditClick={() => setIsEditing(true)}
+        onSaveClick={handleSave}
+        isSaving={isSaving}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <p className="text-sm text-muted-foreground">{expertProfile.name}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <p className="text-sm text-muted-foreground">{expertProfile.email}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Phone</label>
-                <p className="text-sm text-muted-foreground">{expertProfile.phone || 'Not provided'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Specialization</label>
-                <p className="text-sm text-muted-foreground">{expertProfile.specialization || 'Not provided'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Experience</label>
-                <p className="text-sm text-muted-foreground">{expertProfile.experience || 'Not provided'}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Location</label>
-                <p className="text-sm text-muted-foreground">
-                  {[expertProfile.city, expertProfile.state, expertProfile.country]
-                    .filter(Boolean)
-                    .join(', ') || 'Not provided'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <ProfileImageCard
+          expert={expert}
+          name={formData.name}
+          experienceYears={formData.experience_years}
+        />
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Status</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Verification Status</label>
-              <div className="mt-1">
-                <Badge variant={expertProfile.verified ? 'default' : 'secondary'}>
-                  {expertProfile.verified ? 'Verified' : 'Not Verified'}
-                </Badge>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Account Status</label>
-              <div className="mt-1">
-                <Badge 
-                  variant={
-                    expertProfile.status === 'approved' ? 'default' :
-                    expertProfile.status === 'pending' ? 'secondary' :
-                    'destructive'
-                  }
-                >
-                  {expertProfile.status || 'Unknown'}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <PersonalInformationCard
+          formData={formData}
+          isEditing={isEditing}
+          onFormDataChange={setFormData}
+        />
+
+        <ProfessionalDetailsCard
+          formData={formData}
+          isEditing={isEditing}
+          onFormDataChange={setFormData}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          isSaving={isSaving}
+        />
       </div>
-
-      {expertProfile.bio && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Bio</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">{expertProfile.bio}</p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };

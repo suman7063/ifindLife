@@ -10,29 +10,28 @@ interface ExtensionConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (extensionMinutes: number, cost: number) => Promise<boolean>;
-  expertPrice: number;
-  isExtending?: boolean;
+  pricePerMinute: number;
+  walletBalance: number;
+  formatPrice: (price: number) => string;
+  isProcessing?: boolean;
 }
 
 export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  expertPrice,
-  isExtending = false
+  pricePerMinute,
+  walletBalance,
+  formatPrice,
+  isProcessing = false
 }) => {
   const [extensionMinutes, setExtensionMinutes] = useState(15);
   const [isConfirming, setIsConfirming] = useState(false);
 
-  // Use a default wallet balance for now (this should come from props or context in a real implementation)
-  const walletBalance = 1000;
-  
-  const extensionCost = (extensionMinutes / 60) * expertPrice;
+  const extensionCost = (extensionMinutes / 60) * pricePerMinute;
   const hasEnoughBalance = walletBalance >= extensionCost;
   const canDecrease = extensionMinutes > 15;
   const canIncrease = extensionMinutes < 60;
-
-  const formatPrice = (price: number) => `₹${price.toFixed(2)}`;
 
   const handleIncrement = () => {
     if (canIncrease) {
@@ -68,7 +67,7 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
   };
 
   const handleClose = () => {
-    if (!isConfirming && !isExtending) {
+    if (!isConfirming && !isProcessing) {
       setExtensionMinutes(15); // Reset to default
       onClose();
     }
@@ -163,7 +162,7 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
             <Button
               variant="outline"
               onClick={handleClose}
-              disabled={isConfirming || isExtending}
+              disabled={isConfirming || isProcessing}
               className="flex-1"
             >
               Cancel
@@ -171,7 +170,7 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
             
             <Button
               onClick={handleConfirm}
-              disabled={!hasEnoughBalance || isConfirming || isExtending}
+              disabled={!hasEnoughBalance || isConfirming || isProcessing}
               className="flex-1"
             >
               {isConfirming ? (
@@ -196,7 +195,7 @@ export const ExtensionConfirmationModal: React.FC<ExtensionConfirmationModalProp
                 variant={extensionMinutes === minutes ? "default" : "outline"}
                 size="sm"
                 onClick={() => setExtensionMinutes(minutes)}
-                disabled={isConfirming || isExtending}
+                disabled={isConfirming || isProcessing}
                 className="text-xs"
               >
                 +{minutes}m

@@ -1,20 +1,12 @@
 
 import { Session } from '@supabase/supabase-js';
 
-export interface AdminUser {
-  id: string;
-  username: string;
-  email: string;
-  role: 'admin' | 'superadmin';
-  permissions: AdminPermissions;
-  lastLogin?: string;
-  createdAt?: string;
-  isActive?: boolean; // Added missing property
-}
+// Define the role types
+export type AdminRole = 'admin' | 'superadmin' | 'super_admin';
 
-export type AdminRole = 'admin' | 'superadmin';
-
+// Define the permissions interface
 export interface AdminPermissions {
+  [key: string]: boolean;
   canManageUsers?: boolean;
   canManageExperts?: boolean;
   canManageContent?: boolean;
@@ -27,33 +19,51 @@ export interface AdminPermissions {
   canManageTestimonials?: boolean;
 }
 
+// Define the admin user interface
+export interface AdminUser {
+  id: string;
+  email: string;
+  username: string;
+  role: AdminRole;
+  permissions: AdminPermissions;
+  createdAt: string;
+  lastLogin: string;
+  isActive: boolean; // Add this required property
+}
+
+// Define the admin context type
 export interface AdminAuthContextType {
-  // User and session state
   user: AdminUser | null;
   session: Session | null;
   loading: boolean;
   error: Error | null;
   isAuthenticated: boolean;
-  
-  // Auth methods
-  login: (usernameOrEmail: string, password: string) => Promise<boolean>;
+  login: (emailOrUsername: string, password: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
-  
-  // Role checking
-  checkRole: (role: AdminRole) => boolean;
-  
-  // Legacy properties (for backward compatibility)
+  checkRole: (requiredRole: AdminRole | AdminRole[]) => boolean;
+  // Legacy properties for backward compatibility
   currentUser: AdminUser | null;
-  isSuperAdmin: (user: AdminUser | null) => boolean;
+  isSuperAdmin: boolean;
   adminUsers: AdminUser[];
+  addAdmin: (username: string, role: string) => boolean;
+  removeAdmin: (userId: string) => boolean;
+  updateAdminPermissions: (userId: string, permissions: AdminPermissions) => void;
+  hasPermission: (permission: string) => boolean;
+  getAdminById: (userId: string) => AdminUser | null;
+  updateAdminRole: (userId: string, role: string) => boolean;
   permissions: AdminPermissions;
   isLoading: boolean;
-  
-  // Admin user management
-  addAdmin: (admin: Omit<AdminUser, 'id' | 'createdAt'>) => void;
-  removeAdmin: (adminId: string) => void;
-  updateAdminPermissions: (adminId: string, permissions: Partial<AdminPermissions>) => void;
-  hasPermission: (user: AdminUser | null, permission: keyof AdminPermissions) => boolean;
-  getAdminById: (id: string) => AdminUser | undefined;
-  updateAdminRole: (adminId: string, role: AdminRole) => void;
 }
+
+// Initial state for the admin auth context
+export const initialAuthState = {
+  user: null,
+  session: null,
+  loading: true,
+  error: null,
+  isAuthenticated: false,
+  currentUser: null,
+  isSuperAdmin: false,
+  adminUsers: [],
+  permissions: {}
+};

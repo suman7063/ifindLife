@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 import { servicesData } from '@/components/services/detail/servicesData';
 import ServiceHero from '@/components/services/detail/ServiceHero';
 import ServiceDetailContent from '@/components/services/detail/ServiceDetailContent';
-import ProtectedBookingDialog from '@/components/services/detail/ProtectedBookingDialog';
+import BookingDialog from '@/components/services/detail/BookingDialog';
 
 const ServiceDetailPage: React.FC = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -16,7 +16,7 @@ const ServiceDetailPage: React.FC = () => {
   const serviceData = servicesData.find(service => service.id === serviceId);
   
   useEffect(() => {
-    console.log('ServiceDetailPage component rendering with auth protection');
+    console.log('ServiceDetailPage component rendering');
     console.log('Service ID from URL params:', serviceId);
     console.log('Found service data:', serviceData);
     
@@ -25,13 +25,7 @@ const ServiceDetailPage: React.FC = () => {
   }, [serviceId, serviceData]);
   
   const handleBookNowClick = () => {
-    console.log('🔒 Book now clicked - starting protected booking flow');
     setIsBookingDialogOpen(true);
-  };
-
-  const handleProceedToBooking = () => {
-    console.log('Proceeding to booking for service:', serviceData?.title);
-    // Add booking logic here
   };
   
   // If service not found, render a placeholder
@@ -70,13 +64,12 @@ const ServiceDetailPage: React.FC = () => {
         />
       </div>
       
-      {/* Protected Booking Dialog */}
-      <ProtectedBookingDialog 
+      {/* Booking Dialog */}
+      <BookingDialog 
         open={isBookingDialogOpen} 
         onOpenChange={setIsBookingDialogOpen}
         serviceTitle={serviceData.title}
         serviceType="service"
-        onProceed={handleProceedToBooking}
       />
       
       <Footer />

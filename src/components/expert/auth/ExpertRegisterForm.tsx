@@ -1,160 +1,175 @@
 
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
-interface ExpertRegisterFormProps {
-  setActiveTab: (tab: string) => void;
-}
+const formSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  phone: z.string().optional(),
+  specialization: z.string().optional(),
+  experience: z.string().optional(),
+});
 
-const ExpertRegisterForm: React.FC<ExpertRegisterFormProps> = ({ setActiveTab }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    specialization: '',
-    experience: '',
-    bio: ''
+type FormValues = z.infer<typeof formSchema>;
+
+export const ExpertRegisterForm: React.FC = () => {
+  const auth = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+  
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      phone: '',
+      specialization: '',
+      experience: '',
+    },
   });
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (formData.password !== formData.confirmPassword) {
-      toast.error('Passwords do not match');
-      return;
-    }
-
-    setIsLoading(true);
-    
+  
+  const onSubmit = async (data: FormValues) => {
+    setIsRegistering(true);
     try {
-      // Simulate registration process
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // For backward compatibility, check if registerExpert exists, otherwise use signup
+      if (auth.registerExpert) {
+        await auth.registerExpert(data.email, data.password, {
+          name: data.name,
+          phone: data.phone,
+          specialization: data.specialization,
+          experience: data.experience,
+        });
+      } else {
+        await auth.signup(data.email, data.password, {
+          name: data.name,
+          phone: data.phone,
+          specialization: data.specialization,
+          experience: data.experience,
+          isExpert: true,  // Flag to indicate this is an expert registration
+        });
+      }
       
-      toast.success('Registration submitted! Please check your email for verification.');
-      setActiveTab('login');
+      toast.success('Registration successful!');
+      // Redirect is handled by the auth provider
     } catch (error) {
-      console.error('Registration error:', error);
-      toast.error('Registration failed. Please try again.');
+      console.error('Expert registration error:', error);
+      toast.error('An error occurred during registration');
     } finally {
-      setIsLoading(false);
+      setIsRegistering(false);
     }
   };
-
+  
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Full Name</Label>
-        <Input
-          id="name"
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
           name="name"
-          type="text"
-          value={formData.name}
-          onChange={handleInputChange}
-          required
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Full Name</FormLabel>
+              <FormControl>
+                <Input placeholder="John Doe" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
+        
+        <FormField
+          control={form.control}
           name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleInputChange}
-          required
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input type="email" placeholder="you@example.com" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
+        
+        <FormField
+          control={form.control}
           name="password"
-          type="password"
-          value={formData.password}
-          onChange={handleInputChange}
-          required
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input type="password" placeholder="********" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          value={formData.confirmPassword}
-          onChange={handleInputChange}
-          required
+        
+        <FormField
+          control={form.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Phone (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="+1234567890" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="specialization">Specialization</Label>
-        <Input
-          id="specialization"
+        
+        <FormField
+          control={form.control}
           name="specialization"
-          type="text"
-          value={formData.specialization}
-          onChange={handleInputChange}
-          placeholder="e.g., Clinical Psychology, Life Coaching"
-          required
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Specialization (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. Relationship Counseling" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="experience">Years of Experience</Label>
-        <Input
-          id="experience"
+        
+        <FormField
+          control={form.control}
           name="experience"
-          type="number"
-          value={formData.experience}
-          onChange={handleInputChange}
-          min="0"
-          required
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Years of Experience (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g. 5" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="bio">Professional Bio</Label>
-        <Textarea
-          id="bio"
-          name="bio"
-          value={formData.bio}
-          onChange={handleInputChange}
-          placeholder="Tell us about your background and approach..."
-          rows={4}
-          required
-        />
-      </div>
-
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? 'Submitting...' : 'Register as Expert'}
-      </Button>
-
-      <p className="text-sm text-center text-muted-foreground">
-        Already have an account?{' '}
-        <button
-          type="button"
-          onClick={() => setActiveTab('login')}
-          className="text-primary hover:underline"
+        
+        <Button 
+          type="submit" 
+          className="w-full"
+          disabled={isRegistering}
         >
-          Sign in here
-        </button>
-      </p>
-    </form>
+          {isRegistering ? 'Registering...' : 'Register as Expert'}
+        </Button>
+      </form>
+    </Form>
   );
 };
 

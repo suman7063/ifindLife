@@ -1,82 +1,69 @@
 
 import React from 'react';
-import { ArrowRight, Users, Heart, Brain, Calendar, MessageCircle, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 
 const WhatWeDoSection = () => {
-  const programs = [
-    {
-      icon: <Brain className="h-8 w-8 text-ifind-aqua" />,
-      title: "Mental Health Programs",
-      description: "Comprehensive programs designed to support various mental health concerns with expert guidance.",
-      link: "/programs-for-wellness-seekers#general-wellness"
-    },
-    {
-      icon: <Heart className="h-8 w-8 text-red-500" />,
-      title: "Issue-Based Sessions",
-      description: "Targeted sessions for specific concerns like anxiety, depression, stress management, and more.",
-      link: "/programs-for-wellness-seekers#issue-based"
-    },
-    {
-      icon: <Users className="h-8 w-8 text-green-500" />,
-      title: "Group Therapy",
-      description: "Connect with others facing similar challenges in a supportive group environment.",
-      link: "/programs-for-wellness-seekers#group-therapy"
-    },
-    {
-      icon: <Calendar className="h-8 w-8 text-purple-500" />,
-      title: "Structured Programs",
-      description: "Long-term structured programs for sustained mental health improvement and growth.",
-      link: "/programs-for-wellness-seekers#structured"
-    },
-    {
-      icon: <MessageCircle className="h-8 w-8 text-blue-500" />,
-      title: "One-on-One Counseling",
-      description: "Personalized individual sessions with qualified mental health professionals.",
-      link: "/programs-for-wellness-seekers#individual"
-    },
-    {
-      icon: <Shield className="h-8 w-8 text-orange-500" />,
-      title: "Crisis Support",
-      description: "Immediate support and intervention for mental health emergencies and crises.",
-      link: "/programs-for-wellness-seekers#crisis"
-    }
-  ];
+  const programs = [{
+    title: "QuickEase Programs",
+    description: "Short-term solutions for immediate stress and anxiety relief",
+    color: "bg-gray-50",
+    borderColor: "border-l-blue-500",
+    href: "/programs-for-wellness-seekers#quick-ease",
+    accentColor: "text-blue-500",
+    icon: <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-6">
+          <div className="w-8 h-8 rounded-full border-2 border-blue-500"></div>
+        </div>
+  }, {
+    title: "Emotional Resilience",
+    description: "Build psychological strength to handle life's challenges",
+    color: "bg-gray-50",
+    borderColor: "border-l-ifind-purple",
+    href: "/programs-for-wellness-seekers#resilience-building",
+    accentColor: "text-ifind-purple",
+    icon: <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6">
+          <div className="w-8 h-8">
+            <svg viewBox="0 0 24 24" fill="none" className="w-full h-full text-ifind-purple">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="2" fill="none" />
+            </svg>
+          </div>
+        </div>
+  }, {
+    title: "Super Human Life",
+    description: "Achieve your highest potential through mental optimization",
+    color: "bg-gray-50",
+    borderColor: "border-l-ifind-teal",
+    href: "/programs-for-wellness-seekers#super-human",
+    accentColor: "text-ifind-teal",
+    icon: <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mb-6">
+          <div className="w-8 h-8">
+            <svg viewBox="0 0 24 24" fill="none" className="w-full h-full text-ifind-teal">
+              <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
+              <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="2" />
+            </svg>
+          </div>
+        </div>
+  }];
 
   return (
     <section className="py-16 bg-white">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            IFL Programs for Individuals
-          </h2>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto text-center">
-            IFL provides specialized programs to support your mental health journey
-          </p>
+      <div className="container mx-auto px-6 sm:px-12">
+        <div className="mb-4">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">IFL Programs for Individuals</h2>
+          <p className="text-gray-600 text-lg text-center">IFL provides specialized programs to support your mental health journey</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
           {programs.map((program, index) => (
-            <div key={index} className="bg-gray-50 rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <div className="mb-4">
-                {program.icon}
+            <Link key={index} to={program.href} className="block">
+              <div className={`${program.color} ${program.borderColor} border-l-4 rounded-lg p-8 h-full hover:shadow-lg transition-all duration-300 text-center border border-gray-200`}>
+                <div className="flex justify-center">
+                  {program.icon}
+                </div>
+                <h3 className={`font-semibold text-xl mb-4 ${program.accentColor}`}>{program.title}</h3>
+                <p className="text-gray-600">{program.description}</p>
               </div>
-              <h3 className="text-xl font-semibold mb-2">{program.title}</h3>
-              <p className="text-gray-600 mb-4">{program.description}</p>
-              <Link to={program.link} className="text-ifind-aqua hover:text-ifind-teal font-medium inline-flex items-center">
-                Learn More <ArrowRight className="ml-1 h-4 w-4" />
-              </Link>
-            </div>
+            </Link>
           ))}
-        </div>
-
-        <div className="text-center">
-          <Link to="/programs-for-wellness-seekers">
-            <Button className="bg-ifind-aqua hover:bg-ifind-teal text-white px-8 py-3">
-              View All Programs <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
         </div>
       </div>
     </section>

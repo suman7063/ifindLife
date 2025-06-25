@@ -2,14 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ExternalLink, LayoutDashboard, LogOut } from 'lucide-react';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 import { useNavigate } from 'react-router-dom';
 
 const ExpertHeader: React.FC = () => {
-  const { expertProfile, logout } = useAuth();
+  const { expert, logout } = useUnifiedAuth();
   const navigate = useNavigate();
 
   const getInitials = (name: string) => {
@@ -54,25 +54,25 @@ const ExpertHeader: React.FC = () => {
               <div className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 rounded-lg p-2">
                 <Avatar className="h-8 w-8">
                   <AvatarImage 
-                    src={expertProfile?.profile_picture || ''} 
-                    alt={expertProfile?.name || 'Expert'} 
+                    src={expert?.profile_picture || ''} 
+                    alt={expert?.name || 'Expert'} 
                   />
                   <AvatarFallback className="bg-primary text-white text-sm">
-                    {getInitials(expertProfile?.name || 'E')}
+                    {getInitials(expert?.name || 'E')}
                   </AvatarFallback>
                 </Avatar>
                 <span className="text-sm font-medium hidden sm:block">
-                  {expertProfile?.name || 'Expert'}
+                  {expert?.name || 'Expert'}
                 </span>
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56" align="end" forceMount>
               <div className="flex flex-col space-y-1 p-2">
                 <p className="text-sm font-medium leading-none">
-                  {expertProfile?.name || 'Expert'}
+                  {expert?.name || 'Expert'}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {expertProfile?.email}
+                  {expert?.email}
                 </p>
               </div>
               <DropdownMenuSeparator />

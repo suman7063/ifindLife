@@ -1,22 +1,22 @@
 
-// Unified types for the database schema
+// Unified database types for consistent data handling
 export interface UserProfile {
   id: string;
   name: string;
   email: string;
-  phone?: string;
-  country?: string;
-  city?: string;
+  phone: string;
+  country: string;
+  city: string;
   currency: string;
-  profile_picture?: string;
+  profile_picture: string | null;
   wallet_balance: number;
   created_at: string;
   updated_at?: string;
-  referred_by?: string | null;
+  referred_by: string | null;
   referral_code: string;
   referral_link: string;
-  favorite_experts: any[];
-  favorite_programs: any[];
+  favorite_experts: string[]; // Made consistent - always string array
+  favorite_programs: string[] | number[];
   enrolled_courses: any[];
   reviews: any[];
   reports: any[];
@@ -27,7 +27,6 @@ export interface UserProfile {
 export interface ExpertProfile {
   id: string;
   auth_id?: string;
-  user_id?: string;
   name: string;
   email: string;
   phone?: string;
@@ -36,49 +35,43 @@ export interface ExpertProfile {
   state?: string;
   country?: string;
   specialization?: string;
-  specialties?: string[];
   experience?: string;
-  experience_years?: number;
   bio?: string;
   certificate_urls?: string[];
-  certifications?: string[];
-  profile_picture?: string;
-  profile_image_url?: string;
+  profile_picture?: string | null;
   selected_services?: number[];
   average_rating?: number;
   reviews_count?: number;
   verified?: boolean;
-  status?: 'pending' | 'approved' | 'rejected';
-  hourly_rate?: number;
-  currency?: string;
-  timezone?: string;
-  availability_hours?: any;
-  languages?: string[];
-  education?: string;
-  linkedin_url?: string;
-  website_url?: string;
+  status?: string;
   created_at?: string;
+  hourly_rate?: number;
+}
+
+export interface AdminProfile {
+  id: string;
+  auth_id?: string;
+  name?: string;
+  email: string;
+  role: string;
+  created_at?: string;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: 'user' | 'expert' | 'admin' | null;
+}
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
   updated_at?: string;
-}
-
-export interface AuthState {
-  isAuthenticated: boolean;
-  sessionType: 'user' | 'expert' | null;
-  user: any | null;
-  userProfile: UserProfile | null;
-  expertProfile: ExpertProfile | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-export interface AuthActions {
-  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<boolean>;
-  logout: () => Promise<boolean>;
-  register: (email: string, password: string, userData: Partial<UserProfile>) => Promise<boolean>;
-  registerExpert: (email: string, password: string, expertData: Partial<ExpertProfile>) => Promise<boolean>;
-  refreshProfile: () => Promise<void>;
-  updateProfile: (updates: Partial<UserProfile>) => Promise<boolean>;
-  updateExpertProfile: (updates: Partial<ExpertProfile>) => Promise<boolean>;
-  hasUserAccount: boolean;
-  role: 'user' | 'expert' | null;
+  // Add missing properties that components expect
+  isMine?: boolean;
+  timestamp?: Date;
 }

@@ -1,35 +1,6 @@
 
-export interface Expert {
-  id: number;
-  name: string;
-  imageUrl: string;
-  price: number;
-  specialization: string;
-  experience: string;
-  rating: number;
-  reviews: number;
-}
-
-export interface EnhancedExpertSelectionModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onExpertSelected: (expertId: number) => void;
-  serviceTitle: string;
-}
-
-export interface ReportUserType {
-  id: string;
-  user_id: string;
-  expert_id: number;
-  reason: string;
-  details: string;
-  date: string;
-  status: string;
-  userName?: string;
-}
-
 export interface ExpertFormData {
-  id?: number | string;
+  id?: string | number;
   name: string;
   email: string;
   phone: string;
@@ -41,40 +12,64 @@ export interface ExpertFormData {
   country: string;
   specialization: string;
   experience: string;
+  certificates: File[];
+  certificateUrls: string[];
   bio: string;
-  acceptedTerms: boolean;
   selectedServices: number[];
-  profilePicture?: string;
-  certificates?: File[];
-  certificateUrls?: string[];
-  certificate_urls?: string[];
-  selected_services?: number[];
-  reportedUsers?: ReportUserType[];
+  acceptedTerms: boolean;
+  reportedUsers?: any[];
+  profilePicture?: string; // Add the missing profilePicture property
 }
 
 export interface ExpertRegistrationData {
   name: string;
   email: string;
-  password: string;
   phone: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  specialization: string;
-  experience: string;
-  bio: string;
-  certificate_urls: string[];
-  selected_services: number[];
+  password: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string; // Change to string to match with hooks/expert-auth/types.ts
+  bio?: string;
+  certificate_urls?: string[];
+  selected_services?: number[];
 }
 
 export interface ServiceType {
   id: number;
   name: string;
-  title?: string;
-  description: string;
-  price?: number;
-  category?: string;
-  duration?: string;
-  image?: string;
+  description?: string;
+  rate_usd?: number;
+  rate_inr?: number;
 }
+
+export interface ReportUserType {
+  id: string;
+  user_id: string;
+  expert_id: number;
+  reason: string;
+  details?: string;
+  date: string;
+  status: string;
+  userName?: string;
+}
+
+export const formDataToRegistrationData = (formData: ExpertFormData): ExpertRegistrationData => {
+  return {
+    name: formData.name,
+    email: formData.email,
+    phone: formData.phone,
+    password: formData.password,
+    address: formData.address,
+    city: formData.city,
+    state: formData.state,
+    country: formData.country,
+    specialization: formData.specialization,
+    experience: formData.experience,
+    bio: formData.bio,
+    certificate_urls: formData.certificateUrls,
+    selected_services: formData.selectedServices
+  };
+};

@@ -27,13 +27,13 @@ const DEFAULT_PERMISSIONS: AdminPermissions = {
   canManageTestimonials: true
 };
 
-// Default admin users data - Fixed role type
+// Default admin users data
 export const defaultAdminUsers: AdminUser[] = [
   {
     id: '1',
     username: 'IFLsuperadmin',
     email: 'iflsuperadmin@ifindlife.com',
-    role: 'superadmin', // Fixed: changed from 'super_admin' to 'superadmin'
+    role: 'super_admin',
     permissions: DEFAULT_PERMISSIONS,
     isActive: true,
     createdAt: new Date().toISOString(),

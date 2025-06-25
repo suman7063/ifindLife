@@ -1,15 +1,17 @@
 
-import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { ensureUserProfileCompatibility } from '@/utils/typeAdapters';
 
 export const useUserAuth = () => {
   const auth = useAuth();
   
+  // Provide backward compatibility while using the unified auth context
   return {
     // Direct auth properties
     ...auth,
     
     // Adapted user profile for backward compatibility
-    currentUser: auth.userProfile,
+    currentUser: ensureUserProfileCompatibility(auth.userProfile),
     
     // Alias methods for backward compatibility
     authLoading: auth.isLoading,
@@ -18,6 +20,6 @@ export const useUserAuth = () => {
     
     // User-specific methods
     user: auth.user,
-    updateProfilePicture: auth.updateProfilePicture,
+    updateProfilePicture: auth.updateProfilePicture || (async () => null),
   };
 };

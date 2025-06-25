@@ -11,8 +11,6 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
     expertData: Partial<ExpertProfile>
   ): Promise<boolean> => {
     try {
-      console.log('Starting expert registration for:', email);
-      
       // First create the user account with Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -20,16 +18,18 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
       });
 
       if (error) {
-        console.error('Expert registration auth error:', error);
         toast.error(error.message);
         return false;
       }
 
       if (data.user) {
-        console.log('Auth user created with ID:', data.user.id);
-        
+        // Convert experience to string if it's a number
+        const experience = typeof expertData.experience === 'number' 
+          ? String(expertData.experience) 
+          : expertData.experience || '';
+
         // Create expert profile with the auth user id
-        const expertProfileData: Partial<ExpertProfile> = {
+        const expertProfileData = {
           auth_id: data.user.id,
           email,
           status: 'pending',
@@ -41,21 +41,10 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
           state: expertData.state || '',
           country: expertData.country || '',
           specialization: expertData.specialization || '',
-          specialties: expertData.specialties || [],
-          experience: typeof expertData.experience === 'number' 
-            ? String(expertData.experience) 
-            : (expertData.experience || ''),
-          experience_years: typeof expertData.experience === 'number' 
-            ? expertData.experience 
-            : (expertData.experience_years || 0),
+          experience,
           bio: expertData.bio || '',
-          certificate_urls: expertData.certificate_urls || [],
-          certifications: expertData.certifications || [],
           profile_picture: expertData.profile_picture || '',
-          selected_services: expertData.selected_services || [],
-          hourly_rate: expertData.hourly_rate || 0,
-          currency: expertData.currency || 'USD',
-          languages: expertData.languages || ['English']
+          selected_services: expertData.selected_services || []
         };
 
         const { error: profileError } = await supabase
@@ -67,8 +56,6 @@ export const useExpertRegistration = (onActionComplete: () => void) => {
           toast.error(`Failed to create expert profile: ${profileError.message}`);
           return false;
         }
-
-        console.log('Expert profile created successfully');
       }
 
       localStorage.setItem('sessionType', 'expert');

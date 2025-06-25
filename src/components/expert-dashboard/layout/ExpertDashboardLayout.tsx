@@ -3,7 +3,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import ExpertSidebar from './sidebar/ExpertSidebar';
 import ExpertHeader from './ExpertHeader';
 import MobileResponsiveWrapper from './MobileResponsiveWrapper';
-import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import DashboardLoader from '../../expert/dashboard/DashboardLoader';
 import { toast } from 'sonner';
@@ -47,7 +47,7 @@ class RedirectSafety {
 const redirectSafety = new RedirectSafety();
 
 const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children }) => {
-  const { isAuthenticated, sessionType, expertProfile, isLoading } = useAuth();
+  const { isAuthenticated, sessionType, expert, isLoading } = useUnifiedAuth();
   const navigate = useNavigate();
   const [hasRedirected, setHasRedirected] = useState(false);
   
@@ -55,9 +55,9 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   console.log('ExpertDashboardLayout - Unified auth state:', {
     isAuthenticated,
     sessionType,
-    hasExpertProfile: !!expertProfile,
+    hasExpertProfile: !!expert,
     isLoading,
-    expertStatus: expertProfile?.status
+    expertStatus: expert?.status
   });
   
   // Show loading state while checking authentication
@@ -66,7 +66,7 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   }
   
   // Handle unauthorized access with redirect safety
-  if (!isAuthenticated || sessionType !== 'expert' || !expertProfile) {
+  if (!isAuthenticated || sessionType !== 'expert' || !expert) {
     console.log('ExpertDashboardLayout: Not authenticated as expert, checking redirect safety');
     
     if (!hasRedirected && redirectSafety.canRedirect('/expert-dashboard', '/expert-login')) {

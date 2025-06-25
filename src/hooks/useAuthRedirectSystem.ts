@@ -60,9 +60,9 @@ export const useAuthRedirectSystem = () => {
     return false;
   }, [isAuthenticated, navigate]);
 
-  // Convenience methods for common actions - updated to accept string IDs
+  // Convenience methods for common actions
   const requireAuthForExpert = useCallback((
-    expertId: string,
+    expertId: number,
     expertName: string,
     action: 'favorite' | 'connect' | 'book' | 'call',
     additionalParams?: Record<string, any>
@@ -77,7 +77,7 @@ export const useAuthRedirectSystem = () => {
   }, [isAuthenticated, navigate]);
 
   const requireAuthForCall = useCallback((
-    expertId: string,
+    expertId: number,
     expertName: string,
     callType: 'video' | 'voice'
   ) => {

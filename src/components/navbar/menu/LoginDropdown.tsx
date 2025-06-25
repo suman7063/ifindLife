@@ -29,7 +29,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     timestamp: new Date().toISOString()
   });
 
-  // Check if user has ANY valid authentication
+  // Check multiple authentication criteria - user has ANY valid authentication
   const hasAnyAuthentication = Boolean(isAuthenticated) || Boolean(hasExpertProfile);
   
   console.log('LoginDropdown authentication decision:', { 
@@ -38,7 +38,7 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     finalDecision: hasAnyAuthentication ? 'HIDE_LOGIN' : 'SHOW_LOGIN'
   });
   
-  // Only show login dropdown when user is NOT authenticated
+  // If user has any authentication, don't show login dropdown
   if (hasAnyAuthentication) {
     console.log('LoginDropdown: User has authentication, hiding login dropdown');
     return null;

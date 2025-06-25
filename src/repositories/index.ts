@@ -1,3 +1,9 @@
 
-export { userRepository } from './userRepository';
-export { expertRepository } from './expertRepository';
+// Export repository instances
+import { userRepository } from './userRepository';
+import { expertRepository } from './expertRepository';
+
+export {
+  userRepository,
+  expertRepository
+};

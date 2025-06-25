@@ -1,100 +1,155 @@
 
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/UnifiedAuthContext';
-import ExpertLoginForm from '@/components/expert/auth/ExpertLoginForm';
-import LoadingScreen from '@/components/auth/LoadingScreen';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
-import { toast } from 'sonner';
-import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
+import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
+import Navbar from '@/components/Navbar';
+
+// Simple redirect safety to prevent infinite loops
+class RedirectSafety {
+  private redirectCount = 0;
+  private lastRedirectTime = 0;
+  private readonly MAX_REDIRECTS = 3;
+  private readonly RESET_TIME = 5000; // 5 seconds
+
+  canRedirect(from: string, to: string): boolean {
+    const now = Date.now();
+    
+    // Reset counter if enough time has passed
+    if (now - this.lastRedirectTime > this.RESET_TIME) {
+      this.redirectCount = 0;
+    }
+
+    // Check if we've hit the limit
+    if (this.redirectCount >= this.MAX_REDIRECTS) {
+      console.error(`Redirect loop detected: ${from} -> ${to}. Blocking redirect.`);
+      return false;
+    }
+
+    this.redirectCount++;
+    this.lastRedirectTime = now;
+    return true;
+  }
+
+  reset() {
+    this.redirectCount = 0;
+    this.lastRedirectTime = 0;
+  }
+}
+
+const redirectSafety = new RedirectSafety();
 
 const ExpertLogin: React.FC = () => {
-  const { isAuthenticated, sessionType, expertProfile, isLoading, login } = useAuth();
-  const navigate = useNavigate();
-  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [activeTab, setActiveTab] = useState('login');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
+  const { isAuthenticated, sessionType, expert, isLoading, login } = useUnifiedAuth();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
-  console.log('ExpertLogin: Current auth state:', {
-    isAuthenticated: Boolean(isAuthenticated),
+  // Enhanced debug logging to compare with ExpertDashboardLayout
+  console.log('ExpertLogin - Unified auth state:', {
+    isAuthenticated,
     sessionType,
-    hasExpertProfile: Boolean(expertProfile),
-    isLoading: Boolean(isLoading),
-    expertEmail: expertProfile?.email
+    hasExpertProfile: !!expert,
+    isLoading,
+    expertStatus: expert?.status
   });
 
+  // Check for existing authentication with redirect safety
   useEffect(() => {
-    // Don't proceed if still loading
+    // Check status from URL parameters
+    const status = searchParams.get('status');
+    if (status === 'pending') {
+      toast.info('Your expert account is pending approval. You will be notified once approved.');
+    } else if (status === 'disapproved') {
+      toast.error('Your expert account application has been disapproved.');
+    }
+
+    // Wait for auth loading to complete
     if (isLoading) {
-      console.log('ExpertLogin: Auth still loading, waiting...');
+      console.log('ExpertLogin: Still loading auth state...');
       return;
     }
 
-    const checkExistingAuth = () => {
-      console.log('ExpertLogin: Checking existing authentication...');
-
-      // If authenticated as expert with valid profile, redirect to dashboard
-      if (isAuthenticated && sessionType === 'expert' && expertProfile) {
-        console.log('ExpertLogin: Expert authenticated, redirecting to dashboard');
-        navigate('/expert-dashboard', { replace: true });
-        return;
+    // Only redirect if authenticated as expert AND has expert profile AND hasn't redirected yet AND expert is approved
+    if (isAuthenticated && sessionType === 'expert' && expert && expert.status === 'approved' && !hasRedirected) {
+      console.log('ExpertLogin: Already authenticated as expert, checking redirect safety');
+      
+      if (redirectSafety.canRedirect('/expert-login', '/expert-dashboard')) {
+        console.log('ExpertLogin: Redirecting to dashboard');
+        setHasRedirected(true);
+        
+        // Add small delay to prevent infinite loops
+        setTimeout(() => {
+          navigate('/expert-dashboard', { replace: true });
+        }, 100);
+      } else {
+        console.error('ExpertLogin: Redirect loop detected, staying on login page');
+        toast.error('Authentication error detected. Please try logging out and back in.');
       }
+    }
+  }, [isAuthenticated, sessionType, expert, isLoading, navigate, searchParams, hasRedirected]);
 
-      // If authenticated but as different type, show message and logout
-      if (isAuthenticated && sessionType !== 'expert') {
-        console.log('ExpertLogin: Authenticated as different type, need to logout');
-        toast.info('You need to login as an expert to access this area');
-      }
-
-      setCheckingAuth(false);
-    };
-
-    // Small delay to ensure auth state is stable
-    const timer = setTimeout(checkExistingAuth, 100);
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, sessionType, expertProfile, isLoading, navigate]);
-
-  const handleLogin = async (email: string, password: string): Promise<boolean> => {
-    setIsLoggingIn(true);
-    setLoginError(null);
-    
+  // Handle login with unified auth
+  const handleLogin = async (email: string, password: string) => {
     try {
-      console.log('ExpertLogin: Attempting login for expert:', email);
+      setIsLoggingIn(true);
+      setLoginError(null);
       
-      // Set session type before login
-      localStorage.setItem('sessionType', 'expert');
+      console.log('ExpertLogin: Attempting login with unified auth:', email);
       
-      const result = await login(email, password);
+      const success = await login('expert', { email, password, asExpert: true });
       
-      if (result) {
-        console.log('ExpertLogin: Login successful');
+      if (success) {
+        console.log('Expert login successful, will redirect shortly');
+        toast.success('Login successful!');
+        
+        // Reset redirect safety on successful login
+        redirectSafety.reset();
+        
+        // Add a small delay to allow auth state to update
+        setTimeout(() => {
+          navigate('/expert-dashboard', { replace: true });
+        }, 100);
+        
         return true;
       } else {
-        setLoginError('Invalid email or password');
+        console.error('Expert login failed');
+        setLoginError('Invalid email or password. Please check your credentials and try again.');
+        toast.error('Invalid email or password. Please check your credentials and try again.');
         return false;
       }
     } catch (error) {
-      console.error('ExpertLogin: Login error:', error);
-      setLoginError('Login failed. Please try again.');
+      console.error('Login error:', error);
+      setLoginError('An error occurred during login. Please try again.');
+      toast.error('An error occurred during login. Please try again.');
       return false;
     } finally {
       setIsLoggingIn(false);
     }
   };
 
-  const setActiveTab = (tab: string) => {
-    console.log('ExpertLogin: Setting active tab to:', tab);
-  };
-
-  if (isLoading || checkingAuth) {
-    return <LoadingScreen message="Checking expert authentication..." />;
-  }
-
-  // If already authenticated as expert, show loading while redirecting
-  if (isAuthenticated && sessionType === 'expert' && expertProfile) {
-    return <LoadingScreen message="Redirecting to expert dashboard..." />;
+  // Show loading while auth is being checked
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4 mx-auto" />
+            <p>Checking authentication...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
   }
 
   return (
@@ -102,20 +157,20 @@ const ExpertLogin: React.FC = () => {
       <Navbar />
       <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12">
         <Container className="max-w-md">
-          <Card className="shadow-lg">
-            <CardHeader className="text-center">
-              <CardTitle className="text-2xl font-bold">Expert Portal</CardTitle>
-              <p className="text-muted-foreground">Sign in to your expert account</p>
-            </CardHeader>
-            <CardContent>
-              <ExpertLoginForm 
-                onLogin={handleLogin}
-                isLoggingIn={isLoggingIn}
-                loginError={loginError}
-                setActiveTab={setActiveTab}
-              />
-            </CardContent>
-          </Card>
+          <div className="bg-white rounded-lg shadow-md p-8">
+            <div className="mb-6 text-center">
+              <h1 className="text-2xl font-bold mb-1">Expert Portal</h1>
+              <p className="text-gray-600">Login or join as an expert</p>
+            </div>
+            
+            <ExpertLoginTabs
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              onLogin={handleLogin}
+              isLoggingIn={isLoggingIn}
+              loginError={loginError}
+            />
+          </div>
         </Container>
       </div>
       <Footer />
