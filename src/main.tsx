@@ -1,98 +1,62 @@
 
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
-import App from "./App.tsx";
-import "./index.css";
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter as Router } from 'react-router-dom'
+import App from './App.tsx'
+import './index.css'
+import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext'
 
-// DEBUG: Check if main.tsx is loading
-console.log('🔒 main.tsx loading with enhanced debugging');
+// Debug React availability
+console.log('main.tsx - React:', !!React);
+console.log('main.tsx - ReactDOM:', !!ReactDOM);
+console.log('main.tsx - React version:', React.version);
 
-const rootElement = document.getElementById("root");
-if (!rootElement) {
-  throw new Error("Root element not found");
+// Only log in development mode
+if (import.meta.env.DEV) {
+  console.log('Main.tsx is executing...')
 }
 
-const root = createRoot(rootElement);
+const rootElement = document.getElementById('root');
 
-// DEBUG: Check DOM structure
-console.log('🔒 Root element found:', rootElement);
+if (!rootElement) {
+  throw new Error('Root element not found');
+}
 
-root.render(
-  <StrictMode>
-    <BrowserRouter>
-      <div style={{ minHeight: '100vh', width: '100%' }}>
-        <App />
-      </div>
-    </BrowserRouter>
-  </StrictMode>
-);
-
-// DEBUG: Enhanced DOM check after render with comprehensive logging
-setTimeout(() => {
-  console.log('🔒 Post-render DOM check - Comprehensive');
+// Add error handling for React 18 createRoot
+try {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    <React.StrictMode>
+      <Router>
+        <EnhancedUnifiedAuthProvider>
+          <App />
+        </EnhancedUnifiedAuthProvider>
+      </Router>
+    </React.StrictMode>
+  );
   
-  // Check for React app structure
-  const rootChildren = document.getElementById('root')?.children;
-  console.log('🔒 Root children count:', rootChildren?.length || 0);
-  
-  // Check for main app structure
-  const appElement = document.querySelector('.app');
-  console.log('🔒 App element exists:', !!appElement);
-  
-  // Check for navbar specifically
-  const navbar = document.querySelector('[data-navbar="main"]');
-  console.log('🔒 Navbar element exists:', !!navbar);
-  
-  if (navbar) {
-    const htmlNavbar = navbar as HTMLElement;
-    const computedStyles = window.getComputedStyle(htmlNavbar);
-    console.log('🔒 Navbar element details:', {
-      tagName: navbar.tagName,
-      className: navbar.className,
-      offsetHeight: htmlNavbar.offsetHeight,
-      offsetWidth: htmlNavbar.offsetWidth,
-      visible: htmlNavbar.offsetHeight > 0 && htmlNavbar.offsetWidth > 0,
-      display: computedStyles.display,
-      visibility: computedStyles.visibility,
-      opacity: computedStyles.opacity,
-      position: computedStyles.position,
-      zIndex: computedStyles.zIndex
-    });
-  } else {
-    // Look for any nav elements
-    const allNavs = document.querySelectorAll('nav');
-    console.log('🔒 All nav elements found:', allNavs.length);
-    allNavs.forEach((nav, index) => {
-      console.log(`🔒 Nav ${index}:`, {
-        className: nav.className,
-        id: nav.id,
-        dataAttrs: Array.from(nav.attributes).filter(attr => attr.name.startsWith('data-'))
-      });
-    });
+  // Only log in development mode
+  if (import.meta.env.DEV) {
+    console.log('Root component rendered successfully');
   }
+} catch (error) {
+  console.error('Failed to render app:', error);
   
-  // Check for home page elements
-  const homePage = document.querySelector('.home-page');
-  console.log('🔒 Home page element exists:', !!homePage);
-  
-  // Check general DOM health
-  console.log('🔒 General DOM health:', {
-    bodyChildren: document.body.children.length,
-    totalElements: document.querySelectorAll('*').length,
-    hasStylesheets: document.querySelectorAll('link[rel="stylesheet"]').length,
-    hasScripts: document.querySelectorAll('script').length
-  });
-}, 500);
-
-// Additional check after a longer delay to catch async rendering
-setTimeout(() => {
-  console.log('🔒 Extended DOM check after 2 seconds');
-  const navbar = document.querySelector('[data-navbar="main"]');
-  const homePage = document.querySelector('.home-page');
-  console.log('🔒 Extended check results:', {
-    navbarExists: !!navbar,
-    homePageExists: !!homePage,
-    timestamp: new Date().toISOString()
-  });
-}, 2000);
+  // Last resort - direct DOM manipulation
+  rootElement.innerHTML = `
+    <div style="padding: 20px; text-align: center; font-family: Arial, sans-serif;">
+      <h1 style="color: #dc3545;">Application Failed to Load</h1>
+      <p>There was a critical error loading the application.</p>
+      <p>Error: ${error instanceof Error ? error.message : 'Unknown error'}</p>
+      <button onclick="window.location.reload()" style="
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      ">Reload Page</button>
+    </div>
+  `;
+}

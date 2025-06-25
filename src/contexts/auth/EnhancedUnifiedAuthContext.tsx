@@ -1,10 +1,14 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unified';
 import { authProtection, useAuthProtection } from '@/utils/authProtection';
 import { toast } from 'sonner';
+
+// Debug React availability
+console.log('EnhancedUnifiedAuthContext - React:', !!React);
+console.log('EnhancedUnifiedAuthContext - useState:', !!useState);
 
 type SessionType = 'user' | 'expert' | 'admin' | null;
 
@@ -29,7 +33,6 @@ interface EnhancedUnifiedAuthContextType {
   // Auth actions with protection
   login: (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }) => Promise<boolean>;
   logout: () => Promise<void>;
-  registerExpert: (email: string, password: string, expertData: Partial<ExpertProfile>) => Promise<boolean>;
   
   // Auth protection utilities
   startAuthProtection: (operationId: string, type?: 'video-call' | 'booking' | 'payment') => void;
@@ -51,168 +54,112 @@ interface EnhancedUnifiedAuthProviderProps {
   children: React.ReactNode;
 }
 
-// Simplified initial auth state
-const createInitialAuthState = () => ({
-  isAuthenticated: false,
-  isLoading: true,
-  user: null,
-  session: null,
-  sessionType: null as SessionType,
-  error: null,
-  userProfile: null,
-  expertProfile: null,
-  adminProfile: null
-});
-
-const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProviderProps> = ({ children }) => {
-  const [authState, setAuthState] = useState(createInitialAuthState);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const initRef = useRef(false);
+export const EnhancedUnifiedAuthProvider: React.FC<EnhancedUnifiedAuthProviderProps> = ({ children }) => {
+  // Debug hook calls
+  console.log('EnhancedUnifiedAuthProvider rendering...');
   
+  // Core auth state - using React.useState to be explicit
+  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [session, setSession] = React.useState<Session | null>(null);
+  const [sessionType, setSessionType] = React.useState<SessionType>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Profile state
+  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
+  const [expertProfile, setExpertProfile] = React.useState<ExpertProfile | null>(null);
+  const [adminProfile, setAdminProfile] = React.useState<AdminProfile | null>(null);
+
   // Auth protection hooks
   const { startProtection, endProtection, isProtected } = useAuthProtection();
 
-  // Fixed profile fetching function with correct table and column names
-  const fetchProfileForUser = useCallback(async (userId: string, type: SessionType) => {
-    try {
-      console.log(`🔒 Fetching ${type} profile for user:`, userId);
+  // Enhanced session handler with protection awareness
+  const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
+    console.log('🔒 Enhanced auth state change:', { event, hasSession: !!session, isProtected: authProtection.isProtected() });
+    
+    // If auth is currently protected, be more careful about state changes
+    if (authProtection.isProtected() && event === 'SIGNED_OUT') {
+      console.log('🔒 WARNING: Logout detected during protected operation - this may be unintended');
+      const activeOps = authProtection.getActiveOperations();
+      console.log('🔒 Active protected operations:', activeOps);
       
+      // Don't immediately clear state if we have active operations
+      if (activeOps.length > 0) {
+        console.log('🔒 Delaying auth state clear due to active operations');
+        return;
+      }
+    }
+
+    try {
+      setSession(session);
+      setUser(session?.user || null);
+      setIsAuthenticated(!!session);
+      
+      if (session?.user) {
+        // Determine session type and fetch appropriate profile
+        const storedSessionType = localStorage.getItem('sessionType') as SessionType;
+        setSessionType(storedSessionType);
+        
+        // Fetch profile based on session type
+        await fetchProfileForUser(session.user.id, storedSessionType);
+      } else {
+        // Clear all profile state
+        setSessionType(null);
+        setUserProfile(null);
+        setExpertProfile(null);
+        setAdminProfile(null);
+      }
+    } catch (error) {
+      console.error('🔒 Error in auth state change handler:', error);
+      setError('Authentication state error');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch profile data for authenticated user
+  const fetchProfileForUser = async (userId: string, type: SessionType) => {
+    try {
       if (type === 'user') {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('users')
           .select('*')
           .eq('id', userId)
           .single();
-        
-        if (!error && data) {
-          console.log('🔒 User profile loaded successfully');
-          return { userProfile: data };
-        }
+        setUserProfile(data);
       } else if (type === 'expert') {
-        console.log('🔒 Attempting to fetch from expert_accounts table using auth_id');
-        
-        // ✅ FIXED: Use correct table name and column
-        const { data, error } = await supabase
-          .from('expert_accounts')  // ✅ Correct table name
+        const { data } = await supabase
+          .from('experts')
           .select('*')
-          .eq('auth_id', userId)    // ✅ Correct column name
-          .eq('status', 'approved') // ✅ Only approved experts
-          .maybeSingle();          // ✅ Use maybeSingle to avoid errors when not found
-        
-        if (error) {
-          console.error('🔒 Expert profile fetch error:', error);
-          return null;
-        }
-        
-        if (data) {
-          console.log('🔒 Expert profile loaded successfully:', data.name);
-          return { expertProfile: data };
-        } else {
-          console.log('🔒 No approved expert profile found for user');
-          return null;
-        }
+          .eq('id', userId)
+          .single();
+        setExpertProfile(data);
       } else if (type === 'admin') {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('admin_users')
           .select('*')
           .eq('id', userId)
           .single();
-        
-        if (!error && data) {
-          console.log('🔒 Admin profile loaded successfully');
-          return { adminProfile: data };
-        }
+        setAdminProfile(data);
       }
-      
-      return null;
     } catch (error) {
       console.error('🔒 Error fetching profile:', error);
-      return null;
     }
-  }, []);
+  };
 
-  // Simplified auth state handler
-  const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
-    console.log('🔒 Auth state change:', event, session ? 'Has session' : 'No session');
+  // Enhanced login with auth protection
+  const login = async (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }): Promise<boolean> => {
+    const operationId = `login_${Date.now()}`;
     
     try {
-      if (session?.user) {
-        const storedSessionType = localStorage.getItem('sessionType') as SessionType;
-        
-        // Set basic auth state immediately
-        setAuthState(prev => ({
-          ...prev,
-          session,
-          user: session.user,
-          isAuthenticated: true,
-          sessionType: storedSessionType,
-          error: null,
-          isLoading: true
-        }));
-        
-        // Fetch profile if session type is known
-        if (storedSessionType) {
-          console.log('🔒 Fetching profile for session type:', storedSessionType);
-          const profileData = await fetchProfileForUser(session.user.id, storedSessionType);
-          
-          if (profileData) {
-            console.log('🔒 Profile data loaded:', Object.keys(profileData));
-            setAuthState(prev => ({
-              ...prev,
-              ...profileData,
-              isLoading: false
-            }));
-          } else {
-            console.log('🔒 No profile data found for session type:', storedSessionType);
-            // If expert login but no expert profile found, clear session type
-            if (storedSessionType === 'expert') {
-              localStorage.removeItem('sessionType');
-              setAuthState(prev => ({
-                ...prev,
-                sessionType: null,
-                error: 'No expert profile found',
-                isLoading: false
-              }));
-            } else {
-              setAuthState(prev => ({
-                ...prev,
-                isLoading: false
-              }));
-            }
-          }
-        } else {
-          setAuthState(prev => ({
-            ...prev,
-            isLoading: false
-          }));
-        }
-      } else {
-        // Clear auth state
-        localStorage.removeItem('sessionType');
-        setAuthState({
-          ...createInitialAuthState(),
-          isLoading: false
-        });
-      }
-    } catch (error) {
-      console.error('🔒 Error in auth state change:', error);
-      setAuthState(prev => ({
-        ...prev,
-        error: 'Authentication error',
-        isLoading: false
-      }));
-    }
-  }, [fetchProfileForUser]);
+      startProtection(operationId, 'booking');
+      setIsLoading(true);
+      setError(null);
 
-  // Login function
-  const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }): Promise<boolean> => {
-    try {
-      setAuthState(prev => ({ ...prev, error: null, isLoading: true }));
-
+      // Determine session type
       const targetSessionType: SessionType = options?.asExpert ? 'expert' : options?.asAdmin ? 'admin' : 'user';
       localStorage.setItem('sessionType', targetSessionType);
-
-      console.log('🔒 Login attempt:', { email, targetSessionType });
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -221,118 +168,89 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
 
       if (error) {
         console.error('🔒 Login error:', error);
-        setAuthState(prev => ({ ...prev, error: error.message, isLoading: false }));
+        setError(error.message);
         return false;
       }
 
-      console.log('🔒 Login successful');
+      if (!data.session) {
+        setError('Login failed - no session created');
+        return false;
+      }
+
+      console.log('🔒 Login successful with protection');
       return true;
     } catch (error) {
       console.error('🔒 Login error:', error);
-      setAuthState(prev => ({ ...prev, error: 'Login failed', isLoading: false }));
+      setError('Login failed');
       return false;
+    } finally {
+      setIsLoading(false);
+      endProtection(operationId);
     }
-  }, []);
+  };
 
-  // Logout function
-  const logout = useCallback(async (): Promise<void> => {
+  // Enhanced logout with protection check
+  const logout = async (): Promise<void> => {
     try {
-      setAuthState(prev => ({ ...prev, isLoading: true }));
+      // Check if logout is safe
+      if (authProtection.isProtected()) {
+        console.log('🔒 WARNING: Logout requested during protected operation');
+        const activeOps = authProtection.getActiveOperations();
+        
+        if (activeOps.some(op => op.type === 'video-call')) {
+          toast.error('Cannot logout during an active video call');
+          return;
+        }
+        
+        if (activeOps.length > 0) {
+          toast.warning('Logout during active operation - some data may be lost');
+        }
+      }
+
+      setIsLoading(true);
       
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('🔒 Logout error:', error);
         toast.error('Logout failed');
-        setAuthState(prev => ({ ...prev, isLoading: false }));
         return;
       }
 
+      // Clear all state
+      setSession(null);
+      setUser(null);
+      setIsAuthenticated(false);
+      setSessionType(null);
+      setUserProfile(null);
+      setExpertProfile(null);
+      setAdminProfile(null);
+      
+      // Clear stored session type
       localStorage.removeItem('sessionType');
+      
+      // Clear any remaining auth protections
       authProtection.clearAllProtections();
       
-      console.log('🔒 Logout completed');
+      console.log('🔒 Logout completed successfully');
     } catch (error) {
       console.error('🔒 Logout error:', error);
       toast.error('Logout failed');
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
-  // Expert registration method
-  const registerExpert = useCallback(async (email: string, password: string, expertData: Partial<ExpertProfile>): Promise<boolean> => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) {
-        setAuthState(prev => ({ ...prev, error: error.message, isLoading: false }));
-        toast.error(error.message);
-        return false;
-      }
-
-      if (data.user) {
-        const expertProfileData = {
-          auth_id: data.user.id,
-          email,
-          status: 'pending',
-          verified: false,
-          name: expertData.name || '',
-          phone: expertData.phone || '',
-          specialization: expertData.specialization || '',
-          experience: String(expertData.experience || ''),
-          bio: expertData.bio || '',
-          selected_services: expertData.selected_services || []
-        };
-
-        const { error: profileError } = await supabase
-          .from('expert_accounts')
-          .insert(expertProfileData);
-
-        if (profileError) {
-          setAuthState(prev => ({ 
-            ...prev,
-            error: `Failed to create expert profile: ${profileError.message}`,
-            isLoading: false 
-          }));
-          toast.error(`Failed to create expert profile: ${profileError.message}`);
-          return false;
-        }
-
-        await supabase.auth.signOut();
-        toast.success('Expert account created successfully!');
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('🔒 Expert registration error:', error);
-      setAuthState(prev => ({ 
-        ...prev,
-        error: 'Failed to create expert account',
-        isLoading: false 
-      }));
-      toast.error('Failed to create expert account');
-      return false;
-    }
-  }, []);
-
-  // Single initialization effect
+  // Initialize auth state
   useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
+    console.log('🔒 Initializing enhanced unified auth');
     
-    console.log('🔒 Initializing auth context');
-    
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       handleAuthStateChange('INITIAL_SESSION', session);
-      setIsInitialized(true);
     });
 
     return () => {
@@ -340,80 +258,48 @@ const EnhancedUnifiedAuthProviderComponent: React.FC<EnhancedUnifiedAuthProvider
     };
   }, [handleAuthStateChange]);
 
-  // Stable computed values
-  const currentAdmin = useMemo(() => 
-    authState.sessionType === 'admin' ? authState.adminProfile : null, 
-    [authState.sessionType, authState.adminProfile]
-  );
-  
-  const currentExpert = useMemo(() => 
-    authState.sessionType === 'expert' ? authState.expertProfile : null, 
-    [authState.sessionType, authState.expertProfile]
-  );
+  // Compute current active profiles based on session type for backward compatibility
+  const currentAdmin = sessionType === 'admin' ? adminProfile : null;
+  const currentExpert = sessionType === 'expert' ? expertProfile : null;
 
-  // Stable context value
-  const contextValue = useMemo((): EnhancedUnifiedAuthContextType => ({
+  const value: EnhancedUnifiedAuthContextType = {
     // Core auth state
-    isAuthenticated: authState.isAuthenticated,
-    isLoading: authState.isLoading,
-    user: authState.user,
-    session: authState.session,
-    sessionType: authState.sessionType,
-    error: authState.error,
+    isAuthenticated,
+    isLoading,
+    user,
+    session,
+    sessionType,
+    error,
 
-    // Profile data
-    userProfile: authState.userProfile,
-    expertProfile: authState.expertProfile,
-    adminProfile: authState.adminProfile,
+    // Profile data - individual profiles
+    userProfile,
+    expertProfile,
+    adminProfile,
+
+    // Profile data - current active profiles (for backward compatibility)
     admin: currentAdmin,
     expert: currentExpert,
 
     // Auth actions
     login,
     logout,
-    registerExpert,
-    
+
     // Auth protection
     startAuthProtection: startProtection,
     endAuthProtection: endProtection,
     isAuthProtected: isProtected
-  }), [
-    authState.isAuthenticated,
-    authState.isLoading,
-    authState.user,
-    authState.session,
-    authState.sessionType,
-    authState.error,
-    authState.userProfile,
-    authState.expertProfile,
-    authState.adminProfile,
-    currentAdmin,
-    currentExpert,
-    login,
-    logout,
-    registerExpert,
-    startProtection,
-    endProtection,
-    isProtected
-  ]);
+  };
 
-  // Show simple loading during initialization
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  console.log('🔒 EnhancedUnifiedAuthProvider providing value:', { 
+    isAuthenticated, 
+    isLoading, 
+    hasUser: !!user, 
+    sessionType 
+  });
 
   return (
-    <EnhancedUnifiedAuthContext.Provider value={contextValue}>
+    <EnhancedUnifiedAuthContext.Provider value={value}>
       {children}
     </EnhancedUnifiedAuthContext.Provider>
   );
 };
-
-export const EnhancedUnifiedAuthProvider = React.memo(EnhancedUnifiedAuthProviderComponent);

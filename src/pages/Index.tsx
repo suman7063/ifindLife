@@ -11,7 +11,6 @@ import { lazy, Suspense } from 'react';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import ExpertsOnlineSection from '@/components/ExpertsOnlineSection';
 import Footer from '@/components/Footer';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 
 // Lazy load non-critical components
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
@@ -35,69 +34,15 @@ const SectionLoadingFallback = () => (
 );
 
 const Index = () => {
-  const { isAuthenticated, user, sessionType, isLoading } = useEnhancedUnifiedAuth();
-  
-  // Comprehensive logging for homepage state
-  console.log('🔒 HomePage rendering with state:', { 
-    isAuthenticated: Boolean(isAuthenticated), 
-    hasUser: Boolean(user),
-    sessionType,
-    isLoading: Boolean(isLoading),
-    userEmail: user?.email,
-    timestamp: new Date().toISOString()
-  });
-
-  // Ensure page loads from top and add mounting logs
+  // Ensure page loads from top
   useEffect(() => {
-    console.log('🔒 HomePage mounting');
     window.scrollTo(0, 0);
-    
-    // Debug DOM structure
-    setTimeout(() => {
-      const navbar = document.querySelector('[data-navbar="main"]');
-      const homePage = document.querySelector('.home-page');
-      console.log('🔒 HomePage mounted - DOM check:', {
-        navbarExists: Boolean(navbar),
-        homePageExists: Boolean(homePage),
-        bodyChildren: document.body.children.length
-      });
-    }, 100);
-
-    return () => {
-      console.log('🔒 HomePage unmounting');
-    };
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col home-page" style={{ minHeight: '100vh', width: '100%' }}>
-      {/* Always render Navbar with guaranteed visibility */}
-      <div 
-        style={{ 
-          minHeight: '80px', 
-          width: '100%', 
-          position: 'relative', 
-          zIndex: 50,
-          display: 'block',
-          visibility: 'visible'
-        }}
-      >
-        <Navbar />
-      </div>
-      
-      <main className="flex-1 main-content" style={{ paddingTop: '0px', flex: 1 }}>
-        {/* Authentication-aware content */}
-        {isAuthenticated && user && (
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-4">
-            <div className="flex">
-              <div className="ml-3">
-                <p className="text-sm text-blue-700">
-                  Welcome back, {user.email}! You are logged in as {sessionType}.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
+    <div className="min-h-screen flex flex-col home-page">
+      <Navbar />
+      <main className="flex-1">
         {/* Section 1: Hero Banner with enhanced slider and service cards */}
         <EnhancedHero />
         

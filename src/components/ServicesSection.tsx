@@ -1,11 +1,15 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+
 const ServicesSection = () => {
   const navigate = useNavigate();
-  return <section className="py-16 bg-gray-100">
+
+  return (
+    <section className="py-16 bg-white">
       <div className="container mx-auto px-6 sm:px-12">
         <h2 className="text-3xl font-bold mb-8 text-center">Programs for Organizations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -37,6 +41,8 @@ const ServicesSection = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default ServicesSection;
