@@ -1,126 +1,169 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { AdminUser } from '../types';
+import { AdminUser, AdminRole } from '../types';
 
 export const useAdminSession = () => {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [user, setUser] = useState<AdminUser | null>(null);
-  const [error, setError] = useState<Error | null>(null);
   const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const initAuth = async () => {
+    const getSession = async () => {
       try {
-        setLoading(true);
+        const { data, error } = await supabase.auth.getSession();
         
-        // First set up auth state listener
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-          console.log('Admin auth state changed:', event);
-          setSession(session);
-          
-          if (event === 'SIGNED_IN' && session?.user) {
-            await fetchAdminUser(session.user.id);
-          } else if (event === 'SIGNED_OUT') {
-            setIsAuthenticated(false);
-            setUser(null);
-          }
-        });
-
-        // Then check for existing session
-        const { data } = await supabase.auth.getSession();
-        console.log('Initial admin auth check:', data.session ? 'Session found' : 'No session');
+        if (error) {
+          throw error;
+        }
+        
         setSession(data.session);
         
         if (data.session?.user) {
-          await fetchAdminUser(data.session.user.id);
+          await checkAdminStatus(data.session.user.id);
         } else {
-          setIsAuthenticated(false);
-          setUser(null);
+          setLoading(false);
         }
-        
-        return () => {
-          authListener.subscription.unsubscribe();
-        };
-      } catch (error: any) {
-        console.error('Error in admin auth:', error);
-        setError(error);
-      } finally {
+      } catch (err) {
+        console.error('Error checking session:', err);
+        setError(err instanceof Error ? err : new Error(String(err)));
         setLoading(false);
       }
     };
-
-    initAuth();
+    
+    getSession();
   }, []);
 
-  const fetchAdminUser = async (userId: string) => {
+  // Listen for auth changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        setSession(currentSession);
+        
+        if (currentSession?.user) {
+          await checkAdminStatus(currentSession.user.id);
+        } else {
+          setUser(null);
+          setIsAuthenticated(false);
+          setLoading(false);
+        }
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const checkAdminStatus = async (userId: string) => {
     try {
-      console.log('Fetching admin user with ID:', userId);
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('id', userId)
         .single();
-
+      
       if (error) {
-        console.error('Error fetching admin user:', error);
-        throw error;
-      }
-
-      if (data) {
-        // Default permissions for admin users
-        const defaultPermissions = {
-          canManageUsers: data.role === 'super_admin' || data.role === 'superadmin',
-          canManageExperts: data.role === 'super_admin' || data.role === 'superadmin',
-          canManageContent: true,
-          canViewAnalytics: true,
-          canManageServices: true,
-          canManagePrograms: true,
-          canDeleteContent: true,
-          canApproveExperts: true,
-          canManageBlog: true,
-          canManageTestimonials: true
-        };
-
-        const userData = await supabase.auth.getUser();
-        const email = userData.data.user?.email || 'admin@example.com';
-        const username = email.split('@')[0] || 'admin';
-
+        if (error.code !== 'PGRST116') { // Not found error
+          throw error;
+        }
+        
+        setUser(null);
+        setIsAuthenticated(false);
+      } else if (data) {
         const adminUser: AdminUser = {
-          id: data.id,
-          email: email,
-          username: username,
-          role: data.role as any,
-          permissions: defaultPermissions,
-          createdAt: data.created_at,
+          id: userId,
+          email: session?.user?.email || '',
+          username: session?.user?.email?.split('@')[0] || 'admin',
+          role: data.role as AdminRole,
+          permissions: {
+            canViewAnalytics: true,
+            canManageContent: data.role === 'superadmin',
+            canManageUsers: data.role === 'superadmin',
+            canManageExperts: data.role === 'superadmin',
+            canManageServices: data.role === 'superadmin',
+            canManagePrograms: data.role === 'superadmin',
+            canDeleteContent: data.role === 'superadmin',
+            canApproveExperts: data.role === 'superadmin',
+            canManageBlog: data.role === 'superadmin',
+            canManageTestimonials: data.role === 'superadmin'
+          },
+          createdAt: data.created_at || new Date().toISOString(),
           lastLogin: new Date().toISOString(),
-          isActive: true
+          isActive: true // Fixed: added missing isActive property
         };
-        console.log('Admin user found:', adminUser);
+        
         setUser(adminUser);
         setIsAuthenticated(true);
       } else {
-        console.log('No admin user found for ID:', userId);
-        // User exists but not in admin_users table
-        setIsAuthenticated(false);
         setUser(null);
+        setIsAuthenticated(false);
       }
-    } catch (error: any) {
-      console.error('Error fetching admin user:', error);
-      setError(error);
-      setIsAuthenticated(false);
+    } catch (err) {
+      console.error('Error checking admin status:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
       setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setLoading(false);
     }
   };
 
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      
+      if (error) throw error;
+      
+      // Check if user is admin
+      if (data.user) {
+        await checkAdminStatus(data.user.id);
+        return isAuthenticated;
+      }
+      
+      return false;
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  const logout = useCallback(async () => {
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
+      setUser(null);
+      setSession(null);
+      setIsAuthenticated(false);
+      return true;
+    } catch (err) {
+      console.error('Logout error:', err);
+      setError(err instanceof Error ? err : new Error(String(err)));
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
-    loading,
-    isAuthenticated,
-    user,
-    error,
     session,
-    fetchAdminUser
+    user,
+    loading,
+    error,
+    isAuthenticated,
+    login,
+    logout
   };
 };

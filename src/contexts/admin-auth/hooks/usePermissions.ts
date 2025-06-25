@@ -9,7 +9,7 @@ export const usePermissions = (user: AdminUser | null) => {
   // Helper to check if user is a super admin
   const isSuperAdmin = (user: AdminUser | null): boolean => {
     if (!user) return false;
-    return user.role === 'superadmin' || user.role === 'super_admin';
+    return user.role === 'superadmin'; // Fixed: removed comparison with 'super_admin'
   };
   
   // Role checker function
@@ -40,6 +40,7 @@ export const usePermissions = (user: AdminUser | null) => {
     const newAdmin: AdminUser = {
       id: `admin_${Date.now()}`,
       createdAt: new Date().toISOString(),
+      isActive: true, // Set default value
       ...adminData
     };
     

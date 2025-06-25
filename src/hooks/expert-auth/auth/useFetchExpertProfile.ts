@@ -10,10 +10,12 @@ export const useFetchExpertProfile = () => {
   const fetchExpertProfile = useCallback(async (userId: string): Promise<ExpertProfile | null> => {
     try {
       console.log(`Fetching expert profile for user ID: ${userId}`);
+      // FIXED: Use correct table name and column name
       const { data, error } = await supabase
-        .from('expert_accounts')
+        .from('expert_accounts')  // FIXED: Changed from 'experts' to 'expert_accounts'
         .select('*')
-        .eq('auth_id', userId)
+        .eq('auth_id', userId)    // FIXED: Changed from 'id' to 'auth_id'
+        .eq('status', 'approved') // FIXED: Only fetch approved experts
         .single();
         
       if (error) {

@@ -1,175 +1,238 @@
 
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 import { toast } from 'sonner';
+import { Loader2, AlertTriangle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
-const formSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  phone: z.string().optional(),
-  specialization: z.string().optional(),
-  experience: z.string().optional(),
-});
+interface ExpertRegisterFormProps {
+  setActiveTab: (tab: string) => void;
+}
 
-type FormValues = z.infer<typeof formSchema>;
-
-export const ExpertRegisterForm: React.FC = () => {
-  const auth = useAuth();
-  const [isRegistering, setIsRegistering] = useState(false);
-  
-  const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      phone: '',
-      specialization: '',
-      experience: '',
-    },
+const ExpertRegisterForm: React.FC<ExpertRegisterFormProps> = ({ setActiveTab }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
+    specialization: '',
+    experience: '',
+    bio: ''
   });
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
-  const onSubmit = async (data: FormValues) => {
-    setIsRegistering(true);
+  const { registerExpert } = useEnhancedUnifiedAuth();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    // Validation
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+    
     try {
-      // For backward compatibility, check if registerExpert exists, otherwise use signup
-      if (auth.registerExpert) {
-        await auth.registerExpert(data.email, data.password, {
-          name: data.name,
-          phone: data.phone,
-          specialization: data.specialization,
-          experience: data.experience,
-        });
-      } else {
-        await auth.signup(data.email, data.password, {
-          name: data.name,
-          phone: data.phone,
-          specialization: data.specialization,
-          experience: data.experience,
-          isExpert: true,  // Flag to indicate this is an expert registration
-        });
-      }
+      setIsRegistering(true);
       
-      toast.success('Registration successful!');
-      // Redirect is handled by the auth provider
+      const success = await registerExpert(
+        formData.email,
+        formData.password,
+        {
+          name: formData.name,
+          phone: formData.phone,
+          specialization: formData.specialization,
+          experience: formData.experience,
+          bio: formData.bio
+        }
+      );
+      
+      if (success) {
+        toast.success('Registration successful! Your profile is pending approval.');
+        setActiveTab('login');
+      } else {
+        setError('Registration failed. Please try again.');
+      }
     } catch (error) {
-      console.error('Expert registration error:', error);
-      toast.error('An error occurred during registration');
+      console.error('Registration error:', error);
+      setError('An error occurred during registration. Please try again.');
     } finally {
       setIsRegistering(false);
     }
   };
-  
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError(null);
+  };
+
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input placeholder="John Doe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="space-y-4">
+      {error && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="expert-name">Full Name</Label>
+            <Input
+              id="expert-name"
+              type="text"
+              placeholder="Your full name"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              required
+              disabled={isRegistering}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="expert-phone">Phone</Label>
+            <Input
+              id="expert-phone"
+              type="tel"
+              placeholder="Your phone number"
+              value={formData.phone}
+              onChange={(e) => handleInputChange('phone', e.target.value)}
+              required
+              disabled={isRegistering}
+            />
+          </div>
+        </div>
         
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="you@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="expert-reg-email">Email</Label>
+          <Input
+            id="expert-reg-email"
+            type="email"
+            placeholder="your@email.com"
+            value={formData.email}
+            onChange={(e) => handleInputChange('email', e.target.value)}
+            required
+            disabled={isRegistering}
+          />
+        </div>
         
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="********" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="expert-password">Password</Label>
+            <Input
+              id="expert-password"
+              type="password"
+              placeholder="Create a password"
+              value={formData.password}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              required
+              disabled={isRegistering}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="expert-confirm-password">Confirm Password</Label>
+            <Input
+              id="expert-confirm-password"
+              type="password"
+              placeholder="Confirm your password"
+              value={formData.confirmPassword}
+              onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+              required
+              disabled={isRegistering}
+            />
+          </div>
+        </div>
         
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Phone (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="+1234567890" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="expert-specialization">Specialization</Label>
+            <Input
+              id="expert-specialization"
+              type="text"
+              placeholder="e.g., Clinical Psychology"
+              value={formData.specialization}
+              onChange={(e) => handleInputChange('specialization', e.target.value)}
+              required
+              disabled={isRegistering}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="expert-experience">Experience (years)</Label>
+            <Input
+              id="expert-experience"
+              type="number"
+              placeholder="Years of experience"
+              value={formData.experience}
+              onChange={(e) => handleInputChange('experience', e.target.value)}
+              required
+              disabled={isRegistering}
+            />
+          </div>
+        </div>
         
-        <FormField
-          control={form.control}
-          name="specialization"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Specialization (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. Relationship Counseling" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="experience"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Years of Experience (Optional)</FormLabel>
-              <FormControl>
-                <Input placeholder="e.g. 5" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="expert-bio">Bio</Label>
+          <Textarea
+            id="expert-bio"
+            placeholder="Tell us about yourself and your expertise..."
+            value={formData.bio}
+            onChange={(e) => handleInputChange('bio', e.target.value)}
+            required
+            disabled={isRegistering}
+            rows={3}
+          />
+        </div>
         
         <Button 
           type="submit" 
-          className="w-full"
+          className="w-full" 
           disabled={isRegistering}
         >
-          {isRegistering ? 'Registering...' : 'Register as Expert'}
+          {isRegistering ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Creating Account...
+            </>
+          ) : (
+            'Create Expert Account'
+          )}
         </Button>
       </form>
-    </Form>
+      
+      <div className="text-center text-sm">
+        <p className="text-muted-foreground">
+          Already have an expert account?{' '}
+          <button
+            onClick={() => setActiveTab('login')}
+            className="text-primary font-medium hover:underline"
+          >
+            Sign in here
+          </button>
+        </p>
+        <p className="text-xs text-muted-foreground mt-2">
+          Looking for a user account?{' '}
+          <Link to="/user-login" className="text-primary hover:underline">
+            User Login
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 };
 

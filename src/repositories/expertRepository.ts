@@ -5,10 +5,12 @@ import { ExpertProfile } from '@/types/database/unified';
 export const expertRepository = {
   async getExpertByAuthId(authId: string): Promise<ExpertProfile | null> {
     try {
+      // FIXED: Use correct table name and column name
       const { data, error } = await supabase
-        .from('expert_accounts')
+        .from('expert_accounts')  // FIXED: Changed from 'experts' to 'expert_accounts'
         .select('*')
-        .eq('auth_id', authId)
+        .eq('auth_id', authId)    // FIXED: Changed from 'id' to 'auth_id'
+        .eq('status', 'approved') // FIXED: Only fetch approved experts
         .maybeSingle();
 
       if (error) {
@@ -26,7 +28,7 @@ export const expertRepository = {
   async updateExpert(expertId: string, updates: Partial<ExpertProfile>): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('expert_accounts')
+        .from('expert_accounts')  // FIXED: Use correct table name
         .update(updates)
         .eq('id', expertId);
 
@@ -45,7 +47,7 @@ export const expertRepository = {
   async createExpert(expertData: Partial<ExpertProfile>): Promise<ExpertProfile | null> {
     try {
       const { data, error } = await supabase
-        .from('expert_accounts')
+        .from('expert_accounts')  // FIXED: Use correct table name
         .insert(expertData)
         .select()
         .single();

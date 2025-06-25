@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
@@ -37,12 +36,25 @@ const Index = () => {
   // Ensure page loads from top
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // DEBUG: Check if Index page is mounting properly
+    console.log('🔒 Index page mounted, checking for Navbar');
+    setTimeout(() => {
+      const navbar = document.querySelector('[data-navbar="main"]');
+      console.log('🔒 Index page - Navbar found in DOM:', !!navbar);
+    }, 100);
   }, []);
+
+  console.log('🔒 Index page rendering');
 
   return (
     <div className="min-h-screen flex flex-col home-page">
-      <Navbar />
-      <main className="flex-1">
+      {/* DEBUG: Force navbar visibility */}
+      <div style={{ minHeight: '80px', width: '100%', position: 'relative', zIndex: 50 }}>
+        <Navbar />
+      </div>
+      
+      <main className="flex-1" style={{ paddingTop: '0px' }}>
         {/* Section 1: Hero Banner with enhanced slider and service cards */}
         <EnhancedHero />
         

@@ -1,12 +1,6 @@
 
-// Export all admin auth related components and hooks
-export { AdminAuthContext } from './AdminAuthProvider';
-export { AdminAuthProvider } from './AdminAuthProvider';
-export { useAuth } from './AdminAuthProvider';
+export { AdminAuthProvider, useAdminAuth } from './AdminAuthContext';
+export type { AdminUser, AdminRole, AdminPermissions, AdminAuthContextType } from './types';
 
-// Re-export types for convenience
-export type { 
-  AdminUser, 
-  AdminRole, 
-  AdminPermissions, 
-} from './types';
+// Export useAuth as an alias for backward compatibility
+export { useAdminAuth as useAuth } from './AdminAuthContext';

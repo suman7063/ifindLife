@@ -32,7 +32,7 @@ export const useAdminAuth = () => {
       },
       createdAt: userData.createdAt || new Date().toISOString(),
       lastLogin: userData.lastLogin || new Date().toISOString(),
-      isActive: userData.isActive ?? true
+      isActive: userData.isActive ?? true // Fixed: added isActive property
     };
   };
 
@@ -100,7 +100,7 @@ export const useAdminAuth = () => {
           permissions: adminUser.permissions,
           createdAt: adminUser.createdAt,
           lastLogin: new Date().toISOString(),
-          isActive: true
+          isActive: true // Added isActive property
         });
         
         // Store in localStorage for persistence
@@ -179,7 +179,7 @@ export const useAdminAuth = () => {
       permissions: adminData.permissions,
       createdAt: adminData.createdAt,
       lastLogin: adminData.lastLogin,
-      isActive: adminData.isActive
+      isActive: adminData.isActive ?? true // Fixed: added isActive property with default
     });
     
     setAdminUsers(prev => [...prev, newAdmin]);

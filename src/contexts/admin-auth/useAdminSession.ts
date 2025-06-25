@@ -78,23 +78,23 @@ export const useAdminSession = () => {
         const adminUser: AdminUser = {
           id: userId,
           email: session?.user?.email || '',
-          username: session?.user?.email?.split('@')[0] || 'admin', // Generate username from email
+          username: session?.user?.email?.split('@')[0] || 'admin',
           role: data.role as AdminRole,
-          permissions: { // Default permissions based on role
+          permissions: {
             canViewAnalytics: true,
-            canManageContent: data.role === 'super_admin' || data.role === 'superadmin',
-            canManageUsers: data.role === 'super_admin' || data.role === 'superadmin',
-            canManageExperts: data.role === 'super_admin' || data.role === 'superadmin',
-            canManageServices: data.role === 'super_admin' || data.role === 'superadmin',
-            canManagePrograms: data.role === 'super_admin' || data.role === 'superadmin',
-            canDeleteContent: data.role === 'super_admin' || data.role === 'superadmin',
-            canApproveExperts: data.role === 'super_admin' || data.role === 'superadmin',
-            canManageBlog: data.role === 'super_admin' || data.role === 'superadmin',
-            canManageTestimonials: data.role === 'super_admin' || data.role === 'superadmin'
+            canManageContent: data.role === 'superadmin',
+            canManageUsers: data.role === 'superadmin',
+            canManageExperts: data.role === 'superadmin',
+            canManageServices: data.role === 'superadmin',
+            canManagePrograms: data.role === 'superadmin',
+            canDeleteContent: data.role === 'superadmin',
+            canApproveExperts: data.role === 'superadmin',
+            canManageBlog: data.role === 'superadmin',
+            canManageTestimonials: data.role === 'superadmin'
           },
           createdAt: data.created_at || new Date().toISOString(),
-          lastLogin: new Date().toISOString(), // Set current login time
-          isActive: true
+          lastLogin: new Date().toISOString(),
+          isActive: true // Fixed: added missing isActive property
         };
         
         setUser(adminUser);

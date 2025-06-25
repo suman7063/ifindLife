@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExpertLoginForm from './ExpertLoginForm';
-import ExpertRegistrationForm from '@/components/expert/ExpertRegistrationForm';
+import ExpertRegisterForm from './ExpertRegisterForm';
 
 interface ExpertLoginTabsProps {
   activeTab: string;
@@ -19,32 +19,15 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
   isLoggingIn,
   loginError
 }) => {
-  // Log props on render to debug
-  console.log('ExpertLoginTabs: Rendered with props:', {
-    activeTab,
-    hasOnLogin: typeof onLogin === 'function',
-    isLoggingIn,
-    hasError: !!loginError
-  });
-  
-  // Handle tab change
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
-  
   return (
-    <Tabs 
-      value={activeTab} 
-      onValueChange={handleTabChange}
-      className="w-full"
-    >
-      <TabsList className="grid w-full grid-cols-2 mb-6">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <TabsList className="grid w-full grid-cols-2">
         <TabsTrigger value="login">Login</TabsTrigger>
-        <TabsTrigger value="register">Join as Expert</TabsTrigger>
+        <TabsTrigger value="register">Register</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="login">
-        <ExpertLoginForm 
+      <TabsContent value="login" className="space-y-4">
+        <ExpertLoginForm
           onLogin={onLogin}
           isLoggingIn={isLoggingIn}
           loginError={loginError}
@@ -52,8 +35,8 @@ const ExpertLoginTabs: React.FC<ExpertLoginTabsProps> = ({
         />
       </TabsContent>
       
-      <TabsContent value="register" className="max-h-[70vh] overflow-y-auto pb-8">
-        <ExpertRegistrationForm />
+      <TabsContent value="register" className="space-y-4">
+        <ExpertRegisterForm setActiveTab={setActiveTab} />
       </TabsContent>
     </Tabs>
   );
