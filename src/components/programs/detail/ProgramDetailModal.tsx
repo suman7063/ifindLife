@@ -1,12 +1,10 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Clock, Calendar, Users, BookOpen, X, Share2, Heart } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Clock, Users, Star, CheckCircle } from 'lucide-react';
 import { ProgramDetail } from '@/types/programDetail';
-import { useProgramBooking } from '@/components/programs/booking/useProgramBooking';
-import ProgramBookingDialog from '@/components/programs/booking/ProgramBookingDialog';
 
 interface ProgramDetailModalProps {
   isOpen: boolean;
@@ -27,271 +25,112 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   loading,
   error
 }) => {
-  const {
-    isBookingDialogOpen,
-    bookingData,
-    isSubmitting,
-    openBookingDialog,
-    closeBookingDialog,
-    updateBookingData,
-    submitBooking
-  } = useProgramBooking();
-
-  if (!programData) return null;
-
-  const handleBookIndividualSession = () => {
-    openBookingDialog();
-  };
-
-  const handleSubmitBooking = async () => {
-    return await submitBooking(programData.id);
-  };
-
-  // Helper function to get outcomes as array
-  const getOutcomesArray = (expectedOutcomes: ProgramDetail['expectedOutcomes']) => {
-    if (Array.isArray(expectedOutcomes)) {
-      return expectedOutcomes;
-    }
-    
-    // If it's an object structure, combine all outcomes
-    if (expectedOutcomes && typeof expectedOutcomes === 'object') {
-      const combined: string[] = [];
-      if (expectedOutcomes.shortTerm) combined.push(...expectedOutcomes.shortTerm);
-      if (expectedOutcomes.mediumTerm) combined.push(...expectedOutcomes.mediumTerm);
-      if (expectedOutcomes.longTerm) combined.push(...expectedOutcomes.longTerm);
-      return combined;
-    }
-    
-    return [];
-  };
-
-  return (
-    <>
+  if (loading) {
+    return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-6xl max-h-[95vh] overflow-y-auto p-0">
-          <DialogHeader className="p-6 pb-0 border-b">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <DialogTitle className="text-2xl font-bold mb-2">{programData.title}</DialogTitle>
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="flex items-center gap-2">
-                    <img 
-                      src={programData.expert.photo} 
-                      alt={programData.expert.name}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div>
-                      <p className="font-medium text-sm">{programData.expert.name}</p>
-                      <p className="text-xs text-gray-500">{programData.expert.experience}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 ml-4">
-                <Button variant="ghost" size="icon" className="text-ifind-teal">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </DialogHeader>
-
-          <div className="flex flex-col lg:flex-row">
-            {/* Main Content */}
-            <div className="flex-1 p-6">
-              <Tabs value={activeTab} onValueChange={onTabChange}>
-                <TabsList className="grid w-full grid-cols-5 mb-6">
-                  <TabsTrigger value="course-structure">Course Structure</TabsTrigger>
-                  <TabsTrigger value="what-it-covers">What It Covers</TabsTrigger>
-                  <TabsTrigger value="expected-outcomes">Expected Outcomes</TabsTrigger>
-                  <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="course-structure" className="space-y-6">
-                  {/* Course Overview Stats */}
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-ifind-teal/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <BookOpen className="h-6 w-6 text-ifind-teal" />
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">Total Sessions</p>
-                      <p className="text-2xl font-bold">{programData.courseStructure.totalSessions}</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-ifind-teal/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Clock className="h-6 w-6 text-ifind-teal" />
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">Duration</p>
-                      <p className="text-2xl font-bold">{programData.courseStructure.sessionDuration}</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-ifind-teal/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Calendar className="h-6 w-6 text-ifind-teal" />
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">Frequency</p>
-                      <p className="text-2xl font-bold">{programData.courseStructure.frequency}</p>
-                    </div>
-                    <div className="text-center">
-                      <div className="w-12 h-12 bg-ifind-teal/10 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <Users className="h-6 w-6 text-ifind-teal" />
-                      </div>
-                      <p className="text-sm text-gray-600 mb-1">Format</p>
-                      <p className="text-2xl font-bold">{programData.courseStructure.format}</p>
-                    </div>
-                  </div>
-
-                  {/* Weekly Breakdown */}
-                  <div>
-                    <h3 className="text-xl font-bold mb-4">Weekly Breakdown</h3>
-                    <div className="space-y-4">
-                      {programData.courseStructure.weeklyBreakdown.map((week) => (
-                        <div key={week.week} className="border rounded-lg p-4">
-                          <div className="flex items-start gap-4">
-                            <div className="w-8 h-8 bg-ifind-teal text-white rounded-full flex items-center justify-center font-medium text-sm">
-                              {week.week}
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-lg mb-2">{week.title}</h4>
-                              <p className="text-gray-600 mb-3">{week.description}</p>
-                              <div className="flex flex-wrap gap-2">
-                                {week.topics.map((topic, index) => (
-                                  <span 
-                                    key={index}
-                                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm"
-                                  >
-                                    {topic}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="what-it-covers" className="space-y-4">
-                  <h3 className="text-lg font-semibold mb-4">What This Program Covers</h3>
-                  <ul className="space-y-3">
-                    {programData.whatItCovers.map((item, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <span className="text-ifind-teal mt-1">✓</span>
-                        <span className="text-gray-700">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-
-                <TabsContent value="expected-outcomes" className="space-y-4">
-                  <h3 className="text-lg font-semibold mb-4">Expected Outcomes</h3>
-                  <ul className="space-y-3">
-                    {getOutcomesArray(programData.expectedOutcomes).map((outcome, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <span className="text-green-500 mt-1">→</span>
-                        <span className="text-gray-700">{outcome}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </TabsContent>
-
-                <TabsContent value="pricing" className="space-y-4">
-                  <h3 className="text-lg font-semibold mb-4">Pricing Information</h3>
-                  <div className="bg-gray-50 p-6 rounded-lg">
-                    <div className="text-3xl font-bold text-ifind-teal mb-2">
-                      ₹{programData.pricing.individual.totalCost}
-                    </div>
-                    <p className="text-gray-600 mb-4">Complete program cost</p>
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <p>• {programData.courseStructure.totalSessions} individual sessions</p>
-                      <p>• {programData.courseStructure.sessionDuration} per session</p>
-                      <p>• ₹{programData.pricing.individual.perSession} per session</p>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="reviews" className="space-y-4">
-                  <h3 className="text-lg font-semibold mb-4">Reviews</h3>
-                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-2xl font-bold">{programData.reviews.averageRating}</span>
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <span key={i} className={`text-lg ${i < Math.floor(programData.reviews.averageRating) ? 'text-yellow-400' : 'text-gray-300'}`}>
-                            ★
-                          </span>
-                        ))}
-                      </div>
-                      <span className="text-gray-600">({programData.reviews.totalReviews} reviews)</span>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    {programData.reviews.reviews.slice(0, 3).map((review) => (
-                      <div key={review.id} className="border rounded-lg p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium">{review.userName}</span>
-                          <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                              <span key={i} className={`text-sm ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}>
-                                ★
-                              </span>
-                            ))}
-                          </div>
-                          <span className="text-xs text-gray-500">{review.date}</span>
-                        </div>
-                        <p className="text-gray-600">{review.comment}</p>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            {/* Sidebar with Actions */}
-            <div className="lg:w-80 border-l bg-gray-50 p-6">
-              <div className="space-y-4">
-                <Button 
-                  className="w-full bg-ifind-teal hover:bg-ifind-teal/90"
-                  onClick={() => {/* Handle enroll now */}}
-                >
-                  🛒 Enroll Now (₹{programData.pricing.individual.totalCost})
-                </Button>
-                
-                <Button variant="outline" className="w-full">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Add to Wishlist
-                </Button>
-                
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={handleBookIndividualSession}
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Book Individual Session
-                </Button>
-              </div>
-            </div>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ifind-teal"></div>
           </div>
         </DialogContent>
       </Dialog>
+    );
+  }
 
-      {/* Booking Dialog */}
-      {programData && (
-        <ProgramBookingDialog
-          isOpen={isBookingDialogOpen}
-          onClose={closeBookingDialog}
-          programData={programData}
-          bookingData={bookingData}
-          onBookingDataUpdate={updateBookingData}
-          onSubmitBooking={handleSubmitBooking}
-          isSubmitting={isSubmitting}
-        />
-      )}
-    </>
+  if (error || !programData) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="text-center p-8">
+            <p className="text-red-600">Error loading program details. Please try again.</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold text-gray-900">
+            {programData.title}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Program Overview */}
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <p className="text-gray-700">{programData.overview}</p>
+          </div>
+
+          {/* Program Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <Clock className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+              <div className="text-sm text-gray-600">Duration</div>
+              <div className="font-semibold">{programData.duration}</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <Users className="h-6 w-6 text-green-600 mx-auto mb-2" />
+              <div className="text-sm text-gray-600">Format</div>
+              <div className="font-semibold">{programData.format}</div>
+            </div>
+            <div className="text-center p-4 bg-yellow-50 rounded-lg">
+              <Star className="h-6 w-6 text-yellow-600 mx-auto mb-2" />
+              <div className="text-sm text-gray-600">Rating</div>
+              <div className="font-semibold">4.8/5</div>
+            </div>
+            <div className="text-center p-4 bg-purple-50 rounded-lg">
+              <div className="text-sm text-gray-600">Price</div>
+              <div className="font-semibold text-lg">{programData.price}</div>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={onTabChange}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="course-structure">Benefits</TabsTrigger>
+              <TabsTrigger value="features">Features</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="course-structure" className="space-y-4">
+              <h3 className="text-lg font-semibold">Program Benefits</h3>
+              <div className="space-y-3">
+                {programData.benefits.map((benefit, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">{benefit}</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="features" className="space-y-4">
+              <h3 className="text-lg font-semibold">Program Features</h3>
+              <div className="space-y-3">
+                {programData.features.map((feature, index) => (
+                  <div key={index} className="flex items-start gap-3">
+                    <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span className="text-gray-700">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4 border-t">
+            <Button className="flex-1 bg-ifind-teal hover:bg-ifind-teal/90 text-white">
+              Enroll Now - {programData.price}
+            </Button>
+            <Button variant="outline" className="flex-1 border-ifind-teal text-ifind-teal hover:bg-ifind-teal/10">
+              Contact Expert
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

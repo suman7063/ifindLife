@@ -1,7 +1,6 @@
 
 import React from 'react';
 import ProgramsWithModal from './ProgramsWithModal';
-import { getProgramImage } from '@/data/programImageMapping';
 
 // Mock data for issue-based programs that would typically come from your data source
 const issueBasedPrograms = [
@@ -13,7 +12,7 @@ const issueBasedPrograms = [
     price: 25000,
     sessions: 12,
     enrollments: 127,
-    image: getProgramImage('depression'),
+    image: '/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png',
     category: 'issue-based'
   },
   {
@@ -24,7 +23,7 @@ const issueBasedPrograms = [
     price: 20000,
     sessions: 10,
     enrollments: 89,
-    image: getProgramImage('anxiety'),
+    image: '/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png',
     category: 'issue-based'
   },
   {
@@ -35,7 +34,7 @@ const issueBasedPrograms = [
     price: 15000,
     sessions: 8,
     enrollments: 156,
-    image: getProgramImage('stress'),
+    image: '/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png',
     category: 'issue-based'
   },
   {
@@ -46,7 +45,7 @@ const issueBasedPrograms = [
     price: 10000,
     sessions: 6,
     enrollments: 73,
-    image: getProgramImage('sleep'),
+    image: '/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png',
     category: 'issue-based'
   },
   {
@@ -57,7 +56,7 @@ const issueBasedPrograms = [
     price: 25000,
     sessions: 10,
     enrollments: 94,
-    image: getProgramImage('relationships'),
+    image: '/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png',
     category: 'issue-based'
   },
   {
@@ -68,7 +67,7 @@ const issueBasedPrograms = [
     price: 15500,
     sessions: 8,
     enrollments: 118,
-    image: getProgramImage('self-esteem'),
+    image: '/lovable-uploads/b063443e-03be-440d-93b9-3742e49290b7.png',
     category: 'issue-based'
   }
 ];
