@@ -1,7 +1,7 @@
 
 import { useEffect } from 'react';
 import { useAuth as useAuthContext } from '@/contexts/auth/AuthContext'; 
-import { UserProfile } from '@/types/database/unified';
+import { UserProfile } from '@/types/supabase/user';
 import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
 /**
@@ -10,7 +10,7 @@ import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
  */
 export function useAuthSync() {
   const auth = useAuthContext();
-  const { toTypeA, toTypeB } = useProfileTypeAdapter();
+  const { toTypeB } = useProfileTypeAdapter();
   
   // Access the raw profile for internal use
   const profile = auth.profile;

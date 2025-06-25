@@ -17,53 +17,56 @@ const UserLogin: React.FC = () => {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { isAuthenticated, sessionType, user, isLoading: authLoading } = useAuth();
 
-  console.log('UserLogin: Current auth state:', {
+  console.log('UserLogin: Current unified auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
     sessionType,
     hasUser: Boolean(user),
-    authLoading: Boolean(authLoading)
+    authLoading: Boolean(authLoading),
+    userEmail: user?.email
   });
 
   // Check for existing session on component mount
   useEffect(() => {
-    const checkExistingAuth = async () => {
+    const checkSession = async () => {
       try {
-        console.log('UserLogin: Checking for existing authentication...');
+        console.log('UserLogin: Checking for existing session...');
         
+        // Wait for auth state to stabilize
         if (authLoading) {
           console.log('UserLogin: Auth still loading, waiting...');
           return;
         }
         
-        // Check if already authenticated
-        const { data: { session } } = await supabase.auth.getSession();
+        // Enhanced authentication check using unified auth
+        const isProperlyAuthenticated = Boolean(
+          isAuthenticated && 
+          sessionType === 'user' && 
+          user
+        );
         
-        if (session) {
-          console.log('UserLogin: Found existing session, determining redirect...');
+        console.log('UserLogin: Enhanced auth check result:', {
+          isAuthenticated: Boolean(isAuthenticated),
+          sessionType,
+          hasUser: Boolean(user),
+          isProperlyAuthenticated,
+          authLoading: Boolean(authLoading)
+        });
+        
+        if (isProperlyAuthenticated) {
+          console.log('UserLogin: User is properly authenticated, handling redirect...');
           
-          // Get session type from localStorage
-          const storedSessionType = localStorage.getItem('sessionType') || 'user';
-          
-          // Redirect based on session type
-          const redirectMap = {
-            'user': '/user-dashboard',
-            'expert': '/expert-dashboard', 
-            'admin': '/admin-dashboard'
-          };
-          
-          const targetUrl = redirectMap[storedSessionType as keyof typeof redirectMap] || '/user-dashboard';
-          
-          console.log('UserLogin: Redirecting to:', targetUrl);
-          
-          // Force redirect with replace
-          setTimeout(() => {
-            window.location.href = targetUrl;
+          // Execute pending redirect/action
+          setTimeout(async () => {
+            const redirectExecuted = await AuthRedirectSystem.executeRedirect();
+            
+            if (!redirectExecuted) {
+              console.log('UserLogin: No redirect data, going to dashboard');
+              navigate('/user-dashboard', { replace: true });
+            }
           }, 100);
-          
-          return;
+        } else {
+          console.log('UserLogin: User not authenticated, staying on login page');
         }
-        
-        console.log('UserLogin: No existing session found');
       } catch (error) {
         console.error('UserLogin: Error checking session:', error);
       } finally {
@@ -71,22 +74,29 @@ const UserLogin: React.FC = () => {
       }
     };
     
-    checkExistingAuth();
-  }, [authLoading]);
+    checkSession();
+  }, [navigate, isAuthenticated, sessionType, user, authLoading]);
 
-  // Enhanced login handler with working redirect
+  // Handle login form submission with enhanced logging
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
-      toast.error('Please enter both email and password');
+      toast.error('Please enter both email and password', { duration: 2000 });
       return false;
     }
     
     try {
       setIsLoggingIn(true);
-      console.log('UserLogin: Attempting login for:', email);
+      console.log('UserLogin: Attempting login with unified flow:', email);
       
-      // Set session type BEFORE login attempt
+      // Check if we have redirect data to show appropriate message
+      const redirectData = AuthRedirectSystem.getRedirect();
+      if (redirectData) {
+        toast.info(`Logging you in to ${redirectData.action || 'continue'}...`);
+      }
+      
+      // Set session type before login attempt
       localStorage.setItem('sessionType', 'user');
+      console.log('UserLogin: Session type set to user');
       
       // Proceed with login
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -96,36 +106,24 @@ const UserLogin: React.FC = () => {
       
       if (error) {
         console.error('UserLogin: Login error:', error);
-        toast.error(error.message || 'Invalid email or password');
-        localStorage.removeItem('sessionType');
+        toast.error(error.message || 'Invalid email or password', { duration: 2000 });
         return false;
       }
       
       if (!data.user || !data.session) {
         console.error('UserLogin: No user or session returned');
-        toast.error('Login failed. Please try again.');
-        localStorage.removeItem('sessionType');
+        toast.error('Login failed. Please try again.', { duration: 2000 });
         return false;
       }
       
-      console.log('✅ UserLogin: Login successful');
-      toast.success('Login successful!');
+      console.log('UserLogin: Login successful, user ID:', data.user.id);
+      toast.success('Login successful!', { duration: 2000 });
       
-      // Force redirect after successful login
-      setTimeout(async () => {
-        const redirectExecuted = await AuthRedirectSystem.executeRedirect();
-        
-        if (!redirectExecuted) {
-          console.log('🚀 UserLogin: Redirecting to user dashboard');
-          window.location.href = '/user-dashboard';
-        }
-      }, 500);
-      
+      // Auth state change will trigger redirect handling
       return true;
     } catch (error: any) {
-      console.error('UserLogin: Unexpected error:', error);
-      toast.error('An unexpected error occurred');
-      localStorage.removeItem('sessionType');
+      console.error('UserLogin: Login error:', error);
+      toast.error('An unexpected error occurred', { duration: 2000 });
       return false;
     } finally {
       setIsLoggingIn(false);
@@ -147,13 +145,14 @@ const UserLogin: React.FC = () => {
   }
 
   // If user is authenticated, show redirect message
-  if (isAuthenticated && sessionType === 'user' && user) {
+  if (isAuthenticated && sessionType === 'user' && user && !authLoading) {
+    console.log('UserLogin: User is authenticated, should redirect');
     return (
       <>
         <Navbar />
         <div className="flex justify-center items-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Redirecting to dashboard...</span>
+          <span className="ml-2">Processing your request...</span>
         </div>
         <Footer />
       </>

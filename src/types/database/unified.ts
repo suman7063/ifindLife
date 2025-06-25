@@ -22,12 +22,6 @@ export interface UserProfile {
   reports: any[];
   transactions: any[];
   referrals: any[];
-  
-  // Support both naming conventions for backward compatibility
-  walletBalance?: number;
-  favoriteExperts?: any[];
-  enrolledCourses?: any[];
-  profilePicture?: string;
 }
 
 export interface ExpertProfile {
@@ -65,24 +59,6 @@ export interface ExpertProfile {
   website_url?: string;
   created_at?: string;
   updated_at?: string;
-}
-
-export interface AdminProfile {
-  id: string;
-  auth_id: string;
-  email: string;
-  role: string;
-  created_at: string;
-}
-
-export interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  content: string;
-  read: boolean;
-  created_at: string;
-  isMine?: boolean;
 }
 
 export interface AuthState {

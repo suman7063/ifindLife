@@ -1,11 +1,11 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
 import { toast } from 'sonner';
 
-type SessionType = 'user' | 'expert' | 'admin' | null;
+type SessionType = 'user' | 'expert' | null;
 
 export interface UnifiedAuthContextType {
   // Core state
@@ -19,14 +19,14 @@ export interface UnifiedAuthContextType {
   // Profile data
   userProfile: UserProfile | null;
   expertProfile: ExpertProfile | null;
-  profile: UserProfile | ExpertProfile | null;
+  profile: UserProfile | ExpertProfile | null; // Current active profile
 
   // Role-based helpers
-  role: 'user' | 'expert' | 'admin' | null;
+  role: 'user' | 'expert' | null;
   hasUserAccount: boolean;
 
   // Auth actions
-  login: (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }) => Promise<boolean>;
+  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<boolean>;
   logout: () => Promise<boolean>;
   signup: (email: string, password: string, userData?: any) => Promise<boolean>;
   registerExpert: (email: string, password: string, expertData: Partial<ExpertProfile>) => Promise<boolean>;
@@ -70,7 +70,12 @@ interface UnifiedAuthProviderProps {
   children: React.ReactNode;
 }
 
+let renderCount = 0;
+
 export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ children }) => {
+  renderCount++;
+  console.log('🔒 UnifiedAuthProvider render:', renderCount);
+
   // Core state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,261 +88,116 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [expertProfile, setExpertProfile] = useState<ExpertProfile | null>(null);
 
-  // Restore working profile loading
-  const loadUserProfile = useCallback(async (user: User, sessionType: SessionType) => {
+  // Loading timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.log('🔒 Auth loading timeout - completing initialization');
+        setIsLoading(false);
+      }
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [isLoading]);
+
+  // Fetch user profile
+  const fetchUserProfile = useCallback(async (userId: string) => {
     try {
-      console.log('🔒 Loading profile for session type:', sessionType);
-      
-      if (sessionType === 'expert') {
-        const { data: profile, error } = await supabase
-          .from('expert_accounts')
-          .select('*')
-          .eq('auth_id', user.id)
-          .eq('status', 'approved')
-          .maybeSingle();
-        
-        if (!error && profile) {
-          console.log('✅ Expert profile loaded:', profile.name);
-          setExpertProfile(profile);
-          return;
-        }
-        
-        console.error('❌ Expert profile not found or not approved');
-        throw new Error('Expert profile not found or not approved');
-      } else if (sessionType === 'admin') {
-        const { data: profile, error } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (!error && profile) {
-          console.log('✅ Admin profile loaded');
-          // Handle admin profile
-          return;
-        }
-      } else {
-        // Regular user - try users table first, then profiles as fallback
-        const { data: profile, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (!error && profile) {
-          console.log('✅ User profile loaded from users table:', profile.name);
-          const userProfile: UserProfile = {
-            id: profile.id,
-            name: profile.name || user.email?.split('@')[0] || 'User',
-            email: profile.email || user.email || '',
-            phone: profile.phone,
-            country: profile.country,
-            city: profile.city,
-            currency: profile.currency || 'USD',
-            profile_picture: profile.profile_picture,
-            wallet_balance: profile.wallet_balance || 0,
-            created_at: profile.created_at || new Date().toISOString(),
-            updated_at: profile.updated_at || new Date().toISOString(),
-            referred_by: profile.referred_by,
-            referral_code: profile.referral_code || '',
-            referral_link: profile.referral_link || '',
-            favorite_experts: [],
-            favorite_programs: [],
-            enrolled_courses: [],
-            reviews: [],
-            reports: [],
-            transactions: [],
-            referrals: []
-          };
-          setUserProfile(userProfile);
-          return;
-        }
-        
-        // Fallback to profiles table
-        const { data: fallbackProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle();
-        
-        if (fallbackProfile) {
-          console.log('✅ User profile loaded from profiles table:', fallbackProfile.name);
-          const userProfile: UserProfile = {
-            id: fallbackProfile.id,
-            name: fallbackProfile.name || user.email?.split('@')[0] || 'User',
-            email: fallbackProfile.email || user.email || '',
-            phone: fallbackProfile.phone,
-            country: fallbackProfile.country,
-            city: fallbackProfile.city,
-            currency: fallbackProfile.currency || 'USD',
-            profile_picture: fallbackProfile.profile_picture,
-            wallet_balance: fallbackProfile.wallet_balance || 0,
-            created_at: fallbackProfile.created_at || new Date().toISOString(),
-            updated_at: fallbackProfile.updated_at || new Date().toISOString(),
-            referred_by: null,
-            referral_code: '',
-            referral_link: '',
-            favorite_experts: [],
-            favorite_programs: [],
-            enrolled_courses: [],
-            reviews: [],
-            reports: [],
-            transactions: [],
-            referrals: []
-          };
-          setUserProfile(userProfile);
-          return;
-        }
-        
-        // Create fallback profile to prevent "U" showing
-        console.log('🔒 Creating fallback user profile');
-        const fallbackUserProfile: UserProfile = {
-          id: user.id,
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-          email: user.email || '',
-          phone: user.user_metadata?.phone,
-          country: user.user_metadata?.country,
-          city: user.user_metadata?.city,
-          currency: 'USD',
-          profile_picture: user.user_metadata?.avatar_url,
-          wallet_balance: 0,
-          created_at: user.created_at || new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          referred_by: null,
-          referral_code: '',
-          referral_link: '',
-          favorite_experts: [],
-          favorite_programs: [],
-          enrolled_courses: [],
-          reviews: [],
-          reports: [],
-          transactions: [],
-          referrals: []
-        };
-        setUserProfile(fallbackUserProfile);
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
       }
+
+      setUserProfile(data);
+      return data;
     } catch (error) {
-      console.error('❌ Profile loading error:', error);
-      
-      // Always create fallback to prevent UI issues
-      if (sessionType === 'user' || !sessionType) {
-        const fallbackProfile: UserProfile = {
-          id: user.id,
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'User',
-          email: user.email || '',
-          phone: undefined,
-          country: undefined,
-          city: undefined,
-          currency: 'USD',
-          profile_picture: undefined,
-          wallet_balance: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          referred_by: null,
-          referral_code: '',
-          referral_link: '',
-          favorite_experts: [],
-          favorite_programs: [],
-          enrolled_courses: [],
-          reviews: [],
-          reports: [],
-          transactions: [],
-          referrals: []
-        };
-        setUserProfile(fallbackProfile);
-      }
-      
-      // For expert auth failures, we should sign out
-      if (sessionType === 'expert') {
-        await supabase.auth.signOut();
-        throw error;
-      }
+      console.error('Error in fetchUserProfile:', error);
+      return null;
     }
   }, []);
 
-  // Restore working auth state change handler
-  const handleAuthStateChange = useCallback(async (event: AuthChangeEvent, session: Session | null) => {
-    console.log('🔒 Auth state change:', event, session?.user?.id);
-    
-    setIsLoading(true);
-    setError(null);
-
+  // Fetch expert profile
+  const fetchExpertProfile = useCallback(async (userId: string) => {
     try {
-      if (event === 'SIGNED_IN' && session?.user) {
-        console.log('✅ User signed in');
-        
-        setUser(session.user);
-        setSession(session);
-        setIsAuthenticated(true);
-        
-        // Get session type from localStorage
-        const storedSessionType = localStorage.getItem('sessionType') as SessionType;
-        console.log('🔒 Session type from storage:', storedSessionType);
-        
-        if (storedSessionType) {
-          setSessionType(storedSessionType);
-          await loadUserProfile(session.user, storedSessionType);
-        } else {
-          // Default to user if no session type
-          setSessionType('user');
-          localStorage.setItem('sessionType', 'user');
-          await loadUserProfile(session.user, 'user');
-        }
-        
-      } else if (event === 'SIGNED_OUT') {
-        console.log('🔒 User signed out');
-        
-        setUser(null);
-        setSession(null);
-        setIsAuthenticated(false);
-        setSessionType(null);
-        setUserProfile(null);
-        setExpertProfile(null);
-        localStorage.removeItem('sessionType');
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .eq('auth_id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching expert profile:', error);
+        return null;
       }
+
+      setExpertProfile(data);
+      return data;
     } catch (error) {
-      console.error('❌ Auth state change error:', error);
-      setError(error instanceof Error ? error.message : 'Auth error');
-    } finally {
-      setIsLoading(false);
+      console.error('Error in fetchExpertProfile:', error);
+      return null;
     }
-  }, [loadUserProfile]);
+  }, []);
+
+  // Handle auth state changes
+  const handleAuthStateChange = useCallback(async (event: string, session: Session | null) => {
+    console.log('🔒 Auth state change:', { event, hasSession: !!session });
+
+    setSession(session);
+    setUser(session?.user || null);
+    setIsAuthenticated(!!session);
+
+    if (session?.user) {
+      // Get stored session type or default to user
+      const storedType = localStorage.getItem('sessionType') as SessionType || 'user';
+      setSessionType(storedType);
+
+      // Fetch appropriate profile
+      if (storedType === 'expert') {
+        await fetchExpertProfile(session.user.id);
+        setUserProfile(null);
+      } else {
+        await fetchUserProfile(session.user.id);
+        setExpertProfile(null);
+      }
+    } else {
+      // Clear all state on logout
+      setSessionType(null);
+      setUserProfile(null);
+      setExpertProfile(null);
+      localStorage.removeItem('sessionType');
+    }
+
+    setIsLoading(false);
+  }, [fetchUserProfile, fetchExpertProfile]);
 
   // Initialize auth
   useEffect(() => {
     console.log('🔒 Initializing auth context');
 
-    // Set up auth state listener
+    // Set up listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthStateChange);
 
     // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        console.log('🔒 Found existing session');
-        handleAuthStateChange('SIGNED_IN', session);
-      } else {
-        console.log('🔒 No existing session');
-        setIsLoading(false);
-      }
+      handleAuthStateChange('INITIAL_SESSION', session);
     });
 
     return () => subscription.unsubscribe();
   }, [handleAuthStateChange]);
 
-  // Restore working login
-  const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean; asAdmin?: boolean }): Promise<boolean> => {
+  // Auth actions
+  const login = useCallback(async (email: string, password: string, options?: { asExpert?: boolean }): Promise<boolean> => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // Determine session type
-      let targetSessionType: SessionType = 'user';
-      if (options?.asExpert) targetSessionType = 'expert';
-      if (options?.asAdmin) targetSessionType = 'admin';
-
-      // Set session type BEFORE login
-      localStorage.setItem('sessionType', targetSessionType);
-      console.log('🔒 Login attempt as:', targetSessionType);
+      const targetType: SessionType = options?.asExpert ? 'expert' : 'user';
+      localStorage.setItem('sessionType', targetType);
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -346,43 +206,36 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
 
       if (error) {
         setError(error.message);
-        localStorage.removeItem('sessionType');
+        toast.error(error.message);
         return false;
       }
 
       if (!data.session) {
         setError('Login failed - no session created');
-        localStorage.removeItem('sessionType');
         return false;
       }
 
-      console.log('✅ Login successful');
       return true;
     } catch (error) {
       console.error('Login error:', error);
       setError('Login failed');
-      localStorage.removeItem('sessionType');
       return false;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Restore working logout
   const logout = useCallback(async (): Promise<boolean> => {
     try {
       setIsLoading(true);
-      
-      localStorage.removeItem('sessionType');
-      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Logout error:', error);
+        toast.error('Logout failed');
         return false;
       }
 
-      console.log('✅ Logout successful');
       return true;
     } catch (error) {
       console.error('Logout error:', error);
@@ -392,9 +245,11 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     }
   }, []);
 
-  // Placeholder implementations for other methods
   const signup = useCallback(async (email: string, password: string, userData?: any): Promise<boolean> => {
     try {
+      setIsLoading(true);
+      setError(null);
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -406,43 +261,158 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
 
       if (error) {
         setError(error.message);
+        toast.error(error.message);
         return false;
       }
 
+      toast.success('Account created successfully! Please check your email for verification.');
       return true;
     } catch (error) {
       console.error('Signup error:', error);
+      setError('Signup failed');
       return false;
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   const registerExpert = useCallback(async (email: string, password: string, expertData: Partial<ExpertProfile>): Promise<boolean> => {
-    // Implementation for expert registration
-    return false;
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+        toast.error(error.message);
+        return false;
+      }
+
+      if (data.user) {
+        const expertProfileData = {
+          auth_id: data.user.id,
+          email,
+          status: 'pending',
+          verified: false,
+          name: expertData.name || '',
+          phone: expertData.phone || '',
+          address: expertData.address || '',
+          city: expertData.city || '',
+          state: expertData.state || '',
+          country: expertData.country || '',
+          specialization: expertData.specialization || '',
+          experience: typeof expertData.experience === 'number' 
+            ? String(expertData.experience) 
+            : expertData.experience || '',
+          bio: expertData.bio || '',
+          profile_picture: expertData.profile_picture || '',
+          selected_services: expertData.selected_services || []
+        };
+
+        const { error: profileError } = await supabase
+          .from('expert_accounts')
+          .insert(expertProfileData);
+
+        if (profileError) {
+          console.error('Expert profile creation error:', profileError);
+          setError(`Failed to create expert profile: ${profileError.message}`);
+          toast.error(`Failed to create expert profile: ${profileError.message}`);
+          return false;
+        }
+
+        await supabase.auth.signOut();
+        toast.success('Expert account created successfully! Your profile is pending approval.');
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Expert registration error:', error);
+      setError('Failed to create expert account');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Default implementations for other methods
-  const updateProfile = useCallback(async (updates: Partial<UserProfile | ExpertProfile>): Promise<boolean> => false, []);
-  const updateExpertProfile = useCallback(async (updates: Partial<ExpertProfile>): Promise<boolean> => false, []);
-  const updatePassword = useCallback(async (newPassword: string): Promise<boolean> => false, []);
-  const updateProfilePicture = useCallback(async (file: File): Promise<string | null> => null, []);
+  // Profile update functions with default implementations
+  const updateProfile = useCallback(async (updates: Partial<UserProfile | ExpertProfile>): Promise<boolean> => {
+    if (sessionType === 'expert' && expertProfile) {
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(updates)
+        .eq('id', expertProfile.id);
+      return !error;
+    } else if (sessionType === 'user' && userProfile) {
+      const { error } = await supabase
+        .from('users')
+        .update(updates)
+        .eq('id', userProfile.id);
+      return !error;
+    }
+    return false;
+  }, [sessionType, userProfile, expertProfile]);
+
+  const updateExpertProfile = useCallback(async (updates: Partial<ExpertProfile>): Promise<boolean> => {
+    if (expertProfile) {
+      const { error } = await supabase
+        .from('expert_accounts')
+        .update(updates)
+        .eq('id', expertProfile.id);
+      return !error;
+    }
+    return false;
+  }, [expertProfile]);
+
+  const updatePassword = useCallback(async (newPassword: string): Promise<boolean> => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    return !error;
+  }, []);
+
+  const updateProfilePicture = useCallback(async (file: File): Promise<string | null> => {
+    // Default implementation - would need storage setup
+    return null;
+  }, []);
+
+  // User-specific feature defaults
   const addToFavorites = useCallback(async (expertId: number): Promise<boolean> => false, []);
   const removeFromFavorites = useCallback(async (expertId: number): Promise<boolean> => false, []);
   const rechargeWallet = useCallback(async (amount: number): Promise<boolean> => false, []);
   const addReview = useCallback(async (review: any, rating?: number, comment?: string): Promise<boolean> => false, []);
   const reportExpert = useCallback(async (report: any, reason?: string, details?: string): Promise<boolean> => false, []);
   const hasTakenServiceFrom = useCallback(async (id: string | number): Promise<boolean> => false, []);
-  const getExpertShareLink = useCallback((expertId: string | number): string => `${window.location.origin}/experts/${expertId}`, []);
+  const getExpertShareLink = useCallback((expertId: string | number): string => 
+    `${window.location.origin}/experts/${expertId}`, []);
   const getReferralLink = useCallback((): string | null => null, []);
+
+  // Auth protection placeholder
   const isAuthProtected = useCallback((): boolean => false, []);
 
   // Computed values
-  const profile = sessionType === 'expert' ? expertProfile : userProfile;
-  const role = sessionType === 'expert' && expertProfile ? 'expert' : sessionType === 'user' && userProfile ? 'user' : sessionType === 'admin' ? 'admin' : null;
-  const hasUserAccount = !!userProfile;
-  const walletBalance = (userProfile as UserProfile)?.wallet_balance || 0;
+  const profile = useMemo(() => {
+    if (sessionType === 'expert') return expertProfile;
+    if (sessionType === 'user') return userProfile;
+    return null;
+  }, [sessionType, userProfile, expertProfile]);
 
-  const contextValue: UnifiedAuthContextType = {
+  const role = useMemo((): 'user' | 'expert' | null => {
+    if (sessionType === 'expert' && expertProfile) return 'expert';
+    if (sessionType === 'user' && userProfile) return 'user';
+    return null;
+  }, [sessionType, userProfile, expertProfile]);
+
+  const hasUserAccount = useMemo(() => !!userProfile, [userProfile]);
+  const walletBalance = useMemo(() => 
+    (userProfile as UserProfile)?.wallet_balance || 0, [userProfile]);
+
+  const contextValue = useMemo((): UnifiedAuthContextType => ({
     // Core state
     isAuthenticated,
     isLoading,
@@ -489,7 +459,15 @@ export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ childr
     expert: expertProfile,
     admin: null,
     isAuthProtected
-  };
+  }), [
+    isAuthenticated, isLoading, user, session, sessionType, error,
+    userProfile, expertProfile, profile, role, hasUserAccount,
+    login, logout, signup, registerExpert,
+    updateProfile, updateExpertProfile, updatePassword, updateProfilePicture,
+    addToFavorites, removeFromFavorites, rechargeWallet, addReview, reportExpert,
+    hasTakenServiceFrom, getExpertShareLink, getReferralLink, walletBalance,
+    isAuthProtected
+  ]);
 
   return (
     <UnifiedAuthContext.Provider value={contextValue}>

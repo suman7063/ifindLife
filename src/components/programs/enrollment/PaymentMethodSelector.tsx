@@ -2,8 +2,7 @@
 import React from 'react';
 import { CheckCircle, Wallet, CreditCard, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { UserProfile } from '@/types/database/unified';
-import { getUserWalletBalance } from '@/utils/profileHelpers';
+import { UserProfile } from '@/types/supabase';
 
 interface PaymentMethodSelectorProps {
   currentUser: UserProfile;
@@ -18,8 +17,6 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
   hasEnoughBalance,
   setEnrollmentMethod
 }) => {
-  const walletBalance = getUserWalletBalance(currentUser);
-
   return (
     <div className="space-y-3">
       <h4 className="font-medium">Choose payment method:</h4>
@@ -34,7 +31,7 @@ const PaymentMethodSelector: React.FC<PaymentMethodSelectorProps> = ({
           <Wallet className="h-5 w-5 text-ifind-purple" />
           <div>
             <h3 className="font-medium">Pay with Wallet</h3>
-            <p className="text-sm text-muted-foreground">Current Balance: ₹{walletBalance}</p>
+            <p className="text-sm text-muted-foreground">Current Balance: ₹{currentUser.walletBalance || 0}</p>
           </div>
         </div>
         {enrollmentMethod === 'wallet' && (
