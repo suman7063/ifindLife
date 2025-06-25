@@ -25,12 +25,15 @@ export const useUserAuth = () => {
     // Auth methods
     login: auth.login,
     logout: auth.logout,
-    register: auth.register,
+    register: auth.signup, // Map register to signup
     updateProfile: auth.updateProfile,
     updateProfilePicture: auth.updateProfilePicture || (async () => null),
     
     // User-specific properties
     walletBalance: auth.walletBalance,
     error: auth.error,
+    
+    // Referral functionality
+    getReferralLink: auth.getReferralLink || (() => null),
   };
 };

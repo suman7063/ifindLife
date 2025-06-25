@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import { EnhancedUnifiedAuthProvider } from '@/contexts/auth'
+import { SecurityProvider } from '@/contexts/auth/SecurityContext'
 
 // Debug React availability
 console.log('main.tsx - React:', !!React);
@@ -27,7 +28,9 @@ try {
   root.render(
     <React.StrictMode>
       <EnhancedUnifiedAuthProvider>
-        <App />
+        <SecurityProvider>
+          <App />
+        </SecurityProvider>
       </EnhancedUnifiedAuthProvider>
     </React.StrictMode>
   );

@@ -4,8 +4,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 
-// Consolidated auth imports
-import { AuthProvider } from '@/contexts/auth/AuthContext';
+// Consolidated auth imports - using the correct AuthProvider from AuthProvider.tsx
+import { AuthProvider } from '@/contexts/auth/AuthProvider';
 import { AdminAuthProvider } from '@/contexts/admin-auth/AdminAuthProvider';
 import { AdminAuthProvider as AdminAuthCleanProvider } from '@/contexts/AdminAuthClean';
 

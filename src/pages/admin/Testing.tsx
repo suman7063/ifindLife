@@ -1,25 +1,35 @@
 
 import React from 'react';
-import TestingDashboard from '@/components/testing/TestingDashboard';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/admin-auth';
 import AdminHeader from '@/components/admin/AdminHeader';
-import { useNavigate } from 'react-router-dom';
+import AdminRoutes from '@/components/admin/dashboard/AdminRoutes';
 
-const Testing: React.FC = () => {
-  const navigate = useNavigate();
+const Testing = () => {
+  const { isAuthenticated, isLoading, logout } = useAuth();
   
-  // Create a simple logout handler
-  const handleLogout = () => {
-    console.log('Admin logout clicked in testing page');
-    navigate('/admin/login');
-    return Promise.resolve(true);
-  };
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Navigate to="/admin-login" replace />;
+  }
 
   return (
-    <div>
-      <AdminHeader onLogout={handleLogout} />
-      <div className="container mx-auto px-4 py-8">
-        <TestingDashboard />
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <AdminHeader onLogout={logout} />
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Routes>
+          <Route path="/*" element={<AdminRoutes />} />
+        </Routes>
+      </main>
     </div>
   );
 };
