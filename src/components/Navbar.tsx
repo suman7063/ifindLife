@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, memo, useMemo } from 'react';
+import React, { useState, useEffect, memo, useMemo, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
@@ -57,7 +57,7 @@ const NavbarComponent = () => {
     logout
   } = useAuth();
 
-  // Memoize compatible user object
+  // Memoize compatible user object to prevent unnecessary re-renders
   const currentUser = useMemo(() => 
     createCompatibleUser(userProfile, expertProfile, sessionType),
     [userProfile, expertProfile, sessionType]
@@ -89,8 +89,8 @@ const NavbarComponent = () => {
     };
   }, [scrolled]);
 
-  // Handle logout
-  const handleLogout = async (): Promise<boolean> => {
+  // Memoize logout handler
+  const handleLogout = useCallback(async (): Promise<boolean> => {
     try {
       console.log("🔒 Navbar: Initiating logout...");
       
@@ -111,18 +111,25 @@ const NavbarComponent = () => {
       showLogoutErrorToast();
       return false;
     }
-  };
+  }, [logout, sessionType, navigate]);
 
   const navbarBackground = useMemo(() => 
     scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white', [scrolled]);
 
-  console.log("🔒 Navbar state:", {
-    isAuthenticated,
-    sessionType,
-    isLoading,
-    hasCurrentUser: !!currentUser,
-    hasExpertProfile
-  });
+  // Only log when auth state actually changes to prevent log spam
+  const authStateRef = React.useRef<string>('');
+  const currentAuthState = `${isAuthenticated}-${sessionType}-${!!currentUser}-${hasExpertProfile}`;
+  
+  if (authStateRef.current !== currentAuthState) {
+    console.log("🔒 Navbar state:", {
+      isAuthenticated,
+      sessionType,
+      isLoading,
+      hasCurrentUser: !!currentUser,
+      hasExpertProfile
+    });
+    authStateRef.current = currentAuthState;
+  }
 
   return (
     <div 
