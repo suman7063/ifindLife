@@ -10,8 +10,6 @@ const ExpertDashboard: React.FC = () => {
   const { isAuthenticated, sessionType, user, expertProfile, isLoading } = useAuth();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
-  const [profileLoading, setProfileLoading] = useState(true);
-  const [dashboardExpertProfile, setDashboardExpertProfile] = useState<any>(null);
 
   console.log('ExpertDashboard: Current auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
@@ -22,18 +20,11 @@ const ExpertDashboard: React.FC = () => {
     expertStatus: expertProfile?.status
   });
 
-  // ✅ EXPERT DASHBOARD AUTH CHECK
+  // Expert dashboard auth check
   useEffect(() => {
-    const checkExpertAuth = async () => {
-      console.log('🔒 ExpertDashboard auth check:', {
-        isAuthenticated,
-        hasUser: !!user,
-        sessionType,
-        isLoading
-      });
-      
+    const checkExpertAuth = () => {
       if (isLoading) {
-        console.log('🔒 Auth still loading, waiting...');
+        console.log('ExpertDashboard: Auth still loading, waiting...');
         return;
       }
       
@@ -51,53 +42,20 @@ const ExpertDashboard: React.FC = () => {
         return;
       }
       
-      // Load expert profile if not already loaded
-      try {
-        if (expertProfile) {
-          console.log('✅ Expert profile already loaded:', expertProfile.name);
-          setDashboardExpertProfile(expertProfile);
-          setProfileLoading(false);
-          return;
-        }
-
-        console.log('🔒 Loading expert profile for user:', user.id);
-        
-        const { data: profile, error } = await supabase
-          .from('expert_accounts')
-          .select('*')
-          .eq('auth_id', user.id)
-          .eq('status', 'approved')
-          .maybeSingle();
-        
-        if (error || !profile) {
-          console.error('❌ Expert profile not found:', error);
-          toast.error('Expert profile not found or not approved');
-          navigate('/expert-login', { replace: true });
-          return;
-        }
-        
-        console.log('✅ Expert profile loaded:', profile.name);
-        setDashboardExpertProfile(profile);
-
-        // Check expert status
-        if (profile.status === 'pending') {
-          toast.info('Your expert account is pending approval');
-        } else if (profile.status === 'rejected') {
-          toast.error('Your expert account has been rejected. Please contact support.');
-        }
-      } catch (error) {
-        console.error('❌ Expert profile loading failed:', error);
-        toast.error('Failed to load expert profile');
+      if (!expertProfile) {
+        console.log('❌ No expert profile found');
+        toast.error('Expert profile not found');
         navigate('/expert-login', { replace: true });
-      } finally {
-        setProfileLoading(false);
+        return;
       }
+      
+      console.log('✅ Expert authentication verified');
     };
     
     checkExpertAuth();
-  }, [isAuthenticated, user, sessionType, isLoading, expertProfile, navigate]);
+  }, [isAuthenticated, user, sessionType, expertProfile, isLoading, navigate]);
 
-  // Navigation handler for left panel links
+  // Working navigation handler
   const handleNavigation = (section: string) => {
     console.log('🔗 Expert dashboard navigation:', section);
     setActiveSection(section);
@@ -135,11 +93,11 @@ const ExpertDashboard: React.FC = () => {
     }
   };
 
-  // Render content based on active section
+  // Working render content method
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <ExpertDashboardHome expertProfile={dashboardExpertProfile} />;
+        return <ExpertDashboardHome expertProfile={expertProfile} />;
       case 'appointments':
         return <ExpertAppointments />;
       case 'calendar':
@@ -153,25 +111,21 @@ const ExpertDashboard: React.FC = () => {
       case 'availability':
         return <ExpertAvailability />;
       case 'profile':
-        return <ExpertProfile expertProfile={dashboardExpertProfile} />;
+        return <ExpertProfile expertProfile={expertProfile} />;
       case 'settings':
         return <ExpertSettings />;
       default:
-        return <ExpertDashboardHome expertProfile={dashboardExpertProfile} />;
+        return <ExpertDashboardHome expertProfile={expertProfile} />;
     }
   };
 
-  if (isLoading || profileLoading) {
+  if (isLoading) {
     return <LoadingScreen message="Loading expert dashboard..." />;
   }
 
   // If not authenticated as expert, don't render anything (redirect will happen)
-  if (!isAuthenticated || sessionType !== 'expert' || !user) {
+  if (!isAuthenticated || sessionType !== 'expert' || !user || !expertProfile) {
     return <LoadingScreen message="Redirecting to login..." />;
-  }
-
-  if (!dashboardExpertProfile) {
-    return <LoadingScreen message="Loading expert profile..." />;
   }
 
   return (
@@ -180,9 +134,7 @@ const ExpertDashboard: React.FC = () => {
       <div className="w-64 bg-white shadow-lg relative">
         <div className="p-6 border-b">
           <h2 className="text-xl font-bold text-gray-800">Expert Panel</h2>
-          {dashboardExpertProfile && (
-            <p className="text-sm text-gray-600">{dashboardExpertProfile.name}</p>
-          )}
+          <p className="text-sm text-gray-600">{expertProfile.name}</p>
         </div>
         
         <nav className="mt-6">

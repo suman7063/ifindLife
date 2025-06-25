@@ -16,53 +16,56 @@ const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [loginError, setLoginError] = useState<string | null>(null);
 
   console.log('ExpertLogin: Current auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
     sessionType,
     hasExpertProfile: Boolean(expertProfile),
-    isLoading: Boolean(isLoading),
-    expertEmail: expertProfile?.email
+    isLoading: Boolean(isLoading)
   });
 
   useEffect(() => {
-    // Don't proceed if still loading
-    if (isLoading) {
-      console.log('ExpertLogin: Auth still loading, waiting...');
-      return;
-    }
-
-    const checkExistingAuth = () => {
-      console.log('ExpertLogin: Checking existing authentication...');
-
-      // If authenticated as expert with valid profile, redirect to dashboard
-      if (isAuthenticated && sessionType === 'expert' && expertProfile) {
-        console.log('ExpertLogin: Expert authenticated, redirecting to dashboard');
-        navigate('/expert-dashboard', { replace: true });
+    const checkExistingAuth = async () => {
+      if (isLoading) {
+        console.log('ExpertLogin: Auth still loading, waiting...');
         return;
       }
-
-      // If authenticated but as different type, show message and logout
-      if (isAuthenticated && sessionType !== 'expert') {
-        console.log('ExpertLogin: Authenticated as different type, need to logout');
-        toast.info('You need to login as an expert to access this area');
+      
+      // Check for existing session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        const storedSessionType = localStorage.getItem('sessionType');
+        
+        // If authenticated as expert with valid profile, redirect to dashboard
+        if (storedSessionType === 'expert' && isAuthenticated && expertProfile) {
+          console.log('ExpertLogin: Expert authenticated, redirecting to dashboard');
+          navigate('/expert-dashboard', { replace: true });
+          return;
+        }
+        
+        // If authenticated but as different type, show message
+        if (storedSessionType !== 'expert') {
+          console.log('ExpertLogin: Authenticated as different type, need expert login');
+          toast.info('You need to login as an expert to access this area');
+          await supabase.auth.signOut();
+        }
       }
-
+      
       setCheckingAuth(false);
     };
 
-    // Small delay to ensure auth state is stable
-    const timer = setTimeout(checkExistingAuth, 100);
-    return () => clearTimeout(timer);
+    checkExistingAuth();
   }, [isAuthenticated, sessionType, expertProfile, isLoading, navigate]);
 
-  // ✅ EXPERT LOGIN HANDLER WITH CORRECT QUERIES
+  // Restore working expert login handler
   const handleExpertLogin = async (email: string, password: string): Promise<boolean> => {
     try {
       setIsLoggingIn(true);
-      setLoginError(null);
       console.log('🔒 Starting expert login for:', email);
+      
+      // Set session type BEFORE authentication
+      localStorage.setItem('sessionType', 'expert');
       
       // 1. Authenticate with Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -72,72 +75,46 @@ const ExpertLogin: React.FC = () => {
       
       if (authError || !authData.user) {
         console.error('❌ Authentication failed:', authError?.message);
-        setLoginError(authError?.message || 'Authentication failed');
         toast.error(authError?.message || 'Authentication failed');
+        localStorage.removeItem('sessionType');
         return false;
       }
       
-      console.log('✅ Auth successful for user:', authData.user.id);
-      console.log('🔒 Checking expert profile...');
+      console.log('✅ Auth successful, checking expert profile...');
       
-      // 2. Check expert profile with CORRECT table/column
+      // 2. Verify expert profile exists and is approved
       const { data: expertProfile, error: profileError } = await supabase
-        .from('expert_accounts')  // ✅ Correct table
+        .from('expert_accounts')
         .select('*')
-        .eq('auth_id', authData.user.id)  // ✅ Correct column
+        .eq('auth_id', authData.user.id)
         .eq('status', 'approved')
         .maybeSingle();
       
-      if (profileError) {
-        console.error('❌ Expert profile query failed:', profileError);
-        console.error('❌ This means either:');
-        console.error('   1. User is not an expert');
-        console.error('   2. Expert profile not approved');
-        console.error('   3. Database query issue');
-        
-        // Logout the user since they're not an approved expert
+      if (profileError || !expertProfile) {
+        console.error('❌ Expert profile not found or not approved');
         await supabase.auth.signOut();
-        setLoginError('Expert profile not found or not approved');
+        localStorage.removeItem('sessionType');
         toast.error('Expert profile not found or not approved');
         return false;
       }
       
-      if (!expertProfile) {
-        console.error('❌ No expert profile found for auth_id:', authData.user.id);
-        await supabase.auth.signOut();
-        setLoginError('Expert profile not found');
-        toast.error('Expert profile not found');
-        return false;
-      }
-      
       console.log('✅ Expert profile verified:', expertProfile.name);
-      console.log('✅ Expert specialties:', expertProfile.specialties);
-      
-      // 3. Set session type immediately
-      localStorage.setItem('sessionType', 'expert');
-      console.log('✅ Session type set to expert');
-      
-      // 4. Navigate to expert dashboard
-      console.log('🚀 Redirecting to expert dashboard...');
       toast.success('Expert login successful!');
       
+      // 3. Navigate to expert dashboard with forced redirect
       setTimeout(() => {
-        navigate('/expert-dashboard', { replace: true });
+        window.location.href = '/expert-dashboard';
       }, 500);
       
       return true;
     } catch (error: any) {
       console.error('❌ Expert login failed:', error);
-      setLoginError(error.message || 'Login failed');
       toast.error(error.message || 'Login failed. Please try again.');
+      localStorage.removeItem('sessionType');
       return false;
     } finally {
       setIsLoggingIn(false);
     }
-  };
-
-  const setActiveTab = (tab: string) => {
-    console.log('ExpertLogin: Setting active tab to:', tab);
   };
 
   if (isLoading || checkingAuth) {
@@ -158,16 +135,13 @@ const ExpertLogin: React.FC = () => {
             <CardHeader className="text-center">
               <CardTitle className="text-2xl font-bold">Expert Portal</CardTitle>
               <p className="text-muted-foreground">Sign in to your expert account</p>
-              {loginError && (
-                <p className="text-red-500 text-sm mt-2">{loginError}</p>
-              )}
             </CardHeader>
             <CardContent>
               <ExpertLoginForm 
                 onLogin={handleExpertLogin}
                 isLoggingIn={isLoggingIn}
-                loginError={loginError}
-                setActiveTab={setActiveTab}
+                loginError={null}
+                setActiveTab={() => {}}
               />
             </CardContent>
           </Card>
