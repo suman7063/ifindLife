@@ -3,225 +3,195 @@ import { ProgramDetail } from '@/types/programDetail';
 
 export const programDetailData: Record<string, ProgramDetail> = {
   depression: {
-    id: 'depression',
     title: 'Depression Management Program',
     description: 'Comprehensive support for managing depression symptoms and improving mood through evidence-based techniques.',
-    expert: {
-      name: 'Dr. Sarah Johnson',
-      photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80',
-      experience: '8+ years in Clinical Psychology'
-    },
-    courseStructure: {
-      totalSessions: 16,
-      sessionDuration: '60 minutes',
-      frequency: 'Weekly',
-      format: 'Individual',
-      weeklyBreakdown: [
-        {
-          week: 1,
-          title: 'Understanding Depression',
-          description: 'Learn about depression symptoms, causes, and treatment approaches',
-          topics: ['Depression basics', 'Symptom identification', 'Treatment overview']
-        },
-        {
-          week: 2,
-          title: 'Cognitive Behavioral Techniques',
-          description: 'Introduction to CBT methods for managing negative thoughts',
-          topics: ['Thought patterns', 'Cognitive restructuring', 'Behavioral activation']
-        },
-        {
-          week: 3,
-          title: 'Mindfulness and Mood',
-          description: 'Mindfulness practices to improve emotional regulation',
-          topics: ['Mindfulness meditation', 'Emotional awareness', 'Present moment focus']
-        },
-        {
-          week: 4,
-          title: 'Building Resilience',
-          description: 'Developing coping strategies and resilience skills',
-          topics: ['Stress management', 'Problem-solving', 'Support systems']
-        }
-      ]
-    },
-    whatItCovers: [
-      'Understanding depression and its impact',
-      'Cognitive behavioral therapy techniques',
-      'Mindfulness and meditation practices',
-      'Mood tracking and management',
-      'Lifestyle modifications for mental health',
-      'Building support networks',
-      'Relapse prevention strategies'
+    overview: 'Our Depression Management Program provides evidence-based therapeutic support to help individuals overcome depression and regain emotional balance. Through personalized treatment plans, cognitive behavioral therapy techniques, and ongoing support, participants learn effective coping strategies and develop resilience.',
+    benefits: [
+      'Evidence-based therapeutic techniques',
+      'Personalized treatment approach',
+      'Mood tracking and monitoring',
+      'Cognitive restructuring skills',
+      '24/7 crisis support availability',
+      'Group therapy sessions'
     ],
-    expectedOutcomes: [
-      'Improved mood and emotional regulation',
-      'Better understanding of depression triggers',
-      'Effective coping strategies',
-      'Enhanced daily functioning',
-      'Improved sleep and energy levels',
-      'Stronger support systems',
-      'Long-term mental wellness plan'
+    features: [
+      'Individual therapy sessions',
+      'Cognitive Behavioral Therapy (CBT)',
+      'Mindfulness-based interventions',
+      'Mood tracking tools',
+      'Crisis intervention support',
+      'Progress monitoring dashboard'
     ],
-    pricing: {
-      individual: {
-        perSession: 180,
-        totalCost: 2880
-      }
-    },
-    reviews: {
-      averageRating: 4.8,
-      totalReviews: 245,
-      reviews: [
-        {
-          id: '1',
-          userName: 'Anonymous User',
-          rating: 5,
-          comment: 'This program completely changed my life. The techniques I learned here helped me overcome my depression.',
-          date: '2024-11-15'
-        },
-        {
-          id: '2',
-          userName: 'M. Singh',
-          rating: 4,
-          comment: 'Very helpful sessions with practical techniques that I use daily.',
-          date: '2024-11-10'
-        }
-      ]
-    }
+    duration: '12 weeks',
+    format: 'Individual & Group Sessions',
+    price: '₹25,000'
   },
   anxiety: {
-    id: 'anxiety',
     title: 'Anxiety Relief Program',
-    description: 'Learn effective tools and techniques to help manage anxiety and worry.',
-    expert: {
-      name: 'Dr. Michael Chen',
-      photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80',
-      experience: '10+ years in Anxiety Disorders'
-    },
-    courseStructure: {
-      totalSessions: 12,
-      sessionDuration: '50 minutes',
-      frequency: 'Weekly',
-      format: 'Individual',
-      weeklyBreakdown: [
-        {
-          week: 1,
-          title: 'Understanding Anxiety',
-          description: 'Learn about anxiety disorders and their manifestations',
-          topics: ['Types of anxiety', 'Physical symptoms', 'Anxiety triggers']
-        },
-        {
-          week: 2,
-          title: 'Breathing Techniques',
-          description: 'Master breathing exercises for immediate anxiety relief',
-          topics: ['Deep breathing', 'Box breathing', 'Progressive muscle relaxation']
-        },
-        {
-          week: 3,
-          title: 'Cognitive Restructuring',
-          description: 'Challenge and change anxious thought patterns',
-          topics: ['Thought challenging', 'Evidence examination', 'Balanced thinking']
-        }
-      ]
-    },
-    whatItCovers: [
-      'Understanding anxiety and panic',
-      'Breathing and relaxation techniques',
-      'Cognitive restructuring methods',
-      'Exposure therapy principles',
-      'Lifestyle modifications',
-      'Emergency coping strategies'
+    description: 'Learn effective tools and techniques to help manage anxiety and worry through breathing exercises and cognitive restructuring.',
+    overview: 'Our Anxiety Relief Program combines proven therapeutic approaches with practical coping strategies to help you manage anxiety effectively. Learn breathing techniques, cognitive restructuring, and mindfulness practices to reduce worry and panic.',
+    benefits: [
+      'Anxiety reduction techniques',
+      'Breathing and relaxation exercises',
+      'Cognitive restructuring skills',
+      'Panic attack management',
+      'Sleep improvement strategies',
+      'Stress management tools'
     ],
-    expectedOutcomes: [
-      'Reduced anxiety symptoms',
-      'Better stress management',
-      'Improved confidence',
-      'Enhanced daily functioning',
-      'Better sleep quality',
-      'Effective coping tools'
+    features: [
+      'Guided breathing exercises',
+      'Progressive muscle relaxation',
+      'Exposure therapy techniques',
+      'Mindfulness meditation',
+      'Anxiety tracking app',
+      'Emergency coping toolkit'
     ],
-    pricing: {
-      individual: {
-        perSession: 160,
-        totalCost: 1920
-      }
-    },
-    reviews: {
-      averageRating: 4.7,
-      totalReviews: 312,
-      reviews: [
-        {
-          id: '1',
-          userName: 'R. Patel',
-          rating: 5,
-          comment: 'The breathing techniques alone have made such a difference in my daily anxiety levels.',
-          date: '2024-11-12'
-        }
-      ]
-    }
+    duration: '10 weeks',
+    format: 'Individual & Group Sessions',
+    price: '₹20,000'
   },
   stress: {
-    id: 'stress',
     title: 'Stress Management Mastery',
-    description: 'Develop effective strategies to cope with and reduce stress in your daily life.',
-    expert: {
-      name: 'Dr. Aisha Patel',
-      photo: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=256&q=80',
-      experience: '12+ years in Stress Management'
-    },
-    courseStructure: {
-      totalSessions: 8,
-      sessionDuration: '45 minutes',
-      frequency: 'Weekly',
-      format: 'Individual',
-      weeklyBreakdown: [
-        {
-          week: 1,
-          title: 'Stress Assessment',
-          description: 'Identify your stress triggers and patterns',
-          topics: ['Stress identification', 'Personal stress triggers', 'Stress response']
-        },
-        {
-          week: 2,
-          title: 'Time Management',
-          description: 'Learn effective time management and prioritization',
-          topics: ['Priority setting', 'Time blocking', 'Delegation skills']
-        }
-      ]
-    },
-    whatItCovers: [
-      'Stress identification and assessment',
-      'Time management techniques',
-      'Relaxation and mindfulness',
-      'Work-life balance strategies',
-      'Physical stress management',
-      'Communication skills'
+    description: 'Develop effective strategies to cope with and reduce stress in your daily life using proven stress management techniques.',
+    overview: 'Master the art of stress management through our comprehensive program that teaches practical techniques for identifying, managing, and reducing stress in all areas of life.',
+    benefits: [
+      'Stress identification techniques',
+      'Time management skills',
+      'Relaxation strategies',
+      'Work-life balance improvement',
+      'Energy management',
+      'Resilience building'
     ],
-    expectedOutcomes: [
-      'Better stress awareness',
-      'Improved time management',
-      'Enhanced work-life balance',
-      'Better physical health',
-      'Improved relationships',
-      'Sustainable stress management'
+    features: [
+      'Stress assessment tools',
+      'Time management workshops',
+      'Relaxation training',
+      'Lifestyle modification guidance',
+      'Stress monitoring app',
+      'Personal action plans'
     ],
-    pricing: {
-      individual: {
-        perSession: 140,
-        totalCost: 1120
-      }
-    },
-    reviews: {
-      averageRating: 4.6,
-      totalReviews: 189,
-      reviews: [
-        {
-          id: '1',
-          userName: 'K. Sharma',
-          rating: 4,
-          comment: 'Great practical techniques for managing work stress.',
-          date: '2024-11-08'
-        }
-      ]
-    }
+    duration: '8 weeks',
+    format: 'Individual & Group Sessions',
+    price: '₹15,000'
+  },
+  sleep: {
+    title: 'Sleep Quality Improvement Program',
+    description: 'Comprehensive program to help improve sleep quality and address insomnia through sleep hygiene education and behavioral modifications.',
+    overview: 'Transform your sleep with our evidence-based program that addresses insomnia and poor sleep quality through behavioral interventions, sleep hygiene education, and relaxation techniques.',
+    benefits: [
+      'Better sleep quality',
+      'Reduced sleep onset time',
+      'Fewer nighttime awakenings',
+      'Improved daytime energy',
+      'Sleep hygiene education',
+      'Natural sleep solutions'
+    ],
+    features: [
+      'Sleep assessment and tracking',
+      'Behavioral sleep interventions',
+      'Sleep hygiene education',
+      'Relaxation techniques',
+      'Sleep environment optimization',
+      'Progress monitoring'
+    ],
+    duration: '6 weeks',
+    format: 'Individual Sessions',
+    price: '₹10,000'
+  },
+  relationships: {
+    title: 'Relationship Enhancement Program',
+    description: 'Expert guidance for building healthy and fulfilling relationships through communication skills and emotional intelligence development.',
+    overview: 'Strengthen your relationships with our comprehensive program focusing on communication skills, conflict resolution, and emotional intelligence development for healthier connections.',
+    benefits: [
+      'Improved communication skills',
+      'Conflict resolution techniques',
+      'Emotional intelligence development',
+      'Trust building strategies',
+      'Intimacy enhancement',
+      'Boundary setting skills'
+    ],
+    features: [
+      'Communication workshops',
+      'Couples therapy sessions',
+      'Conflict resolution training',
+      'Emotional intelligence assessments',
+      'Relationship coaching',
+      'Interactive exercises'
+    ],
+    duration: '10 weeks',
+    format: 'Individual & Couples Sessions',
+    price: '₹25,000'
+  },
+  trauma: {
+    title: 'Trauma Recovery Program',
+    description: 'Support for healing from trauma and managing PTSD symptoms through specialized therapeutic approaches.',
+    overview: 'Our Trauma Recovery Program provides specialized support for individuals healing from traumatic experiences using evidence-based approaches like EMDR and trauma-focused CBT.',
+    benefits: [
+      'Trauma processing techniques',
+      'PTSD symptom management',
+      'Emotional regulation skills',
+      'Safety and grounding techniques',
+      'Resilience building',
+      'Post-traumatic growth'
+    ],
+    features: [
+      'EMDR therapy sessions',
+      'Trauma-focused CBT',
+      'Grounding techniques',
+      'Safety planning',
+      'Somatic interventions',
+      'Support group access'
+    ],
+    duration: '16 weeks',
+    format: 'Individual Sessions',
+    price: '₹35,000'
+  },
+  grief: {
+    title: 'Grief & Loss Support Program',
+    description: 'Compassionate support for navigating grief and loss with understanding and healing.',
+    overview: 'Navigate the journey of grief with compassionate support and evidence-based techniques to help you process loss and find meaning in your healing journey.',
+    benefits: [
+      'Grief processing support',
+      'Emotional healing techniques',
+      'Meaning-making activities',
+      'Coping strategy development',
+      'Social support integration',
+      'Memorial and ritual guidance'
+    ],
+    features: [
+      'Individual grief counseling',
+      'Support group participation',
+      'Bereavement education',
+      'Creative expression therapy',
+      'Ritual and ceremony guidance',
+      'Family support sessions'
+    ],
+    duration: '12 weeks',
+    format: 'Individual & Group Sessions',
+    price: '₹22,000'
+  },
+  'self-esteem': {
+    title: 'Self-Esteem Building Program',
+    description: 'Comprehensive program to help build confidence and improve self-image through self-awareness exercises and empowerment strategies.',
+    overview: 'Build lasting self-confidence and positive self-image through our comprehensive program that combines cognitive restructuring, self-awareness exercises, and empowerment strategies.',
+    benefits: [
+      'Improved self-confidence',
+      'Positive self-image development',
+      'Self-worth recognition',
+      'Assertiveness training',
+      'Goal achievement skills',
+      'Personal empowerment'
+    ],
+    features: [
+      'Self-assessment tools',
+      'Confidence building exercises',
+      'Assertiveness training',
+      'Goal setting workshops',
+      'Personal achievement tracking',
+      'Empowerment coaching'
+    ],
+    duration: '8 weeks',
+    format: 'Individual & Group Sessions',
+    price: '₹15,500'
   }
 };

@@ -117,7 +117,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-white/10 pt-8 text-center text-ifind-offwhite/60 text-sm">
-          <p>© {new Date().getFullYear()} iFindLife. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} iFindLife, A Soulversity Venture. All rights reserved.</p>
         </div>
       </div>
     </footer>

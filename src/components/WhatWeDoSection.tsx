@@ -1,65 +1,109 @@
+
 import React from 'react';
+import { Container } from '@/components/ui/container';
+import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { ArrowRight, BookOpen, Users, Heart, Brain } from 'lucide-react';
+
 const WhatWeDoSection = () => {
-  const programs = [{
-    title: "QuickEase Programs",
-    description: "Short-term solutions for immediate stress and anxiety relief",
-    color: "bg-gray-50",
-    borderColor: "border-l-blue-500",
-    href: "/programs-for-wellness-seekers#quick-ease",
-    accentColor: "text-blue-500",
-    icon: <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-6">
-          <div className="w-8 h-8 rounded-full border-2 border-blue-500"></div>
-        </div>
-  }, {
-    title: "Emotional Resilience",
-    description: "Build psychological strength to handle life's challenges",
-    color: "bg-gray-50",
-    borderColor: "border-l-ifind-purple",
-    href: "/programs-for-wellness-seekers#resilience-building",
-    accentColor: "text-ifind-purple",
-    icon: <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mb-6">
-          <div className="w-8 h-8">
-            <svg viewBox="0 0 24 24" fill="none" className="w-full h-full text-ifind-purple">
-              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" strokeWidth="2" fill="none" />
-            </svg>
-          </div>
-        </div>
-  }, {
-    title: "Super Human Life",
-    description: "Achieve your highest potential through mental optimization",
-    color: "bg-gray-50",
-    borderColor: "border-l-ifind-teal",
-    href: "/programs-for-wellness-seekers#super-human",
-    accentColor: "text-ifind-teal",
-    icon: <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mb-6">
-          <div className="w-8 h-8">
-            <svg viewBox="0 0 24 24" fill="none" className="w-full h-full text-ifind-teal">
-              <rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none" />
-              <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" strokeWidth="2" />
-            </svg>
-          </div>
-        </div>
-  }];
-  return <section className="py-16 bg-white">
-      <div className="container mx-auto px-6 sm:px-12">
-        <div className="mb-4">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4 text-center">IFL Programs for Individuals</h2>
-          <p className="text-gray-600 text-lg text-center">IFL provides specialized programs to support your mental health journey</p>
+  const programs = [
+    {
+      id: 1,
+      icon: <Brain className="h-8 w-8 text-ifind-teal" />,
+      title: "Mental Health Programs",
+      description: "Comprehensive therapy sessions and counseling programs designed to support your mental wellness journey.",
+      features: ["Individual Therapy", "Group Sessions", "Crisis Support"],
+      href: "/programs-for-wellness-seekers"
+    },
+    {
+      id: 2,
+      icon: <Heart className="h-8 w-8 text-ifind-purple" />,
+      title: "Wellness & Mindfulness",
+      description: "Guided meditation programs and mindfulness practices to help you find inner peace and balance.",
+      features: ["Guided Meditations", "Mindfulness Training", "Stress Reduction"],
+      href: "/programs-for-wellness-seekers"
+    },
+    {
+      id: 3,
+      icon: <Users className="h-8 w-8 text-ifind-aqua" />,
+      title: "Community Support",
+      description: "Connect with like-minded individuals in our supportive community programs and group activities.",
+      features: ["Support Groups", "Community Events", "Peer Support"],
+      href: "/programs-for-wellness-seekers"
+    },
+    {
+      id: 4,
+      icon: <BookOpen className="h-8 w-8 text-ifind-teal" />,
+      title: "Educational Resources",
+      description: "Access comprehensive educational materials and workshops to enhance your understanding of mental health.",
+      features: ["Workshops", "Educational Content", "Self-Help Resources"],
+      href: "/programs-for-wellness-seekers"
+    }
+  ];
+
+  return (
+    <section className="py-16 bg-white">
+      <Container>
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            IFL Programs for Individuals
+          </h2>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto text-center">
+            IFL provides specialized programs to support your mental health journey
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-          {programs.map((program, index) => <Link key={index} to={program.href} className="block">
-              <div className={`${program.color} ${program.borderColor} border-l-4 rounded-lg p-8 h-full hover:shadow-lg transition-all duration-300 text-center border border-gray-200`}>
-                <div className="flex justify-center">
-                  {program.icon}
-                </div>
-                <h3 className={`font-semibold text-xl mb-4 ${program.accentColor}`}>{program.title}</h3>
-                <p className="text-gray-600">{program.description}</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {programs.map((program) => (
+            <div 
+              key={program.id} 
+              className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition-all duration-300 hover:border-ifind-teal/30"
+            >
+              <div className="flex items-center justify-center w-16 h-16 bg-gray-50 rounded-lg mb-4 mx-auto">
+                {program.icon}
               </div>
-            </Link>)}
+              
+              <h3 className="text-xl font-semibold text-gray-900 mb-3 text-center">
+                {program.title}
+              </h3>
+              
+              <p className="text-gray-600 mb-4 text-center">
+                {program.description}
+              </p>
+              
+              <ul className="space-y-2 mb-6">
+                {program.features.map((feature, index) => (
+                  <li key={index} className="flex items-center text-sm text-gray-600">
+                    <div className="w-1.5 h-1.5 bg-ifind-teal rounded-full mr-2"></div>
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+              
+              <Link to={program.href} className="block">
+                <Button 
+                  variant="outline" 
+                  className="w-full border-ifind-teal text-ifind-teal hover:bg-ifind-teal hover:text-white transition-colors"
+                >
+                  Learn More
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          ))}
         </div>
-      </div>
-    </section>;
+
+        <div className="text-center mt-12">
+          <Link to="/programs-for-wellness-seekers">
+            <Button className="bg-ifind-teal hover:bg-ifind-teal/90 text-white px-8 py-3">
+              View All Programs
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
+      </Container>
+    </section>
+  );
 };
+
 export default WhatWeDoSection;

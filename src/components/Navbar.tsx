@@ -39,7 +39,6 @@ const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: Ex
   }
   
   if (sessionType === 'expert' && expertProfile) {
-    // Create a UserProfile-like object for compatibility
     return {
       id: expertProfile.id,
       name: expertProfile.name || '',
@@ -47,9 +46,9 @@ const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: Ex
       phone: expertProfile.phone || '',
       country: expertProfile.country || '',
       city: expertProfile.city || '',
-      currency: 'USD', // Default currency for experts
+      currency: 'USD',
       profile_picture: expertProfile.profile_picture || '',
-      wallet_balance: 0, // Experts don't have wallet balance in navbar context
+      wallet_balance: 0,
       created_at: expertProfile.created_at || '',
       updated_at: expertProfile.created_at || '',
       referred_by: null,
@@ -66,7 +65,6 @@ const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: Ex
   }
   
   if (sessionType === 'admin' && adminProfile) {
-    // Create a UserProfile-like object for compatibility
     return {
       id: adminProfile.id,
       name: adminProfile.name || '',
@@ -122,7 +120,7 @@ const Navbar = () => {
   // Convert sessionType to match expected interface
   const convertSessionType = (type: 'user' | 'admin' | 'expert' | null): 'user' | 'expert' | 'none' | 'dual' => {
     if (!type) return 'none';
-    if (type === 'admin') return 'user'; // Treat admin as user for navbar purposes
+    if (type === 'admin') return 'user';
     if (type === 'expert') return 'expert';
     return 'user';
   };
@@ -150,7 +148,6 @@ const Navbar = () => {
       console.log("Navbar: Logout successful");
       showLogoutSuccessToast();
 
-      // Redirect based on session type
       const redirectPath = sessionType === 'expert' ? '/expert-login' : sessionType === 'admin' ? '/admin-login' : '/user-login';
       navigate(redirectPath);
       return true;
@@ -161,26 +158,14 @@ const Navbar = () => {
     }
   };
 
-  // Updated to have consistent white background
   const getNavbarBackground = () => {
     return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   };
 
-  // Enhanced authentication state logging for debugging
-  console.log("Navbar rendering. Enhanced unified auth state:", {
-    isAuthenticated: Boolean(isAuthenticated),
-    sessionType,
-    navbarSessionType,
-    isLoading: Boolean(isLoading),
-    hasCurrentUser: Boolean(currentUser),
-    hasExpertProfile: Boolean(hasExpertProfile),
-    hasAdminProfile: Boolean(hasAdminProfile),
-    timestamp: new Date().toISOString()
-  });
-
-  // Show loading state only briefly
+  // Show loading state only if still loading after a brief delay
   if (isLoading) {
-    return <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
+    return (
+      <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
           <div className="flex items-center gap-2 relative">
             <Link to="/" className="flex items-center">
@@ -192,44 +177,44 @@ const Navbar = () => {
           </div>
           <div className="text-gray-500">Loading...</div>
         </div>
-      </div>;
+      </div>
+    );
   }
 
-  // Normal navbar - shows appropriate state based on authentication
-  return <>
-      <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
-          <div className="flex items-center gap-2 relative">
-            <Link to="/" className="flex items-center">
-              <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-16" />
-            </Link>
-            <span className="absolute -top-1 -right-6 bg-gray-400 text-white text-[8px] px-1 py-0.5 rounded font-medium">
-              BETA
-            </span>
-          </div>
-          
-          <NavbarDesktopLinks 
-            isAuthenticated={Boolean(isAuthenticated)} 
-            currentUser={currentUser} 
-            hasExpertProfile={Boolean(hasExpertProfile)} 
-            userLogout={handleLogout} 
-            expertLogout={handleLogout} 
-            sessionType={navbarSessionType} 
-            isLoggingOut={false} 
-          />
-          
-          <NavbarMobileMenu 
-            isAuthenticated={Boolean(isAuthenticated)} 
-            currentUser={currentUser} 
-            hasExpertProfile={Boolean(hasExpertProfile)} 
-            userLogout={handleLogout} 
-            expertLogout={handleLogout} 
-            sessionType={navbarSessionType} 
-            isLoggingOut={false} 
-          />
+  return (
+    <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
+        <div className="flex items-center gap-2 relative">
+          <Link to="/" className="flex items-center">
+            <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-16" />
+          </Link>
+          <span className="absolute -top-1 -right-6 bg-gray-400 text-white text-[8px] px-1 py-0.5 rounded font-medium">
+            BETA
+          </span>
         </div>
+        
+        <NavbarDesktopLinks 
+          isAuthenticated={Boolean(isAuthenticated)} 
+          currentUser={currentUser} 
+          hasExpertProfile={Boolean(hasExpertProfile)} 
+          userLogout={handleLogout} 
+          expertLogout={handleLogout} 
+          sessionType={navbarSessionType} 
+          isLoggingOut={false} 
+        />
+        
+        <NavbarMobileMenu 
+          isAuthenticated={Boolean(isAuthenticated)} 
+          currentUser={currentUser} 
+          hasExpertProfile={Boolean(hasExpertProfile)} 
+          userLogout={handleLogout} 
+          expertLogout={handleLogout} 
+          sessionType={navbarSessionType} 
+          isLoggingOut={false} 
+        />
       </div>
-    </>;
+    </div>
+  );
 };
 
 export default Navbar;
