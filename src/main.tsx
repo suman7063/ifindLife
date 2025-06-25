@@ -1,7 +1,6 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter as Router } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext'
@@ -27,11 +26,9 @@ try {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <Router>
-        <EnhancedUnifiedAuthProvider>
-          <App />
-        </EnhancedUnifiedAuthProvider>
-      </Router>
+      <EnhancedUnifiedAuthProvider>
+        <App />
+      </EnhancedUnifiedAuthProvider>
     </React.StrictMode>
   );
   
