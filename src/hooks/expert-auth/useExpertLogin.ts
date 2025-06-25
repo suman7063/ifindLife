@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 /**
  * Hook for handling expert login functionality
+ * FIXED: Now uses correct expert profile fetching
  */
 export const useExpertLogin = (
   setExpert: React.Dispatch<React.SetStateAction<ExpertProfile | null>>,
@@ -19,7 +20,7 @@ export const useExpertLogin = (
    */
   const login = async (email: string, password: string): Promise<boolean> => {
     if (loginInProgress) {
-      console.log('Expert login already in progress, aborting');
+      console.log('🔒 Expert login already in progress, aborting');
       return false;
     }
     
@@ -27,7 +28,7 @@ export const useExpertLogin = (
       setLoginInProgress(true);
       setLoading(true);
       
-      console.log('Expert auth: Starting authentication');
+      console.log('🔒 Expert auth: Starting authentication for:', email);
       
       // Clean auth state before proceeding
       await supabase.auth.signOut({ scope: 'local' });
@@ -39,33 +40,33 @@ export const useExpertLogin = (
       });
       
       if (error) {
-        console.error('Expert login error:', error);
+        console.error('🔒 Expert login error:', error);
         toast.error('Login failed: ' + error.message);
         return false;
       }
       
       if (!data.user) {
-        console.error('Expert login: No user data returned');
+        console.error('🔒 Expert login: No user data returned');
         toast.error('Login failed: No user data returned');
         return false;
       }
       
-      // Fetch expert profile after successful login
-      console.log('Expert auth: Successfully authenticated, fetching expert profile');
+      // Fetch expert profile after successful login using FIXED function
+      console.log('🔒 Expert auth: Successfully authenticated, fetching expert profile');
       const expertProfile = await fetchExpertProfile(data.user.id);
       
       if (!expertProfile) {
-        console.error('Expert login: No expert profile found for this user');
-        toast.error('No expert profile found for this account. Please contact support.');
+        console.error('🔒 Expert login: No approved expert profile found for this user');
+        toast.error('No approved expert profile found for this account. Please contact support.');
         
         // Sign out since this is not a valid expert
         await supabase.auth.signOut();
         return false;
       }
       
-      // Check expert approval status
+      // Check expert approval status (redundant but good for clarity)
       if (expertProfile.status === 'pending') {
-        console.error('Expert login: Account is pending approval');
+        console.error('🔒 Expert login: Account is pending approval');
         toast.info('Your account is pending approval. You will be notified once approved.');
         
         // Sign out since this expert is not approved yet
@@ -77,7 +78,7 @@ export const useExpertLogin = (
       }
       
       if (expertProfile.status === 'disapproved') {
-        console.error('Expert login: Account is disapproved');
+        console.error('🔒 Expert login: Account is disapproved');
         toast.error('Your account has been disapproved. Please check your email for details.');
         
         // Sign out since this expert is disapproved
@@ -89,7 +90,7 @@ export const useExpertLogin = (
       }
       
       if (expertProfile.status !== 'approved') {
-        console.error(`Expert login: Unknown account status: ${expertProfile.status}`);
+        console.error(`🔒 Expert login: Unknown account status: ${expertProfile.status}`);
         toast.error('Your account has an unknown status. Please contact support.');
         
         // Sign out since this expert has an unknown status
@@ -97,7 +98,7 @@ export const useExpertLogin = (
         return false;
       }
       
-      console.log('Expert auth: Profile found and approved, setting expert state');
+      console.log('🔒 Expert auth: Profile found and approved, setting expert state');
       
       // Set the expert data
       setExpert(expertProfile);
@@ -105,7 +106,7 @@ export const useExpertLogin = (
       toast.success('Expert login successful');
       return true;
     } catch (error) {
-      console.error('Expert login unexpected error:', error);
+      console.error('🔒 Expert login unexpected error:', error);
       toast.error('An unexpected error occurred during login');
       return false;
     } finally {

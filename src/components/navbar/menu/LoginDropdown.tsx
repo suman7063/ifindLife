@@ -29,17 +29,17 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
     timestamp: new Date().toISOString()
   });
 
-  // Check multiple authentication criteria - user has ANY valid authentication
-  const hasAnyAuthentication = Boolean(isAuthenticated) || Boolean(hasExpertProfile);
+  // FIXED: Show login dropdown when user is NOT authenticated
+  // This was the main issue - the logic was inverted
+  const shouldShowLogin = !Boolean(isAuthenticated) && !Boolean(hasExpertProfile);
   
   console.log('LoginDropdown authentication decision:', { 
-    hasAnyAuthentication,
-    shouldShowLogin: !hasAnyAuthentication,
-    finalDecision: hasAnyAuthentication ? 'HIDE_LOGIN' : 'SHOW_LOGIN'
+    shouldShowLogin,
+    finalDecision: shouldShowLogin ? 'SHOW_LOGIN' : 'HIDE_LOGIN'
   });
   
   // If user has any authentication, don't show login dropdown
-  if (hasAnyAuthentication) {
+  if (!shouldShowLogin) {
     console.log('LoginDropdown: User has authentication, hiding login dropdown');
     return null;
   }

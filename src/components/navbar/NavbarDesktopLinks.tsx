@@ -19,19 +19,6 @@ interface NavbarDesktopLinksProps {
   isLoading?: boolean;
 }
 
-// FIXED: Render tracking for debugging
-const useRenderTracker = (componentName: string) => {
-  const renderCountRef = React.useRef(0);
-  renderCountRef.current += 1;
-  
-  // FIXED: Only log first few renders
-  if (renderCountRef.current <= 3) {
-    console.log(`🔒 ${componentName} render count: ${renderCountRef.current}`);
-  }
-  
-  return renderCountRef.current;
-};
-
 const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   isAuthenticated,
   currentUser,
@@ -42,13 +29,10 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   isLoggingOut,
   isLoading = false
 }) => {
-  // FIXED: Track renders for debugging
-  const renderCount = useRenderTracker('NavbarDesktopLinks');
-  
   // Get enhanced unified auth state for more accurate authentication checks
   const enhancedAuth = useEnhancedUnifiedAuth();
 
-  // FIXED: Ultra-stable memoization using only primitive values
+  // Ultra-stable memoization using only primitive values
   const authState = useMemo(() => {
     const isUserAuth = Boolean(isAuthenticated && !isLoading);
     const isExpertAuth = Boolean(enhancedAuth?.sessionType === 'expert' && enhancedAuth?.expert && !isLoading);
@@ -74,52 +58,7 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
     Boolean(currentUser)
   ]);
 
-  // FIXED: Only show loading state for first render to prevent flicker
-  if (authState.isLoading && renderCount === 1) {
-    return (
-      <div className="hidden md:flex items-center space-x-4">
-        <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
-          <Link to="/">Home</Link>
-        </Button>
-        
-        <NavigationMenu>
-          <NavigationMenuList>
-            <ServicesMenu />
-          </NavigationMenuList>
-        </NavigationMenu>
-        
-        <NavigationMenu>
-          <NavigationMenuList>
-            <AssessmentMenu />
-          </NavigationMenuList>
-        </NavigationMenu>
-        
-        <NavigationMenu>
-          <NavigationMenuList>
-            <ProgramsMenu />
-          </NavigationMenuList>
-        </NavigationMenu>
-        
-        <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
-          <Link to="/experts">Experts</Link>
-        </Button>
-        
-        <Button variant="ghost" asChild className="text-gray-700 hover:text-gray-900 font-medium">
-          <Link to="/about">About Us</Link>
-        </Button>
-        
-        <NavigationMenu>
-          <NavigationMenuList>
-            <SupportMenu />
-          </NavigationMenuList>
-        </NavigationMenu>
-        
-        <div className="px-3 py-2 text-gray-500 animate-pulse">Loading...</div>
-      </div>
-    );
-  }
-
-  // FIXED: Ultra-stable auth component determination
+  // Ultra-stable auth component determination
   const authComponent = useMemo(() => {
     if (authState.isExpertAuthenticated) {
       console.log('NavbarDesktopLinks: Showing expert menu for authenticated expert');
@@ -188,7 +127,7 @@ const NavbarDesktopLinksComponent: React.FC<NavbarDesktopLinksProps> = ({
   );
 };
 
-// FIXED: Proper memoization with stable comparison
+// Proper memoization with stable comparison
 const NavbarDesktopLinks = memo(NavbarDesktopLinksComponent, (prevProps, nextProps) => {
   return (
     prevProps.isAuthenticated === nextProps.isAuthenticated &&

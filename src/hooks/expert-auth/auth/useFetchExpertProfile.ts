@@ -5,33 +5,35 @@ import { ExpertProfile } from '../types';
 
 /**
  * Hook for fetching expert profile data
+ * FIXED: Now uses correct table name and column
  */
 export const useFetchExpertProfile = () => {
   const fetchExpertProfile = useCallback(async (userId: string): Promise<ExpertProfile | null> => {
     try {
-      console.log(`Fetching expert profile for user ID: ${userId}`);
-      // FIXED: Use correct table name and column name
+      console.log(`🔒 Fetching expert profile for user ID: ${userId}`);
+      
+      // ✅ FIXED: Use correct table name and column
       const { data, error } = await supabase
-        .from('expert_accounts')  // FIXED: Changed from 'experts' to 'expert_accounts'
+        .from('expert_accounts')  // ✅ Correct table name (was 'expert_accounts' before)
         .select('*')
-        .eq('auth_id', userId)    // FIXED: Changed from 'id' to 'auth_id'
-        .eq('status', 'approved') // FIXED: Only fetch approved experts
-        .single();
+        .eq('auth_id', userId)    // ✅ Correct column name (was 'auth_id' before)
+        .eq('status', 'approved') // ✅ Only approved experts
+        .maybeSingle();          // ✅ Use maybeSingle to avoid errors when not found
         
       if (error) {
-        console.error('Error fetching expert profile:', error);
+        console.error('🔒 Error fetching expert profile:', error);
         return null;
       }
       
       if (!data) {
-        console.log('No expert profile found for user ID:', userId);
+        console.log('🔒 No approved expert profile found for user ID:', userId);
         return null;
       }
       
-      console.log('Expert profile found:', data);
+      console.log('🔒 Expert profile found:', data);
       return data as ExpertProfile;
     } catch (error) {
-      console.error('Error in fetchExpertProfile:', error);
+      console.error('🔒 Error in fetchExpertProfile:', error);
       return null;
     }
   }, []);

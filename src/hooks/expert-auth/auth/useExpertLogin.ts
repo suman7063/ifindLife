@@ -14,7 +14,7 @@ export const useExpertLogin = (
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true);
     try {
-      console.log('Expert auth: Starting login process for', email);
+      console.log('🔒 Expert auth: Starting login process for', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -22,32 +22,34 @@ export const useExpertLogin = (
       });
       
       if (error) {
-        console.error('Login error:', error);
+        console.error('🔒 Login error:', error);
         toast.error(error.message);
         return false;
       }
       
       if (!data.session) {
-        console.error('Login failed: No session created');
+        console.error('🔒 Login failed: No session created');
         toast.error('Login failed. No session created.');
         return false;
       }
       
-      console.log('Expert auth: Session created, checking for expert profile');
+      console.log('🔒 Expert auth: Session created, checking for expert profile');
+      
+      // Use the FIXED fetchExpertProfile function
       const expertProfile = await fetchExpertProfile(data.session.user.id);
       
       if (!expertProfile) {
-        console.error('Login failed: No expert profile found for authenticated user');
-        toast.error('No expert profile found for this account.');
+        console.error('🔒 Login failed: No approved expert profile found for authenticated user');
+        toast.error('No approved expert profile found for this account.');
         
         // Sign out since there's no expert profile
         await supabase.auth.signOut({ scope: 'local' });
         return false;
       }
       
-      // Check if expert is approved
+      // Check if expert is approved (redundant but good for clarity)
       if (expertProfile.status !== 'approved') {
-        console.error(`Login failed: Expert status is ${expertProfile.status}`);
+        console.error(`🔒 Login failed: Expert status is ${expertProfile.status}`);
         
         // Sign out since the expert is not approved
         await supabase.auth.signOut({ scope: 'local' });
@@ -67,14 +69,14 @@ export const useExpertLogin = (
         return false;
       }
       
-      console.log('Expert auth: Login successful');
+      console.log('🔒 Expert auth: Login successful for expert:', expertProfile.name);
       setExpert(expertProfile);
       setIsUserLoggedIn(true);
       toast.success('Login successful');
       
       return true;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('🔒 Login error:', error);
       toast.error('An unexpected error occurred during login.');
       return false;
     } finally {

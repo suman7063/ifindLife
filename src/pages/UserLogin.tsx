@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
-import AuthRedirectSystem from '@/utils/authRedirectSystem';
+import PostLoginRedirectSystem from '@/utils/postLoginRedirect';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -57,7 +57,7 @@ const UserLogin: React.FC = () => {
           
           // Execute pending redirect/action
           setTimeout(async () => {
-            const redirectExecuted = await AuthRedirectSystem.executeRedirect();
+            const redirectExecuted = await PostLoginRedirectSystem.executeRedirect();
             
             if (!redirectExecuted) {
               console.log('UserLogin: No redirect data, going to dashboard');
@@ -89,7 +89,7 @@ const UserLogin: React.FC = () => {
       console.log('UserLogin: Attempting login with enhanced flow:', email);
       
       // Check if we have redirect data to show appropriate message
-      const redirectData = AuthRedirectSystem.getRedirect();
+      const redirectData = PostLoginRedirectSystem.getRedirect();
       if (redirectData) {
         toast.info(`Logging you in to ${redirectData.action || 'continue'}...`);
       }
@@ -160,7 +160,7 @@ const UserLogin: React.FC = () => {
   }
 
   // Get redirect context for UI messaging
-  const redirectData = AuthRedirectSystem.getRedirect();
+  const redirectData = PostLoginRedirectSystem.getRedirect();
   const actionMessage = redirectData 
     ? `Login to ${redirectData.action || 'continue'} ${redirectData.expertName ? `with ${redirectData.expertName}` : ''}`
     : 'Login to access your account';
