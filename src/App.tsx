@@ -40,7 +40,7 @@ const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClient client={queryClient}>
+    <QueryClientProvider client={queryClient}>
       <Toaster />
       <AuthProvider>
         <AdminAuthProvider>
