@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
@@ -30,20 +31,21 @@ import UnifiedAssessment from './pages/UnifiedAssessment';
 import { Toaster } from '@/components/ui/toaster';
 import AdminLoginClean from '@/pages/AdminLoginClean';
 import AdminDashboardClean from '@/pages/AdminDashboardClean';
-import { QueryClient, QueryClientProvider as QueryClientWrapper } from 'react-query';
-import { AuthProvider } from '@/context/AuthContext';
-import { EnhancedUnifiedAuthProvider } from '@/context/EnhancedUnifiedAuthProvider';
-import { AdminAuthProvider } from '@/context/AdminAuthProvider';
-import { Router } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext';
+import { AdminAuthProvider } from '@/contexts/admin-auth/AdminAuthProvider';
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <QueryClientWrapper>
+    <QueryClientProvider client={queryClient}>
       <Toaster />
       <AuthProvider>
         <EnhancedUnifiedAuthProvider>
           <AdminAuthProvider>
-            <Router>
+            <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Home />} />
                 
@@ -105,11 +107,11 @@ function App() {
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Router>
+            </BrowserRouter>
           </AdminAuthProvider>
         </EnhancedUnifiedAuthProvider>
       </AuthProvider>
-    </QueryClientWrapper>
+    </QueryClientProvider>
   );
 }
 
