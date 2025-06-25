@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -193,10 +192,8 @@ export const EnhancedCallTimer: React.FC<EnhancedCallTimerProps> = ({
         isOpen={showExtensionModal}
         onClose={() => setShowExtensionModal(false)}
         onConfirm={handleExtendCall}
-        pricePerMinute={pricePerMinute}
-        walletBalance={walletBalance}
-        formatPrice={formatPrice}
-        isProcessing={isExtending}
+        expertPrice={pricePerMinute}
+        isExtending={isExtending}
       />
     </>
   );

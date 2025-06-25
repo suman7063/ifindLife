@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   AccordionContent,
   AccordionItem,
@@ -9,20 +10,31 @@ import {
 interface MobileAccordionItemProps {
   title: string;
   value: string;
-  children: React.ReactNode;
+  items: Array<{
+    title: string;
+    href: string;
+  }>;
 }
 
 const MobileAccordionItem: React.FC<MobileAccordionItemProps> = ({ 
   title,
   value,
-  children 
+  items 
 }) => {
   return (
     <AccordionItem value={value}>
       <AccordionTrigger className="py-2 px-4 text-sm">{title}</AccordionTrigger>
       <AccordionContent>
         <div className="flex flex-col gap-1 pl-4 pr-2">
-          {children}
+          {items.map((item, index) => (
+            <Link
+              key={index}
+              to={item.href}
+              className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
+            >
+              {item.title}
+            </Link>
+          ))}
         </div>
       </AccordionContent>
     </AccordionItem>

@@ -4,11 +4,12 @@ import { AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface CallErrorMessageProps {
-  errorMessage: string | null;
+  errorMessage: string;
   onRetry: () => void;
+  onClose?: () => void;
 }
 
-const CallErrorMessage: React.FC<CallErrorMessageProps> = ({ errorMessage, onRetry }) => {
+const CallErrorMessage: React.FC<CallErrorMessageProps> = ({ errorMessage, onRetry, onClose }) => {
   return (
     <div className="flex flex-col items-center justify-center p-6 text-center space-y-6">
       <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">

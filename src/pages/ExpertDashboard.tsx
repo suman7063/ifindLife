@@ -11,12 +11,12 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
 
 const ExpertDashboard = () => {
-  const { isAuthenticated, sessionType, expert, isLoading } = useUnifiedAuth();
+  const { isAuthenticated, sessionType, expert, isLoading } = useEnhancedUnifiedAuth();
   
-  console.log('ExpertDashboard - Unified auth state:', {
+  console.log('ExpertDashboard - Enhanced unified auth state:', {
     isAuthenticated,
     sessionType,
     hasExpertProfile: !!expert,

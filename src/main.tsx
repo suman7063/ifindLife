@@ -1,8 +1,10 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+import { BrowserRouter as Router } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
+import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext'
 
 // Debug React availability
 console.log('main.tsx - React:', !!React);
@@ -25,7 +27,11 @@ try {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <App />
+      <Router>
+        <EnhancedUnifiedAuthProvider>
+          <App />
+        </EnhancedUnifiedAuthProvider>
+      </Router>
     </React.StrictMode>
   );
   

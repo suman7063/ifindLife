@@ -1,6 +1,10 @@
+
 import React from 'react';
+import { Zap } from 'lucide-react';
+
 const IntroductionSection = () => {
-  return <section className="py-16 w-full bg-gray-50">
+  return (
+    <section className="py-16 w-full bg-gray-50">
       <div className="container mx-auto px-0">
         <div className="max-w-5xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-ifind-aqua to-ifind-purple">
@@ -12,7 +16,17 @@ const IntroductionSection = () => {
             everyday challenges, and long-term tools to build emotional resilience. Anytime, anywhere.
           </p>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12">
+            <div className="bg-gradient-to-b from-ifind-purple/10 to-transparent p-6 rounded-xl">
+              <div className="w-16 h-16 bg-ifind-purple/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Zap className="text-ifind-purple h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Root Cause Healing</h3>
+              <p className="text-gray-600">
+                Energy-aware therapists guide healing of root cause, not just manage symptoms.
+              </p>
+            </div>
+            
             <div className="bg-gradient-to-b from-ifind-aqua/10 to-transparent p-6 rounded-xl">
               <div className="w-16 h-16 bg-ifind-aqua/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-ifind-aqua">
@@ -54,6 +68,8 @@ const IntroductionSection = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
+
 export default IntroductionSection;

@@ -6,7 +6,7 @@ export interface AuthRedirectData {
   action?: 'favorite' | 'connect' | 'book' | 'enroll' | 'purchase' | 'call' | 'navigate';
   params?: Record<string, any>;
   timestamp: number;
-  expertId?: number;
+  expertId?: string; // Changed from number to string
   expertName?: string;
   callType?: 'video' | 'voice';
   message?: string;
@@ -100,10 +100,10 @@ export class AuthRedirectSystem {
   }
 
   /**
-   * Convenience method for expert-related actions
+   * Convenience method for expert-related actions - updated to accept string IDs
    */
   static setExpertAction(
-    expertId: number,
+    expertId: string,
     expertName: string,
     action: 'favorite' | 'connect' | 'book' | 'call',
     additionalParams?: Record<string, any>
@@ -125,10 +125,10 @@ export class AuthRedirectSystem {
   }
 
   /**
-   * Convenience method for call actions
+   * Convenience method for call actions - updated to accept string IDs
    */
   static setCallAction(
-    expertId: number,
+    expertId: string,
     expertName: string,
     callType: 'video' | 'voice'
   ): void {

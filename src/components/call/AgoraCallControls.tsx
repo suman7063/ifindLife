@@ -8,12 +8,22 @@ import {
   Video, 
   VideoOff, 
   MessageCircle,
-  Maximize,
-  Minimize,
   PlusCircle
 } from 'lucide-react';
-import { CallState } from '@/utils/agoraService';
-import { toast } from 'sonner';
+
+interface AgoraCallControlsProps {
+  callState: any;
+  callType?: 'audio' | 'video';
+  isExtending?: boolean;
+  isFullscreen?: boolean;
+  onToggleMute: () => void;
+  onToggleVideo: () => void;
+  onEndCall: () => void;
+  onToggleChat?: () => void;
+  onExtendCall?: () => void;
+  onToggleFullscreen?: () => void;
+  showChat?: boolean;
+}
 
 interface AgoraCallControlButtonProps {
   onClick: () => void;
@@ -49,34 +59,22 @@ const AgoraCallControlButton: React.FC<AgoraCallControlButtonProps> = ({
   );
 };
 
-interface AgoraCallControlsProps {
-  callState: CallState;
-  callType: 'audio' | 'video';
-  isExtending: boolean;
-  isFullscreen: boolean;
-  onToggleMute: () => void;
-  onToggleVideo: () => void;
-  onEndCall: () => void;
-  onExtendCall: () => void;
-  onToggleChat: () => void;
-  onToggleFullscreen: () => void;
-}
-
 const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
   callState,
   callType,
-  isExtending,
-  isFullscreen,
+  isExtending = false,
+  isFullscreen = false,
   onToggleMute,
   onToggleVideo,
   onEndCall,
   onExtendCall,
   onToggleChat,
-  onToggleFullscreen
+  onToggleFullscreen,
+  showChat = false
 }) => {
   return (
     <div className="flex justify-center items-center space-x-4 p-2 bg-background/80 rounded-lg backdrop-blur-sm">
-      {callState.isJoined && (
+      {callState?.isJoined && (
         <>
           <AgoraCallControlButton
             onClick={onToggleMute}
@@ -86,29 +84,24 @@ const AgoraCallControls: React.FC<AgoraCallControlsProps> = ({
             title={callState.isMuted ? "Unmute microphone" : "Mute microphone"}
           />
           
-          {callType === 'video' && (
+          <AgoraCallControlButton
+            onClick={onToggleVideo}
+            active={!callState.isVideoEnabled}
+            icon={<Video className="h-5 w-5" />}
+            activeIcon={<VideoOff className="h-5 w-5" />}
+            title={callState.isVideoEnabled ? "Turn off camera" : "Turn on camera"}
+          />
+          
+          {onToggleChat && (
             <AgoraCallControlButton
-              onClick={onToggleVideo}
-              active={!callState.isVideoEnabled}
-              icon={<Video className="h-5 w-5" />}
-              activeIcon={<VideoOff className="h-5 w-5" />}
-              title={callState.isVideoEnabled ? "Turn off camera" : "Turn on camera"}
+              onClick={onToggleChat}
+              active={showChat}
+              icon={<MessageCircle className="h-5 w-5" />}
+              title="Toggle chat"
             />
           )}
           
-          <AgoraCallControlButton
-            onClick={onToggleChat}
-            icon={<MessageCircle className="h-5 w-5" />}
-            title="Toggle chat"
-          />
-          
-          <AgoraCallControlButton
-            onClick={onToggleFullscreen}
-            icon={isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-            title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          />
-          
-          {isExtending && (
+          {onExtendCall && !isExtending && (
             <AgoraCallControlButton
               onClick={onExtendCall}
               icon={<PlusCircle className="h-5 w-5 text-green-600" />}

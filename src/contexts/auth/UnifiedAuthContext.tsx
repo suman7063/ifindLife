@@ -34,6 +34,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const [isLoading, setIsLoading] = useState(true);
   const [sessionType, setSessionType] = useState<'user' | 'admin' | 'expert' | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
+  const [videoCallActive, setVideoCallActive] = useState(false);
   
   const [user, setUser] = useState<UserProfile | null>(null);
   const [admin, setAdmin] = useState<AdminProfile | null>(null);
@@ -41,19 +42,32 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const isAuthenticated = Boolean(user || admin || expert);
 
+  // Check if video call is active by monitoring for Agora-related elements
+  useEffect(() => {
+    const checkVideoCallStatus = () => {
+      const agoraElements = document.querySelectorAll('[class*="agora"], [id*="agora"], [class*="video"], [class*="call"]');
+      const isCallActive = agoraElements.length > 0 || window.location.pathname.includes('expert') || 
+                          sessionStorage.getItem('videoCallActive') === 'true';
+      setVideoCallActive(isCallActive);
+    };
+
+    const interval = setInterval(checkVideoCallStatus, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   // Initialize auth state
   useEffect(() => {
     let mounted = true;
 
     const initializeAuth = async () => {
       try {
-        console.log('UnifiedAuth: Initializing auth state...');
+        console.log('🔒 UnifiedAuth: Initializing auth state...');
         
         // Get current session
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error('UnifiedAuth: Error getting session:', error);
+          console.error('🔒 UnifiedAuth: Error getting session:', error);
           if (mounted) {
             setIsLoading(false);
             setHasInitialized(true);
@@ -62,10 +76,13 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
         
         if (session?.user && mounted) {
-          console.log('UnifiedAuth: Session found, loading profiles...');
+          console.log('🔒 UnifiedAuth: Session found, loading profiles...', {
+            userId: session.user.id,
+            email: session.user.email
+          });
           await loadUserProfiles(session.user);
         } else {
-          console.log('UnifiedAuth: No session found, setting not authenticated state');
+          console.log('🔒 UnifiedAuth: No session found, setting not authenticated state');
           if (mounted) {
             setUser(null);
             setAdmin(null);
@@ -76,7 +93,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
           }
         }
       } catch (error) {
-        console.error('UnifiedAuth: Error initializing auth:', error);
+        console.error('🔒 UnifiedAuth: Error initializing auth:', error);
         if (mounted) {
           setIsLoading(false);
           setHasInitialized(true);
@@ -91,20 +108,33 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       async (event, session) => {
         if (!mounted) return;
 
-        console.log('UnifiedAuth: Auth state changed:', { event, hasSession: !!session, userId: session?.user?.id });
+        console.log('🔒 UnifiedAuth: Auth state changed:', { 
+          event, 
+          hasSession: !!session, 
+          userId: session?.user?.id,
+          videoCallActive 
+        });
+        
+        // CRITICAL: Don't clear auth during video calls
+        if (videoCallActive && event === 'SIGNED_OUT') {
+          console.log('🔒 UnifiedAuth: Preventing logout during video call');
+          return;
+        }
         
         if (session?.user) {
           setIsLoading(true);
           await loadUserProfiles(session.user);
         } else {
-          // Clear all profile states
-          console.log('UnifiedAuth: Clearing auth state (no session)');
-          setUser(null);
-          setAdmin(null);
-          setExpert(null);
-          setSessionType(null);
-          setIsLoading(false);
-          setHasInitialized(true);
+          // Only clear auth state if not in a video call
+          if (!videoCallActive) {
+            console.log('🔒 UnifiedAuth: Clearing auth state (no session)');
+            setUser(null);
+            setAdmin(null);
+            setExpert(null);
+            setSessionType(null);
+            setIsLoading(false);
+            setHasInitialized(true);
+          }
         }
       }
     );
@@ -113,21 +143,21 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [videoCallActive]);
 
   const loadUserProfiles = async (authUser: User) => {
     try {
-      console.log('UnifiedAuth: Loading user profiles for:', authUser.id);
+      console.log('🔒 UnifiedAuth: Loading user profiles for:', authUser.id);
       
       // Check stored session type preference
       const storedSessionType = localStorage.getItem('sessionType') as 'user' | 'admin' | 'expert' | null;
-      console.log('UnifiedAuth: Stored session type:', storedSessionType);
+      console.log('🔒 UnifiedAuth: Stored session type:', storedSessionType);
       
       // Try to load expert profile first if stored type is expert
       if (storedSessionType === 'expert') {
         const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
         if (expertProfile) {
-          console.log('UnifiedAuth: Expert profile loaded:', expertProfile);
+          console.log('🔒 UnifiedAuth: Expert profile loaded:', expertProfile);
           setExpert(expertProfile);
           setSessionType('expert');
           setUser(null);
@@ -142,7 +172,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (storedSessionType === 'admin') {
         const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
         if (adminProfile) {
-          console.log('UnifiedAuth: Admin profile loaded:', adminProfile);
+          console.log('🔒 UnifiedAuth: Admin profile loaded:', adminProfile);
           setAdmin(adminProfile);
           setSessionType('admin');
           setUser(null);
@@ -156,7 +186,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       // Try to load user profile
       const userProfile = await userRepository.getUserByAuthId(authUser.id);
       if (userProfile) {
-        console.log('UnifiedAuth: User profile loaded:', userProfile);
+        console.log('🔒 UnifiedAuth: User profile loaded:', userProfile);
         setUser(userProfile);
         setSessionType('user');
         setAdmin(null);
@@ -170,7 +200,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       if (!storedSessionType) {
         const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
         if (expertProfile) {
-          console.log('UnifiedAuth: Expert profile loaded (no preference):', expertProfile);
+          console.log('🔒 UnifiedAuth: Expert profile loaded (no preference):', expertProfile);
           setExpert(expertProfile);
           setSessionType('expert');
           localStorage.setItem('sessionType', 'expert');
@@ -181,7 +211,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         
         const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
         if (adminProfile) {
-          console.log('UnifiedAuth: Admin profile loaded (no preference):', adminProfile);
+          console.log('🔒 UnifiedAuth: Admin profile loaded (no preference):', adminProfile);
           setAdmin(adminProfile);
           setSessionType('admin');
           localStorage.setItem('sessionType', 'admin');
@@ -192,7 +222,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         
         const userProfile = await userRepository.getUserByAuthId(authUser.id);
         if (userProfile) {
-          console.log('UnifiedAuth: User profile loaded (no preference):', userProfile);
+          console.log('🔒 UnifiedAuth: User profile loaded (no preference):', userProfile);
           setUser(userProfile);
           setSessionType('user');
           localStorage.setItem('sessionType', 'user');
@@ -202,12 +232,12 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         }
       }
       
-      console.log('UnifiedAuth: No profiles found for user:', authUser.id);
+      console.log('🔒 UnifiedAuth: No profiles found for user:', authUser.id);
       // Even if no profiles found, we should stop loading
       setIsLoading(false);
       setHasInitialized(true);
     } catch (error) {
-      console.error('UnifiedAuth: Error loading user profiles:', error);
+      console.error('🔒 UnifiedAuth: Error loading user profiles:', error);
       setIsLoading(false);
       setHasInitialized(true);
     }
@@ -215,7 +245,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
   const login = async (type: 'user' | 'admin' | 'expert', credentials: any): Promise<boolean> => {
     try {
-      console.log(`UnifiedAuth: Attempting ${type} login:`, credentials.email);
+      console.log(`🔒 UnifiedAuth: Attempting ${type} login:`, credentials.email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: credentials.email,
@@ -223,7 +253,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       });
 
       if (error) {
-        console.error('UnifiedAuth: Login error:', error);
+        console.error('🔒 UnifiedAuth: Login error:', error);
         return false;
       }
 
@@ -239,7 +269,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       return false;
     } catch (error) {
-      console.error('UnifiedAuth: Login error:', error);
+      console.error('🔒 UnifiedAuth: Login error:', error);
       return false;
     }
   };
@@ -260,25 +290,28 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       setIsLoading(false);
       setHasInitialized(true);
       
-      console.log('UnifiedAuth: Logout completed');
+      console.log('🔒 UnifiedAuth: Logout completed');
     } catch (error) {
-      console.error('UnifiedAuth: Logout error:', error);
+      console.error('🔒 UnifiedAuth: Logout error:', error);
       throw error;
     }
   };
 
-  // Add timeout to prevent infinite loading
+  // FIXED: Replace problematic timeout with proper auth completion check
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    const authCompletionCheck = setTimeout(() => {
       if (isLoading && !hasInitialized) {
-        console.log('UnifiedAuth: Force completing loading after timeout');
-        setIsLoading(false);
-        setHasInitialized(true);
+        console.log('🔒 UnifiedAuth: Auth check taking longer than expected, completing with current state');
+        // Only complete if we haven't initialized yet and we're not in a video call
+        if (!videoCallActive) {
+          setIsLoading(false);
+          setHasInitialized(true);
+        }
       }
-    }, 3000); // 3 second timeout
+    }, 5000); // Increased timeout and added safety checks
 
-    return () => clearTimeout(timeout);
-  }, [isLoading, hasInitialized]);
+    return () => clearTimeout(authCompletionCheck);
+  }, [isLoading, hasInitialized, videoCallActive]);
 
   const value = {
     isAuthenticated,

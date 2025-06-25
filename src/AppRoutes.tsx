@@ -29,7 +29,7 @@ import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes
 import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
-import MentalHealthAssessment from './pages/MentalHealthAssessment';
+import UnifiedAssessment from './pages/UnifiedAssessment';
 import ProgramsDemo from '@/pages/ProgramsDemo';
 import Earnings from './pages/Earnings';
 import { AdminAuthProvider } from '@/contexts/admin-auth/AdminAuthProvider';
@@ -56,7 +56,9 @@ const AppRoutes = () => {
       <Route path="/programs-for-business" element={<ProgramsForBusiness />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />
-      <Route path="/mental-health-assessment" element={<MentalHealthAssessment />} />
+      <Route path="/mental-health-assessment" element={<UnifiedAssessment />} />
+      <Route path="/emotional-wellness-assessment" element={<UnifiedAssessment />} />
+      <Route path="/spiritual-wellness-assessment" element={<UnifiedAssessment />} />
       
       <Route path="/faqs" element={<FAQs />} />
       <Route path="/faq" element={<FAQs />} />
