@@ -12,9 +12,9 @@ import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import ExpertsOnlineSection from '@/components/ExpertsOnlineSection';
 import Footer from '@/components/Footer';
 import AuthDebugPanel from '@/components/debug/AuthDebugPanel';
+import TestimonialsSection from '@/components/TestimonialsSection';
 
-// Lazy load non-critical components
-const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
+// Lazy load remaining non-critical components
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
 const CTASection = lazy(() => import('@/components/CTASection'));
 const BlogSection = lazy(() => import('@/components/BlogSection'));
@@ -78,10 +78,8 @@ const Index = () => {
           <WhyChooseUsSection />
         </Suspense>
 
-        {/* Section 9: Testimonials */}
-        <Suspense fallback={<SectionLoadingFallback />}>
-          <TestimonialsSection />
-        </Suspense>
+        {/* Section 9: Testimonials - Now imported normally */}
+        <TestimonialsSection />
         
         {/* Section 10: CTA Section */}
         <Suspense fallback={<SectionLoadingFallback />}>
