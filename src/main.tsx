@@ -3,7 +3,6 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext'
 
 // Debug React availability
 console.log('main.tsx - React:', !!React);
@@ -26,9 +25,7 @@ try {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <EnhancedUnifiedAuthProvider>
-        <App />
-      </EnhancedUnifiedAuthProvider>
+      <App />
     </React.StrictMode>
   );
   

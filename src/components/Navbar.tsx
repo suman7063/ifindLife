@@ -4,127 +4,48 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
-import { UserProfile, ExpertProfile, AdminProfile } from '@/types/database/unified';
-
-// Type guard functions
-const isUserProfile = (profile: any): profile is UserProfile => {
-  return profile && 'wallet_balance' in profile && 'currency' in profile;
-};
-const isExpertProfile = (profile: any): profile is ExpertProfile => {
-  return profile && 'specialization' in profile && 'experience' in profile;
-};
-const isAdminProfile = (profile: any): profile is AdminProfile => {
-  return profile && 'role' in profile && !('wallet_balance' in profile) && !('specialization' in profile);
-};
-
-// Helper function to get common properties safely
-const getCommonProfileProps = (profile: UserProfile | ExpertProfile | AdminProfile | null) => {
-  if (!profile) return {
-    name: '',
-    email: ''
-  };
-  return {
-    name: profile.name || '',
-    email: profile.email || '',
-    id: profile.id || ''
-  };
-};
-
-// Helper function to create a compatible currentUser object for NavbarDesktopLinks
-const createCompatibleUser = (userProfile: UserProfile | null, expertProfile: ExpertProfile | null, adminProfile: AdminProfile | null, sessionType: 'user' | 'expert' | 'admin' | null): UserProfile | null => {
-  // Return the appropriate profile based on session type
-  if (sessionType === 'user' && userProfile) {
-    return userProfile;
-  }
-  
-  if (sessionType === 'expert' && expertProfile) {
-    return {
-      id: expertProfile.id,
-      name: expertProfile.name || '',
-      email: expertProfile.email || '',
-      phone: expertProfile.phone || '',
-      country: expertProfile.country || '',
-      city: expertProfile.city || '',
-      currency: 'USD',
-      profile_picture: expertProfile.profile_picture || '',
-      wallet_balance: 0,
-      created_at: expertProfile.created_at || '',
-      updated_at: expertProfile.created_at || '',
-      referred_by: null,
-      referral_code: '',
-      referral_link: '',
-      favorite_experts: [],
-      favorite_programs: [],
-      enrolled_courses: [],
-      reviews: [],
-      reports: [],
-      transactions: [],
-      referrals: []
-    } as UserProfile;
-  }
-  
-  if (sessionType === 'admin' && adminProfile) {
-    return {
-      id: adminProfile.id,
-      name: adminProfile.name || '',
-      email: adminProfile.email || '',
-      phone: '',
-      country: '',
-      city: '',
-      currency: 'USD',
-      profile_picture: '',
-      wallet_balance: 0,
-      created_at: adminProfile.created_at || '',
-      updated_at: adminProfile.created_at || '',
-      referred_by: null,
-      referral_code: '',
-      referral_link: '',
-      favorite_experts: [],
-      favorite_programs: [],
-      enrolled_courses: [],
-      reviews: [],
-      reports: [],
-      transactions: [],
-      referrals: []
-    } as UserProfile;
-  }
-  
-  return null;
-};
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Use enhanced unified auth context
-  const {
-    isAuthenticated,
-    sessionType,
-    user,
-    admin,
-    expert,
-    userProfile,
-    expertProfile,
-    adminProfile,
-    isLoading,
-    logout
-  } = useEnhancedUnifiedAuth();
+  // Use simplified auth hook
+  const { isAuthenticated, userType, user, expert, userProfile, isLoading } = useSimpleAuth();
 
-  // Create compatible user object for navbar components
-  const currentUser = createCompatibleUser(userProfile, expertProfile, adminProfile, sessionType);
-  const hasExpertProfile = sessionType === 'expert' && !!expert;
-  const hasAdminProfile = sessionType === 'admin' && !!admin;
+  // Create a compatible user object for backward compatibility
+  const currentUser = userProfile || (expert ? {
+    id: expert.id,
+    name: expert.name || '',
+    email: expert.email || '',
+    phone: expert.phone || '',
+    country: expert.country || '',
+    city: expert.city || '',
+    currency: 'USD',
+    profile_picture: expert.profile_picture || '',
+    wallet_balance: 0,
+    created_at: expert.created_at || '',
+    updated_at: expert.created_at || '',
+    referred_by: null,
+    referral_code: '',
+    referral_link: '',
+    favorite_experts: [],
+    favorite_programs: [],
+    enrolled_courses: [],
+    reviews: [],
+    reports: [],
+    transactions: [],
+    referrals: []
+  } : null);
 
-  // Convert sessionType to match expected interface
-  const convertSessionType = (type: 'user' | 'admin' | 'expert' | null): 'user' | 'expert' | 'none' | 'dual' => {
-    if (!type) return 'none';
-    if (type === 'admin') return 'user';
-    if (type === 'expert') return 'expert';
-    return 'user';
+  const hasExpertProfile = userType === 'expert' && !!expert;
+
+  // Convert userType to match expected interface
+  const convertSessionType = (type: 'user' | 'expert' | 'none'): 'user' | 'expert' | 'none' | 'dual' => {
+    return type;
   };
-  const navbarSessionType = convertSessionType(sessionType);
+  const navbarSessionType = convertSessionType(userType);
 
   // Scroll effect
   useEffect(() => {
@@ -144,12 +65,10 @@ const Navbar = () => {
   const handleLogout = async (): Promise<boolean> => {
     try {
       console.log("Navbar: Initiating logout...");
-      await logout();
-      console.log("Navbar: Logout successful");
+      // For now, just clear localStorage and reload
+      localStorage.clear();
       showLogoutSuccessToast();
-
-      const redirectPath = sessionType === 'expert' ? '/expert-login' : sessionType === 'admin' ? '/admin-login' : '/user-login';
-      navigate(redirectPath);
+      window.location.reload();
       return true;
     } catch (error) {
       console.error('Error during logout:', error);

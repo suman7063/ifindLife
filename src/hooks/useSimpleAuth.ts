@@ -13,6 +13,8 @@ export interface SimpleAuthState {
   isAuthenticated: boolean;
   expert: any | null;
   userProfile: any | null;
+  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 export const useSimpleAuth = (): SimpleAuthState => {
@@ -59,7 +61,71 @@ export const useSimpleAuth = (): SimpleAuthState => {
     }
   };
 
+  const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<boolean> => {
+    try {
+      console.log('SimpleAuth: Attempting login for:', email, options?.asExpert ? 'as expert' : 'as user');
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        console.error('SimpleAuth: Login error:', error);
+        return false;
+      }
+
+      if (!data.user || !data.session) {
+        console.error('SimpleAuth: No user or session returned');
+        return false;
+      }
+
+      console.log('SimpleAuth: Login successful, determining user type...');
+      
+      // Set session immediately
+      setSession(data.session);
+      setUser(data.user);
+      
+      // Determine user type
+      const type = await determineUserType(data.user);
+      setUserType(type);
+      
+      // If trying to login as expert but user type is not expert, fail
+      if (options?.asExpert && type !== 'expert') {
+        console.error('SimpleAuth: User attempted expert login but is not an expert');
+        await supabase.auth.signOut();
+        return false;
+      }
+      
+      // If trying to login as user but user type is expert, allow it
+      // (experts can access user areas)
+      
+      console.log('SimpleAuth: Login completed successfully as:', type);
+      return true;
+    } catch (error) {
+      console.error('SimpleAuth: Login exception:', error);
+      return false;
+    }
+  };
+
+  const logout = async (): Promise<void> => {
+    try {
+      console.log('SimpleAuth: Logging out...');
+      await supabase.auth.signOut();
+      setSession(null);
+      setUser(null);
+      setUserType('none');
+      setExpert(null);
+      setUserProfile(null);
+      console.log('SimpleAuth: Logout completed');
+    } catch (error) {
+      console.error('SimpleAuth: Logout error:', error);
+    }
+  };
+
   useEffect(() => {
+    console.log('SimpleAuth: Setting up auth state listener...');
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -110,6 +176,8 @@ export const useSimpleAuth = (): SimpleAuthState => {
     isLoading,
     isAuthenticated: !!user,
     expert,
-    userProfile
+    userProfile,
+    login,
+    logout
   };
 };
