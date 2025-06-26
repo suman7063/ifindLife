@@ -12,9 +12,6 @@ export const loadAuthDependencies = {
   // Lazy load date utilities
   dateUtils: () => import('date-fns'),
   
-  // Lazy load encryption utilities (if needed)
-  crypto: () => import('crypto-js'),
-  
   // Lazy load chart components for analytics
   charts: () => import('recharts'),
 };

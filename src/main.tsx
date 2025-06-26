@@ -3,7 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { LazyAuthProvider } from '@/components/auth/LazyAuthProvider'
+import LazyAuthProvider from '@/components/auth/LazyAuthProvider'
 import { preloadAuthModules, checkPerformanceBudget } from '@/utils/auth/bundleOptimization'
 
 // Debug React availability
