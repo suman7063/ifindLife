@@ -9,6 +9,7 @@ import { HelpCircle, Send, Loader2, MessageSquare, Phone } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { UserProfile } from '@/types/database/unified';
+import type { SupportRequestInsert } from '@/types/database/support';
 import {
   Select,
   SelectContent,
@@ -50,14 +51,18 @@ const HelpSection: React.FC<HelpSectionProps> = ({ user }) => {
 
     try {
       // Submit support request to the database
-      const { error } = await supabase.from('support_requests').insert({
+      const supportRequestData: SupportRequestInsert = {
         user_id: user.id,
         category: formData.category,
         subject: formData.subject,
         message: formData.message,
         status: 'open',
         created_at: new Date().toISOString(),
-      });
+      };
+
+      const { error } = await supabase
+        .from('support_requests' as any) // Cast to any since types aren't generated yet
+        .insert(supportRequestData);
 
       if (error) {
         throw error;

@@ -634,6 +634,27 @@ export type Database = {
         }
         Relationships: []
       }
+      newsletter_subscriptions: {
+        Row: {
+          active: boolean | null
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          active?: boolean | null
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          active?: boolean | null
+          created_at?: string | null
+          email?: string
+          id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           content: string | null
@@ -763,7 +784,7 @@ export type Database = {
           id: number
           image: string
           price: number
-          programType: string
+          programType: Database["public"]["Enums"]["program_type"]
           sessions: number
           title: string
         }
@@ -776,7 +797,7 @@ export type Database = {
           id?: number
           image: string
           price: number
-          programType?: string
+          programType?: Database["public"]["Enums"]["program_type"]
           sessions: number
           title: string
         }
@@ -789,7 +810,7 @@ export type Database = {
           id?: number
           image?: string
           price?: number
-          programType?: string
+          programType?: Database["public"]["Enums"]["program_type"]
           sessions?: number
           title?: string
         }
@@ -876,6 +897,45 @@ export type Database = {
           name?: string
           rate_inr?: number
           rate_usd?: number
+        }
+        Relationships: []
+      }
+      support_requests: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string
+          id: string
+          message: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -1286,6 +1346,12 @@ export type Database = {
     }
     Enums: {
       moderation_action_type: "warning" | "suspension" | "ban" | "no_action"
+      program_type:
+        | "wellness"
+        | "academic"
+        | "business"
+        | "productivity"
+        | "leadership"
       report_reason:
         | "misleading_information"
         | "off_platform_redirection"
@@ -1410,6 +1476,13 @@ export const Constants = {
   public: {
     Enums: {
       moderation_action_type: ["warning", "suspension", "ban", "no_action"],
+      program_type: [
+        "wellness",
+        "academic",
+        "business",
+        "productivity",
+        "leadership",
+      ],
       report_reason: [
         "misleading_information",
         "off_platform_redirection",

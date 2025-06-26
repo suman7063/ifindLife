@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Program, ProgramType } from '@/types/programs';
+import { Program, ProgramType, ProgramUpdate } from '@/types/programs';
 import { toast } from 'sonner';
 
 export const useProgramManager = () => {
@@ -27,7 +27,13 @@ export const useProgramManager = () => {
         return;
       }
       
-      setPrograms(data || []);
+      // Type cast the data to ensure it matches our Program interface
+      const typedPrograms: Program[] = (data || []).map(program => ({
+        ...program,
+        programType: program.programType as ProgramType
+      }));
+      
+      setPrograms(typedPrograms);
     } catch (error) {
       console.error('Error fetching programs:', error);
       toast.error('An unexpected error occurred');
@@ -53,7 +59,7 @@ export const useProgramManager = () => {
   };
   
   // Save a program (create or update)
-  const handleSaveProgram = async (programData: Partial<Program>) => {
+  const handleSaveProgram = async (programData: ProgramUpdate) => {
     try {
       setIsLoading(true);
       

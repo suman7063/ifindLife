@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { Send } from 'lucide-react';
+import type { NewsletterSubscriptionInsert } from '@/types/database/newsletter';
 
 interface NewsletterSubscriptionProps {
   className?: string;
@@ -33,10 +34,15 @@ const NewsletterSubscription: React.FC<NewsletterSubscriptionProps> = ({
     setIsSubmitting(true);
     
     try {
-      // Store subscription in Supabase
-      const { error } = await supabase.from('newsletter_subscriptions').insert([
-        { email, created_at: new Date().toISOString() }
-      ]);
+      // Store subscription in Supabase using proper typing
+      const subscriptionData: NewsletterSubscriptionInsert = {
+        email,
+        created_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('newsletter_subscriptions' as any) // Cast to any since types aren't generated yet
+        .insert([subscriptionData]);
       
       if (error) {
         if (error.code === '23505') { // Unique constraint violation

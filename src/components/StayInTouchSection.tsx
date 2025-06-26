@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
+import type { NewsletterSubscriptionInsert } from '@/types/database/newsletter';
 
 const StayInTouchSection: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -13,9 +15,11 @@ const StayInTouchSection: React.FC = () => {
     setLoading(true);
 
     try {
+      const subscriptionData: NewsletterSubscriptionInsert = { email };
+      
       const { error } = await supabase
-        .from('newsletter_subscriptions')
-        .insert([{ email }]);
+        .from('newsletter_subscriptions' as any) // Cast to any since types aren't generated yet
+        .insert([subscriptionData]);
 
       if (error) {
         console.error('Error subscribing:', error);
