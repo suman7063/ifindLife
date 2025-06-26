@@ -32,8 +32,8 @@ export const useProgramManager = () => {
         ...program,
         programType: program.programType as ProgramType,
         enrollments: program.enrollments || 0,
-        is_favorite: program.is_favorite || false,
-        is_featured: program.is_featured || false
+        is_favorite: program.is_favorite !== undefined ? program.is_favorite : false,
+        is_featured: program.is_featured !== undefined ? program.is_featured : false
       }));
       
       setPrograms(typedPrograms);

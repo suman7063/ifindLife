@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, User, Star, BookOpen, Heart, Activity } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import LoadingScreen from '@/components/auth/LoadingScreen';
@@ -20,189 +24,158 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserProfile } from '@/types/database/unified';
 
-const UserDashboardPages: React.FC = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const navigate = useNavigate();
-  const { section } = useParams<{ section?: string }>();
-  
-  console.log('Current dashboard section:', section);
-  
-  // Check auth status and fetch user profile
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Check if user is logged in
-        const { data: sessionData } = await supabase.auth.getSession();
-        
-        if (!sessionData.session) {
-          console.log('No session found, redirecting to login');
-          navigate('/user-login');
-          return;
-        }
-        
-        // Get user data from users table
-        const { data: userData, error } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', sessionData.session.user.id)
-          .single();
-          
-        if (error || !userData) {
-          console.error('Error fetching user data:', error);
-          // Try to get at least basic info from auth user
-          const basicUserProfile: UserProfile = {
-            id: sessionData.session.user.id,
-            name: sessionData.session.user.user_metadata?.name || 'User',
-            email: sessionData.session.user.email || '',
-            profile_picture: null,
-            phone: '',
-            country: '',
-            city: '',
-            wallet_balance: 0,
-            currency: 'INR',
-            created_at: new Date().toISOString(),
-            referred_by: null,
-            referral_code: '',
-            referral_link: '',
-            favorite_experts: [],
-            favorite_programs: [],
-            enrolled_courses: [],
-            reviews: [],
-            reports: [],
-            transactions: [],
-            referrals: []
-          };
-          setUser(basicUserProfile);
-        } else {
-          // Use data from users table and ensure all properties exist
-          const fullUserProfile: UserProfile = {
-            id: userData.id,
-            name: userData.name || sessionData.session.user.user_metadata?.name || 'User',
-            email: userData.email || sessionData.session.user.email || '',
-            profile_picture: userData.profile_picture || null,
-            phone: userData.phone || '',
-            country: userData.country || '',
-            city: userData.city || '',
-            wallet_balance: userData.wallet_balance || 0,
-            currency: userData.currency || 'INR',
-            created_at: userData.created_at || new Date().toISOString(),
-            referred_by: userData.referred_by || null,
-            referral_code: userData.referral_code || '',
-            referral_link: userData.referral_link || '',
-            favorite_experts: userData.favorite_experts || [],
-            favorite_programs: userData.favorite_programs || [],
-            enrolled_courses: userData.enrolled_courses || [],
-            reviews: [],
-            reports: [],
-            transactions: [],
-            referrals: []
-          };
-          setUser(fullUserProfile);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        toast.error('Failed to load user data');
-        navigate('/user-login');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchUserData();
-  }, [navigate]);
+interface UserDashboardPagesProps {
+  currentUser: any;
+  onNavigate: (section: string) => void;
+}
 
-  // Handle user logout with boolean return type
-  const handleLogout = async (): Promise<boolean> => {
-    try {
-      setIsLoggingOut(true);
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) {
-        toast.error('Failed to logout. Please try again.');
-        return false;
-      }
-      
-      // Clear local storage
-      localStorage.removeItem('sessionType');
-      
-      // Redirect to logout confirmation page
-      toast.success('Logged out successfully');
-      navigate('/logout?type=user');
-      return true;
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('An error occurred during logout');
-      return false;
-    } finally {
-      setIsLoggingOut(false);
-    }
+const UserDashboardPages: React.FC<UserDashboardPagesProps> = ({ 
+  currentUser, 
+  onNavigate 
+}) => {
+  // Mock data with safe defaults
+  const mockData = {
+    recentActivities: [
+      { id: 1, type: 'session', description: 'Completed session with Dr. Sarah Johnson', date: '2024-01-15', icon: User },
+      { id: 2, type: 'program', description: 'Enrolled in Anxiety Management Program', date: '2024-01-14', icon: BookOpen },
+      { id: 3, type: 'review', description: 'Left a review for Dr. Michael Chen', date: '2024-01-13', icon: Star }
+    ],
+    upcomingAppointments: [
+      { id: 1, expertName: 'Dr. Sarah Johnson', date: '2024-01-20', time: '2:00 PM', type: 'Individual Session' },
+      { id: 2, expertName: 'Dr. Michael Chen', date: '2024-01-22', time: '10:00 AM', type: 'Group Therapy' }
+    ],
+    favoriteExperts: currentUser?.favorite_experts || [],
+    favoritePrograms: currentUser?.favorite_programs || [],
+    enrolledCourses: currentUser?.enrolled_courses || []
   };
-
-  // Render the appropriate section based on the URL parameter
-  const renderSection = () => {
-    if (!user) return null;
-    
-    console.log('Rendering section:', section);
-    
-    switch(section) {
-      case 'profile':
-        return <ProfileSection user={user} />;
-      case 'wallet':
-        return <WalletSection user={user} />;
-      case 'appointments':
-      case 'consultations':
-        return <ConsultationsSection user={user} />;
-      case 'booking-history':
-        return <BookingHistorySection user={user} />;
-      case 'progress':
-        return <ProgressTrackingSection user={user} />;
-      case 'favorites':
-        return <FavoritesSection user={user} />;
-      case 'programs':
-        return <ProgramsSection user={user} />;
-      case 'messages':
-        return <MessagesSection user={user} />;
-      case 'security':
-        return <SecuritySection />;
-      case 'settings':
-        return <SettingsSection user={user} />;
-      case 'support':
-      case 'help':
-        return <SupportSection />;
-      default:
-        return <DashboardHome user={user} />;
-    }
-  };
-
-  if (isLoading) {
-    return <LoadingScreen message="Loading your dashboard..." />;
-  }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      {/* Keep website header */}
-      <Navbar />
-      
-      {/* Main content */}
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <UserDashboardSidebar 
-          user={user} 
-          onLogout={handleLogout} 
-          isLoggingOut={isLoggingOut}
-        />
-        
-        {/* Content */}
-        <div className="flex-1 p-6 overflow-auto">
-          {renderSection()}
-        </div>
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Welcome back, {currentUser?.name || 'User'}!
+        </h1>
+        <p className="text-gray-600">
+          Here's what's happening with your mental wellness journey today.
+        </p>
       </div>
-      
-      <Footer />
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Favorite Experts</CardTitle>
+            <Heart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mockData.favoriteExperts.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Enrolled Programs</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mockData.enrolledCourses.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Upcoming Sessions</CardTitle>
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{mockData.upcomingAppointments.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Wallet Balance</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${currentUser?.wallet_balance?.toFixed(2) || '0.00'}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button variant="outline" onClick={() => onNavigate('experts')}>
+              Find Experts
+            </Button>
+            <Button variant="outline" onClick={() => onNavigate('programs')}>
+              Browse Programs
+            </Button>
+            <Button variant="outline" onClick={() => onNavigate('appointments')}>
+              Book Session
+            </Button>
+            <Button variant="outline" onClick={() => onNavigate('wallet')}>
+              Add Funds
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Recent Activities */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activities</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {mockData.recentActivities.map((activity) => {
+              const Icon = activity.icon;
+              return (
+                <div key={activity.id} className="flex items-center space-x-4">
+                  <div className="bg-blue-100 p-2 rounded-full">
+                    <Icon className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{activity.description}</p>
+                    <p className="text-xs text-gray-500">{activity.date}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Upcoming Appointments */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Upcoming Appointments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {mockData.upcomingAppointments.map((appointment) => (
+              <div key={appointment.id} className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">{appointment.expertName}</p>
+                  <p className="text-sm text-gray-500">{appointment.type}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">{appointment.date}</p>
+                  <p className="text-xs text-gray-500">{appointment.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,10 +20,17 @@ const ProgramDetail: React.FC = () => {
           return;
         }
 
+        // Convert string ID to number for database query
+        const programId = parseInt(id);
+        if (isNaN(programId)) {
+          console.error('Invalid program ID format');
+          return;
+        }
+
         const { data, error } = await supabase
           .from('programs')
           .select('*')
-          .eq('id', id)
+          .eq('id', programId)
           .single();
 
         if (error) {
