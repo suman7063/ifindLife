@@ -11,17 +11,15 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
+import { useAuth } from '@/contexts/SimpleAuthProvider';
 
 const ExpertDashboard = () => {
-  const { isAuthenticated, sessionType, expert, isLoading } = useEnhancedUnifiedAuth();
+  const { isAuthenticated, userType, isLoading } = useAuth();
   
-  console.log('ExpertDashboard - Enhanced unified auth state:', {
+  console.log('ExpertDashboard - Simple auth state:', {
     isAuthenticated,
-    sessionType,
-    hasExpertProfile: !!expert,
-    isLoading,
-    expertStatus: expert?.status
+    userType,
+    isLoading
   });
 
   // Show loading state while authentication is being checked
@@ -37,7 +35,7 @@ const ExpertDashboard = () => {
   }
 
   // Handle unauthorized access
-  if (!isAuthenticated || sessionType !== 'expert' || !expert) {
+  if (!isAuthenticated || userType !== 'expert') {
     return <Navigate to="/expert-login" replace />;
   }
 
