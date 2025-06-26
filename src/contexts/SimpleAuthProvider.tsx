@@ -4,7 +4,7 @@ import { useSimpleAuth, UserType } from '@/hooks/useSimpleAuth';
 import { User, Session } from '@supabase/supabase-js';
 
 // Export UserType so it can be used by other components
-export { UserType };
+export type { UserType };
 
 interface SimpleAuthContextType {
   user: User | null;
