@@ -3,6 +3,9 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { useSimpleAuth, UserType } from '@/hooks/useSimpleAuth';
 import { User, Session } from '@supabase/supabase-js';
 
+// Export UserType so it can be used by other components
+export { UserType };
+
 interface SimpleAuthContextType {
   user: User | null;
   session: Session | null;
