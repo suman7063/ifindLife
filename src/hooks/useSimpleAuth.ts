@@ -26,38 +26,102 @@ export const useSimpleAuth = (): SimpleAuthState => {
   const [userProfile, setUserProfile] = useState<any | null>(null);
 
   const determineUserType = async (currentUser: User | null): Promise<UserType> => {
-    if (!currentUser) return 'none';
+    if (!currentUser) {
+      setExpert(null);
+      setUserProfile(null);
+      return 'none';
+    }
 
     try {
-      // Check if user is an expert
-      const { data: expertData } = await supabase
+      console.log('SimpleAuth: Determining user type for:', currentUser.id);
+
+      // Check if user is an expert first
+      const { data: expertData, error: expertError } = await supabase
         .from('experts')
         .select('*')
         .eq('id', currentUser.id)
         .single();
 
-      if (expertData) {
+      if (!expertError && expertData) {
+        console.log('SimpleAuth: User is an expert:', expertData.name);
         setExpert(expertData);
+        setUserProfile(null);
         return 'expert';
       }
 
       // Check if user has a regular user profile
-      const { data: profileData } = await supabase
-        .from('profiles')
+      const { data: profileData, error: profileError } = await supabase
+        .from('users')
         .select('*')
         .eq('id', currentUser.id)
         .single();
 
-      if (profileData) {
+      if (!profileError && profileData) {
+        console.log('SimpleAuth: User has user profile:', profileData.name);
         setUserProfile(profileData);
+        setExpert(null);
         return 'user';
       }
 
-      // Default to user if no specific profile found
+      // If no specific profile found, create a basic user profile
+      console.log('SimpleAuth: No profile found, creating basic user profile');
+      const basicProfile = {
+        id: currentUser.id,
+        name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User',
+        email: currentUser.email || '',
+        phone: '',
+        country: '',
+        city: '',
+        wallet_balance: 0,
+        currency: 'USD',
+        profile_picture: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        referred_by: null,
+        referral_code: '',
+        referral_link: '',
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        reports: [],
+        transactions: [],
+        referrals: []
+      };
+      
+      setUserProfile(basicProfile);
+      setExpert(null);
       return 'user';
     } catch (error) {
-      console.error('Error determining user type:', error);
-      return 'user'; // Default fallback
+      console.error('SimpleAuth: Error determining user type:', error);
+      // Default to user with basic profile
+      const basicProfile = {
+        id: currentUser.id,
+        name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User',
+        email: currentUser.email || '',
+        phone: '',
+        country: '',
+        city: '',
+        wallet_balance: 0,
+        currency: 'USD',
+        profile_picture: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        referred_by: null,
+        referral_code: '',
+        referral_link: '',
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        reports: [],
+        transactions: [],
+        referrals: []
+      };
+      
+      setUserProfile(basicProfile);
+      setExpert(null);
+      return 'user';
     }
   };
 
@@ -94,11 +158,13 @@ export const useSimpleAuth = (): SimpleAuthState => {
       if (options?.asExpert && type !== 'expert') {
         console.error('SimpleAuth: User attempted expert login but is not an expert');
         await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setUserType('none');
+        setExpert(null);
+        setUserProfile(null);
         return false;
       }
-      
-      // If trying to login as user but user type is expert, allow it
-      // (experts can access user areas)
       
       console.log('SimpleAuth: Login completed successfully as:', type);
       return true;

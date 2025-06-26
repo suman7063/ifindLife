@@ -28,6 +28,7 @@ import FAQs from './pages/FAQs';
 import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import UnifiedAssessment from './pages/UnifiedAssessment';
+import AuthTestPage from './pages/AuthTestPage';
 import { Toaster } from '@/components/ui/toaster';
 import AdminLoginClean from '@/pages/AdminLoginClean';
 import AdminDashboardClean from '@/pages/AdminDashboardClean';
@@ -88,6 +89,9 @@ function App() {
           {/* Clean Admin Routes - Completely Isolated */}
           <Route path="/admin-login-clean" element={<AdminLoginClean />} />
           <Route path="/admin-dashboard-clean" element={<AdminDashboardClean />} />
+          
+          {/* Authentication Test Suite */}
+          <Route path="/auth-test" element={<AuthTestPage />} />
           
           {/* Legal Routes */}
           <Route path="/terms-of-service" element={<TermsOfService />} />

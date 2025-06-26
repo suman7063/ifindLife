@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
@@ -11,6 +10,7 @@ import { lazy, Suspense } from 'react';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import ExpertsOnlineSection from '@/components/ExpertsOnlineSection';
 import Footer from '@/components/Footer';
+import AuthDebugPanel from '@/components/debug/AuthDebugPanel';
 
 // Lazy load non-critical components
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
@@ -90,6 +90,9 @@ const Index = () => {
 
       {/* Footer */}
       <Footer />
+      
+      {/* Debug Panel - Only in development */}
+      <AuthDebugPanel />
     </div>
   );
 };
