@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
@@ -11,6 +10,7 @@ import { lazy, Suspense } from 'react';
 import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import ExpertsOnlineSection from '@/components/ExpertsOnlineSection';
 import Footer from '@/components/Footer';
+import SimpleAuthTest from '@/components/debug/SimpleAuthTest';
 
 // Lazy load non-critical components
 const TestimonialsSection = lazy(() => import('@/components/TestimonialsSection'));
@@ -42,6 +42,12 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col home-page">
       <Navbar />
+      
+      {/* Temporary debug component */}
+      <div className="container mx-auto px-4 py-4">
+        <SimpleAuthTest />
+      </div>
+      
       <main className="flex-1">
         {/* Section 1: Hero Banner with enhanced slider and service cards */}
         <EnhancedHero />
