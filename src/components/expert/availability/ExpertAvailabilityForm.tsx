@@ -1,16 +1,11 @@
+
 import React, { useState } from 'react';
-import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
-import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
-import { UserProfile } from '@/types/supabase/user';
 
 interface ExpertAvailabilityFormProps {
-  user: UserProfile;
+  user: any;
 }
 
 const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({ user }) => {
-  const { toTypeB } = useProfileTypeAdapter();
-  const adaptedUser = toTypeB(user);
-  
   // State variables
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const [startTime, setStartTime] = useState<string>('09:00');
@@ -44,7 +39,7 @@ const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({ user })
 
     // Construct availability data
     const availabilityData = {
-      expertId: adaptedUser?.id,
+      expertId: user?.id,
       days: selectedDays,
       startTime,
       endTime,
@@ -162,4 +157,4 @@ const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({ user })
   );
 };
 
-export default withProfileTypeAdapter(ExpertAvailabilityForm);
+export default ExpertAvailabilityForm;

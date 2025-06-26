@@ -2,13 +2,11 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Program } from '@/types/programs';
-import { UserProfile } from '@/types/supabase/user';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { useDialog } from '@/hooks/useDialog';
 import { useFavorites } from '@/contexts/favorites/FavoritesContext';
-import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import ProgramImageHeader from './components/ProgramImageHeader';
 import ProgramMetadata from './components/ProgramMetadata';
@@ -17,7 +15,7 @@ import ProgramPriceFooter from './components/ProgramPriceFooter';
 
 interface ProgramDetailDialogProps {
   program: Program;
-  currentUser: UserProfile | null;
+  currentUser: any | null;
   isAuthenticated: boolean;
   onClose?: () => void;
 }
@@ -111,4 +109,4 @@ const ProgramDetailDialog: React.FC<ProgramDetailDialogProps> = ({
   );
 };
 
-export default withProfileTypeAdapter(ProgramDetailDialog);
+export default ProgramDetailDialog;

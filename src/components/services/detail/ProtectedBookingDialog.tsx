@@ -1,8 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
-import { useAuthProtection } from '@/utils/authProtection';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import EnhancedExpertSelectionModal from '@/components/expert/EnhancedExpertSelectionModal';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Lock } from 'lucide-react';
@@ -21,34 +20,11 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
   serviceTitle,
   serviceType
 }) => {
-  const { isAuthenticated, isLoading, sessionType } = useEnhancedUnifiedAuth();
-  const { startProtection, endProtection, isProtected } = useAuthProtection();
+  const { isAuthenticated, isLoading } = useSimpleAuth();
   const [showExpertSelection, setShowExpertSelection] = useState(false);
-  const [operationId, setOperationId] = useState<string | null>(null);
 
-  // Start protection when dialog opens
-  useEffect(() => {
-    if (open && isAuthenticated) {
-      const id = `booking_${serviceTitle}_${Date.now()}`;
-      setOperationId(id);
-      startProtection(id, 'booking');
-      console.log('🔒 Started booking protection for:', serviceTitle);
-    }
-    
-    return () => {
-      if (operationId) {
-        endProtection(operationId);
-        console.log('🔒 Ended booking protection for:', serviceTitle);
-      }
-    };
-  }, [open, isAuthenticated, serviceTitle]);
-
-  // Handle dialog close with protection cleanup
+  // Handle dialog close
   const handleClose = () => {
-    if (operationId) {
-      endProtection(operationId);
-      setOperationId(null);
-    }
     setShowExpertSelection(false);
     onOpenChange(false);
   };
@@ -67,10 +43,9 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
     setShowExpertSelection(true);
   };
 
-  // Handle expert selection (this is where the critical auth operation happens)
+  // Handle expert selection
   const handleExpertSelected = (expertId: number) => {
-    console.log('🔒 Expert selected during protected booking:', expertId);
-    // The expert selection will handle its own auth protection
+    console.log('Expert selected during booking:', expertId);
     setShowExpertSelection(false);
     handleClose();
   };
@@ -94,7 +69,7 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
-              {isProtected() && <Lock className="h-5 w-5 text-green-600" />}
+              {isAuthenticated && <Lock className="h-5 w-5 text-green-600" />}
               <span>Book {serviceTitle}</span>
             </DialogTitle>
           </DialogHeader>
@@ -131,19 +106,17 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
               </div>
             ) : (
               <div className="space-y-4">
-                {isProtected() && (
-                  <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg">
-                    <Lock className="h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium text-green-800 dark:text-green-200">
-                        Session Protected
-                      </p>
-                      <p className="text-xs text-green-600 dark:text-green-300">
-                        Your authentication is secured during this booking process
-                      </p>
-                    </div>
+                <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg">
+                  <Lock className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="text-sm font-medium text-green-800 dark:text-green-200">
+                      Session Protected
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-300">
+                      Your authentication is secured during this booking process
+                    </p>
                   </div>
-                )}
+                </div>
 
                 <div className="text-center space-y-2">
                   <h3 className="text-lg font-semibold">Ready to Book</h3>
@@ -166,7 +139,7 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
         </DialogContent>
       </Dialog>
 
-      {/* Expert Selection Modal with Auth Protection */}
+      {/* Expert Selection Modal */}
       {showExpertSelection && (
         <EnhancedExpertSelectionModal
           isOpen={showExpertSelection}

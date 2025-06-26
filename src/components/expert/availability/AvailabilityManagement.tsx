@@ -1,24 +1,30 @@
 
 import React from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import ExpertAvailabilityForm from './ExpertAvailabilityForm';
 import ExpertAvailabilityList from './ExpertAvailabilityList';
-import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
 
 const AvailabilityManagement: React.FC = () => {
-  const { userProfile } = useAuth();
+  const { expert, userProfile, isLoading } = useSimpleAuth();
   
-  if (!userProfile) {
+  // Use expert profile if available, otherwise fall back to user profile
+  const currentUser = expert || userProfile;
+  
+  if (isLoading) {
     return <div>Loading profile...</div>;
+  }
+  
+  if (!currentUser) {
+    return <div>No profile found. Please log in.</div>;
   }
   
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold">Manage Your Availability</h2>
-      <ExpertAvailabilityForm user={userProfile} />
-      <ExpertAvailabilityList user={userProfile} />
+      <ExpertAvailabilityForm user={currentUser} />
+      <ExpertAvailabilityList user={currentUser} />
     </div>
   );
 };
 
-export default withProfileTypeAdapter(AvailabilityManagement);
+export default AvailabilityManagement;

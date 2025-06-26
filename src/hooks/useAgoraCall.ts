@@ -1,9 +1,8 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
-import { useAuthProtection } from '@/utils/authProtection';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 
-// Enhanced Agora hook with comprehensive auth protection
+// Enhanced Agora hook with simplified auth
 export const useAgoraCall = (expertId: number, expertPrice: number) => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [callState, setCallState] = useState<any>(null);
@@ -14,31 +13,17 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
   const [callError, setCallError] = useState<string | null>(null);
   const [callOperationId, setCallOperationId] = useState<string | null>(null);
   
-  const { isAuthenticated, startAuthProtection, endAuthProtection } = useEnhancedUnifiedAuth();
-  const { startProtection, endProtection } = useAuthProtection();
+  const { isAuthenticated } = useSimpleAuth();
   
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (callOperationId) {
-        endAuthProtection(callOperationId);
-        endProtection(callOperationId);
-      }
-    };
-  }, [callOperationId, endAuthProtection, endProtection]);
-  
-  // Enhanced initialization with comprehensive auth protection
+  // Enhanced initialization with auth protection
   const initializeAgoraCall = useCallback(async () => {
     if (isInitialized) return;
     
     const operationId = `agora_init_${expertId}_${Date.now()}`;
     
-    console.log('🔒 Initializing Agora call with comprehensive auth protection for expert:', expertId);
+    console.log('Initializing Agora call for expert:', expertId);
     
     try {
-      // Start both levels of auth protection
-      startAuthProtection(operationId, 'video-call');
-      startProtection(operationId, 'video-call');
       setCallOperationId(operationId);
       
       // Store current auth state before Agora initialization
@@ -48,7 +33,7 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
         authToken: sessionStorage.getItem('supabase.auth.token')
       };
       
-      console.log('🔒 Auth state before Agora init:', authSnapshot);
+      console.log('Auth state before Agora init:', authSnapshot);
       
       // Mark video call as active to protect auth
       sessionStorage.setItem('videoCallActive', 'true');
@@ -61,34 +46,26 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
         const { useCallOperations } = await import('./call/useCallOperations');
         
         setIsInitialized(true);
-        console.log('🔒 Agora modules loaded successfully with auth protection');
+        console.log('Agora modules loaded successfully');
         
         return { useCallState, useCallTimer, useCallOperations };
       } catch (importError) {
-        console.log('🔒 Agora modules not available, using fallback implementation');
+        console.log('Agora modules not available, using fallback implementation');
         setIsInitialized(true);
         return null;
       }
     } catch (error) {
-      console.error('🔒 Error initializing Agora with auth protection:', error);
+      console.error('Error initializing Agora:', error);
       setCallError('Failed to initialize video call');
-      
-      // Cleanup on error
-      if (operationId) {
-        endAuthProtection(operationId);
-        endProtection(operationId);
-      }
     }
-  }, [expertId, isInitialized, isAuthenticated, startAuthProtection, startProtection]);
+  }, [expertId, isInitialized, isAuthenticated]);
 
   const startCall = async (duration: number, callType: 'video' | 'voice' = 'video') => {
     try {
-      console.log('🔒 Starting call with comprehensive auth protection');
+      console.log('Starting call');
       
       if (!callOperationId) {
         const operationId = `call_${expertId}_${Date.now()}`;
-        startAuthProtection(operationId, 'video-call');
-        startProtection(operationId, 'video-call');
         setCallOperationId(operationId);
       }
       
@@ -110,10 +87,10 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
       setDuration(0);
       setRemainingTime(duration * 60);
       
-      console.log('🔒 Call started successfully with comprehensive auth protection');
+      console.log('Call started successfully');
       return true;
     } catch (error) {
-      console.error('🔒 Error starting call:', error);
+      console.error('Error starting call:', error);
       setCallError('Failed to start call');
       return false;
     }
@@ -121,7 +98,7 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
 
   const endCall = async () => {
     try {
-      console.log('🔒 Ending call, maintaining auth state during cleanup');
+      console.log('Ending call');
       
       const result = { success: true, cost };
       
@@ -129,55 +106,45 @@ export const useAgoraCall = (expertId: number, expertPrice: number) => {
       sessionStorage.removeItem('callInProgress');
       sessionStorage.removeItem('activeCallExpertId');
       
-      // Clear call state but maintain auth protection briefly for cleanup
+      // Clear call state
       setCallState(null);
       
-      // Delay auth protection removal to ensure smooth transition
+      // Delay cleanup to ensure smooth transition
       setTimeout(() => {
-        if (callOperationId) {
-          endAuthProtection(callOperationId);
-          endProtection(callOperationId);
-          setCallOperationId(null);
-        }
+        setCallOperationId(null);
         sessionStorage.removeItem('videoCallActive');
-        console.log('🔒 Auth protection removed after call end cleanup');
+        console.log('Call cleanup completed');
       }, 3000); // 3 second delay for cleanup
       
       return result;
     } catch (error) {
-      console.error('🔒 Error ending call:', error);
+      console.error('Error ending call:', error);
       return { success: false, cost: 0 };
     }
   };
 
   const handleToggleMute = () => {
-    console.log('🔒 Toggle mute with auth protection');
+    console.log('Toggle mute');
     setCallState((prev: any) => prev ? { ...prev, isMuted: !prev.isMuted } : prev);
   };
 
   const handleToggleVideo = () => {
-    console.log('🔒 Toggle video with auth protection');
+    console.log('Toggle video');
     setCallState((prev: any) => prev ? { ...prev, isVideoEnabled: !prev.isVideoEnabled } : prev);
   };
 
   const extendCall = async (additionalMinutes: number) => {
-    console.log('🔒 Extending call with auth protection');
+    console.log('Extending call');
     setIsExtending(true);
     
     try {
-      // Extend auth protection for the additional time
-      if (callOperationId) {
-        const extendedTime = Date.now() + (additionalMinutes * 60 * 1000);
-        sessionStorage.setItem(`authProtection_${callOperationId}_extended`, extendedTime.toString());
-      }
-      
       setRemainingTime(prev => prev + (additionalMinutes * 60));
       
       setTimeout(() => {
         setIsExtending(false);
       }, 1000);
     } catch (error) {
-      console.error('🔒 Error extending call:', error);
+      console.error('Error extending call:', error);
       setIsExtending(false);
     }
   };

@@ -1,21 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
-import { withProfileTypeAdapter } from '@/components/wrappers/withProfileTypeAdapter';
-import { UserProfile } from '@/types/supabase/user';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import EmptyAvailabilityState from './EmptyAvailabilityState';
 import AvailabilityCard from './AvailabilityCard';
 
 interface ExpertAvailabilityListProps {
-  user: UserProfile;
+  user: any;
 }
 
 const ExpertAvailabilityList: React.FC<ExpertAvailabilityListProps> = ({ user }) => {
-  const { toTypeB } = useProfileTypeAdapter();
-  const adaptedUser = toTypeB(user);
-  
-  const { userProfile } = useAuth();
+  const { userProfile } = useSimpleAuth();
   const [availabilities, setAvailabilities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -79,4 +73,4 @@ const ExpertAvailabilityList: React.FC<ExpertAvailabilityListProps> = ({ user })
   );
 };
 
-export default withProfileTypeAdapter(ExpertAvailabilityList);
+export default ExpertAvailabilityList;
