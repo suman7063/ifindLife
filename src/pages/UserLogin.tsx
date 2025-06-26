@@ -1,27 +1,24 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
-import AuthRedirectSystem from '@/utils/authRedirectSystem';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const { isAuthenticated, sessionType, user, isLoading: authLoading } = useEnhancedUnifiedAuth();
+  const { isAuthenticated, userType, user, isLoading, login } = useSimpleAuth();
 
-  console.log('UserLogin: Current enhanced unified auth state:', {
+  console.log('UserLogin: Current simple auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
-    sessionType,
+    userType,
     hasUser: Boolean(user),
-    authLoading: Boolean(authLoading),
+    isLoading: Boolean(isLoading),
     userEmail: user?.email
   });
 
@@ -32,38 +29,29 @@ const UserLogin: React.FC = () => {
         console.log('UserLogin: Checking for existing session...');
         
         // Wait for auth state to stabilize
-        if (authLoading) {
+        if (isLoading) {
           console.log('UserLogin: Auth still loading, waiting...');
           return;
         }
         
-        // Enhanced authentication check using unified auth
+        // Check if user is properly authenticated
         const isProperlyAuthenticated = Boolean(
           isAuthenticated && 
-          sessionType === 'user' && 
+          userType === 'user' && 
           user
         );
         
-        console.log('UserLogin: Enhanced auth check result:', {
+        console.log('UserLogin: Auth check result:', {
           isAuthenticated: Boolean(isAuthenticated),
-          sessionType,
+          userType,
           hasUser: Boolean(user),
           isProperlyAuthenticated,
-          authLoading: Boolean(authLoading)
+          isLoading: Boolean(isLoading)
         });
         
         if (isProperlyAuthenticated) {
-          console.log('UserLogin: User is properly authenticated, handling redirect...');
-          
-          // Execute pending redirect/action
-          setTimeout(async () => {
-            const redirectExecuted = await AuthRedirectSystem.executeRedirect();
-            
-            if (!redirectExecuted) {
-              console.log('UserLogin: No redirect data, going to dashboard');
-              navigate('/user-dashboard', { replace: true });
-            }
-          }, 100);
+          console.log('UserLogin: User is properly authenticated, redirecting to dashboard...');
+          navigate('/user-dashboard', { replace: true });
         } else {
           console.log('UserLogin: User not authenticated, staying on login page');
         }
@@ -75,9 +63,9 @@ const UserLogin: React.FC = () => {
     };
     
     checkSession();
-  }, [navigate, isAuthenticated, sessionType, user, authLoading]);
+  }, [navigate, isAuthenticated, userType, user, isLoading]);
 
-  // Handle login form submission with enhanced logging
+  // Handle login form submission
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password', { duration: 2000 });
@@ -85,53 +73,30 @@ const UserLogin: React.FC = () => {
     }
     
     try {
-      setIsLoggingIn(true);
-      console.log('UserLogin: Attempting login with enhanced flow:', email);
+      console.log('UserLogin: Attempting login:', email);
       
-      // Check if we have redirect data to show appropriate message
-      const redirectData = AuthRedirectSystem.getRedirect();
-      if (redirectData) {
-        toast.info(`Logging you in to ${redirectData.action || 'continue'}...`);
-      }
+      const success = await login(email, password);
       
-      // Set session type before login attempt
-      localStorage.setItem('sessionType', 'user');
-      console.log('UserLogin: Session type set to user');
-      
-      // Proceed with login
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      
-      if (error) {
-        console.error('UserLogin: Login error:', error);
-        toast.error(error.message || 'Invalid email or password', { duration: 2000 });
+      if (success) {
+        console.log('UserLogin: Login successful');
+        toast.success('Login successful!', { duration: 2000 });
+        
+        // Navigation will be handled by the useEffect above when auth state changes
+        return true;
+      } else {
+        console.error('UserLogin: Login failed');
+        toast.error('Invalid email or password', { duration: 2000 });
         return false;
       }
-      
-      if (!data.user || !data.session) {
-        console.error('UserLogin: No user or session returned');
-        toast.error('Login failed. Please try again.', { duration: 2000 });
-        return false;
-      }
-      
-      console.log('UserLogin: Login successful, user ID:', data.user.id);
-      toast.success('Login successful!', { duration: 2000 });
-      
-      // Auth state change will trigger redirect handling
-      return true;
     } catch (error: any) {
       console.error('UserLogin: Login error:', error);
       toast.error('An unexpected error occurred', { duration: 2000 });
       return false;
-    } finally {
-      setIsLoggingIn(false);
     }
   };
   
   // Show loading while checking auth
-  if (isCheckingAuth || authLoading) {
+  if (isCheckingAuth || isLoading) {
     return (
       <>
         <Navbar />
@@ -145,26 +110,20 @@ const UserLogin: React.FC = () => {
   }
 
   // If user is authenticated, show redirect message
-  if (isAuthenticated && sessionType === 'user' && user && !authLoading) {
+  if (isAuthenticated && userType === 'user' && user && !isLoading) {
     console.log('UserLogin: User is authenticated, should redirect');
     return (
       <>
         <Navbar />
         <div className="flex justify-center items-center min-h-screen">
           <Loader2 className="h-8 w-8 animate-spin" />
-          <span className="ml-2">Processing your request...</span>
+          <span className="ml-2">Redirecting to dashboard...</span>
         </div>
         <Footer />
       </>
     );
   }
 
-  // Get redirect context for UI messaging
-  const redirectData = AuthRedirectSystem.getRedirect();
-  const actionMessage = redirectData 
-    ? `Login to ${redirectData.action || 'continue'} ${redirectData.expertName ? `with ${redirectData.expertName}` : ''}`
-    : 'Login to access your account';
-  
   return (
     <>
       <Navbar />
@@ -173,17 +132,12 @@ const UserLogin: React.FC = () => {
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Welcome to iFindLife</CardTitle>
             <p className="text-muted-foreground mt-2">
-              {actionMessage}
+              Login to access your account
             </p>
-            {redirectData && (
-              <p className="text-sm text-primary mt-1">
-                You'll be returned to complete your action after logging in
-              </p>
-            )}
           </CardHeader>
           
           <CardContent>
-            <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
+            <UserLoginTabs onLogin={handleLogin} isLoggingIn={false} />
           </CardContent>
         </Card>
       </div>
