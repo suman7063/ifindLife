@@ -1,188 +1,181 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Program, ProgramType, ProgramUpdate } from '@/types/programs';
-import { toast } from 'sonner';
+import { Program, ProgramInsert, ProgramUpdate } from '@/types/programs';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useProgramManager = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [activeTab, setActiveTab] = useState<ProgramType>('wellness');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch programs from the database
   const fetchPrograms = async () => {
+    setLoading(true);
+    setError(null);
+    
     try {
-      setIsLoading(true);
-      
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('programs')
         .select('*')
         .order('created_at', { ascending: false });
-        
-      if (error) {
-        console.error('Error fetching programs:', error);
-        toast.error('Failed to load programs');
-        return;
-      }
+
+      if (fetchError) throw fetchError;
       
-      // Type cast the data to ensure it matches our Program interface
-      const typedPrograms: Program[] = (data || []).map(program => ({
-        ...program,
-        programType: program.programType as ProgramType,
-        enrollments: program.enrollments || 0,
-        is_favorite: program.is_favorite !== undefined ? program.is_favorite : false,
-        is_featured: program.is_featured !== undefined ? program.is_featured : false
+      // Transform the data to match our Program type
+      const transformedData: Program[] = (data || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        duration: item.duration,
+        sessions: item.sessions,
+        price: item.price,
+        image: item.image,
+        category: item.category,
+        programType: item.programType,
+        created_at: item.created_at,
+        enrollments: item.enrollments || 0,
+        is_favorite: item.is_favorite || false,
+        is_featured: item.is_featured || false
       }));
       
-      setPrograms(typedPrograms);
-    } catch (error) {
-      console.error('Error fetching programs:', error);
-      toast.error('An unexpected error occurred');
+      setPrograms(transformedData);
+    } catch (err) {
+      console.error('Error fetching programs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch programs');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-  
-  // Load programs on component mount
-  useEffect(() => {
-    fetchPrograms();
-  }, []);
-  
-  // Open dialog for creating/editing a program
-  const handleOpenDialog = (program?: Program) => {
-    if (program) {
-      setSelectedProgram(program);
-    } else {
-      setSelectedProgram(null); // For creating a new program
-    }
-    
-    setIsDialogOpen(true);
-  };
-  
-  // Save a program (create or update)
-  const handleSaveProgram = async (programData: ProgramUpdate) => {
+
+  const addProgram = async (programData: ProgramInsert): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      
-      if (selectedProgram?.id) {
-        // Update existing program
-        const { error } = await supabase
-          .from('programs')
-          .update(programData)
-          .eq('id', selectedProgram.id);
-          
-        if (error) {
-          console.error('Error updating program:', error);
-          toast.error('Failed to update program');
-          return false;
-        }
-        
-        toast.success('Program updated successfully');
-      } else {
-        // Create new program - ensure all required fields are present
-        const insertData = {
-          title: programData.title || '',
-          description: programData.description || '',
-          duration: programData.duration || '',
-          image: programData.image || '',
-          category: programData.category || 'wellness',
-          sessions: programData.sessions || 1,
-          price: programData.price || 0,
-          programType: programData.programType || 'wellness',
+      const { data, error: insertError } = await supabase
+        .from('programs')
+        .insert([{
+          title: programData.title,
+          description: programData.description,
+          duration: programData.duration,
+          sessions: programData.sessions,
+          price: programData.price,
+          image: programData.image,
+          category: programData.category,
+          programType: programData.programType,
           enrollments: programData.enrollments || 0,
           is_favorite: programData.is_favorite || false,
           is_featured: programData.is_featured || false
-        };
-        
-        const { error } = await supabase
-          .from('programs')
-          .insert([insertData]);
-          
-        if (error) {
-          console.error('Error creating program:', error);
-          toast.error('Failed to create program');
-          return false;
-        }
-        
-        toast.success('Program created successfully');
-      }
-      
-      setIsDialogOpen(false);
-      fetchPrograms();
+        }])
+        .select();
+
+      if (insertError) throw insertError;
+
+      await fetchPrograms();
       return true;
-    } catch (error) {
-      console.error('Error saving program:', error);
-      toast.error('An unexpected error occurred');
+    } catch (err) {
+      console.error('Error adding program:', err);
+      setError(err instanceof Error ? err.message : 'Failed to add program');
       return false;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-  
-  // Delete a program
-  const handleDeleteProgram = async (programId: number) => {
+
+  const updateProgram = async (id: number, updates: ProgramUpdate): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      
-      const { error } = await supabase
+      const { error: updateError } = await supabase
+        .from('programs')
+        .update(updates)
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
+      await fetchPrograms();
+      return true;
+    } catch (err) {
+      console.error('Error updating program:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update program');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteProgram = async (id: number): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error: deleteError } = await supabase
         .from('programs')
         .delete()
-        .eq('id', programId);
-        
-      if (error) {
-        console.error('Error deleting program:', error);
-        toast.error('Failed to delete program');
-        return false;
-      }
-      
-      toast.success('Program deleted successfully');
-      fetchPrograms();
+        .eq('id', id);
+
+      if (deleteError) throw deleteError;
+
+      setPrograms(prev => prev.filter(program => program.id !== id));
       return true;
-    } catch (error) {
-      console.error('Error deleting program:', error);
-      toast.error('An unexpected error occurred');
+    } catch (err) {
+      console.error('Error deleting program:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete program');
       return false;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
-  
-  // Get category color for a program
-  const getCategoryColor = (category: string): string => {
-    switch (category.toLowerCase()) {
-      case 'mental_health':
-        return 'bg-blue-500';
-      case 'career':
-        return 'bg-green-500';
-      case 'relationships':
-        return 'bg-pink-500';
-      case 'wellness':
-        return 'bg-purple-500';
-      case 'academic':
-      case 'education':
-        return 'bg-yellow-500';
-      case 'business':
-        return 'bg-orange-500';
-      case 'productivity':
-        return 'bg-indigo-500';
-      default:
-        return 'bg-gray-500';
+
+  const bulkInsertPrograms = async (programsData: ProgramInsert[]): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Insert programs one by one to avoid type issues
+      for (const programData of programsData) {
+        const { error: insertError } = await supabase
+          .from('programs')
+          .insert([{
+            title: programData.title,
+            description: programData.description,
+            duration: programData.duration,
+            sessions: programData.sessions,
+            price: programData.price,
+            image: programData.image,
+            category: programData.category,
+            programType: programData.programType,
+            enrollments: programData.enrollments || 0,
+            is_favorite: programData.is_favorite || false,
+            is_featured: programData.is_featured || false
+          }]);
+
+        if (insertError) throw insertError;
+      }
+
+      await fetchPrograms();
+      return true;
+    } catch (err) {
+      console.error('Error bulk inserting programs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to bulk insert programs');
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
-  
+
+  useEffect(() => {
+    fetchPrograms();
+  }, []);
+
   return {
     programs,
-    isLoading,
-    selectedProgram,
-    isDialogOpen,
-    setIsDialogOpen,
-    handleOpenDialog,
-    handleSaveProgram,
-    handleDeleteProgram,
-    getCategoryColor,
-    activeTab,
-    setActiveTab
+    loading,
+    error,
+    fetchPrograms,
+    addProgram,
+    updateProgram,
+    deleteProgram,
+    bulkInsertPrograms
   };
 };

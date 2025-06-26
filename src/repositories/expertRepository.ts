@@ -1,6 +1,6 @@
 
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile } from '@/hooks/expert-auth/types';
+import { ExpertProfile } from '@/types/database/unified';
 
 export interface ExpertCreateData {
   name: string;
@@ -125,6 +125,50 @@ export class ExpertRepository {
       };
     } catch (error) {
       console.error('Error finding expert by ID:', error);
+      return null;
+    }
+  }
+
+  static async getExpertByAuthId(authId: string): Promise<ExpertProfile | null> {
+    try {
+      const { data, error } = await supabase
+        .from('expert_accounts')
+        .select('*')
+        .eq('auth_id', authId)
+        .single();
+
+      if (error || !data) {
+        return null;
+      }
+
+      return {
+        id: data.id,
+        auth_id: data.auth_id,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        bio: data.bio,
+        specialties: [],
+        experience_years: 0,
+        hourly_rate: 0,
+        status: data.status as 'pending' | 'approved' | 'disapproved',
+        profilePicture: data.profile_picture,
+        created_at: data.created_at,
+        updated_at: data.created_at,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country,
+        specialization: data.specialization,
+        experience: data.experience,
+        certificate_urls: data.certificate_urls,
+        selected_services: data.selected_services,
+        average_rating: data.average_rating,
+        reviews_count: data.reviews_count,
+        verified: data.verified
+      };
+    } catch (error) {
+      console.error('Error finding expert by auth ID:', error);
       return null;
     }
   }

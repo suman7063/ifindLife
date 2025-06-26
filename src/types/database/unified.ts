@@ -22,6 +22,8 @@ export interface UserProfile {
   recent_activities?: any[];
   upcoming_appointments?: any[];
   transactions?: any[];
+  reports?: any[];
+  referrals?: any[];
 }
 
 export interface UserProfileUpdate {
@@ -32,6 +34,49 @@ export interface UserProfileUpdate {
   city?: string;
   currency?: string;
   profile_picture?: string;
+}
+
+export interface ExpertProfile {
+  id: string;
+  auth_id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  bio?: string;
+  specialties: string[];
+  experience_years: number;
+  hourly_rate: number;
+  status: 'pending' | 'approved' | 'disapproved';
+  profilePicture?: string;
+  created_at: string;
+  updated_at: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  specialization?: string;
+  experience?: string;
+  certificate_urls?: string[];
+  selected_services?: number[];
+  average_rating?: number;
+  reviews_count?: number;
+  verified?: boolean;
+}
+
+export interface AdminProfile {
+  id: string;
+  role: string;
+  created_at: string;
+}
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 // Re-export from user types to maintain compatibility
