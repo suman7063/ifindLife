@@ -3,6 +3,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
+import { EnhancedUnifiedAuthProvider } from '@/contexts/auth/EnhancedUnifiedAuthContext'
 
 // Debug React availability
 console.log('main.tsx - React:', !!React);
@@ -11,7 +12,7 @@ console.log('main.tsx - React version:', React.version);
 
 // Only log in development mode
 if (import.meta.env.DEV) {
-  console.log('Main.tsx is executing with simplified auth...')
+  console.log('Main.tsx is executing...')
 }
 
 const rootElement = document.getElementById('root');
@@ -25,13 +26,15 @@ try {
   const root = ReactDOM.createRoot(rootElement);
   root.render(
     <React.StrictMode>
-      <App />
+      <EnhancedUnifiedAuthProvider>
+        <App />
+      </EnhancedUnifiedAuthProvider>
     </React.StrictMode>
   );
   
   // Only log in development mode
   if (import.meta.env.DEV) {
-    console.log('Root component rendered successfully with simplified auth');
+    console.log('Root component rendered successfully');
   }
 } catch (error) {
   console.error('Failed to render app:', error);
