@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
@@ -34,10 +35,15 @@ const SectionLoadingFallback = () => (
 );
 
 const Index = () => {
+  console.log('Index: Page component is rendering');
+  
   // Ensure page loads from top
   useEffect(() => {
+    console.log('Index: Page mounted, scrolling to top');
     window.scrollTo(0, 0);
   }, []);
+
+  console.log('Index: About to render page content');
 
   return (
     <div className="min-h-screen flex flex-col home-page">

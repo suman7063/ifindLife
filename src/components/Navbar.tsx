@@ -13,6 +13,15 @@ const Navbar = () => {
 
   const { isAuthenticated, userType, user, expert, userProfile, isLoading, logout } = useSimpleAuth();
 
+  console.log('Navbar: Rendering with auth state:', {
+    isAuthenticated,
+    userType,
+    isLoading,
+    hasUser: !!user,
+    hasExpert: !!expert,
+    hasUserProfile: !!userProfile
+  });
+
   // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
@@ -73,8 +82,16 @@ const Navbar = () => {
 
   const hasExpertProfile = userType === 'expert' && !!expert;
 
+  console.log('Navbar: Computed state:', {
+    currentUser: !!currentUser,
+    hasExpertProfile,
+    userType,
+    isLoading
+  });
+
   // Show loading state
   if (isLoading) {
+    console.log('Navbar: Showing loading state');
     return (
       <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
@@ -91,6 +108,8 @@ const Navbar = () => {
       </div>
     );
   }
+
+  console.log('Navbar: Rendering full navbar');
 
   return (
     <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
