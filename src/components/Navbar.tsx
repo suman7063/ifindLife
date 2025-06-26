@@ -11,10 +11,42 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Use simplified auth hook
-  const { isAuthenticated, userType, user, expert, userProfile, isLoading } = useSimpleAuth();
+  const { isAuthenticated, userType, user, expert, userProfile, isLoading, logout } = useSimpleAuth();
 
-  // Create a compatible user object for backward compatibility
+  // Scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 10;
+      if (isScrolled !== scrolled) {
+        setScrolled(isScrolled);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [scrolled]);
+
+  // Handle logout
+  const handleLogout = async (): Promise<boolean> => {
+    try {
+      console.log("Navbar: Initiating logout...");
+      await logout();
+      showLogoutSuccessToast();
+      navigate('/');
+      return true;
+    } catch (error) {
+      console.error('Error during logout:', error);
+      showLogoutErrorToast();
+      return false;
+    }
+  };
+
+  const getNavbarBackground = () => {
+    return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
+  };
+
+  // Create compatible user object for navbar components
   const currentUser = userProfile || (expert ? {
     id: expert.id,
     name: expert.name || '',
@@ -41,54 +73,14 @@ const Navbar = () => {
 
   const hasExpertProfile = userType === 'expert' && !!expert;
 
-  // Convert userType to match expected interface
-  const convertSessionType = (type: 'user' | 'expert' | 'none'): 'user' | 'expert' | 'none' | 'dual' => {
-    return type;
-  };
-  const navbarSessionType = convertSessionType(userType);
-
-  // Scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      const isScrolled = window.scrollY > 10;
-      if (isScrolled !== scrolled) {
-        setScrolled(isScrolled);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [scrolled]);
-
-  // Handle logout with consistent messaging
-  const handleLogout = async (): Promise<boolean> => {
-    try {
-      console.log("Navbar: Initiating logout...");
-      // For now, just clear localStorage and reload
-      localStorage.clear();
-      showLogoutSuccessToast();
-      window.location.reload();
-      return true;
-    } catch (error) {
-      console.error('Error during logout:', error);
-      showLogoutErrorToast();
-      return false;
-    }
-  };
-
-  const getNavbarBackground = () => {
-    return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
-  };
-
-  // Show loading state only if still loading after a brief delay
+  // Show loading state
   if (isLoading) {
     return (
       <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
           <div className="flex items-center gap-2 relative">
             <Link to="/" className="flex items-center">
-              <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-10" />
+              <img src="/lovable-uploads/55b74deb-7ab0-4410-a3db-d3706db1d19a.png" alt="iFindLife" className="h-16" />
             </Link>
             <span className="absolute -top-1 -right-6 bg-gray-400 text-white text-[8px] px-1 py-0.5 rounded font-medium">
               BETA
@@ -113,22 +105,22 @@ const Navbar = () => {
         </div>
         
         <NavbarDesktopLinks 
-          isAuthenticated={Boolean(isAuthenticated)} 
+          isAuthenticated={isAuthenticated} 
           currentUser={currentUser} 
-          hasExpertProfile={Boolean(hasExpertProfile)} 
+          hasExpertProfile={hasExpertProfile} 
           userLogout={handleLogout} 
           expertLogout={handleLogout} 
-          sessionType={navbarSessionType} 
+          sessionType={userType} 
           isLoggingOut={false} 
         />
         
         <NavbarMobileMenu 
-          isAuthenticated={Boolean(isAuthenticated)} 
+          isAuthenticated={isAuthenticated} 
           currentUser={currentUser} 
-          hasExpertProfile={Boolean(hasExpertProfile)} 
+          hasExpertProfile={hasExpertProfile} 
           userLogout={handleLogout} 
           expertLogout={handleLogout} 
-          sessionType={navbarSessionType} 
+          sessionType={userType} 
           isLoggingOut={false} 
         />
       </div>
