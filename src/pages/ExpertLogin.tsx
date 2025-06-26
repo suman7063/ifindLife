@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
-import { useEnhancedUnifiedAuth } from '@/contexts/auth/EnhancedUnifiedAuthContext';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -50,13 +50,13 @@ const ExpertLogin: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const { isAuthenticated, sessionType, expert, isLoading, login } = useEnhancedUnifiedAuth();
+  const { isAuthenticated, userType, expert, isLoading, login } = useSimpleAuth();
   const [hasRedirected, setHasRedirected] = useState(false);
 
-  // Enhanced debug logging to compare with ExpertDashboardLayout
-  console.log('ExpertLogin - Enhanced unified auth state:', {
+  // Enhanced debug logging
+  console.log('ExpertLogin - Simple auth state:', {
     isAuthenticated,
-    sessionType,
+    userType,
     hasExpertProfile: !!expert,
     isLoading,
     expertStatus: expert?.status
@@ -79,7 +79,7 @@ const ExpertLogin: React.FC = () => {
     }
 
     // Only redirect if authenticated as expert AND has expert profile AND hasn't redirected yet AND expert is approved
-    if (isAuthenticated && sessionType === 'expert' && expert && expert.status === 'approved' && !hasRedirected) {
+    if (isAuthenticated && userType === 'expert' && expert && expert.status === 'approved' && !hasRedirected) {
       console.log('ExpertLogin: Already authenticated as expert, checking redirect safety');
       
       if (redirectSafety.canRedirect('/expert-login', '/expert-dashboard')) {
@@ -95,15 +95,15 @@ const ExpertLogin: React.FC = () => {
         toast.error('Authentication error detected. Please try logging out and back in.');
       }
     }
-  }, [isAuthenticated, sessionType, expert, isLoading, navigate, searchParams, hasRedirected]);
+  }, [isAuthenticated, userType, expert, isLoading, navigate, searchParams, hasRedirected]);
 
-  // Handle login with enhanced unified auth
+  // Handle login with simple auth
   const handleLogin = async (email: string, password: string) => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      console.log('ExpertLogin: Attempting login with enhanced unified auth:', email);
+      console.log('ExpertLogin: Attempting login with simple auth:', email);
       
       const success = await login(email, password, { asExpert: true });
       
