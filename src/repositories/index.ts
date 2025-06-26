@@ -1,9 +1,11 @@
 
-// Export repository instances
-import { userRepository } from './userRepository';
-import { expertRepository } from './expertRepository';
+// Export repository classes
+import { UserRepository } from './userRepository';
+import { ExpertRepository } from './expertRepository';
 
-export {
-  userRepository,
-  expertRepository
-};
+// Create instances for backward compatibility
+export const userRepository = UserRepository;
+export const expertRepository = ExpertRepository;
+
+// Also export the classes directly
+export { UserRepository, ExpertRepository };

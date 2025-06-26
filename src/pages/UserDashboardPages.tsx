@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,14 +25,14 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { UserProfile } from '@/types/database/unified';
 
-interface UserDashboardPagesProps {
-  currentUser: any;
-  onNavigate: (section: string) => void;
+export interface UserDashboardPagesProps {
+  currentUser?: UserProfile | null;
+  onNavigate?: (section: string) => void;
 }
 
 const UserDashboardPages: React.FC<UserDashboardPagesProps> = ({ 
   currentUser, 
-  onNavigate 
+  onNavigate = () => {} 
 }) => {
   // Mock data with safe defaults
   const mockData = {

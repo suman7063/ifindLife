@@ -18,6 +18,28 @@ export const programFormSchema = z.object({
 
 export type ProgramFormValues = z.infer<typeof programFormSchema>;
 
+// Categories and program types
+export const categories: ProgramCategory[] = [
+  'wellness',
+  'mental_health', 
+  'fitness',
+  'nutrition',
+  'career',
+  'relationships',
+  'personal_development',
+  'academic',
+  'business',
+  'productivity'
+];
+
+export const programTypes: ProgramType[] = [
+  'wellness',
+  'academic', 
+  'business',
+  'productivity',
+  'leadership'
+];
+
 export const validateProgramForm = (data: ProgramUpdate): string[] => {
   const errors: string[] = [];
   

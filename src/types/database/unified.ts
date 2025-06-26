@@ -1,5 +1,5 @@
 
-// Unified database types for consistent data handling
+// Unified types for the application
 export interface UserProfile {
   id: string;
   name: string;
@@ -8,70 +8,31 @@ export interface UserProfile {
   country: string;
   city: string;
   currency: string;
-  profile_picture: string | null;
-  wallet_balance: number;
-  created_at: string;
-  updated_at?: string;
-  referred_by: string | null;
+  profile_picture: string;
   referral_code: string;
   referral_link: string;
-  favorite_experts: string[]; // Made consistent - always string array
-  favorite_programs: string[] | number[];
-  enrolled_courses: any[];
-  reviews: any[];
-  reports: any[];
-  transactions: any[];
-  referrals: any[];
-}
-
-export interface ExpertProfile {
-  id: string;
-  auth_id?: string;
-  name: string;
-  email: string;
-  phone?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  country?: string;
-  specialization?: string;
-  experience?: string;
-  bio?: string;
-  certificate_urls?: string[];
-  profile_picture?: string | null;
-  selected_services?: number[];
-  average_rating?: number;
-  reviews_count?: number;
-  verified?: boolean;
-  status?: string;
-  created_at?: string;
-  hourly_rate?: number;
-}
-
-export interface AdminProfile {
-  id: string;
-  auth_id?: string;
-  name?: string;
-  email: string;
-  role: string;
-  created_at?: string;
-}
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  role: 'user' | 'expert' | 'admin' | null;
-}
-
-export interface Message {
-  id: string;
-  sender_id: string;
-  receiver_id: string;
-  content: string;
-  read: boolean;
+  referred_by: string;
+  wallet_balance: number;
   created_at: string;
-  updated_at?: string;
-  // Add missing properties that components expect
-  isMine?: boolean;
-  timestamp?: Date;
+  // Additional properties for user dashboard
+  favorite_experts?: string[];
+  favorite_programs?: number[];
+  enrolled_courses?: any[];
+  reviews?: any[];
+  recent_activities?: any[];
+  upcoming_appointments?: any[];
+  transactions?: any[];
 }
+
+export interface UserProfileUpdate {
+  name?: string;
+  email?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  currency?: string;
+  profile_picture?: string;
+}
+
+// Re-export from user types to maintain compatibility
+export * from './user';

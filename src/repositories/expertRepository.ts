@@ -37,10 +37,8 @@ export class ExpertRepository {
         profile_picture: expertData.profile_picture || null,
         certificate_urls: expertData.certificate_urls || [],
         selected_services: expertData.selected_services || [],
-        status: expertData.status || 'pending',
         average_rating: 0,
-        reviews_count: 0,
-        verified: false
+        reviews_count: 0
       };
 
       const { data, error } = await supabase
@@ -65,7 +63,7 @@ export class ExpertRepository {
         specialties: [],
         experience_years: 0,
         hourly_rate: 0,
-        status: data.status as 'pending' | 'approved' | 'disapproved',
+        status: 'pending',
         profilePicture: data.profile_picture,
         created_at: data.created_at,
         updated_at: data.created_at,
@@ -79,7 +77,7 @@ export class ExpertRepository {
         selected_services: data.selected_services,
         average_rating: data.average_rating,
         reviews_count: data.reviews_count,
-        verified: data.verified
+        verified: false
       };
     } catch (error) {
       console.error('Error creating expert:', error);
@@ -109,7 +107,7 @@ export class ExpertRepository {
         specialties: [],
         experience_years: 0,
         hourly_rate: 0,
-        status: data.status as 'pending' | 'approved' | 'disapproved',
+        status: 'pending',
         profilePicture: data.profile_picture,
         created_at: data.created_at,
         updated_at: data.created_at,
@@ -123,7 +121,7 @@ export class ExpertRepository {
         selected_services: data.selected_services,
         average_rating: data.average_rating,
         reviews_count: data.reviews_count,
-        verified: data.verified
+        verified: false
       };
     } catch (error) {
       console.error('Error finding expert by ID:', error);
@@ -155,7 +153,7 @@ export class ExpertRepository {
         specialties: [],
         experience_years: 0,
         hourly_rate: 0,
-        status: data.status as 'pending' | 'approved' | 'disapproved',
+        status: 'pending',
         profilePicture: data.profile_picture,
         created_at: data.created_at,
         updated_at: data.created_at,
@@ -169,7 +167,7 @@ export class ExpertRepository {
         selected_services: data.selected_services,
         average_rating: data.average_rating,
         reviews_count: data.reviews_count,
-        verified: data.verified
+        verified: false
       };
     } catch (error) {
       console.error('Error updating expert:', error);
