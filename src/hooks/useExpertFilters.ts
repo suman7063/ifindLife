@@ -1,187 +1,59 @@
 
-import { useState, useCallback } from 'react';
-import { Expert } from '@/types/expert';
+import { useState, useMemo } from 'react';
 import { ExtendedExpert } from '@/types/programs';
 
-interface FilterState {
-  searchQuery: string;
-  selectedLanguages: string[];
-  selectedSpecialties: string[];
-  priceRange: [number, number];
-  experienceLevel: string;
-  availability: string;
-  sortBy: string;
-  sortDirection: 'asc' | 'desc';
-}
+export const useExpertFilters = (experts: ExtendedExpert[]) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSpecialization, setSelectedSpecialization] = useState('all');
+  const [sortBy, setSortBy] = useState('rating');
 
-export const useExpertFilters = (initialExperts: ExtendedExpert[]) => {
-  const [experts, setExperts] = useState<ExtendedExpert[]>(initialExperts);
-  const [filteredExperts, setFilteredExperts] = useState<ExtendedExpert[]>(initialExperts);
-  
-  const [filters, setFilters] = useState<FilterState>({
-    searchQuery: '',
-    selectedLanguages: [],
-    selectedSpecialties: [],
-    priceRange: [0, 5000],
-    experienceLevel: 'Any',
-    availability: 'Any',
-    sortBy: 'rating',
-    sortDirection: 'desc'
-  });
+  const filteredAndSortedExperts = useMemo(() => {
+    let filtered = experts.filter(expert => {
+      const matchesSearch = expert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           expert.specialization?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesSpecialization = selectedSpecialization === 'all' || 
+                                   expert.specialization === selectedSpecialization;
+      
+      return matchesSearch && matchesSpecialization;
+    });
 
-  // Extract available languages from experts data
-  const getAvailableLanguages = useCallback(() => {
-    const languagesSet = new Set<string>();
-    
-    experts.forEach(expert => {
-      if (expert.languages) {
-        expert.languages.forEach(lang => languagesSet.add(lang));
+    // Sort experts
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'rating':
+          return (b.average_rating || 0) - (a.average_rating || 0);
+        case 'experience':
+          const aExp = parseInt(a.experience || '0');
+          const bExp = parseInt(b.experience || '0');
+          return bExp - aExp;
+        case 'name':
+          return a.name.localeCompare(b.name);
+        default:
+          return 0;
       }
     });
+
+    return filtered;
+  }, [experts, searchTerm, selectedSpecialization, sortBy]);
+
+  const specializations = useMemo(() => {
+    const specs = experts
+      .map(expert => expert.specialization)
+      .filter((spec): spec is string => Boolean(spec))
+      .filter((spec, index, arr) => arr.indexOf(spec) === index);
     
-    return Array.from(languagesSet).sort();
+    return ['all', ...specs];
   }, [experts]);
 
-  // Extract available specialties from experts data
-  const getAvailableSpecialties = useCallback(() => {
-    const specialtiesSet = new Set<string>();
-    
-    experts.forEach(expert => {
-      if (expert.specialties) {
-        expert.specialties.forEach(specialty => specialtiesSet.add(specialty));
-      }
-    });
-    
-    return Array.from(specialtiesSet).sort();
-  }, [experts]);
-
-  // Get price range (min, max) from experts data
-  const getPriceRange = useCallback((): [number, number] => {
-    let min = Infinity;
-    let max = 0;
-    
-    experts.forEach(expert => {
-      const price = expert.pricing?.consultation_fee || 0;
-      min = Math.min(min, price);
-      max = Math.max(max, price);
-    });
-    
-    return [min === Infinity ? 0 : min, max === 0 ? 5000 : max];
-  }, [experts]);
-
-  // Apply filters
-  const applyFilters = useCallback(() => {
-    let result = [...experts];
-    
-    // Apply search filter
-    if (filters.searchQuery) {
-      const query = filters.searchQuery.toLowerCase();
-      result = result.filter(expert => {
-        const nameMatch = expert.name.toLowerCase().includes(query);
-        const specialtyMatch = expert.specialties?.some(s => 
-          typeof s === 'string' && s.toLowerCase().includes(query)
-        );
-        
-        return nameMatch || specialtyMatch;
-      });
-    }
-    
-    // Apply language filter
-    if (filters.selectedLanguages.length > 0) {
-      result = result.filter(expert => {
-        return expert.languages?.some(lang => filters.selectedLanguages.includes(lang));
-      });
-    }
-    
-    // Apply specialty filter
-    if (filters.selectedSpecialties.length > 0) {
-      result = result.filter(expert => {
-        return expert.specialties?.some(specialty => filters.selectedSpecialties.includes(specialty));
-      });
-    }
-    
-    // Apply price filter
-    if (filters.priceRange) {
-      const [min, max] = filters.priceRange;
-      result = result.filter(expert => {
-        const price = expert.pricing?.consultation_fee || 0;
-        return price >= min && price <= max;
-      });
-    }
-    
-    // Apply sort
-    if (filters.sortBy) {
-      result.sort((a, b) => {
-        let valueA, valueB;
-        
-        switch (filters.sortBy) {
-          case 'price':
-            valueA = a.pricing?.consultation_fee || 0;
-            valueB = b.pricing?.consultation_fee || 0;
-            break;
-          case 'rating':
-            valueA = a.rating || 0;
-            valueB = b.rating || 0;
-            break;
-          default:
-            valueA = a.name.toLowerCase();
-            valueB = b.name.toLowerCase();
-            return (filters.sortDirection === 'asc') 
-              ? valueA.localeCompare(valueB)
-              : valueB.localeCompare(valueA);
-        }
-        
-        return (filters.sortDirection === 'asc') 
-          ? valueA - valueB 
-          : valueB - valueA;
-      });
-    }
-    
-    setFilteredExperts(result);
-    return result;
-  }, [experts, filters]);
-
-  const updateFilter = (filterName: keyof FilterState, value: any) => {
-    setFilters(prev => ({
-      ...prev,
-      [filterName]: value
-    }));
-  };
-  
-  // Reset filters to default
-  const resetFilters = () => {
-    const range = getPriceRange();
-    setFilters({
-      searchQuery: '',
-      selectedLanguages: [],
-      selectedSpecialties: [],
-      priceRange: range,
-      experienceLevel: 'Any',
-      availability: 'Any',
-      sortBy: 'rating',
-      sortDirection: 'desc'
-    });
-  };
-
-  // Return all necessary values for filters
   return {
-    experts,
-    setExperts,
-    filteredExperts,
-    filters,
-    updateFilter,
-    applyFilters,
-    resetFilters,
-    getAvailableLanguages,
-    getAvailableSpecialties,
-    getPriceRange,
-    selectedLanguages: filters.selectedLanguages,
-    setSelectedLanguages: (languages: string[]) => updateFilter('selectedLanguages', languages),
-    selectedSpecialties: filters.selectedSpecialties,
-    setSelectedSpecialties: (specialties: string[]) => updateFilter('selectedSpecialties', specialties),
-    priceRange: filters.priceRange,
-    setPriceRange: (range: [number, number]) => updateFilter('priceRange', range),
-    experienceLevel: filters.experienceLevel,
-    setExperienceLevel: (level: string) => updateFilter('experienceLevel', level)
+    searchTerm,
+    setSearchTerm,
+    selectedSpecialization,
+    setSelectedSpecialization,
+    sortBy,
+    setSortBy,
+    filteredAndSortedExperts,
+    specializations
   };
 };

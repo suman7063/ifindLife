@@ -30,7 +30,10 @@ export const useProgramManager = () => {
       // Type cast the data to ensure it matches our Program interface
       const typedPrograms: Program[] = (data || []).map(program => ({
         ...program,
-        programType: program.programType as ProgramType
+        programType: program.programType as ProgramType,
+        enrollments: program.enrollments || 0,
+        is_favorite: program.is_favorite || false,
+        is_featured: program.is_featured || false
       }));
       
       setPrograms(typedPrograms);
@@ -78,10 +81,24 @@ export const useProgramManager = () => {
         
         toast.success('Program updated successfully');
       } else {
-        // Create new program
+        // Create new program - ensure all required fields are present
+        const insertData = {
+          title: programData.title || '',
+          description: programData.description || '',
+          duration: programData.duration || '',
+          image: programData.image || '',
+          category: programData.category || 'wellness',
+          sessions: programData.sessions || 1,
+          price: programData.price || 0,
+          programType: programData.programType || 'wellness',
+          enrollments: programData.enrollments || 0,
+          is_favorite: programData.is_favorite || false,
+          is_featured: programData.is_featured || false
+        };
+        
         const { error } = await supabase
           .from('programs')
-          .insert([programData]);
+          .insert([insertData]);
           
         if (error) {
           console.error('Error creating program:', error);
@@ -135,7 +152,7 @@ export const useProgramManager = () => {
   // Get category color for a program
   const getCategoryColor = (category: string): string => {
     switch (category.toLowerCase()) {
-      case 'mental health':
+      case 'mental_health':
         return 'bg-blue-500';
       case 'career':
         return 'bg-green-500';
@@ -143,8 +160,13 @@ export const useProgramManager = () => {
         return 'bg-pink-500';
       case 'wellness':
         return 'bg-purple-500';
+      case 'academic':
       case 'education':
         return 'bg-yellow-500';
+      case 'business':
+        return 'bg-orange-500';
+      case 'productivity':
+        return 'bg-indigo-500';
       default:
         return 'bg-gray-500';
     }

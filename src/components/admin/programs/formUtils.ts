@@ -1,77 +1,72 @@
 
-import { z } from 'zod';
-import { Program, ProgramType, ProgramCategory } from '@/types/programs';
+import { Program, ProgramUpdate, ProgramType } from '@/types/programs';
 
-// Validation schema for program form
-export const programFormSchema = z.object({
-  title: z.string().min(3, { message: 'Title must be at least 3 characters long' }),
-  description: z.string().min(10, { message: 'Description must be at least 10 characters long' }),
-  duration: z.string().min(1, { message: 'Duration is required' }),
-  sessions: z.coerce.number().min(1, { message: 'Number of sessions must be at least 1' }),
-  price: z.coerce.number().min(0, { message: 'Price must be a positive number' }),
-  category: z.string().min(1, { message: 'Category is required' }),
-  programType: z.string(),
-  image: z.string().min(1, { message: 'Image URL is required' }),
-});
-
-export type ProgramFormValues = z.infer<typeof programFormSchema>;
-
-// Get default values for form
-export const getProgramFormDefaults = (program: Program | null): ProgramFormValues => {
-  if (!program) {
-    return {
-      title: '',
-      description: '',
-      duration: '',
-      sessions: 0,
-      price: 0,
-      category: '',
-      programType: 'wellness',
-      image: '',
-    };
+export const validateProgramForm = (data: ProgramUpdate): string[] => {
+  const errors: string[] = [];
+  
+  if (!data.title?.trim()) {
+    errors.push('Title is required');
   }
   
+  if (!data.description?.trim()) {
+    errors.push('Description is required');
+  }
+  
+  if (!data.duration?.trim()) {
+    errors.push('Duration is required');
+  }
+  
+  if (!data.image?.trim()) {
+    errors.push('Image URL is required');
+  }
+  
+  if (!data.category?.trim()) {
+    errors.push('Category is required');
+  }
+  
+  if (!data.sessions || data.sessions <= 0) {
+    errors.push('Sessions must be greater than 0');
+  }
+  
+  if (!data.price || data.price < 0) {
+    errors.push('Price must be 0 or greater');
+  }
+  
+  return errors;
+};
+
+export const formatProgramData = (data: any): Program => {
   return {
-    title: program.title,
-    description: program.description,
-    duration: program.duration || '',
-    sessions: program.sessions || 0,
-    price: program.price,
-    category: program.category,
-    image: program.image || '',
-    programType: program.programType || 'wellness',
+    id: data.id || 0,
+    title: data.title || '',
+    description: data.description || '',
+    duration: data.duration || '',
+    sessions: data.sessions || 1,
+    price: data.price || 0,
+    image: data.image || '',
+    category: data.category || 'wellness',
+    programType: data.programType as ProgramType || 'wellness',
+    created_at: data.created_at || new Date().toISOString(),
+    enrollments: data.enrollments || 0,
+    is_favorite: data.is_favorite || false,
+    is_featured: data.is_featured || false
   };
 };
 
-// Prepare program data for saving
-export const prepareProgramData = (values: ProgramFormValues, id?: number): Program => {
-  if (id) {
-    // Update existing program
-    return {
-      id,
-      title: values.title,
-      description: values.description,
-      duration: values.duration,
-      sessions: values.sessions,
-      price: values.price,
-      image: values.image,
-      category: values.category as ProgramCategory,
-      programType: values.programType as ProgramType,
-      created_at: new Date().toISOString(), // Add required created_at field
-    };
-  }
-  
-  // Create new program
-  return {
-    id: Math.floor(Math.random() * 10000), // Temporary ID until saved
-    title: values.title,
-    description: values.description,
-    duration: values.duration,
-    sessions: values.sessions,
-    price: values.price,
-    image: values.image,
-    category: values.category as ProgramCategory,
-    programType: values.programType as ProgramType,
-    created_at: new Date().toISOString(), // Add required created_at field
-  };
+export const formatProgramsArray = (programs: any[]): Program[] => {
+  return programs.map(program => ({
+    id: program.id || 0,
+    title: program.title || '',
+    description: program.description || '',
+    duration: program.duration || '',
+    sessions: program.sessions || 1,
+    price: program.price || 0,
+    image: program.image || '',
+    category: program.category || 'wellness',
+    programType: program.programType as ProgramType || 'wellness',
+    created_at: program.created_at || new Date().toISOString(),
+    enrollments: program.enrollments || 0,
+    is_favorite: program.is_favorite || false,
+    is_featured: program.is_featured || false
+  }));
 };
