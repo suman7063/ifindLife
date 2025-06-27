@@ -65,13 +65,24 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   const [expert, setExpert] = useState<ExpertProfile | null>(null);
   const [userType, setUserType] = useState<SessionType>('none');
 
-  // Derive authentication state
-  const isAuthenticated = !!user && !!session;
+  // Derive authentication state - CRITICAL: This must be consistent
+  const isAuthenticated = Boolean(user && session);
+
+  console.log('SimpleAuthContext: Current state:', {
+    user: !!user,
+    session: !!session,
+    isAuthenticated,
+    userType,
+    isLoading,
+    userProfile: !!userProfile,
+    expert: !!expert
+  });
 
   // Load profiles based on user
   const loadUserProfile = async (userId: string) => {
     try {
       const profile = await UserRepository.findById(userId);
+      console.log('SimpleAuthContext: Loaded user profile:', !!profile);
       setUserProfile(profile);
       return profile;
     } catch (error) {
@@ -83,6 +94,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   const loadExpertProfile = async (userId: string) => {
     try {
       const expertProfile = await ExpertRepository.getExpertByAuthId(userId);
+      console.log('SimpleAuthContext: Loaded expert profile:', !!expertProfile);
       setExpert(expertProfile);
       return expertProfile;
     } catch (error) {
@@ -275,6 +287,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     return () => clearTimeout(emergencyTimeout);
   }, []);
 
+  // CRITICAL: Make sure we return all required values consistently
   const contextValue: SimpleAuthContextType = {
     isAuthenticated,
     isLoading,
@@ -287,6 +300,15 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     logout,
     refreshProfiles
   };
+
+  console.log('SimpleAuthContext: Providing context value:', {
+    isAuthenticated: contextValue.isAuthenticated,
+    isLoading: contextValue.isLoading,
+    userType: contextValue.userType,
+    hasUser: !!contextValue.user,
+    hasUserProfile: !!contextValue.userProfile,
+    hasExpert: !!contextValue.expert
+  });
 
   return (
     <SimpleAuthContext.Provider value={contextValue}>

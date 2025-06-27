@@ -16,22 +16,26 @@ const UserLogin: React.FC = () => {
   const simpleAuth = useSimpleAuth();
   const { isAuthenticated, userType, user, isLoading, login } = simpleAuth;
 
-  console.log('UserLogin: Current auth state:', {
-    isAuthenticated: Boolean(isAuthenticated),
-    userType,
-    hasUser: Boolean(user),
-    isLoading: Boolean(isLoading),
-    userEmail: user?.email
+  // DETAILED DEBUGGING
+  console.log('UserLogin: DETAILED AUTH STATE DEBUG:', {
+    fullAuthObject: simpleAuth,
+    user: simpleAuth?.user,
+    isAuthenticated: simpleAuth?.isAuthenticated,
+    userType: simpleAuth?.userType,
+    isLoading: simpleAuth?.isLoading,
+    hasUser: !!simpleAuth?.user,
+    userKeys: simpleAuth?.user ? Object.keys(simpleAuth.user) : 'no user',
+    authKeys: simpleAuth ? Object.keys(simpleAuth) : 'no auth object'
   });
 
-  // Enhanced redirect logic based on Claude's suggestion
   useEffect(() => {
     console.log('UserLogin: Checking auth state for redirect...');
-    console.log('UserLogin: Auth state details:', {
+    console.log('UserLogin: REDIRECT CHECK - Detailed state:', {
       isAuthenticated: Boolean(isAuthenticated),
       userType,
       hasUser: Boolean(user),
-      isLoading: Boolean(isLoading)
+      isLoading: Boolean(isLoading),
+      userEmail: user?.email
     });
     
     // Wait for auth state to stabilize
@@ -57,7 +61,6 @@ const UserLogin: React.FC = () => {
     }
   }, [isAuthenticated, user, isLoading, userType, navigate]);
 
-  // Enhanced login form submission based on Claude's suggestion
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password', { duration: 2000 });
@@ -69,13 +72,11 @@ const UserLogin: React.FC = () => {
     try {
       console.log('UserLogin: Attempting login:', email);
       
-      // Use SimpleAuthContext login method
       const success = await login(email, password);
       
       if (success) {
         console.log('UserLogin: Login successful via SimpleAuth');
         toast.success('Login successful!', { duration: 2000 });
-        // Don't navigate here - let the useEffect handle it
         return true;
       } else {
         console.error('UserLogin: Login failed via SimpleAuth');
@@ -127,6 +128,17 @@ const UserLogin: React.FC = () => {
     <>
       <Navbar />
       <div className="py-12 bg-gray-50 min-h-screen flex items-center justify-center">
+        {/* Emergency redirect button for debugging */}
+        <button 
+          onClick={() => {
+            console.log('Emergency redirect triggered');
+            navigate('/user-dashboard', { replace: true });
+          }}
+          className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded text-sm z-50"
+        >
+          EMERGENCY: Go to Dashboard
+        </button>
+        
         <Card className="max-w-md w-full shadow-lg">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold">Welcome to iFindLife</CardTitle>
