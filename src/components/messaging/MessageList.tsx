@@ -27,7 +27,7 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
         const adaptedResult = (result || [])
           .map(adaptConversation)
           .filter((conv): conv is Conversation => {
-            // Ensure conversation has required properties including name
+            // Fix: Just check if conversation has required properties
             return conv !== null && conv.name && conv.name.trim() !== '';
           });
         setConversations(adaptedResult);

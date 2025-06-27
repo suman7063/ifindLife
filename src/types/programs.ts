@@ -116,7 +116,7 @@ export interface ProgramCardProps {
   user?: any;
   currentUser?: any;
   isAuthenticated?: boolean;
-  onProgramClick?: (program: Program) => void; // Added missing prop
+  onProgramClick?: (program: Program) => void; // Made optional to match usage
   onFavoriteToggle?: (programId: number) => void;
 }
 

@@ -24,3 +24,14 @@ export interface Message {
   isMine?: boolean;
   timestamp?: Date;
 }
+
+export interface UseMessagesReturn {
+  messages: Message[];
+  loading: boolean;
+  error: string | null;
+  sendMessage: (content: string) => Promise<void>;
+  markAsRead: (messageId: string) => Promise<void>;
+  refreshMessages: () => Promise<void>;
+  setMessages: (messages: Message[]) => void;
+  fetchMessages: (conversationId: string) => Promise<Message[]>;
+}
