@@ -31,15 +31,15 @@ export class UserRepository {
       // Return complete UserProfile with all required properties
       return {
         ...data,
-        favorite_experts: data.favorite_experts || [],
-        favorite_programs: data.favorite_programs || [],
-        enrolled_courses: data.enrolled_courses || [],
-        reviews: data.reviews || [],
-        recent_activities: data.recent_activities || [],
-        upcoming_appointments: data.upcoming_appointments || [],
-        transactions: data.transactions || [],
-        reports: data.reports || [],
-        referrals: data.referrals || []
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        recent_activities: [],
+        upcoming_appointments: [],
+        transactions: [],
+        reports: [],
+        referrals: []
       };
     } catch (error) {
       console.error('Error creating user:', error);
@@ -62,15 +62,15 @@ export class UserRepository {
       // Return complete UserProfile with all required properties
       return {
         ...data,
-        favorite_experts: data.favorite_experts || [],
-        favorite_programs: data.favorite_programs || [],
-        enrolled_courses: data.enrolled_courses || [],
-        reviews: data.reviews || [],
-        recent_activities: data.recent_activities || [],
-        upcoming_appointments: data.upcoming_appointments || [],
-        transactions: data.transactions || [],
-        reports: data.reports || [],
-        referrals: data.referrals || []
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        recent_activities: [],
+        upcoming_appointments: [],
+        transactions: [],
+        reports: [],
+        referrals: []
       };
     } catch (error) {
       console.error('Error finding user by ID:', error);
@@ -95,15 +95,15 @@ export class UserRepository {
       // Return complete UserProfile with all required properties
       return {
         ...data,
-        favorite_experts: data.favorite_experts || [],
-        favorite_programs: data.favorite_programs || [],
-        enrolled_courses: data.enrolled_courses || [],
-        reviews: data.reviews || [],
-        recent_activities: data.recent_activities || [],
-        upcoming_appointments: data.upcoming_appointments || [],
-        transactions: data.transactions || [],
-        reports: data.reports || [],
-        referrals: data.referrals || []
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        recent_activities: [],
+        upcoming_appointments: [],
+        transactions: [],
+        reports: [],
+        referrals: []
       };
     } catch (error) {
       console.error('Error updating user:', error);

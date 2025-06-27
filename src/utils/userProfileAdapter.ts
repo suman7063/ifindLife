@@ -30,3 +30,75 @@ export function adaptUserProfile(user: any): UserProfile | null {
     referrals: user.referrals || []
   };
 }
+
+// Add missing adapter functions
+export function adaptMessage(message: any) {
+  if (!message) return null;
+  
+  return {
+    id: message.id,
+    sender_id: message.sender_id,
+    receiver_id: message.receiver_id,
+    content: message.content,
+    read: message.read,
+    created_at: message.created_at,
+    updated_at: message.updated_at,
+    isMine: message.isMine,
+    timestamp: message.timestamp ? new Date(message.timestamp) : new Date(message.created_at)
+  };
+}
+
+export function adaptConversation(conversation: any) {
+  if (!conversation) return null;
+  
+  return {
+    id: conversation.id || conversation.participant_id,
+    participant_id: conversation.participant_id || conversation.id,
+    participant_name: conversation.participant_name || conversation.name,
+    name: conversation.name || conversation.participant_name,
+    profilePicture: conversation.profilePicture || conversation.profile_picture,
+    last_message: conversation.last_message || conversation.lastMessage || '',
+    lastMessage: conversation.lastMessage || conversation.last_message || '',
+    last_message_time: conversation.last_message_time || conversation.lastMessageDate,
+    lastMessageDate: conversation.lastMessageDate || conversation.last_message_time,
+    unread_count: conversation.unread_count || conversation.unreadCount || 0,
+    unreadCount: conversation.unreadCount || conversation.unread_count || 0
+  };
+}
+
+export function adaptTransaction(transaction: any) {
+  if (!transaction) return null;
+  
+  return {
+    id: transaction.id,
+    user_id: transaction.user_id,
+    amount: transaction.amount,
+    date: transaction.date || transaction.created_at,
+    created_at: transaction.created_at || transaction.date,
+    type: transaction.type || transaction.transaction_type,
+    transaction_type: transaction.transaction_type || transaction.type,
+    currency: transaction.currency,
+    description: transaction.description
+  };
+}
+
+export function adaptReview(review: any) {
+  if (!review) return null;
+  
+  return {
+    id: review.id,
+    expert_id: review.expert_id,
+    rating: review.rating,
+    date: review.date,
+    comment: review.comment,
+    verified: review.verified,
+    user_name: review.user_name,
+    expert_name: review.expert_name,
+    review_id: review.review_id || review.id
+  };
+}
+
+export function getProfilePicture(profile: any): string {
+  if (!profile) return '';
+  return profile.profile_picture || profile.profilePicture || '';
+}

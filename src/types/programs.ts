@@ -1,3 +1,4 @@
+
 export type ProgramType = 'wellness' | 'academic' | 'business' | 'productivity' | 'leadership';
 
 export type ProgramCategory = 
@@ -95,6 +96,7 @@ export interface ExtendedExpert extends Expert {
   experience?: string;
   verified?: boolean;
   status?: 'pending' | 'approved' | 'disapproved';
+  selected_services?: number[]; // Add missing property
 }
 
 // Component Props Types

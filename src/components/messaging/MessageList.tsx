@@ -24,7 +24,9 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
       try {
         setLoading(true);
         const result = await getConversations(userId);
-        const adaptedResult = (result || []).map(adaptConversation);
+        const adaptedResult = (result || [])
+          .map(adaptConversation)
+          .filter((conv): conv is Conversation => conv !== null);
         setConversations(adaptedResult);
       } catch (error) {
         console.error("Error fetching conversations:", error);

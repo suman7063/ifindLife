@@ -73,6 +73,8 @@ export interface UserProfile {
   reports: Report[]; // Made required to match expectations
   transactions: UserTransaction[]; // Made required to match expectations
   referrals: Referral[]; // Made required to match expectations
+  recent_activities: any[]; // Add missing property
+  upcoming_appointments: any[]; // Add missing property
   // Add these for improved type compatibility
   profilePicture?: string | null;
   walletBalance?: number;
