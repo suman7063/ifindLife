@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/lib/supabase';
@@ -81,9 +80,16 @@ const useMessaging = () => {
         if (!userError && userData) {
           conversationList.push({
             id: partnerId,
+            participant_id: partnerId,
+            participant_name: userData.name || 'Unknown User',
             name: userData.name || 'Unknown User',
             profilePicture: userData.profile_picture || '',
-            lastMessageDate: data.lastMessageDate
+            last_message: '',
+            lastMessage: '',
+            last_message_time: data.lastMessageDate,
+            lastMessageDate: data.lastMessageDate,
+            unread_count: 0,
+            unreadCount: 0
           });
         }
       }
@@ -93,7 +99,6 @@ const useMessaging = () => {
         new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime()
       );
       
-      setConversations(conversationList);
       return conversationList;
     } catch (error) {
       console.error('Error in getConversations:', error);
@@ -138,6 +143,7 @@ const useMessaging = () => {
         receiver_id: msg.receiver_id,
         content: msg.content,
         created_at: msg.created_at,
+        updated_at: msg.updated_at || msg.created_at,
         read: msg.read,
         timestamp: new Date(msg.created_at),
         isMine: msg.sender_id === userId
@@ -223,6 +229,7 @@ const useMessaging = () => {
         receiver_id: data.receiver_id,
         content: data.content,
         created_at: data.created_at,
+        updated_at: data.updated_at || data.created_at,
         read: data.read,
         timestamp: new Date(data.created_at),
         isMine: true
@@ -266,6 +273,7 @@ const useMessaging = () => {
             receiver_id: newMessage.receiver_id,
             content: newMessage.content,
             created_at: newMessage.created_at,
+            updated_at: newMessage.updated_at,
             read: newMessage.read,
             timestamp: new Date(newMessage.created_at),
             isMine: false
@@ -326,8 +334,8 @@ const useMessaging = () => {
     fetchMessages,
     sendMessage,
     fetchConversations,
-    getConversations, // Add missing method
-    getMessages      // Add missing method
+    getConversations,
+    getMessages
   };
 };
 

@@ -52,6 +52,7 @@ export interface AuthContextType extends AuthState {
   signup: (email: string, password: string, userData: any, referralCode?: string) => Promise<boolean>;
   logout: () => Promise<boolean>;
   updateProfile: (data: any) => Promise<boolean>;
+  updateExpertProfile: (data: any) => Promise<boolean>;
   updatePassword: (password: string) => Promise<boolean>;
   refreshProfile: () => Promise<void>;
   
@@ -60,7 +61,6 @@ export interface AuthContextType extends AuthState {
   refreshUserProfile?: () => Promise<void>;
   refreshExpertProfile?: () => Promise<void>;
   updateUserProfile?: (data: any) => Promise<boolean>;
-  updateExpertProfile?: (data: any) => Promise<boolean>;
   addExpertService?: (serviceId: number) => Promise<boolean>;
   removeExpertService?: (serviceId: number) => Promise<boolean>;
   

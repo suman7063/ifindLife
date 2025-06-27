@@ -1,4 +1,3 @@
-
 import { Message } from '@/types/database/unified';
 import { Message as MessagingMessage } from '@/hooks/messaging/types';
 
@@ -13,6 +12,16 @@ export const adaptMessage = (message: Message, currentUserId: string): Messaging
     updated_at: message.updated_at,
     isMine: message.sender_id === currentUserId,
     timestamp: new Date(message.created_at)
+  };
+};
+
+export const adaptTransaction = (transaction: any) => {
+  return {
+    ...transaction,
+    date: transaction.date || transaction.created_at,
+    created_at: transaction.created_at || transaction.date,
+    type: transaction.type || transaction.transaction_type,
+    transaction_type: transaction.transaction_type || transaction.type
   };
 };
 

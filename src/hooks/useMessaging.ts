@@ -134,6 +134,7 @@ const useMessaging = () => {
         receiver_id: msg.receiver_id,
         content: msg.content,
         created_at: msg.created_at,
+        updated_at: msg.updated_at || msg.created_at,
         read: msg.read,
         timestamp: new Date(msg.created_at),
         isMine: msg.sender_id === user.id
@@ -202,6 +203,7 @@ const useMessaging = () => {
         receiver_id: data.receiver_id,
         content: data.content,
         created_at: data.created_at,
+        updated_at: data.updated_at || data.created_at,
         read: data.read,
         timestamp: new Date(data.created_at),
         isMine: true
@@ -245,6 +247,7 @@ const useMessaging = () => {
             receiver_id: newMessage.receiver_id,
             content: newMessage.content,
             created_at: newMessage.created_at,
+            updated_at: newMessage.updated_at || newMessage.created_at,
             read: newMessage.read,
             timestamp: new Date(newMessage.created_at),
             isMine: false

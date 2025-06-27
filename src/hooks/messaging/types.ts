@@ -25,3 +25,10 @@ export interface Conversation {
   unread_count: number;
   unreadCount?: number; // Alias for compatibility
 }
+
+export interface UseMessagesReturn {
+  messages: Message[];
+  loading: boolean;
+  sendMessage: (recipientId: string, content: string) => Promise<boolean>;
+  fetchMessages: (recipientId: string) => Promise<void>;
+}
