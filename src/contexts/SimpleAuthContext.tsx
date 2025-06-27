@@ -255,12 +255,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Load profiles when user is authenticated
-          setTimeout(async () => {
-            if (!mounted) return;
-            await refreshProfiles();
+          // CRITICAL FIX: Don't set loading to false until profiles are loaded
+          console.log('SimpleAuthContext: Loading profiles before marking as ready...');
+          await refreshProfiles();
+          if (mounted) {
             setIsLoading(false);
-          }, 0);
+          }
         } else {
           // Clear profiles when user is not authenticated
           setUserProfile(null);
