@@ -133,7 +133,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       if (data.user && data.session) {
         console.log('SimpleAuthContext: Login successful');
-        // The auth state change listener will handle the rest
         return true;
       }
 
@@ -167,19 +166,66 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     }
   };
 
-  // Set up auth state listener and initial session check
+  // Bulletproof auth initialization
   useEffect(() => {
-    let mounted = true;
+    let mounted = true; // Prevent state updates if component unmounts
     
-    console.log('SimpleAuthContext: Setting up auth state listener (singleton)...');
+    const initializeAuth = async () => {
+      console.log('Auth: Starting initialization...');
+      
+      try {
+        // Set a maximum timeout for the session check
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout')), 5000)
+        );
+        
+        // Race between session check and timeout
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]);
+        
+        if (!mounted) return; // Component unmounted, don't update state
+        
+        if (error) {
+          console.warn('Auth: Session check error:', error);
+        } else if (session) {
+          console.log('Auth: Session found');
+          setSession(session);
+          setUser(session.user);
+          // Load profiles after setting user
+          setTimeout(async () => {
+            if (!mounted) return;
+            await refreshProfiles();
+          }, 0);
+        } else {
+          console.log('Auth: No session found');
+          setUserProfile(null);
+          setExpert(null);
+          setUserType('none');
+        }
+        
+      } catch (error) {
+        console.error('Auth: Initialization failed:', error);
+        // Continue anyway - app should work without auth
+      } finally {
+        if (mounted) {
+          console.log('Auth: Setting loading to false');
+          setIsLoading(false);
+        }
+      }
+    };
     
-    // Set up the auth state change listener
+    // Start initialization
+    initializeAuth();
+    
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
         
-        console.log('SimpleAuthContext: Auth state changed:', event, session ? 'Session exists' : 'No session');
-        
+        console.log('Auth: State change:', event);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -199,43 +245,22 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         }
       }
     );
-
-    // Check for existing session
-    const checkInitialSession = async () => {
-      try {
-        console.log('SimpleAuthContext: Checking for existing session...');
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('SimpleAuthContext: Session check error:', error);
-          setIsLoading(false);
-          return;
-        }
-        
-        if (session) {
-          console.log('SimpleAuthContext: Found existing session');
-          setSession(session);
-          setUser(session.user);
-          await refreshProfiles();
-        } else {
-          console.log('SimpleAuthContext: Initial session check: No session');
-        }
-      } catch (error) {
-        console.error('SimpleAuthContext: Session check exception:', error);
-      } finally {
-        if (mounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    checkInitialSession();
-
+    
     // Cleanup function
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
+  }, []);
+
+  // Emergency fallback: Force loading to false after 10 seconds
+  useEffect(() => {
+    const emergencyTimeout = setTimeout(() => {
+      console.warn('Auth: Emergency timeout - forcing loading to false');
+      setIsLoading(false);
+    }, 10000);
+    
+    return () => clearTimeout(emergencyTimeout);
   }, []);
 
   const contextValue: SimpleAuthContextType = {

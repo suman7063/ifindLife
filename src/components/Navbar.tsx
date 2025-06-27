@@ -13,13 +13,25 @@ const Navbar = () => {
 
   const { isAuthenticated, userType, user, expert, userProfile, isLoading, logout } = useSimpleAuth();
 
+  // Don't show loading forever - fallback after reasonable time
+  const [showContent, setShowContent] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowContent(true);
+    }, 2000); // Show content after 2 seconds regardless
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   console.log('Navbar: Rendering with auth state:', {
     isAuthenticated,
     userType,
     isLoading,
     hasUser: !!user,
     hasExpert: !!expert,
-    hasUserProfile: !!userProfile
+    hasUserProfile: !!userProfile,
+    showContent
   });
 
   // Scroll effect
@@ -75,8 +87,8 @@ const Navbar = () => {
     favorite_programs: [],
     enrolled_courses: [],
     reviews: [],
-    recent_activities: [], // Add missing property
-    upcoming_appointments: [], // Add missing property
+    recent_activities: [],
+    upcoming_appointments: [],
     reports: [],
     transactions: [],
     referrals: []
@@ -84,16 +96,10 @@ const Navbar = () => {
 
   const hasExpertProfile = userType === 'expert' && !!expert;
 
-  console.log('Navbar: Computed state:', {
-    currentUser: !!currentUser,
-    hasExpertProfile,
-    userType,
-    isLoading
-  });
-
-  // Show loading state
-  if (isLoading) {
-    console.log('Navbar: Showing loading state');
+  // Show content if not loading OR after timeout
+  if (!isLoading || showContent) {
+    console.log('Navbar: Rendering full navbar');
+    
     return (
       <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
@@ -105,14 +111,33 @@ const Navbar = () => {
               BETA
             </span>
           </div>
-          <div className="text-gray-500">Loading...</div>
+          
+          <NavbarDesktopLinks 
+            isAuthenticated={isAuthenticated} 
+            currentUser={currentUser} 
+            hasExpertProfile={hasExpertProfile} 
+            userLogout={handleLogout} 
+            expertLogout={handleLogout} 
+            sessionType={userType} 
+            isLoggingOut={false} 
+          />
+          
+          <NavbarMobileMenu 
+            isAuthenticated={isAuthenticated} 
+            currentUser={currentUser} 
+            hasExpertProfile={hasExpertProfile} 
+            userLogout={handleLogout} 
+            expertLogout={handleLogout} 
+            sessionType={userType} 
+            isLoggingOut={false} 
+          />
         </div>
       </div>
     );
   }
 
-  console.log('Navbar: Rendering full navbar');
-
+  // Loading state - but only briefly
+  console.log('Navbar: Showing loading state');
   return (
     <div className={`sticky top-0 w-full z-50 transition-colors ${getNavbarBackground()} border-b border-gray-100`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-20 items-center justify-between">
@@ -124,26 +149,9 @@ const Navbar = () => {
             BETA
           </span>
         </div>
-        
-        <NavbarDesktopLinks 
-          isAuthenticated={isAuthenticated} 
-          currentUser={currentUser} 
-          hasExpertProfile={hasExpertProfile} 
-          userLogout={handleLogout} 
-          expertLogout={handleLogout} 
-          sessionType={userType} 
-          isLoggingOut={false} 
-        />
-        
-        <NavbarMobileMenu 
-          isAuthenticated={isAuthenticated} 
-          currentUser={currentUser} 
-          hasExpertProfile={hasExpertProfile} 
-          userLogout={handleLogout} 
-          expertLogout={handleLogout} 
-          sessionType={userType} 
-          isLoggingOut={false} 
-        />
+        <div className="flex items-center">
+          <div className="animate-pulse text-gray-400">Loading...</div>
+        </div>
       </div>
     </div>
   );
