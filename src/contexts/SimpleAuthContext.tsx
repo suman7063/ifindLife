@@ -68,21 +68,22 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Derive authentication state - CRITICAL: This must be consistent
   const isAuthenticated = Boolean(user && session);
 
-  console.log('SimpleAuthContext: Current state:', {
-    user: !!user,
-    session: !!session,
+  console.log('SimpleAuthContext: Current detailed state:', {
+    user: user ? { id: user.id, email: user.email } : null,
+    session: session ? 'exists' : null,
     isAuthenticated,
     userType,
     isLoading,
-    userProfile: !!userProfile,
-    expert: !!expert
+    userProfile: userProfile ? { id: userProfile.id, name: userProfile.name } : null,
+    expert: expert ? { id: expert.id, name: expert.name } : null
   });
 
   // Load profiles based on user
   const loadUserProfile = async (userId: string) => {
     try {
+      console.log('SimpleAuthContext: Loading user profile for:', userId);
       const profile = await UserRepository.findById(userId);
-      console.log('SimpleAuthContext: Loaded user profile:', !!profile);
+      console.log('SimpleAuthContext: User profile loaded:', profile ? { id: profile.id, name: profile.name } : null);
       setUserProfile(profile);
       return profile;
     } catch (error) {
@@ -93,8 +94,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
   const loadExpertProfile = async (userId: string) => {
     try {
+      console.log('SimpleAuthContext: Loading expert profile for:', userId);
       const expertProfile = await ExpertRepository.getExpertByAuthId(userId);
-      console.log('SimpleAuthContext: Loaded expert profile:', !!expertProfile);
+      console.log('SimpleAuthContext: Expert profile loaded:', expertProfile ? { id: expertProfile.id, name: expertProfile.name } : null);
       setExpert(expertProfile);
       return expertProfile;
     } catch (error) {
@@ -104,9 +106,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   };
 
   const refreshProfiles = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('SimpleAuthContext: No user to refresh profiles for');
+      return;
+    }
     
-    console.log('SimpleAuthContext: Refreshing profiles for user:', user.id);
+    console.log('SimpleAuthContext: Starting profile refresh for user:', user.id);
     
     const [userProfileResult, expertProfileResult] = await Promise.all([
       loadUserProfile(user.id),
@@ -117,7 +122,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     let newUserType: SessionType = 'none';
     const preferredRole = localStorage.getItem('sessionType') || localStorage.getItem('preferredRole');
     
-    console.log('SimpleAuthContext: Profile loading results:', {
+    console.log('SimpleAuthContext: Profile refresh results:', {
       hasUserProfile: !!userProfileResult,
       hasExpertProfile: !!expertProfileResult,
       preferredRole
@@ -136,7 +141,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       newUserType = 'user';
     }
     
-    console.log('SimpleAuthContext: User type determined:', newUserType);
+    console.log('SimpleAuthContext: Setting user type to:', newUserType);
     setUserType(newUserType);
   };
 
@@ -216,11 +221,11 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         if (error) {
           console.warn('Auth: Session check error:', error);
         } else if (session) {
-          console.log('Auth: Session found');
+          console.log('Auth: Initial session found:', { userId: session.user.id, email: session.user.email });
           setSession(session);
           setUser(session.user);
         } else {
-          console.log('Auth: No session found');
+          console.log('Auth: No initial session found');
           setUserProfile(null);
           setExpert(null);
           setUserType('none');
@@ -230,7 +235,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         console.error('Auth: Initialization failed:', error);
       } finally {
         if (mounted) {
-          console.log('Auth: Setting loading to false');
+          console.log('Auth: Initial check complete, setting loading to false');
           setIsLoading(false);
         }
       }
@@ -242,22 +247,23 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth: State change:', event);
+        console.log('Auth: State change event:', event, session ? { userId: session.user.id } : 'no session');
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           console.log('SimpleAuthContext: User authenticated, loading profiles...');
-          setIsLoading(true);
+          // Don't set loading true here - let profiles load in background
           await refreshProfiles();
-          if (mounted) {
-            setIsLoading(false);
-          }
         } else {
           // Clear profiles when user is not authenticated
+          console.log('SimpleAuthContext: User logged out, clearing profiles');
           setUserProfile(null);
           setExpert(null);
           setUserType('none');
+        }
+        
+        if (mounted) {
           setIsLoading(false);
         }
       }
@@ -283,13 +289,14 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     refreshProfiles
   };
 
-  console.log('SimpleAuthContext: Providing context value:', {
+  console.log('SimpleAuthContext: Providing detailed context value:', {
     isAuthenticated: contextValue.isAuthenticated,
     isLoading: contextValue.isLoading,
     userType: contextValue.userType,
     hasUser: !!contextValue.user,
     hasUserProfile: !!contextValue.userProfile,
-    hasExpert: !!contextValue.expert
+    hasExpert: !!contextValue.expert,
+    userEmail: contextValue.user?.email
   });
 
   return (
