@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import ServicesSection from '@/components/ServicesSection';
@@ -12,6 +11,7 @@ import HomepageIssueSessions from '@/components/HomepageIssueSessions';
 import ExpertsOnlineSection from '@/components/ExpertsOnlineSection';
 import Footer from '@/components/Footer';
 import AuthDebugPanel from '@/components/debug/AuthDebugPanel';
+import EmergencyAuthFix from '@/components/debug/EmergencyAuthFix';
 import TestimonialsSection from '@/components/TestimonialsSection';
 
 // Lazy load remaining non-critical components
@@ -48,6 +48,9 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col home-page">
       <Navbar />
+      
+      {/* Emergency Auth Debug - only in development */}
+      <EmergencyAuthFix />
       
       <main className="flex-1">
         {/* Section 1: Hero Banner with enhanced slider and service cards */}
