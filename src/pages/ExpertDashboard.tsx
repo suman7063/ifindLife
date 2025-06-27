@@ -12,11 +12,12 @@ import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { Loader2 } from 'lucide-react';
 
 const ExpertDashboard = () => {
   const { isAuthenticated, userType, expert, isLoading } = useSimpleAuth();
   
-  console.log('ExpertDashboard - Simple auth state:', {
+  console.log('ExpertDashboard - Auth state:', {
     isAuthenticated,
     userType,
     hasExpertProfile: !!expert,
@@ -29,49 +30,48 @@ const ExpertDashboard = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto" />
           <p className="mt-4 text-gray-600">Loading expert dashboard...</p>
         </div>
       </div>
     );
   }
 
-  // Handle unauthorized access
+  // Handle unauthorized access - redirect to expert login
   if (!isAuthenticated || userType !== 'expert' || !expert) {
+    console.log('ExpertDashboard: Unauthorized access, redirecting to expert login');
     return <Navigate to="/expert-login" replace />;
+  }
+
+  // Handle non-approved expert status
+  if (expert.status !== 'approved') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md p-8 bg-white rounded-lg shadow-md">
+          <h2 className="text-2xl font-bold mb-4">Account Status: {expert.status}</h2>
+          {expert.status === 'pending' && (
+            <p className="text-gray-600">Your expert account is pending approval. You will be notified once approved.</p>
+          )}
+          {expert.status === 'disapproved' && (
+            <p className="text-gray-600">Your expert account application has been disapproved. Please check your email for details.</p>
+          )}
+        </div>
+      </div>
+    );
   }
 
   return (
     <ExpertDashboardLayout>
       <Routes>
-        {/* Dashboard Home */}
         <Route index element={<DashboardHome />} />
-        
-        {/* Professional Profile Management */}
         <Route path="profile" element={<ProfilePage />} />
-        
-        {/* Consultation Schedule and Availability Management */}
         <Route path="schedule" element={<SchedulePage />} />
-        
-        {/* Client Management with History and Notes */}
         <Route path="clients" element={<ClientsPage />} />
-        
-        {/* Messaging */}
         <Route path="messages" element={<MessagingPage />} />
-        
-        {/* Service Offering Management with Pricing Control */}
         <Route path="services" element={<ServicesPage />} />
-        
-        {/* Earnings Tracking and Payout Management */}
         <Route path="earnings" element={<EarningsPage />} />
-        
-        {/* Advanced Analytics Dashboard */}
         <Route path="analytics" element={<AnalyticsPage />} />
-        
-        {/* User Reporting System for Inappropriate Behavior */}
         <Route path="reports" element={<ReportPage />} />
-        
-        {/* Fallback route */}
         <Route path="*" element={<Navigate to="/expert-dashboard" replace />} />
       </Routes>
     </ExpertDashboardLayout>

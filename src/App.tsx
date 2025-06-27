@@ -8,7 +8,7 @@ import UserSignup from './pages/UserRegister';
 import ExpertLogin from './pages/ExpertLogin';
 import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
-import UserDashboard from './pages/UserDashboardPages';
+import UserDashboard from './pages/UserDashboard';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/admin/Testing';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';

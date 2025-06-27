@@ -9,40 +9,6 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
-// Simple redirect safety to prevent infinite loops
-class RedirectSafety {
-  private redirectCount = 0;
-  private lastRedirectTime = 0;
-  private readonly MAX_REDIRECTS = 3;
-  private readonly RESET_TIME = 5000; // 5 seconds
-
-  canRedirect(from: string, to: string): boolean {
-    const now = Date.now();
-    
-    // Reset counter if enough time has passed
-    if (now - this.lastRedirectTime > this.RESET_TIME) {
-      this.redirectCount = 0;
-    }
-
-    // Check if we've hit the limit
-    if (this.redirectCount >= this.MAX_REDIRECTS) {
-      console.error(`Redirect loop detected: ${from} -> ${to}. Blocking redirect.`);
-      return false;
-    }
-
-    this.redirectCount++;
-    this.lastRedirectTime = now;
-    return true;
-  }
-
-  reset() {
-    this.redirectCount = 0;
-    this.lastRedirectTime = 0;
-  }
-}
-
-const redirectSafety = new RedirectSafety();
-
 const ExpertLogin: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -53,8 +19,7 @@ const ExpertLogin: React.FC = () => {
   const { isAuthenticated, userType, expert, isLoading, login } = useSimpleAuth();
   const [hasRedirected, setHasRedirected] = useState(false);
 
-  // Enhanced debug logging
-  console.log('ExpertLogin - Simple auth state:', {
+  console.log('ExpertLogin - Auth state:', {
     isAuthenticated,
     userType,
     hasExpertProfile: !!expert,
@@ -62,9 +27,8 @@ const ExpertLogin: React.FC = () => {
     expertStatus: expert?.status
   });
 
-  // Check for existing authentication with redirect safety
+  // Check for existing authentication and redirect
   useEffect(() => {
-    // Check status from URL parameters
     const status = searchParams.get('status');
     if (status === 'pending') {
       toast.info('Your expert account is pending approval. You will be notified once approved.');
@@ -78,47 +42,34 @@ const ExpertLogin: React.FC = () => {
       return;
     }
 
-    // Only redirect if authenticated as expert AND has expert profile AND hasn't redirected yet AND expert is approved
-    if (isAuthenticated && userType === 'expert' && expert && expert.status === 'approved' && !hasRedirected) {
-      console.log('ExpertLogin: Already authenticated as expert, checking redirect safety');
-      
-      if (redirectSafety.canRedirect('/expert-login', '/expert-dashboard')) {
-        console.log('ExpertLogin: Redirecting to dashboard');
-        setHasRedirected(true);
-        
-        // Add small delay to prevent infinite loops
-        setTimeout(() => {
-          navigate('/expert-dashboard', { replace: true });
-        }, 100);
-      } else {
-        console.error('ExpertLogin: Redirect loop detected, staying on login page');
-        toast.error('Authentication error detected. Please try logging out and back in.');
-      }
+    // Check if authenticated as expert with approved status
+    const isExpertAuthenticated = Boolean(
+      isAuthenticated && 
+      userType === 'expert' && 
+      expert && 
+      expert.status === 'approved'
+    );
+
+    if (isExpertAuthenticated && !hasRedirected) {
+      console.log('ExpertLogin: Expert authenticated, redirecting to dashboard');
+      setHasRedirected(true);
+      navigate('/expert-dashboard', { replace: true });
     }
   }, [isAuthenticated, userType, expert, isLoading, navigate, searchParams, hasRedirected]);
 
-  // Handle login with simple auth
+  // Handle expert login
   const handleLogin = async (email: string, password: string) => {
     try {
       setIsLoggingIn(true);
       setLoginError(null);
       
-      console.log('ExpertLogin: Attempting login with simple auth:', email);
+      console.log('ExpertLogin: Attempting expert login:', email);
       
       const success = await login(email, password, { asExpert: true });
       
       if (success) {
-        console.log('Expert login successful, will redirect shortly');
+        console.log('Expert login successful');
         toast.success('Login successful!');
-        
-        // Reset redirect safety on successful login
-        redirectSafety.reset();
-        
-        // Add a small delay to allow auth state to update
-        setTimeout(() => {
-          navigate('/expert-dashboard', { replace: true });
-        }, 100);
-        
         return true;
       } else {
         console.error('Expert login failed');

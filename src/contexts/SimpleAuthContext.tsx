@@ -101,11 +101,23 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       loadExpertProfile(user.id)
     ]);
 
-    // Determine user type based on available profiles
+    // Determine user type based on available profiles and login intent
     let newUserType: SessionType = 'none';
+    const preferredRole = localStorage.getItem('sessionType') || localStorage.getItem('preferredRole');
+    
+    console.log('SimpleAuthContext: Profile loading results:', {
+      hasUserProfile: !!userProfileResult,
+      hasExpertProfile: !!expertProfileResult,
+      preferredRole
+    });
     
     if (userProfileResult && expertProfileResult) {
-      newUserType = 'dual';
+      // User has both profiles - check preference
+      if (preferredRole === 'expert') {
+        newUserType = 'expert';
+      } else {
+        newUserType = 'user';
+      }
     } else if (expertProfileResult) {
       newUserType = 'expert';
     } else if (userProfileResult) {
@@ -119,7 +131,16 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   // Auth actions
   const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<boolean> => {
     try {
-      console.log('SimpleAuthContext: Login attempt for:', email);
+      console.log('SimpleAuthContext: Login attempt for:', email, 'as expert:', options?.asExpert);
+      
+      // Set session type preference before login
+      if (options?.asExpert) {
+        localStorage.setItem('sessionType', 'expert');
+        localStorage.setItem('preferredRole', 'expert');
+      } else {
+        localStorage.setItem('sessionType', 'user');
+        localStorage.setItem('preferredRole', 'user');
+      }
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -155,38 +176,38 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         console.log('SimpleAuthContext: Logout successful');
       }
       
-      // Clear local state immediately
+      // Clear local state and preferences
       setUser(null);
       setSession(null);
       setUserProfile(null);
       setExpert(null);
       setUserType('none');
+      localStorage.removeItem('sessionType');
+      localStorage.removeItem('preferredRole');
     } catch (error) {
       console.error('SimpleAuthContext: Logout exception:', error);
     }
   };
 
-  // Bulletproof auth initialization
+  // Auth initialization and state management
   useEffect(() => {
-    let mounted = true; // Prevent state updates if component unmounts
+    let mounted = true;
     
     const initializeAuth = async () => {
       console.log('Auth: Starting initialization...');
       
       try {
-        // Set a maximum timeout for the session check
         const sessionPromise = supabase.auth.getSession();
         const timeoutPromise = new Promise<never>((_, reject) => 
           setTimeout(() => reject(new Error('Session check timeout')), 5000)
         );
         
-        // Race between session check and timeout
         const { data: { session }, error } = await Promise.race([
           sessionPromise,
           timeoutPromise
         ]);
         
-        if (!mounted) return; // Component unmounted, don't update state
+        if (!mounted) return;
         
         if (error) {
           console.warn('Auth: Session check error:', error);
@@ -194,11 +215,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           console.log('Auth: Session found');
           setSession(session);
           setUser(session.user);
-          // Load profiles after setting user
-          setTimeout(async () => {
-            if (!mounted) return;
-            await refreshProfiles();
-          }, 0);
         } else {
           console.log('Auth: No session found');
           setUserProfile(null);
@@ -208,7 +224,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         
       } catch (error) {
         console.error('Auth: Initialization failed:', error);
-        // Continue anyway - app should work without auth
       } finally {
         if (mounted) {
           console.log('Auth: Setting loading to false');
@@ -217,12 +232,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
     };
     
-    // Start initialization
     initializeAuth();
     
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         if (!mounted) return;
         
         console.log('Auth: State change:', event);
@@ -246,7 +259,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
     );
     
-    // Cleanup function
     return () => {
       mounted = false;
       subscription.unsubscribe();
