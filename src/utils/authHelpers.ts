@@ -1,7 +1,7 @@
 
-import { SimpleAuthContextType } from '@/contexts/SimpleAuthContext';
+import { SimpleAuthState } from '@/contexts/SimpleAuthContext';
 
-export const isUserAuthenticated = (authState: SimpleAuthContextType): boolean => {
+export const isUserAuthenticated = (authState: SimpleAuthState): boolean => {
   console.log('AuthHelper: Checking auth state:', {
     hasUser: !!authState?.user,
     hasEmail: !!authState?.user?.email,
@@ -35,7 +35,7 @@ export const isUserAuthenticated = (authState: SimpleAuthContextType): boolean =
   return userAuthenticated;
 };
 
-export const isUserAuthenticatedForDashboard = (authState: SimpleAuthContextType): boolean => {
+export const isUserAuthenticatedForDashboard = (authState: SimpleAuthState): boolean => {
   console.log('AuthHelper: Dashboard auth check:', {
     user: !!authState?.user,
     userType: authState?.userType,
