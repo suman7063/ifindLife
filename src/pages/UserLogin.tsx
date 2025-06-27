@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { isUserAuthenticated } from '@/utils/authHelpers';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -16,50 +17,61 @@ const UserLogin: React.FC = () => {
   const simpleAuth = useSimpleAuth();
   const { isAuthenticated, userType, user, isLoading, login } = simpleAuth;
 
-  // DETAILED DEBUGGING
-  console.log('UserLogin: DETAILED AUTH STATE DEBUG:', {
-    fullAuthObject: simpleAuth,
-    user: simpleAuth?.user,
-    isAuthenticated: simpleAuth?.isAuthenticated,
-    userType: simpleAuth?.userType,
-    isLoading: simpleAuth?.isLoading,
-    hasUser: !!simpleAuth?.user,
-    userKeys: simpleAuth?.user ? Object.keys(simpleAuth.user) : 'no user',
-    authKeys: simpleAuth ? Object.keys(simpleAuth) : 'no auth object'
-  });
-
-  useEffect(() => {
-    console.log('UserLogin: Checking auth state for redirect...');
-    console.log('UserLogin: REDIRECT CHECK - Detailed state:', {
+  // DETAILED DEBUGGING with unified auth check
+  console.log('UserLogin: UNIFIED AUTH CHECK:', {
+    unifiedResult: isUserAuthenticated(simpleAuth),
+    originalCheck: Boolean(isAuthenticated && userType === 'user' && user),
+    rawAuthState: {
       isAuthenticated: Boolean(isAuthenticated),
       userType,
       hasUser: Boolean(user),
-      isLoading: Boolean(isLoading),
-      userEmail: user?.email
-    });
+      userEmail: user?.email,
+      isLoading: Boolean(isLoading)
+    }
+  });
+
+  // PRIMARY AUTH CHECK - Using unified helper
+  useEffect(() => {
+    console.log('UserLogin: Primary auth check with unified helper...');
     
-    // Wait for auth state to stabilize
     if (isLoading) {
-      console.log('UserLogin: Auth still loading, waiting...');
+      console.log('UserLogin: Still loading, waiting...');
       return;
     }
 
-    // Check if user is properly authenticated as a user
-    const isUserAuthenticated = Boolean(
-      isAuthenticated && 
-      userType === 'user' && 
-      user
-    );
-
-    console.log('UserLogin: Is user authenticated:', isUserAuthenticated);
-
-    if (isUserAuthenticated) {
-      console.log('UserLogin: User authenticated, redirecting to user dashboard');
+    if (isUserAuthenticated(simpleAuth)) {
+      console.log('UserLogin: User authenticated via unified helper, redirecting');
       navigate('/user-dashboard', { replace: true });
     } else {
-      console.log('UserLogin: User not authenticated, staying on login page');
+      console.log('UserLogin: Not authenticated via unified helper');
     }
-  }, [isAuthenticated, user, isLoading, userType, navigate]);
+  }, [simpleAuth, isLoading, navigate]);
+
+  // SECONDARY AUTH CHECK - Copy LoginDropdown's exact logic
+  useEffect(() => {
+    console.log('UserLogin: Secondary check using LoginDropdown logic...');
+    
+    if (isLoading) return;
+    
+    // LoginDropdown checks: Boolean(isAuthenticated) || Boolean(hasExpertProfile)
+    // For user login, we adapt this to: user exists and has email
+    if (simpleAuth?.user && simpleAuth?.user?.email) {
+      console.log('UserLogin: Using LoginDropdown-style logic - user has email, redirecting');
+      navigate('/user-dashboard', { replace: true });
+    }
+  }, [simpleAuth?.user, simpleAuth?.user?.email, isLoading, navigate]);
+
+  // EMERGENCY AUTH CHECK - Most basic user check
+  useEffect(() => {
+    console.log('UserLogin: Emergency check - basic user presence...');
+    
+    if (isLoading) return;
+    
+    if (user?.email && isAuthenticated) {
+      console.log('UserLogin: Emergency redirect - user authenticated with email');
+      navigate('/user-dashboard', { replace: true });
+    }
+  }, [user?.email, isAuthenticated, isLoading, navigate]);
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
@@ -77,6 +89,13 @@ const UserLogin: React.FC = () => {
       if (success) {
         console.log('UserLogin: Login successful via SimpleAuth');
         toast.success('Login successful!', { duration: 2000 });
+        
+        // Force immediate redirect on successful login
+        setTimeout(() => {
+          console.log('UserLogin: Forcing redirect after successful login');
+          navigate('/user-dashboard', { replace: true });
+        }, 100);
+        
         return true;
       } else {
         console.error('UserLogin: Login failed via SimpleAuth');
@@ -92,8 +111,8 @@ const UserLogin: React.FC = () => {
     }
   };
 
-  // Don't render login form if already authenticated (should redirect)
-  if (isAuthenticated && userType === 'user' && user && !isLoading) {
+  // Don't render login form if already authenticated
+  if (isUserAuthenticated(simpleAuth) && !isLoading) {
     return (
       <>
         <Navbar />
@@ -131,7 +150,7 @@ const UserLogin: React.FC = () => {
         {/* Emergency redirect button for debugging */}
         <button 
           onClick={() => {
-            console.log('Emergency redirect triggered');
+            console.log('Emergency redirect triggered with auth state:', simpleAuth);
             navigate('/user-dashboard', { replace: true });
           }}
           className="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded text-sm z-50"

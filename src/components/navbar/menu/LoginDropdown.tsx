@@ -21,21 +21,29 @@ const LoginDropdown: React.FC<LoginDropdownProps> = ({
   hasExpertProfile 
 }) => {
   // Enhanced auth state logging for debugging
-  console.log('LoginDropdown detailed auth check:', {
+  console.log('LoginDropdown: EXACT AUTH CONDITIONS ANALYSIS:', {
     isAuthenticated: Boolean(isAuthenticated),
     hasExpertProfile: Boolean(hasExpertProfile),
     authType: typeof isAuthenticated,
     expertType: typeof hasExpertProfile,
+    // Log the EXACT condition that LoginDropdown uses
+    exactCondition: Boolean(isAuthenticated) || Boolean(hasExpertProfile),
+    individualChecks: {
+      booleanAuth: Boolean(isAuthenticated),
+      booleanExpert: Boolean(hasExpertProfile)
+    },
     timestamp: new Date().toISOString()
   });
 
   // Check multiple authentication criteria - user has ANY valid authentication
   const hasAnyAuthentication = Boolean(isAuthenticated) || Boolean(hasExpertProfile);
   
-  console.log('LoginDropdown authentication decision:', { 
+  console.log('LoginDropdown: WORKING LOGIC BREAKDOWN:', { 
     hasAnyAuthentication,
     shouldShowLogin: !hasAnyAuthentication,
-    finalDecision: hasAnyAuthentication ? 'HIDE_LOGIN' : 'SHOW_LOGIN'
+    finalDecision: hasAnyAuthentication ? 'HIDE_LOGIN' : 'SHOW_LOGIN',
+    // This is the EXACT logic that works
+    workingCondition: `Boolean(${isAuthenticated}) || Boolean(${hasExpertProfile}) = ${hasAnyAuthentication}`
   });
   
   // If user has any authentication, don't show login dropdown
