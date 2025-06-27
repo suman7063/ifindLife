@@ -11,9 +11,10 @@ import Footer from '@/components/Footer';
 
 const UserLogin: React.FC = () => {
   const navigate = useNavigate();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
-  const { isAuthenticated, userType, user, isLoading, login } = useSimpleAuth();
+  const simpleAuth = useSimpleAuth();
+  const { isAuthenticated, userType, user, isLoading, login } = simpleAuth;
 
   console.log('UserLogin: Current auth state:', {
     isAuthenticated: Boolean(isAuthenticated),
@@ -23,9 +24,15 @@ const UserLogin: React.FC = () => {
     userEmail: user?.email
   });
 
-  // Handle redirect logic
+  // Enhanced redirect logic based on Claude's suggestion
   useEffect(() => {
     console.log('UserLogin: Checking auth state for redirect...');
+    console.log('UserLogin: Auth state details:', {
+      isAuthenticated: Boolean(isAuthenticated),
+      userType,
+      hasUser: Boolean(user),
+      isLoading: Boolean(isLoading)
+    });
     
     // Wait for auth state to stabilize
     if (isLoading) {
@@ -43,20 +50,21 @@ const UserLogin: React.FC = () => {
     console.log('UserLogin: Is user authenticated:', isUserAuthenticated);
 
     if (isUserAuthenticated) {
-      console.log('UserLogin: User authenticated, redirecting to dashboard');
+      console.log('UserLogin: User authenticated, redirecting to user dashboard');
       navigate('/user-dashboard', { replace: true });
     } else {
       console.log('UserLogin: User not authenticated, staying on login page');
-      setIsCheckingAuth(false);
     }
   }, [isAuthenticated, user, isLoading, userType, navigate]);
 
-  // Handle login form submission
+  // Enhanced login form submission based on Claude's suggestion
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {
       toast.error('Please enter both email and password', { duration: 2000 });
       return false;
     }
+    
+    setIsLoggingIn(true);
     
     try {
       console.log('UserLogin: Attempting login:', email);
@@ -67,6 +75,7 @@ const UserLogin: React.FC = () => {
       if (success) {
         console.log('UserLogin: Login successful via SimpleAuth');
         toast.success('Login successful!', { duration: 2000 });
+        // Don't navigate here - let the useEffect handle it
         return true;
       } else {
         console.error('UserLogin: Login failed via SimpleAuth');
@@ -77,27 +86,13 @@ const UserLogin: React.FC = () => {
       console.error('UserLogin: Login error:', error);
       toast.error('An unexpected error occurred', { duration: 2000 });
       return false;
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
-  // Show loading while checking auth
-  if (isCheckingAuth || isLoading) {
-    return (
-      <>
-        <Navbar />
-        <div className="flex justify-center items-center min-h-screen">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-            <span className="ml-2">Checking authentication...</span>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
-  // Don't render login form if already authenticated
-  if (isAuthenticated && userType === 'user' && user) {
+  // Don't render login form if already authenticated (should redirect)
+  if (isAuthenticated && userType === 'user' && user && !isLoading) {
     return (
       <>
         <Navbar />
@@ -105,6 +100,22 @@ const UserLogin: React.FC = () => {
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto" />
             <p className="mt-2 text-gray-600">Redirecting to dashboard...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+            <span className="ml-2">Checking authentication...</span>
           </div>
         </div>
         <Footer />
@@ -125,7 +136,7 @@ const UserLogin: React.FC = () => {
           </CardHeader>
           
           <CardContent>
-            <UserLoginTabs onLogin={handleLogin} isLoggingIn={false} />
+            <UserLoginTabs onLogin={handleLogin} isLoggingIn={isLoggingIn} />
           </CardContent>
         </Card>
       </div>

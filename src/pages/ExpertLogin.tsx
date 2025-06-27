@@ -16,18 +16,18 @@ const ExpertLogin: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const { isAuthenticated, userType, expert, isLoading, login } = useSimpleAuth();
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const simpleAuth = useSimpleAuth();
+  const { isAuthenticated, userType, expert, isLoading, login } = simpleAuth;
 
   console.log('ExpertLogin - Auth state:', {
-    isAuthenticated,
+    isAuthenticated: Boolean(isAuthenticated),
     userType,
-    hasExpertProfile: !!expert,
-    isLoading,
+    hasExpertProfile: Boolean(expert),
+    isLoading: Boolean(isLoading),
     expertStatus: expert?.status
   });
 
-  // Check for existing authentication and redirect
+  // Enhanced redirect logic
   useEffect(() => {
     const status = searchParams.get('status');
     if (status === 'pending') {
@@ -35,6 +35,15 @@ const ExpertLogin: React.FC = () => {
     } else if (status === 'disapproved') {
       toast.error('Your expert account application has been disapproved.');
     }
+
+    console.log('ExpertLogin: Checking auth state for redirect...');
+    console.log('ExpertLogin: Auth state details:', {
+      isAuthenticated: Boolean(isAuthenticated),
+      userType,
+      hasExpert: Boolean(expert),
+      isLoading: Boolean(isLoading),
+      expertStatus: expert?.status
+    });
 
     // Wait for auth loading to complete
     if (isLoading) {
@@ -50,19 +59,25 @@ const ExpertLogin: React.FC = () => {
       expert.status === 'approved'
     );
 
-    if (isExpertAuthenticated && !hasRedirected) {
+    if (isExpertAuthenticated) {
       console.log('ExpertLogin: Expert authenticated, redirecting to dashboard');
-      setHasRedirected(true);
       navigate('/expert-dashboard', { replace: true });
+    } else {
+      console.log('ExpertLogin: Expert not authenticated or not approved, staying on login page');
     }
-  }, [isAuthenticated, userType, expert, isLoading, navigate, searchParams, hasRedirected]);
+  }, [isAuthenticated, userType, expert, isLoading, navigate, searchParams]);
 
-  // Handle expert login
+  // Enhanced expert login
   const handleLogin = async (email: string, password: string) => {
+    if (!email || !password) {
+      toast.error('Please enter both email and password', { duration: 2000 });
+      return false;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError(null);
+    
     try {
-      setIsLoggingIn(true);
-      setLoginError(null);
-      
       console.log('ExpertLogin: Attempting expert login:', email);
       
       const success = await login(email, password, { asExpert: true });
@@ -70,6 +85,7 @@ const ExpertLogin: React.FC = () => {
       if (success) {
         console.log('Expert login successful');
         toast.success('Login successful!');
+        // Don't navigate here - let the useEffect handle it
         return true;
       } else {
         console.error('Expert login failed');
@@ -86,6 +102,22 @@ const ExpertLogin: React.FC = () => {
       setIsLoggingIn(false);
     }
   };
+
+  // Don't render login form if already authenticated (should redirect)
+  if (isAuthenticated && userType === 'expert' && expert && expert.status === 'approved' && !isLoading) {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4 mx-auto" />
+            <p>Redirecting to expert dashboard...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
 
   // Show loading while auth is being checked
   if (isLoading) {
