@@ -61,27 +61,33 @@ export const messagingRepository = {
         );
 
         const lastMessage = allMessages.length > 0 ? allMessages[0].content : '';
-        const lastMessageDate = allMessages.length > 0 ? allMessages[0].created_at : undefined;
+        const lastMessageDate = allMessages.length > 0 ? allMessages[0].created_at : '';
         
         // Count unread messages from this user
         const unreadCount = receivedFromUser.filter(msg => !msg.read).length;
 
         return {
           id: user.id,
+          participant_id: user.id,
+          participant_name: user.name || user.email?.split('@')[0] || 'Unknown User',
+          last_message: lastMessage,
+          last_message_time: lastMessageDate,
+          unread_count: unreadCount,
+          // Compatibility aliases
           name: user.name || user.email?.split('@')[0] || 'Unknown User',
           profilePicture: user.profile_picture,
-          lastMessage,
-          lastMessageDate,
-          unreadCount,
+          lastMessage: lastMessage,
+          lastMessageDate: lastMessageDate,
+          unreadCount: unreadCount,
           participantId: user.id
         };
       });
 
       // Sort conversations by last message date
       return conversations.sort((a, b) => {
-        if (!a.lastMessageDate) return 1;
-        if (!b.lastMessageDate) return -1;
-        return new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime();
+        if (!a.last_message_time) return 1;
+        if (!b.last_message_time) return -1;
+        return new Date(b.last_message_time).getTime() - new Date(a.last_message_time).getTime();
       });
     } catch (error) {
       console.error("Error in fetchConversations:", error);
@@ -119,13 +125,14 @@ export const messagingRepository = {
       // Format messages for the UI
       return filteredMessages.map(msg => ({
         id: msg.id,
-        content: msg.content,
-        timestamp: new Date(msg.created_at),
-        isMine: msg.sender_id === userId,
         sender_id: msg.sender_id,
         receiver_id: msg.receiver_id,
+        content: msg.content,
         created_at: msg.created_at,
-        read: msg.read || false
+        updated_at: msg.updated_at || msg.created_at,
+        read: msg.read || false,
+        timestamp: new Date(msg.created_at),
+        isMine: msg.sender_id === userId
       }));
     } catch (error) {
       console.error("Error in fetchMessages:", error);

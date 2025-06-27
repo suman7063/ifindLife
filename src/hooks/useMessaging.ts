@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { Message, Conversation } from './messaging/types';
+import { adaptConversation } from '@/utils/userProfileAdapter';
 
 const useMessaging = () => {
   const { user, isAuthenticated } = useAuth();
@@ -12,9 +13,9 @@ const useMessaging = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [sending, setSending] = useState<boolean>(false);
 
-  // Fetch conversations (recipients) for the current user
-  const fetchConversations = useCallback(async () => {
-    if (!isAuthenticated || !user) return;
+  // Get conversations for a user
+  const getConversations = useCallback(async (userId: string): Promise<Conversation[]> => {
+    if (!isAuthenticated || !user) return [];
     
     setLoading(true);
     try {
@@ -22,19 +23,19 @@ const useMessaging = () => {
       const { data: sentMessages, error: sentError } = await supabase
         .from('messages')
         .select('receiver_id, created_at')
-        .eq('sender_id', user.id)
+        .eq('sender_id', userId)
         .order('created_at', { ascending: false });
         
       const { data: receivedMessages, error: receivedError } = await supabase
         .from('messages')
         .select('sender_id, created_at')
-        .eq('receiver_id', user.id)
+        .eq('receiver_id', userId)
         .order('created_at', { ascending: false });
         
       if (sentError || receivedError) {
         console.error('Error fetching conversations:', sentError || receivedError);
         toast.error('Failed to load conversations');
-        return;
+        return [];
       }
       
       // Combine and find unique conversation partners
@@ -78,32 +79,46 @@ const useMessaging = () => {
           .single();
           
         if (!userError && userData) {
-          conversationList.push({
+          const conversation: Conversation = {
             id: partnerId,
+            participant_id: partnerId,
+            participant_name: userData.name || 'Unknown User',
+            last_message: '',
+            last_message_time: data.lastMessageDate,
+            unread_count: 0,
+            // Compatibility aliases
             name: userData.name || 'Unknown User',
             profilePicture: userData.profile_picture || '',
-            lastMessageDate: data.lastMessageDate
-          });
+            lastMessage: '',
+            lastMessageDate: data.lastMessageDate,
+            unreadCount: 0,
+            participantId: partnerId
+          };
+          
+          conversationList.push(adaptConversation(conversation));
         }
       }
       
       // Sort by most recent message
       conversationList.sort((a, b) => 
-        new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime()
+        new Date(b.lastMessageDate || b.last_message_time).getTime() - 
+        new Date(a.lastMessageDate || a.last_message_time).getTime()
       );
       
-      setConversations(conversationList);
+      return conversationList;
     } catch (error) {
-      console.error('Error in fetchConversations:', error);
+      console.error('Error in getConversations:', error);
       toast.error('An error occurred while loading conversations');
+      return [];
     } finally {
       setLoading(false);
     }
   }, [isAuthenticated, user]);
 
-  // Fetch messages for a specific conversation
-  const fetchMessages = useCallback(async (recipientId: string) => {
-    if (!isAuthenticated || !user) return;
+  // Get messages for a specific conversation
+  const getMessages = useCallback(async (userId: string, recipientId?: string): Promise<Message[]> => {
+    if (!recipientId) recipientId = selectedConversation || '';
+    if (!isAuthenticated || !user) return [];
     
     setLoading(true);
     try {
@@ -111,20 +126,20 @@ const useMessaging = () => {
       const { data, error } = await supabase
         .from('messages')
         .select('*')
-        .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
+        .or(`sender_id.eq.${userId},receiver_id.eq.${userId}`)
         .or(`sender_id.eq.${recipientId},receiver_id.eq.${recipientId}`)
         .order('created_at', { ascending: true });
         
       if (error) {
         console.error('Error fetching messages:', error);
         toast.error('Failed to load messages');
-        return;
+        return [];
       }
       
       // Filter to only include messages between these two users
       const filteredMessages = data.filter(msg =>
-        (msg.sender_id === user.id && msg.receiver_id === recipientId) ||
-        (msg.sender_id === recipientId && msg.receiver_id === user.id)
+        (msg.sender_id === userId && msg.receiver_id === recipientId) ||
+        (msg.sender_id === recipientId && msg.receiver_id === userId)
       );
       
       // Transform to our Message type
@@ -137,7 +152,7 @@ const useMessaging = () => {
         updated_at: msg.updated_at || msg.created_at,
         read: msg.read,
         timestamp: new Date(msg.created_at),
-        isMine: msg.sender_id === user.id
+        isMine: msg.sender_id === userId
       }));
       
       setMessages(formattedMessages);
@@ -145,7 +160,7 @@ const useMessaging = () => {
       
       // Mark received messages as read
       const unreadMessageIds = filteredMessages
-        .filter(msg => msg.receiver_id === user.id && !msg.read)
+        .filter(msg => msg.receiver_id === userId && !msg.read)
         .map(msg => msg.id);
         
       if (unreadMessageIds.length > 0) {
@@ -154,15 +169,32 @@ const useMessaging = () => {
           .update({ read: true })
           .in('id', unreadMessageIds);
       }
+      
+      return formattedMessages;
     } catch (error) {
-      console.error('Error in fetchMessages:', error);
+      console.error('Error in getMessages:', error);
       toast.error('An error occurred while loading messages');
+      return [];
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, selectedConversation]);
 
-  // Send a message - updated to use 2 parameters
+  // Fetch conversations (alias for getConversations for backward compatibility)
+  const fetchConversations = useCallback(async () => {
+    if (user?.id) {
+      await getConversations(user.id);
+    }
+  }, [user, getConversations]);
+
+  // Fetch messages (alias for getMessages for backward compatibility)
+  const fetchMessages = useCallback(async (recipientId: string) => {
+    if (user?.id) {
+      await getMessages(user.id, recipientId);
+    }
+  }, [user, getMessages]);
+
+  // Send a message
   const sendMessage = useCallback(async (recipientId: string, content: string): Promise<boolean> => {
     if (!isAuthenticated || !user) {
       toast.error('You must be logged in to send messages');
@@ -247,7 +279,7 @@ const useMessaging = () => {
             receiver_id: newMessage.receiver_id,
             content: newMessage.content,
             created_at: newMessage.created_at,
-            updated_at: newMessage.updated_at || newMessage.created_at,
+            updated_at: newMessage.updated_at,
             read: newMessage.read,
             timestamp: new Date(newMessage.created_at),
             isMine: false
@@ -307,7 +339,9 @@ const useMessaging = () => {
     sending,
     fetchMessages,
     sendMessage,
-    fetchConversations
+    fetchConversations,
+    getConversations,
+    getMessages
   };
 };
 

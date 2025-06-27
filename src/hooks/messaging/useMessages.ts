@@ -8,7 +8,7 @@ export const useMessages = (): UseMessagesReturn => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
+  const [error, setError] = useState<string | null>(null);
   
   const fetchMessages = useCallback(async (conversationId: string) => {
     if (!user || !conversationId) {
@@ -29,36 +29,40 @@ export const useMessages = (): UseMessagesReturn => {
       setMessages(mockMessages);
     } catch (err) {
       console.error('Error fetching messages:', err);
-      // Create proper Error object 
-      setError(err instanceof Error ? err : new Error(String(err)));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
   }, [user]);
   
-  const sendMessage = useCallback(async (content: string): Promise<boolean> => {
-    if (!user || !content.trim()) return false;
+  const sendMessage = useCallback(async (content: string): Promise<void> => {
+    if (!user || !content.trim()) return;
     
     try {
       // Implement actual message sending logic here
-      return true;
+      console.log('Sending message:', content);
     } catch (error) {
       console.error('Error sending message:', error);
-      return false;
+      throw error;
     }
   }, [user]);
   
-  const markAsRead = useCallback(async (messageId: string): Promise<boolean> => {
-    if (!user || !messageId) return false;
+  const markAsRead = useCallback(async (messageId: string): Promise<void> => {
+    if (!user || !messageId) return;
     
     try {
       // Implement actual mark as read logic here
-      return true;
+      console.log('Marking message as read:', messageId);
     } catch (error) {
       console.error('Error marking message as read:', error);
-      return false;
+      throw error;
     }
   }, [user]);
+
+  const refreshMessages = useCallback(async (): Promise<void> => {
+    // Implement refresh logic here
+    console.log('Refreshing messages');
+  }, []);
 
   return {
     messages,
@@ -66,7 +70,8 @@ export const useMessages = (): UseMessagesReturn => {
     error,
     sendMessage,
     markAsRead,
-    fetchMessages,
-    setMessages
+    refreshMessages,
+    setMessages,
+    fetchMessages
   };
 };
