@@ -64,13 +64,28 @@ const UserDashboardWrapper = () => {
     // Handle navigation logic here if needed
   };
 
+  const handleLogout = async () => {
+    try {
+      await simpleAuth.logout();
+      navigate('/user-login');
+      return true;
+    } catch (error) {
+      console.error('Logout error:', error);
+      return false;
+    }
+  };
+
   return (
     <>
       <Navbar />
       <div className="min-h-screen bg-gray-50">
         <div className="flex">
           {/* Sidebar */}
-          <UserDashboardSidebar />
+          <UserDashboardSidebar 
+            user={simpleAuth.userProfile} 
+            onLogout={handleLogout}
+            isLoggingOut={false}
+          />
           
           {/* Main Content */}
           <div className="flex-1 p-8">

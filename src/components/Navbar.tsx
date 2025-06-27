@@ -5,6 +5,7 @@ import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { UserProfile } from '@/types/database/unified';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -58,8 +59,8 @@ const Navbar = () => {
     return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   };
 
-  // Create compatible user object for navbar components
-  const currentUser = userProfile || (expert ? {
+  // Create compatible user object for navbar components with proper type conversion
+  const currentUser: UserProfile | null = userProfile || (expert ? {
     id: expert.id,
     name: expert.name || '',
     email: expert.email || '',
@@ -74,7 +75,7 @@ const Navbar = () => {
     referred_by: null,
     referral_code: '',
     referral_link: '',
-    favorite_experts: [],
+    favorite_experts: [], // Ensure this is string[] to match unified type
     favorite_programs: [],
     enrolled_courses: [],
     reviews: [],

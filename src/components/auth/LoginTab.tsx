@@ -13,7 +13,7 @@ interface LoginTabProps {
   socialLoading?: string | null;
   authLoading?: boolean;
   setSocialLoading?: (provider: string | null) => void;
-  onSwitchToRegister?: () => void;
+  onSwitchToRegister?: () => void; // Added missing prop
 }
 
 const LoginTab: React.FC<LoginTabProps> = ({

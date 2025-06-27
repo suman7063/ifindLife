@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
 
 interface RegisterTabProps {
-  onSwitchToLogin?: () => void;
+  onSwitchToLogin?: () => void; // Added missing prop
 }
 
 const RegisterTab: React.FC<RegisterTabProps> = ({ onSwitchToLogin }) => {
