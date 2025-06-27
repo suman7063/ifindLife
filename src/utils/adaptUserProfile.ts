@@ -26,7 +26,9 @@ export function adaptUserProfile(user: any): UserProfile {
     reviews: [],
     reports: [],
     transactions: [],
-    referrals: []
+    referrals: [],
+    recent_activities: [], // Added missing property
+    upcoming_appointments: [] // Added missing property
   };
   
   return {
@@ -49,6 +51,8 @@ export function adaptUserProfile(user: any): UserProfile {
     reviews: user.reviews || [],
     reports: user.reports || [],
     transactions: user.transactions || [],
-    referrals: user.referrals || []
+    referrals: user.referrals || [],
+    recent_activities: user.recent_activities || [], // Added missing property
+    upcoming_appointments: user.upcoming_appointments || [] // Added missing property
   };
 }

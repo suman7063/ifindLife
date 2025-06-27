@@ -31,8 +31,9 @@ export const useProgramData = () => {
         programType: program.programType as ProgramType,
         category: program.category as ProgramCategory,
         enrollments: program.enrollments || 0,
-        is_favorite: program.is_favorite !== undefined ? program.is_favorite : false,
-        is_featured: program.is_featured !== undefined ? program.is_featured : false
+        // Set default values for optional properties that may not exist in database
+        is_favorite: false,
+        is_featured: false
       }));
 
       setPrograms(typedPrograms);

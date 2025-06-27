@@ -173,7 +173,7 @@ export const useAuthFunctions = (): AuthFunctions => {
       referral_link: profile?.referral_link || '',
       referred_by: profile?.referred_by || null,
       favorite_experts: profile?.favorite_experts || [],
-      favorite_programs: profile?.favorite_programs?.map(String) || [],
+      favorite_programs: profile?.favorite_programs || [], // Keep as number[]
       enrolled_courses: profile?.enrolled_courses || [],
       reviews: profile?.reviews || [],
       reports: profile?.reports || [],

@@ -23,3 +23,31 @@ export interface UserProfile {
   recent_activities: any[]; // Added missing property
   upcoming_appointments: any[]; // Added missing property
 }
+
+// Add missing type exports
+export interface Review {
+  id: string;
+  expert_id: string;
+  rating: number;
+  comment: string;
+  date: string;
+  verified: boolean;
+}
+
+export interface Report {
+  id: string;
+  expert_id: string;
+  reason: string;
+  details: string;
+  date: string;
+  status: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  expert_name: string;
+  enrollment_date: string;
+  progress: number;
+  completed: boolean;
+}

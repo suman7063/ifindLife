@@ -1,3 +1,4 @@
+
 export type ProgramType = 'wellness' | 'academic' | 'business' | 'productivity' | 'leadership';
 
 export type ProgramCategory = 
@@ -115,7 +116,7 @@ export interface ProgramCardProps {
   user?: any;
   currentUser?: any;
   isAuthenticated?: boolean;
-  onProgramClick?: (program: Program) => void;
+  onProgramClick?: (program: Program) => void; // Added missing prop
   onFavoriteToggle?: (programId: number) => void;
 }
 

@@ -8,7 +8,7 @@ const WalletSection: React.FC = () => {
   const { userProfile } = useAuth();
   const currentUser = ensureUserProfileCompatibility(userProfile);
 
-  const walletBalance = currentUser?.walletBalance || currentUser?.wallet_balance || 0;
+  const walletBalance = currentUser?.wallet_balance || 0;
   const currency = currentUser?.currency || 'USD';
 
   return (

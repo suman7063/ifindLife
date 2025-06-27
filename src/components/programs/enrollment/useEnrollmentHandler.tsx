@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/supabase/user';
@@ -9,7 +10,7 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   
-  const hasEnoughBalance = (currentUser.walletBalance || 0) >= program.price;
+  const hasEnoughBalance = (currentUser.wallet_balance || 0) >= program.price;
   
   const handleWalletPayment = async () => {
     try {
@@ -31,7 +32,7 @@ export function useEnrollmentHandler(program: Program, currentUser: UserProfile)
       const { error: walletError } = await supabase
         .from('profiles')
         .update({
-          wallet_balance: (currentUser.walletBalance || 0) - program.price
+          wallet_balance: (currentUser.wallet_balance || 0) - program.price
         })
         .eq('id', currentUser.id);
         

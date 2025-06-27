@@ -14,10 +14,10 @@ const FavoritesSection: React.FC = () => {
         <CardTitle>Your Favorites</CardTitle>
       </CardHeader>
       <CardContent>
-        {currentUser?.favoriteExperts && currentUser.favoriteExperts.length > 0 ? (
+        {currentUser?.favorite_experts && currentUser.favorite_experts.length > 0 ? (
           <div>
             <p className="text-sm text-muted-foreground mb-2">
-              You have {currentUser.favoriteExperts.length} favorite experts
+              You have {currentUser.favorite_experts.length} favorite experts
             </p>
             {/* Favorite experts list would go here */}
           </div>

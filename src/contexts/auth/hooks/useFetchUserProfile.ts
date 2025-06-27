@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
 import { UserProfile, Review, Report, Course } from '@/types/supabase/user';
 import { UserTransaction } from '@/types/supabase/tables';
-import { Referral } from '@/types/supabase/referral'; // Import from the correct location
+import { Referral } from '@/types/supabase/referral';
 
 export const useFetchUserProfile = (userId: string | undefined, session: Session | null) => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -134,7 +135,9 @@ export const useFetchUserProfile = (userId: string | undefined, session: Session
             transactions: (rawProfileData.transactions || []) as UserTransaction[],
             reviews: (rawProfileData.reviews || []) as Review[],
             reports: (rawProfileData.reports || []) as Report[],
-            referrals: (rawProfileData.referrals || []) as any[]
+            referrals: (rawProfileData.referrals || []) as any[],
+            recent_activities: (rawProfileData.recent_activities || []) as any[], // Added missing property
+            upcoming_appointments: (rawProfileData.upcoming_appointments || []) as any[] // Added missing property
           };
           
           console.log('Enhanced profile created:', {

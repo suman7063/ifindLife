@@ -31,8 +31,8 @@ export function adaptUserProfile(user: any): UserProfile | null {
   };
 }
 
-// Fix adaptMessage to take only one parameter
-export function adaptMessage(message: any) {
+// Fix adaptMessage to take only one parameter and add userId context
+export function adaptMessage(message: any, currentUserId?: string) {
   if (!message) return null;
   
   return {
@@ -43,7 +43,7 @@ export function adaptMessage(message: any) {
     read: message.read,
     created_at: message.created_at,
     updated_at: message.updated_at,
-    isMine: message.isMine,
+    isMine: currentUserId ? message.sender_id === currentUserId : message.isMine,
     timestamp: message.timestamp ? new Date(message.timestamp) : new Date(message.created_at)
   };
 }
