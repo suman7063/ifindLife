@@ -209,15 +209,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       console.log('Auth: Starting initialization...');
       
       try {
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error('Session check timeout')), 5000)
-        );
-        
-        const { data: { session }, error } = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]);
+        const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
         
@@ -255,8 +247,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // CRITICAL FIX: Don't set loading to false until profiles are loaded
-          console.log('SimpleAuthContext: Loading profiles before marking as ready...');
+          console.log('SimpleAuthContext: User authenticated, loading profiles...');
+          setIsLoading(true);
           await refreshProfiles();
           if (mounted) {
             setIsLoading(false);
@@ -275,16 +267,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
-
-  // Emergency fallback: Force loading to false after 10 seconds
-  useEffect(() => {
-    const emergencyTimeout = setTimeout(() => {
-      console.warn('Auth: Emergency timeout - forcing loading to false');
-      setIsLoading(false);
-    }, 10000);
-    
-    return () => clearTimeout(emergencyTimeout);
   }, []);
 
   // CRITICAL: Make sure we return all required values consistently
