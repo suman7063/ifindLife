@@ -1,11 +1,19 @@
 
-// Export repository classes and create instances
+// repositories/index.ts - PROPER EXPORTS
 import { UserRepository } from './userRepository';
 import { ExpertRepository } from './expertRepository';
 
-// Create instances for backward compatibility
+// Create and export instances (what components expect)
 export const userRepository = new UserRepository();
 export const expertRepository = new ExpertRepository();
 
-// Also export the classes directly
+// Also export the classes
 export { UserRepository, ExpertRepository };
+
+// Default exports for compatibility
+export default {
+  userRepository,
+  expertRepository,
+  UserRepository,
+  ExpertRepository
+};
