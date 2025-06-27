@@ -75,6 +75,8 @@ const Navbar = () => {
     favorite_programs: [],
     enrolled_courses: [],
     reviews: [],
+    recent_activities: [], // Add missing property
+    upcoming_appointments: [], // Add missing property
     reports: [],
     transactions: [],
     referrals: []
