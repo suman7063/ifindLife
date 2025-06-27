@@ -38,6 +38,21 @@ export const useSimpleAuth = () => {
   return context;
 };
 
+// Export the hook with the expected name for compatibility
+export const useSimpleAuthContext = useSimpleAuth;
+
+// Export types for compatibility
+export type UserType = SessionType;
+export interface SimpleAuthState {
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  user: User | null;
+  session: Session | null;
+  userType: SessionType;
+  userProfile: UserProfile | null;
+  expert: ExpertProfile | null;
+}
+
 interface SimpleAuthProviderProps {
   children: ReactNode;
 }
@@ -67,7 +82,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
   const loadExpertProfile = async (userId: string) => {
     try {
-      const expertProfile = await ExpertRepository.findByAuthId(userId);
+      const expertProfile = await ExpertRepository.getExpertByAuthId(userId);
       setExpert(expertProfile);
       return expertProfile;
     } catch (error) {
