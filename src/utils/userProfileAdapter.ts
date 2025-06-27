@@ -15,3 +15,45 @@ export const adaptMessage = (message: Message, currentUserId: string): Messaging
     timestamp: new Date(message.created_at)
   };
 };
+
+export const getProfilePicture = (profile: any): string => {
+  return profile?.profile_picture || profile?.profilePicture || '';
+};
+
+export const adaptReview = (review: any) => {
+  return {
+    id: review.id || review.review_id,
+    expert_id: review.expert_id,
+    rating: review.rating,
+    comment: review.comment,
+    date: review.date,
+    verified: review.verified || false,
+    expert_name: review.expert_name || review.expertName || 'Unknown Expert'
+  };
+};
+
+export const adaptConversation = (conversation: any) => {
+  return {
+    ...conversation,
+    name: conversation.participant_name || conversation.name,
+    profilePicture: conversation.profile_picture || conversation.profilePicture,
+    lastMessage: conversation.last_message || conversation.lastMessage,
+    lastMessageDate: conversation.last_message_time || conversation.lastMessageDate,
+    unreadCount: conversation.unread_count || conversation.unreadCount || 0
+  };
+};
+
+export const adaptUserProfile = (profile: any) => {
+  return {
+    ...profile,
+    favorite_experts: profile.favorite_experts || [],
+    favorite_programs: profile.favorite_programs || [],
+    enrolled_courses: profile.enrolled_courses || [],
+    reviews: profile.reviews || [],
+    recent_activities: profile.recent_activities || [],
+    upcoming_appointments: profile.upcoming_appointments || [],
+    transactions: profile.transactions || [],
+    reports: profile.reports || [],
+    referrals: profile.referrals || []
+  };
+};

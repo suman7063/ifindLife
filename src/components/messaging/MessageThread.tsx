@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -64,6 +63,7 @@ const MessageThread: React.FC<MessageThreadProps> = ({
         content: newMessage,
         read: false,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         isMine: true
       };
       setMessages([...messages, newMsg]);

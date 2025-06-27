@@ -1,330 +1,158 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
-import { ExpertProfile, UserProfile, AdminProfile } from '@/types/database/unified';
-import { expertRepository } from '@/repositories/expertRepository';
-import { userRepository } from '@/repositories/userRepository';
-import { adminRepository } from '@/repositories/adminRepository';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { ExpertRepository } from '@/repositories/expertRepository';
+import { UserRepository } from '@/repositories/userRepository';
 
-interface UnifiedAuthContextType {
-  // Auth state
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  sessionType: 'user' | 'admin' | 'expert' | null;
-  
-  // User profiles
-  user: UserProfile | null;
-  admin: AdminProfile | null;
-  expert: ExpertProfile | null;
-  
-  // Auth methods
-  login: (type: 'user' | 'admin' | 'expert', credentials: any) => Promise<boolean>;
+export interface UnifiedAuthState {
+  session: Session | null;
+  user: User | null;
+  userProfile: UserProfile | null;
+  expertProfile: ExpertProfile | null;
+  loading: boolean;
+  sessionType: 'user' | 'expert' | 'dual' | 'none';
+}
+
+interface UnifiedAuthContextType extends UnifiedAuthState {
+  login: (email: string, password: string, type?: 'user' | 'expert') => Promise<boolean>;
   logout: () => Promise<void>;
-  
-  // Profile setters for updates
-  setUser: (user: UserProfile | null) => void;
-  setAdmin: (admin: AdminProfile | null) => void;
-  setExpert: (expert: ExpertProfile | null) => void;
+  refreshProfiles: () => Promise<void>;
 }
 
 const UnifiedAuthContext = createContext<UnifiedAuthContextType | undefined>(undefined);
 
-export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [sessionType, setSessionType] = useState<'user' | 'admin' | 'expert' | null>(null);
-  const [hasInitialized, setHasInitialized] = useState(false);
-  const [videoCallActive, setVideoCallActive] = useState(false);
-  
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [admin, setAdmin] = useState<AdminProfile | null>(null);
-  const [expert, setExpert] = useState<ExpertProfile | null>(null);
+export const useUnifiedAuth = () => {
+  const context = useContext(UnifiedAuthContext);
+  if (!context) {
+    throw new Error('useUnifiedAuth must be used within UnifiedAuthProvider');
+  }
+  return context;
+};
 
-  const isAuthenticated = Boolean(user || admin || expert);
+interface UnifiedAuthProviderProps {
+  children: ReactNode;
+}
 
-  // Check if video call is active by monitoring for Agora-related elements
-  useEffect(() => {
-    const checkVideoCallStatus = () => {
-      const agoraElements = document.querySelectorAll('[class*="agora"], [id*="agora"], [class*="video"], [class*="call"]');
-      const isCallActive = agoraElements.length > 0 || window.location.pathname.includes('expert') || 
-                          sessionStorage.getItem('videoCallActive') === 'true';
-      setVideoCallActive(isCallActive);
-    };
+export const UnifiedAuthProvider: React.FC<UnifiedAuthProviderProps> = ({ children }) => {
+  const [state, setState] = useState<UnifiedAuthState>({
+    session: null,
+    user: null,
+    userProfile: null,
+    expertProfile: null,
+    loading: true,
+    sessionType: 'none'
+  });
 
-    const interval = setInterval(checkVideoCallStatus, 1000);
-    return () => clearInterval(interval);
-  }, []);
+  const refreshProfiles = async () => {
+    if (!state.session?.user) return;
 
-  // Initialize auth state
-  useEffect(() => {
-    let mounted = true;
+    try {
+      const [userProfile, expertProfile] = await Promise.all([
+        UserRepository.findByAuthId(state.session.user.id),
+        ExpertRepository.getExpertByAuthId(state.session.user.id)
+      ]);
 
-    const initializeAuth = async () => {
-      try {
-        console.log('🔒 UnifiedAuth: Initializing auth state...');
-        
-        // Get current session
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('🔒 UnifiedAuth: Error getting session:', error);
-          if (mounted) {
-            setIsLoading(false);
-            setHasInitialized(true);
-          }
-          return;
-        }
-        
-        if (session?.user && mounted) {
-          console.log('🔒 UnifiedAuth: Session found, loading profiles...', {
-            userId: session.user.id,
-            email: session.user.email
-          });
-          await loadUserProfiles(session.user);
-        } else {
-          console.log('🔒 UnifiedAuth: No session found, setting not authenticated state');
-          if (mounted) {
-            setUser(null);
-            setAdmin(null);
-            setExpert(null);
-            setSessionType(null);
-            setIsLoading(false);
-            setHasInitialized(true);
-          }
-        }
-      } catch (error) {
-        console.error('🔒 UnifiedAuth: Error initializing auth:', error);
-        if (mounted) {
-          setIsLoading(false);
-          setHasInitialized(true);
-        }
+      setState(prev => ({
+        ...prev,
+        userProfile,
+        expertProfile,
+        sessionType: userProfile && expertProfile ? 'dual' : 
+                    userProfile ? 'user' : 
+                    expertProfile ? 'expert' : 'none'
+      }));
+    } catch (error) {
+      console.error('Error refreshing profiles:', error);
+    }
+  };
+
+  const login = async (email: string, password: string, type: 'user' | 'expert' = 'user'): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error || !data.session) {
+        console.error('Login error:', error);
+        return false;
       }
-    };
 
-    initializeAuth();
+      setState(prev => ({
+        ...prev,
+        session: data.session,
+        user: data.session.user
+      }));
 
-    // Listen for auth changes
+      await refreshProfiles();
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setState({
+        session: null,
+        user: null,
+        userProfile: null,
+        expertProfile: null,
+        loading: false,
+        sessionType: 'none'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setState(prev => ({
+        ...prev,
+        session,
+        user: session?.user ?? null,
+        loading: false
+      }));
+
+      if (session) {
+        refreshProfiles();
+      }
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (!mounted) return;
+        setState(prev => ({
+          ...prev,
+          session,
+          user: session?.user ?? null,
+          loading: false
+        }));
 
-        console.log('🔒 UnifiedAuth: Auth state changed:', { 
-          event, 
-          hasSession: !!session, 
-          userId: session?.user?.id,
-          videoCallActive 
-        });
-        
-        // CRITICAL: Don't clear auth during video calls
-        if (videoCallActive && event === 'SIGNED_OUT') {
-          console.log('🔒 UnifiedAuth: Preventing logout during video call');
-          return;
-        }
-        
-        if (session?.user) {
-          setIsLoading(true);
-          await loadUserProfiles(session.user);
+        if (session) {
+          await refreshProfiles();
         } else {
-          // Only clear auth state if not in a video call
-          if (!videoCallActive) {
-            console.log('🔒 UnifiedAuth: Clearing auth state (no session)');
-            setUser(null);
-            setAdmin(null);
-            setExpert(null);
-            setSessionType(null);
-            setIsLoading(false);
-            setHasInitialized(true);
-          }
+          setState(prev => ({
+            ...prev,
+            userProfile: null,
+            expertProfile: null,
+            sessionType: 'none'
+          }));
         }
       }
     );
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [videoCallActive]);
+    return () => subscription.unsubscribe();
+  }, []);
 
-  const loadUserProfiles = async (authUser: User) => {
-    try {
-      console.log('🔒 UnifiedAuth: Loading user profiles for:', authUser.id);
-      
-      // Check stored session type preference
-      const storedSessionType = localStorage.getItem('sessionType') as 'user' | 'admin' | 'expert' | null;
-      console.log('🔒 UnifiedAuth: Stored session type:', storedSessionType);
-      
-      // Try to load expert profile first if stored type is expert
-      if (storedSessionType === 'expert') {
-        const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
-        if (expertProfile) {
-          console.log('🔒 UnifiedAuth: Expert profile loaded:', expertProfile);
-          setExpert(expertProfile);
-          setSessionType('expert');
-          setUser(null);
-          setAdmin(null);
-          setIsLoading(false);
-          setHasInitialized(true);
-          return;
-        }
-      }
-      
-      // Try to load admin profile
-      if (storedSessionType === 'admin') {
-        const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
-        if (adminProfile) {
-          console.log('🔒 UnifiedAuth: Admin profile loaded:', adminProfile);
-          setAdmin(adminProfile);
-          setSessionType('admin');
-          setUser(null);
-          setExpert(null);
-          setIsLoading(false);
-          setHasInitialized(true);
-          return;
-        }
-      }
-      
-      // Try to load user profile
-      const userProfile = await userRepository.getUserByAuthId(authUser.id);
-      if (userProfile) {
-        console.log('🔒 UnifiedAuth: User profile loaded:', userProfile);
-        setUser(userProfile);
-        setSessionType('user');
-        setAdmin(null);
-        setExpert(null);
-        setIsLoading(false);
-        setHasInitialized(true);
-        return;
-      }
-      
-      // If no stored preference, try expert first, then admin, then user
-      if (!storedSessionType) {
-        const expertProfile = await expertRepository.getExpertByAuthId(authUser.id);
-        if (expertProfile) {
-          console.log('🔒 UnifiedAuth: Expert profile loaded (no preference):', expertProfile);
-          setExpert(expertProfile);
-          setSessionType('expert');
-          localStorage.setItem('sessionType', 'expert');
-          setIsLoading(false);
-          setHasInitialized(true);
-          return;
-        }
-        
-        const adminProfile = await adminRepository.getAdminByAuthId(authUser.id);
-        if (adminProfile) {
-          console.log('🔒 UnifiedAuth: Admin profile loaded (no preference):', adminProfile);
-          setAdmin(adminProfile);
-          setSessionType('admin');
-          localStorage.setItem('sessionType', 'admin');
-          setIsLoading(false);
-          setHasInitialized(true);
-          return;
-        }
-        
-        const userProfile = await userRepository.getUserByAuthId(authUser.id);
-        if (userProfile) {
-          console.log('🔒 UnifiedAuth: User profile loaded (no preference):', userProfile);
-          setUser(userProfile);
-          setSessionType('user');
-          localStorage.setItem('sessionType', 'user');
-          setIsLoading(false);
-          setHasInitialized(true);
-          return;
-        }
-      }
-      
-      console.log('🔒 UnifiedAuth: No profiles found for user:', authUser.id);
-      // Even if no profiles found, we should stop loading
-      setIsLoading(false);
-      setHasInitialized(true);
-    } catch (error) {
-      console.error('🔒 UnifiedAuth: Error loading user profiles:', error);
-      setIsLoading(false);
-      setHasInitialized(true);
-    }
-  };
-
-  const login = async (type: 'user' | 'admin' | 'expert', credentials: any): Promise<boolean> => {
-    try {
-      console.log(`🔒 UnifiedAuth: Attempting ${type} login:`, credentials.email);
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: credentials.email,
-        password: credentials.password
-      });
-
-      if (error) {
-        console.error('🔒 UnifiedAuth: Login error:', error);
-        return false;
-      }
-
-      if (data.user) {
-        // Store the login type preference
-        localStorage.setItem('sessionType', type);
-        
-        // Load the specific profile type
-        await loadUserProfiles(data.user);
-        
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      console.error('🔒 UnifiedAuth: Login error:', error);
-      return false;
-    }
-  };
-
-  const logout = async (): Promise<void> => {
-    try {
-      // Clear stored session type
-      localStorage.removeItem('sessionType');
-      
-      // Sign out from Supabase
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // Clear all states
-      setUser(null);
-      setAdmin(null);
-      setExpert(null);
-      setSessionType(null);
-      setIsLoading(false);
-      setHasInitialized(true);
-      
-      console.log('🔒 UnifiedAuth: Logout completed');
-    } catch (error) {
-      console.error('🔒 UnifiedAuth: Logout error:', error);
-      throw error;
-    }
-  };
-
-  // FIXED: Replace problematic timeout with proper auth completion check
-  useEffect(() => {
-    const authCompletionCheck = setTimeout(() => {
-      if (isLoading && !hasInitialized) {
-        console.log('🔒 UnifiedAuth: Auth check taking longer than expected, completing with current state');
-        // Only complete if we haven't initialized yet and we're not in a video call
-        if (!videoCallActive) {
-          setIsLoading(false);
-          setHasInitialized(true);
-        }
-      }
-    }, 5000); // Increased timeout and added safety checks
-
-    return () => clearTimeout(authCompletionCheck);
-  }, [isLoading, hasInitialized, videoCallActive]);
-
-  const value = {
-    isAuthenticated,
-    isLoading,
-    sessionType,
-    user,
-    admin,
-    expert,
+  const value: UnifiedAuthContextType = {
+    ...state,
     login,
     logout,
-    setUser,
-    setAdmin,
-    setExpert
+    refreshProfiles
   };
 
   return (
@@ -332,12 +160,4 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       {children}
     </UnifiedAuthContext.Provider>
   );
-};
-
-export const useUnifiedAuth = () => {
-  const context = useContext(UnifiedAuthContext);
-  if (context === undefined) {
-    throw new Error('useUnifiedAuth must be used within a UnifiedAuthProvider');
-  }
-  return context;
 };

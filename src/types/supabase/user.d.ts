@@ -10,6 +10,6 @@ export interface UserProfile {
   currency?: string;
   wallet_balance?: number;
   profile_picture?: string;
-  favorite_experts?: string[];
-  favorite_programs?: number[]; // Make sure this is included
+  favorite_experts: string[]; // Made required and consistent
+  favorite_programs: number[]; // Made required and number[] only
 }

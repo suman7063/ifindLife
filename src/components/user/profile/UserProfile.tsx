@@ -1,136 +1,204 @@
 
 import React, { useState } from 'react';
-import { useAuth } from '@/contexts/auth/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import UserProfileForm from './UserProfileForm';
-import UserProfileSummary from './UserProfileSummary';
-import UserProfileSecurity from './UserProfileSecurity';
-import UserProfilePreferences from './UserProfilePreferences';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Pencil, User, Shield, Settings } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { UserProfile as UserProfileType } from '@/types/database/unified';
+import { adaptUserProfile, getProfilePicture } from '@/utils/userProfileAdapter';
+import { Camera, Save } from 'lucide-react';
 
-const UserProfile: React.FC = () => {
-  const { userProfile, isLoading } = useAuth();
+interface UserProfileProps {
+  user: UserProfileType | any;
+  onSave?: (data: any) => Promise<boolean>;
+  loading?: boolean;
+}
+
+const UserProfile: React.FC<UserProfileProps> = ({ user, onSave, loading = false }) => {
+  // Adapt user profile to ensure consistent structure
+  const adaptedUser = adaptUserProfile(user);
+  
+  const [formData, setFormData] = useState({
+    name: adaptedUser.name || '',
+    email: adaptedUser.email || '',
+    phone: adaptedUser.phone || '',
+    city: adaptedUser.city || '',
+    country: adaptedUser.country || '',
+    currency: adaptedUser.currency || 'USD'
+  });
+
   const [isEditing, setIsEditing] = useState(false);
-  
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Loading your profile data...</CardDescription>
-        </CardHeader>
-        <CardContent className="animate-pulse">
-          <div className="h-12 bg-gray-200 rounded-md mb-4"></div>
-          <div className="h-12 bg-gray-200 rounded-md mb-4"></div>
-          <div className="h-12 bg-gray-200 rounded-md"></div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (!userProfile) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Please sign in to view your profile</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button onClick={() => window.location.href = '/user-login'}>
-            Sign In
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
-  
+  const profilePicture = getProfilePicture(adaptedUser);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    if (onSave) {
+      const success = await onSave(formData);
+      if (success) {
+        setIsEditing(false);
+      }
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(' ').map(part => part[0]).join('').toUpperCase();
+  };
+
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Your Profile</CardTitle>
-            <CardDescription>
-              View and manage your personal information
-            </CardDescription>
+            <CardTitle>Profile Information</CardTitle>
+            <CardDescription>Manage your personal information</CardDescription>
           </div>
           <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditing(prev => !prev)}
+            variant={isEditing ? "outline" : "default"}
+            onClick={() => setIsEditing(!isEditing)}
           >
-            {isEditing ? 'Cancel' : (
-              <>
-                <Pencil className="h-4 w-4 mr-2" />
-                Edit Profile
-              </>
-            )}
+            {isEditing ? 'Cancel' : 'Edit Profile'}
           </Button>
-        </CardHeader>
-        <CardContent>
-          {isEditing ? (
-            <UserProfileForm 
-              profile={userProfile} 
-              onComplete={() => setIsEditing(false)} 
-            />
-          ) : (
-            <UserProfileSummary profile={userProfile} />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Profile Picture */}
+        <div className="flex items-center space-x-4">
+          <Avatar className="h-20 w-20">
+            <AvatarImage src={profilePicture} alt={adaptedUser.name} />
+            <AvatarFallback className="text-lg">
+              {getInitials(adaptedUser.name)}
+            </AvatarFallback>
+          </Avatar>
+          {isEditing && (
+            <Button variant="outline" size="sm">
+              <Camera className="h-4 w-4 mr-2" />
+              Change Photo
+            </Button>
           )}
-        </CardContent>
-      </Card>
-      
-      <Tabs defaultValue="preferences">
-        <TabsList className="grid grid-cols-3 w-full">
-          <TabsTrigger value="preferences">
-            <Settings className="h-4 w-4 mr-2" />
-            Preferences
-          </TabsTrigger>
-          <TabsTrigger value="notifications">
-            <User className="h-4 w-4 mr-2" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="security">
-            <Shield className="h-4 w-4 mr-2" />
-            Security
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="preferences">
-          <Card>
-            <CardHeader>
-              <CardTitle>Account Preferences</CardTitle>
-              <CardDescription>Manage your account settings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <UserProfilePreferences profile={userProfile} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-              <CardDescription>Control what notifications you receive</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p>Notification settings will be implemented in the next phase.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="security">
-          <Card>
-            <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Manage your account security</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <UserProfileSecurity />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        </div>
+
+        {/* Form Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="name">Full Name</Label>
+            {isEditing ? (
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+              />
+            ) : (
+              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.name || 'Not provided'}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            {isEditing ? (
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+              />
+            ) : (
+              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.email || 'Not provided'}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Phone</Label>
+            {isEditing ? (
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+              />
+            ) : (
+              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.phone || 'Not provided'}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">City</Label>
+            {isEditing ? (
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => handleInputChange('city', e.target.value)}
+              />
+            ) : (
+              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.city || 'Not provided'}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="country">Country</Label>
+            {isEditing ? (
+              <Input
+                id="country"
+                value={formData.country}
+                onChange={(e) => handleInputChange('country', e.target.value)}
+              />
+            ) : (
+              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.country || 'Not provided'}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="currency">Currency</Label>
+            {isEditing ? (
+              <select
+                id="currency"
+                value={formData.currency}
+                onChange={(e) => handleInputChange('currency', e.target.value)}
+                className="w-full py-2 px-3 border border-gray-300 rounded-md"
+              >
+                <option value="USD">USD</option>
+                <option value="INR">INR</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+              </select>
+            ) : (
+              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.currency || 'USD'}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Save Button */}
+        {isEditing && (
+          <div className="flex justify-end">
+            <Button onClick={handleSave} disabled={loading}>
+              <Save className="h-4 w-4 mr-2" />
+              {loading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        )}
+
+        {/* Additional Info */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t">
+          <div className="text-center">
+            <p className="text-2xl font-bold text-green-600">
+              ${adaptedUser.wallet_balance.toFixed(2)}
+            </p>
+            <p className="text-sm text-gray-500">Wallet Balance</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{adaptedUser.favorite_experts.length}</p>
+            <p className="text-sm text-gray-500">Favorite Experts</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{adaptedUser.favorite_programs.length}</p>
+            <p className="text-sm text-gray-500">Favorite Programs</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

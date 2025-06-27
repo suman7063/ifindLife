@@ -1,147 +1,98 @@
 
-import React, { useState, useEffect } from 'react';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ExpertRepository } from '@/repositories/expertRepository';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { toast } from 'sonner';
-import { expertRepository } from '@/repositories/expertRepository';
-import ProfileHeader from './profile/ProfileHeader';
-import ProfileImageCard from './profile/ProfileImageCard';
-import PersonalInformationCard from './profile/PersonalInformationCard';
-import ProfessionalDetailsCard from './profile/ProfessionalDetailsCard';
 
-const ProfilePage = () => {
-  const { expert, setExpert } = useUnifiedAuth();
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    city: '',
-    state: '',
-    country: '',
-    location: '',
-    bio: '',
-    specialization: '',
-    experience_years: 0,
-    hourly_rate: 0
-  });
+const ProfilePage: React.FC = () => {
+  const { expertProfile } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-  // Load expert data when component mounts or expert changes
-  useEffect(() => {
-    if (expert) {
-      setFormData({
-        name: expert.name || '',
-        email: expert.email || '',
-        phone: expert.phone || '',
-        address: expert.address || '',
-        city: expert.city || '',
-        state: expert.state || '',
-        country: expert.country || '',
-        location: `${expert.city || ''}, ${expert.state || ''}, ${expert.country || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
-        bio: expert.bio || '',
-        specialization: expert.specialization || '',
-        experience_years: parseInt(expert.experience || '0') || 0,
-        hourly_rate: expert.hourly_rate || 0
-      });
-    }
-  }, [expert]);
+  const handleUpdateProfile = async (data: any) => {
+    if (!expertProfile?.id) return;
 
-  const handleSave = async () => {
-    if (!expert?.id) {
-      toast.error('No expert profile found');
-      return;
-    }
-
+    setLoading(true);
     try {
-      setIsSaving(true);
-      
-      // Prepare update data
-      const updateData = {
-        name: formData.name,
-        phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        state: formData.state,
-        country: formData.country,
-        bio: formData.bio,
-        specialization: formData.specialization,
-        experience: formData.experience_years.toString(),
-        hourly_rate: formData.hourly_rate
-      };
-
-      const success = await expertRepository.updateExpert(expert.id, updateData);
-      
-      if (success) {
-        // Update local expert state
-        const updatedExpert = { ...expert, ...updateData };
-        setExpert(updatedExpert);
-        
+      const result = await ExpertRepository.update(expertProfile.id, data);
+      if (result) {
         toast.success('Profile updated successfully');
-        setIsEditing(false);
       } else {
         toast.error('Failed to update profile');
       }
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+      toast.error('An error occurred while updating profile');
     } finally {
-      setIsSaving(false);
+      setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    // Reset form data to original expert data
-    if (expert) {
-      setFormData({
-        name: expert.name || '',
-        email: expert.email || '',
-        phone: expert.phone || '',
-        address: expert.address || '',
-        city: expert.city || '',
-        state: expert.state || '',
-        country: expert.country || '',
-        location: `${expert.city || ''}, ${expert.state || ''}, ${expert.country || ''}`.replace(/^,\s*|,\s*$/g, '').replace(/,\s*,/g, ','),
-        bio: expert.bio || '',
-        specialization: expert.specialization || '',
-        experience_years: parseInt(expert.experience || '0') || 0,
-        hourly_rate: expert.hourly_rate || 0
-      });
-    }
-    setIsEditing(false);
-  };
+  if (!expertProfile) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">
+            <p>No expert profile found</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <ProfileHeader
-        isEditing={isEditing}
-        onEditClick={() => setIsEditing(true)}
-        onSaveClick={handleSave}
-        isSaving={isSaving}
-      />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <ProfileImageCard
-          expert={expert}
-          name={formData.name}
-          experienceYears={formData.experience_years}
-        />
-
-        <PersonalInformationCard
-          formData={formData}
-          isEditing={isEditing}
-          onFormDataChange={setFormData}
-        />
-
-        <ProfessionalDetailsCard
-          formData={formData}
-          isEditing={isEditing}
-          onFormDataChange={setFormData}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          isSaving={isSaving}
-        />
+      <div>
+        <h1 className="text-3xl font-bold">Expert Profile</h1>
+        <p className="text-gray-600 mt-1">Manage your professional profile</p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Profile Information</CardTitle>
+          <CardDescription>
+            Update your professional details and qualifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Name</label>
+              <p className="text-lg">{expertProfile.name}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Email</label>
+              <p>{expertProfile.email}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Specialization</label>
+              <p>{expertProfile.specialization || 'Not specified'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Experience</label>
+              <p>{expertProfile.experience || 'Not specified'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Bio</label>
+              <p>{expertProfile.bio || 'No bio provided'}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium">Status</label>
+              <p className="capitalize">{expertProfile.status}</p>
+            </div>
+          </div>
+          
+          <div className="mt-6">
+            <Button 
+              onClick={() => handleUpdateProfile({})} 
+              disabled={loading}
+            >
+              {loading ? 'Updating...' : 'Update Profile'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

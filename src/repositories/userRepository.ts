@@ -1,120 +1,87 @@
 
 import { supabase } from '@/lib/supabase';
-import { UserProfile } from '@/types/database/user';
+import { UserProfile, UserProfileUpdate } from '@/types/database/unified';
 
 export class UserRepository {
-  static async findById(id: string): Promise<UserProfile | null> {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error || !data) {
-        return null;
-      }
-
-      // Adapt the database response to match UserProfile interface
-      return {
-        ...data,
-        favorite_experts: [],
-        favorite_programs: [],
-        enrolled_courses: [],
-        reviews: [],
-        recent_activities: [],
-        upcoming_appointments: [],
-        transactions: []
-      };
-    } catch (error) {
-      console.error('Error finding user by ID:', error);
-      return null;
-    }
-  }
-
-  static async findByEmail(email: string): Promise<UserProfile | null> {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('email', email)
-        .single();
-
-      if (error || !data) {
-        return null;
-      }
-
-      return {
-        ...data,
-        favorite_experts: [],
-        favorite_programs: [],
-        enrolled_courses: [],
-        reviews: [],
-        recent_activities: [],
-        upcoming_appointments: [],
-        transactions: []
-      };
-    } catch (error) {
-      console.error('Error finding user by email:', error);
-      return null;
-    }
-  }
-
   static async create(userData: Partial<UserProfile>): Promise<UserProfile | null> {
     try {
+      const insertData = {
+        name: userData.name || '',
+        email: userData.email || '',
+        phone: userData.phone || '',
+        country: userData.country || '',
+        city: userData.city || '',
+        currency: userData.currency || 'USD',
+        profile_picture: userData.profile_picture || '',
+        referral_code: userData.referral_code || '',
+        referral_link: userData.referral_link || '',
+        referred_by: userData.referred_by || '',
+        wallet_balance: userData.wallet_balance || 0,
+        favorite_experts: userData.favorite_experts || [],
+        favorite_programs: userData.favorite_programs || [],
+        enrolled_courses: userData.enrolled_courses || [],
+        reviews: userData.reviews || [],
+        recent_activities: userData.recent_activities || [],
+        upcoming_appointments: userData.upcoming_appointments || [],
+        transactions: userData.transactions || [],
+        reports: userData.reports || [],
+        referrals: userData.referrals || []
+      };
+
       const { data, error } = await supabase
         .from('users')
-        .insert([{
-          id: userData.id!,
-          name: userData.name,
-          email: userData.email,
-          phone: userData.phone,
-          country: userData.country,
-          city: userData.city,
-          currency: userData.currency || 'USD',
-          profile_picture: userData.profile_picture,
-          wallet_balance: userData.wallet_balance || 0
-        }])
+        .insert([insertData])
         .select()
         .single();
 
-      if (error || !data) {
+      if (error) {
         console.error('Error creating user:', error);
         return null;
       }
 
-      return {
-        ...data,
-        favorite_experts: [],
-        favorite_programs: [],
-        enrolled_courses: [],
-        reviews: [],
-        recent_activities: [],
-        upcoming_appointments: [],
-        transactions: []
-      };
+      return data as UserProfile;
     } catch (error) {
       console.error('Error creating user:', error);
       return null;
     }
   }
 
-  static async update(id: string, userData: Partial<UserProfile>): Promise<UserProfile | null> {
+  static async findByAuthId(authId: string): Promise<UserProfile | null> {
     try {
-      // Only update fields that exist in the database
-      const updateData: any = {};
-      if (userData.name !== undefined) updateData.name = userData.name;
-      if (userData.email !== undefined) updateData.email = userData.email;
-      if (userData.phone !== undefined) updateData.phone = userData.phone;
-      if (userData.country !== undefined) updateData.country = userData.country;
-      if (userData.city !== undefined) updateData.city = userData.city;
-      if (userData.currency !== undefined) updateData.currency = userData.currency;
-      if (userData.profile_picture !== undefined) updateData.profile_picture = userData.profile_picture;
-      if (userData.wallet_balance !== undefined) updateData.wallet_balance = userData.wallet_balance;
-
       const { data, error } = await supabase
         .from('users')
-        .update(updateData)
+        .select('*')
+        .eq('id', authId)
+        .single();
+
+      if (error || !data) {
+        return null;
+      }
+
+      // Ensure all required arrays exist
+      return {
+        ...data,
+        favorite_experts: data.favorite_experts || [],
+        favorite_programs: data.favorite_programs || [],
+        enrolled_courses: data.enrolled_courses || [],
+        reviews: data.reviews || [],
+        recent_activities: data.recent_activities || [],
+        upcoming_appointments: data.upcoming_appointments || [],
+        transactions: data.transactions || [],
+        reports: data.reports || [],
+        referrals: data.referrals || []
+      } as UserProfile;
+    } catch (error) {
+      console.error('Error finding user by auth ID:', error);
+      return null;
+    }
+  }
+
+  static async update(id: string, userData: UserProfileUpdate): Promise<UserProfile | null> {
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .update(userData)
         .eq('id', id)
         .select()
         .single();
@@ -124,16 +91,19 @@ export class UserRepository {
         return null;
       }
 
+      // Ensure all required arrays exist
       return {
         ...data,
-        favorite_experts: [],
-        favorite_programs: [],
-        enrolled_courses: [],
-        reviews: [],
-        recent_activities: [],
-        upcoming_appointments: [],
-        transactions: []
-      };
+        favorite_experts: data.favorite_experts || [],
+        favorite_programs: data.favorite_programs || [],
+        enrolled_courses: data.enrolled_courses || [],
+        reviews: data.reviews || [],
+        recent_activities: data.recent_activities || [],
+        upcoming_appointments: data.upcoming_appointments || [],
+        transactions: data.transactions || [],
+        reports: data.reports || [],
+        referrals: data.referrals || []
+      } as UserProfile;
     } catch (error) {
       console.error('Error updating user:', error);
       return null;

@@ -1,61 +1,51 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import { Conversation, UseConversationsReturn } from './types';
+import { useState, useCallback } from 'react';
+import { Conversation } from './types';
+import { adaptConversation } from '@/utils/userProfileAdapter';
 
-export const useConversations = (): UseConversationsReturn => {
-  const { user } = useAuth();
+export const useConversations = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<Error | null>(null);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-  
+  const [loading, setLoading] = useState(false);
+
   const fetchConversations = useCallback(async () => {
-    if (!user) {
-      setConversations([]);
-      setLoading(false);
-      return;
-    }
-    
     setLoading(true);
-    setError(null);
-    
     try {
-      // Implement actual conversation fetching logic here
-      const mockConversations: Conversation[] = [
-        // Mock data for now
+      // Mock conversations for now - replace with actual API call
+      const mockConversations = [
+        {
+          id: '1',
+          participant_id: 'expert-1',
+          participant_name: 'Dr. Sarah Johnson',
+          name: 'Dr. Sarah Johnson',
+          profilePicture: '',
+          last_message: 'Thanks for the session today!',
+          lastMessage: 'Thanks for the session today!',
+          last_message_time: new Date().toISOString(),
+          lastMessageDate: new Date().toISOString(),
+          unread_count: 2,
+          unreadCount: 2
+        }
       ];
       
-      setConversations(mockConversations);
-    } catch (err) {
-      console.error('Error fetching conversations:', err);
-      // Create proper Error object
-      setError(err instanceof Error ? err : new Error(String(err)));
+      const adaptedConversations = mockConversations.map(adaptConversation);
+      setConversations(adaptedConversations);
+    } catch (error) {
+      console.error('Error fetching conversations:', error);
     } finally {
       setLoading(false);
     }
-  }, [user]);
-  
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
-  
-  const selectConversation = useCallback((conversationId: string) => {
-    setSelectedConversation(conversationId);
   }, []);
-  
-  const setCurrentConversation = useCallback((conversationId: string) => {
+
+  const selectConversation = useCallback((conversationId: string) => {
     setSelectedConversation(conversationId);
   }, []);
 
   return {
     conversations,
-    loading,
-    error,
     selectedConversation,
-    selectConversation,
     fetchConversations,
-    setCurrentConversation
+    selectConversation,
+    loading
   };
 };

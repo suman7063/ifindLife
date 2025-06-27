@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Conversation } from '@/hooks/messaging/types';
 import { useConversations } from '@/hooks/messaging/useConversations';
+import { adaptConversation } from '@/utils/userProfileAdapter';
 import { format } from 'date-fns';
 
 const formatMessageDate = (dateString: string): string => {
@@ -43,41 +45,44 @@ const UserMessages: React.FC = () => {
     loadConversations();
   }, [fetchConversations]);
 
-  const conversationItem = (conversation: Conversation) => (
-    <div
-      key={conversation.id}
-      className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer ${
-        selectedConversationId === conversation.id 
-          ? 'bg-ifind-purple/10' 
-          : 'hover:bg-gray-100'
-      }`}
-      onClick={() => selectConversation(conversation.id)}
-    >
-      <Avatar className="h-10 w-10">
-        <AvatarImage 
-          src={conversation.profilePicture || '/placeholder-user.jpg'} 
-          alt={conversation.name} 
-        />
-        <AvatarFallback>{conversation.name.charAt(0)}</AvatarFallback>
-      </Avatar>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between">
-          <p className="font-medium truncate">{conversation.name}</p>
-          <span className="text-xs text-gray-500">
-            {formatMessageDate(conversation.lastMessageDate)}
-          </span>
+  const conversationItem = (conversation: Conversation) => {
+    const adaptedConversation = adaptConversation(conversation);
+    return (
+      <div
+        key={adaptedConversation.id}
+        className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer ${
+          selectedConversationId === adaptedConversation.id 
+            ? 'bg-ifind-purple/10' 
+            : 'hover:bg-gray-100'
+        }`}
+        onClick={() => selectConversation(adaptedConversation.id)}
+      >
+        <Avatar className="h-10 w-10">
+          <AvatarImage 
+            src={adaptedConversation.profilePicture || '/placeholder-user.jpg'} 
+            alt={adaptedConversation.name} 
+          />
+          <AvatarFallback>{adaptedConversation.name.charAt(0)}</AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between">
+            <p className="font-medium truncate">{adaptedConversation.name}</p>
+            <span className="text-xs text-gray-500">
+              {formatMessageDate(adaptedConversation.lastMessageDate)}
+            </span>
+          </div>
+          <p className="text-sm text-gray-500 truncate">
+            {adaptedConversation.lastMessage || 'No messages yet'}
+          </p>
         </div>
-        <p className="text-sm text-gray-500 truncate">
-          {conversation.lastMessage || 'No messages yet'}
-        </p>
+        {adaptedConversation.unreadCount && adaptedConversation.unreadCount > 0 ? (
+          <Badge variant="default" className="bg-ifind-purple h-5 min-w-[20px] flex items-center justify-center">
+            {adaptedConversation.unreadCount}
+          </Badge>
+        ) : null}
       </div>
-      {conversation.unreadCount && conversation.unreadCount > 0 ? (
-        <Badge variant="default" className="bg-ifind-purple h-5 min-w-[20px] flex items-center justify-center">
-          {conversation.unreadCount}
-        </Badge>
-      ) : null}
-    </div>
-  );
+    );
+  };
 
   if (loading) {
     return <div className="p-4">Loading messages...</div>;

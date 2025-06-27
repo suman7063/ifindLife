@@ -1,59 +1,55 @@
 
 import React from 'react';
-import { Program } from '@/types/programs';
-import { UserProfile } from '@/types/supabase/user';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { withProgramUserTypeA } from './ProgramUserAdapter';
-import ProgramCard from './ProgramCard';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { UserProfile } from '@/types/database/unified';
+import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
 interface ProgramCategoriesProps {
-  programsByCategory: Record<string, Program[]>;
-  currentUser: UserProfile | null;
-  isAuthenticated: boolean;
+  categories: string[];
+  selectedCategory: string;
+  onCategorySelect: (category: string) => void;
+  user?: UserProfile | any;
 }
 
 const ProgramCategories: React.FC<ProgramCategoriesProps> = ({
-  programsByCategory,
-  currentUser,
-  isAuthenticated
+  categories,
+  selectedCategory,
+  onCategorySelect,
+  user
 }) => {
-  // Helper function to get category display name
-  const getCategoryDisplayName = (category: string): string => {
-    switch (category) {
-      case 'quick-ease': return 'QuickEase';
-      case 'resilience-building': return 'Resilience Building';
-      case 'super-human': return 'Super Human';
-      case 'issue-based': return 'Issue-Based';
-      default: return category;
-    }
-  };
+  // Adapt user profile to ensure consistent structure
+  const adaptedUser = user ? adaptUserProfile(user) : null;
 
   return (
-    <div className="space-y-10">
-      {Object.entries(programsByCategory).map(([category, categoryPrograms]) => (
-        categoryPrograms.length > 0 && (
-          <div key={category} className="space-y-4">
-            <h2 className="text-2xl font-semibold">
-              {getCategoryDisplayName(category)}
-            </h2>
-            <ScrollArea className="pb-4">
-              <div className="flex space-x-6 pb-2">
-                {categoryPrograms.map(program => (
-                  <div key={program.id} className="min-w-[350px] max-w-[350px]">
-                    <ProgramCard 
-                      program={program} 
-                      currentUser={currentUser}
-                      isAuthenticated={isAuthenticated}
-                    />
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-        )
+    <div className="flex flex-wrap gap-2 mb-6">
+      <Button
+        variant={selectedCategory === 'all' ? 'default' : 'outline'}
+        size="sm"
+        onClick={() => onCategorySelect('all')}
+        className="mb-2"
+      >
+        All Categories
+        {adaptedUser && (
+          <Badge variant="secondary" className="ml-2">
+            {adaptedUser.favorite_programs.length}
+          </Badge>
+        )}
+      </Button>
+      
+      {categories.map((category) => (
+        <Button
+          key={category}
+          variant={selectedCategory === category ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => onCategorySelect(category)}
+          className="mb-2 capitalize"
+        >
+          {category.replace('_', ' ')}
+        </Button>
       ))}
     </div>
   );
 };
 
-export default withProgramUserTypeA(ProgramCategories);
+export default ProgramCategories;

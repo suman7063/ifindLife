@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Conversation } from '@/hooks/messaging/types';
+import { adaptConversation } from '@/utils/userProfileAdapter';
 
 interface MessageListProps {
   userId: string;
@@ -23,7 +24,8 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
       try {
         setLoading(true);
         const result = await getConversations(userId);
-        setConversations(result || []);
+        const adaptedResult = (result || []).map(adaptConversation);
+        setConversations(adaptedResult);
       } catch (error) {
         console.error("Error fetching conversations:", error);
       } finally {

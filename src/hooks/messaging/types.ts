@@ -16,7 +16,12 @@ export interface Conversation {
   id: string;
   participant_id: string;
   participant_name: string;
+  name: string; // Required now
+  profilePicture?: string; // Added
   last_message: string;
+  lastMessage?: string; // Alias for compatibility
   last_message_time: string;
+  lastMessageDate: string; // Added
   unread_count: number;
+  unreadCount?: number; // Alias for compatibility
 }

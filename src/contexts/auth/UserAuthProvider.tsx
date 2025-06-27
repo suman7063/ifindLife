@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { UserAuthContext } from './UserAuthContext';
 import { useAuth } from './AuthContext';
 import { NewReview, NewReport } from '@/types/supabase/tables';
+import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
 export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const auth = useAuth();
@@ -18,7 +19,7 @@ export const UserAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   // Create a compatibility layer for the user auth context
   const userAuthValue = {
-    currentUser: auth.userProfile || auth.profile,
+    currentUser: auth.userProfile || auth.profile ? adaptUserProfile(auth.userProfile || auth.profile) : null,
     isAuthenticated: auth.isAuthenticated && auth.role === 'user',
     login: auth.login || (async () => { 
       console.error("Login function not available in UserAuthProvider");

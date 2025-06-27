@@ -14,16 +14,17 @@ export interface UserProfile {
   referred_by: string;
   wallet_balance: number;
   created_at: string;
-  // Additional properties for user dashboard
-  favorite_experts?: string[];
-  favorite_programs?: number[];
-  enrolled_courses?: any[];
-  reviews?: any[];
-  recent_activities?: any[];
-  upcoming_appointments?: any[];
-  transactions?: any[];
-  reports?: any[];
-  referrals?: any[];
+  updated_at?: string;
+  // Additional properties for user dashboard - all required now
+  favorite_experts: string[];
+  favorite_programs: number[];
+  enrolled_courses: any[];
+  reviews: any[];
+  recent_activities: any[];
+  upcoming_appointments: any[];
+  transactions: any[];
+  reports: any[];
+  referrals: any[];
 }
 
 export interface UserProfileUpdate {
@@ -78,6 +79,23 @@ export interface Message {
   read: boolean;
   created_at: string;
   updated_at: string;
+  // UI-specific properties
+  isMine?: boolean;
+  timestamp?: Date;
+}
+
+export interface Conversation {
+  id: string;
+  participant_id: string;
+  participant_name: string;
+  name: string; // Add missing name property
+  profilePicture?: string; // Add missing profilePicture property
+  last_message: string;
+  lastMessage?: string; // Add alias for backward compatibility
+  last_message_time: string;
+  lastMessageDate: string; // Add missing lastMessageDate property
+  unread_count: number;
+  unreadCount?: number; // Add alias for backward compatibility
 }
 
 // Re-export from user types to maintain compatibility
