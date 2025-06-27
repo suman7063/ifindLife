@@ -35,10 +35,13 @@ import AdminLoginClean from '@/pages/AdminLoginClean';
 import AdminDashboardClean from '@/pages/AdminDashboardClean';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// EMERGENCY FIX - Disable all auth guards temporarily
+const DISABLE_AUTH_GUARDS = true; // Debug flag
+
 const queryClient = new QueryClient();
 
 function App() {
-  console.log('App: Component is rendering');
+  console.log('App: Component is rendering with auth guards disabled:', DISABLE_AUTH_GUARDS);
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -59,10 +62,13 @@ function App() {
             <Route path="/expert-signup" element={<ExpertSignup />} />
             <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
             
-            {/* User Routes */}
+            {/* User Routes - DISABLE AUTH GUARDS FOR DEBUGGING */}
             <Route path="/user-login" element={<UserLogin />} />
             <Route path="/user-signup" element={<UserSignup />} />
-            <Route path="/user-dashboard/*" element={<UserDashboard />} />
+            <Route 
+              path="/user-dashboard/*" 
+              element={<UserDashboard />}
+            />
             
             {/* Program Routes */}
             <Route path="/programs" element={<Programs />} />

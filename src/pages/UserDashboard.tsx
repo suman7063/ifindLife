@@ -1,57 +1,66 @@
 
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
-import { isUserAuthenticatedForDashboard } from '@/utils/authHelpers';
-import { Loader2 } from 'lucide-react';
-import UserDashboardPages from './UserDashboardPages';
+import { isUserAuthenticated } from '@/utils/authHelpers';
 
 const UserDashboard = () => {
   const simpleAuth = useSimpleAuth();
-  const { isAuthenticated, userType, userProfile, isLoading, user } = simpleAuth;
+  const navigate = useNavigate();
   
-  console.log('UserDashboard - Enhanced auth state:', {
-    unifiedAuthCheck: isUserAuthenticatedForDashboard(simpleAuth),
-    originalCheck: Boolean(isAuthenticated && userType === 'user' && userProfile),
-    rawState: {
-      isAuthenticated: Boolean(isAuthenticated),
-      userType,
-      hasUserProfile: Boolean(userProfile),
-      hasUser: Boolean(user),
-      userEmail: user?.email,
-      isLoading: Boolean(isLoading)
-    }
-  });
+  console.log('UserDashboard: Starting with auth state:', simpleAuth);
 
-  // Show loading state while authentication is being checked
-  if (isLoading) {
+  // SIMPLIFIED APPROACH - Just show content if user exists
+  if (simpleAuth?.isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading user dashboard...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading dashboard...</p>
         </div>
       </div>
     );
   }
 
-  // Handle unauthorized access using unified auth check
-  if (!isUserAuthenticatedForDashboard(simpleAuth)) {
-    console.log('UserDashboard: Unauthorized access via unified check, redirecting to user login');
-    return <Navigate to="/user-login" replace />;
-  }
+  // Show dashboard content regardless of auth state (for debugging)
+  return (
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-8">
+          User Dashboard
+        </h1>
+        
+        <div className="bg-white rounded-lg shadow p-6 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Auth Status Debug</h2>
+          <div className="space-y-2 text-sm">
+            <p><strong>Loading:</strong> {String(simpleAuth?.isLoading)}</p>
+            <p><strong>Has User:</strong> {String(!!simpleAuth?.user)}</p>
+            <p><strong>User Email:</strong> {simpleAuth?.user?.email || 'No email'}</p>
+            <p><strong>Auth Helper Result:</strong> {String(isUserAuthenticated(simpleAuth))}</p>
+          </div>
+        </div>
 
-  // TEMPORARY DEBUG: Show auth state for debugging
-  if (process.env.NODE_ENV === 'development') {
-    console.log('UserDashboard: RENDERING - Auth state passed all checks:', {
-      user: user?.email,
-      userType,
-      isAuthenticated
-    });
-  }
-
-  // Render the existing UserDashboardPages component
-  return <UserDashboardPages />;
+        {simpleAuth?.user ? (
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-semibold mb-4">Welcome!</h2>
+            <p>Email: {simpleAuth.user.email}</p>
+            <p>User ID: {simpleAuth.user.id}</p>
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h2 className="text-xl font-semibold mb-4">No User Data</h2>
+            <p>The auth context doesn't contain user data.</p>
+            <button 
+              onClick={() => navigate('/user-login')}
+              className="mt-4 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+            >
+              Go to Login
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default UserDashboard;
