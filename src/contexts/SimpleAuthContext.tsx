@@ -1,138 +1,110 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
+import { UserProfile, ExpertProfile } from '@/types/database/unified';
+import { UserRepository } from '@/repositories/userRepository';
+import { ExpertRepository } from '@/repositories/expertRepository';
 
-export type UserType = 'user' | 'expert' | 'none';
+export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
-export interface SimpleAuthState {
+interface SimpleAuthContextType {
+  // Core auth state
+  isAuthenticated: boolean;
+  isLoading: boolean;
   user: User | null;
   session: Session | null;
-  userType: UserType;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  expert: any | null;
-  userProfile: any | null;
+  userType: SessionType;
+  
+  // Profile data
+  userProfile: UserProfile | null;
+  expert: ExpertProfile | null;
+  
+  // Auth actions
   login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<boolean>;
   logout: () => Promise<void>;
+  
+  // Profile actions
+  refreshProfiles: () => Promise<void>;
 }
 
-const SimpleAuthContext = createContext<SimpleAuthState | undefined>(undefined);
+const SimpleAuthContext = createContext<SimpleAuthContextType | null>(null);
+
+export const useSimpleAuth = () => {
+  const context = useContext(SimpleAuthContext);
+  if (!context) {
+    throw new Error('useSimpleAuth must be used within a SimpleAuthProvider');
+  }
+  return context;
+};
 
 interface SimpleAuthProviderProps {
   children: ReactNode;
 }
 
 export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [userType, setUserType] = useState<UserType>('none');
-  const [isLoading, setIsLoading] = useState(true);
-  const [expert, setExpert] = useState<any | null>(null);
-  const [userProfile, setUserProfile] = useState<any | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [expert, setExpert] = useState<ExpertProfile | null>(null);
+  const [userType, setUserType] = useState<SessionType>('none');
 
-  const determineUserType = async (currentUser: User | null): Promise<UserType> => {
-    if (!currentUser) {
-      setExpert(null);
-      setUserProfile(null);
-      return 'none';
-    }
+  // Derive authentication state
+  const isAuthenticated = !!user && !!session;
 
+  // Load profiles based on user
+  const loadUserProfile = async (userId: string) => {
     try {
-      console.log('SimpleAuthContext: Determining user type for:', currentUser.id);
-
-      // Check if user is an expert first
-      const { data: expertData, error: expertError } = await supabase
-        .from('experts')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!expertError && expertData) {
-        console.log('SimpleAuthContext: User is an expert:', expertData.name);
-        setExpert(expertData);
-        setUserProfile(null);
-        return 'expert';
-      }
-
-      // Check if user has a regular user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!profileError && profileData) {
-        console.log('SimpleAuthContext: User has user profile:', profileData.name);
-        setUserProfile(profileData);
-        setExpert(null);
-        return 'user';
-      }
-
-      // If no specific profile found, create a basic user profile
-      console.log('SimpleAuthContext: No profile found, creating basic user profile');
-      const basicProfile = {
-        id: currentUser.id,
-        name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User',
-        email: currentUser.email || '',
-        phone: '',
-        country: '',
-        city: '',
-        wallet_balance: 0,
-        currency: 'USD',
-        profile_picture: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        referred_by: null,
-        referral_code: '',
-        referral_link: '',
-        favorite_experts: [],
-        favorite_programs: [],
-        enrolled_courses: [],
-        reviews: [],
-        reports: [],
-        transactions: [],
-        referrals: []
-      };
-      
-      setUserProfile(basicProfile);
-      setExpert(null);
-      return 'user';
+      const profile = await UserRepository.findById(userId);
+      setUserProfile(profile);
+      return profile;
     } catch (error) {
-      console.error('SimpleAuthContext: Error determining user type:', error);
-      // Default to user with basic profile
-      const basicProfile = {
-        id: currentUser.id,
-        name: currentUser.user_metadata?.name || currentUser.email?.split('@')[0] || 'User',
-        email: currentUser.email || '',
-        phone: '',
-        country: '',
-        city: '',
-        wallet_balance: 0,
-        currency: 'USD',
-        profile_picture: null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        referred_by: null,
-        referral_code: '',
-        referral_link: '',
-        favorite_experts: [],
-        favorite_programs: [],
-        enrolled_courses: [],
-        reviews: [],
-        reports: [],
-        transactions: [],
-        referrals: []
-      };
-      
-      setUserProfile(basicProfile);
-      setExpert(null);
-      return 'user';
+      console.error('Error loading user profile:', error);
+      return null;
     }
   };
 
+  const loadExpertProfile = async (userId: string) => {
+    try {
+      const expertProfile = await ExpertRepository.findByAuthId(userId);
+      setExpert(expertProfile);
+      return expertProfile;
+    } catch (error) {
+      console.error('Error loading expert profile:', error);
+      return null;
+    }
+  };
+
+  const refreshProfiles = async () => {
+    if (!user) return;
+    
+    console.log('SimpleAuthContext: Refreshing profiles for user:', user.id);
+    
+    const [userProfileResult, expertProfileResult] = await Promise.all([
+      loadUserProfile(user.id),
+      loadExpertProfile(user.id)
+    ]);
+
+    // Determine user type based on available profiles
+    let newUserType: SessionType = 'none';
+    
+    if (userProfileResult && expertProfileResult) {
+      newUserType = 'dual';
+    } else if (expertProfileResult) {
+      newUserType = 'expert';
+    } else if (userProfileResult) {
+      newUserType = 'user';
+    }
+    
+    console.log('SimpleAuthContext: User type determined:', newUserType);
+    setUserType(newUserType);
+  };
+
+  // Auth actions
   const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<boolean> => {
     try {
-      console.log('SimpleAuthContext: Attempting login for:', email, options?.asExpert ? 'as expert' : 'as user');
+      console.log('SimpleAuthContext: Login attempt for:', email);
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -140,39 +112,17 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       });
 
       if (error) {
-        console.error('SimpleAuthContext: Login error:', error);
+        console.error('SimpleAuthContext: Login error:', error.message);
         return false;
       }
 
-      if (!data.user || !data.session) {
-        console.error('SimpleAuthContext: No user or session returned');
-        return false;
+      if (data.user && data.session) {
+        console.log('SimpleAuthContext: Login successful');
+        // The auth state change listener will handle the rest
+        return true;
       }
 
-      console.log('SimpleAuthContext: Login successful, determining user type...');
-      
-      // Set session immediately
-      setSession(data.session);
-      setUser(data.user);
-      
-      // Determine user type
-      const type = await determineUserType(data.user);
-      setUserType(type);
-      
-      // If trying to login as expert but user type is not expert, fail
-      if (options?.asExpert && type !== 'expert') {
-        console.error('SimpleAuthContext: User attempted expert login but is not an expert');
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
-        setUserType('none');
-        setExpert(null);
-        setUserProfile(null);
-        return false;
-      }
-      
-      console.log('SimpleAuthContext: Login completed successfully as:', type);
-      return true;
+      return false;
     } catch (error) {
       console.error('SimpleAuthContext: Login exception:', error);
       return false;
@@ -181,88 +131,114 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
   const logout = async (): Promise<void> => {
     try {
-      console.log('SimpleAuthContext: Logging out...');
-      await supabase.auth.signOut();
-      setSession(null);
+      console.log('SimpleAuthContext: Logout initiated');
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('SimpleAuthContext: Logout error:', error);
+      } else {
+        console.log('SimpleAuthContext: Logout successful');
+      }
+      
+      // Clear local state immediately
       setUser(null);
-      setUserType('none');
-      setExpert(null);
+      setSession(null);
       setUserProfile(null);
-      console.log('SimpleAuthContext: Logout completed');
+      setExpert(null);
+      setUserType('none');
     } catch (error) {
-      console.error('SimpleAuthContext: Logout error:', error);
+      console.error('SimpleAuthContext: Logout exception:', error);
     }
   };
 
+  // Set up auth state listener and initial session check
   useEffect(() => {
+    let mounted = true;
+    
     console.log('SimpleAuthContext: Setting up auth state listener (singleton)...');
     
-    // Set up auth state listener
+    // Set up the auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!mounted) return;
+        
         console.log('SimpleAuthContext: Auth state changed:', event, session ? 'Session exists' : 'No session');
         
         setSession(session);
-        setUser(session?.user || null);
+        setUser(session?.user ?? null);
         
         if (session?.user) {
-          const type = await determineUserType(session.user);
-          setUserType(type);
+          // Load profiles when user is authenticated
+          setTimeout(async () => {
+            if (!mounted) return;
+            await refreshProfiles();
+            setIsLoading(false);
+          }, 0);
         } else {
-          setUserType('none');
-          setExpert(null);
+          // Clear profiles when user is not authenticated
           setUserProfile(null);
+          setExpert(null);
+          setUserType('none');
+          setIsLoading(false);
         }
-        
-        setIsLoading(false);
       }
     );
 
     // Check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('SimpleAuthContext: Initial session check:', session ? 'Session exists' : 'No session');
-      
-      setSession(session);
-      setUser(session?.user || null);
-      
-      if (session?.user) {
-        const type = await determineUserType(session.user);
-        setUserType(type);
-      } else {
-        setUserType('none');
+    const checkInitialSession = async () => {
+      try {
+        console.log('SimpleAuthContext: Checking for existing session...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('SimpleAuthContext: Session check error:', error);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (session) {
+          console.log('SimpleAuthContext: Found existing session');
+          setSession(session);
+          setUser(session.user);
+          await refreshProfiles();
+        } else {
+          console.log('SimpleAuthContext: Initial session check: No session');
+        }
+      } catch (error) {
+        console.error('SimpleAuthContext: Session check exception:', error);
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
-      
-      setIsLoading(false);
-    });
+    };
 
+    checkInitialSession();
+
+    // Cleanup function
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
-  const value: SimpleAuthState = {
+  const contextValue: SimpleAuthContextType = {
+    isAuthenticated,
+    isLoading,
     user,
     session,
     userType,
-    isLoading,
-    isAuthenticated: !!user,
-    expert,
     userProfile,
+    expert,
     login,
-    logout
+    logout,
+    refreshProfiles
   };
 
   return (
-    <SimpleAuthContext.Provider value={value}>
+    <SimpleAuthContext.Provider value={contextValue}>
       {children}
     </SimpleAuthContext.Provider>
   );
-};
-
-export const useSimpleAuthContext = (): SimpleAuthState => {
-  const context = useContext(SimpleAuthContext);
-  if (context === undefined) {
-    throw new Error('useSimpleAuthContext must be used within a SimpleAuthProvider');
-  }
-  return context;
 };
