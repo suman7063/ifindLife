@@ -105,7 +105,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     }
   };
 
-  const refreshProfiles = async () => {
+  const refreshProfiles = async (): Promise<void> => {
     if (!user) {
       console.log('⚠️ SimpleAuthContext: No user to refresh profiles for');
       return;
@@ -143,7 +143,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     
     console.log('🎯 SimpleAuthContext: Setting user type to:', newUserType);
     setUserType(newUserType);
-    return newUserType;
   };
 
   // Auth actions
