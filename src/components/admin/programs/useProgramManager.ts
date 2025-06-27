@@ -2,11 +2,14 @@
 import { useState, useEffect } from 'react';
 import { Program, ProgramInsert, ProgramUpdate } from '@/types/programs';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const useProgramManager = () => {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const fetchPrograms = async () => {
     setLoading(true);
@@ -71,10 +74,12 @@ export const useProgramManager = () => {
       if (insertError) throw insertError;
 
       await fetchPrograms();
+      toast.success('Program added successfully');
       return true;
     } catch (err) {
       console.error('Error adding program:', err);
       setError(err instanceof Error ? err.message : 'Failed to add program');
+      toast.error('Failed to add program');
       return false;
     } finally {
       setLoading(false);
@@ -94,10 +99,12 @@ export const useProgramManager = () => {
       if (updateError) throw updateError;
 
       await fetchPrograms();
+      toast.success('Program updated successfully');
       return true;
     } catch (err) {
       console.error('Error updating program:', err);
       setError(err instanceof Error ? err.message : 'Failed to update program');
+      toast.error('Failed to update program');
       return false;
     } finally {
       setLoading(false);
@@ -117,10 +124,12 @@ export const useProgramManager = () => {
       if (deleteError) throw deleteError;
 
       setPrograms(prev => prev.filter(program => program.id !== id));
+      toast.success('Program deleted successfully');
       return true;
     } catch (err) {
       console.error('Error deleting program:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete program');
+      toast.error('Failed to delete program');
       return false;
     } finally {
       setLoading(false);
@@ -154,14 +163,52 @@ export const useProgramManager = () => {
       }
 
       await fetchPrograms();
+      toast.success('Programs imported successfully');
       return true;
     } catch (err) {
       console.error('Error bulk inserting programs:', err);
       setError(err instanceof Error ? err.message : 'Failed to bulk insert programs');
+      toast.error('Failed to import programs');
       return false;
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenDialog = (program?: Program) => {
+    setSelectedProgram(program || null);
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveProgram = async (program: Program) => {
+    const success = program.id 
+      ? await updateProgram(program.id, program)
+      : await addProgram(program);
+    
+    if (success) {
+      setIsDialogOpen(false);
+      setSelectedProgram(null);
+    }
+  };
+
+  const handleDeleteProgram = async (programId: number): Promise<boolean> => {
+    return await deleteProgram(programId);
+  };
+
+  const getCategoryColor = (category: string): string => {
+    const colors: Record<string, string> = {
+      wellness: 'bg-green-100 text-green-800',
+      mental_health: 'bg-blue-100 text-blue-800',
+      fitness: 'bg-orange-100 text-orange-800',
+      nutrition: 'bg-yellow-100 text-yellow-800',
+      career: 'bg-purple-100 text-purple-800',
+      relationships: 'bg-pink-100 text-pink-800',
+      personal_development: 'bg-indigo-100 text-indigo-800',
+      academic: 'bg-cyan-100 text-cyan-800',
+      business: 'bg-gray-100 text-gray-800',
+      productivity: 'bg-red-100 text-red-800'
+    };
+    return colors[category] || 'bg-gray-100 text-gray-800';
   };
 
   useEffect(() => {
@@ -171,11 +218,19 @@ export const useProgramManager = () => {
   return {
     programs,
     loading,
+    isLoading: loading, // Provide both for compatibility
     error,
+    selectedProgram,
+    isDialogOpen,
+    setIsDialogOpen,
     fetchPrograms,
     addProgram,
     updateProgram,
     deleteProgram,
-    bulkInsertPrograms
+    bulkInsertPrograms,
+    handleOpenDialog,
+    handleSaveProgram,
+    handleDeleteProgram,
+    getCategoryColor
   };
 };

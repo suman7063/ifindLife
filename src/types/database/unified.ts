@@ -47,7 +47,8 @@ export interface ExpertProfile {
   experience_years: number;
   hourly_rate: number;
   status: 'pending' | 'approved' | 'disapproved';
-  profilePicture?: string;
+  profile_picture?: string;
+  profilePicture?: string; // For backward compatibility
   created_at: string;
   updated_at: string;
   address?: string;

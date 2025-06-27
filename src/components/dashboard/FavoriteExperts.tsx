@@ -31,7 +31,36 @@ const FavoriteExperts: React.FC = () => {
           
         if (error) throw error;
         
-        setFavoriteExperts(data || []);
+        // Transform data to match ExpertProfile interface
+        const transformedData: ExpertProfile[] = (data || []).map((expert: any) => ({
+          id: expert.id,
+          auth_id: expert.auth_id || '',
+          name: expert.name,
+          email: expert.email,
+          phone: expert.phone,
+          bio: expert.bio,
+          specialties: expert.specialties || [],
+          experience_years: 0,
+          hourly_rate: 0,
+          status: 'approved' as const,
+          profile_picture: expert.profile_picture,
+          profilePicture: expert.profile_picture,
+          created_at: expert.created_at,
+          updated_at: expert.created_at,
+          address: expert.address,
+          city: expert.city,
+          state: expert.state,
+          country: expert.country,
+          specialization: expert.specialization,
+          experience: expert.experience,
+          certificate_urls: expert.certificate_urls,
+          selected_services: expert.selected_services,
+          average_rating: expert.average_rating,
+          reviews_count: expert.reviews_count,
+          verified: expert.verified || false
+        }));
+        
+        setFavoriteExperts(transformedData);
       } catch (error) {
         console.error('Error fetching favorite experts:', error);
       } finally {
