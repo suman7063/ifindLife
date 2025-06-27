@@ -54,7 +54,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       hasUserAccount: authState.hasUserAccount,
       
       // Auth actions
-      ...actions
+      ...actions,
+      
+      // Add missing properties to prevent errors
+      addToFavorites: async (expertId: number) => false,
+      removeFromFavorites: async (expertId: number) => false,
+      rechargeWallet: async (amount: number) => false,
+      addReview: async (review: any, rating?: number, comment?: string) => false,
+      reportExpert: async (report: any, reason?: string, details?: string) => false,
+      hasTakenServiceFrom: async (id: string | number) => false,
+      getExpertShareLink: (expertId: string | number) => '',
+      getReferralLink: () => null,
+      updateProfilePicture: async (file: File) => null,
+      registerExpert: async () => false
     };
 
     console.log('AuthProvider: Context value created with login function:', !!value.login);

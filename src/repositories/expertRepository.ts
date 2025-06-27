@@ -217,4 +217,9 @@ export class ExpertRepository {
       return null;
     }
   }
+
+  // Instance method that calls the static method for compatibility
+  async getExpertByAuthId(authId: string): Promise<ExpertProfile | null> {
+    return ExpertRepository.getExpertByAuthId(authId);
+  }
 }

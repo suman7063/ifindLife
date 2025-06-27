@@ -5,21 +5,29 @@ import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/types/database/unified';
 import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
-interface ProgramCategoriesProps {
-  categories: string[];
-  selectedCategory: string;
-  onCategorySelect: (category: string) => void;
+interface Props {
+  categories?: string[];
+  selectedCategory?: string;
+  onCategorySelect?: (category: string) => void;
   user?: UserProfile | any;
+  currentUser?: UserProfile | any;
+  isAuthenticated?: boolean;
+  programsByCategory?: Record<string, any[]>;
+  [key: string]: any;
 }
 
-const ProgramCategories: React.FC<ProgramCategoriesProps> = ({
-  categories,
-  selectedCategory,
-  onCategorySelect,
-  user
+const ProgramCategories: React.FC<Props> = ({
+  categories = [],
+  selectedCategory = 'all',
+  onCategorySelect = () => {},
+  user,
+  currentUser,
+  isAuthenticated = false,
+  programsByCategory = {},
+  ...otherProps
 }) => {
   // Adapt user profile to ensure consistent structure
-  const adaptedUser = user ? adaptUserProfile(user) : null;
+  const adaptedUser = (user || currentUser) ? adaptUserProfile(user || currentUser) : null;
 
   return (
     <div className="flex flex-wrap gap-2 mb-6">
@@ -32,7 +40,7 @@ const ProgramCategories: React.FC<ProgramCategoriesProps> = ({
         All Categories
         {adaptedUser && (
           <Badge variant="secondary" className="ml-2">
-            {adaptedUser.favorite_programs.length}
+            {adaptedUser.favorite_programs?.length || 0}
           </Badge>
         )}
       </Button>

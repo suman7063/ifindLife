@@ -1,74 +1,46 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/database/unified';
-import ProgramsPagination from './ProgramsPagination';
-import EmptyState from './EmptyState';
 import ProgramGrid from './ProgramGrid';
-import { useProfileTypeAdapter } from '@/hooks/useProfileTypeAdapter';
 
-interface FilteredProgramsGridProps {
+interface Props {
   filteredPrograms: Program[];
-  currentUser: UserProfile | null;
+  currentUser?: UserProfile | any;
   isAuthenticated: boolean;
   selectedCategory: string;
+  user?: any;
+  programs?: Program[];
+  [key: string]: any;
 }
 
-const FilteredProgramsGrid: React.FC<FilteredProgramsGridProps> = ({
+const FilteredProgramsGrid: React.FC<Props> = ({
   filteredPrograms,
   currentUser,
   isAuthenticated,
-  selectedCategory
+  selectedCategory,
+  ...otherProps
 }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [paginatedPrograms, setPaginatedPrograms] = useState<Program[]>([]);
-  const { toTypeA } = useProfileTypeAdapter();
-  const programsPerPage = 6; // Show 6 programs per page (2 rows of 3)
-  
-  const totalPages = Math.ceil(filteredPrograms.length / programsPerPage);
-  
-  // Reset pagination when category changes or when filtered programs change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, filteredPrograms.length]);
-  
-  // Update paginated programs when page changes or filtered programs change
-  useEffect(() => {
-    const startIndex = (currentPage - 1) * programsPerPage;
-    const endIndex = startIndex + programsPerPage;
-    setPaginatedPrograms(filteredPrograms.slice(startIndex, endIndex));
-    
-    // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage, filteredPrograms]);
-  
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  // Adapt the user profile to type A as required by ProgramGrid
-  const adaptedUser = currentUser ? toTypeA(currentUser as any) : null;
-
   if (filteredPrograms.length === 0) {
-    return <EmptyState selectedCategory={selectedCategory} />;
+    return (
+      <div className="text-center py-12 border rounded-lg bg-gray-50">
+        <h3 className="text-xl font-medium text-gray-600">
+          No {selectedCategory.replace('_', ' ')} programs found
+        </h3>
+        <p className="text-gray-500 mt-2">
+          Please check back later for new programs in this category.
+        </p>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <ProgramGrid 
-        programs={paginatedPrograms}
-        currentUser={adaptedUser}
-        isAuthenticated={isAuthenticated}
-      />
-      
-      {filteredPrograms.length > programsPerPage && (
-        <ProgramsPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-        />
-      )}
-    </div>
+    <ProgramGrid
+      programs={filteredPrograms}
+      user={currentUser}
+      isAuthenticated={isAuthenticated}
+      {...otherProps}
+    />
   );
 };
 

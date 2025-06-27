@@ -1,4 +1,5 @@
 
+
 export type ProgramType = 'wellness' | 'academic' | 'business' | 'productivity' | 'leadership';
 
 export type ProgramCategory = 
@@ -11,7 +12,11 @@ export type ProgramCategory =
   | 'personal_development'
   | 'academic'
   | 'business'
-  | 'productivity';
+  | 'productivity'
+  | 'quick-ease'
+  | 'resilience-building'
+  | 'super-human'
+  | 'issue-based';
 
 export interface Program {
   id: number;
@@ -89,7 +94,8 @@ export interface ExtendedExpert extends Expert {
   average_rating?: number;
   hourly_rate?: number;
   updated_at?: string;
-  experience?: string; // Add this for compatibility
+  experience?: string;
+  verified?: boolean; // Add this property
 }
 
 // Component Props Types

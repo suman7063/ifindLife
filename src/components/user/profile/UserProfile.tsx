@@ -1,200 +1,73 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import React from 'react';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { UserProfile as UserProfileType } from '@/types/database/unified';
-import { adaptUserProfile, getProfilePicture } from '@/utils/userProfileAdapter';
-import { Camera, Save } from 'lucide-react';
+import { getInitials } from '@/utils/getInitials';
 
-interface UserProfileProps {
-  user: UserProfileType | any;
-  onSave?: (data: any) => Promise<boolean>;
-  loading?: boolean;
+interface Props {
+  user?: any;
+  currentUser?: any;
+  [key: string]: any;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ user, onSave, loading = false }) => {
-  // Adapt user profile to ensure consistent structure
-  const adaptedUser = adaptUserProfile(user);
+const UserProfile: React.FC<Props> = (props) => {
+  const { userProfile, isLoading } = useAuth();
   
-  const [formData, setFormData] = useState({
-    name: adaptedUser.name || '',
-    email: adaptedUser.email || '',
-    phone: adaptedUser.phone || '',
-    city: adaptedUser.city || '',
-    country: adaptedUser.country || '',
-    currency: adaptedUser.currency || 'USD'
-  });
-
-  const [isEditing, setIsEditing] = useState(false);
-  const profilePicture = getProfilePicture(adaptedUser);
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const handleSave = async () => {
-    if (onSave) {
-      const success = await onSave(formData);
-      if (success) {
-        setIsEditing(false);
-      }
-    }
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(' ').map(part => part[0]).join('').toUpperCase();
-  };
-
+  const user = props.user || userProfile;
+  
+  if (isLoading) {
+    return (
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+        <div className="h-64 bg-gray-200 rounded"></div>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">No user profile found</p>
+      </div>
+    );
+  }
+  
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>Manage your personal information</CardDescription>
-          </div>
-          <Button
-            variant={isEditing ? "outline" : "default"}
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? 'Cancel' : 'Edit Profile'}
-          </Button>
-        </div>
+        <CardTitle>Profile Information</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Profile Picture */}
         <div className="flex items-center space-x-4">
           <Avatar className="h-20 w-20">
-            <AvatarImage src={profilePicture} alt={adaptedUser.name} />
+            <AvatarImage src={user.profile_picture || user.profilePicture} />
             <AvatarFallback className="text-lg">
-              {getInitials(adaptedUser.name)}
+              {getInitials(user.name || 'User')}
             </AvatarFallback>
           </Avatar>
-          {isEditing && (
-            <Button variant="outline" size="sm">
-              <Camera className="h-4 w-4 mr-2" />
-              Change Photo
-            </Button>
-          )}
-        </div>
-
-        {/* Form Fields */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            {isEditing ? (
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
-              />
-            ) : (
-              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.name || 'Not provided'}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            {isEditing ? (
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
-              />
-            ) : (
-              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.email || 'Not provided'}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            {isEditing ? (
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-              />
-            ) : (
-              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.phone || 'Not provided'}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
-            {isEditing ? (
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => handleInputChange('city', e.target.value)}
-              />
-            ) : (
-              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.city || 'Not provided'}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            {isEditing ? (
-              <Input
-                id="country"
-                value={formData.country}
-                onChange={(e) => handleInputChange('country', e.target.value)}
-              />
-            ) : (
-              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.country || 'Not provided'}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="currency">Currency</Label>
-            {isEditing ? (
-              <select
-                id="currency"
-                value={formData.currency}
-                onChange={(e) => handleInputChange('currency', e.target.value)}
-                className="w-full py-2 px-3 border border-gray-300 rounded-md"
-              >
-                <option value="USD">USD</option>
-                <option value="INR">INR</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-              </select>
-            ) : (
-              <p className="py-2 px-3 bg-gray-50 rounded-md">{adaptedUser.currency || 'USD'}</p>
-            )}
+          <div>
+            <h3 className="text-xl font-semibold">{user.name}</h3>
+            <p className="text-gray-600">{user.email}</p>
           </div>
         </div>
-
-        {/* Save Button */}
-        {isEditing && (
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={loading}>
-              <Save className="h-4 w-4 mr-2" />
-              {loading ? 'Saving...' : 'Save Changes'}
-            </Button>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">Phone</label>
+            <p className="text-lg">{user.phone || 'Not provided'}</p>
           </div>
-        )}
-
-        {/* Additional Info */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t">
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-600">
-              ${adaptedUser.wallet_balance.toFixed(2)}
-            </p>
-            <p className="text-sm text-gray-500">Wallet Balance</p>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Country</label>
+            <p className="text-lg">{user.country || 'Not provided'}</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{adaptedUser.favorite_experts.length}</p>
-            <p className="text-sm text-gray-500">Favorite Experts</p>
+          <div>
+            <label className="text-sm font-medium text-gray-500">City</label>
+            <p className="text-lg">{user.city || 'Not provided'}</p>
           </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{adaptedUser.favorite_programs.length}</p>
-            <p className="text-sm text-gray-500">Favorite Programs</p>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Wallet Balance</label>
+            <p className="text-lg">${user.wallet_balance || user.walletBalance || 0}</p>
           </div>
         </div>
       </CardContent>

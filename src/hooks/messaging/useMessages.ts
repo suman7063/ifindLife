@@ -10,11 +10,11 @@ export const useMessages = (): UseMessagesReturn => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
-  const fetchMessages = useCallback(async (conversationId: string) => {
+  const fetchMessages = useCallback(async (conversationId: string): Promise<Message[]> => {
     if (!user || !conversationId) {
       setMessages([]);
       setLoading(false);
-      return;
+      return [];
     }
     
     setLoading(true);
@@ -27,9 +27,11 @@ export const useMessages = (): UseMessagesReturn => {
       ];
       
       setMessages(mockMessages);
+      return mockMessages;
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError(err instanceof Error ? err.message : String(err));
+      return [];
     } finally {
       setLoading(false);
     }
