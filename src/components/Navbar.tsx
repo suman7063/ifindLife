@@ -95,7 +95,7 @@ const Navbar = () => {
     isLoading
   });
 
-  // Show loading briefly during auth check
+  // Only show loading during the initial auth check - not after each render
   if (isLoading) {
     console.log('Navbar: Showing loading state');
     return (
