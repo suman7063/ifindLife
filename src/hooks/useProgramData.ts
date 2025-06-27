@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Program, ProgramType } from '@/types/programs';
+import { Program, ProgramType, ProgramCategory } from '@/types/programs';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -29,6 +29,7 @@ export const useProgramData = () => {
       const typedPrograms: Program[] = (data || []).map(program => ({
         ...program,
         programType: program.programType as ProgramType,
+        category: program.category as ProgramCategory,
         enrollments: program.enrollments || 0,
         is_favorite: program.is_favorite !== undefined ? program.is_favorite : false,
         is_featured: program.is_featured !== undefined ? program.is_featured : false

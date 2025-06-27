@@ -26,7 +26,7 @@ export interface Program {
   created_at: string;
   enrollments: number;
   is_favorite?: boolean;
-  is_featured?: boolean; // THIS WAS MISSING!
+  is_featured?: boolean;
 }
 
 export interface ProgramInsert {
@@ -89,6 +89,7 @@ export interface ExtendedExpert extends Expert {
   average_rating?: number;
   hourly_rate?: number;
   updated_at?: string;
+  experience?: string; // Add this for compatibility
 }
 
 // Component Props Types
@@ -99,12 +100,14 @@ export interface ProgramGridProps {
   isAuthenticated?: boolean;
   onProgramClick?: (program: Program) => void;
   onFavoriteToggle?: (programId: number) => void;
+  loading?: boolean;
 }
 
 export interface ProgramCardProps {
   program: Program;
   user?: any;
   currentUser?: any;
+  isAuthenticated?: boolean;
   onProgramClick?: (program: Program) => void;
   onFavoriteToggle?: (programId: number) => void;
 }
@@ -112,6 +115,10 @@ export interface ProgramCardProps {
 export interface ProgramCategoriesProps {
   programs?: Program[];
   programsByCategory?: Record<string, Program[]>;
+  categories?: string[];
+  selectedCategory?: string;
+  onCategorySelect?: (category: string) => void;
   currentUser?: any;
   isAuthenticated?: boolean;
+  user?: any;
 }

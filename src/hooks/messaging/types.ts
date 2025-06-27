@@ -37,4 +37,6 @@ export interface UseMessagesReturn {
   sendMessage: (content: string) => Promise<void>;
   markAsRead: (messageId: string) => Promise<void>;
   refreshMessages: () => Promise<void>;
+  setMessages?: (messages: Message[]) => void;
+  fetchMessages?: (conversationId: string) => Promise<Message[]>;
 }
