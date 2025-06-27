@@ -6,7 +6,7 @@ import NavbarUserMenu from './NavbarUserMenu';
 import { getInitials } from '@/utils/getInitials';
 
 interface NavbarUserAvatarProps {
-  currentUser: any; // Accept any profile type for flexibility
+  currentUser: any;
   onLogout: () => Promise<boolean>;
   isLoggingOut: boolean;
 }
@@ -16,20 +16,23 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
   onLogout,
   isLoggingOut 
 }) => {
-  if (!currentUser) {
-    return null;
-  }
+  console.log('NavbarUserAvatar: Rendering with user:', {
+    hasUser: !!currentUser,
+    userName: currentUser?.name,
+    userEmail: currentUser?.email
+  });
 
-  // Get profile picture from either format
-  const profilePicture = currentUser.profile_picture || 
-    currentUser.profilePicture || '';
-  
-  // Get name from either format
-  const userName = currentUser.name || '';
+  // Always show the avatar when this component is rendered
+  // If no currentUser, show a default user
+  const displayUser = currentUser || {
+    name: 'User',
+    email: '',
+    profile_picture: ''
+  };
 
   return (
     <NavbarUserMenu 
-      currentUser={currentUser} 
+      currentUser={displayUser} 
       onLogout={onLogout}
       isLoggingOut={isLoggingOut}
     />
