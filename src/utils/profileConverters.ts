@@ -25,6 +25,8 @@ export function convertUserToUserProfile(userData: any): UserProfile | null {
     favorite_programs: userData.favorite_programs || [],
     enrolled_courses: userData.enrolled_courses || [],
     reviews: userData.reviews || [],
+    recent_activities: userData.recent_activities || [], // Add missing property
+    upcoming_appointments: userData.upcoming_appointments || [], // Add missing property
     reports: userData.reports || [],
     transactions: userData.transactions || [],
     referrals: userData.referrals || []

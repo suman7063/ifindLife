@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { AdminProfile } from '@/types/database/unified';
 
@@ -22,10 +21,9 @@ export const adminRepository = {
 
       return {
         id: data.id,
-        auth_id: data.id,
-        email: '', // Admin email would come from auth.users
         role: data.role,
         created_at: data.created_at
+        // Remove auth_id as it doesn't exist in AdminProfile type
       };
     } catch (error) {
       console.error('Error in getAdminByAuthId:', error);

@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { AuthState, AuthUser, UserRole, SessionType, initialAuthState } from '@/contexts/auth/types';
-import { userRepository } from '@/repositories/userRepository';
-import { expertRepository } from '@/repositories/expertRepository';
+import { UserRepository } from '@/repositories/userRepository'; // Fix import
+import { ExpertRepository } from '@/repositories/expertRepository'; // Fix import
 
 export const useAuthState = (): AuthState => {
   const [state, setState] = useState<AuthState>(initialAuthState);
@@ -51,12 +51,12 @@ export const useAuthState = (): AuthState => {
             let walletBalance = 0;
             
             if (sessionType === 'user' || sessionType === 'dual') {
-              userProfile = await userRepository.getUser(session.user.id);
+              userProfile = await UserRepository.findById(session.user.id);
               walletBalance = userProfile?.wallet_balance || 0;
             }
             
             if (sessionType === 'expert' || sessionType === 'dual') {
-              expertProfile = await expertRepository.getExpertByAuthId(session.user.id);
+              expertProfile = await ExpertRepository.getExpertByAuthId(session.user.id);
             }
             
             // Finally update with full profile data

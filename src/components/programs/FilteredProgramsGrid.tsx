@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/database/unified';

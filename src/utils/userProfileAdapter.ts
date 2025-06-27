@@ -1,68 +1,32 @@
-import { Message } from '@/types/database/unified';
-import { Message as MessagingMessage } from '@/hooks/messaging/types';
 
-export const adaptMessage = (message: Message, currentUserId: string): MessagingMessage & { isMine: boolean; timestamp: Date } => {
+import { UserProfile } from '@/types/database/unified';
+
+export function adaptUserProfile(user: any): UserProfile | null {
+  if (!user) return null;
+  
   return {
-    id: message.id,
-    sender_id: message.sender_id,
-    receiver_id: message.receiver_id,
-    content: message.content,
-    read: message.read,
-    created_at: message.created_at,
-    updated_at: message.updated_at,
-    isMine: message.sender_id === currentUserId,
-    timestamp: new Date(message.created_at)
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    country: user.country,
+    city: user.city,
+    currency: user.currency || 'USD',
+    profile_picture: user.profile_picture || user.profilePicture,
+    wallet_balance: user.wallet_balance || user.walletBalance || 0,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
+    referred_by: user.referred_by,
+    referral_code: user.referral_code || user.referralCode,
+    referral_link: user.referral_link,
+    favorite_experts: user.favorite_experts || user.favoriteExperts || [],
+    favorite_programs: user.favorite_programs || [],
+    enrolled_courses: user.enrolled_courses || user.enrolledCourses || [],
+    reviews: user.reviews || [],
+    recent_activities: user.recent_activities || [],
+    upcoming_appointments: user.upcoming_appointments || [],
+    reports: user.reports || [],
+    transactions: user.transactions || [],
+    referrals: user.referrals || []
   };
-};
-
-export const adaptTransaction = (transaction: any) => {
-  return {
-    ...transaction,
-    date: transaction.date || transaction.created_at,
-    created_at: transaction.created_at || transaction.date,
-    type: transaction.type || transaction.transaction_type,
-    transaction_type: transaction.transaction_type || transaction.type
-  };
-};
-
-export const getProfilePicture = (profile: any): string => {
-  return profile?.profile_picture || profile?.profilePicture || '';
-};
-
-export const adaptReview = (review: any) => {
-  return {
-    id: review.id || review.review_id,
-    expert_id: review.expert_id,
-    rating: review.rating,
-    comment: review.comment,
-    date: review.date,
-    verified: review.verified || false,
-    expert_name: review.expert_name || review.expertName || 'Unknown Expert'
-  };
-};
-
-export const adaptConversation = (conversation: any) => {
-  return {
-    ...conversation,
-    name: conversation.participant_name || conversation.name,
-    profilePicture: conversation.profile_picture || conversation.profilePicture,
-    lastMessage: conversation.last_message || conversation.lastMessage,
-    lastMessageDate: conversation.last_message_time || conversation.lastMessageDate,
-    unreadCount: conversation.unread_count || conversation.unreadCount || 0
-  };
-};
-
-export const adaptUserProfile = (profile: any) => {
-  return {
-    ...profile,
-    favorite_experts: profile.favorite_experts || [],
-    favorite_programs: profile.favorite_programs || [],
-    enrolled_courses: profile.enrolled_courses || [],
-    reviews: profile.reviews || [],
-    recent_activities: profile.recent_activities || [],
-    upcoming_appointments: profile.upcoming_appointments || [],
-    transactions: profile.transactions || [],
-    reports: profile.reports || [],
-    referrals: profile.referrals || []
-  };
-};
+}

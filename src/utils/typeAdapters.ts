@@ -1,4 +1,3 @@
-
 import { UserProfile as UserProfileA } from '@/types/supabase/user';
 import { UserProfile as UserProfileB } from '@/types/supabase/userProfile';
 import { UserProfile } from '@/types/database/unified';
@@ -96,4 +95,39 @@ export function toUnifiedProfile(profile: any): UserProfile | null {
     transactions: profile.transactions || [],
     referrals: profile.referrals || []
   };
+}
+
+// Handle different user profile formats
+export function adaptUserProfile(user: any): UserProfile | null {
+  if (!user) return null;
+  
+  // Handle different user profile formats
+  const baseProfile = {
+    id: user.id,
+    name: user.name || user.full_name,
+    email: user.email,
+    phone: user.phone,
+    country: user.country,
+    city: user.city,
+    currency: user.currency || 'USD',
+    profile_picture: user.profile_picture || user.profilePicture,
+    wallet_balance: user.wallet_balance || user.walletBalance || 0,
+    created_at: user.created_at,
+    updated_at: user.updated_at,
+    referred_by: user.referred_by,
+    referral_code: user.referral_code || user.referralCode,
+    referral_link: user.referral_link,
+    // Ensure all arrays are present
+    favorite_experts: user.favorite_experts || user.favoriteExperts || [],
+    favorite_programs: user.favorite_programs || [],
+    enrolled_courses: user.enrolled_courses || user.enrolledCourses || [],
+    reviews: user.reviews || [],
+    recent_activities: user.recent_activities || [], // Add missing property
+    upcoming_appointments: user.upcoming_appointments || [], // Add missing property
+    reports: user.reports || [],
+    transactions: user.transactions || [],
+    referrals: user.referrals || []
+  };
+  
+  return baseProfile;
 }

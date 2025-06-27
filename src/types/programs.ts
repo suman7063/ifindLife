@@ -1,5 +1,3 @@
-
-
 export type ProgramType = 'wellness' | 'academic' | 'business' | 'productivity' | 'leadership';
 
 export type ProgramCategory = 
@@ -95,7 +93,8 @@ export interface ExtendedExpert extends Expert {
   hourly_rate?: number;
   updated_at?: string;
   experience?: string;
-  verified?: boolean; // Add this property
+  verified?: boolean;
+  status?: 'pending' | 'approved' | 'disapproved';
 }
 
 // Component Props Types
