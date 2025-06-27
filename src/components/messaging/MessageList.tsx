@@ -25,13 +25,13 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
         const result = await getConversations(userId);
         const adaptedResult = (result || [])
           .map(adaptConversation)
-          .filter((conv): conv is Conversation => {
-            // Check if conversation has required properties
+          .filter((conv) => {
+            // Filter out null/invalid conversations
             return conv !== null && 
                    typeof conv.name === 'string' && 
                    conv.name.trim() !== '' &&
                    typeof conv.id === 'string';
-          });
+          }) as Conversation[];
         setConversations(adaptedResult);
       } catch (error) {
         console.error("Error fetching conversations:", error);
