@@ -2,14 +2,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ExternalLink, LayoutDashboard, LogOut } from 'lucide-react';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
 import { useNavigate } from 'react-router-dom';
 
 const ExpertHeader: React.FC = () => {
-  const { expert, logout } = useUnifiedAuth();
+  const { expert, logout } = useSimpleAuth();
   const navigate = useNavigate();
 
   const getInitials = (name: string) => {

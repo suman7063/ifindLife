@@ -8,7 +8,7 @@ import UserSignup from './pages/UserRegister';
 import ExpertLogin from './pages/ExpertLogin';
 import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
-import UserDashboard from './pages/UserDashboard';
+import UserDashboardWrapper from './pages/UserDashboardWrapper';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/admin/Testing';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
@@ -35,13 +35,10 @@ import AdminLoginClean from '@/pages/AdminLoginClean';
 import AdminDashboardClean from '@/pages/AdminDashboardClean';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// EMERGENCY FIX - Disable all auth guards temporarily
-const DISABLE_AUTH_GUARDS = true; // Debug flag
-
 const queryClient = new QueryClient();
 
 function App() {
-  console.log('App: Component is rendering with auth guards disabled:', DISABLE_AUTH_GUARDS);
+  console.log('App: Component is rendering');
   
   return (
     <QueryClientProvider client={queryClient}>
@@ -62,13 +59,10 @@ function App() {
             <Route path="/expert-signup" element={<ExpertSignup />} />
             <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
             
-            {/* User Routes - DISABLE AUTH GUARDS FOR DEBUGGING */}
+            {/* User Routes */}
             <Route path="/user-login" element={<UserLogin />} />
             <Route path="/user-signup" element={<UserSignup />} />
-            <Route 
-              path="/user-dashboard/*" 
-              element={<UserDashboard />}
-            />
+            <Route path="/user-dashboard/*" element={<UserDashboardWrapper />} />
             
             {/* Program Routes */}
             <Route path="/programs" element={<Programs />} />
@@ -92,11 +86,11 @@ function App() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
             
-            {/* Admin Routes - Using simplified auth for now */}
+            {/* Admin Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
             
-            {/* Clean Admin Routes - Completely Isolated */}
+            {/* Clean Admin Routes */}
             <Route path="/admin-login-clean" element={<AdminLoginClean />} />
             <Route path="/admin-dashboard-clean" element={<AdminDashboardClean />} />
             

@@ -3,10 +3,11 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import ExpertSidebar from './sidebar/ExpertSidebar';
 import ExpertHeader from './ExpertHeader';
 import MobileResponsiveWrapper from './MobileResponsiveWrapper';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { Navigate, useNavigate } from 'react-router-dom';
 import DashboardLoader from '../../expert/dashboard/DashboardLoader';
 import { toast } from 'sonner';
+import { isExpertAuthenticated } from '@/utils/authHelpers';
 
 interface ExpertDashboardLayoutProps {
   children: ReactNode;
@@ -47,26 +48,26 @@ class RedirectSafety {
 const redirectSafety = new RedirectSafety();
 
 const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children }) => {
-  const { isAuthenticated, sessionType, expert, isLoading } = useUnifiedAuth();
+  const simpleAuth = useSimpleAuth();
   const navigate = useNavigate();
   const [hasRedirected, setHasRedirected] = useState(false);
   
-  // Enhanced debug logging to compare with ExpertLogin
-  console.log('ExpertDashboardLayout - Unified auth state:', {
-    isAuthenticated,
-    sessionType,
-    hasExpertProfile: !!expert,
-    isLoading,
-    expertStatus: expert?.status
+  // Enhanced debug logging
+  console.log('ExpertDashboardLayout - Simple auth state:', {
+    isAuthenticated: simpleAuth.isAuthenticated,
+    userType: simpleAuth.userType,
+    hasExpertProfile: !!simpleAuth.expert,
+    isLoading: simpleAuth.isLoading,
+    expertStatus: simpleAuth.expert?.status
   });
   
   // Show loading state while checking authentication
-  if (isLoading) {
+  if (simpleAuth.isLoading) {
     return <DashboardLoader />;
   }
   
   // Handle unauthorized access with redirect safety
-  if (!isAuthenticated || sessionType !== 'expert' || !expert) {
+  if (!isExpertAuthenticated(simpleAuth)) {
     console.log('ExpertDashboardLayout: Not authenticated as expert, checking redirect safety');
     
     if (!hasRedirected && redirectSafety.canRedirect('/expert-dashboard', '/expert-login')) {
@@ -103,12 +104,12 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
 
   // Handle edge case where user is authenticated but not as expert
   useEffect(() => {
-    if (!isLoading && isAuthenticated && sessionType !== 'expert') {
+    if (!simpleAuth.isLoading && simpleAuth.isAuthenticated && simpleAuth.userType !== 'expert') {
       console.log('ExpertDashboardLayout: User authenticated but not as expert');
       toast.error('You do not have expert privileges');
       navigate('/user-dashboard', { replace: true });
     }
-  }, [isLoading, isAuthenticated, sessionType, navigate]);
+  }, [simpleAuth.isLoading, simpleAuth.isAuthenticated, simpleAuth.userType, navigate]);
 
   return (
     <MobileResponsiveWrapper className="bg-gray-50">

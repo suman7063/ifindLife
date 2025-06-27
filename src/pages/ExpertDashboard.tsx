@@ -12,21 +12,22 @@ import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { isExpertAuthenticated } from '@/utils/authHelpers';
 import { Loader2 } from 'lucide-react';
 
 const ExpertDashboard = () => {
-  const { isAuthenticated, userType, expert, isLoading } = useSimpleAuth();
+  const simpleAuth = useSimpleAuth();
   
   console.log('ExpertDashboard - Auth state:', {
-    isAuthenticated,
-    userType,
-    hasExpertProfile: !!expert,
-    isLoading,
-    expertStatus: expert?.status
+    isAuthenticated: simpleAuth.isAuthenticated,
+    userType: simpleAuth.userType,
+    hasExpertProfile: !!simpleAuth.expert,
+    isLoading: simpleAuth.isLoading,
+    expertStatus: simpleAuth.expert?.status
   });
 
   // Show loading state while authentication is being checked
-  if (isLoading) {
+  if (simpleAuth.isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -38,21 +39,21 @@ const ExpertDashboard = () => {
   }
 
   // Handle unauthorized access - redirect to expert login
-  if (!isAuthenticated || userType !== 'expert' || !expert) {
+  if (!isExpertAuthenticated(simpleAuth)) {
     console.log('ExpertDashboard: Unauthorized access, redirecting to expert login');
     return <Navigate to="/expert-login" replace />;
   }
 
   // Handle non-approved expert status
-  if (expert.status !== 'approved') {
+  if (simpleAuth.expert?.status !== 'approved') {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center max-w-md p-8 bg-white rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4">Account Status: {expert.status}</h2>
-          {expert.status === 'pending' && (
+          <h2 className="text-2xl font-bold mb-4">Account Status: {simpleAuth.expert?.status}</h2>
+          {simpleAuth.expert?.status === 'pending' && (
             <p className="text-gray-600">Your expert account is pending approval. You will be notified once approved.</p>
           )}
-          {expert.status === 'disapproved' && (
+          {simpleAuth.expert?.status === 'disapproved' && (
             <p className="text-gray-600">Your expert account application has been disapproved. Please check your email for details.</p>
           )}
         </div>
