@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import useMessaging from '@/hooks/messaging';
@@ -27,7 +26,7 @@ const MessageList: React.FC<MessageListProps> = ({ userId, onSelectConversation,
         const adaptedResult = (result || [])
           .map(adaptConversation)
           .filter((conv): conv is Conversation => {
-            // Fix: Just check if conversation has required properties
+            // Check if conversation has required properties (profilePicture is optional)
             return conv !== null && conv.name && conv.name.trim() !== '';
           });
         setConversations(adaptedResult);

@@ -81,7 +81,7 @@ const useMessaging = () => {
         if (!userError && userData) {
           const conversation: Conversation = {
             id: partnerId,
-            participant_id: partnerId,
+            participant_id: partnerId, // Fixed: Use participant_id instead of participantId
             participant_name: userData.name || 'Unknown User',
             last_message: '',
             last_message_time: data.lastMessageDate,
@@ -91,8 +91,7 @@ const useMessaging = () => {
             profilePicture: userData.profile_picture || '',
             lastMessage: '',
             lastMessageDate: data.lastMessageDate,
-            unreadCount: 0,
-            participantId: partnerId
+            unreadCount: 0
           };
           
           conversationList.push(adaptConversation(conversation));
