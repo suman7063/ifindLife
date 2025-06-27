@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { fetchUserProfile } from '@/utils/profileFetcher';
@@ -178,7 +179,9 @@ export const useAuthFunctions = (): AuthFunctions => {
       reviews: [],
       reports: [],
       transactions: [],
-      referrals: []
+      referrals: [],
+      recent_activities: [], // Added missing property
+      upcoming_appointments: [] // Added missing property
     };
     
     // Determine user role based on profile data

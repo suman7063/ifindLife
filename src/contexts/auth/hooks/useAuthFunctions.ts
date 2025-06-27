@@ -1,7 +1,8 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { fetchUserProfile } from '@/utils/profileFetcher';
-import { UserRole } from '../types';
+import { UserRole } from '@/contexts/auth/types';
 import { UserProfile } from '@/types/supabase/user';
 import { toast } from '@/hooks/use-toast';
 
@@ -175,14 +176,14 @@ export const useAuthFunctions = (): AuthFunctions => {
       favorite_experts: profile?.favorite_experts || [],
       favorite_programs: profile?.favorite_programs || [], // Keep as number[]
       enrolled_courses: profile?.enrolled_courses || [],
-      reviews: profile?.reviews || [],
-      reports: profile?.reports || [],
-      transactions: profile?.transactions || [],
-      referrals: profile?.referrals || [],
-      recent_activities: profile?.recent_activities || [], // Added missing property
-      upcoming_appointments: profile?.upcoming_appointments || [] // Added missing property
+      reviews: [],
+      reports: [],
+      transactions: [],
+      referrals: [],
+      recent_activities: [], // Added missing property
+      upcoming_appointments: [] // Added missing property
     };
-      
+    
     // Determine user role based on profile data
     let role: UserRole = 'user';
     
@@ -215,18 +216,10 @@ export const useAuthFunctions = (): AuthFunctions => {
       
       const userId = userData.user.id;
       
-      // Create a copy of updates that doesn't include arrays (handle those separately)
-      const basicUpdates: Record<string, any> = {};
-      Object.entries(updates).forEach(([key, value]) => {
-        if (!Array.isArray(value)) {
-          basicUpdates[key] = value;
-        }
-      });
-      
       // Update the profile in the database
       const { error } = await supabase
         .from('users')
-        .update(basicUpdates)
+        .update(updates)
         .eq('id', userId);
         
       if (error) {
@@ -298,40 +291,6 @@ export const useAuthFunctions = (): AuthFunctions => {
     }
   }, []);
 
-  const createUserProfile = useCallback(async (userData: any): Promise<UserProfile | null> => {
-    try {
-      const profileData = {
-        id: userData.id,
-        name: userData.name || '',
-        email: userData.email || '',
-        phone: userData.phone || '',
-        city: userData.city || '',
-        country: userData.country || '',
-        profile_picture: userData.profile_picture || '',
-        wallet_balance: userData.wallet_balance || 0,
-        currency: userData.currency || 'USD',
-        created_at: userData.created_at || new Date().toISOString(),
-        referral_code: userData.referral_code || '',
-        referred_by: userData.referred_by || null,
-        referral_link: userData.referral_link || '',
-        favorite_experts: userData.favorite_experts || [],
-        favorite_programs: userData.favorite_programs || [],
-        enrolled_courses: userData.enrolled_courses || [],
-        reviews: userData.reviews || [],
-        reports: userData.reports || [],
-        transactions: userData.transactions || [],
-        referrals: userData.referrals || [],
-        recent_activities: userData.recent_activities || [], // Added missing property
-        upcoming_appointments: userData.upcoming_appointments || [] // Added missing property
-      };
-
-      return profileData;
-    } catch (error) {
-      console.error('Error creating user profile:', error);
-      return null;
-    }
-  }, []);
-
   return {
     login,
     signup,
@@ -339,7 +298,6 @@ export const useAuthFunctions = (): AuthFunctions => {
     checkSession,
     updateProfile,
     updatePassword,
-    verifyEmail,
-    createUserProfile
+    verifyEmail
   };
 };
