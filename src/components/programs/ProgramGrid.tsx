@@ -9,6 +9,7 @@ interface ProgramGridProps {
   programs: Program[];
   loading?: boolean;
   user?: UserProfile | any;
+  isAuthenticated?: boolean; // Added missing prop
   onProgramClick?: (program: Program) => void;
   onFavoriteToggle?: (programId: number) => void;
 }
@@ -17,6 +18,7 @@ const ProgramGrid: React.FC<ProgramGridProps> = ({
   programs,
   loading = false,
   user,
+  isAuthenticated = false, // Added default value
   onProgramClick,
   onFavoriteToggle
 }) => {
@@ -48,7 +50,8 @@ const ProgramGrid: React.FC<ProgramGridProps> = ({
         <ProgramCard
           key={program.id}
           program={program}
-          user={adaptedUser}
+          currentUser={adaptedUser}
+          isAuthenticated={isAuthenticated}
           onProgramClick={onProgramClick}
           onFavoriteToggle={onFavoriteToggle}
         />

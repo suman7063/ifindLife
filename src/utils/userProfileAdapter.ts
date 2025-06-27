@@ -31,7 +31,7 @@ export function adaptUserProfile(user: any): UserProfile | null {
   };
 }
 
-// Add missing adapter functions
+// Fix adaptMessage to take only one parameter
 export function adaptMessage(message: any) {
   if (!message) return null;
   

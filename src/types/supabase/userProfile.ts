@@ -15,12 +15,14 @@ export interface UserProfile {
   referral_code: string;
   referral_link: string;
   favorite_experts: string[];
-  favorite_programs: number[] | string[];
+  favorite_programs: number[]; // Changed to only number[] for consistency
   enrolled_courses: any[];
-  reviews: any[]; // Made required to match expectations
-  reports: any[]; // Made required to match expectations
-  transactions: any[]; // Made required to match expectations
-  referrals: any[]; // Made required to match expectations
+  reviews: any[];
+  reports: any[];
+  transactions: any[];
+  referrals: any[];
+  recent_activities: any[]; // Added missing property
+  upcoming_appointments: any[]; // Added missing property
   
   // Camel case aliases for backward compatibility
   profilePicture?: string;

@@ -1,4 +1,3 @@
-
 export type ProgramType = 'wellness' | 'academic' | 'business' | 'productivity' | 'leadership';
 
 export type ProgramCategory = 
@@ -73,7 +72,7 @@ export interface Expert {
   rating?: number;
   reviews_count?: number;
   is_available?: boolean;
-  created_at: string;
+  created_at?: string; // Made optional
 }
 
 export interface ExtendedExpert extends Expert {
@@ -97,6 +96,7 @@ export interface ExtendedExpert extends Expert {
   verified?: boolean;
   status?: 'pending' | 'approved' | 'disapproved';
   selected_services?: number[]; // Add missing property
+  created_at?: string; // Made optional to avoid errors
 }
 
 // Component Props Types

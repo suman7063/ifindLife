@@ -1,4 +1,3 @@
-
 // Unified types for the application
 export interface UserProfile {
   id: string;
@@ -88,14 +87,14 @@ export interface Conversation {
   id: string;
   participant_id: string;
   participant_name: string;
-  name: string; // Add missing name property
-  profilePicture?: string; // Add missing profilePicture property
+  name: string; // Made required instead of optional
+  profilePicture?: string;
   last_message: string;
-  lastMessage?: string; // Add alias for backward compatibility
+  lastMessage?: string;
   last_message_time: string;
-  lastMessageDate: string; // Add missing lastMessageDate property
+  lastMessageDate: string;
   unread_count: number;
-  unreadCount?: number; // Add alias for backward compatibility
+  unreadCount?: number;
 }
 
 // Re-export from user types to maintain compatibility
