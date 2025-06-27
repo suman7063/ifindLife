@@ -21,7 +21,7 @@ interface SimpleAuthContextType {
   expert: ExpertProfile | null;
   
   // Auth actions
-  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<boolean>;
+  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<{ success: boolean; userType?: SessionType }>;
   logout: () => Promise<void>;
   
   // Profile actions
@@ -143,10 +143,11 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     
     console.log('🎯 SimpleAuthContext: Setting user type to:', newUserType);
     setUserType(newUserType);
+    return newUserType;
   };
 
   // Auth actions
-  const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<boolean> => {
+  const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<{ success: boolean; userType?: SessionType }> => {
     try {
       console.log('🔐 SimpleAuthContext: Login attempt for:', email, 'as expert:', options?.asExpert);
       
@@ -166,18 +167,37 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       if (error) {
         console.error('❌ SimpleAuthContext: Login error:', error.message);
-        return false;
+        return { success: false };
       }
 
       if (data.user && data.session) {
-        console.log('✅ SimpleAuthContext: Login successful');
-        return true;
+        console.log('✅ SimpleAuthContext: Login successful, loading profiles...');
+        
+        // Wait for profiles to load to determine user type
+        const [userProfileResult, expertProfileResult] = await Promise.all([
+          loadUserProfile(data.user.id),
+          loadExpertProfile(data.user.id)
+        ]);
+
+        let finalUserType: SessionType = 'none';
+        
+        if (userProfileResult && expertProfileResult) {
+          // User has both profiles - use preference
+          finalUserType = options?.asExpert ? 'expert' : 'user';
+        } else if (expertProfileResult) {
+          finalUserType = 'expert';
+        } else if (userProfileResult) {
+          finalUserType = 'user';
+        }
+        
+        console.log('🎯 SimpleAuthContext: Final user type determined:', finalUserType);
+        return { success: true, userType: finalUserType };
       }
 
-      return false;
+      return { success: false };
     } catch (error) {
       console.error('❌ SimpleAuthContext: Login exception:', error);
-      return false;
+      return { success: false };
     }
   };
 

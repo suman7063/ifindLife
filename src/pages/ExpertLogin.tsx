@@ -80,12 +80,21 @@ const ExpertLogin: React.FC = () => {
     try {
       console.log('ExpertLogin: Attempting expert login:', email);
       
-      const success = await login(email, password, { asExpert: true });
+      const result = await login(email, password, { asExpert: true });
       
-      if (success) {
-        console.log('Expert login successful');
+      if (result.success) {
+        console.log('Expert login successful, userType:', result.userType);
         toast.success('Login successful!');
-        // Don't navigate here - let the useEffect handle it
+        
+        // Navigate based on the determined user type
+        if (result.userType === 'expert') {
+          navigate('/expert-dashboard', { replace: true });
+        } else {
+          // User doesn't have expert profile but has user profile
+          navigate('/user-dashboard', { replace: true });
+          toast.info('You don\'t have an expert profile. Redirected to user dashboard.');
+        }
+        
         return true;
       } else {
         console.error('Expert login failed');

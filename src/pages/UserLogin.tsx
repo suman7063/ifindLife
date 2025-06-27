@@ -21,7 +21,7 @@ const UserLogin: React.FC = () => {
   // Redirect authenticated users to dashboard
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      console.log('UserLogin: User authenticated, redirecting to dashboard');
+      console.log('UserLogin: User authenticated, redirecting to dashboard based on userType:', userType);
       const targetRoute = userType === 'expert' ? '/expert-dashboard' : '/user-dashboard';
       navigate(targetRoute, { replace: true });
     }
@@ -38,14 +38,19 @@ const UserLogin: React.FC = () => {
     try {
       console.log('UserLogin: Attempting login:', email);
       
-      const success = await login(email, password);
+      const result = await login(email, password, { asExpert: false });
       
-      if (success) {
-        console.log('UserLogin: Login successful via SimpleAuth');
+      if (result.success) {
+        console.log('UserLogin: Login successful, userType:', result.userType);
         toast.success('Login successful!', { duration: 2000 });
+        
+        // Navigate immediately based on determined user type
+        const targetRoute = result.userType === 'expert' ? '/expert-dashboard' : '/user-dashboard';
+        navigate(targetRoute, { replace: true });
+        
         return true;
       } else {
-        console.error('UserLogin: Login failed via SimpleAuth');
+        console.error('UserLogin: Login failed');
         toast.error('Invalid email or password', { duration: 2000 });
         return false;
       }
