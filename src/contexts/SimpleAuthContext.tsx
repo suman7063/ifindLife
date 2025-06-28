@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -109,7 +108,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         referred_by: profile.referred_by || '',
         wallet_balance: profile.wallet_balance || 0,
         created_at: profile.created_at,
-        updated_at: profile.updated_at,
+        updated_at: profile.created_at, // Use created_at as fallback for updated_at
         // Set default values for required properties
         favorite_experts: [],
         favorite_programs: [],
