@@ -1,270 +1,147 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { UserProfile } from '@/types/database/unified';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Calendar, Video, Clock, Filter } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, User, Video } from 'lucide-react';
 
 interface ConsultationsSectionProps {
-  user: UserProfile | null;
-}
-
-interface Appointment {
-  id: string;
-  expert_name: string;
-  appointment_date: string;
-  start_time: string;
-  end_time: string;
-  status: string;
-  notes: string;
-  channel_name?: string;
-  token?: string;
+  user?: UserProfile;
 }
 
 const ConsultationsSection: React.FC<ConsultationsSectionProps> = ({ user }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [activeTab, setActiveTab] = useState('upcoming');
-  const navigate = useNavigate();
+  // Mock consultation data - in a real app, this would come from the database
+  const consultations = [
+    {
+      id: 1,
+      expertName: 'Dr. Sarah Johnson',
+      date: '2024-01-20',
+      time: '10:00 AM',
+      duration: 60,
+      status: 'upcoming',
+      type: 'Video Call',
+      notes: 'Follow-up session for stress management'
+    },
+    {
+      id: 2,
+      expertName: 'Dr. Michael Chen',
+      date: '2024-01-15',
+      time: '2:00 PM',
+      duration: 45,
+      status: 'completed',
+      type: 'Phone Call',
+      notes: 'Initial consultation for anxiety support'
+    }
+  ];
 
-  useEffect(() => {
-    if (!user) return;
-    
-    const fetchAppointments = async () => {
-      setIsLoading(true);
-      
-      try {
-        // Fetch user appointments from Supabase
-        const { data, error } = await supabase
-          .from('appointments')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('appointment_date', { ascending: true });
-        
-        if (error) {
-          console.error('Error fetching appointments:', error);
-          return;
-        }
-        
-        setAppointments(data || []);
-      } catch (error) {
-        console.error('Error fetching appointments:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchAppointments();
-  }, [user]);
-  
-  // Filter appointments by status
-  const upcomingAppointments = appointments.filter(a => 
-    a.status === 'confirmed' || a.status === 'pending'
-  );
-  
-  const pastAppointments = appointments.filter(a => 
-    a.status === 'completed' || a.status === 'cancelled'
-  );
+  const upcomingConsultations = consultations.filter(c => c.status === 'upcoming');
+  const pastConsultations = consultations.filter(c => c.status === 'completed');
 
-  const getStatusBadgeStyle = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      case 'upcoming': return 'bg-blue-500';
+      case 'completed': return 'bg-green-500';
+      case 'cancelled': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  const joinConsultation = (appointment: Appointment) => {
-    // This would typically navigate to a video call page
-    console.log('Joining consultation:', appointment);
-    navigate(`/video-call/${appointment.id}`);
-  };
-
-  if (!user) return null;
+  const renderConsultationCard = (consultation: any) => (
+    <Card key={consultation.id} className="mb-4">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg">{consultation.expertName}</CardTitle>
+            <CardDescription className="flex items-center gap-2 mt-1">
+              <Calendar className="h-4 w-4" />
+              {consultation.date} at {consultation.time}
+            </CardDescription>
+          </div>
+          <Badge className={getStatusColor(consultation.status)}>
+            {consultation.status}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-3">
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span>{consultation.duration} minutes</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Video className="h-4 w-4 text-muted-foreground" />
+            <span>{consultation.type}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <span>1-on-1 Session</span>
+          </div>
+        </div>
+        {consultation.notes && (
+          <div className="mt-3 p-2 bg-muted rounded-md">
+            <p className="text-sm">{consultation.notes}</p>
+          </div>
+        )}
+        {consultation.status === 'upcoming' && (
+          <div className="mt-4 flex gap-2">
+            <Button size="sm">Join Session</Button>
+            <Button size="sm" variant="outline">Reschedule</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Your Consultations</CardTitle>
-              <CardDescription>Manage your bookings and appointments</CardDescription>
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Consultations</h2>
+        <p className="text-muted-foreground">Manage your consultation sessions with experts</p>
+      </div>
+
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="upcoming">Upcoming Sessions</TabsTrigger>
+          <TabsTrigger value="past">Past Sessions</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="upcoming" className="mt-6">
+          {upcomingConsultations.length > 0 ? (
+            <div className="space-y-4">
+              {upcomingConsultations.map(renderConsultationCard)}
             </div>
-            <Button variant="outline" size="sm">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-              <TabsTrigger value="past">Past</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="upcoming" className="pt-4">
-              {isLoading ? (
-                <div className="py-8 text-center">
-                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                  <p className="mt-2 text-sm text-muted-foreground">Loading appointments...</p>
-                </div>
-              ) : upcomingAppointments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Expert</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {upcomingAppointments.map((appointment) => {
-                      const today = new Date().toISOString().split('T')[0];
-                      const isToday = appointment.appointment_date === today;
-                      
-                      return (
-                        <TableRow key={appointment.id}>
-                          <TableCell className="font-medium">{appointment.expert_name}</TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                              {appointment.appointment_date} 
-                              {isToday && <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Today</span>}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                              {appointment.start_time} - {appointment.end_time}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge className={getStatusBadgeStyle(appointment.status)}>
-                              {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              {isToday && appointment.status === 'confirmed' && (
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => joinConsultation(appointment)}
-                                >
-                                  <Video className="mr-2 h-4 w-4" />
-                                  Join
-                                </Button>
-                              )}
-                              <Button size="sm" variant="outline">
-                                View
-                              </Button>
-                              {appointment.status === 'pending' && (
-                                <Button size="sm" variant="ghost" className="text-red-500">
-                                  Cancel
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="py-16 text-center">
-                  <p className="text-muted-foreground mb-4">You don't have any upcoming appointments</p>
-                  <Button onClick={() => navigate('/experts')} variant="outline">
-                    Book a Consultation
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="past" className="pt-4">
-              {isLoading ? (
-                <div className="py-8 text-center">
-                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
-                  <p className="mt-2 text-sm text-muted-foreground">Loading appointments...</p>
-                </div>
-              ) : pastAppointments.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Expert</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Time</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Action</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pastAppointments.map((appointment) => (
-                      <TableRow key={appointment.id}>
-                        <TableCell className="font-medium">{appointment.expert_name}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {appointment.appointment_date}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {appointment.start_time} - {appointment.end_time}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusBadgeStyle(appointment.status)}>
-                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button size="sm" variant="outline">
-                              View Details
-                            </Button>
-                            {appointment.status === 'completed' && (
-                              <Button size="sm" variant="outline">
-                                Add Review
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="py-16 text-center">
-                  <p className="text-muted-foreground">You don't have any past appointments</p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+          ) : (
+            <div className="bg-muted p-12 rounded-lg text-center">
+              <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-medium mb-2">No Upcoming Consultations</h3>
+              <p className="text-muted-foreground mb-6">
+                You don't have any scheduled consultations. Book a session with an expert to get started!
+              </p>
+              <Button>
+                <a href="/experts">Find Experts</a>
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="past" className="mt-6">
+          {pastConsultations.length > 0 ? (
+            <div className="space-y-4">
+              {pastConsultations.map(renderConsultationCard)}
+            </div>
+          ) : (
+            <div className="bg-muted p-12 rounded-lg text-center">
+              <Calendar className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-xl font-medium mb-2">No Past Consultations</h3>
+              <p className="text-muted-foreground">
+                Your completed consultation sessions will appear here.
+              </p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

@@ -8,6 +8,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
 import DashboardHome from '@/components/user/dashboard/DashboardHome';
+import DashboardContent from '@/components/user/dashboard/DashboardContent';
+import WalletPage from '@/components/user/dashboard/wallet/WalletPage';
 import ProfileSection from '@/components/user/dashboard/sections/ProfileSection';
 import WalletSection from '@/components/user/dashboard/sections/WalletSection';
 import ConsultationsSection from '@/components/user/dashboard/sections/ConsultationsSection';
@@ -100,7 +102,7 @@ const UserDashboardWrapper = () => {
             <Routes>
               <Route path="/" element={<DashboardHome user={simpleAuth.userProfile} />} />
               <Route path="/profile" element={<ProfileSection user={simpleAuth.userProfile} />} />
-              <Route path="/wallet" element={<WalletSection user={simpleAuth.userProfile} />} />
+              <Route path="/wallet" element={<WalletPage user={simpleAuth.userProfile} currentUser={simpleAuth.userProfile} />} />
               <Route path="/programs" element={<ProgramsSection user={simpleAuth.userProfile} />} />
               <Route path="/booking-history" element={<BookingHistorySection user={simpleAuth.userProfile} />} />
               <Route path="/progress" element={<ProgressTrackingSection user={simpleAuth.userProfile} />} />
