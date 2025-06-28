@@ -109,6 +109,7 @@ const UserDashboardWrapper = () => {
               <Route path="/security" element={<SecuritySection user={simpleAuth.userProfile} />} />
               <Route path="/settings" element={<SettingsSection user={simpleAuth.userProfile} />} />
               <Route path="/support" element={<SupportSection />} />
+              <Route path="/consultations" element={<ConsultationsSection />} />
               {/* Fallback to dashboard home */}
               <Route path="*" element={<DashboardHome user={simpleAuth.userProfile} />} />
             </Routes>
