@@ -93,8 +93,37 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
 
       console.log('✅ User profile loaded:', profile);
-      setUserProfile(profile);
-      return profile;
+      
+      // Transform database response to match UserProfile interface
+      const transformedProfile: UserProfile = {
+        id: profile.id,
+        name: profile.name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        country: profile.country || '',
+        city: profile.city || '',
+        currency: profile.currency || 'USD',
+        profile_picture: profile.profile_picture || '',
+        referral_code: profile.referral_code || '',
+        referral_link: profile.referral_link || '',
+        referred_by: profile.referred_by || '',
+        wallet_balance: profile.wallet_balance || 0,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+        // Set default values for required properties
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        recent_activities: [],
+        upcoming_appointments: [],
+        transactions: [],
+        reports: [],
+        referrals: []
+      };
+      
+      setUserProfile(transformedProfile);
+      return transformedProfile;
     } catch (error) {
       console.error('❌ User profile fetch failed:', error);
       return null;
@@ -106,7 +135,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       console.log('🎯 Loading expert profile for:', userId);
       
       const { data: expertData, error } = await supabase
-        .from('experts')
+        .from('expert_accounts')
         .select('*')
         .eq('auth_id', userId)
         .single();
@@ -119,32 +148,32 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       console.log('✅ Expert profile loaded:', expertData);
       
-      // Transform the data to match ExpertProfile interface
+      // Transform the data to match ExpertProfile interface with proper defaults
       const transformedExpert: ExpertProfile = {
         id: expertData.id,
-        auth_id: expertData.auth_id || '',
-        name: expertData.name,
-        email: expertData.email,
-        phone: expertData.phone,
-        bio: expertData.bio,
-        specialties: expertData.specialties || [],
-        experience_years: parseInt(expertData.experience) || 0,
-        hourly_rate: expertData.hourly_rate || 0,
-        status: expertData.status || 'approved' as const,
-        profile_picture: expertData.profile_picture,
-        profilePicture: expertData.profile_picture,
+        auth_id: expertData.auth_id || userId,
+        name: expertData.name || '',
+        email: expertData.email || '',
+        phone: expertData.phone || '',
+        bio: expertData.bio || '',
+        specialties: expertData.specialization ? [expertData.specialization] : [],
+        experience_years: expertData.experience ? parseInt(expertData.experience) || 0 : 0,
+        hourly_rate: 0, // Default since not in expert_accounts table
+        status: (expertData.status as 'pending' | 'approved' | 'disapproved') || 'pending',
+        profile_picture: expertData.profile_picture || '',
+        profilePicture: expertData.profile_picture || '',
         created_at: expertData.created_at,
-        updated_at: expertData.updated_at || expertData.created_at,
-        address: expertData.address,
-        city: expertData.city,
-        state: expertData.state,
-        country: expertData.country,
-        specialization: expertData.specialization,
-        experience: expertData.experience,
-        certificate_urls: expertData.certificate_urls,
-        selected_services: expertData.selected_services,
-        average_rating: expertData.average_rating,
-        reviews_count: expertData.reviews_count,
+        updated_at: expertData.created_at, // Fallback to created_at
+        address: expertData.address || '',
+        city: expertData.city || '',
+        state: expertData.state || '',
+        country: expertData.country || '',
+        specialization: expertData.specialization || '',
+        experience: expertData.experience || '',
+        certificate_urls: expertData.certificate_urls || [],
+        selected_services: expertData.selected_services || [],
+        average_rating: expertData.average_rating || 0,
+        reviews_count: expertData.reviews_count || 0,
         verified: expertData.verified || false
       };
       
