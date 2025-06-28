@@ -3,8 +3,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import { UserProfile, ExpertProfile } from '@/types/database/unified';
-import { UserRepository } from '@/repositories/userRepository';
-import { ExpertRepository } from '@/repositories/expertRepository';
 
 export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
@@ -78,71 +76,130 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     expert: expert ? { id: expert.id, name: expert.name } : null
   });
 
-  // Load profiles based on user
-  const loadUserProfile = async (userId: string) => {
+  // Improved profile loading function
+  const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
-      console.log('📊 SimpleAuthContext: Loading user profile for:', userId);
-      const profile = await UserRepository.findById(userId);
-      console.log('✅ SimpleAuthContext: User profile loaded:', profile ? { id: profile.id, name: profile.name } : null);
+      console.log('📊 Loading user profile for:', userId);
+      
+      const { data: profile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) {
+        console.error('❌ User profile error:', error);
+        return null;
+      }
+
+      console.log('✅ User profile loaded:', profile);
       setUserProfile(profile);
       return profile;
     } catch (error) {
-      console.error('❌ Error loading user profile:', error);
+      console.error('❌ User profile fetch failed:', error);
       return null;
     }
   };
 
-  const loadExpertProfile = async (userId: string) => {
+  const loadExpertProfile = async (userId: string): Promise<ExpertProfile | null> => {
     try {
-      console.log('🎯 SimpleAuthContext: Loading expert profile for:', userId);
-      const expertProfile = await ExpertRepository.getExpertByAuthId(userId);
-      console.log('✅ SimpleAuthContext: Expert profile loaded:', expertProfile ? { id: expertProfile.id, name: expertProfile.name } : null);
-      setExpert(expertProfile);
-      return expertProfile;
+      console.log('🎯 Loading expert profile for:', userId);
+      
+      const { data: expertData, error } = await supabase
+        .from('experts')
+        .select('*')
+        .eq('auth_id', userId)
+        .single();
+
+      if (error) {
+        console.log('ℹ️ No expert profile found:', error.message);
+        setExpert(null);
+        return null;
+      }
+
+      console.log('✅ Expert profile loaded:', expertData);
+      
+      // Transform the data to match ExpertProfile interface
+      const transformedExpert: ExpertProfile = {
+        id: expertData.id,
+        auth_id: expertData.auth_id || '',
+        name: expertData.name,
+        email: expertData.email,
+        phone: expertData.phone,
+        bio: expertData.bio,
+        specialties: expertData.specialties || [],
+        experience_years: parseInt(expertData.experience) || 0,
+        hourly_rate: expertData.hourly_rate || 0,
+        status: expertData.status || 'approved' as const,
+        profile_picture: expertData.profile_picture,
+        profilePicture: expertData.profile_picture,
+        created_at: expertData.created_at,
+        updated_at: expertData.updated_at || expertData.created_at,
+        address: expertData.address,
+        city: expertData.city,
+        state: expertData.state,
+        country: expertData.country,
+        specialization: expertData.specialization,
+        experience: expertData.experience,
+        certificate_urls: expertData.certificate_urls,
+        selected_services: expertData.selected_services,
+        average_rating: expertData.average_rating,
+        reviews_count: expertData.reviews_count,
+        verified: expertData.verified || false
+      };
+      
+      setExpert(transformedExpert);
+      return transformedExpert;
     } catch (error) {
-      console.error('❌ Error loading expert profile:', error);
+      console.error('❌ Expert profile fetch failed:', error);
       return null;
     }
   };
 
   const refreshProfiles = async (): Promise<void> => {
-    if (!user) {
-      console.log('⚠️ SimpleAuthContext: No user to refresh profiles for');
+    if (!user?.id) {
+      console.warn('⚠️ No user ID to refresh profiles');
       return;
     }
-    
-    console.log('🔄 SimpleAuthContext: Starting profile refresh for user:', user.id);
-    
-    const [userProfileResult, expertProfileResult] = await Promise.all([
-      loadUserProfile(user.id),
-      loadExpertProfile(user.id)
-    ]);
 
-    // Determine user type based on available profiles and login intent
-    let newUserType: SessionType = 'none';
-    const preferredRole = localStorage.getItem('sessionType') || localStorage.getItem('preferredRole');
+    console.log('🔄 Refreshing profiles for user:', user.id);
     
-    console.log('📋 SimpleAuthContext: Profile refresh results:', {
-      hasUserProfile: !!userProfileResult,
-      hasExpertProfile: !!expertProfileResult,
-      preferredRole
-    });
-    
-    if (userProfileResult && expertProfileResult) {
-      // User has both profiles - check preference
-      if (preferredRole === 'expert') {
+    try {
+      // Load both profiles in parallel
+      const [userProfileData, expertData] = await Promise.all([
+        loadUserProfile(user.id),
+        loadExpertProfile(user.id)
+      ]);
+
+      // Determine user type based on loaded profiles and preferences
+      let newUserType: SessionType = 'none';
+      const preferredRole = localStorage.getItem('sessionType') || localStorage.getItem('preferredRole');
+      
+      console.log('📋 Profile refresh results:', {
+        hasUserProfile: !!userProfileData,
+        hasExpertProfile: !!expertData,
+        preferredRole
+      });
+      
+      if (userProfileData && expertData) {
+        // User has both profiles - check preference
+        if (preferredRole === 'expert' && expertData.status === 'approved') {
+          newUserType = 'expert';
+        } else {
+          newUserType = 'user';
+        }
+      } else if (expertData && expertData.status === 'approved') {
         newUserType = 'expert';
-      } else {
+      } else if (userProfileData) {
         newUserType = 'user';
       }
-    } else if (expertProfileResult) {
-      newUserType = 'expert';
-    } else if (userProfileResult) {
-      newUserType = 'user';
+      
+      console.log('✅ Profiles refreshed. User type:', newUserType);
+      setUserType(newUserType);
+      
+    } catch (error) {
+      console.error('❌ Profile refresh failed:', error);
     }
-    
-    console.log('🎯 SimpleAuthContext: Setting user type to:', newUserType);
-    setUserType(newUserType);
   };
 
   // Auth actions
@@ -170,27 +227,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
 
       if (data.user && data.session) {
-        console.log('✅ SimpleAuthContext: Login successful, loading profiles...');
-        
-        // Wait for profiles to load to determine user type
-        const [userProfileResult, expertProfileResult] = await Promise.all([
-          loadUserProfile(data.user.id),
-          loadExpertProfile(data.user.id)
-        ]);
-
-        let finalUserType: SessionType = 'none';
-        
-        if (userProfileResult && expertProfileResult) {
-          // User has both profiles - use preference
-          finalUserType = options?.asExpert ? 'expert' : 'user';
-        } else if (expertProfileResult) {
-          finalUserType = 'expert';
-        } else if (userProfileResult) {
-          finalUserType = 'user';
-        }
-        
-        console.log('🎯 SimpleAuthContext: Final user type determined:', finalUserType);
-        return { success: true, userType: finalUserType };
+        console.log('✅ SimpleAuthContext: Login successful, profiles will load via auth listener');
+        return { success: true };
       }
 
       return { success: false };
@@ -201,45 +239,43 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
   };
 
   const logout = async (): Promise<void> => {
+    console.log('🚪 Starting logout...');
+    setIsLoading(true);
+    
     try {
-      console.log('🚪 SimpleAuthContext: Logout initiated');
-      
       const { error } = await supabase.auth.signOut();
       
       if (error) {
-        console.error('❌ SimpleAuthContext: Logout error:', error);
-      } else {
-        console.log('✅ SimpleAuthContext: Logout successful');
+        console.error('❌ Logout error:', error);
+        throw error;
       }
-      
-      // Clear local state and preferences
+
+      // Clear all state
       setUser(null);
       setSession(null);
       setUserProfile(null);
       setExpert(null);
       setUserType('none');
+      
+      // Clear local storage
       localStorage.removeItem('sessionType');
       localStorage.removeItem('preferredRole');
+      
+      console.log('✅ Logout completed');
     } catch (error) {
-      console.error('❌ SimpleAuthContext: Logout exception:', error);
+      console.error('❌ Logout failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Auth initialization and state management
   useEffect(() => {
     let mounted = true;
-    let timeoutId: NodeJS.Timeout;
     
     const initializeAuth = async () => {
       console.log('🚀 Auth: Starting initialization...');
-      
-      // Add timeout to prevent infinite loading
-      timeoutId = setTimeout(() => {
-        if (mounted) {
-          console.warn('⚠️ Auth: Initialization timeout after 10 seconds - forcing completion');
-          setIsLoading(false);
-        }
-      }, 10000);
       
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -252,6 +288,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           console.log('✅ Auth: Initial session found:', { userId: session.user.id, email: session.user.email });
           setSession(session);
           setUser(session.user);
+          // Profiles will be loaded by the auth state change listener
         } else {
           console.log('ℹ️ Auth: No initial session found');
           setUserProfile(null);
@@ -263,8 +300,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         console.error('❌ Auth: Initialization failed:', error);
       } finally {
         if (mounted) {
-          clearTimeout(timeoutId);
-          console.log('✅ Auth: Initial check complete, setting loading to false');
+          console.log('✅ Auth: Initial check complete');
           setIsLoading(false);
         }
       }
@@ -278,27 +314,26 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         
         console.log('🔄 Auth: State change event:', event, session ? { userId: session.user.id } : 'no session');
         
-        // Clear timeout on any auth state change
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          console.log('👤 SimpleAuthContext: User authenticated, loading profiles...');
-          // Don't set loading true here - let profiles load in background
-          await refreshProfiles();
+          console.log('👤 User authenticated, loading profiles...');
+          // Small delay to ensure user state is set
+          setTimeout(async () => {
+            if (mounted) {
+              await refreshProfiles();
+            }
+          }, 100);
         } else {
           // Clear profiles when user is not authenticated
-          console.log('🚫 SimpleAuthContext: User logged out, clearing profiles');
+          console.log('🚫 User logged out, clearing profiles');
           setUserProfile(null);
           setExpert(null);
           setUserType('none');
         }
         
-        if (mounted) {
+        if (mounted && event !== 'INITIAL_SESSION') {
           setIsLoading(false);
         }
       }
@@ -306,9 +341,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     
     return () => {
       mounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
       subscription.unsubscribe();
     };
   }, []);
@@ -327,7 +359,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     refreshProfiles
   };
 
-  console.log('📡 SimpleAuthContext: Providing detailed context value:', {
+  console.log('📡 SimpleAuthContext: Providing context value:', {
     isAuthenticated: contextValue.isAuthenticated,
     isLoading: contextValue.isLoading,
     userType: contextValue.userType,
