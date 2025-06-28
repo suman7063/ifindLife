@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -199,30 +200,48 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         loadExpertProfile(user.id)
       ]);
 
-      // Determine user type based on loaded profiles and preferences
-      let newUserType: SessionType = 'none';
+      // Get login preferences
       const preferredRole = localStorage.getItem('sessionType') || localStorage.getItem('preferredRole');
       
       console.log('📋 Profile refresh results:', {
         hasUserProfile: !!userProfileData,
         hasExpertProfile: !!expertData,
+        expertStatus: expertData?.status,
         preferredRole
       });
       
+      // Determine user type based on loaded profiles and preferences
+      let newUserType: SessionType = 'none';
+      
       if (userProfileData && expertData) {
-        // User has both profiles - check preference
+        // User has both profiles - prioritize expert login preference
         if (preferredRole === 'expert' && expertData.status === 'approved') {
+          console.log('✅ User logged in as expert and has approved expert profile');
           newUserType = 'expert';
+        } else if (expertData.status === 'approved') {
+          // Expert profile exists and is approved, but user didn't explicitly choose expert
+          console.log('ℹ️ User has approved expert profile but logged in as user');
+          newUserType = 'user';
         } else {
+          // Expert profile exists but not approved, default to user
+          console.log('ℹ️ Expert profile not approved, defaulting to user');
           newUserType = 'user';
         }
       } else if (expertData && expertData.status === 'approved') {
+        // Only expert profile exists and is approved
+        console.log('✅ Only expert profile exists and is approved');
         newUserType = 'expert';
       } else if (userProfileData) {
+        // Only user profile exists
+        console.log('✅ Only user profile exists');
         newUserType = 'user';
+      } else {
+        // No profiles found or expert profile not approved
+        console.log('⚠️ No valid profiles found');
+        newUserType = 'none';
       }
       
-      console.log('✅ Profiles refreshed. User type:', newUserType);
+      console.log('✅ Profiles refreshed. Final user type:', newUserType);
       setUserType(newUserType);
       
     } catch (error) {
@@ -235,11 +254,13 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     try {
       console.log('🔐 SimpleAuthContext: Login attempt for:', email, 'as expert:', options?.asExpert);
       
-      // Set session type preference before login
+      // Set session type preference before login - THIS IS CRITICAL
       if (options?.asExpert) {
+        console.log('🎯 Setting expert login preference');
         localStorage.setItem('sessionType', 'expert');
         localStorage.setItem('preferredRole', 'expert');
       } else {
+        console.log('👤 Setting user login preference');
         localStorage.setItem('sessionType', 'user');
         localStorage.setItem('preferredRole', 'user');
       }
