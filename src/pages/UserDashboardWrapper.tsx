@@ -8,17 +8,6 @@ import UserDashboardPages from './UserDashboardPages';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import UserDashboardSidebar from '@/components/user/dashboard/UserDashboardSidebar';
-import ProfileSection from '@/components/user/dashboard/sections/ProfileSection';
-import WalletSection from '@/components/user/dashboard/sections/WalletSection';
-import ConsultationsSection from '@/components/user/dashboard/sections/ConsultationsSection';
-import FavoritesSection from '@/components/user/dashboard/sections/FavoritesSection';
-import MessagesSection from '@/components/user/dashboard/sections/MessagesSection';
-import SecuritySection from '@/components/user/dashboard/sections/SecuritySection';
-import SettingsSection from '@/components/user/dashboard/sections/SettingsSection';
-import SupportSection from '@/components/user/dashboard/sections/SupportSection';
-import ProgramsSection from '@/components/user/dashboard/sections/ProgramsSection';
-import BookingHistorySection from '@/components/user/dashboard/sections/BookingHistorySection';
-import ProgressTrackingSection from '@/components/user/dashboard/sections/ProgressTrackingSection';
 
 const UserDashboardWrapper = () => {
   const simpleAuth = useSimpleAuth();
@@ -86,22 +75,6 @@ const UserDashboardWrapper = () => {
     }
   };
 
-  // Ensure we have a valid user profile for the sidebar
-  if (!simpleAuth.userProfile) {
-    return (
-      <>
-        <Navbar />
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-            <p className="mt-2 text-gray-600">Loading user profile...</p>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-
   return (
     <>
       <Navbar />
@@ -118,53 +91,13 @@ const UserDashboardWrapper = () => {
           <div className="flex-1 p-8">
             <Routes>
               <Route 
-                path="/" 
+                path="/*" 
                 element={
                   <UserDashboardPages 
                     currentUser={simpleAuth.userProfile} 
                     onNavigate={handleNavigation} 
                   />
                 } 
-              />
-              <Route 
-                path="/profile" 
-                element={<ProfileSection />} 
-              />
-              <Route 
-                path="/wallet" 
-                element={<WalletSection />} 
-              />
-              <Route 
-                path="/programs" 
-                element={<ProgramsSection />} 
-              />
-              <Route 
-                path="/booking-history" 
-                element={<BookingHistorySection />} 
-              />
-              <Route 
-                path="/progress" 
-                element={<ProgressTrackingSection />} 
-              />
-              <Route 
-                path="/favorites" 
-                element={<FavoritesSection />} 
-              />
-              <Route 
-                path="/messages" 
-                element={<MessagesSection />} 
-              />
-              <Route 
-                path="/security" 
-                element={<SecuritySection />} 
-              />
-              <Route 
-                path="/settings" 
-                element={<SettingsSection />} 
-              />
-              <Route 
-                path="/support" 
-                element={<SupportSection />} 
               />
             </Routes>
           </div>

@@ -1,79 +1,127 @@
 
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
-import { Heart, BookOpen } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/lib/supabase';
+import { ExpertProfile } from '@/types/database/unified';
+import { adaptUserProfile } from '@/utils/userProfileAdapter';
 
-const FavoritesSection = () => {
-  const { userProfile } = useSimpleAuth();
+const FavoritesSection: React.FC = () => {
+  const { profile } = useAuth();
+  const navigate = useNavigate();
+  const [favoriteExperts, setFavoriteExperts] = useState<ExpertProfile[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const favoriteExperts = userProfile?.favorite_experts || [];
-  const favoritePrograms = userProfile?.favorite_programs || [];
-
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Favorites</h1>
+  // Ensure profile has the correct structure
+  const adaptedProfile = profile ? adaptUserProfile(profile) : null;
+  
+  // Fetch favorite experts data
+  useEffect(() => {
+    const fetchExperts = async () => {
+      if (!adaptedProfile?.favorite_experts?.length) return;
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Favorite Experts */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Favorite Experts</CardTitle>
-            <Heart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{favoriteExperts.length}</div>
-            {favoriteExperts.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                No favorite experts yet. Browse experts to add some!
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {favoriteExperts.slice(0, 3).map((expertId, index) => (
-                  <div key={index} className="text-sm">
-                    Expert ID: {expertId}
+      setIsLoading(true);
+      try {
+        // Convert favorite expert IDs to strings for the query
+        const expertIds = adaptedProfile.favorite_experts.map(id => String(id));
+        
+        const { data, error } = await supabase
+          .from('experts')
+          .select('*')
+          .in('id', expertIds);
+          
+        if (error) throw error;
+        
+        // Transform data to match ExpertProfile interface
+        const transformedData: ExpertProfile[] = (data || []).map((expert: any) => ({
+          id: expert.id,
+          auth_id: expert.auth_id || '',
+          name: expert.name,
+          email: expert.email,
+          phone: expert.phone,
+          bio: expert.bio,
+          specialties: expert.specialties || [],
+          experience_years: parseInt(expert.experience) || 0,
+          hourly_rate: expert.hourly_rate || 0,
+          status: expert.status || 'approved' as const,
+          profile_picture: expert.profile_picture,
+          profilePicture: expert.profile_picture,
+          created_at: expert.created_at,
+          updated_at: expert.updated_at || expert.created_at,
+          address: expert.address,
+          city: expert.city,
+          state: expert.state,
+          country: expert.country,
+          specialization: expert.specialization,
+          experience: expert.experience,
+          certificate_urls: expert.certificate_urls,
+          selected_services: expert.selected_services,
+          average_rating: expert.average_rating,
+          reviews_count: expert.reviews_count,
+          verified: expert.verified || false
+        }));
+        
+        setFavoriteExperts(transformedData);
+      } catch (error) {
+        console.error('Error fetching favorite experts:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchExperts();
+  }, [adaptedProfile?.favorite_experts]);
+  
+  const getInitials = (name: string) => {
+    return name.split(' ').map(part => part[0]).join('').toUpperCase();
+  };
+  
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Favorite Experts</CardTitle>
+        <CardDescription>Experts you've saved for quick access</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-4">
+            <p className="text-sm text-muted-foreground">Loading experts...</p>
+          </div>
+        ) : favoriteExperts.length > 0 ? (
+          <div className="space-y-4">
+            {favoriteExperts.map((expert) => (
+              <div key={expert.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar>
+                    <AvatarImage src={expert.profile_picture} alt={expert.name} />
+                    <AvatarFallback>{getInitials(expert.name)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="text-sm font-medium">{expert.name}</p>
+                    <p className="text-xs text-muted-foreground">{expert.specialization}</p>
                   </div>
-                ))}
-                {favoriteExperts.length > 3 && (
-                  <p className="text-xs text-muted-foreground">
-                    +{favoriteExperts.length - 3} more
-                  </p>
-                )}
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => navigate(`/expert/${expert.id}`)}
+                >
+                  View
+                </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Favorite Programs */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Favorite Programs</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold mb-2">{favoritePrograms.length}</div>
-            {favoritePrograms.length === 0 ? (
-              <p className="text-xs text-muted-foreground">
-                No favorite programs yet. Browse programs to add some!
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {favoritePrograms.slice(0, 3).map((programId, index) => (
-                  <div key={index} className="text-sm">
-                    Program ID: {programId}
-                  </div>
-                ))}
-                {favoritePrograms.length > 3 && (
-                  <p className="text-xs text-muted-foreground">
-                    +{favoritePrograms.length - 3} more
-                  </p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground mb-4">You haven't added any experts to favorites yet</p>
+            <Button variant="outline" onClick={() => navigate('/experts')}>Browse Experts</Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

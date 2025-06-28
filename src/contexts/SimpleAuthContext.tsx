@@ -170,9 +170,27 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       }
 
       if (data.user && data.session) {
-        console.log('✅ SimpleAuthContext: Login successful, waiting for profiles to load...');
-        // Profiles will be loaded by the onAuthStateChange handler
-        return { success: true };
+        console.log('✅ SimpleAuthContext: Login successful, loading profiles...');
+        
+        // Wait for profiles to load to determine user type
+        const [userProfileResult, expertProfileResult] = await Promise.all([
+          loadUserProfile(data.user.id),
+          loadExpertProfile(data.user.id)
+        ]);
+
+        let finalUserType: SessionType = 'none';
+        
+        if (userProfileResult && expertProfileResult) {
+          // User has both profiles - use preference
+          finalUserType = options?.asExpert ? 'expert' : 'user';
+        } else if (expertProfileResult) {
+          finalUserType = 'expert';
+        } else if (userProfileResult) {
+          finalUserType = 'user';
+        }
+        
+        console.log('🎯 SimpleAuthContext: Final user type determined:', finalUserType);
+        return { success: true, userType: finalUserType };
       }
 
       return { success: false };
@@ -234,7 +252,6 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           console.log('✅ Auth: Initial session found:', { userId: session.user.id, email: session.user.email });
           setSession(session);
           setUser(session.user);
-          // Profiles will be loaded in the auth state change handler
         } else {
           console.log('ℹ️ Auth: No initial session found');
           setUserProfile(null);
@@ -271,7 +288,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         
         if (session?.user) {
           console.log('👤 SimpleAuthContext: User authenticated, loading profiles...');
-          // Load profiles after setting user state
+          // Don't set loading true here - let profiles load in background
           await refreshProfiles();
         } else {
           // Clear profiles when user is not authenticated
