@@ -16,14 +16,29 @@ const UserLogin: React.FC = () => {
   const simpleAuth = useSimpleAuth();
   const { isAuthenticated, userType, user, isLoading, login } = simpleAuth;
 
-  console.log('UserLogin: Current auth state:', simpleAuth);
+  console.log('UserLogin: Current auth state:', {
+    isAuthenticated,
+    userType,
+    hasUser: !!user,
+    isLoading,
+    userEmail: user?.email
+  });
 
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      console.log('UserLogin: User authenticated, redirecting to dashboard based on userType:', userType);
-      const targetRoute = userType === 'expert' ? '/expert-dashboard' : '/user-dashboard';
-      navigate(targetRoute, { replace: true });
+      console.log('UserLogin: User authenticated, redirecting based on userType:', userType);
+      
+      // Wait a bit for userType to be determined, then redirect
+      setTimeout(() => {
+        if (userType === 'expert') {
+          console.log('UserLogin: Redirecting to expert dashboard');
+          navigate('/expert-dashboard', { replace: true });
+        } else {
+          console.log('UserLogin: Redirecting to user dashboard');
+          navigate('/user-dashboard', { replace: true });
+        }
+      }, 500);
     }
   }, [isLoading, isAuthenticated, user, userType, navigate]);
 
@@ -44,9 +59,12 @@ const UserLogin: React.FC = () => {
         console.log('UserLogin: Login successful, userType:', result.userType);
         toast.success('Login successful!', { duration: 2000 });
         
-        // Navigate immediately based on determined user type
-        const targetRoute = result.userType === 'expert' ? '/expert-dashboard' : '/user-dashboard';
-        navigate(targetRoute, { replace: true });
+        // Navigate based on determined user type
+        setTimeout(() => {
+          const targetRoute = result.userType === 'expert' ? '/expert-dashboard' : '/user-dashboard';
+          console.log('UserLogin: Navigating to:', targetRoute);
+          navigate(targetRoute, { replace: true });
+        }, 1000);
         
         return true;
       } else {

@@ -2,10 +2,18 @@
 import { SimpleAuthContextType } from '@/contexts/SimpleAuthContext';
 
 export const isUserAuthenticated = (auth: SimpleAuthContextType): boolean => {
+  console.log('🔍 isUserAuthenticated check:', {
+    isAuthenticated: auth.isAuthenticated,
+    userType: auth.userType,
+    hasUser: !!auth.user,
+    hasUserProfile: !!auth.userProfile
+  });
+  
+  // User is authenticated if they have a session and user, regardless of profile loading status
   return Boolean(
     auth.isAuthenticated && 
-    auth.userType === 'user' && 
-    auth.userProfile
+    auth.user &&
+    (auth.userType === 'user' || auth.userType === 'none') // Allow 'none' during profile loading
   );
 };
 
@@ -13,12 +21,14 @@ export const isExpertAuthenticated = (auth: SimpleAuthContextType): boolean => {
   console.log('🔍 isExpertAuthenticated check:', {
     isAuthenticated: auth.isAuthenticated,
     userType: auth.userType,
+    hasUser: !!auth.user,
     hasExpert: !!auth.expert,
     expertStatus: auth.expert?.status
   });
   
   return Boolean(
     auth.isAuthenticated && 
+    auth.user &&
     auth.userType === 'expert' && 
     auth.expert && 
     auth.expert.status === 'approved'

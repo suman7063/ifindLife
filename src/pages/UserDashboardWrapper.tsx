@@ -2,7 +2,6 @@
 import React from 'react';
 import { useNavigate, Routes, Route } from 'react-router-dom';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
-import { isUserAuthenticated } from '@/utils/authHelpers';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -29,6 +28,7 @@ const UserDashboardWrapper = () => {
   console.log('UserDashboardWrapper: Current auth state:', {
     isAuthenticated: simpleAuth.isAuthenticated,
     userType: simpleAuth.userType,
+    hasUser: !!simpleAuth.user,
     hasUserProfile: !!simpleAuth.userProfile,
     isLoading: simpleAuth.isLoading,
     userName: simpleAuth.userProfile?.name,
@@ -50,8 +50,9 @@ const UserDashboardWrapper = () => {
     );
   }
 
-  // Check if user is authenticated
-  if (!isUserAuthenticated(simpleAuth)) {
+  // Check if user is authenticated - more lenient check
+  const isUserAuth = simpleAuth.isAuthenticated && simpleAuth.user;
+  if (!isUserAuth) {
     return (
       <>
         <Navbar />
@@ -74,6 +75,24 @@ const UserDashboardWrapper = () => {
     );
   }
 
+  // If user is authenticated but being redirected to expert dashboard, redirect them
+  if (simpleAuth.userType === 'expert') {
+    console.log('UserDashboardWrapper: User has expert type, redirecting to expert dashboard');
+    navigate('/expert-dashboard', { replace: true });
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+            <p className="mt-2 text-gray-600">Redirecting to expert dashboard...</p>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
   const handleLogout = async () => {
     try {
       await simpleAuth.logout();
@@ -85,6 +104,33 @@ const UserDashboardWrapper = () => {
     }
   };
 
+  // Create a default user profile if none exists but user is authenticated
+  const userProfile = simpleAuth.userProfile || {
+    id: simpleAuth.user?.id || '',
+    name: simpleAuth.user?.email?.split('@')[0] || 'User',
+    email: simpleAuth.user?.email || '',
+    phone: '',
+    country: '',
+    city: '',
+    currency: 'USD',
+    profile_picture: '',
+    referral_code: '',
+    referral_link: '',
+    referred_by: '',
+    wallet_balance: 0,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    favorite_experts: [],
+    favorite_programs: [],
+    enrolled_courses: [],
+    reviews: [],
+    recent_activities: [],
+    upcoming_appointments: [],
+    transactions: [],
+    reports: [],
+    referrals: []
+  };
+
   return (
     <>
       <Navbar />
@@ -92,7 +138,7 @@ const UserDashboardWrapper = () => {
         <div className="flex">
           {/* Sidebar */}
           <UserDashboardSidebar 
-            user={simpleAuth.userProfile} 
+            user={userProfile} 
             onLogout={handleLogout}
             isLoggingOut={false}
           />
@@ -100,20 +146,20 @@ const UserDashboardWrapper = () => {
           {/* Main Content */}
           <div className="flex-1 p-8">
             <Routes>
-              <Route path="/" element={<DashboardHome user={simpleAuth.userProfile} />} />
-              <Route path="/profile" element={<ProfileSection user={simpleAuth.userProfile} />} />
-              <Route path="/wallet" element={<WalletPage user={simpleAuth.userProfile} currentUser={simpleAuth.userProfile} />} />
-              <Route path="/programs" element={<ProgramsSection user={simpleAuth.userProfile} />} />
-              <Route path="/booking-history" element={<BookingHistorySection user={simpleAuth.userProfile} />} />
-              <Route path="/progress" element={<ProgressTrackingSection user={simpleAuth.userProfile} />} />
+              <Route path="/" element={<DashboardHome user={userProfile} />} />
+              <Route path="/profile" element={<ProfileSection user={userProfile} />} />
+              <Route path="/wallet" element={<WalletPage user={userProfile} currentUser={userProfile} />} />
+              <Route path="/programs" element={<ProgramsSection user={userProfile} />} />
+              <Route path="/booking-history" element={<BookingHistorySection user={userProfile} />} />
+              <Route path="/progress" element={<ProgressTrackingSection user={userProfile} />} />
               <Route path="/favorites" element={<FavoritesSection />} />
-              <Route path="/messages" element={<MessagesSection user={simpleAuth.userProfile} />} />
-              <Route path="/security" element={<SecuritySection user={simpleAuth.userProfile} />} />
-              <Route path="/settings" element={<SettingsSection user={simpleAuth.userProfile} />} />
+              <Route path="/messages" element={<MessagesSection user={userProfile} />} />
+              <Route path="/security" element={<SecuritySection user={userProfile} />} />
+              <Route path="/settings" element={<SettingsSection user={userProfile} />} />
               <Route path="/support" element={<SupportSection />} />
-              <Route path="/consultations" element={<ConsultationsSection />} />
+              <Route path="/consultations" element={<ConsultationsSection user={userProfile} />} />
               {/* Fallback to dashboard home */}
-              <Route path="*" element={<DashboardHome user={simpleAuth.userProfile} />} />
+              <Route path="*" element={<DashboardHome user={userProfile} />} />
             </Routes>
           </div>
         </div>

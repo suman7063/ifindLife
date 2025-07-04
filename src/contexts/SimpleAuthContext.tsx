@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -211,7 +210,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       });
       
       // Determine user type based on loaded profiles and preferences
-      let newUserType: SessionType = 'none';
+      let newUserType: SessionType = 'user'; // Default to 'user' instead of 'none'
       
       if (userProfileData && expertData) {
         // User has both profiles - prioritize explicit expert login preference
@@ -231,14 +230,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         // Only expert profile exists and is approved
         console.log('✅ Only expert profile exists and is approved');
         newUserType = 'expert';
-      } else if (userProfileData) {
-        // Only user profile exists
-        console.log('✅ Only user profile exists');
-        newUserType = 'user';
       } else {
-        // No profiles found or expert profile not approved
-        console.log('⚠️ No valid profiles found');
-        newUserType = 'none';
+        // Default to user type even if no profiles are loaded
+        console.log('ℹ️ Defaulting to user type');
+        newUserType = 'user';
       }
       
       console.log('✅ Profiles refreshed. Final user type:', newUserType);
@@ -246,6 +241,8 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       
     } catch (error) {
       console.error('❌ Profile refresh failed:', error);
+      // Default to user type on error
+      setUserType('user');
     }
   };
 
@@ -286,7 +283,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
               success: true, 
               userType: userType || (options?.asExpert ? 'expert' : 'user')
             });
-          }, 1000);
+          }, 1500); // Increased timeout to allow for profile loading
         });
       }
 
@@ -383,7 +380,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
             if (mounted) {
               await refreshProfiles();
             }
-          }, 250); // Increased delay to ensure user state is set
+          }, 500); // Increased delay to ensure user state is set and prevent race conditions
         } else {
           // Clear profiles when user is not authenticated
           console.log('🚫 User logged out, clearing profiles');
