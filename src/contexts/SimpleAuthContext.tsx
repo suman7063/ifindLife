@@ -5,7 +5,7 @@ import { UserProfile, ExpertProfile } from '@/types/database/unified';
 
 export type SessionType = 'none' | 'user' | 'expert' | 'dual';
 
-interface SimpleAuthContextType {
+export interface SimpleAuthContextType {
   // Core auth state
   isAuthenticated: boolean;
   isLoading: boolean;
