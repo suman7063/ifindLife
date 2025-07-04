@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -377,12 +378,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         
         if (session?.user) {
           console.log('👤 User authenticated, loading profiles...');
-          // Small delay to ensure user state is set
+          // Wait for user state to be set, then refresh profiles
           setTimeout(async () => {
             if (mounted) {
               await refreshProfiles();
             }
-          }, 100);
+          }, 250); // Increased delay to ensure user state is set
         } else {
           // Clear profiles when user is not authenticated
           console.log('🚫 User logged out, clearing profiles');
