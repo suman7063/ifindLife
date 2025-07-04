@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -18,7 +19,7 @@ export interface SimpleAuthContextType {
   expert: ExpertProfile | null;
   
   // Auth actions
-  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<{ success: boolean; userType?: SessionType }>;
+  login: (email: string, password: string, options?: { asExpert?: boolean }) => Promise<{ success: boolean; userType?: SessionType; error?: string }>;
   logout: () => Promise<void>;
   
   // Profile actions
@@ -75,6 +76,68 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     expert: expert ? { id: expert.id, name: expert.name, status: expert.status } : null
   });
 
+  // Function to validate credentials against intended role
+  const validateCredentialsForRole = async (userId: string, intendedRole: 'user' | 'expert'): Promise<{ isValid: boolean; actualRole?: 'user' | 'expert' | 'both' }> => {
+    try {
+      console.log('🔍 Validating credentials for role:', intendedRole, 'userId:', userId);
+      
+      // Check if user has user profile
+      const { data: userProfileData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      // Check if user has expert profile
+      const { data: expertData, error: expertError } = await supabase
+        .from('expert_accounts')
+        .select('id, status')
+        .eq('auth_id', userId)
+        .single();
+
+      const hasUserProfile = userProfileData && !userError;
+      const hasExpertProfile = expertData && !expertError;
+
+      console.log('🔍 Profile validation results:', {
+        hasUserProfile,
+        hasExpertProfile,
+        expertStatus: expertData?.status,
+        intendedRole
+      });
+
+      if (hasUserProfile && hasExpertProfile) {
+        // User has both profiles
+        if (intendedRole === 'expert' && expertData?.status === 'approved') {
+          return { isValid: true, actualRole: 'both' };
+        } else if (intendedRole === 'user') {
+          return { isValid: true, actualRole: 'both' };
+        } else {
+          return { isValid: false, actualRole: 'both' };
+        }
+      } else if (hasExpertProfile) {
+        // Only expert profile exists
+        if (intendedRole === 'expert' && expertData?.status === 'approved') {
+          return { isValid: true, actualRole: 'expert' };
+        } else {
+          return { isValid: false, actualRole: 'expert' };
+        }
+      } else if (hasUserProfile) {
+        // Only user profile exists
+        if (intendedRole === 'user') {
+          return { isValid: true, actualRole: 'user' };
+        } else {
+          return { isValid: false, actualRole: 'user' };
+        }
+      } else {
+        // No profiles exist - this shouldn't happen for valid users
+        return { isValid: false };
+      }
+    } catch (error) {
+      console.error('❌ Error validating credentials:', error);
+      return { isValid: false };
+    }
+  };
+
   // Improved profile loading function
   const loadUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
@@ -108,8 +171,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         referred_by: profile.referred_by || '',
         wallet_balance: profile.wallet_balance || 0,
         created_at: profile.created_at,
-        updated_at: profile.created_at, // Use created_at as fallback for updated_at
-        // Set default values for required properties
+        updated_at: profile.created_at,
         favorite_experts: [],
         favorite_programs: [],
         enrolled_courses: [],
@@ -157,12 +219,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         bio: expertData.bio || '',
         specialties: expertData.specialization ? [expertData.specialization] : [],
         experience_years: expertData.experience ? parseInt(expertData.experience) || 0 : 0,
-        hourly_rate: 0, // Default since not in expert_accounts table
+        hourly_rate: 0,
         status: (expertData.status as 'pending' | 'approved' | 'disapproved') || 'pending',
         profile_picture: expertData.profile_picture || '',
         profilePicture: expertData.profile_picture || '',
         created_at: expertData.created_at,
-        updated_at: expertData.created_at, // Fallback to created_at
+        updated_at: expertData.created_at,
         address: expertData.address || '',
         city: expertData.city || '',
         state: expertData.state || '',
@@ -210,30 +272,33 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       });
       
       // Determine user type based on loaded profiles and preferences
-      let newUserType: SessionType = 'user'; // Default to 'user' instead of 'none'
+      let newUserType: SessionType = 'none';
       
       if (userProfileData && expertData) {
         // User has both profiles - prioritize explicit expert login preference
         if (preferredRole === 'expert' && expertData.status === 'approved') {
           console.log('✅ User logged in as expert and has approved expert profile');
           newUserType = 'expert';
-        } else if (expertData.status === 'approved') {
-          // Expert profile exists and is approved, but user didn't explicitly choose expert
-          console.log('ℹ️ User has approved expert profile but logged in as user');
+        } else if (preferredRole === 'user') {
+          console.log('✅ User logged in as user and has user profile');
           newUserType = 'user';
         } else {
-          // Expert profile exists but not approved, default to user
-          console.log('ℹ️ Expert profile not approved, defaulting to user');
+          // Default to user if no clear preference
+          console.log('ℹ️ Defaulting to user type for dual profile user');
           newUserType = 'user';
         }
       } else if (expertData && expertData.status === 'approved') {
         // Only expert profile exists and is approved
         console.log('✅ Only expert profile exists and is approved');
         newUserType = 'expert';
-      } else {
-        // Default to user type even if no profiles are loaded
-        console.log('ℹ️ Defaulting to user type');
+      } else if (userProfileData) {
+        // Only user profile exists
+        console.log('✅ Only user profile exists');
         newUserType = 'user';
+      } else {
+        // No profiles found - this is an error state
+        console.warn('⚠️ No valid profiles found for authenticated user');
+        newUserType = 'none';
       }
       
       console.log('✅ Profiles refreshed. Final user type:', newUserType);
@@ -241,17 +306,57 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       
     } catch (error) {
       console.error('❌ Profile refresh failed:', error);
-      // Default to user type on error
-      setUserType('user');
+      setUserType('none');
     }
   };
 
   // Auth actions
-  const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<{ success: boolean; userType?: SessionType }> => {
+  const login = async (email: string, password: string, options?: { asExpert?: boolean }): Promise<{ success: boolean; userType?: SessionType; error?: string }> => {
     try {
       console.log('🔐 SimpleAuthContext: Login attempt for:', email, 'as expert:', options?.asExpert);
       
-      // Set session type preference before login - THIS IS CRITICAL
+      // First attempt to sign in to get the user ID
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        console.error('❌ SimpleAuthContext: Login error:', error.message);
+        return { success: false, error: error.message };
+      }
+
+      if (!data.user || !data.session) {
+        console.error('❌ SimpleAuthContext: No user or session returned');
+        return { success: false, error: 'Authentication failed' };
+      }
+
+      // Now validate the credentials against the intended role
+      const intendedRole = options?.asExpert ? 'expert' : 'user';
+      const validation = await validateCredentialsForRole(data.user.id, intendedRole);
+      
+      if (!validation.isValid) {
+        console.error('❌ Credential validation failed:', {
+          intendedRole,
+          actualRole: validation.actualRole
+        });
+        
+        // Sign out the user since they used wrong credentials
+        await supabase.auth.signOut();
+        
+        let errorMessage = 'Invalid credentials for this login type.';
+        if (validation.actualRole === 'expert' && intendedRole === 'user') {
+          errorMessage = 'These are expert credentials. Please use the expert login.';
+        } else if (validation.actualRole === 'user' && intendedRole === 'expert') {
+          errorMessage = 'These are user credentials. Please use the user login.';
+        } else if (validation.actualRole === 'expert' && intendedRole === 'expert') {
+          errorMessage = 'Your expert account is not approved yet.';
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+
+      // Set session type preference after successful validation
       if (options?.asExpert) {
         console.log('🎯 Setting expert login preference');
         localStorage.setItem('sessionType', 'expert');
@@ -261,36 +366,22 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         localStorage.setItem('sessionType', 'user');
         localStorage.setItem('preferredRole', 'user');
       }
+
+      console.log('✅ SimpleAuthContext: Login successful and validated');
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
+      // Return success with determined user type
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({ 
+            success: true, 
+            userType: intendedRole === 'expert' ? 'expert' : 'user'
+          });
+        }, 1000);
       });
 
-      if (error) {
-        console.error('❌ SimpleAuthContext: Login error:', error.message);
-        return { success: false };
-      }
-
-      if (data.user && data.session) {
-        console.log('✅ SimpleAuthContext: Login successful, profiles will load via auth listener');
-        
-        // Wait a moment for the auth state to update, then return the determined user type
-        return new Promise((resolve) => {
-          setTimeout(() => {
-            // Return the current userType which should be set by the auth listener
-            resolve({ 
-              success: true, 
-              userType: userType || (options?.asExpert ? 'expert' : 'user')
-            });
-          }, 1500); // Increased timeout to allow for profile loading
-        });
-      }
-
-      return { success: false };
     } catch (error) {
       console.error('❌ SimpleAuthContext: Login exception:', error);
-      return { success: false };
+      return { success: false, error: 'An unexpected error occurred' };
     }
   };
 
@@ -380,7 +471,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
             if (mounted) {
               await refreshProfiles();
             }
-          }, 500); // Increased delay to ensure user state is set and prevent race conditions
+          }, 500);
         } else {
           // Clear profiles when user is not authenticated
           console.log('🚫 User logged out, clearing profiles');

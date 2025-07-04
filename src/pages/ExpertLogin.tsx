@@ -88,9 +88,9 @@ const ExpertLogin: React.FC = () => {
         
         return true;
       } else {
-        console.error('Expert login failed');
-        setLoginError('Invalid email or password. Please check your credentials and try again.');
-        toast.error('Invalid email or password. Please check your credentials and try again.');
+        console.error('Expert login failed:', result.error);
+        setLoginError(result.error || 'Login failed. Please check your credentials and try again.');
+        toast.error(result.error || 'Login failed. Please check your credentials and try again.', { duration: 3000 });
         return false;
       }
     } catch (error) {

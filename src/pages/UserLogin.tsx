@@ -26,7 +26,7 @@ const UserLogin: React.FC = () => {
 
   // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
-    if (!isLoading && isAuthenticated && user) {
+    if (!isLoading && isAuthenticated && user && userType !== 'none') {
       console.log('UserLogin: User authenticated, redirecting based on userType:', userType);
       
       // Wait a bit for userType to be determined, then redirect
@@ -51,7 +51,7 @@ const UserLogin: React.FC = () => {
     setIsLoggingIn(true);
     
     try {
-      console.log('UserLogin: Attempting login:', email);
+      console.log('UserLogin: Attempting user login:', email);
       
       const result = await login(email, password, { asExpert: false });
       
@@ -68,8 +68,8 @@ const UserLogin: React.FC = () => {
         
         return true;
       } else {
-        console.error('UserLogin: Login failed');
-        toast.error('Invalid email or password', { duration: 2000 });
+        console.error('UserLogin: Login failed:', result.error);
+        toast.error(result.error || 'Login failed', { duration: 3000 });
         return false;
       }
     } catch (error: any) {
