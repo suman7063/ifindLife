@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
@@ -73,7 +72,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     userType,
     isLoading,
     userProfile: userProfile ? { id: userProfile.id, name: userProfile.name } : null,
-    expert: expert ? { id: expert.id, name: expert.name } : null
+    expert: expert ? { id: expert.id, name: expert.name, status: expert.status } : null
   });
 
   // Improved profile loading function
@@ -214,7 +213,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       let newUserType: SessionType = 'none';
       
       if (userProfileData && expertData) {
-        // User has both profiles - prioritize expert login preference
+        // User has both profiles - prioritize explicit expert login preference
         if (preferredRole === 'expert' && expertData.status === 'approved') {
           console.log('✅ User logged in as expert and has approved expert profile');
           newUserType = 'expert';
@@ -277,7 +276,17 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
 
       if (data.user && data.session) {
         console.log('✅ SimpleAuthContext: Login successful, profiles will load via auth listener');
-        return { success: true };
+        
+        // Wait a moment for the auth state to update, then return the determined user type
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            // Return the current userType which should be set by the auth listener
+            resolve({ 
+              success: true, 
+              userType: userType || (options?.asExpert ? 'expert' : 'user')
+            });
+          }, 1000);
+        });
       }
 
       return { success: false };

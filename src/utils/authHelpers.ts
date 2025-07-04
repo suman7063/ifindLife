@@ -1,49 +1,35 @@
 
-export const isUserAuthenticated = (authState: any): boolean => {
-  console.log('AuthHelper: UNIFIED CHECK - Input:', authState);
-  
-  // Use the EXACT same logic everywhere
-  const hasUser = !!authState?.user;
-  const hasEmail = !!authState?.user?.email;
-  const notLoading = !authState?.isLoading;
-  const isAuthenticated = !!authState?.isAuthenticated;
-  
-  const result = hasUser && hasEmail && notLoading && isAuthenticated;
-  
-  console.log('AuthHelper: UNIFIED CHECK - Results:', {
-    hasUser,
-    hasEmail,
-    notLoading,
-    isAuthenticated,
-    finalResult: result,
-    userObject: authState?.user
-  });
-  
-  return result;
+import { SimpleAuthContextType } from '@/contexts/SimpleAuthContext';
+
+export const isUserAuthenticated = (auth: SimpleAuthContextType): boolean => {
+  return Boolean(
+    auth.isAuthenticated && 
+    auth.userType === 'user' && 
+    auth.userProfile
+  );
 };
 
-export const isUserAuthenticatedForDashboard = (authState: any): boolean => {
-  // Use the same unified logic for consistency
-  return isUserAuthenticated(authState);
-};
-
-export const isExpertAuthenticated = (authState: any): boolean => {
-  console.log('AuthHelper: EXPERT CHECK - Input:', authState);
-  
-  const baseAuth = isUserAuthenticated(authState);
-  const isExpertType = authState?.userType === 'expert';
-  const hasExpertProfile = !!authState?.expert;
-  const isApproved = authState?.expert?.status === 'approved';
-  
-  const result = baseAuth && isExpertType && hasExpertProfile && isApproved;
-  
-  console.log('AuthHelper: EXPERT CHECK - Results:', {
-    baseAuth,
-    isExpertType,
-    hasExpertProfile,
-    isApproved,
-    finalResult: result
+export const isExpertAuthenticated = (auth: SimpleAuthContextType): boolean => {
+  console.log('🔍 isExpertAuthenticated check:', {
+    isAuthenticated: auth.isAuthenticated,
+    userType: auth.userType,
+    hasExpert: !!auth.expert,
+    expertStatus: auth.expert?.status
   });
   
-  return result;
+  return Boolean(
+    auth.isAuthenticated && 
+    auth.userType === 'expert' && 
+    auth.expert && 
+    auth.expert.status === 'approved'
+  );
+};
+
+export const isDualAuthenticated = (auth: SimpleAuthContextType): boolean => {
+  return Boolean(
+    auth.isAuthenticated && 
+    auth.userType === 'dual' && 
+    auth.userProfile && 
+    auth.expert
+  );
 };

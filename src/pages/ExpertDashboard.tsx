@@ -23,7 +23,8 @@ const ExpertDashboard = () => {
     userType: simpleAuth.userType,
     hasExpertProfile: !!simpleAuth.expert,
     isLoading: simpleAuth.isLoading,
-    expertStatus: simpleAuth.expert?.status
+    expertStatus: simpleAuth.expert?.status,
+    isExpertAuthenticated: isExpertAuthenticated(simpleAuth)
   });
 
   // Show loading state while authentication is being checked

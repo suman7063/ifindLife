@@ -5,6 +5,7 @@ import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { isExpertAuthenticated } from '@/utils/authHelpers';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
@@ -17,17 +18,18 @@ const ExpertLogin: React.FC = () => {
   const navigate = useNavigate();
   
   const simpleAuth = useSimpleAuth();
-  const { isAuthenticated, userType, expert, isLoading, login } = simpleAuth;
+  const { isLoading, login } = simpleAuth;
 
   console.log('ExpertLogin - Auth state:', {
-    isAuthenticated: Boolean(isAuthenticated),
-    userType,
-    hasExpertProfile: Boolean(expert),
+    isAuthenticated: Boolean(simpleAuth.isAuthenticated),
+    userType: simpleAuth.userType,
+    hasExpertProfile: Boolean(simpleAuth.expert),
     isLoading: Boolean(isLoading),
-    expertStatus: expert?.status
+    expertStatus: simpleAuth.expert?.status,
+    isExpertAuthenticated: isExpertAuthenticated(simpleAuth)
   });
 
-  // Enhanced redirect logic
+  // Enhanced redirect logic - check if already authenticated as expert
   useEffect(() => {
     const status = searchParams.get('status');
     if (status === 'pending') {
@@ -37,13 +39,6 @@ const ExpertLogin: React.FC = () => {
     }
 
     console.log('ExpertLogin: Checking auth state for redirect...');
-    console.log('ExpertLogin: Auth state details:', {
-      isAuthenticated: Boolean(isAuthenticated),
-      userType,
-      hasExpert: Boolean(expert),
-      isLoading: Boolean(isLoading),
-      expertStatus: expert?.status
-    });
 
     // Wait for auth loading to complete
     if (isLoading) {
@@ -52,20 +47,13 @@ const ExpertLogin: React.FC = () => {
     }
 
     // Check if authenticated as expert with approved status
-    const isExpertAuthenticated = Boolean(
-      isAuthenticated && 
-      userType === 'expert' && 
-      expert && 
-      expert.status === 'approved'
-    );
-
-    if (isExpertAuthenticated) {
+    if (isExpertAuthenticated(simpleAuth)) {
       console.log('ExpertLogin: Expert authenticated, redirecting to dashboard');
       navigate('/expert-dashboard', { replace: true });
     } else {
-      console.log('ExpertLogin: Expert not authenticated or not approved, staying on login page');
+      console.log('ExpertLogin: Expert not authenticated, staying on login page');
     }
-  }, [isAuthenticated, userType, expert, isLoading, navigate, searchParams]);
+  }, [simpleAuth.isAuthenticated, simpleAuth.userType, simpleAuth.expert, isLoading, navigate, searchParams]);
 
   // Enhanced expert login
   const handleLogin = async (email: string, password: string) => {
@@ -83,17 +71,20 @@ const ExpertLogin: React.FC = () => {
       const result = await login(email, password, { asExpert: true });
       
       if (result.success) {
-        console.log('Expert login successful, userType:', result.userType);
+        console.log('Expert login successful');
         toast.success('Login successful!');
         
-        // Navigate based on the determined user type
-        if (result.userType === 'expert') {
-          navigate('/expert-dashboard', { replace: true });
-        } else {
-          // User doesn't have expert profile but has user profile
-          navigate('/user-dashboard', { replace: true });
-          toast.info('You don\'t have an expert profile. Redirected to user dashboard.');
-        }
+        // Wait a moment for auth state to update, then check if expert authenticated
+        setTimeout(() => {
+          if (isExpertAuthenticated(simpleAuth)) {
+            console.log('Redirecting to expert dashboard');
+            navigate('/expert-dashboard', { replace: true });
+          } else {
+            console.log('No expert profile or not approved, redirecting to user dashboard');
+            navigate('/user-dashboard', { replace: true });
+            toast.info('You don\'t have an approved expert profile. Redirected to user dashboard.');
+          }
+        }, 500);
         
         return true;
       } else {
@@ -112,8 +103,8 @@ const ExpertLogin: React.FC = () => {
     }
   };
 
-  // Don't render login form if already authenticated (should redirect)
-  if (isAuthenticated && userType === 'expert' && expert && expert.status === 'approved' && !isLoading) {
+  // Don't render login form if already authenticated as expert
+  if (isExpertAuthenticated(simpleAuth) && !isLoading) {
     return (
       <>
         <Navbar />
