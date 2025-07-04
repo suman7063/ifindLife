@@ -370,14 +370,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       console.log('✅ SimpleAuthContext: Login successful and validated');
       
       // Return success with determined user type
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({ 
-            success: true, 
-            userType: intendedRole === 'expert' ? 'expert' : 'user'
-          });
-        }, 1000);
-      });
+      return { 
+        success: true, 
+        userType: intendedRole === 'expert' ? 'expert' : 'user'
+      };
 
     } catch (error) {
       console.error('❌ SimpleAuthContext: Login exception:', error);
@@ -471,7 +467,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
             if (mounted) {
               await refreshProfiles();
             }
-          }, 500);
+          }, 1000); // Increased delay to ensure proper state setting
         } else {
           // Clear profiles when user is not authenticated
           console.log('🚫 User logged out, clearing profiles');

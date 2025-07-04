@@ -55,7 +55,7 @@ const ExpertLogin: React.FC = () => {
     }
   }, [simpleAuth.isAuthenticated, simpleAuth.userType, simpleAuth.expert, isLoading, navigate, searchParams]);
 
-  // Enhanced expert login
+  // Enhanced expert login with proper redirection
   const handleLogin = async (email: string, password: string) => {
     if (!email || !password) {
       toast.error('Please enter both email and password', { duration: 2000 });
@@ -74,17 +74,11 @@ const ExpertLogin: React.FC = () => {
         console.log('Expert login successful');
         toast.success('Login successful!');
         
-        // Wait a moment for auth state to update, then check if expert authenticated
+        // Wait for auth state to update, then redirect to expert dashboard
         setTimeout(() => {
-          if (isExpertAuthenticated(simpleAuth)) {
-            console.log('Redirecting to expert dashboard');
-            navigate('/expert-dashboard', { replace: true });
-          } else {
-            console.log('No expert profile or not approved, redirecting to user dashboard');
-            navigate('/user-dashboard', { replace: true });
-            toast.info('You don\'t have an approved expert profile. Redirected to user dashboard.');
-          }
-        }, 500);
+          console.log('Redirecting to expert dashboard after successful login');
+          navigate('/expert-dashboard', { replace: true });
+        }, 1000);
         
         return true;
       } else {

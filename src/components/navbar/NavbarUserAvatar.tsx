@@ -17,7 +17,8 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
   console.log('NavbarUserAvatar: Rendering with user:', {
     hasUser: !!currentUser,
     userName: currentUser?.name,
-    userEmail: currentUser?.email
+    userEmail: currentUser?.email,
+    profilePicture: currentUser?.profile_picture
   });
 
   // Get display name with better fallback logic
@@ -42,18 +43,33 @@ const NavbarUserAvatar: React.FC<NavbarUserAvatarProps> = ({
     return 'U';
   };
 
+  // Get profile picture with proper fallback
+  const getProfilePicture = () => {
+    // Check multiple possible profile picture fields
+    return currentUser?.profile_picture || 
+           currentUser?.profilePicture || 
+           currentUser?.user_metadata?.avatar_url || 
+           '';
+  };
+
   // Create enhanced user object for the menu
   const enhancedUser = currentUser ? {
     ...currentUser,
     displayName: getDisplayName(),
     initials: getInitials(),
-    profile_picture: currentUser.profile_picture || currentUser.user_metadata?.avatar_url || ''
+    profile_picture: getProfilePicture()
   } : {
     displayName: 'User',
     initials: 'U',
     profile_picture: '',
     email: ''
   };
+
+  console.log('NavbarUserAvatar: Enhanced user data:', {
+    displayName: enhancedUser.displayName,
+    initials: enhancedUser.initials,
+    profile_picture: enhancedUser.profile_picture
+  });
 
   return (
     <NavbarUserMenu 

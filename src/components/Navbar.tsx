@@ -59,32 +59,41 @@ const Navbar = () => {
     return scrolled ? 'bg-white/95 backdrop-blur-sm shadow-sm' : 'bg-white';
   };
 
-  // Create compatible user object for navbar components with proper type conversion
-  const currentUser: UserProfile | null = userProfile || (expert ? {
-    id: expert.id,
-    name: expert.name || '',
-    email: expert.email || '',
-    phone: expert.phone || '',
-    country: expert.country || '',
-    city: expert.city || '',
-    currency: 'USD',
-    profile_picture: expert.profile_picture || '',
-    wallet_balance: 0,
-    created_at: expert.created_at || '',
-    updated_at: expert.created_at || '',
-    referred_by: null,
-    referral_code: '',
-    referral_link: '',
-    favorite_experts: [], // Ensure this is string[] to match unified type
-    favorite_programs: [],
-    enrolled_courses: [],
-    reviews: [],
-    recent_activities: [],
-    upcoming_appointments: [],
-    reports: [],
-    transactions: [],
-    referrals: []
-  } : null);
+  // Create enhanced compatible user object for navbar components
+  const currentUser: UserProfile | null = (() => {
+    if (userType === 'expert' && expert) {
+      // For experts, create a UserProfile-compatible object from expert data
+      return {
+        id: expert.id,
+        name: expert.name || '',
+        email: expert.email || '',
+        phone: expert.phone || '',
+        country: expert.country || '',
+        city: expert.city || '',
+        currency: 'USD',
+        profile_picture: expert.profile_picture || expert.profilePicture || '',
+        wallet_balance: 0, // Experts don't have wallet balance
+        created_at: expert.created_at || '',
+        updated_at: expert.created_at || '',
+        referred_by: null,
+        referral_code: '',
+        referral_link: '',
+        favorite_experts: [],
+        favorite_programs: [],
+        enrolled_courses: [],
+        reviews: [],
+        recent_activities: [],
+        upcoming_appointments: [],
+        reports: [],
+        transactions: [],
+        referrals: []
+      };
+    } else if (userType === 'user' && userProfile) {
+      // For users, return the userProfile directly
+      return userProfile;
+    }
+    return null;
+  })();
 
   const hasExpertProfile = userType === 'expert' && !!expert;
 
@@ -93,7 +102,8 @@ const Navbar = () => {
     currentUser: !!currentUser,
     hasExpertProfile,
     sessionType: userType,
-    isLoading
+    isLoading,
+    currentUserProfilePicture: currentUser?.profile_picture
   });
 
   // Only show loading during the initial auth check - not after each render
