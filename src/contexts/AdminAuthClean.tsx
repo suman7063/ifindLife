@@ -28,15 +28,22 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [error, setError] = useState<string | null>(null);
 
   // SAFETY: Only initialize on admin routes
-  const isAdminRoute = window.location.pathname.startsWith('/admin');
+  const isAdminRoute = window.location.pathname.startsWith('/admin-login-clean') || 
+                      window.location.pathname.startsWith('/admin-dashboard-clean');
+
+  console.log('🔒 AdminAuthClean: Provider initialized', {
+    isAdminRoute,
+    currentPath: window.location.pathname
+  });
 
   useEffect(() => {
     if (!isAdminRoute) {
+      console.log('🔒 AdminAuthClean: Not on admin route, skipping initialization');
       setIsLoading(false);
       return;
     }
 
-    console.log('🔒 AdminAuthClean: Initializing for iFindLife admin (isolated)');
+    console.log('🔒 AdminAuthClean: Initializing for iFindLife admin (completely isolated)');
 
     const checkSession = async () => {
       try {
@@ -58,8 +65,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setIsAuthenticated(true);
             setError(null);
           } else {
+            console.log('⏰ AdminAuthClean: Session expired, clearing');
             localStorage.removeItem('clean_admin_session');
           }
+        } else {
+          console.log('ℹ️ AdminAuthClean: No existing session found');
         }
       } catch (err) {
         console.error('❌ AdminAuthClean: Session check error:', err);
@@ -74,7 +84,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log('🔒 AdminAuthClean: iFindLife admin login (isolated):', email);
+      console.log('🔒 AdminAuthClean: iFindLife admin login attempt (isolated):', email);
       setError(null);
       setIsLoading(true);
       
@@ -86,6 +96,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .single();
 
       if (queryError || !adminUser) {
+        console.log('❌ AdminAuthClean: Admin user not found:', email);
         setError('Invalid admin credentials');
         return false;
       }
@@ -94,6 +105,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const validPassword = password === 'IFLadmin2024';
       
       if (!validPassword) {
+        console.log('❌ AdminAuthClean: Invalid password for admin:', email);
         setError('Invalid admin credentials');
         return false;
       }
@@ -115,7 +127,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsAuthenticated(true);
       setError(null);
 
-      console.log('✅ AdminAuthClean: Login successful (isolated system)');
+      console.log('✅ AdminAuthClean: Login successful (completely isolated system)');
       return true;
     } catch (err) {
       console.error('❌ AdminAuthClean: Login failed:', err);
@@ -141,18 +153,28 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // SAFETY: Don't provide context on non-admin routes
   if (!isAdminRoute) {
+    console.log('🔒 AdminAuthClean: Not on admin route, rendering children without context');
     return <>{children}</>;
   }
 
+  const contextValue = {
+    admin,
+    isAuthenticated,
+    isLoading,
+    error,
+    login,
+    logout
+  };
+
+  console.log('🔒 AdminAuthClean: Providing context:', {
+    hasAdmin: !!admin,
+    isAuthenticated,
+    isLoading,
+    hasError: !!error
+  });
+
   return (
-    <AdminAuthContext.Provider value={{
-      admin,
-      isAuthenticated,
-      isLoading,
-      error,
-      login,
-      logout
-    }}>
+    <AdminAuthContext.Provider value={contextValue}>
       {children}
     </AdminAuthContext.Provider>
   );
@@ -160,8 +182,13 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useAdminAuthClean = () => {
   const context = useContext(AdminAuthContext);
-  if (!context && window.location.pathname.startsWith('/admin')) {
+  const isOnAdminRoute = window.location.pathname.startsWith('/admin-login-clean') || 
+                        window.location.pathname.startsWith('/admin-dashboard-clean');
+  
+  if (!context && isOnAdminRoute) {
+    console.error('❌ useAdminAuthClean: Must be used within AdminAuthProvider on admin routes');
     throw new Error('useAdminAuthClean must be used within AdminAuthProvider');
   }
+  
   return context;
 };

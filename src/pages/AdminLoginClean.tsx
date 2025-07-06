@@ -17,32 +17,45 @@ const AdminLoginClean: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  console.log('🔒 AdminLoginClean: Using correct useAdminAuthClean hook:', {
+    hasAdminAuth: !!adminAuth,
+    isAuthenticated: adminAuth?.isAuthenticated,
+    isLoading: adminAuth?.isLoading,
+    error: adminAuth?.error
+  });
+
   // SAFETY: Only render on admin routes
   if (!window.location.pathname.startsWith('/admin')) {
+    console.log('🔒 AdminLoginClean: Not on admin route, not rendering');
     return null;
   }
 
   // Redirect if already authenticated
   useEffect(() => {
     if (adminAuth?.isAuthenticated) {
-      console.log('✅ AdminLoginClean: Already authenticated, redirecting');
+      console.log('✅ AdminLoginClean: Already authenticated, redirecting to dashboard');
       navigate('/admin-dashboard-clean', { replace: true });
     }
   }, [adminAuth?.isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!adminAuth) return;
+    if (!adminAuth) {
+      console.error('❌ AdminLoginClean: No admin auth context available');
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      console.log('🔒 AdminLoginClean: iFindLife admin login submit (isolated)');
+      console.log('🔒 AdminLoginClean: Attempting login with isolated admin system');
       const success = await adminAuth.login(formData.email, formData.password);
       
       if (success) {
-        console.log('✅ AdminLoginClean: Login successful (isolated system)');
+        console.log('✅ AdminLoginClean: Login successful with isolated admin system');
         // Redirect happens in useEffect when isAuthenticated becomes true
+      } else {
+        console.log('❌ AdminLoginClean: Login failed');
       }
     } catch (error) {
       console.error('❌ AdminLoginClean: Submit error:', error);
@@ -56,7 +69,7 @@ const AdminLoginClean: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600" />
-          <p className="mt-4 text-gray-600">iFindLife Admin - Clean Auth System</p>
+          <p className="mt-4 text-gray-600">Loading iFindLife Admin (Clean Auth System)...</p>
         </div>
       </div>
     );
@@ -73,10 +86,10 @@ const AdminLoginClean: React.FC = () => {
             iFindLife Admin
           </CardTitle>
           <p className="text-gray-600 mt-2">
-            Clean Authentication System
+            Clean Authentication System (Isolated)
           </p>
           <p className="text-xs text-blue-600 mt-1">
-            Route: /admin-login-clean (Isolated)
+            ✅ Using useAdminAuthClean hook
           </p>
         </CardHeader>
         
@@ -141,15 +154,16 @@ const AdminLoginClean: React.FC = () => {
                   Signing in...
                 </>
               ) : (
-                'iFindLife Admin (Clean System)'
+                'Admin Login (Clean System)'
               )}
             </Button>
             
             <div className="text-center text-xs text-gray-500 space-y-1">
-              <p>✅ Isolated admin authentication</p>
+              <p>✅ Isolated admin authentication system</p>
               <p>✅ No interference with user/expert auth</p>
-              <p>✅ Clean separation of concerns</p>
-              <p className="text-blue-600">Old system: /admin-login (still works)</p>
+              <p>✅ Complete separation of concerns</p>
+              <p>✅ Using correct useAdminAuthClean hook</p>
+              <p className="text-blue-600">Old system: /admin-login (separate auth)</p>
             </div>
           </form>
         </CardContent>
