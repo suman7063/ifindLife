@@ -19,6 +19,9 @@ export const expertFormSchema = z.object({
   experience: z.number().min(0, "Please specify years of experience"),
   specialties: z.array(z.string()).min(1, "Select at least one specialty"),
   bio: z.string().min(50, "Bio should be at least 50 characters"),
+  expertCategory: z.enum(["therapist", "counselor", "coach", "consultant"], {
+    required_error: "Please select an expert category",
+  }),
   
   // Account
   password: z.string().min(8, "Password must be at least 8 characters"),
