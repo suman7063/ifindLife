@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from '@/contexts/admin-auth';
+import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
 import { Users, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 
 const AdminOverview: React.FC = () => {
-  const { currentUser } = useAuth();
+  const adminAuth = useAdminAuthClean();
+  const currentUser = adminAuth?.admin;
   
   return (
     <div className="space-y-6 w-full">
@@ -63,9 +64,9 @@ const AdminOverview: React.FC = () => {
             <CardTitle>Admin Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <p>Logged in as: {currentUser?.username}</p>
+            <p>Logged in as: {currentUser?.name || currentUser?.id}</p>
             <p>Role: {currentUser?.role}</p>
-            <p>Last login: {currentUser?.lastLogin ? new Date(currentUser.lastLogin).toLocaleString() : 'First login'}</p>
+            <p>Status: Clean Auth System Active</p>
           </CardContent>
         </Card>
         

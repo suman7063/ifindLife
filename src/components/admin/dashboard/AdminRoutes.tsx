@@ -12,7 +12,7 @@ import { SessionsEditor } from '@/components/admin/sessions/SessionsEditor';
 import BlogEditor from '@/components/admin/BlogEditor';
 import ContactSubmissionsTable from '@/components/admin/ContactSubmissionsTable';
 import ReferralSettingsEditor from '@/components/admin/ReferralSettingsEditor';
-import AdminUsersManager from '@/components/admin/users/AdminUsersManager';
+import AdminUsersManagerPlaceholder from '@/components/admin/users/AdminUsersManagerPlaceholder';
 import AdminAnalytics from '@/components/admin/analytics/AdminAnalytics';
 import AdminReports from '@/components/admin/reports/AdminReports';
 import AdminUsersList from '@/components/admin/users/AdminUsersList';
@@ -68,7 +68,7 @@ const AdminRoutes: React.FC = () => {
       <Route path="/blog" element={<BlogEditor />} />
       <Route path="/contact" element={<ContactSubmissionsTable />} />
       <Route path="/referrals" element={<ReferralSettingsEditor />} />
-      <Route path="/adminUsers" element={<AdminUsersManager />} />
+      <Route path="/adminUsers" element={<AdminUsersManagerPlaceholder />} />
       <Route path="/users" element={<AdminUsersList />} />
       <Route path="/settings" element={<AdminSettings />} />
       <Route path="*" element={<Navigate to="/admin/overview" replace />} />

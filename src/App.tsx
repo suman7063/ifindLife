@@ -11,7 +11,7 @@ import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
 import UserDashboardWrapper from './pages/UserDashboardWrapper';
 import AdminLoginClean from '@/pages/AdminLoginClean';
-import AdminDashboardClean from '@/pages/AdminDashboardClean';
+import AdminDashboard from '@/components/admin/dashboard/AdminDashboard';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import ProgramDetailPage from './pages/ProgramDetail';
 import ContactUs from './pages/Contact';
@@ -118,7 +118,7 @@ function App() {
           } />
           <Route path="/admin/*" element={
             <AdminAuthProvider>
-              <AdminDashboardClean />
+              <AdminDashboard />
             </AdminAuthProvider>
           } />
           

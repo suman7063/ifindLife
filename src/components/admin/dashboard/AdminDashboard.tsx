@@ -1,56 +1,51 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Routes, Route, Navigate } from 'react-router-dom';
+import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
 import AdminDashboardLayout from '../layout/AdminDashboardLayout';
-import AdminTabs from '../AdminTabs';
-import AdminUserManagement from '@/components/AdminUserManagement';
-import AdminSettings from './AdminSettings';
-import AdminOverview from './AdminOverview';
-import { Expert } from '@/components/admin/experts/types';
+import AdminRoutes from './AdminRoutes';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
+  const adminAuth = useAdminAuthClean();
   const [activeTab, setActiveTab] = useState('overview');
-  
-  // States for all content sections
-  const [experts, setExperts] = useState<Expert[]>([]);
-  const [services, setServices] = useState<any[]>([]);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
 
+  // Auth check with clean admin system
   useEffect(() => {
-    // Simple auth check - admin authentication should be handled at the route level
-    // This component now focuses on rendering the dashboard content
-    console.log('AdminDashboard: Component loaded');
+    if (!adminAuth?.isLoading && !adminAuth?.isAuthenticated) {
+      console.log('❌ AdminDashboard: Not authenticated, redirecting');
+      navigate('/admin-login', { replace: true });
+    }
+  }, [adminAuth?.isAuthenticated, adminAuth?.isLoading, navigate]);
+
+  // Extract current tab from URL path
+  useEffect(() => {
+    const pathParts = window.location.pathname.split('/');
+    const currentTab = pathParts.length > 2 ? pathParts[2] : 'overview';
+    setActiveTab(currentTab);
   }, []);
 
-  // Switch to specific tab based on content section
-  const handleTabContent = () => {
-    switch (activeTab) {
-      case 'adminUsers':
-        return <AdminUserManagement />;
-      case 'settings':
-        return <AdminSettings />;
-      case 'overview':
-        return <AdminOverview />;
-      default:
-        return (
-          <AdminTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            experts={experts}
-            setExperts={setExperts}
-            services={services}
-            setServices={setServices}
-            testimonials={testimonials}
-            setTestimonials={setTestimonials}
-          />
-        );
-    }
-  };
+  if (adminAuth?.isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p>Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!adminAuth?.isAuthenticated || !adminAuth.admin) {
+    return null; // Will redirect in useEffect
+  }
 
   return (
     <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {handleTabContent()}
+      <Routes>
+        <Route path="/" element={<Navigate to="/admin/overview" replace />} />
+        <Route path="/*" element={<AdminRoutes />} />
+      </Routes>
     </AdminDashboardLayout>
   );
 };
