@@ -2,7 +2,7 @@
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ExpertLoginForm from './ExpertLoginForm';
-import ExpertRegistrationForm from '@/components/expert/ExpertRegistrationForm';
+import ExpertRegistrationForm from './ExpertRegistrationForm';
 
 interface ExpertLoginTabsProps {
   activeTab: string;
