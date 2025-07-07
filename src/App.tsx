@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
+import { SecureAdminAuthProvider } from '@/contexts/admin-auth/SecureAdminAuthProvider';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
@@ -11,7 +12,9 @@ import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
 import UserDashboardWrapper from './pages/UserDashboardWrapper';
 import AdminLogin from './pages/AdminLogin';
+import SecureAdminLogin from './pages/SecureAdminLogin';
 import AdminDashboard from './pages/admin/Testing';
+import SecureAdminDashboard from './pages/SecureAdminDashboard';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import ProgramDetailPage from './pages/ProgramDetail';
 import ContactUs from './pages/Contact';
@@ -47,6 +50,18 @@ const AdminRoutes: React.FC = () => {
         <Route path="/admin-dashboard-clean" element={<AdminDashboardClean />} />
       </Routes>
     </AdminAuthProvider>
+  );
+};
+
+// Component wrapper for secure admin routes with SecureAdminAuthProvider
+const SecureAdminRoutes: React.FC = () => {
+  return (
+    <SecureAdminAuthProvider>
+      <Routes>
+        <Route path="/admin-login" element={<SecureAdminLogin />} />
+        <Route path="/admin/*" element={<SecureAdminDashboard />} />
+      </Routes>
+    </SecureAdminAuthProvider>
   );
 };
 
@@ -95,10 +110,6 @@ const UserRoutes: React.FC = () => {
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         
-        {/* Old Admin Routes (separate auth system) */}
-        <Route path="/admin-login" element={<AdminLogin />} />
-        <Route path="/admin-dashboard/*" element={<AdminDashboard />} />
-        
         {/* Authentication Test Suite */}
         <Route path="/auth-test" element={<AuthTestPage />} />
         
@@ -126,9 +137,13 @@ function App() {
       <Toaster />
       <BrowserRouter>
         <Routes>
-          {/* Admin routes with isolated AdminAuthProvider */}
+          {/* Clean Admin routes with isolated AdminAuthProvider */}
           <Route path="/admin-login-clean" element={<AdminRoutes />} />
           <Route path="/admin-dashboard-clean" element={<AdminRoutes />} />
+          
+          {/* Secure Admin routes with SecureAdminAuthProvider */}
+          <Route path="/admin-login" element={<SecureAdminRoutes />} />
+          <Route path="/admin/*" element={<SecureAdminRoutes />} />
           
           {/* All other routes with SimpleAuthProvider */}
           <Route path="/*" element={<UserRoutes />} />

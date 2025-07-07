@@ -6,7 +6,7 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/admin-auth';
+import { useSecureAdminAuth } from '@/contexts/admin-auth/SecureAdminAuthProvider';
 import AdminSidebar from './sidebar/AdminSidebar';
 import RestoreSidebarButton from './sidebar/RestoreSidebarButton';
 import { getTabTitle } from './utils/tabUtils';
@@ -29,7 +29,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, isSuperAdmin, currentUser } = useAuth();
+  const { logout, isSuperAdmin, currentUser } = useSecureAdminAuth();
   
   const handleTabChange = (tab: string) => {
     console.log('AdminDashboardLayout: Changing tab to', tab);
