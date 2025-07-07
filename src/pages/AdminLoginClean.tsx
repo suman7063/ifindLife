@@ -26,11 +26,33 @@ const AdminLoginClean: React.FC = () => {
 
   // Clear any conflicting auth sessions on mount
   useEffect(() => {
-    console.log('🔒 AdminLoginClean: Clearing conflicting auth sessions');
-    // Clear expert and user sessions to prevent conflicts
-    localStorage.removeItem('sb-nmcqyudqvbldxwzhyzma-auth-token');
-    localStorage.removeItem('expert_session');
-    localStorage.removeItem('user_session');
+    const clearAllSessions = async () => {
+      console.log('🔒 AdminLoginClean: Clearing ALL conflicting auth sessions');
+      
+      // Clear all localStorage auth tokens
+      localStorage.removeItem('sb-nmcqyudqvbldxwzhyzma-auth-token');
+      localStorage.removeItem('expert_session');
+      localStorage.removeItem('user_session');
+      
+      // Clear all possible Supabase session data
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.includes('supabase') || key.includes('auth') || key.includes('session')) {
+          localStorage.removeItem(key);
+        }
+      });
+
+      // Force clear any active Supabase session
+      try {
+        const { supabase } = await import('@/integrations/supabase/client');
+        await supabase.auth.signOut({ scope: 'local' });
+        console.log('🔒 AdminLoginClean: Supabase session cleared');
+      } catch (error) {
+        console.log('🔒 AdminLoginClean: Supabase clear error (ignored):', error);
+      }
+    };
+
+    clearAllSessions();
   }, []);
 
   // SAFETY: Only render on admin routes

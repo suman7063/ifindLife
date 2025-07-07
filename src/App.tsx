@@ -36,17 +36,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
 
-// Component wrapper for admin routes with AdminAuthProvider (Clean)
-const AdminRoutes: React.FC = () => {
-  return (
-    <AdminAuthProvider>
-      <Routes>
-        <Route path="/admin-login" element={<AdminLoginClean />} />
-        <Route path="/admin/*" element={<AdminDashboardClean />} />
-      </Routes>
-    </AdminAuthProvider>
-  );
-};
+// Clean routing - admin routes are now handled directly in App component
 
 // Component wrapper for user/expert routes with SimpleAuthProvider
 const UserRoutes: React.FC = () => {
@@ -120,21 +110,17 @@ function App() {
       <Toaster />
       <BrowserRouter>
         <Routes>
-          {/* Clean Admin routes with isolated AdminAuthProvider */}
-          <Route path="/admin-login-clean" element={
+          {/* CRITICAL: Admin routes MUST come FIRST to prevent catch-all interference */}
+          <Route path="/admin-login" element={
             <AdminAuthProvider>
               <AdminLoginClean />
             </AdminAuthProvider>
           } />
-          <Route path="/admin-dashboard-clean" element={
+          <Route path="/admin/*" element={
             <AdminAuthProvider>
               <AdminDashboardClean />
             </AdminAuthProvider>
           } />
-          
-          {/* Main Admin routes with Clean AdminAuthProvider */}
-          <Route path="/admin-login" element={<AdminRoutes />} />
-          <Route path="/admin/*" element={<AdminRoutes />} />
           
           {/* All other routes with SimpleAuthProvider */}
           <Route path="/*" element={<UserRoutes />} />
