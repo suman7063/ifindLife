@@ -65,7 +65,7 @@ export const useRazorpayPayment = () => {
 
       // Configure Razorpay options
       const options = {
-        key: 'rzp_test_placeholder', // TODO: Replace with actual Razorpay key
+        key: 'rzp_test_dHFtNrBurVpQVi', // Your Razorpay Key ID
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'iFindLife',
