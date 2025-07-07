@@ -1090,17 +1090,17 @@ export type Database = {
       }
       user_favorites: {
         Row: {
-          expert_id: number
+          expert_id: string
           id: string
           user_id: string | null
         }
         Insert: {
-          expert_id: number
+          expert_id: string
           id?: string
           user_id?: string | null
         }
         Update: {
-          expert_id?: number
+          expert_id?: string
           id?: string
           user_id?: string | null
         }
