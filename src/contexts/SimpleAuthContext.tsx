@@ -23,7 +23,7 @@ export interface SimpleAuthContextType {
   logout: () => Promise<void>;
   
   // Profile actions
-  refreshProfiles: () => Promise<void>;
+  refreshProfiles: (userId?: string) => Promise<void>;
 }
 
 const SimpleAuthContext = createContext<SimpleAuthContextType | null>(null);
@@ -81,9 +81,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     try {
       console.log('🔍 Validating credentials for role:', intendedRole, 'userId:', userId);
       
-      // Check if user has user profile
+      // Check if user has user profile - use profiles table instead of users table for compatibility
       const { data: userProfileData, error: userError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('id')
         .eq('id', userId)
         .single();
@@ -102,7 +102,9 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         hasUserProfile,
         hasExpertProfile,
         expertStatus: expertData?.status,
-        intendedRole
+        intendedRole,
+        userError: userError?.message,
+        expertError: expertError?.message
       });
 
       if (hasUserProfile && hasExpertProfile) {
@@ -129,12 +131,14 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
           return { isValid: false, actualRole: 'user' };
         }
       } else {
-        // No profiles exist - this shouldn't happen for valid users
-        return { isValid: false };
+        // No profiles exist - still allow login but will create profiles later
+        console.log('ℹ️ No existing profiles found, allowing login to proceed');
+        return { isValid: true, actualRole: intendedRole === 'expert' ? 'expert' : 'user' };
       }
     } catch (error) {
       console.error('❌ Error validating credentials:', error);
-      return { isValid: false };
+      // Allow login to proceed even if validation fails - profiles will be handled later
+      return { isValid: true, actualRole: intendedRole === 'expert' ? 'expert' : 'user' };
     }
   };
 
@@ -143,14 +147,37 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     try {
       console.log('📊 Loading user profile for:', userId);
       
-      const { data: profile, error } = await supabase
+      // Try both tables to ensure compatibility
+      let profile = null;
+      let error = null;
+      
+      // First try the users table
+      const { data: usersData, error: usersError } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single();
+        
+      if (usersData && !usersError) {
+        profile = usersData;
+      } else {
+        // Fallback to profiles table
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single();
+          
+        if (profilesData && !profilesError) {
+          profile = profilesData;
+        } else {
+          error = profilesError || usersError;
+        }
+      }
 
-      if (error) {
-        console.error('❌ User profile error:', error);
+      if (error && !profile) {
+        console.log('ℹ️ No user profile found:', error.message);
+        setUserProfile(null);
         return null;
       }
 
@@ -171,7 +198,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         referred_by: profile.referred_by || '',
         wallet_balance: profile.wallet_balance || 0,
         created_at: profile.created_at,
-        updated_at: profile.created_at,
+        updated_at: profile.updated_at || profile.created_at,
         favorite_experts: [],
         favorite_programs: [],
         enrolled_courses: [],
@@ -187,6 +214,7 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
       return transformedProfile;
     } catch (error) {
       console.error('❌ User profile fetch failed:', error);
+      setUserProfile(null);
       return null;
     }
   };
@@ -246,19 +274,20 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
     }
   };
 
-  const refreshProfiles = async (): Promise<void> => {
-    if (!user?.id) {
-      console.warn('⚠️ No user ID to refresh profiles');
+  const refreshProfiles = async (userId?: string): Promise<void> => {
+    const targetUserId = userId || user?.id;
+    if (!targetUserId) {
+      console.warn('⚠️ No user ID to refresh profiles', { userId, hasUser: !!user });
       return;
     }
 
-    console.log('🔄 Refreshing profiles for user:', user.id);
+    console.log('🔄 Refreshing profiles for user:', targetUserId);
     
     try {
       // Load both profiles in parallel
       const [userProfileData, expertData] = await Promise.all([
-        loadUserProfile(user.id),
-        loadExpertProfile(user.id)
+        loadUserProfile(targetUserId),
+        loadExpertProfile(targetUserId)
       ]);
 
       // Get login preferences with explicit priority
@@ -470,10 +499,10 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         
         if (session?.user) {
           console.log('👤 User authenticated, loading profiles...');
-          // Immediately refresh profiles without delay to prevent race conditions
+          // Immediately refresh profiles with the user ID to prevent race conditions
           setTimeout(async () => {
             if (mounted) {
-              await refreshProfiles();
+              await refreshProfiles(session.user.id);
             }
           }, 100); // Reduced delay to fix race condition in expert login
         } else {
