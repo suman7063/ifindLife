@@ -2,11 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
-import AdminOverview from './AdminOverview';
+import AdminDashboardLayout from '../layout/AdminDashboardLayout';
+import AdminRoutes from './AdminRoutes';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const adminAuth = useAdminAuthClean();
+  const [activeTab, setActiveTab] = useState('overview');
 
   // Auth check with clean admin system
   useEffect(() => {
@@ -30,7 +32,11 @@ const AdminDashboard = () => {
     return null; // Will redirect in useEffect
   }
 
-  return <AdminOverview />;
+  return (
+    <AdminDashboardLayout activeTab={activeTab} setActiveTab={setActiveTab}>
+      <AdminRoutes />
+    </AdminDashboardLayout>
+  );
 };
 
 export default AdminDashboard;
