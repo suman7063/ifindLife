@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, User, MapPin, Briefcase, Shield } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, User, MapPin, Briefcase, Shield, Upload, CheckCircle } from 'lucide-react';
 import { expertFormSchema, ExpertFormValues } from '@/components/expert/schemas/expertFormSchema';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
@@ -17,6 +18,20 @@ import { toast } from 'sonner';
 const ExpertRegistrationForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [captchaQuestion, setCaptchaQuestion] = useState({ num1: 0, num2: 0, answer: 0 });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Generate CAPTCHA on component mount
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
+  const generateCaptcha = () => {
+    const num1 = Math.floor(Math.random() * 20) + 1;
+    const num2 = Math.floor(Math.random() * 20) + 1;
+    setCaptchaQuestion({ num1, num2, answer: num1 + num2 });
+  };
 
   const form = useForm<ExpertFormValues>({
     resolver: zodResolver(expertFormSchema),
@@ -32,7 +47,8 @@ const ExpertRegistrationForm: React.FC = () => {
       experience: 0,
       specialties: [],
       bio: '',
-      expertCategory: 'therapist',
+      expertCategory: 'listening-volunteer',
+      captchaAnswer: 0,
       password: '',
       confirmPassword: '',
       termsAccepted: false,
@@ -40,6 +56,18 @@ const ExpertRegistrationForm: React.FC = () => {
   });
 
   const onSubmit = async (data: ExpertFormValues) => {
+    // Validate CAPTCHA
+    if (data.captchaAnswer !== captchaQuestion.answer) {
+      setSubmitError('CAPTCHA answer is incorrect. Please try again.');
+      generateCaptcha();
+      return;
+    }
+
+    if (!selectedFile) {
+      setSubmitError('Please upload your Soulversity certificate.');
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError(null);
 
@@ -61,6 +89,23 @@ const ExpertRegistrationForm: React.FC = () => {
         throw new Error('Failed to create user account');
       }
 
+      // Upload certificate to storage
+      let certificateUrl = '';
+      if (selectedFile) {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${authData.user.id}-certificate.${fileExt}`;
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('expert-certificates')
+          .upload(fileName, selectedFile);
+
+        if (uploadError) {
+          throw new Error('Failed to upload certificate: ' + uploadError.message);
+        }
+
+        certificateUrl = uploadData.path;
+      }
+
       // Create expert account
       const { error: expertError } = await supabase
         .from('expert_accounts')
@@ -76,6 +121,7 @@ const ExpertRegistrationForm: React.FC = () => {
           specialization: data.title,
           experience: data.experience.toString(),
           bio: data.bio,
+          certificate_urls: certificateUrl ? [certificateUrl] : [],
           status: 'pending',
         });
 
@@ -83,8 +129,7 @@ const ExpertRegistrationForm: React.FC = () => {
         throw new Error(expertError.message);
       }
 
-      toast.success('Registration successful! Please check your email to verify your account.');
-      form.reset();
+      setIsSuccess(true);
     } catch (error) {
       console.error('Registration error:', error);
       setSubmitError(error instanceof Error ? error.message : 'Registration failed');
@@ -94,6 +139,7 @@ const ExpertRegistrationForm: React.FC = () => {
   };
 
   const specialtyOptions = [
+    'Mindful Listening',
     'Anxiety & Stress',
     'Depression',
     'Relationships',
@@ -114,6 +160,60 @@ const ExpertRegistrationForm: React.FC = () => {
       form.setValue('specialties', current.filter(s => s !== specialty));
     }
   };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type (accept PDF, JPG, PNG)
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a PDF, JPG, or PNG file.');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB.');
+        return;
+      }
+      
+      setSelectedFile(file);
+      form.setValue('certificate', file);
+    }
+  };
+
+  // Show success message if registration completed
+  if (isSuccess) {
+    return (
+      <div className="max-w-2xl mx-auto">
+        <Card className="text-center">
+          <CardHeader>
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-8 h-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl text-green-700">Registration Successful!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-600">
+              Thank you for registering as an expert with us. Your application has been submitted successfully.
+            </p>
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="font-medium text-blue-800 mb-2">What happens next?</p>
+              <ul className="text-blue-700 space-y-1 text-sm">
+                <li>• We will review your application and certificate</li>
+                <li>• You will receive an email notification about your approval status</li>
+                <li>• Please wait for admin approval before attempting to log in</li>
+                <li>• This process typically takes 1-3 business days</li>
+              </ul>
+            </div>
+            <p className="text-sm text-gray-500">
+              You can close this window now. We'll contact you via email once your account is approved.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -249,24 +349,53 @@ const ExpertRegistrationForm: React.FC = () => {
               className="mt-2"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="therapist" id="therapist" />
-                <Label htmlFor="therapist">Therapist</Label>
+                <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
+                <Label htmlFor="listening-volunteer">Listening Volunteer (Entry level)</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="counselor" id="counselor" />
-                <Label htmlFor="counselor">Counselor</Label>
+                <RadioGroupItem value="listening-expert" id="listening-expert" />
+                <Label htmlFor="listening-expert">Listening Expert (Intermediate)</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="coach" id="coach" />
-                <Label htmlFor="coach">Life Coach</Label>
+                <RadioGroupItem value="listening-coach" id="listening-coach" />
+                <Label htmlFor="listening-coach">Listening Coach (Advanced)</Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="consultant" id="consultant" />
-                <Label htmlFor="consultant">Consultant</Label>
+                <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
+                <Label htmlFor="mindfulness-expert">Mindfulness Expert (Specialized)</Label>
               </div>
             </RadioGroup>
             {form.formState.errors.expertCategory && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.expertCategory.message}</p>
+            )}
+          </div>
+
+          {/* Certificate Upload */}
+          <div>
+            <Label className="text-base font-medium">Upload Proof (Soulversity Certificate) *</Label>
+            <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+              <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <div className="space-y-2">
+                <Label htmlFor="certificate" className="cursor-pointer text-sm font-medium text-primary hover:text-primary/80">
+                  Choose file to upload
+                </Label>
+                <Input
+                  id="certificate"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <p className="text-xs text-gray-500">PDF, JPG, or PNG files up to 5MB</p>
+                {selectedFile && (
+                  <div className="mt-2 p-2 bg-green-50 rounded text-sm text-green-700">
+                    ✓ {selectedFile.name} selected
+                  </div>
+                )}
+              </div>
+            </div>
+            {form.formState.errors.certificate && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.certificate.message}</p>
             )}
           </div>
 
@@ -330,6 +459,39 @@ const ExpertRegistrationForm: React.FC = () => {
             {form.formState.errors.bio && (
               <p className="text-sm text-red-500 mt-1">{form.formState.errors.bio.message}</p>
             )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* CAPTCHA Verification */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-lg font-semibold">
+            <Shield className="h-5 w-5" />
+            Security Verification
+          </div>
+          
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <Label className="text-base font-medium">CAPTCHA Verification *</Label>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="text-lg font-mono bg-white p-3 rounded border-2 border-gray-200">
+                {captchaQuestion.num1} + {captchaQuestion.num2} = ?
+              </div>
+              <Input
+                type="number"
+                placeholder="Answer"
+                {...form.register('captchaAnswer', { valueAsNumber: true })}
+                className="w-24"
+              />
+              <Button 
+                type="button" 
+                variant="outline" 
+                size="sm"
+                onClick={generateCaptcha}
+              >
+                Refresh
+              </Button>
+            </div>
           </div>
         </div>
 

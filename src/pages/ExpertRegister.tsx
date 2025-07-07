@@ -38,7 +38,8 @@ const ExpertRegister: React.FC = () => {
       experience: 0,
       specialties: [],
       bio: '',
-      expertCategory: 'therapist',
+      expertCategory: 'listening-volunteer',
+      captchaAnswer: 0,
       password: '',
       confirmPassword: '',
       termsAccepted: false,
@@ -100,6 +101,7 @@ const ExpertRegister: React.FC = () => {
   };
 
   const specialtyOptions = [
+    'Mindful Listening',
     'Anxiety & Stress',
     'Depression',
     'Relationships',
@@ -264,20 +266,20 @@ const ExpertRegister: React.FC = () => {
                       className="mt-2"
                     >
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="therapist" id="therapist" />
-                        <Label htmlFor="therapist">Therapist</Label>
+                        <RadioGroupItem value="listening-volunteer" id="listening-volunteer" />
+                        <Label htmlFor="listening-volunteer">Listening Volunteer (Entry level)</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="counselor" id="counselor" />
-                        <Label htmlFor="counselor">Counselor</Label>
+                        <RadioGroupItem value="listening-expert" id="listening-expert" />
+                        <Label htmlFor="listening-expert">Listening Expert (Intermediate)</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="coach" id="coach" />
-                        <Label htmlFor="coach">Life Coach</Label>
+                        <RadioGroupItem value="listening-coach" id="listening-coach" />
+                        <Label htmlFor="listening-coach">Listening Coach (Advanced)</Label>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="consultant" id="consultant" />
-                        <Label htmlFor="consultant">Consultant</Label>
+                        <RadioGroupItem value="mindfulness-expert" id="mindfulness-expert" />
+                        <Label htmlFor="mindfulness-expert">Mindfulness Expert (Specialized)</Label>
                       </div>
                     </RadioGroup>
                     {form.formState.errors.expertCategory && (
