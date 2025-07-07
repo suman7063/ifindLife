@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ShieldCheck, Eye, EyeOff, Loader2 } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const AdminLoginClean: React.FC = () => {
   const navigate = useNavigate();
@@ -16,13 +17,11 @@ const AdminLoginClean: React.FC = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [captchaValue, setCaptchaValue] = useState<string | null>(null);
 
-  console.log('🔒 AdminLoginClean: Using correct useAdminAuthClean hook:', {
-    hasAdminAuth: !!adminAuth,
-    isAuthenticated: adminAuth?.isAuthenticated,
-    isLoading: adminAuth?.isLoading,
-    error: adminAuth?.error
-  });
+  // Test site key - replace with real key in production
+  const RECAPTCHA_SITE_KEY = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+
 
   // Clear any conflicting auth sessions on mount
   useEffect(() => {
@@ -69,6 +68,10 @@ const AdminLoginClean: React.FC = () => {
     }
   }, [adminAuth?.isAuthenticated, navigate]);
 
+  const handleCaptchaChange = (value: string | null) => {
+    setCaptchaValue(value);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminAuth) {
@@ -76,17 +79,17 @@ const AdminLoginClean: React.FC = () => {
       return;
     }
 
+    if (!captchaValue) {
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      console.log('🔒 AdminLoginClean: Attempting login with isolated admin system');
       const success = await adminAuth.login(formData.email, formData.password);
       
       if (success) {
-        console.log('✅ AdminLoginClean: Login successful with isolated admin system');
         // Redirect happens in useEffect when isAuthenticated becomes true
-      } else {
-        console.log('❌ AdminLoginClean: Login failed');
       }
     } catch (error) {
       console.error('❌ AdminLoginClean: Submit error:', error);
@@ -99,28 +102,25 @@ const AdminLoginClean: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin mx-auto text-blue-600" />
-          <p className="mt-4 text-gray-600">Loading iFindLife Admin (Clean Auth System)...</p>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-primary" />
+          <p className="mt-4 text-muted-foreground">Loading iFindLife Admin...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <ShieldCheck className="h-12 w-12 text-blue-600" />
+            <ShieldCheck className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
-            iFindLife Admin
+          <CardTitle className="text-2xl font-bold">
+            iFindLife Admin Portal
           </CardTitle>
-          <p className="text-gray-600 mt-2">
-            Clean Authentication System (Isolated)
-          </p>
-          <p className="text-xs text-blue-600 mt-1">
-            ✅ Using useAdminAuthClean hook
+          <p className="text-muted-foreground mt-2">
+            Secure Administrator Access
           </p>
         </CardHeader>
         
@@ -168,34 +168,32 @@ const AdminLoginClean: React.FC = () => {
               </div>
             </div>
             
-            <div className="bg-blue-50 p-3 rounded-md text-sm text-blue-800">
-              <p className="font-medium">Test Credentials:</p>
-              <p>ID: iflsuperadmin</p>
-              <p>Password: IFLadmin2024</p>
+            <div className="space-y-2">
+              <Label>Security Verification</Label>
+              <ReCAPTCHA
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleCaptchaChange}
+                onExpired={() => setCaptchaValue(null)}
+              />
+              {!captchaValue && (
+                <p className="text-sm text-destructive">Please complete the security verification</p>
+              )}
             </div>
             
             <Button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
-              disabled={isSubmitting}
+              className="w-full"
+              disabled={isSubmitting || !captchaValue}
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Signing in...
+                  Authenticating...
                 </>
               ) : (
-                'Admin Login (Clean System)'
+                'Secure Admin Login'
               )}
             </Button>
-            
-            <div className="text-center text-xs text-gray-500 space-y-1">
-              <p>✅ Isolated admin authentication system</p>
-              <p>✅ No interference with user/expert auth</p>
-              <p>✅ Complete separation of concerns</p>
-              <p>✅ Using correct useAdminAuthClean hook</p>
-              <p className="text-blue-600">Old system: /admin-login (separate auth)</p>
-            </div>
           </form>
         </CardContent>
       </Card>

@@ -31,19 +31,11 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const isAdminRoute = window.location.pathname.startsWith('/admin-login') || 
                       window.location.pathname.startsWith('/admin');
 
-  console.log('🔒 AdminAuthClean: Provider initialized', {
-    isAdminRoute,
-    currentPath: window.location.pathname
-  });
-
   useEffect(() => {
     if (!isAdminRoute) {
-      console.log('🔒 AdminAuthClean: Not on admin route, skipping initialization');
       setIsLoading(false);
       return;
     }
-
-    console.log('🔒 AdminAuthClean: Initializing for iFindLife admin (completely isolated)');
 
     const checkSession = async () => {
       try {
@@ -56,7 +48,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           const maxAge = 8 * 60 * 60 * 1000; // 8 hours
           
           if (now - sessionTime < maxAge) {
-            console.log('✅ AdminAuthClean: Valid session found (isolated system):', session.id);
             setAdmin({
               id: session.id,
               name: session.id,
@@ -65,14 +56,10 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             setIsAuthenticated(true);
             setError(null);
           } else {
-            console.log('⏰ AdminAuthClean: Session expired, clearing');
             localStorage.removeItem('clean_admin_session');
           }
-        } else {
-          console.log('ℹ️ AdminAuthClean: No existing session found');
         }
       } catch (err) {
-        console.error('❌ AdminAuthClean: Session check error:', err);
         localStorage.removeItem('clean_admin_session');
       } finally {
         setIsLoading(false);
@@ -84,7 +71,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log('🔒 AdminAuthClean: iFindLife admin login attempt (isolated):', email);
       setError(null);
       setIsLoading(true);
       
@@ -99,7 +85,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       );
       
       if (!foundUser) {
-        console.log('❌ AdminAuthClean: Invalid credentials for:', email);
         setError('Invalid admin credentials');
         return false;
       }
@@ -121,10 +106,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setIsAuthenticated(true);
       setError(null);
 
-      console.log('✅ AdminAuthClean: Login successful (completely isolated system)');
       return true;
     } catch (err) {
-      console.error('❌ AdminAuthClean: Login failed:', err);
       setError('Login failed. Please try again.');
       return false;
     } finally {
@@ -134,7 +117,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const logout = async (): Promise<void> => {
     try {
-      console.log('🔒 AdminAuthClean: iFindLife admin logout (isolated)');
       localStorage.removeItem('clean_admin_session');
       setAdmin(null);
       setIsAuthenticated(false);
@@ -147,7 +129,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // SAFETY: Don't provide context on non-admin routes
   if (!isAdminRoute) {
-    console.log('🔒 AdminAuthClean: Not on admin route, rendering children without context');
     return <>{children}</>;
   }
 
@@ -159,13 +140,6 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     login,
     logout
   };
-
-  console.log('🔒 AdminAuthClean: Providing context:', {
-    hasAdmin: !!admin,
-    isAuthenticated,
-    isLoading,
-    hasError: !!error
-  });
 
   return (
     <AdminAuthContext.Provider value={contextValue}>
