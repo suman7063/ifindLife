@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { FavoritesContext } from './FavoritesContext';
 import { FavoritesContextType } from './types';
 
@@ -16,7 +16,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [programFavoriteDetails, setProgramFavoriteDetails] = useState<Array<{ id: number, title: string }>>([]);
   
   const [loading, setLoading] = useState(true);
-  const { isAuthenticated, user, userProfile } = useAuth();
+  const { isAuthenticated, user } = useSimpleAuth();
 
   // Load favorites when user is authenticated
   useEffect(() => {
@@ -39,7 +39,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load expert favorites with details
       const { data: expertData, error: expertError } = await supabase
         .from('user_favorites')
-        .select('expert_id');
+        .select('expert_id')
+        .eq('user_id', user.id);
         
       if (expertError) throw expertError;
       
@@ -68,7 +69,8 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Load program favorites with details
       const { data: programData, error: programError } = await supabase
         .from('user_favorite_programs')
-        .select('program_id');
+        .select('program_id')
+        .eq('user_id', user.id);
         
       if (programError) throw programError;
       

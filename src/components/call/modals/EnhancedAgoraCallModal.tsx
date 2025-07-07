@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/hooks/useSimpleAuth';
 import { useAgoraCall } from '@/hooks/useAgoraCall';
 import AgoraCallContent from '../AgoraCallContent';
 import AgoraCallControls from '../AgoraCallControls';
@@ -28,7 +28,7 @@ const EnhancedAgoraCallModal: React.FC<EnhancedAgoraCallModalProps> = ({
   onClose,
   expert
 }) => {
-  const { isAuthenticated, userProfile } = useAuth();
+  const { isAuthenticated, userProfile } = useSimpleAuth();
   const [callType, setCallType] = useState<'voice' | 'video'>('video');
   const [callStatus, setCallStatus] = useState<'choosing' | 'connecting' | 'connected' | 'ended' | 'error'>('choosing');
   const [showChat, setShowChat] = useState(false);

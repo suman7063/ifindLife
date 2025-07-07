@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import AgoraCallModal from '@/components/AgoraCallModal';
 import AgoraChatModal from '@/components/AgoraChatModal';
 import { toast } from 'sonner';
+import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import ExpertHeader from '@/components/expert/ExpertHeader';
 import ExpertProfile from '@/components/expert/ExpertProfile';
 import ExpertDetailTabs from '@/components/expert/ExpertDetailTabs';
@@ -15,6 +16,7 @@ const ExpertDetail = () => {
   const [searchParams] = useSearchParams();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const { executePendingAction, isAuthenticated } = useAuthRedirectSystem();
   
   useEffect(() => {
     if (searchParams.get('call') === 'true') {
@@ -24,6 +26,25 @@ const ExpertDetail = () => {
       setIsChatModalOpen(true);
     }
   }, [searchParams]);
+
+  // Check for pending actions after user returns from login
+  useEffect(() => {
+    if (isAuthenticated) {
+      const pendingAction = executePendingAction();
+      if (pendingAction) {
+        console.log('ExpertDetail: Executing pending action:', pendingAction);
+        
+        // Execute the appropriate action based on the pending action type
+        if (pendingAction.action === 'call') {
+          setIsCallModalOpen(true);
+        } else if (pendingAction.action === 'connect') {
+          setIsChatModalOpen(true);
+        } else if (pendingAction.action === 'book') {
+          handleBookClick();
+        }
+      }
+    }
+  }, [isAuthenticated]);
   
   const expert = {
     id: Number(id),

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import AuthRedirectSystem from '@/utils/authRedirectSystem';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -27,9 +28,19 @@ const UserLogin: React.FC = () => {
   // Redirect authenticated users to appropriate dashboard
   useEffect(() => {
     if (!isLoading && isAuthenticated && user && userType !== 'none') {
-      console.log('UserLogin: User authenticated, redirecting based on userType:', userType);
+      console.log('UserLogin: User authenticated, checking for redirect data');
       
-      // Wait a bit for userType to be determined, then redirect
+      // Check for auth redirect first
+      const redirectData = AuthRedirectSystem.getRedirect();
+      if (redirectData) {
+        console.log('UserLogin: Found redirect data, executing redirect');
+        setTimeout(() => {
+          AuthRedirectSystem.executeRedirect();
+        }, 500);
+        return;
+      }
+      
+      // Otherwise, redirect to appropriate dashboard based on userType
       setTimeout(() => {
         if (userType === 'expert') {
           console.log('UserLogin: Redirecting to expert dashboard');
@@ -59,13 +70,7 @@ const UserLogin: React.FC = () => {
         console.log('UserLogin: Login successful, userType:', result.userType);
         toast.success('Login successful!', { duration: 2000 });
         
-        // Navigate based on determined user type
-        setTimeout(() => {
-          const targetRoute = result.userType === 'expert' ? '/expert-dashboard' : '/user-dashboard';
-          console.log('UserLogin: Navigating to:', targetRoute);
-          navigate(targetRoute, { replace: true });
-        }, 1000);
-        
+        // Navigation will be handled by the useEffect after auth state updates
         return true;
       } else {
         console.error('UserLogin: Login failed:', result.error);

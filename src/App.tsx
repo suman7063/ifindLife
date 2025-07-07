@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
+import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
@@ -22,6 +23,7 @@ import NotFound from './pages/NotFound';
 import LogoutPage from './pages/LogoutPage';
 import Services from './pages/Services';
 import Experts from './pages/Experts';
+import ExpertDetail from './pages/ExpertDetail';
 import Programs from './pages/Programs';
 import ProgramsForWellnessSeekers from './pages/ProgramsForWellnessSeekers';
 import ProgramsForAcademicInstitutes from './pages/ProgramsForAcademicInstitutes';
@@ -42,7 +44,8 @@ const queryClient = new QueryClient();
 const UserRoutes: React.FC = () => {
   return (
     <SimpleAuthProvider>
-      <Routes>
+      <FavoritesProvider>
+        <Routes>
         <Route path="/" element={<Home />} />
         
         {/* Services Routes */}
@@ -52,6 +55,7 @@ const UserRoutes: React.FC = () => {
         
         {/* Expert Routes */}
         <Route path="/experts" element={<Experts />} />
+        <Route path="/experts/:id" element={<ExpertDetail />} />
         <Route path="/expert-login" element={<ExpertLogin />} />
         <Route path="/expert-signup" element={<ExpertSignup />} />
         <Route path="/expert-dashboard/*" element={<ExpertDashboard />} />
@@ -97,7 +101,8 @@ const UserRoutes: React.FC = () => {
         
         {/* Catch-all route */}
         <Route path="*" element={<NotFound />} />
-      </Routes>
+        </Routes>
+      </FavoritesProvider>
     </SimpleAuthProvider>
   );
 };

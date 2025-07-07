@@ -4,6 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Languages, Star, Phone, Calendar, MessageCircle } from "lucide-react";
+import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
+import FavoriteButton from '@/components/favorites/FavoriteButton';
+import { useFavorites } from '@/contexts/favorites/FavoritesContext';
 
 interface ExpertProfileProps {
   expert: {
@@ -31,23 +34,68 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
   onBookClick,
   onChatClick 
 }) => {
+  const { requireAuthForExpert, requireAuthForCall, isAuthenticated } = useAuthRedirectSystem();
+  const { isExpertFavorite, toggleExpertFavorite } = useFavorites();
+
+  const handleCallClick = () => {
+    if (!requireAuthForCall(expert.id.toString(), expert.name, 'video')) {
+      return; // User will be redirected to login
+    }
+    onCallClick();
+  };
+
+  const handleBookClick = () => {
+    if (!requireAuthForExpert(expert.id.toString(), expert.name, 'book')) {
+      return; // User will be redirected to login
+    }
+    onBookClick();
+  };
+
+  const handleChatClick = () => {
+    if (!requireAuthForExpert(expert.id.toString(), expert.name, 'connect')) {
+      return; // User will be redirected to login
+    }
+    onChatClick();
+  };
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!isAuthenticated) {
+      return; // FavoriteButton will handle auth redirect
+    }
+    
+    toggleExpertFavorite(expert.id);
+  };
   return (
     <Card className="overflow-hidden border-0 shadow-md">
-      {/* Expert Image */}
-      <div className="relative h-64 w-full">
-        <img 
-          src={expert.imageUrl} 
-          alt={expert.name} 
-          className="w-full h-full object-cover"
-        />
-        
-        {/* Online Status */}
-        {expert.online && (
-          <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-            Online
+        {/* Expert Image */}
+        <div className="relative h-64 w-full">
+          <img 
+            src={expert.imageUrl} 
+            alt={expert.name} 
+            className="w-full h-full object-cover"
+          />
+          
+          {/* Online Status */}
+          {expert.online && (
+            <div className="absolute top-4 right-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+              Online
+            </div>
+          )}
+
+          {/* Favorite Button */}
+          <div className="absolute top-4 left-4">
+            <FavoriteButton
+              isFavorite={isExpertFavorite(expert.id)}
+              onClick={handleFavoriteClick}
+              expertId={expert.id.toString()}
+              expertName={expert.name}
+              tooltipText={isExpertFavorite(expert.id) ? 'Remove from favorites' : 'Add to favorites'}
+            />
           </div>
-        )}
-      </div>
+        </div>
       
       <CardContent className="p-6">
         {/* Expert Name and Rating */}
@@ -98,7 +146,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           
           <div className="grid grid-cols-2 gap-3">
             <Button
-              onClick={onCallClick}
+              onClick={handleCallClick}
               className="flex items-center justify-center gap-2"
               variant="default"
             >
@@ -107,7 +155,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
             </Button>
             
             <Button 
-              onClick={onBookClick} 
+              onClick={handleBookClick} 
               className="flex items-center justify-center gap-2"
               variant="outline"
               data-id="booking-tab-button"
@@ -118,7 +166,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           </div>
           
           <Button 
-            onClick={onChatClick}
+            onClick={handleChatClick}
             className="w-full flex items-center justify-center gap-2"
             variant="secondary"
             data-id="chat-button"
