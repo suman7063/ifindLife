@@ -1,5 +1,3 @@
-
-// Follow Deno deploy guidelines for Edge Functions
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RAZORPAY_KEY_ID = Deno.env.get("RAZORPAY_KEY_ID") || "";
@@ -21,7 +19,7 @@ serve(async (req) => {
       throw new Error("RazorPay credentials are not configured");
     }
 
-    const { amount } = await req.json();
+    const { amount, currency = "INR", receipt, notes } = await req.json();
 
     if (!amount || isNaN(amount) || amount <= 0) {
       throw new Error("Invalid amount");
@@ -35,9 +33,10 @@ serve(async (req) => {
         "Authorization": `Basic ${btoa(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`)}`,
       },
       body: JSON.stringify({
-        amount: amount,
-        currency: "INR",
-        receipt: `receipt_${Date.now()}`,
+        amount: amount, // Amount in smallest currency unit (paise for INR)
+        currency: currency,
+        receipt: receipt || `receipt_${Date.now()}`,
+        notes: notes || {}
       }),
     });
 
