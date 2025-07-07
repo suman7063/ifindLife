@@ -8,7 +8,6 @@ export const getTabTitle = (tab: string): string => {
     experts: 'Experts Management',
     expertApprovals: 'Expert Approvals',
     services: 'Services Management',
-    herosection: 'Hero Section Editor',
     testimonials: 'Testimonials Management',
     programs: 'Programs Management',
     sessions: 'Sessions Management',

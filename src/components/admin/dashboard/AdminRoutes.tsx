@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import AdminDashboard from './AdminDashboard';
+import AdminOverview from './AdminOverview';
 import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
 import { ServicesEditor } from '@/components/admin/services';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
@@ -34,7 +34,7 @@ const AdminRoutes: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/overview" element={<AdminDashboard />} />
+      <Route path="/overview" element={<AdminOverview />} />
       <Route path="/analytics" element={<AdminAnalytics />} />
       <Route path="/reports" element={<AdminReports />} />
       <Route path="/content" element={<ContentSearchManager />} />

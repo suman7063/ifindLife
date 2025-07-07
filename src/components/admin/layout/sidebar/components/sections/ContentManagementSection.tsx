@@ -12,7 +12,6 @@ import {
 type ContentManagementSectionProps = {
   activeTab?: string;
   onTabChange: (tab: string) => void;
-  hasHeroSectionPermission: boolean;
   hasTestimonialsPermission: boolean;
   hasProgramsPermission: boolean;
   hasSessionsPermission: boolean;
@@ -22,7 +21,6 @@ type ContentManagementSectionProps = {
 const ContentManagementSection: React.FC<ContentManagementSectionProps> = ({
   activeTab,
   onTabChange,
-  hasHeroSectionPermission,
   hasTestimonialsPermission,
   hasProgramsPermission,
   hasSessionsPermission,
@@ -36,18 +34,6 @@ const ContentManagementSection: React.FC<ContentManagementSectionProps> = ({
         </h3>
       </div>
       
-      {hasHeroSectionPermission && (
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={() => onTabChange('herosection')}
-            className={activeTab === 'herosection' ? 'bg-accent' : ''}
-          >
-            <FileText className="h-4 w-4" />
-            <span>Hero Section</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      )}
-
       {hasTestimonialsPermission && (
         <SidebarMenuItem>
           <SidebarMenuButton

@@ -3,6 +3,32 @@ import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Session } from './types';
 import { defaultSessions } from './defaultSessions';
+import { issueBasedPrograms } from '@/data/issueBasedPrograms';
+
+// Helper functions to get color and icon based on category
+const getCategoryColor = (category: string): string => {
+  const colors: Record<string, string> = {
+    mental_health: 'bg-blue-100 text-blue-800',
+    relationships: 'bg-pink-100 text-pink-800',
+    career: 'bg-purple-100 text-purple-800',
+    productivity: 'bg-green-100 text-green-800',
+    business: 'bg-gray-100 text-gray-800',
+    academic: 'bg-cyan-100 text-cyan-800'
+  };
+  return colors[category] || 'bg-gray-100 text-gray-800';
+};
+
+const getCategoryIcon = (category: string): string => {
+  const icons: Record<string, string> = {
+    mental_health: '🧠',
+    relationships: '💝',
+    career: '🚀',
+    productivity: '⚡',
+    business: '💼',
+    academic: '📚'
+  };
+  return icons[category] || '📋';
+};
 
 export const useSessionsManager = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -15,52 +41,25 @@ export const useSessionsManager = () => {
     fetchSessions();
   }, []);
 
-  // Fetch sessions from localStorage or initialize with defaults
+  // Fetch sessions from the same data source as frontend (issueBasedPrograms)
   const fetchSessions = async () => {
     setIsLoading(true);
     try {
-      let fetchedSessions: Session[] = [];
+      // Transform issueBasedPrograms to session format to match frontend data
+      const programSessions: Session[] = issueBasedPrograms.map(program => ({
+        id: program.id.toString(),
+        title: program.title,
+        description: program.description,
+        color: getCategoryColor(program.category),
+        icon: getCategoryIcon(program.category),
+        href: `/program/${program.id}`
+      }));
       
-      // First, try to get sessions from the main website content
-      const storedContent = localStorage.getItem('ifindlife-content');
-      if (storedContent) {
-        const parsedContent = JSON.parse(storedContent);
-        if (parsedContent.sessions && parsedContent.sessions.length > 0) {
-          fetchedSessions = parsedContent.sessions;
-          console.log('Sessions loaded from website content:', fetchedSessions.length);
-        }
-      }
-      
-      // If no sessions in main content, try dedicated sessions storage
-      if (fetchedSessions.length === 0) {
-        const storedSessions = localStorage.getItem('ifindlife-sessions');
-        if (storedSessions) {
-          fetchedSessions = JSON.parse(storedSessions);
-          console.log('Sessions loaded from dedicated storage:', fetchedSessions.length);
-        }
-      }
-      
-      // If still no sessions, use defaults and save them
-      if (fetchedSessions.length === 0) {
-        fetchedSessions = [...defaultSessions];
-        
-        // Save defaults to both storages for consistency
-        localStorage.setItem('ifindlife-sessions', JSON.stringify(fetchedSessions));
-        
-        // Also update main content if it exists
-        if (storedContent) {
-          const content = JSON.parse(storedContent);
-          content.sessions = fetchedSessions;
-          localStorage.setItem('ifindlife-content', JSON.stringify(content));
-        }
-        
-        console.log('Using default sessions and saved for future use');
-      }
-      
-      setSessions(fetchedSessions);
+      console.log('Sessions loaded from issueBasedPrograms data:', programSessions.length);
+      setSessions(programSessions);
     } catch (error) {
-      console.error('Error fetching sessions:', error);
-      toast.error('Failed to fetch sessions');
+      console.error('Error loading sessions from programs data:', error);
+      toast.error('Failed to load sessions');
       // Fallback to defaults
       setSessions([...defaultSessions]);
     } finally {
