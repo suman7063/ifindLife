@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 
 export const useUserFavorites = () => {
   const { user, isAuthenticated } = useAuth();
-  const [favoriteExperts, setFavoriteExperts] = useState<number[]>([]);
+  const [favoriteExperts, setFavoriteExperts] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
@@ -39,7 +39,7 @@ export const useUserFavorites = () => {
     }
   };
   
-  const addFavorite = async (expertId: number): Promise<boolean> => {
+  const addFavorite = async (expertId: string): Promise<boolean> => {
     if (!user?.id) return false;
     
     try {
@@ -60,7 +60,7 @@ export const useUserFavorites = () => {
     }
   };
   
-  const removeFavorite = async (expertId: number): Promise<boolean> => {
+  const removeFavorite = async (expertId: string): Promise<boolean> => {
     if (!user?.id) return false;
     
     try {
@@ -82,7 +82,7 @@ export const useUserFavorites = () => {
     }
   };
   
-  const isFavorite = (expertId: number): boolean => {
+  const isFavorite = (expertId: string): boolean => {
     return favoriteExperts.includes(expertId);
   };
   

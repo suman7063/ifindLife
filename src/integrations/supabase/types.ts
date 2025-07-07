@@ -1106,6 +1106,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "user_favorites_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "experts"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "user_favorites_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false

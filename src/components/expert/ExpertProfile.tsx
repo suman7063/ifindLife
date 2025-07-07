@@ -66,7 +66,7 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
       return; // FavoriteButton will handle auth redirect
     }
     
-    toggleExpertFavorite(expert.id);
+    toggleExpertFavorite(expert.id.toString());
   };
   return (
     <Card className="overflow-hidden border-0 shadow-md">
@@ -88,11 +88,11 @@ const ExpertProfile: React.FC<ExpertProfileProps> = ({
           {/* Favorite Button */}
           <div className="absolute top-4 left-4">
             <FavoriteButton
-              isFavorite={isExpertFavorite(expert.id)}
+              isFavorite={isExpertFavorite(expert.id.toString())}
               onClick={handleFavoriteClick}
               expertId={expert.id.toString()}
               expertName={expert.name}
-              tooltipText={isExpertFavorite(expert.id) ? 'Remove from favorites' : 'Add to favorites'}
+              tooltipText={isExpertFavorite(expert.id.toString()) ? 'Remove from favorites' : 'Add to favorites'}
             />
           </div>
         </div>

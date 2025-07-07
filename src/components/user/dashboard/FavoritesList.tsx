@@ -37,12 +37,12 @@ const FavoritesList: React.FC<FavoritesListProps> = ({ type, onToggle }) => {
     if (onToggle) {
       await onToggle(id);
     } else {
-      // Convert string IDs to numbers if needed
-      const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
-      
+      // Expert IDs are now strings (UUIDs), program IDs remain numbers
       if (type === 'experts') {
-        await toggleExpertFavorite(numericId);
+        const stringId = typeof id === 'number' ? id.toString() : id;
+        await toggleExpertFavorite(stringId);
       } else {
+        const numericId = typeof id === 'string' ? parseInt(id, 10) : id;
         await toggleProgramFavorite(numericId);
       }
     }

@@ -7,12 +7,12 @@ import { FavoritesContext } from './FavoritesContext';
 import { FavoritesContextType } from './types';
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Favorite IDs
-  const [expertFavorites, setExpertFavorites] = useState<number[]>([]);
+  // Favorite IDs - expert IDs are now UUIDs
+  const [expertFavorites, setExpertFavorites] = useState<string[]>([]);
   const [programFavorites, setProgramFavorites] = useState<number[]>([]);
   
   // Favorite details with full data
-  const [expertFavoriteDetails, setExpertFavoriteDetails] = useState<Array<{ id: number, name: string }>>([]);
+  const [expertFavoriteDetails, setExpertFavoriteDetails] = useState<Array<{ id: string, name: string }>>([]);
   const [programFavoriteDetails, setProgramFavoriteDetails] = useState<Array<{ id: number, title: string }>>([]);
   
   const [loading, setLoading] = useState(true);
@@ -49,19 +49,16 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       
       // Fetch expert details for these IDs
       if (expertIds.length > 0) {
-        // Convert numbers to strings for Supabase .in() method if needed
-        const expertIdsForQuery = expertIds.map(id => id.toString());
-        
         const { data: expertsDetails, error: expertsDetailsError } = await supabase
           .from('experts')
           .select('id, name')
-          .in('id', expertIdsForQuery);
+          .in('id', expertIds);
           
         if (expertsDetailsError) throw expertsDetailsError;
         
-        // Convert UUID strings to numbers if needed
+        // IDs are already strings (UUIDs)
         setExpertFavoriteDetails(expertsDetails.map(expert => ({
-          id: typeof expert.id === 'string' ? parseInt(expert.id) : expert.id,
+          id: expert.id,
           name: expert.name
         })));
       }
@@ -96,7 +93,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const addExpertFavorite = async (expertId: number) => {
+  const addExpertFavorite = async (expertId: string) => {
     try {
       if (!user) {
         toast.error('You must be logged in to add favorites');
@@ -118,12 +115,12 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       const { data: expertData, error: expertError } = await supabase
         .from('experts')
         .select('id, name')
-        .eq('id', expertId.toString())
+        .eq('id', expertId)
         .single();
         
       if (!expertError && expertData) {
         setExpertFavoriteDetails(prev => [...prev, {
-          id: typeof expertData.id === 'string' ? parseInt(expertData.id) : expertData.id,
+          id: expertData.id,
           name: expertData.name
         }]);
       }
@@ -137,7 +134,7 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const removeExpertFavorite = async (expertId: number) => {
+  const removeExpertFavorite = async (expertId: string) => {
     try {
       if (!user) {
         toast.error('You must be logged in to remove favorites');
@@ -164,11 +161,11 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   };
 
-  const isExpertFavorite = (expertId: number) => {
+  const isExpertFavorite = (expertId: string) => {
     return expertFavorites.includes(expertId);
   };
   
-  const toggleExpertFavorite = async (expertId: number) => {
+  const toggleExpertFavorite = async (expertId: string) => {
     if (isExpertFavorite(expertId)) {
       return await removeExpertFavorite(expertId);
     } else {

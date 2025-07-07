@@ -21,7 +21,7 @@ export const useExpertFavorites = (
         .from('user_favorites')
         .insert({
           user_id: userId,
-          expert_id: parseInt(String(expert.id), 10)
+          expert_id: String(expert.id)
         });
         
       if (error) throw error;
@@ -45,21 +45,21 @@ export const useExpertFavorites = (
     }
     
     try {
-      const expertIdInt = parseInt(String(expert.id), 10);
+      const expertIdStr = String(expert.id);
       
       const { error } = await supabase
         .from('user_favorites')
         .delete()
         .eq('user_id', userId)
-        .eq('expert_id', expertIdInt);
+        .eq('expert_id', expertIdStr);
         
       if (error) throw error;
       
       if (setFavoriteExperts) {
         // Fix the type issue here - explicitly cast to the expected type
         setFavoriteExperts(favoriteExperts.filter(item => {
-          const itemExpertId = parseInt(String(item.expert_id), 10);
-          return itemExpertId !== expertIdInt;
+          const itemExpertId = String(item.expert_id);
+          return itemExpertId !== expertIdStr;
         }));
       }
       
