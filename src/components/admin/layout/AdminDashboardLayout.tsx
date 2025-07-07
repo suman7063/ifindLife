@@ -6,7 +6,7 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { toast } from 'sonner';
-import { useSecureAdminAuth } from '@/contexts/admin-auth/SecureAdminAuthProvider';
+import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
 import AdminSidebar from './sidebar/AdminSidebar';
 import RestoreSidebarButton from './sidebar/RestoreSidebarButton';
 import { getTabTitle } from './utils/tabUtils';
@@ -29,7 +29,9 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { logout, isSuperAdmin, currentUser } = useSecureAdminAuth();
+  const adminAuth = useAdminAuthClean();
+  const { logout } = adminAuth || {};
+  const currentUser = adminAuth?.admin;
   
   const handleTabChange = (tab: string) => {
     console.log('AdminDashboardLayout: Changing tab to', tab);
@@ -55,11 +57,11 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
     }
   };
 
-  // Check if current user is a super admin
-  const userIsSuperAdmin = currentUser ? isSuperAdmin(currentUser) : false;
+  // Check if current user is a super admin (simplified for clean auth)
+  const userIsSuperAdmin = currentUser?.role === 'superadmin';
 
-  // Get user permissions for display
-  const userPermissions = getUserPermissions(currentUser);
+  // Get user permissions for display (simplified for clean auth)
+  const userPermissions = {};
 
   // Get current tab from URL if activeTab is not provided
   const currentTab = activeTab || location.pathname.split('/')[2] || 'overview';
@@ -73,8 +75,8 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             onTabChange={handleTabChange}
             onLogout={handleLogout}
             isSuperAdmin={userIsSuperAdmin}
-            username={currentUser?.username || 'Admin'}
-            userPermissions={(currentUser?.permissions || {}) as Record<string, boolean>}
+            username={currentUser?.name || currentUser?.id || 'Admin'}
+            userPermissions={userPermissions}
           />
           
           <SidebarInset className="relative w-full">

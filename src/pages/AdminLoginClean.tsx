@@ -24,6 +24,15 @@ const AdminLoginClean: React.FC = () => {
     error: adminAuth?.error
   });
 
+  // Clear any conflicting auth sessions on mount
+  useEffect(() => {
+    console.log('🔒 AdminLoginClean: Clearing conflicting auth sessions');
+    // Clear expert and user sessions to prevent conflicts
+    localStorage.removeItem('sb-nmcqyudqvbldxwzhyzma-auth-token');
+    localStorage.removeItem('expert_session');
+    localStorage.removeItem('user_session');
+  }, []);
+
   // SAFETY: Only render on admin routes
   if (!window.location.pathname.startsWith('/admin')) {
     console.log('🔒 AdminLoginClean: Not on admin route, not rendering');
@@ -34,7 +43,7 @@ const AdminLoginClean: React.FC = () => {
   useEffect(() => {
     if (adminAuth?.isAuthenticated) {
       console.log('✅ AdminLoginClean: Already authenticated, redirecting to dashboard');
-      navigate('/admin-dashboard-clean', { replace: true });
+      navigate('/admin/overview', { replace: true });
     }
   }, [adminAuth?.isAuthenticated, navigate]);
 

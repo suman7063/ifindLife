@@ -28,8 +28,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [error, setError] = useState<string | null>(null);
 
   // SAFETY: Only initialize on admin routes
-  const isAdminRoute = window.location.pathname.startsWith('/admin-login-clean') || 
-                      window.location.pathname.startsWith('/admin-dashboard-clean');
+  const isAdminRoute = window.location.pathname.startsWith('/admin-login') || 
+                      window.location.pathname.startsWith('/admin');
 
   console.log('🔒 AdminAuthClean: Provider initialized', {
     isAdminRoute,
@@ -145,7 +145,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setAdmin(null);
       setIsAuthenticated(false);
       setError(null);
-      window.location.href = '/admin-login-clean';
+      window.location.href = '/admin-login';
     } catch (err) {
       console.error('❌ AdminAuthClean: Logout error:', err);
     }
@@ -182,8 +182,8 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useAdminAuthClean = () => {
   const context = useContext(AdminAuthContext);
-  const isOnAdminRoute = window.location.pathname.startsWith('/admin-login-clean') || 
-                        window.location.pathname.startsWith('/admin-dashboard-clean');
+  const isOnAdminRoute = window.location.pathname.startsWith('/admin-login') || 
+                        window.location.pathname.startsWith('/admin');
   
   if (!context && isOnAdminRoute) {
     console.error('❌ useAdminAuthClean: Must be used within AdminAuthProvider on admin routes');

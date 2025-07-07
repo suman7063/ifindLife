@@ -3,7 +3,6 @@ import React from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
-import { SecureAdminAuthProvider } from '@/contexts/admin-auth/SecureAdminAuthProvider';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
@@ -11,10 +10,8 @@ import ExpertLogin from './pages/ExpertLogin';
 import ExpertSignup from './pages/ExpertRegister';
 import ExpertDashboard from './pages/ExpertDashboard';
 import UserDashboardWrapper from './pages/UserDashboardWrapper';
-import AdminLogin from './pages/AdminLogin';
-import SecureAdminLogin from './pages/SecureAdminLogin';
-import AdminDashboard from './pages/admin/Testing';
-import SecureAdminDashboard from './pages/SecureAdminDashboard';
+import AdminLoginClean from '@/pages/AdminLoginClean';
+import AdminDashboardClean from '@/pages/AdminDashboardClean';
 import ServiceDetailPage from './pages/service/ServiceDetailPage';
 import ProgramDetailPage from './pages/ProgramDetail';
 import ContactUs from './pages/Contact';
@@ -35,33 +32,19 @@ import BlogPost from './pages/BlogPost';
 import UnifiedAssessment from './pages/UnifiedAssessment';
 import AuthTestPage from './pages/AuthTestPage';
 import { Toaster } from '@/components/ui/toaster';
-import AdminLoginClean from '@/pages/AdminLoginClean';
-import AdminDashboardClean from '@/pages/AdminDashboardClean';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient();
 
-// Component wrapper for admin routes with AdminAuthProvider
+// Component wrapper for admin routes with AdminAuthProvider (Clean)
 const AdminRoutes: React.FC = () => {
   return (
     <AdminAuthProvider>
       <Routes>
-        <Route path="/admin-login-clean" element={<AdminLoginClean />} />
-        <Route path="/admin-dashboard-clean" element={<AdminDashboardClean />} />
+        <Route path="/admin-login" element={<AdminLoginClean />} />
+        <Route path="/admin/*" element={<AdminDashboardClean />} />
       </Routes>
     </AdminAuthProvider>
-  );
-};
-
-// Component wrapper for secure admin routes with SecureAdminAuthProvider
-const SecureAdminRoutes: React.FC = () => {
-  return (
-    <SecureAdminAuthProvider>
-      <Routes>
-        <Route path="/admin-login" element={<SecureAdminLogin />} />
-        <Route path="/admin/*" element={<SecureAdminDashboard />} />
-      </Routes>
-    </SecureAdminAuthProvider>
   );
 };
 
@@ -138,12 +121,20 @@ function App() {
       <BrowserRouter>
         <Routes>
           {/* Clean Admin routes with isolated AdminAuthProvider */}
-          <Route path="/admin-login-clean" element={<AdminRoutes />} />
-          <Route path="/admin-dashboard-clean" element={<AdminRoutes />} />
+          <Route path="/admin-login-clean" element={
+            <AdminAuthProvider>
+              <AdminLoginClean />
+            </AdminAuthProvider>
+          } />
+          <Route path="/admin-dashboard-clean" element={
+            <AdminAuthProvider>
+              <AdminDashboardClean />
+            </AdminAuthProvider>
+          } />
           
-          {/* Secure Admin routes with SecureAdminAuthProvider */}
-          <Route path="/admin-login" element={<SecureAdminRoutes />} />
-          <Route path="/admin/*" element={<SecureAdminRoutes />} />
+          {/* Main Admin routes with Clean AdminAuthProvider */}
+          <Route path="/admin-login" element={<AdminRoutes />} />
+          <Route path="/admin/*" element={<AdminRoutes />} />
           
           {/* All other routes with SimpleAuthProvider */}
           <Route path="/*" element={<UserRoutes />} />

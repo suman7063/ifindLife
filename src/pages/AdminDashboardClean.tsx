@@ -26,7 +26,7 @@ const AdminDashboardClean: React.FC = () => {
   useEffect(() => {
     if (!adminAuth?.isLoading && !adminAuth?.isAuthenticated) {
       console.log('❌ AdminDashboardClean: Not authenticated, redirecting');
-      navigate('/admin-login-clean', { replace: true });
+      navigate('/admin-login', { replace: true });
     }
   }, [adminAuth?.isAuthenticated, adminAuth?.isLoading, navigate]);
 
