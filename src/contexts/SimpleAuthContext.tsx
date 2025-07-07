@@ -261,43 +261,51 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         loadExpertProfile(user.id)
       ]);
 
-      // Get login preferences
-      const preferredRole = localStorage.getItem('sessionType') || localStorage.getItem('preferredRole');
+      // Get login preferences with explicit priority
+      const sessionType = localStorage.getItem('sessionType');
+      const preferredRole = localStorage.getItem('preferredRole');
+      const loginPreference = sessionType || preferredRole;
       
       console.log('📋 Profile refresh results:', {
         hasUserProfile: !!userProfileData,
         hasExpertProfile: !!expertData,
         expertStatus: expertData?.status,
-        preferredRole
+        sessionType,
+        preferredRole,
+        loginPreference
       });
       
       // Determine user type based on loaded profiles and preferences
       let newUserType: SessionType = 'none';
       
       if (userProfileData && expertData) {
-        // User has both profiles - prioritize explicit expert login preference
-        if (preferredRole === 'expert' && expertData.status === 'approved') {
-          console.log('✅ User logged in as expert and has approved expert profile');
+        // User has both profiles - STRICTLY honor the login preference
+        if (loginPreference === 'expert' && expertData.status === 'approved') {
+          console.log('✅ EXPERT LOGIN: User has both profiles but logged in as expert - honoring expert preference');
           newUserType = 'expert';
-        } else if (preferredRole === 'user') {
-          console.log('✅ User logged in as user and has user profile');
+        } else if (loginPreference === 'user') {
+          console.log('✅ USER LOGIN: User has both profiles and logged in as user - honoring user preference');
           newUserType = 'user';
+        } else if (expertData.status === 'approved') {
+          // If no clear preference but expert is approved, default to expert
+          console.log('ℹ️ No clear preference but expert approved - defaulting to expert');
+          newUserType = 'expert';
         } else {
-          // Default to user if no clear preference
-          console.log('ℹ️ Defaulting to user type for dual profile user');
+          // Default to user if expert not approved
+          console.log('ℹ️ Expert not approved - defaulting to user');
           newUserType = 'user';
         }
       } else if (expertData && expertData.status === 'approved') {
         // Only expert profile exists and is approved
-        console.log('✅ Only expert profile exists and is approved');
+        console.log('✅ EXPERT ONLY: Only expert profile exists and is approved');
         newUserType = 'expert';
       } else if (userProfileData) {
         // Only user profile exists
-        console.log('✅ Only user profile exists');
+        console.log('✅ USER ONLY: Only user profile exists');
         newUserType = 'user';
       } else {
         // No profiles found - this is an error state
-        console.warn('⚠️ No valid profiles found for authenticated user');
+        console.warn('⚠️ PROFILE ERROR: No valid profiles found for authenticated user');
         newUserType = 'none';
       }
       
@@ -462,12 +470,12 @@ export const SimpleAuthProvider: React.FC<SimpleAuthProviderProps> = ({ children
         
         if (session?.user) {
           console.log('👤 User authenticated, loading profiles...');
-          // Wait for user state to be set, then refresh profiles
+          // Immediately refresh profiles without delay to prevent race conditions
           setTimeout(async () => {
             if (mounted) {
               await refreshProfiles();
             }
-          }, 1000); // Increased delay to ensure proper state setting
+          }, 100); // Reduced delay to fix race condition in expert login
         } else {
           // Clear profiles when user is not authenticated
           console.log('🚫 User logged out, clearing profiles');
