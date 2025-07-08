@@ -17,7 +17,7 @@ const ExpertAvailabilityList: React.FC<ExpertAvailabilityListProps> = ({ user })
 
   useEffect(() => {
     if (user?.id) {
-      fetchAvailabilities(user.id);
+      fetchAvailabilities();
     }
   }, [user?.id, fetchAvailabilities]);
 
@@ -82,7 +82,7 @@ const ExpertAvailabilityList: React.FC<ExpertAvailabilityListProps> = ({ user })
           <div className="text-center py-8">
             <p className="text-red-600">{error}</p>
             <Button 
-              onClick={() => fetchAvailabilities(user.id)} 
+              onClick={() => fetchAvailabilities()} 
               variant="outline" 
               className="mt-4"
             >

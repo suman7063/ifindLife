@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import AvailabilityBasedBooking from './AvailabilityBasedBooking';
 import EnhancedAgoraCallModal from '../call/modals/EnhancedAgoraCallModal';
@@ -29,6 +30,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
   onClose
 }) => {
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'schedule' | 'instant'>('instant');
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [callType, setCallType] = useState<'voice' | 'video'>('video');
@@ -43,6 +45,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
   const handleInstantCall = (type: 'voice' | 'video') => {
     if (!isAuthenticated) {
       toast.error('Please log in to start a call');
+      navigate('/user-login');
       return;
     }
 
@@ -63,6 +66,7 @@ const IntegratedBookingSystem: React.FC<IntegratedBookingSystemProps> = ({
   const handleScheduledBooking = async (slotId: string, date: string, time: string) => {
     if (!isAuthenticated || !user) {
       toast.error('Please log in to book an appointment');
+      navigate('/user-login');
       return;
     }
 

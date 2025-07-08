@@ -3,6 +3,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AdminOverview from './AdminOverview';
 import ExpertsEditor from '@/components/admin/experts/ExpertsEditor';
+import ExpertsListView from '@/components/admin/experts/ExpertsListView';
 import { ServicesEditor } from '@/components/admin/services';
 import ExpertApprovals from '@/components/admin/experts/ExpertApprovals';
 import TestimonialsEditor from '@/components/admin/TestimonialsEditor';
@@ -48,6 +49,7 @@ const AdminRoutes: React.FC = () => {
         />
       } />
       <Route path="/expertApprovals" element={<ExpertApprovals />} />
+      <Route path="/experts-list" element={<ExpertsListView />} />
       <Route path="/services" element={
         <ServicesEditor 
           categories={services} 

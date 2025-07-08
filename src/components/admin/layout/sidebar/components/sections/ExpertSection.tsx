@@ -21,9 +21,15 @@ const ExpertSection: React.FC<ExpertSectionProps> = ({
   if (hasExpertsPermission) {
     items.push({
       icon: Users,
-      label: "Experts",
+      label: "Expert Approvals",
       isActive: activeTab === 'experts',
       onClick: () => onTabChange('experts')
+    });
+    items.push({
+      icon: Users,
+      label: "Experts List",
+      isActive: activeTab === 'experts-list',
+      onClick: () => onTabChange('experts-list')
     });
   }
   

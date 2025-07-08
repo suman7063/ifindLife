@@ -15,7 +15,8 @@ const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { experts: allExperts, loading } = usePublicExpertsData();
-  const { getExpertAvailability } = useRealExpertPresence(allExperts.map(e => e.id));
+  const expertIds = allExperts.map(e => e.id);
+  const { getExpertAvailability, updateExpertPresence } = useRealExpertPresence(expertIds);
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});

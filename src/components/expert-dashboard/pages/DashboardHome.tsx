@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useUnifiedAuth } from '@/contexts/auth/UnifiedAuthContext';
+import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -17,10 +17,10 @@ import {
 } from 'lucide-react';
 
 const DashboardHome = () => {
-  const { expert } = useUnifiedAuth();
+  const { expertProfile } = useAuth();
   const navigate = useNavigate();
 
-  const isApproved = expert?.status === 'approved';
+  const isApproved = expertProfile?.status === 'approved';
 
   const handleEditProfile = () => {
     navigate('/expert-dashboard/profile');
@@ -74,7 +74,7 @@ const DashboardHome = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold mb-2">
-              Welcome back, {expert?.name}!
+              Welcome back, {expertProfile?.name}!
             </h1>
             <p className="text-blue-100">
               You're helping people find their path to wellness.
@@ -86,7 +86,7 @@ const DashboardHome = () => {
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                 <span className="text-sm">
-                  {expert?.average_rating || 0} ({expert?.reviews_count || 0} reviews)
+                  {expertProfile?.average_rating || 0} ({expertProfile?.reviews_count || 0} reviews)
                 </span>
               </div>
             </div>
@@ -149,9 +149,9 @@ const DashboardHome = () => {
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{expert?.average_rating || 0}</div>
+            <div className="text-2xl font-bold">{expertProfile?.average_rating || 0}</div>
             <p className="text-xs text-muted-foreground">
-              Based on {expert?.reviews_count || 0} reviews
+              Based on {expertProfile?.reviews_count || 0} reviews
             </p>
           </CardContent>
         </Card>

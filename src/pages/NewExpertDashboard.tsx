@@ -11,11 +11,15 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import { useAuth } from '@/contexts/auth/AuthContext';
+import { useExpertPresenceSync } from '@/hooks/useExpertPresenceSync';
 import { toast } from 'sonner';
 
 const NewExpertDashboard: React.FC = () => {
   const { expertProfile, isAuthenticated, isLoading, role } = useAuth();
   const navigate = useNavigate();
+  
+  // Sync expert presence automatically
+  useExpertPresenceSync();
   
   // Enhanced debug logging
   useEffect(() => {
