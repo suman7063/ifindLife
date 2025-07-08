@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/button';
 import AmountInput from './payment/AmountInput';
 import PaymentMethodSelector from './payment/PaymentMethodSelector';
 import PaymentSummary from './payment/PaymentSummary';
+import { useRazorpayPayment } from '@/hooks/call/useRazorpayPayment';
+import { toast } from 'sonner';
 
 interface RechargeDialogProps {
   open: boolean;
@@ -27,6 +29,7 @@ const RechargeDialog: React.FC<RechargeDialogProps> = ({
   const [amount, setAmount] = useState(50);
   const [paymentMethod, setPaymentMethod] = useState('card');
   const [isProcessing, setIsProcessing] = useState(false);
+  const { processPayment, isLoading } = useRazorpayPayment();
   
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseFloat(e.target.value);
@@ -39,13 +42,31 @@ const RechargeDialog: React.FC<RechargeDialogProps> = ({
   
   const handleSubmit = async () => {
     if (amount <= 0) {
+      toast.error('Please enter a valid amount');
       return;
     }
     
     setIsProcessing(true);
     
     try {
-      await onSuccess(amount);
+      await processPayment(
+        amount,
+        'INR',
+        'Wallet Recharge',
+        async (paymentId: string, orderId: string) => {
+          console.log('Payment successful:', { paymentId, orderId });
+          await onSuccess(amount);
+          toast.success('Wallet recharged successfully!');
+          onOpenChange(false);
+        },
+        (error: any) => {
+          console.error('Payment failed:', error);
+          toast.error('Payment failed. Please try again.');
+        }
+      );
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error('Payment failed. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -85,9 +106,9 @@ const RechargeDialog: React.FC<RechargeDialogProps> = ({
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isProcessing || amount <= 0}
+            disabled={isProcessing || isLoading || amount <= 0}
           >
-            {isProcessing ? 'Processing...' : 'Confirm Payment'}
+            {(isProcessing || isLoading) ? 'Processing...' : `Pay ₹${amount}`}
           </Button>
         </DialogFooter>
       </DialogContent>

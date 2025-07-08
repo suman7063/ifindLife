@@ -30,7 +30,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   onShowConnectOptions
 }) => {
   const { isAuthenticated } = useAuth();
-  const { requireAuthForExpert, requireAuthForCall, executePendingAction } = useAuthRedirectSystem();
+  const { requireAuthForExpert, requireAuthForCall, executeIntendedAction } = useAuthRedirectSystem();
 
   // Default values for missing props
   const expertName = expert.name || 'Unnamed Expert';

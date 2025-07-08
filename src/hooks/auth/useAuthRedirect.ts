@@ -12,16 +12,30 @@ export const useAuthRedirect = (defaultRedirectPath: string = '/') => {
     if (pendingActionStr) {
       try {
         const pendingAction = JSON.parse(pendingActionStr);
-        if (pendingAction.type === 'book' && pendingAction.id) {
-          console.log('Found pending booking action, redirecting to expert page');
-          return `/experts/${pendingAction.id}?book=true`;
+        console.log('Found pending action:', pendingAction);
+        
+        // Clear the action after using it
+        sessionStorage.removeItem('pendingAction');
+        
+        if (pendingAction.type === 'book' && pendingAction.expertId) {
+          console.log('Redirecting to expert booking page');
+          return `/experts/${pendingAction.expertId}?book=true`;
         }
-        if (pendingAction.path) {
-          console.log('Found pending action with path, redirecting to:', pendingAction.path);
-          return pendingAction.path;
+        if (pendingAction.type === 'call' && pendingAction.expertId) {
+          console.log('Redirecting to expert call page');
+          return `/experts/${pendingAction.expertId}?call=true`;
+        }
+        if (pendingAction.type === 'connect' && pendingAction.expertId) {
+          console.log('Redirecting to expert connect page');
+          return `/experts/${pendingAction.expertId}?connect=true`;
+        }
+        if (pendingAction.currentPath) {
+          console.log('Redirecting to stored current path:', pendingAction.currentPath);
+          return pendingAction.currentPath;
         }
       } catch (error) {
         console.error('Error parsing pending action:', error);
+        sessionStorage.removeItem('pendingAction');
       }
     }
     
@@ -40,11 +54,12 @@ export const useAuthRedirect = (defaultRedirectPath: string = '/') => {
       return redirectParam;
     }
     
-    // For role-specific redirects
+    // For role-specific redirects - only if no other redirect found
     if (role === 'expert') {
       return '/expert-dashboard';
     } else if (role === 'user') {
-      return '/user-dashboard';
+      // For users, redirect to home instead of dashboard by default
+      return '/';
     }
     
     // Finally, use the default path

@@ -1,114 +1,114 @@
-
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@/contexts/auth/AuthContext';
-import AuthRedirectSystem from '@/utils/authRedirectSystem';
+import { useSimpleAuth } from './useSimpleAuth';
 import { toast } from 'sonner';
 
 export const useAuthRedirectSystem = () => {
-  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAuthenticated } = useSimpleAuth();
 
-  // Execute post-login redirect
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      const executeRedirect = async () => {
-        // Small delay to ensure auth state is fully stabilized
-        setTimeout(async () => {
-          const redirectExecuted = await AuthRedirectSystem.executeRedirect();
-          
-          if (!redirectExecuted) {
-            // Check for pending actions from URL parameters or other sources
-            const urlParams = new URLSearchParams(location.search);
-            const action = urlParams.get('action');
-            const expertId = urlParams.get('expertId');
-            
-            if (action && expertId) {
-              console.log('useAuthRedirectSystem: Found URL-based action to execute');
-              // Handle URL-based actions if needed
-            }
-          }
-        }, 500);
-      };
-      
-      executeRedirect();
-    }
-  }, [isAuthenticated, user, location]);
+  const setIntendedAction = useCallback((action: {
+    type: 'book' | 'call' | 'connect';
+    expertId: string;
+    expertName: string;
+    path?: string;
+  }) => {
+    // Store the intended action in sessionStorage
+    sessionStorage.setItem('pendingAction', JSON.stringify({
+      ...action,
+      timestamp: Date.now(),
+      currentPath: location.pathname + location.search
+    }));
+    console.log('Stored pending action:', action);
+  }, [location]);
 
-  // Set redirect for authentication required actions
-  const requireAuth = useCallback((
-    action: string,
-    params?: Record<string, any>,
-    message?: string
-  ) => {
-    if (isAuthenticated) {
-      return true; // User is already authenticated
-    }
-
-    const currentPath = window.location.pathname + window.location.search;
-    
-    AuthRedirectSystem.setRedirect({
-      returnTo: currentPath,
-      action: action as any,
-      params,
-      message: message || `Please login to ${action}`
-    });
-
-    // Navigate to login
-    navigate('/user-login');
-    return false;
-  }, [isAuthenticated, navigate]);
-
-  // Convenience methods for common actions - updated to accept string IDs
-  const requireAuthForExpert = useCallback((
-    expertId: string,
-    expertName: string,
-    action: 'favorite' | 'connect' | 'book' | 'call',
-    additionalParams?: Record<string, any>
-  ) => {
-    if (isAuthenticated) {
-      return true;
-    }
-
-    AuthRedirectSystem.setExpertAction(expertId, expertName, action, additionalParams);
-    navigate('/user-login');
-    return false;
-  }, [isAuthenticated, navigate]);
-
-  const requireAuthForCall = useCallback((
-    expertId: string,
-    expertName: string,
-    callType: 'video' | 'voice'
-  ) => {
-    if (isAuthenticated) {
-      return true;
-    }
-
-    AuthRedirectSystem.setCallAction(expertId, expertName, callType);
-    navigate('/user-login');
-    return false;
-  }, [isAuthenticated, navigate]);
-
-  // Execute pending actions on current page
-  const executePendingAction = useCallback(() => {
-    const pendingAction = AuthRedirectSystem.getPendingAction();
-    
-    if (pendingAction) {
-      console.log('useAuthRedirectSystem: Executing pending action:', pendingAction);
-      
-      // Return the action for the component to handle
-      return pendingAction;
-    }
-    
-    return null;
+  const clearIntendedAction = useCallback(() => {
+    sessionStorage.removeItem('pendingAction');
+    console.log('Cleared pending action');
   }, []);
 
+  const requireAuthForExpert = useCallback((expertId: string, expertName: string, actionType: 'book' | 'connect') => {
+    if (isAuthenticated) {
+      clearIntendedAction();
+      return true;
+    }
+
+    // Store the intended action
+    setIntendedAction({
+      type: actionType,
+      expertId,
+      expertName
+    });
+
+    // Show message and redirect to login
+    toast.info(`Please log in to ${actionType} with ${expertName}`);
+    navigate('/user-login', { 
+      state: { 
+        from: { pathname: location.pathname },
+        expertAction: { type: actionType, expertId, expertName }
+      }
+    });
+    return false;
+  }, [isAuthenticated, setIntendedAction, clearIntendedAction, navigate, location]);
+
+  const requireAuthForCall = useCallback((expertId: string, expertName: string, callType: 'video' | 'voice') => {
+    if (isAuthenticated) {
+      clearIntendedAction();
+      return true;
+    }
+
+    // Store the intended action
+    setIntendedAction({
+      type: 'call',
+      expertId,
+      expertName,
+      path: `${location.pathname}?call=${callType}`
+    });
+
+    // Show message and redirect to login
+    toast.info(`Please log in to start a ${callType} call with ${expertName}`);
+    navigate('/user-login', { 
+      state: { 
+        from: { pathname: location.pathname },
+        expertAction: { type: 'call', expertId, expertName, callType }
+      }
+    });
+    return false;
+  }, [isAuthenticated, setIntendedAction, clearIntendedAction, navigate, location]);
+
+  const executeIntendedAction = useCallback(() => {
+    const pendingActionStr = sessionStorage.getItem('pendingAction');
+    if (!pendingActionStr) return null;
+
+    try {
+      const pendingAction = JSON.parse(pendingActionStr);
+      console.log('Executing intended action:', pendingAction);
+      
+      // Clear the action first
+      clearIntendedAction();
+      
+      // Check if action is not too old (30 minutes)
+      const maxAge = 30 * 60 * 1000; // 30 minutes
+      if (Date.now() - pendingAction.timestamp > maxAge) {
+        console.log('Pending action expired');
+        return null;
+      }
+
+      return pendingAction;
+    } catch (error) {
+      console.error('Error parsing pending action:', error);
+      clearIntendedAction();
+      return null;
+    }
+  }, [clearIntendedAction]);
+
   return {
-    requireAuth,
+    isAuthenticated,
     requireAuthForExpert,
     requireAuthForCall,
-    executePendingAction,
-    isAuthenticated
+    executeIntendedAction,
+    setIntendedAction,
+    clearIntendedAction
   };
 };

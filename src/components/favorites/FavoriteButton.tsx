@@ -52,7 +52,7 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
 
     // Check authentication if required
     if (requireAuth && expertId && expertName) {
-      if (!requireAuthForExpert(expertId, expertName, 'favorite')) {
+      if (!requireAuthForExpert(expertId, expertName, 'connect')) {
         return; // User will be redirected to login
       }
     }
