@@ -15,7 +15,7 @@ export function useAvailabilityManagement(user: any) {
   const [error, setError] = useState<string | null>(null);
 
   const createAvailability = async (
-    expertId: string,
+    expertAuthId: string,
     startDate: string,
     endDate: string,
     availabilityType: 'date_range' | 'recurring',
@@ -23,12 +23,14 @@ export function useAvailabilityManagement(user: any) {
   ) => {
     try {
       setLoading(true);
+      
+      console.log('🔧 Creating availability with auth_id:', expertAuthId);
 
       // First, create the availability record
       const { data: availability, error: availabilityError } = await supabase
         .from('expert_availabilities')
         .insert({
-          expert_id: expertId,
+          expert_id: expertAuthId,
           start_date: startDate,
           end_date: endDate,
           availability_type: availabilityType
@@ -94,11 +96,13 @@ export function useAvailabilityManagement(user: any) {
   };
 
   const fetchAvailabilities = async () => {
-    if (!user?.id) return;
+    if (!user?.auth_id) return;
 
     try {
       setLoading(true);
       setError(null);
+      
+      console.log('🔍 Fetching availabilities for auth_id:', user.auth_id);
 
       const { data, error: fetchError } = await supabase
         .from('expert_availabilities')
@@ -106,7 +110,7 @@ export function useAvailabilityManagement(user: any) {
           *,
           time_slots:expert_time_slots(*)
         `)
-        .eq('expert_id', user.id)
+        .eq('expert_id', user.auth_id)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
@@ -121,7 +125,7 @@ export function useAvailabilityManagement(user: any) {
 
   useEffect(() => {
     fetchAvailabilities();
-  }, [user?.id]);
+  }, [user?.auth_id]);
 
   return {
     createAvailability,

@@ -15,13 +15,13 @@ export function useRealExpertPresence(expertIds: string[] = []) {
   const [loading, setLoading] = useState(true);
 
   // Initialize presence for current expert (when they log in)
-  const updateExpertPresence = async (expertId: string, status: 'available' | 'busy' | 'away' | 'offline') => {
+  const updateExpertPresence = async (expertAuthId: string, status: 'available' | 'busy' | 'away' | 'offline') => {
     try {
-      console.log('🔴 Setting expert presence:', { expertId, status });
-      const channel = supabase.channel(`expert_presence_${expertId}`);
+      console.log('🔴 Setting expert presence:', { expertAuthId, status });
+      const channel = supabase.channel(`expert_presence_${expertAuthId}`);
       
       const trackResult = await channel.track({
-        user_id: expertId,
+        user_id: expertAuthId,
         status,
         last_seen: new Date().toISOString(),
         current_clients: 0,
@@ -36,8 +36,8 @@ export function useRealExpertPresence(expertIds: string[] = []) {
       // Update local state immediately
       setPresenceData(prev => ({
         ...prev,
-        [expertId]: {
-          expertId,
+        [expertAuthId]: {
+          expertId: expertAuthId,
           isOnline: status !== 'offline',
           lastSeen: new Date().toISOString(),
           currentClients: 0,

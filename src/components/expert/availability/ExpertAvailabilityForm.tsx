@@ -69,7 +69,7 @@ const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({ user })
       }));
 
       const result = await createAvailability(
-        user.id,
+        user.auth_id || user.id,
         formData.startDate,
         formData.endDate,
         formData.availabilityType,

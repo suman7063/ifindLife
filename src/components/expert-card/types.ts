@@ -1,6 +1,7 @@
 
 export interface ExpertCardData {
   id: string;
+  auth_id?: string; // Supabase auth ID
   name: string;
   email?: string; // Make email optional to fix type compatibility
   specialization: string;
@@ -16,6 +17,7 @@ export interface ExpertCardData {
   title?: string;
   rating?: number;
   reviewCount?: number;
+  dbStatus?: string; // Database status field (approved, pending, etc.)
 }
 
 export interface ExpertActionsProps {

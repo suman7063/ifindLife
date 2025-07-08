@@ -14,12 +14,14 @@ export function usePublicExpertsData() {
   // Map database expert to ExpertCardData
   const mapDbExpertToExpertCard = (dbExpert: any): ExpertCardData => {
     const expertId = String(dbExpert.id);
+    const expertAuthId = dbExpert.auth_id;
     const isApproved = dbExpert.status === 'approved';
-    const expertStatus = getExpertStatus(expertId);
-    const availability = getExpertAvailability(expertId);
+    const expertStatus = getExpertStatus(expertAuthId);
+    const availability = getExpertAvailability(expertAuthId);
     
     return {
       id: expertId,
+      auth_id: expertAuthId,
       name: dbExpert.name || 'Unknown Expert',
       profilePicture: dbExpert.profile_picture || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=1780&auto=format&fit=crop',
       specialization: dbExpert.specialization || 'General Counseling',
@@ -31,7 +33,8 @@ export function usePublicExpertsData() {
       status: isApproved && expertStatus === 'online' ? 'online' : 'offline',
       waitTime: isApproved && availability === 'available' ? 'Available Now' : 
                 isApproved && availability === 'busy' ? 'Busy' :
-                isApproved && availability === 'away' ? 'Away' : 'Not Available'
+                isApproved && availability === 'away' ? 'Away' : 'Not Available',
+      dbStatus: dbExpert.status
     };
   };
 

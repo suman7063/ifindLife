@@ -14,17 +14,17 @@ export function useIntegratedExpertPresence() {
   useEffect(() => {
     if (userType === 'expert' && expert && isAuthenticated) {
       // Expert logged in - set them as available
-      const expertId = expert.id || expert.auth_id;
-      if (expertId) {
+      const expertAuthId = expert.auth_id || expert.id;
+      if (expertAuthId) {
         console.log('🟢 Expert logged in, setting presence to available:', {
-          expertId,
+          expertAuthId,
           expertName: expert.name,
           status: expert.status
         });
         
         // Only set available if expert is approved
         const status = expert.status === 'approved' ? 'available' : 'offline';
-        updateExpertPresence(expertId, status);
+        updateExpertPresence(expertAuthId, status);
         
         if (expert.status === 'approved') {
           toast.success(`Welcome back, ${expert.name}! You are now online and available.`);
@@ -32,10 +32,10 @@ export function useIntegratedExpertPresence() {
       }
     } else if (userType === 'expert' && expert && !isAuthenticated) {
       // Expert logged out - set them as offline
-      const expertId = expert.id || expert.auth_id;
-      if (expertId) {
-        console.log('🔴 Expert logged out, setting presence to offline:', expertId);
-        updateExpertPresence(expertId, 'offline');
+      const expertAuthId = expert.auth_id || expert.id;
+      if (expertAuthId) {
+        console.log('🔴 Expert logged out, setting presence to offline:', expertAuthId);
+        updateExpertPresence(expertAuthId, 'offline');
       }
     }
   }, [expert, isAuthenticated, userType, updateExpertPresence]);
@@ -44,10 +44,10 @@ export function useIntegratedExpertPresence() {
   useEffect(() => {
     return () => {
       if (userType === 'expert' && expert) {
-        const expertId = expert.id || expert.auth_id;
-        if (expertId) {
-          console.log('🔴 Page unload, setting expert offline:', expertId);
-          updateExpertPresence(expertId, 'offline');
+        const expertAuthId = expert.auth_id || expert.id;
+        if (expertAuthId) {
+          console.log('🔴 Page unload, setting expert offline:', expertAuthId);
+          updateExpertPresence(expertAuthId, 'offline');
         }
       }
     };
@@ -57,11 +57,11 @@ export function useIntegratedExpertPresence() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (userType === 'expert' && expert && isAuthenticated) {
-        const expertId = expert.id || expert.auth_id;
-        if (expertId) {
+        const expertAuthId = expert.auth_id || expert.id;
+        if (expertAuthId) {
           const status = document.hidden ? 'away' : 'available';
-          console.log('👁️ Visibility changed, updating presence:', { expertId, status });
-          updateExpertPresence(expertId, status);
+          console.log('👁️ Visibility changed, updating presence:', { expertAuthId, status });
+          updateExpertPresence(expertAuthId, status);
         }
       }
     };

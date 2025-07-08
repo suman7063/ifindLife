@@ -15,16 +15,17 @@ const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useSimpleAuth();
   const { experts: allExperts, loading } = usePublicExpertsData();
-  const expertIds = allExperts.map(e => e.id);
-  const { getExpertAvailability, updateExpertPresence } = useRealExpertPresence(expertIds);
+  const expertAuthIds = allExperts.map(e => e.auth_id || e.id);
+  const { getExpertAvailability, updateExpertPresence } = useRealExpertPresence(expertAuthIds);
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
   // Filter experts to show only those that are currently online and available
   const onlineExperts = allExperts.filter(expert => {
-    const availability = getExpertAvailability(expert.id);
-    return expert.status === 'online' && availability === 'available';
+    const expertAuthId = expert.auth_id || expert.id;
+    const availability = getExpertAvailability(expertAuthId);
+    return expert.dbStatus === 'approved' && availability === 'available';
   }).slice(0, 3);
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
