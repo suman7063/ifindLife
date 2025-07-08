@@ -1,159 +1,197 @@
 
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAvailabilityManagement } from '@/hooks/useAvailabilityManagement';
+import { toast } from 'sonner';
+import { Calendar, Clock } from 'lucide-react';
 
 interface ExpertAvailabilityFormProps {
   user: any;
 }
 
 const ExpertAvailabilityForm: React.FC<ExpertAvailabilityFormProps> = ({ user }) => {
-  // State variables
-  const [selectedDays, setSelectedDays] = useState<string[]>([]);
-  const [startTime, setStartTime] = useState<string>('09:00');
-  const [endTime, setEndTime] = useState<string>('17:00');
-  const [isRecurring, setIsRecurring] = useState<boolean>(true);
-  const [untilDate, setUntilDate] = useState<string>('');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  
+  const { createAvailability, loading } = useAvailabilityManagement(user);
+  const [formData, setFormData] = useState({
+    selectedDays: [] as number[],
+    startTime: '09:00',
+    endTime: '17:00',
+    startDate: '',
+    endDate: '',
+    availabilityType: 'recurring' as 'date_range' | 'recurring'
+  });
+
+  const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+  const handleDayToggle = (dayIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedDays: prev.selectedDays.includes(dayIndex)
+        ? prev.selectedDays.filter(d => d !== dayIndex)
+        : [...prev.selectedDays, dayIndex].sort()
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Basic validation
-    if (!selectedDays.length) {
-      alert('Please select at least one day.');
-      setIsLoading(false);
+    // Validation
+    if (formData.selectedDays.length === 0) {
+      toast.error('Please select at least one day');
       return;
     }
 
-    if (!startTime || !endTime) {
-      alert('Please select a start and end time.');
-      setIsLoading(false);
+    if (!formData.startDate || !formData.endDate) {
+      toast.error('Please select start and end dates');
       return;
     }
 
-    if (isRecurring && !untilDate) {
-      alert('Please select an end date for recurring availability.');
-      setIsLoading(false);
+    if (new Date(formData.startDate) >= new Date(formData.endDate)) {
+      toast.error('End date must be after start date');
       return;
     }
 
-    // Construct availability data
-    const availabilityData = {
-      expertId: user?.id,
-      days: selectedDays,
-      startTime,
-      endTime,
-      isRecurring,
-      untilDate: isRecurring ? untilDate : null,
-    };
+    if (formData.startTime >= formData.endTime) {
+      toast.error('End time must be after start time');
+      return;
+    }
 
-    // Here you would typically send this data to your backend
-    console.log('Availability data to be submitted:', availabilityData);
+    try {
+      // Create time slots for each selected day
+      const timeSlots = formData.selectedDays.map(dayIndex => ({
+        start_time: formData.startTime,
+        end_time: formData.endTime,
+        day_of_week: dayIndex + 1, // Database expects 1-7 for Monday-Sunday
+        specific_date: null
+      }));
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await createAvailability(
+        user.id,
+        formData.startDate,
+        formData.endDate,
+        formData.availabilityType,
+        timeSlots
+      );
 
-    // Reset form
-    setSelectedDays([]);
-    setStartTime('09:00');
-    setEndTime('17:00');
-    setIsRecurring(true);
-    setUntilDate('');
-    setIsLoading(false);
-
-    alert('Availability submitted successfully!');
+      if (result) {
+        toast.success('Availability created successfully!');
+        // Reset form
+        setFormData({
+          selectedDays: [],
+          startTime: '09:00',
+          endTime: '17:00',
+          startDate: '',
+          endDate: '',
+          availabilityType: 'recurring'
+        });
+      }
+    } catch (error) {
+      console.error('Error creating availability:', error);
+      toast.error('Failed to create availability');
+    }
   };
-  
+
   return (
-    <div className="bg-white p-6 rounded-lg shadow">
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Select Days:
-          </label>
-          <div className="flex flex-wrap">
-            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => (
-              <label key={day} className="inline-flex items-center mr-4 mb-2">
-                <input
-                  type="checkbox"
-                  className="form-checkbox h-5 w-5 text-indigo-600"
-                  value={day}
-                  checked={selectedDays.includes(day)}
-                  onChange={e => {
-                    if (e.target.checked) {
-                      setSelectedDays([...selectedDays, day]);
-                    } else {
-                      setSelectedDays(selectedDays.filter(d => d !== day));
-                    }
-                  }}
-                />
-                <span className="ml-2 text-gray-700">{day}</span>
-              </label>
-            ))}
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Set Your Availability
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Date Range */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                min={new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={formData.endDate}
+                onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                min={formData.startDate || new Date().toISOString().split('T')[0]}
+                required
+              />
+            </div>
           </div>
-        </div>
 
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            Start Time:
-          </label>
-          <input
-            type="time"
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            value={startTime}
-            onChange={e => setStartTime(e.target.value)}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2">
-            End Time:
-          </label>
-          <input
-            type="time"
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            value={endTime}
-            onChange={e => setEndTime(e.target.value)}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="inline-flex items-center">
-            <input
-              type="checkbox"
-              className="form-checkbox h-5 w-5 text-indigo-600"
-              checked={isRecurring}
-              onChange={e => setIsRecurring(e.target.checked)}
-            />
-            <span className="ml-2 text-gray-700">Recurring</span>
-          </label>
-        </div>
-
-        {isRecurring && (
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2">
-              Until Date:
-            </label>
-            <input
-              type="date"
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-              value={untilDate}
-              onChange={e => setUntilDate(e.target.value)}
-            />
+          {/* Days Selection */}
+          <div className="space-y-2">
+            <Label>Select Days</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+              {dayNames.map((day, index) => (
+                <div key={day} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`day-${index}`}
+                    checked={formData.selectedDays.includes(index)}
+                    onCheckedChange={() => handleDayToggle(index)}
+                  />
+                  <Label 
+                    htmlFor={`day-${index}`} 
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    {day.substring(0, 3)}
+                  </Label>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
 
-        <div className="flex items-center justify-between">
-          <button
-            className={`bg-indigo-500 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-            type="submit"
-            disabled={isLoading}
+          {/* Time Range */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startTime" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Start Time
+              </Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={formData.startTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, startTime: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                End Time
+              </Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={formData.endTime}
+                onChange={(e) => setFormData(prev => ({ ...prev, endTime: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <Button 
+            type="submit" 
+            className="w-full"
+            disabled={loading}
           >
-            {isLoading ? 'Submitting...' : 'Submit Availability'}
-          </button>
-        </div>
-      </form>
-    </div>
+            {loading ? 'Creating Availability...' : 'Create Availability'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 };
 
