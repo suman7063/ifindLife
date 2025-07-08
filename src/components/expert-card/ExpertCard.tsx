@@ -55,7 +55,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
   // Execute pending action after authentication
   React.useEffect(() => {
     if (isAuthenticated) {
-      const pendingAction = executePendingAction();
+      const pendingAction = executeIntendedAction();
       if (pendingAction && pendingAction.params?.expertId === expert.id) {
         console.log('ExpertCard: Executing pending action for expert:', pendingAction);
         
@@ -76,7 +76,7 @@ const ExpertCard: React.FC<ExpertCardProps> = ({
         }, 500);
       }
     }
-  }, [isAuthenticated, executePendingAction, onConnectNow, onBookNow, onShowConnectOptions, expert.id, expertName]);
+  }, [isAuthenticated, executeIntendedAction, onConnectNow, onBookNow, onShowConnectOptions, expert.id, expertName]);
 
   const handleConnectNow = (e: React.MouseEvent) => {
     e.stopPropagation();
