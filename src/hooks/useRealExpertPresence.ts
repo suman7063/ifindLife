@@ -17,18 +17,35 @@ export function useRealExpertPresence(expertIds: string[] = []) {
   // Initialize presence for current expert (when they log in)
   const updateExpertPresence = async (expertId: string, status: 'available' | 'busy' | 'away' | 'offline') => {
     try {
-      const channel = supabase.channel(`expert_${expertId}`);
+      console.log('🔴 Setting expert presence:', { expertId, status });
+      const channel = supabase.channel(`expert_presence_${expertId}`);
       
-      await channel.track({
+      const trackResult = await channel.track({
         user_id: expertId,
         status,
         last_seen: new Date().toISOString(),
-        current_clients: 0
+        current_clients: 0,
+        online_at: new Date().toISOString()
       });
 
-      await channel.subscribe();
+      console.log('🔴 Track result:', trackResult);
+      
+      const subscribeResult = await channel.subscribe();
+      console.log('🔴 Subscribe result:', subscribeResult);
+      
+      // Update local state immediately
+      setPresenceData(prev => ({
+        ...prev,
+        [expertId]: {
+          expertId,
+          isOnline: status !== 'offline',
+          lastSeen: new Date().toISOString(),
+          currentClients: 0,
+          status
+        }
+      }));
     } catch (error) {
-      console.error('Error updating expert presence:', error);
+      console.error('❌ Error updating expert presence:', error);
     }
   };
 
@@ -44,19 +61,21 @@ export function useRealExpertPresence(expertIds: string[] = []) {
 
     // Initialize presence for each expert
     expertIds.forEach(expertId => {
-      const channel = supabase.channel(`presence_${expertId}`);
+      const channel = supabase.channel(`expert_presence_${expertId}`);
       
       channel
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState();
           const expertPresences = Object.values(state).flat() as any[];
           
+          console.log('🟢 Expert presence sync:', { expertId, presences: expertPresences });
+          
           if (expertPresences.length > 0) {
             const latestPresence = expertPresences[0];
             presence[expertId] = {
               expertId,
               isOnline: latestPresence.status !== 'offline',
-              lastSeen: latestPresence.last_seen || new Date().toISOString(),
+              lastSeen: latestPresence.last_seen || latestPresence.online_at || new Date().toISOString(),
               currentClients: latestPresence.current_clients || 0,
               status: latestPresence.status || 'offline'
             };
@@ -73,10 +92,10 @@ export function useRealExpertPresence(expertIds: string[] = []) {
           setPresenceData({ ...presence });
         })
         .on('presence', { event: 'join' }, ({ newPresences }) => {
-          console.log('Expert joined:', newPresences);
+          console.log('🟢 Expert joined:', newPresences);
         })
         .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-          console.log('Expert left:', leftPresences);
+          console.log('🔴 Expert left:', leftPresences);
         })
         .subscribe();
 
@@ -93,7 +112,9 @@ export function useRealExpertPresence(expertIds: string[] = []) {
   }, [expertIds]);
 
   const isExpertOnline = (expertId: string): boolean => {
-    return presenceData[expertId]?.isOnline || false;
+    const online = presenceData[expertId]?.isOnline || false;
+    console.log('🔍 Checking expert online status:', { expertId, online, presenceData: presenceData[expertId] });
+    return online;
   };
 
   const getExpertStatus = (expertId: string): 'online' | 'offline' => {

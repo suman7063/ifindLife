@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 const DashboardHome = () => {
-  const { expertProfile } = useAuth();
+  const { expert: expertProfile } = useSimpleAuth();
   const navigate = useNavigate();
 
   const isApproved = expertProfile?.status === 'approved';
