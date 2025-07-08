@@ -2,17 +2,21 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ExpertCardData } from '@/components/expert-card/types';
-import { useExpertPresence } from './useExpertPresence';
+import { useRealExpertPresence } from './useRealExpertPresence';
 
 export function usePublicExpertsData() {
   const [experts, setExperts] = useState<ExpertCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const { getExpertStatus, getExpertAvailability } = useRealExpertPresence();
+
   // Map database expert to ExpertCardData
   const mapDbExpertToExpertCard = (dbExpert: any): ExpertCardData => {
     const expertId = String(dbExpert.id);
     const isApproved = dbExpert.status === 'approved';
+    const expertStatus = getExpertStatus(expertId);
+    const availability = getExpertAvailability(expertId);
     
     return {
       id: expertId,
@@ -24,8 +28,10 @@ export function usePublicExpertsData() {
       reviewsCount: Number(dbExpert.reviews_count) || 0,
       price: 30, // Default price - this should come from services or expert pricing in the future
       verified: Boolean(dbExpert.verified),
-      status: isApproved ? 'online' : 'offline', // Simplified for now
-      waitTime: isApproved ? 'Available Now' : 'Not Available'
+      status: isApproved && expertStatus === 'online' ? 'online' : 'offline',
+      waitTime: isApproved && availability === 'available' ? 'Available Now' : 
+                isApproved && availability === 'busy' ? 'Busy' :
+                isApproved && availability === 'away' ? 'Away' : 'Not Available'
     };
   };
 

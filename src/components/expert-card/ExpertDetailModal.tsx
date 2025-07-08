@@ -1,15 +1,16 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Star, X, Award, MapPin, Clock, Video, Phone } from 'lucide-react';
+import { Star, X, Award, MapPin, Clock, Video, Phone, Calendar } from 'lucide-react';
 import { ExpertCardData } from './types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import IntegratedBookingSystem from '../booking/IntegratedBookingSystem';
 
 interface ExpertDetailModalProps {
   expert: ExpertCardData | null;
@@ -28,7 +29,8 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
 }) => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [showConnectOptions, setShowConnectOptions] = React.useState(false);
+  const [showConnectOptions, setShowConnectOptions] = useState(false);
+  const [showBookingSystem, setShowBookingSystem] = useState(false);
 
   if (!expert) return null;
 
@@ -114,9 +116,7 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
       return;
     }
 
-    if (onBookNow) {
-      onBookNow();
-    }
+    setShowBookingSystem(true);
   };
 
   const handleConnectOption = (type: 'video' | 'voice') => {
@@ -125,6 +125,48 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
     }
     setShowConnectOptions(false);
   };
+
+  if (showBookingSystem) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] p-6">
+          <DialogHeader className="mb-4">
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-xl font-semibold">Book with {expertName}</DialogTitle>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowBookingSystem(false)}
+                  className="h-8"
+                >
+                  Back to Profile
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <IntegratedBookingSystem
+            expert={{
+              id: expert.id,
+              name: expertName,
+              profile_picture: expert.profilePicture,
+              specialization: expert.specialization,
+              price: expert.price
+            }}
+            onClose={onClose}
+          />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -307,9 +349,10 @@ const ExpertDetailModal: React.FC<ExpertDetailModalProps> = ({
               </Button>
               <Button
                 variant="outline"
-                className="flex-1"
+                className="flex-1 flex items-center gap-2"
                 onClick={handleBookNow}
               >
+                <Calendar className="h-4 w-4" />
                 Book Now
               </Button>
             </div>

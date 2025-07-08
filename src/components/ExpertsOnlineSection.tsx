@@ -9,17 +9,22 @@ import ExpertCard from '@/components/expert-card';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import { ExpertCardData } from '@/components/expert-card/types';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
+import { useRealExpertPresence } from '@/hooks/useRealExpertPresence';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { experts: allExperts, loading } = usePublicExpertsData();
+  const { getExpertAvailability } = useRealExpertPresence(allExperts.map(e => e.id));
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
-  // Filter experts to show only those that are currently online
-  const onlineExperts = allExperts.filter(expert => expert.status === 'online').slice(0, 3);
+  // Filter experts to show only those that are currently online and available
+  const onlineExperts = allExperts.filter(expert => {
+    const availability = getExpertAvailability(expert.id);
+    return expert.status === 'online' && availability === 'available';
+  }).slice(0, 3);
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
     setSelectedExpert(expert);
