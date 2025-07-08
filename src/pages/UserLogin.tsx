@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSimpleAuth } from '@/hooks/useSimpleAuth';
-import AuthRedirectSystem from '@/utils/authRedirectSystem';
+import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -16,6 +16,7 @@ const UserLogin: React.FC = () => {
   
   const simpleAuth = useSimpleAuth();
   const { isAuthenticated, userType, user, isLoading, login } = simpleAuth;
+  const { executeIntendedAction } = useAuthRedirectSystem();
 
   console.log('UserLogin: Current auth state:', {
     isAuthenticated,
@@ -30,13 +31,15 @@ const UserLogin: React.FC = () => {
     if (!isLoading && isAuthenticated && user && userType !== 'none') {
       console.log('UserLogin: User authenticated, checking for redirect data');
       
-      // Check for auth redirect first
-      const redirectData = AuthRedirectSystem.getRedirect();
-      if (redirectData) {
-        console.log('UserLogin: Found redirect data, executing redirect');
+      // Check for intended action first
+      const pendingAction = executeIntendedAction();
+      if (pendingAction) {
+        console.log('UserLogin: Found pending action, staying on page for action execution:', pendingAction);
+        // Don't navigate away - let the component that initiated the action handle it
+        // Navigate back to where the user came from instead of dashboard
         setTimeout(() => {
-          AuthRedirectSystem.executeRedirect();
-        }, 500);
+          window.history.back();
+        }, 1000);
         return;
       }
       
@@ -46,12 +49,12 @@ const UserLogin: React.FC = () => {
           console.log('UserLogin: Redirecting to expert dashboard');
           navigate('/expert-dashboard', { replace: true });
         } else {
-          console.log('UserLogin: Redirecting to user dashboard');
-          navigate('/user-dashboard', { replace: true });
+          console.log('UserLogin: Redirecting to home page instead of dashboard');
+          navigate('/', { replace: true });
         }
       }, 500);
     }
-  }, [isLoading, isAuthenticated, user, userType, navigate]);
+  }, [isLoading, isAuthenticated, user, userType, navigate, executeIntendedAction]);
 
   const handleLogin = async (email: string, password: string): Promise<boolean> => {
     if (!email || !password) {

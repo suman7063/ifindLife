@@ -16,7 +16,7 @@ const ExpertDetail = () => {
   const [searchParams] = useSearchParams();
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
-  const { executePendingAction, isAuthenticated } = useAuthRedirectSystem();
+  const { executeIntendedAction, isAuthenticated } = useAuthRedirectSystem();
   
   useEffect(() => {
     if (searchParams.get('call') === 'true') {
@@ -30,7 +30,7 @@ const ExpertDetail = () => {
   // Check for pending actions after user returns from login
   useEffect(() => {
     if (isAuthenticated) {
-      const pendingAction = executePendingAction();
+      const pendingAction = executeIntendedAction();
       if (pendingAction) {
         console.log('ExpertDetail: Executing pending action:', pendingAction);
         
