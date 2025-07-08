@@ -60,28 +60,28 @@ export function useRealExpertPresence(expertIds: string[] = []) {
     const presence: Record<string, ExpertPresence> = {};
 
     // Initialize presence for each expert
-    expertIds.forEach(expertId => {
-      const channel = supabase.channel(`expert_presence_${expertId}`);
+    expertIds.forEach(expertAuthId => {
+      const channel = supabase.channel(`expert_presence_${expertAuthId}`);
       
       channel
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState();
           const expertPresences = Object.values(state).flat() as any[];
           
-          console.log('🟢 Expert presence sync:', { expertId, presences: expertPresences });
+          console.log('🟢 Expert presence sync:', { expertAuthId, presences: expertPresences });
           
           if (expertPresences.length > 0) {
             const latestPresence = expertPresences[0];
-            presence[expertId] = {
-              expertId,
+            presence[expertAuthId] = {
+              expertId: expertAuthId,
               isOnline: latestPresence.status !== 'offline',
               lastSeen: latestPresence.last_seen || latestPresence.online_at || new Date().toISOString(),
               currentClients: latestPresence.current_clients || 0,
               status: latestPresence.status || 'offline'
             };
           } else {
-            presence[expertId] = {
-              expertId,
+            presence[expertAuthId] = {
+              expertId: expertAuthId,
               isOnline: false,
               lastSeen: new Date().toISOString(),
               currentClients: 0,
