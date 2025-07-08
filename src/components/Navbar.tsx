@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import NavbarDesktopLinks from './navbar/NavbarDesktopLinks';
 import NavbarMobileMenu from './navbar/NavbarMobileMenu';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { UserProfile } from '@/types/database/unified';
 
 const Navbar = () => {

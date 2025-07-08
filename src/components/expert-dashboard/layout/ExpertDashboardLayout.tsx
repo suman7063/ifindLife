@@ -3,7 +3,7 @@ import React, { ReactNode, useEffect, useState } from 'react';
 import ExpertSidebar from './sidebar/ExpertSidebar';
 import ExpertHeader from './ExpertHeader';
 import MobileResponsiveWrapper from './MobileResponsiveWrapper';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { Navigate, useNavigate } from 'react-router-dom';
 import DashboardLoader from '../../expert/dashboard/DashboardLoader';
 import { toast } from 'sonner';

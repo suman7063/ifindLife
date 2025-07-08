@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

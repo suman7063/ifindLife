@@ -7,6 +7,8 @@ import { Clock, Calendar, Users, BookOpen, X, Share2, Heart } from 'lucide-react
 import { ProgramDetail } from '@/types/programDetail';
 import { useProgramBooking } from '@/components/programs/booking/useProgramBooking';
 import ProgramBookingDialog from '@/components/programs/booking/ProgramBookingDialog';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import { toast } from 'sonner';
 
 interface ProgramDetailModalProps {
   isOpen: boolean;
@@ -37,14 +39,38 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
     submitBooking
   } = useProgramBooking();
 
+  const { isAuthenticated, userProfile } = useSimpleAuth();
+
   if (!programData) return null;
 
   const handleBookIndividualSession = () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to book a session');
+      return;
+    }
     openBookingDialog();
   };
 
   const handleSubmitBooking = async () => {
     return await submitBooking(programData.id);
+  };
+
+  const handleEnrollNow = () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to enroll in this program');
+      return;
+    }
+    // Handle enrollment logic here
+    toast.success('Enrollment feature coming soon!');
+  };
+
+  const handleAddToWishlist = () => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to add to wishlist');
+      return;
+    }
+    // Handle wishlist logic here
+    toast.success('Added to wishlist!');
   };
 
   // Helper function to get outcomes as array
@@ -255,12 +281,12 @@ const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
               <div className="space-y-4">
                 <Button 
                   className="w-full bg-ifind-teal hover:bg-ifind-teal/90"
-                  onClick={() => {/* Handle enroll now */}}
+                  onClick={handleEnrollNow}
                 >
                   🛒 Enroll Now (₹{programData.pricing.individual.totalCost})
                 </Button>
                 
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full" onClick={handleAddToWishlist}>
                   <Heart className="w-4 h-4 mr-2" />
                   Add to Wishlist
                 </Button>

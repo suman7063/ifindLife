@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import ExpertAvailabilityForm from './ExpertAvailabilityForm';
 import ExpertAvailabilityList from './ExpertAvailabilityList';
 

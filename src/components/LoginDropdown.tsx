@@ -3,7 +3,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { showLogoutSuccessToast, showLogoutErrorToast } from '@/utils/toastConfig';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { 
   DropdownMenu,
   DropdownMenuTrigger,
@@ -14,7 +14,7 @@ import {
 import { User, LogOut } from 'lucide-react';
 
 const LoginDropdown: React.FC = () => {
-  const { isAuthenticated, isLoading, logout, role, userProfile } = useAuth();
+  const { isAuthenticated, isLoading, logout, userType, userProfile, expert } = useSimpleAuth();
   const navigate = useNavigate();
   
   const handleLogout = async () => {
@@ -40,7 +40,7 @@ const LoginDropdown: React.FC = () => {
   // If user is authenticated, show profile menu
   if (isAuthenticated) {
     const displayName = userProfile?.name || 'User';
-    const dashboardLink = role === 'expert' ? '/expert-dashboard' : '/user-dashboard';
+    const dashboardLink = userType === 'expert' ? '/expert-dashboard' : '/user-dashboard';
     
     return (
       <DropdownMenu>

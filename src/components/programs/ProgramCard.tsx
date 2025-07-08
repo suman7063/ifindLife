@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Heart, Star, Clock, Users } from 'lucide-react';
 import { Program } from '@/types/programs';
 import { UserProfile } from '@/types/database/unified';
+import { toast } from 'sonner';
 
 interface ProgramCardProps {
   program: Program;
@@ -25,6 +26,10 @@ const ProgramCard: React.FC<ProgramCardProps> = ({
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering onProgramClick
+    if (!isAuthenticated) {
+      toast.error('Please log in to add programs to favorites');
+      return;
+    }
     onFavoriteToggle?.(program.id);
   };
 

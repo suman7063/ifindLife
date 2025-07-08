@@ -11,7 +11,7 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import AnalyticsPage from '@/components/expert-dashboard/pages/analytics/AnalyticsPage';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { isExpertAuthenticated } from '@/utils/authHelpers';
 import { Loader2 } from 'lucide-react';
 

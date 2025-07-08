@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useAgoraCall } from '@/hooks/useAgoraCall';
 import AgoraCallContent from '../AgoraCallContent';
 import AgoraCallControls from '../AgoraCallControls';

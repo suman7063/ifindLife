@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate, Routes, Route } from 'react-router-dom';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { FavoritesContext } from './FavoritesContext';
 import { FavoritesContextType } from './types';
 

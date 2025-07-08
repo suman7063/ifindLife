@@ -10,12 +10,12 @@ import MessagingTab from '@/components/expert/dashboard/MessagingTab';
 import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useExpertPresenceSync } from '@/hooks/useExpertPresenceSync';
 import { toast } from 'sonner';
 
 const NewExpertDashboard: React.FC = () => {
-  const { expertProfile, isAuthenticated, isLoading, role } = useAuth();
+  const { expert, isAuthenticated, isLoading, userType } = useSimpleAuth();
   const navigate = useNavigate();
   
   // Sync expert presence automatically
@@ -25,18 +25,18 @@ const NewExpertDashboard: React.FC = () => {
   useEffect(() => {
     console.log('NewExpertDashboard - Auth state:', {
       isAuthenticated,
-      hasExpertProfile: !!expertProfile,
+      hasExpertProfile: !!expert,
       isLoading,
-      role
+      userType
     });
     
-    // Ensure role is set to expert when accessing this page
-    if (isAuthenticated && expertProfile) {
+    // Ensure userType is set to expert when accessing this page
+    if (isAuthenticated && expert) {
       console.log('Setting preferred role to expert');
       localStorage.setItem('preferredRole', 'expert');
       localStorage.setItem('sessionType', 'expert');
     }
-  }, [isAuthenticated, expertProfile, isLoading, role]);
+  }, [isAuthenticated, expert, isLoading, userType]);
   
   // Display loading state
   if (isLoading) {
@@ -44,11 +44,11 @@ const NewExpertDashboard: React.FC = () => {
   }
   
   // Handle unauthorized access
-  if (!isAuthenticated || role !== 'expert' || !expertProfile) {
+  if (!isAuthenticated || userType !== 'expert' || !expert) {
     console.error('User not authenticated as expert, redirecting to expert login', {
       isAuthenticated,
-      role,
-      hasExpertProfile: !!expertProfile
+      userType,
+      hasExpertProfile: !!expert
     });
     
     // Show toast and redirect

@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useEffect } from 'react';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 
 // Enhanced Agora hook with simplified auth
 export const useAgoraCall = (expertId: number, expertPrice: number) => {

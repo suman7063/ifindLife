@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import EnhancedExpertSelectionModal from '@/components/expert/EnhancedExpertSelectionModal';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Lock } from 'lucide-react';

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
 import { Shield } from 'lucide-react';
 import { toast } from 'sonner';

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useSimpleAuth } from './useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
 
 export const useAuthRedirectSystem = () => {

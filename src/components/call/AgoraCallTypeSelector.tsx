@@ -5,7 +5,7 @@ import { Video, Phone, Loader2 } from 'lucide-react';
 import { useCallPricing } from '@/hooks/call/useCallPricing';
 import CallDurationSelector from '@/components/call/duration/CallDurationSelector';
 import PaymentMethodSelector from '@/components/call/duration/PaymentMethodSelector';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useRazorpayPayment } from '@/hooks/call/useRazorpayPayment';
 import { toast } from 'sonner';
 

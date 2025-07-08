@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '@/components/ui/container';
 import Footer from '@/components/Footer';
 import ExpertLoginTabs from '@/components/expert/auth/ExpertLoginTabs';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { isExpertAuthenticated } from '@/utils/authHelpers';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';

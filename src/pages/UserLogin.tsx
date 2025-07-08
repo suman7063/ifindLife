@@ -5,7 +5,7 @@ import UserLoginTabs from '@/components/auth/UserLoginTabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useSimpleAuth } from '@/hooks/useSimpleAuth';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
