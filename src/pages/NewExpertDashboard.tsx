@@ -11,7 +11,7 @@ import ServicesPage from '@/components/expert-dashboard/pages/ServicesPage';
 import EarningsPage from '@/components/expert-dashboard/pages/EarningsPage';
 import ReportPage from '@/components/expert-dashboard/pages/ReportPage';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import { useExpertPresenceSync } from '@/hooks/useExpertPresenceSync';
+import { useIntegratedExpertPresence } from '@/hooks/useIntegratedExpertPresence';
 import { toast } from 'sonner';
 
 const NewExpertDashboard: React.FC = () => {
@@ -19,7 +19,7 @@ const NewExpertDashboard: React.FC = () => {
   const navigate = useNavigate();
   
   // Sync expert presence automatically
-  useExpertPresenceSync();
+  const { isExpertOnline } = useIntegratedExpertPresence();
   
   // Enhanced debug logging
   useEffect(() => {

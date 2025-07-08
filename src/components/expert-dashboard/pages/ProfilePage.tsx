@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ExpertRepository } from '@/repositories/expertRepository';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import { toast } from 'sonner';
 
 const ProfilePage: React.FC = () => {
-  const { expertProfile } = useAuth();
+  const { expert: expertProfile } = useSimpleAuth();
   const [loading, setLoading] = useState(false);
 
   const handleUpdateProfile = async (data: any) => {

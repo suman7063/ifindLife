@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Heart } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/contexts/auth/AuthContext';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
 import ExpertCard from '@/components/expert-card';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import { ExpertCardData } from '@/components/expert-card/types';
@@ -13,7 +13,7 @@ import { useRealExpertPresence } from '@/hooks/useRealExpertPresence';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useSimpleAuth();
   const { experts: allExperts, loading } = usePublicExpertsData();
   const expertIds = allExperts.map(e => e.id);
   const { getExpertAvailability, updateExpertPresence } = useRealExpertPresence(expertIds);
