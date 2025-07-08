@@ -8,52 +8,18 @@ import { useAuth } from '@/contexts/auth/AuthContext';
 import ExpertCard from '@/components/expert-card';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import { ExpertCardData } from '@/components/expert-card/types';
+import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { experts: allExperts, loading } = usePublicExpertsData();
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
-  // Sample experts data with proper typing
-  const experts: ExpertCardData[] = [{
-    id: '1',
-    name: 'Dr. Emily Chen',
-    specialization: 'Anxiety & Depression',
-    profilePicture: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
-    averageRating: 4.9,
-    reviewsCount: 128,
-    status: 'online',
-    waitTime: 'Available Now',
-    verified: true,
-    experience: 8,
-    price: 120
-  }, {
-    id: '2',
-    name: 'Dr. James Wilson',
-    specialization: 'Relationship Counseling',
-    profilePicture: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
-    averageRating: 4.8,
-    reviewsCount: 96,
-    status: 'online',
-    waitTime: 'Available Now',
-    verified: true,
-    experience: 12,
-    price: 150
-  }, {
-    id: '3',
-    name: 'Dr. Aisha Patel',
-    specialization: 'Trauma Therapy',
-    profilePicture: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
-    averageRating: 4.7,
-    reviewsCount: 113,
-    status: 'offline',
-    waitTime: 'Back in 2 hours',
-    verified: true,
-    experience: 10,
-    price: 135
-  }];
+  // Filter experts to show only those that are currently online
+  const onlineExperts = allExperts.filter(expert => expert.status === 'online').slice(0, 3);
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
     setSelectedExpert(expert);
@@ -106,21 +72,52 @@ const ExpertsOnlineSection: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {experts.map(expert => (
-              <div key={expert.id} className="flex">
-                <ExpertCard
-                  expert={expert}
-                  onClick={() => handleExpertCardClick(expert)}
-                  onConnectNow={(type) => handleConnectNow(expert, type)}
-                  onBookNow={() => handleBookNow(expert)}
-                  showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
-                  onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
-                  className="w-full"
-                />
-              </div>
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border rounded-md p-4 h-64 animate-pulse flex flex-col">
+                  <div className="flex items-center mb-4">
+                    <div className="w-16 h-16 bg-gray-200 rounded-full"></div>
+                    <div className="ml-3 flex-1">
+                      <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                    <div className="flex justify-end">
+                      <div className="h-8 bg-gray-200 rounded w-24"></div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : onlineExperts.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {onlineExperts.map(expert => (
+                <div key={expert.id} className="flex">
+                  <ExpertCard
+                    expert={expert}
+                    onClick={() => handleExpertCardClick(expert)}
+                    onConnectNow={(type) => handleConnectNow(expert, type)}
+                    onBookNow={() => handleBookNow(expert)}
+                    showConnectOptions={expertConnectOptions[expert.id.toString()] || false}
+                    onShowConnectOptions={(show) => handleShowConnectOptions(expert.id.toString(), show)}
+                    className="w-full"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-gray-600 mb-8">
+                No experts are currently online. Please check back later or browse all experts.
+              </p>
+            </div>
+          )}
           
           <div className="text-center mt-8">
             <Button onClick={() => navigate("/experts")} className="bg-ifind-teal hover:bg-ifind-teal/90 text-white">

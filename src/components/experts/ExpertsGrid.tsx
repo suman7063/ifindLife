@@ -22,48 +22,8 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
-  // Default experts if none provided
-  const defaultExperts: ExpertCardData[] = experts.length > 0 ? experts : [
-    {
-      id: '1',
-      name: 'Dr. Sarah Johnson',
-      specialization: 'Cognitive Behavioral Therapy',
-      averageRating: 4.9,
-      reviewsCount: 124,
-      verified: true,
-      profilePicture: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
-      status: 'online',
-      experience: 8,
-      price: 120,
-      waitTime: '2-3 days'
-    },
-    {
-      id: '2',
-      name: 'Dr. Michael Chen',
-      specialization: 'Family Therapy',
-      averageRating: 4.7,
-      reviewsCount: 98,
-      verified: true,
-      profilePicture: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
-      status: 'offline',
-      experience: 10,
-      price: 135,
-      waitTime: '1 week'
-    },
-    {
-      id: '3',
-      name: 'Dr. Leila Patel',
-      specialization: 'Trauma Therapy',
-      averageRating: 4.8,
-      reviewsCount: 156,
-      verified: true,
-      profilePicture: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=256&q=80',
-      status: 'online',
-      experience: 12,
-      price: 150,
-      waitTime: 'Same day'
-    }
-  ];
+  // Use provided experts or show empty state
+  const displayExperts = experts;
 
   const handleExpertCardClick = (expert: ExpertCardData) => {
     setSelectedExpert(expert);
@@ -136,7 +96,7 @@ const ExpertsGrid: React.FC<ExpertsGridProps> = ({
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {defaultExperts.map((expert) => (
+        {displayExperts.map((expert) => (
           <ExpertCard
             key={expert.id.toString()}
             expert={expert}

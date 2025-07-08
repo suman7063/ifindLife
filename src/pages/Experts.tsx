@@ -3,8 +3,12 @@ import React from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Container } from '@/components/ui/container';
+import ExpertsGrid from '@/components/experts/ExpertsGrid';
+import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 
 const Experts = () => {
+  const { experts, loading, error } = usePublicExpertsData();
+
   return (
     <>
       <Navbar />
@@ -17,11 +21,37 @@ const Experts = () => {
             </p>
           </div>
           
-          <div className="text-center">
-            <p className="text-gray-600 mb-8">
-              Our expert directory is currently being updated. Please check back soon to browse and connect with our qualified professionals.
-            </p>
-          </div>
+          {error && (
+            <div className="text-center mb-8">
+              <p className="text-red-600 mb-4">{error}</p>
+              <p className="text-gray-600">Please try refreshing the page or contact support if the issue persists.</p>
+            </div>
+          )}
+          
+          {experts.length === 0 && !loading && !error && (
+            <div className="text-center">
+              <p className="text-gray-600 mb-8">
+                No experts are currently available. Please check back soon to browse and connect with our qualified professionals.
+              </p>
+            </div>
+          )}
+          
+          {loading && (
+            <div className="text-center">
+              <p className="text-gray-600">Loading experts...</p>
+            </div>
+          )}
+          
+          {experts.length > 0 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-6">
+                  {experts.length} {experts.length === 1 ? 'expert' : 'experts'} available
+                </p>
+              </div>
+              <ExpertsGrid experts={experts} loading={loading} />
+            </div>
+          )}
         </Container>
       </div>
       <Footer />

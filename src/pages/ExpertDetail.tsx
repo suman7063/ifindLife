@@ -46,43 +46,22 @@ const ExpertDetail = () => {
     }
   }, [isAuthenticated]);
   
+  // For now, use a mock expert. This should be fetched from database by ID in a real implementation
   const expert = {
     id: Number(id),
-    name: "Acharya Raman",
-    experience: 15,
-    specialties: ["Vedic", "Palmistry", "Tarot", "Kundli", "Vastu"],
-    rating: 4.9,
-    consultations: 35000,
+    name: "Expert Profile",
+    experience: 10,
+    specialties: ["General Counseling"],
+    rating: 4.5,
+    consultations: 100,
     price: 30,
     waitTime: "Available",
     imageUrl: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?q=80&w=2070&auto=format&fit=crop",
     online: true,
-    languages: ["English", "Hindi"],
-    description: "Acharya Raman is an experienced expert with over 15 years of experience in Vedic astrology, palmistry, and tarot reading. He has helped thousands of people find clarity and direction in their lives through his accurate predictions and spiritual guidance.",
-    education: "Master's in Vedic Astrology, Banaras Hindu University",
-    reviews: [
-      {
-        id: 1,
-        name: "Priya S.",
-        rating: 5,
-        date: "2 days ago",
-        comment: "Amazing experience! Acharya's predictions were spot on and his guidance helped me make an important career decision."
-      },
-      {
-        id: 2,
-        name: "Rahul M.",
-        rating: 4,
-        date: "1 week ago",
-        comment: "Very knowledgeable and patient. Took time to explain everything in detail. Will definitely consult again."
-      },
-      {
-        id: 3,
-        name: "Ananya K.",
-        rating: 5,
-        date: "2 weeks ago",
-        comment: "Incredible insight into my relationship problems. His advice has already started helping me improve things with my partner."
-      }
-    ]
+    languages: ["English"],
+    description: "This expert profile is currently being loaded from the database.",
+    education: "Professional Qualifications",
+    reviews: []
   };
   
   const handleCallClick = () => {
