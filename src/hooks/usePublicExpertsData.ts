@@ -59,7 +59,8 @@ export function usePublicExpertsData() {
         
         if (expertsData && expertsData.length > 0) {
           const formattedExperts = expertsData.map(mapDbExpertToExpertCard);
-          console.log(`Loaded ${formattedExperts.length} approved experts`);
+          console.log(`Loaded ${formattedExperts.length} approved experts with auth_ids:`, 
+            expertsData.map(e => ({ name: e.name, auth_id: e.auth_id })));
           setExperts(formattedExperts);
         } else {
           console.log('No approved experts found');
@@ -75,7 +76,7 @@ export function usePublicExpertsData() {
     };
     
     fetchApprovedExperts();
-  }, []);
+  }, [getExpertStatus, getExpertAvailability]); // Add dependencies to refresh when presence data changes
 
   return {
     experts,
@@ -83,7 +84,8 @@ export function usePublicExpertsData() {
     error,
     refetch: () => {
       setLoading(true);
-      // Re-run the effect by updating a dependency
+      setExperts([]); // Clear current experts to force reload
+      // The useEffect will run again due to dependency changes
     }
   };
 }

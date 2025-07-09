@@ -8,6 +8,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import DashboardLoader from '../../expert/dashboard/DashboardLoader';
 import { toast } from 'sonner';
 import { isExpertAuthenticated } from '@/utils/authHelpers';
+import { useIntegratedExpertPresence } from '@/hooks/useIntegratedExpertPresence';
 
 interface ExpertDashboardLayoutProps {
   children: ReactNode;
@@ -52,13 +53,17 @@ const ExpertDashboardLayout: React.FC<ExpertDashboardLayoutProps> = ({ children 
   const navigate = useNavigate();
   const [hasRedirected, setHasRedirected] = useState(false);
   
+  // Initialize expert presence tracking
+  const { isExpertOnline } = useIntegratedExpertPresence();
+  
   // Enhanced debug logging
   console.log('ExpertDashboardLayout - Simple auth state:', {
     isAuthenticated: simpleAuth.isAuthenticated,
     userType: simpleAuth.userType,
     hasExpertProfile: !!simpleAuth.expert,
     isLoading: simpleAuth.isLoading,
-    expertStatus: simpleAuth.expert?.status
+    expertStatus: simpleAuth.expert?.status,
+    isExpertOnline
   });
   
   // Show loading state while checking authentication

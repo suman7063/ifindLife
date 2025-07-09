@@ -96,13 +96,18 @@ export function useAvailabilityManagement(user: any) {
   };
 
   const fetchAvailabilities = async () => {
-    if (!user?.auth_id) return;
+    // Get auth_id from user object - try auth_id first, then fallback to id
+    const expertAuthId = user?.auth_id || user?.id;
+    if (!expertAuthId) {
+      console.log('🚫 No auth_id or id found for user:', user);
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
       
-      console.log('🔍 Fetching availabilities for auth_id:', user.auth_id);
+      console.log('🔍 Fetching availabilities for auth_id:', expertAuthId);
 
       const { data, error: fetchError } = await supabase
         .from('expert_availabilities')
@@ -110,10 +115,11 @@ export function useAvailabilityManagement(user: any) {
           *,
           time_slots:expert_time_slots(*)
         `)
-        .eq('expert_id', user.auth_id)
+        .eq('expert_id', expertAuthId)
         .order('created_at', { ascending: false });
 
       if (fetchError) throw fetchError;
+      console.log('✅ Fetched availabilities:', data);
       setAvailabilities(data || []);
     } catch (err: any) {
       console.error('Error fetching availabilities:', err);
@@ -125,7 +131,7 @@ export function useAvailabilityManagement(user: any) {
 
   useEffect(() => {
     fetchAvailabilities();
-  }, [user?.auth_id]);
+  }, [user?.auth_id, user?.id]); // Watch both auth_id and id
 
   return {
     createAvailability,
