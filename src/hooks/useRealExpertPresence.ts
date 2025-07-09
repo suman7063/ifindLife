@@ -20,18 +20,25 @@ export function useRealExpertPresence(expertIds: string[] = []) {
       console.log('🔴 Setting expert presence:', { expertAuthId, status });
       const channel = supabase.channel(`expert_presence_${expertAuthId}`);
       
-      const trackResult = await channel.track({
-        user_id: expertAuthId,
-        status,
-        last_seen: new Date().toISOString(),
-        current_clients: 0,
-        online_at: new Date().toISOString()
+      // MUST subscribe first before tracking presence
+      await channel.subscribe((subscriptionStatus) => {
+        console.log('🔴 Channel subscription status:', subscriptionStatus);
+        
+        if (subscriptionStatus === 'SUBSCRIBED') {
+          // Now we can track presence
+          channel.track({
+            user_id: expertAuthId,
+            status: status,
+            last_seen: new Date().toISOString(),
+            current_clients: 0,
+            online_at: new Date().toISOString()
+          }).then((trackResult) => {
+            console.log('🟢 Track result:', trackResult);
+          }).catch((error) => {
+            console.error('❌ Error tracking presence:', error);
+          });
+        }
       });
-
-      console.log('🔴 Track result:', trackResult);
-      
-      const subscribeResult = await channel.subscribe();
-      console.log('🔴 Subscribe result:', subscribeResult);
       
       // Update local state immediately
       setPresenceData(prev => ({
