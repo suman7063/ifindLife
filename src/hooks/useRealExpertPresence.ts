@@ -112,16 +112,19 @@ export function useRealExpertPresence(expertIds: string[] = []) {
   }, [expertIds]);
 
   const isExpertOnline = (expertId: string): boolean => {
+    if (!expertId) return false;
     const online = presenceData[expertId]?.isOnline || false;
     console.log('🔍 Checking expert online status:', { expertId, online, presenceData: presenceData[expertId] });
     return online;
   };
 
   const getExpertStatus = (expertId: string): 'online' | 'offline' => {
+    if (!expertId) return 'offline';
     return isExpertOnline(expertId) ? 'online' : 'offline';
   };
 
   const getExpertAvailability = (expertId: string): 'available' | 'busy' | 'away' | 'offline' => {
+    if (!expertId) return 'offline';
     return presenceData[expertId]?.status || 'offline';
   };
 

@@ -7,6 +7,7 @@ import ExpertCard from '@/components/expert-card';
 import { ExpertCardData } from '@/components/expert-card/types';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import { toast } from 'sonner';
+import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
 
 interface ExpertSelectionModalProps {
   isOpen: boolean;
@@ -21,12 +22,14 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
   serviceTitle,
   experts = []
 }) => {
+  const { experts: realExperts, loading, error } = usePublicExpertsData();
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isExpertModalOpen, setIsExpertModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
-  // Sample experts data for the service
-  const defaultExperts: ExpertCardData[] = experts.length > 0 ? experts : [
+  // Use provided experts first, then real experts, then fallback to sample data
+  const defaultExperts: ExpertCardData[] = experts.length > 0 ? experts : 
+    realExperts.length > 0 ? realExperts : [
     {
       id: '1',
       name: 'Dr. Sarah Johnson',
@@ -143,62 +146,75 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
           </DialogHeader>
 
           <div className="py-6 space-y-8">
-            {/* Online Experts Section */}
-            {onlineExperts.length > 0 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <h3 className="text-xl font-semibold">Available Now</h3>
-                  <Badge className="bg-green-100 text-green-800 border-green-200">
-                    {onlineExperts.length} experts online
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {onlineExperts.map((expert) => (
-                    <ExpertCard
-                      key={expert.id}
-                      expert={expert}
-                      onClick={() => handleExpertCardClick(expert)}
-                      onConnectNow={(type) => handleConnectNow(expert, type)}
-                      onBookNow={() => handleBookNow(expert)}
-                      showConnectOptions={expertConnectOptions[String(expert.id)] || false}
-                      onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
-                      className="h-full"
-                    />
-                  ))}
-                </div>
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="mt-4 text-gray-600">Loading experts...</p>
               </div>
-            )}
+            ) : error ? (
+              <div className="text-center py-12 text-red-600">
+                <p>Failed to load experts. Please try again.</p>
+              </div>
+            ) : (
+              <>
+                {/* Online Experts Section */}
+                {onlineExperts.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <h3 className="text-xl font-semibold">Available Now</h3>
+                      <Badge className="bg-green-100 text-green-800 border-green-200">
+                        {onlineExperts.length} experts online
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {onlineExperts.map((expert) => (
+                        <ExpertCard
+                          key={expert.id}
+                          expert={expert}
+                          onClick={() => handleExpertCardClick(expert)}
+                          onConnectNow={(type) => handleConnectNow(expert, type)}
+                          onBookNow={() => handleBookNow(expert)}
+                          showConnectOptions={expertConnectOptions[String(expert.id)] || false}
+                          onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
+                          className="h-full"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {/* Offline Experts Section */}
-            {offlineExperts.length > 0 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <h3 className="text-xl font-semibold">Schedule for Later</h3>
-                  <Badge variant="outline" className="border-gray-300 text-gray-600">
-                    {offlineExperts.length} experts available
-                  </Badge>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {offlineExperts.map((expert) => (
-                    <ExpertCard
-                      key={expert.id}
-                      expert={expert}
-                      onClick={() => handleExpertCardClick(expert)}
-                      onConnectNow={(type) => handleConnectNow(expert, type)}
-                      onBookNow={() => handleBookNow(expert)}
-                      showConnectOptions={expertConnectOptions[String(expert.id)] || false}
-                      onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
-                      className="h-full"
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+                {/* Offline Experts Section */}
+                {offlineExperts.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-3 mb-6">
+                      <h3 className="text-xl font-semibold">Schedule for Later</h3>
+                      <Badge variant="outline" className="border-gray-300 text-gray-600">
+                        {offlineExperts.length} experts available
+                      </Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {offlineExperts.map((expert) => (
+                        <ExpertCard
+                          key={expert.id}
+                          expert={expert}
+                          onClick={() => handleExpertCardClick(expert)}
+                          onConnectNow={(type) => handleConnectNow(expert, type)}
+                          onBookNow={() => handleBookNow(expert)}
+                          showConnectOptions={expertConnectOptions[String(expert.id)] || false}
+                          onShowConnectOptions={(show) => handleShowConnectOptions(String(expert.id), show)}
+                          className="h-full"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            {defaultExperts.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No experts available for this service at the moment.</p>
-              </div>
+                {defaultExperts.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-gray-500">No experts available for this service at the moment.</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </DialogContent>

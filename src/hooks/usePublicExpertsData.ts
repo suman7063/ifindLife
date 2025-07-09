@@ -8,8 +8,14 @@ export function usePublicExpertsData() {
   const [experts, setExperts] = useState<ExpertCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [rawExperts, setRawExperts] = useState<any[]>([]);
 
-  const { getExpertStatus, getExpertAvailability } = useRealExpertPresence();
+  // Get auth IDs from raw experts data
+  const expertAuthIds = rawExperts
+    .map(e => e.auth_id)
+    .filter(id => id !== null && id !== undefined);
+
+  const { getExpertStatus, getExpertAvailability } = useRealExpertPresence(expertAuthIds);
 
   // Map database expert to ExpertCardData
   const mapDbExpertToExpertCard = (dbExpert: any): ExpertCardData => {
@@ -38,6 +44,14 @@ export function usePublicExpertsData() {
     };
   };
 
+  // Update experts when presence data changes
+  useEffect(() => {
+    if (rawExperts.length > 0) {
+      const formattedExperts = rawExperts.map(mapDbExpertToExpertCard);
+      setExperts(formattedExperts);
+    }
+  }, [rawExperts, getExpertStatus, getExpertAvailability]);
+
   useEffect(() => {
     const fetchApprovedExperts = async () => {
       try {
@@ -58,12 +72,13 @@ export function usePublicExpertsData() {
         }
         
         if (expertsData && expertsData.length > 0) {
-          const formattedExperts = expertsData.map(mapDbExpertToExpertCard);
-          console.log(`Loaded ${formattedExperts.length} approved experts with auth_ids:`, 
+          console.log(`Loaded ${expertsData.length} approved experts with auth_ids:`, 
             expertsData.map(e => ({ name: e.name, auth_id: e.auth_id })));
-          setExperts(formattedExperts);
+          
+          setRawExperts(expertsData);
         } else {
           console.log('No approved experts found');
+          setRawExperts([]);
           setExperts([]);
         }
       } catch (err) {
@@ -76,7 +91,7 @@ export function usePublicExpertsData() {
     };
     
     fetchApprovedExperts();
-  }, [getExpertStatus, getExpertAvailability]); // Add dependencies to refresh when presence data changes
+  }, []); // Remove dependencies to prevent infinite loops
 
   return {
     experts,

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -95,7 +95,7 @@ export function useAvailabilityManagement(user: any) {
     }
   };
 
-  const fetchAvailabilities = async () => {
+  const fetchAvailabilities = useCallback(async () => {
     // Get auth_id from user object - try auth_id first, then fallback to id
     const expertAuthId = user?.auth_id || user?.id;
     if (!expertAuthId) {
@@ -127,11 +127,11 @@ export function useAvailabilityManagement(user: any) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.auth_id, user?.id]);
 
   useEffect(() => {
     fetchAvailabilities();
-  }, [user?.auth_id, user?.id]); // Watch both auth_id and id
+  }, [fetchAvailabilities]); // Use fetchAvailabilities as dependency
 
   return {
     createAvailability,
