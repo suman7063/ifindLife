@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
@@ -15,7 +15,7 @@ export function useRealExpertPresence(expertIds: string[] = []) {
   const [loading, setLoading] = useState(true);
 
   // Initialize presence for current expert (when they log in)
-  const updateExpertPresence = async (expertAuthId: string, status: 'available' | 'busy' | 'away' | 'offline') => {
+  const updateExpertPresence = useCallback(async (expertAuthId: string, status: 'available' | 'busy' | 'away' | 'offline') => {
     try {
       console.log('🔴 Setting expert presence:', { expertAuthId, status });
       const channel = supabase.channel(`expert_presence_${expertAuthId}`);
@@ -54,7 +54,7 @@ export function useRealExpertPresence(expertIds: string[] = []) {
     } catch (error) {
       console.error('❌ Error updating expert presence:', error);
     }
-  };
+  }, []);
 
   // Get expert presence using realtime
   useEffect(() => {
