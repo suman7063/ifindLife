@@ -1,214 +1,151 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+interface LoginRequest {
+  action: 'login' | 'verify' | 'logout';
+  username?: string;
+  password?: string;
+  sessionToken?: string;
+}
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const { action, username, password, sessionToken } = await req.json();
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    // Create Supabase client with service role key for admin operations
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const { action, username, password, sessionToken } = await req.json() as LoginRequest
 
-    if (action === "login") {
-      // Input validation
-      if (!username || !password) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Username and password are required" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-          }
-        );
-      }
-
-      // Sanitize inputs
-      const sanitizedUsername = username.trim().toLowerCase();
-      const sanitizedPassword = password.trim();
-
-      // Use the secure authentication function
-      const { data, error } = await supabase.rpc("authenticate_admin", {
-        p_username: sanitizedUsername,
-        p_password: sanitizedPassword,
-      });
-
-      if (error) {
-        console.error("Admin auth error:", error);
-        return new Response(
-          JSON.stringify({ success: false, error: "Authentication failed" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
-          }
-        );
-      }
-
-      if (!data?.success) {
-        return new Response(
-          JSON.stringify({ success: false, error: data?.error || "Invalid credentials" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 401,
-          }
-        );
-      }
-
-      // Generate secure session token
-      const sessionTokenValue = crypto.randomUUID();
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
-      // Store session in database
-      const { error: sessionError } = await supabase
-        .from("admin_sessions")
-        .insert({
-          admin_id: data.admin.id,
-          session_token: sessionTokenValue,
-          expires_at: expiresAt.toISOString(),
-          ip_address: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip"),
-          user_agent: req.headers.get("user-agent"),
-        });
-
-      if (sessionError) {
-        console.error("Session creation error:", sessionError);
-        return new Response(
-          JSON.stringify({ success: false, error: "Failed to create session" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 500,
-          }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          admin: data.admin,
-          sessionToken: sessionTokenValue,
-          expiresAt: expiresAt.toISOString(),
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
-
-    } else if (action === "verify") {
-      // Verify session token
-      if (!sessionToken) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Session token required" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 400,
-          }
-        );
-      }
-
-      const { data: sessionData, error: sessionError } = await supabase
-        .from("admin_sessions")
-        .select(`
-          id,
-          admin_id,
-          expires_at,
-          admin_accounts (
-            id,
-            username,
-            email,
-            role,
-            is_active
+    switch (action) {
+      case 'login':
+        if (!username || !password) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Username and password required' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
-        `)
-        .eq("session_token", sessionToken)
-        .single();
-
-      if (sessionError || !sessionData) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Invalid session" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 401,
-          }
-        );
-      }
-
-      // Check if session is expired
-      if (new Date(sessionData.expires_at) < new Date()) {
-        // Delete expired session
-        await supabase.from("admin_sessions").delete().eq("id", sessionData.id);
-        
-        return new Response(
-          JSON.stringify({ success: false, error: "Session expired" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 401,
-          }
-        );
-      }
-
-      // Check if admin account is active
-      if (!sessionData.admin_accounts?.is_active) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Account deactivated" }),
-          {
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-            status: 401,
-          }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          admin: sessionData.admin_accounts,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
         }
-      );
 
-    } else if (action === "logout") {
-      // Logout - delete session
-      if (sessionToken) {
-        await supabase.from("admin_sessions").delete().eq("session_token", sessionToken);
-      }
+        // Call the authenticate_admin function
+        const { data: authResult, error: authError } = await supabaseClient
+          .rpc('authenticate_admin', {
+            p_username: username,
+            p_password: password
+          })
 
-      return new Response(
-        JSON.stringify({ success: true }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
+        if (authError) {
+          console.error('Authentication error:', authError)
+          return new Response(
+            JSON.stringify({ success: false, error: 'Authentication failed' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
         }
-      );
+
+        if (!authResult?.success) {
+          return new Response(
+            JSON.stringify({ success: false, error: authResult?.error || 'Invalid credentials' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        // Create session token
+        const sessionData = {
+          admin_id: authResult.admin.id,
+          session_token: crypto.randomUUID(),
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+          ip_address: req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown',
+          user_agent: req.headers.get('user-agent') || null
+        }
+
+        const { error: sessionError } = await supabaseClient
+          .from('admin_sessions')
+          .insert(sessionData)
+
+        if (sessionError) {
+          console.error('Session creation error:', sessionError)
+          return new Response(
+            JSON.stringify({ success: false, error: 'Failed to create session' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            admin: authResult.admin,
+            sessionToken: sessionData.session_token,
+            expiresAt: sessionData.expires_at
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+
+      case 'verify':
+        if (!sessionToken) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Session token required' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        const { data: session, error: sessionQueryError } = await supabaseClient
+          .from('admin_sessions')
+          .select(`
+            *,
+            admin_accounts(id, username, email, role, last_login)
+          `)
+          .eq('session_token', sessionToken)
+          .gt('expires_at', new Date().toISOString())
+          .single()
+
+        if (sessionQueryError || !session) {
+          return new Response(
+            JSON.stringify({ success: false, error: 'Invalid or expired session' }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            admin: session.admin_accounts
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+
+      case 'logout':
+        if (sessionToken) {
+          await supabaseClient
+            .from('admin_sessions')
+            .delete()
+            .eq('session_token', sessionToken)
+        }
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+
+      default:
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid action' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
     }
 
-    return new Response(
-      JSON.stringify({ success: false, error: "Invalid action" }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 400,
-      }
-    );
-
   } catch (error) {
-    console.error("Admin auth function error:", error);
+    console.error('Admin auth error:', error)
     return new Response(
-      JSON.stringify({ success: false, error: "Internal server error" }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
-    );
+      JSON.stringify({ success: false, error: 'Internal server error' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-});
+})
