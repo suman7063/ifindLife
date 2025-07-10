@@ -129,13 +129,32 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
         type,
         selectedDuration,
         callCost,
-        'USD'
+        'INR'
       );
 
       if (session) {
-        setSelectedExpert(expert);
-        setIsCallModalOpen(true);
-        toast.success(`Starting ${type} call with ${expert.name}...`);
+        console.log('Call session created, now processing payment...');
+        
+        // Process payment for the call
+        await processPayment(
+          {
+            amount: Math.round(callCost * 100), // Convert to smallest currency unit (cents)
+            currency: 'INR',
+            description: `${type} call with ${expert.name} (${selectedDuration} minutes)`,
+            expertId: expert.id,
+            callSessionId: session.id,
+          },
+          (paymentId, orderId) => {
+            console.log('Payment successful, starting call interface...');
+            setSelectedExpert(expert);
+            setIsCallModalOpen(true);
+            toast.success(`Payment successful! Starting ${type} call with ${expert.name}...`);
+          },
+          (error) => {
+            console.error('Payment failed:', error);
+            toast.error('Payment failed. Please try again.');
+          }
+        );
       } else {
         toast.error('Failed to start call session');
       }

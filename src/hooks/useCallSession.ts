@@ -29,7 +29,7 @@ export function useCallSession() {
     callType: 'video' | 'voice',
     selectedDuration: number,
     cost: number,
-    currency: string = 'USD'
+    currency: string = 'INR'
   ): Promise<CallSession | null> => {
     if (!user) {
       setError('User not authenticated');

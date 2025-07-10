@@ -75,18 +75,18 @@ export const useRazorpayPayment = () => {
         throw orderError;
       }
 
-      if (!orderData?.orderId) {
+      if (!orderData?.id) {
         throw new Error('Failed to create payment order');
       }
 
       // Configure Razorpay options
       const options = {
-        key: orderData.razorpayKeyId,
-        amount: paymentDetails.amount,
-        currency: paymentDetails.currency,
+        key: orderData.razorpayKeyId || "rzp_test_kG71PNKVyDWEm8",
+        amount: orderData.amount,
+        currency: orderData.currency,
         name: 'Expert Consultation',
         description: paymentDetails.description,
-        order_id: orderData.orderId,
+        order_id: orderData.id,
         prefill: {
           email: user.email || '',
           name: user.user_metadata?.name || user.email || '',

@@ -46,7 +46,10 @@ serve(async (req) => {
       throw new Error(data.error?.description || "Failed to create RazorPay order");
     }
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({
+      ...data,
+      razorpayKeyId: RAZORPAY_KEY_ID
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });

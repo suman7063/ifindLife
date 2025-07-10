@@ -130,8 +130,8 @@ const AppointmentBookingModal: React.FC<AppointmentBookingModalProps> = ({
       // Process payment first
       await processPayment(
         {
-          amount: sessionCost * 100, // Convert to cents
-          currency: 'USD',
+          amount: Math.round(sessionCost * 100), // Convert to paise
+          currency: 'INR',
           description: `Appointment with ${expert.name} for ${serviceTitle}`,
           expertId: expert.auth_id,
           serviceId: serviceId,
