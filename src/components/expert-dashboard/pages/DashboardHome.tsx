@@ -15,6 +15,8 @@ import {
   Clock,
   Edit
 } from 'lucide-react';
+import PresenceStatusControl from '../components/PresenceStatusControl';
+import AwayMessagesPanel from '../components/AwayMessagesPanel';
 
 const DashboardHome = () => {
   const { expert: expertProfile } = useSimpleAuth();
@@ -69,6 +71,12 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6">
+      {/* Presence and Messages Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <PresenceStatusControl />
+        <AwayMessagesPanel />
+      </div>
+
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg p-6">
         <div className="flex items-center justify-between">

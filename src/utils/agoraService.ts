@@ -44,41 +44,57 @@ export const joinCall = async (
   localVideoTrack: ICameraVideoTrack | null;
 }> => {
   const { channelName, callType, appId = '9b3ad657507642f98a52d47893780e8e' } = settings;
-  const userId = `user-${Math.floor(Math.random() * 1000000)}`;
+  
+  // Generate a consistent user ID
+  const userId = `user_${Math.floor(Math.random() * 1000000)}_${Date.now()}`;
   
   // For demo purposes only - in production get this from server
   const token = null;
   
   try {
-    // Join the channel
+    // Join the channel with consistent App ID
     await client.join(appId, channelName, token, userId);
-    console.log('Joined channel:', channelName, 'with App ID:', appId);
+    console.log('✅ Agora: Joined channel:', channelName, 'with App ID:', appId, 'User ID:', userId);
     
-    // Create local audio track
-    const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-    console.log('Created local audio track');
+    // Create local audio track with quality settings
+    const localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+      encoderConfig: {
+        sampleRate: 48000,
+        stereo: false,
+        bitrate: 48
+      }
+    });
+    console.log('✅ Agora: Created local audio track');
     
     // Create local video track if video call
     let localVideoTrack = null;
     if (callType === 'video') {
-      localVideoTrack = await AgoraRTC.createCameraVideoTrack();
-      console.log('Created local video track');
+      localVideoTrack = await AgoraRTC.createCameraVideoTrack({
+        encoderConfig: {
+          width: 640,
+          height: 480,
+          frameRate: 15,
+          bitrateMin: 200,
+          bitrateMax: 1000
+        }
+      });
+      console.log('✅ Agora: Created local video track');
     }
     
     // Publish tracks
-    if (callType === 'video') {
-      await client.publish([localAudioTrack, localVideoTrack]);
-    } else {
-      await client.publish([localAudioTrack]);
-    }
-    console.log('Published local tracks');
+    const tracksToPublish = localVideoTrack 
+      ? [localAudioTrack, localVideoTrack] 
+      : [localAudioTrack];
+      
+    await client.publish(tracksToPublish);
+    console.log('✅ Agora: Published local tracks:', tracksToPublish.length, 'tracks');
     
     return {
       localAudioTrack,
       localVideoTrack
     };
   } catch (error) {
-    console.error('Error joining call:', error);
+    console.error('❌ Agora: Error joining call:', error);
     throw error;
   }
 };

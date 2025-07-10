@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,9 @@ import { Star, Video, Phone, Clock, Calendar } from 'lucide-react';
 import { ExpertCardData } from './types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
+import { useEnhancedExpertPresence } from '@/hooks/useEnhancedExpertPresence';
+import ExpertStatusIndicator from './ExpertStatusIndicator';
+import AwayMessageDialog from './AwayMessageDialog';
 import { toast } from 'sonner';
 
 export interface OptimizedExpertCardProps {
@@ -32,6 +35,13 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
 }) => {
   const { isAuthenticated } = useAuth();
   const { requireAuthForExpert, requireAuthForCall, executeIntendedAction } = useAuthRedirectSystem();
+  const [showAwayDialog, setShowAwayDialog] = useState(false);
+  
+  const { 
+    isExpertOnline, 
+    getExpertStatus, 
+    getLastActivity
+  } = useEnhancedExpertPresence([expert.id]);
 
   // Memoize expert data processing
   const expertData = useMemo(() => {
@@ -58,17 +68,20 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
 
   // Memoize availability status
   const availabilityStatus = useMemo(() => {
-    const isOnline = expertData.status === 'online';
-    const isAvailable = isOnline && expertData.waitTime === 'Available Now';
+    const online = isExpertOnline(expertData.id);
+    const status = getExpertStatus(expertData.id);
+    const lastActivity = getLastActivity(expertData.id);
     
     return {
-      isOnline,
-      isAvailable,
-      statusText: isOnline ? 'Available Now' : expertData.waitTime,
-      statusColor: isOnline ? 'text-green-600' : 'text-gray-500',
-      badgeColor: isOnline ? 'bg-green-500' : 'bg-gray-400'
+      isOnline: online,
+      status: status,
+      lastActivity: lastActivity,
+      canConnect: online && (status === 'available'),
+      canMessage: status === 'away',
+      statusColor: online ? 'text-green-600' : 'text-gray-500',
+      badgeColor: online ? 'bg-green-500' : 'bg-gray-400'
     };
-  }, [expertData.status, expertData.waitTime]);
+  }, [expertData.id, isExpertOnline, getExpertStatus, getLastActivity]);
 
   // Handle authentication flow after login
   React.useEffect(() => {
@@ -104,10 +117,20 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       return;
     }
 
-    if (onShowConnectOptions) {
+    if (availabilityStatus.status === 'away') {
+      setShowAwayDialog(true);
+      return;
+    }
+
+    if (availabilityStatus.status === 'busy') {
+      toast.error(`${expertData.name} is currently busy`);
+      return;
+    }
+
+    if (availabilityStatus.canConnect && onShowConnectOptions) {
       onShowConnectOptions(true);
     }
-  }, [requireAuthForExpert, expertData.id, expertData.name, availabilityStatus.isOnline, onShowConnectOptions]);
+  }, [requireAuthForExpert, expertData.id, expertData.name, availabilityStatus, onShowConnectOptions]);
 
   // Handle book now with improved UX
   const handleBookNow = React.useCallback((e: React.MouseEvent) => {
@@ -128,17 +151,26 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       return;
     }
 
+    // Double check availability before connecting
+    if (!availabilityStatus.canConnect) {
+      toast.error(`${expertData.name} is no longer available for connection`);
+      if (onShowConnectOptions) {
+        onShowConnectOptions(false);
+      }
+      return;
+    }
+
     if (onConnectNow) {
       onConnectNow(type);
     }
     if (onShowConnectOptions) {
       onShowConnectOptions(false);
     }
-  }, [requireAuthForCall, expertData.id, expertData.name, onConnectNow, onShowConnectOptions]);
+  }, [requireAuthForCall, expertData.id, expertData.name, availabilityStatus.canConnect, onConnectNow, onShowConnectOptions]);
 
   // Render buttons based on variant and state
   const renderActionButtons = () => {
-    if (showConnectOptions && availabilityStatus.isOnline) {
+    if (showConnectOptions && availabilityStatus.canConnect) {
       return (
         <div className="flex gap-2">
           <Button
@@ -173,15 +205,24 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       <div className="flex gap-2">
         <Button
           size="sm"
-          variant={availabilityStatus.isOnline ? 'default' : 'outline'}
+          variant={availabilityStatus.canConnect ? 'default' : 'outline'}
           className="flex-1"
           onClick={handleConnectNow}
           disabled={!availabilityStatus.isOnline}
         >
-          {availabilityStatus.isOnline ? (
+          {availabilityStatus.canConnect ? (
             <>
               <Video className="h-3 w-3 mr-1" />
               Connect Now
+            </>
+          ) : availabilityStatus.canMessage ? (
+            <>
+              Send Message
+            </>
+          ) : availabilityStatus.status === 'busy' ? (
+            <>
+              <Clock className="h-3 w-3 mr-1" />
+              Busy
             </>
           ) : (
             <>
@@ -255,8 +296,13 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
       
       <CardFooter className="bg-muted/50 px-4 py-3">
         <div className="w-full space-y-2">
-          <div className={`text-xs text-center font-medium ${availabilityStatus.statusColor}`}>
-            {availabilityStatus.statusText}
+          <div className="flex justify-center">
+            <ExpertStatusIndicator
+              status={availabilityStatus.status}
+              isOnline={availabilityStatus.isOnline}
+              lastActivity={availabilityStatus.lastActivity}
+              size="sm"
+            />
           </div>
           {renderActionButtons()}
         </div>
@@ -265,12 +311,22 @@ const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({
   );
 
   return (
-    <Card 
-      className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${className}`}
-      onClick={onClick}
-    >
-      {cardContent}
-    </Card>
+    <>
+      <Card 
+        className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${className}`}
+        onClick={onClick}
+      >
+        {cardContent}
+      </Card>
+      
+      {/* Away Message Dialog */}
+      <AwayMessageDialog
+        isOpen={showAwayDialog}
+        onClose={() => setShowAwayDialog(false)}
+        expertId={expertData.id}
+        expertName={expertData.name}
+      />
+    </>
   );
 });
 

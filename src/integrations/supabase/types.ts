@@ -345,6 +345,85 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_away_messages: {
+        Row: {
+          expert_id: string
+          id: string
+          is_read: boolean | null
+          message: string
+          read_at: string | null
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          expert_id: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          read_at?: string | null
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          expert_id?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          read_at?: string | null
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_away_messages_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: false
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
+        ]
+      }
+      expert_presence: {
+        Row: {
+          auto_away_enabled: boolean | null
+          away_timeout_minutes: number | null
+          created_at: string
+          expert_id: string
+          id: string
+          last_activity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          auto_away_enabled?: boolean | null
+          away_timeout_minutes?: number | null
+          created_at?: string
+          expert_id: string
+          id?: string
+          last_activity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          auto_away_enabled?: boolean | null
+          away_timeout_minutes?: number | null
+          created_at?: string
+          expert_id?: string
+          id?: string
+          last_activity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expert_presence_expert_id_fkey"
+            columns: ["expert_id"]
+            isOneToOne: true
+            referencedRelation: "expert_accounts"
+            referencedColumns: ["auth_id"]
+          },
+        ]
+      }
       expert_reports: {
         Row: {
           date: string | null
@@ -1354,6 +1433,14 @@ export type Database = {
       is_superadmin: {
         Args: Record<PropertyKey, never> | { user_id: string }
         Returns: boolean
+      }
+      mark_away_message_read: {
+        Args: { message_id: string }
+        Returns: undefined
+      }
+      update_expert_away_status: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {
