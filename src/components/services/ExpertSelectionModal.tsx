@@ -6,13 +6,19 @@ import { X } from 'lucide-react';
 import ExpertCard from '@/components/expert-card';
 import { ExpertCardData } from '@/components/expert-card/types';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
+import AppointmentBookingModal from '@/components/booking/AppointmentBookingModal';
 import { toast } from 'sonner';
-import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
+import { useExpertData } from '@/hooks/useExpertData';
+import { useCallSession } from '@/hooks/useCallSession';
+import { useRazorpayPayment } from '@/hooks/useRazorpayPayment';
+import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
+import LazyAgoraCallModal from '@/components/call/LazyAgoraCallModal';
 
 interface ExpertSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   serviceTitle: string;
+  serviceId?: string;
   experts?: ExpertCardData[];
 }
 
@@ -20,11 +26,18 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
   isOpen,
   onClose,
   serviceTitle,
+  serviceId,
   experts = []
 }) => {
-  const { experts: realExperts, loading, error } = usePublicExpertsData();
+  const { isAuthenticated } = useSimpleAuth();
+  const { experts: realExperts, loading, error } = useExpertData({ serviceId });
+  const { createCallSession, currentSession } = useCallSession();
+  const { processPayment } = useRazorpayPayment();
+  
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isExpertModalOpen, setIsExpertModalOpen] = useState(false);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});
 
   // Use provided experts first, then real experts, then fallback to sample data
@@ -93,16 +106,54 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
     setIsExpertModalOpen(true);
   };
 
-  const handleConnectNow = (expert: ExpertCardData, type: 'video' | 'voice') => {
-    console.log(`Connecting to ${expert.name} via ${type} for ${serviceTitle}`);
-    toast.success(`Initiating ${type} call with ${expert.name}...`);
-    onClose();
+  const handleConnectNow = async (expert: ExpertCardData, type: 'video' | 'voice') => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to start a call');
+      return;
+    }
+
+    if (expert.status !== 'online') {
+      toast.error('Expert is not available for immediate connection');
+      return;
+    }
+
+    try {
+      console.log(`Initiating ${type} call with ${expert.name}`);
+      
+      // Create call session with 30-minute default duration
+      const selectedDuration = 30; // minutes
+      const callCost = expert.price * selectedDuration;
+      
+      const session = await createCallSession(
+        expert.id,
+        type,
+        selectedDuration,
+        callCost,
+        'USD'
+      );
+
+      if (session) {
+        setSelectedExpert(expert);
+        setIsCallModalOpen(true);
+        toast.success(`Starting ${type} call with ${expert.name}...`);
+      } else {
+        toast.error('Failed to start call session');
+      }
+    } catch (error) {
+      console.error('Error starting call:', error);
+      toast.error('Failed to start call');
+    }
   };
 
   const handleBookNow = (expert: ExpertCardData) => {
-    console.log(`Booking session with ${expert.name} for ${serviceTitle}`);
-    toast.info(`Opening booking interface for ${expert.name}...`);
-    onClose();
+    if (!isAuthenticated) {
+      toast.error('Please log in to book a session');
+      return;
+    }
+
+    console.log(`Opening booking interface for ${expert.name} - ${serviceTitle}`);
+    setSelectedExpert(expert);
+    setIsBookingModalOpen(true);
   };
 
   const handleShowConnectOptions = (expertId: string, show: boolean) => {
@@ -230,6 +281,37 @@ const ExpertSelectionModal: React.FC<ExpertSelectionModalProps> = ({
         onConnectNow={handleModalConnectNow}
         onBookNow={handleModalBookNow}
       />
+
+      {/* Appointment Booking Modal */}
+      {isBookingModalOpen && selectedExpert && (
+        <AppointmentBookingModal
+          isOpen={isBookingModalOpen}
+          onClose={() => {
+            setIsBookingModalOpen(false);
+            setSelectedExpert(null);
+          }}
+          expert={selectedExpert}
+          serviceTitle={serviceTitle}
+          serviceId={serviceId}
+        />
+      )}
+
+      {/* Call Modal */}
+      {isCallModalOpen && selectedExpert && currentSession && (
+        <LazyAgoraCallModal
+          isOpen={isCallModalOpen}
+          onClose={() => {
+            setIsCallModalOpen(false);
+            setSelectedExpert(null);
+          }}
+          expert={{
+            id: parseInt(selectedExpert.id),
+            name: selectedExpert.name,
+            imageUrl: selectedExpert.profilePicture || '',
+            price: selectedExpert.price || 30
+          }}
+        />
+      )}
     </>
   );
 };

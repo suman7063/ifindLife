@@ -7,7 +7,7 @@ import { Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Expert, EnhancedExpertSelectionModalProps } from './types';
-import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
+import { useExpertData } from '@/hooks/useExpertData';
 import AuthRequiredDialog from './AuthRequiredDialog';
 import AuthProtectionIndicator from './AuthProtectionIndicator';
 import ExpertGrid from './ExpertGrid';
@@ -16,10 +16,11 @@ const EnhancedExpertSelectionModal: React.FC<EnhancedExpertSelectionModalProps> 
   isOpen,
   onClose,
   onExpertSelected,
-  serviceTitle
+  serviceTitle,
+  serviceId
 }) => {
   const { isAuthenticated, userType } = useSimpleAuth();
-  const { experts: realExperts, loading, error } = usePublicExpertsData();
+  const { experts: realExperts, loading, error } = useExpertData({ serviceId });
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [showCallModal, setShowCallModal] = useState(false);
   const [operationId, setOperationId] = useState<string | null>(null);

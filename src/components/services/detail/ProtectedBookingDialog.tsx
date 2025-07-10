@@ -11,6 +11,7 @@ interface ProtectedBookingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   serviceTitle: string;
+  serviceId?: string;
   serviceType: 'service' | 'program';
 }
 
@@ -18,6 +19,7 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
   open,
   onOpenChange,
   serviceTitle,
+  serviceId,
   serviceType
 }) => {
   const { isAuthenticated, isLoading } = useSimpleAuth();
@@ -149,6 +151,7 @@ const ProtectedBookingDialog: React.FC<ProtectedBookingDialogProps> = ({
           }}
           onExpertSelected={handleExpertSelected}
           serviceTitle={serviceTitle}
+          serviceId={serviceId}
         />
       )}
     </>

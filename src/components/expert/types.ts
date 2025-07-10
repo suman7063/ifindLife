@@ -15,6 +15,7 @@ export interface EnhancedExpertSelectionModalProps {
   onClose: () => void;
   onExpertSelected: (expertId: number) => void;
   serviceTitle: string;
+  serviceId?: string;
 }
 
 export interface ReportUserType {

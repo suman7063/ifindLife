@@ -70,6 +70,7 @@ const ServiceDetailPage: React.FC = () => {
         open={isBookingDialogOpen} 
         onOpenChange={setIsBookingDialogOpen}
         serviceTitle={serviceData.title}
+        serviceId={serviceId}
         serviceType="service"
       />
       
