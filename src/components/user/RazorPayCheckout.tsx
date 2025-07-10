@@ -74,7 +74,7 @@ const RazorPayCheckout: React.FC<RazorPayCheckoutProps> = ({
       }
 
       const options = {
-        key: 'rzp_test_yourkeyhere', // Replace with your Razorpay key (use test key for development)
+        key: orderData.razorpayKeyId, // Use key from backend for security
         amount: amount * 100, // Amount in paise
         currency: currentUser.currency || 'INR',
         name: 'IFindLife',

@@ -4,6 +4,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SimpleAuthProvider } from '@/contexts/SimpleAuthContext';
 import { AdminAuthProvider } from '@/contexts/AdminAuthClean';
 import { FavoritesProvider } from '@/contexts/favorites/FavoritesProvider';
+import { SecureAdminAuthProvider } from '@/contexts/SecureAdminAuth';
+import SecureAdminLogin from '@/components/admin/SecureAdminLogin';
 import Home from './pages/Index';
 import UserLogin from './pages/UserLogin';
 import UserSignup from './pages/UserRegister';
@@ -115,16 +117,16 @@ function App() {
       <Toaster />
       <BrowserRouter>
         <Routes>
-          {/* CRITICAL: Admin routes MUST come FIRST to prevent catch-all interference */}
+          {/* CRITICAL: Admin routes with secure authentication */}
           <Route path="/admin-login" element={
-            <AdminAuthProvider>
-              <AdminLoginClean />
-            </AdminAuthProvider>
+            <SecureAdminAuthProvider>
+              <SecureAdminLogin />
+            </SecureAdminAuthProvider>
           } />
           <Route path="/admin/*" element={
-            <AdminAuthProvider>
+            <SecureAdminAuthProvider>
               <AdminDashboard />
-            </AdminAuthProvider>
+            </SecureAdminAuthProvider>
           } />
           
           {/* All other routes with SimpleAuthProvider */}

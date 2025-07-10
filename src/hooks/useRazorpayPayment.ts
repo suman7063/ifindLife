@@ -81,7 +81,7 @@ export const useRazorpayPayment = () => {
 
       // Configure Razorpay options
       const options = {
-        key: orderData.razorpayKeyId || "rzp_test_kG71PNKVyDWEm8",
+        key: orderData.razorpayKeyId, // Use key from backend only
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'Expert Consultation',

@@ -1,13 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
+import { useSecureAdminAuth } from '@/contexts/SecureAdminAuth';
 import AdminDashboardLayout from '../layout/AdminDashboardLayout';
 import AdminRoutes from './AdminRoutes';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const adminAuth = useAdminAuthClean();
+  const adminAuth = useSecureAdminAuth();
   const [activeTab, setActiveTab] = useState('overview');
 
   // Auth check with clean admin system
