@@ -6,7 +6,7 @@ import {
   SidebarInset,
 } from "@/components/ui/sidebar";
 import { toast } from 'sonner';
-import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
+import { useSecureAdminAuth } from '@/contexts/SecureAdminAuth';
 import AdminSidebar from './sidebar/AdminSidebar';
 import RestoreSidebarButton from './sidebar/RestoreSidebarButton';
 import { getTabTitle } from './utils/tabUtils';
@@ -29,7 +29,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const adminAuth = useAdminAuthClean();
+  const adminAuth = useSecureAdminAuth();
   const { logout } = adminAuth || {};
   const currentUser = adminAuth?.admin;
   
@@ -75,7 +75,7 @@ const AdminDashboardLayout: React.FC<AdminDashboardLayoutProps> = ({
             onTabChange={handleTabChange}
             onLogout={handleLogout}
             isSuperAdmin={userIsSuperAdmin}
-            username={currentUser?.name || currentUser?.id || 'Admin'}
+            username={currentUser?.username || currentUser?.id || 'Admin'}
             userPermissions={userPermissions}
           />
           

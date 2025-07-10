@@ -2,10 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Users, Settings, Shield } from 'lucide-react';
-import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
+import { useSecureAdminAuth } from '@/contexts/SecureAdminAuth';
 
 const AdminUsersManagerPlaceholder: React.FC = () => {
-  const adminAuth = useAdminAuthClean();
+  const adminAuth = useSecureAdminAuth();
   const currentUser = adminAuth?.admin;
 
   return (
@@ -65,10 +65,10 @@ const AdminUsersManagerPlaceholder: React.FC = () => {
             <div className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex items-center space-x-4">
                 <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                  {currentUser?.name?.[0] || 'A'}
+                  {currentUser?.username?.[0] || 'A'}
                 </div>
                 <div>
-                  <p className="font-medium">{currentUser?.name || currentUser?.id}</p>
+                  <p className="font-medium">{currentUser?.username || currentUser?.id}</p>
                   <p className="text-sm text-muted-foreground">{currentUser?.role}</p>
                 </div>
               </div>

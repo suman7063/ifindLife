@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAdminAuthClean } from '@/contexts/AdminAuthClean';
+import { useSecureAdminAuth } from '@/contexts/SecureAdminAuth';
 import { Users, CheckCircle, Clock, TrendingUp, UserCheck, Calendar, MessageSquare, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const AdminOverview: React.FC = () => {
-  const adminAuth = useAdminAuthClean();
+  const adminAuth = useSecureAdminAuth();
   const currentUser = adminAuth?.admin;
   const [stats, setStats] = useState({
     totalExperts: 0,
@@ -89,7 +89,7 @@ const AdminOverview: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Dashboard Overview</h1>
-          <p className="text-muted-foreground">Welcome back, {currentUser?.name || currentUser?.id}</p>
+          <p className="text-muted-foreground">Welcome back, {currentUser?.username || currentUser?.id}</p>
         </div>
       </div>
 
@@ -182,7 +182,7 @@ const AdminOverview: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <p className="text-sm"><strong>User:</strong> {currentUser?.name || currentUser?.id}</p>
+              <p className="text-sm"><strong>User:</strong> {currentUser?.username || currentUser?.id}</p>
               <p className="text-sm"><strong>Role:</strong> {currentUser?.role}</p>
               <p className="text-sm"><strong>Status:</strong> <span className="text-green-600">Active</span></p>
               <p className="text-xs text-muted-foreground">
