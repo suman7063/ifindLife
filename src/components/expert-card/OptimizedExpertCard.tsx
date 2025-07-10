@@ -1,0 +1,279 @@
+import React, { memo, useMemo } from 'react';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Star, Video, Phone, Clock, Calendar } from 'lucide-react';
+import { ExpertCardData } from './types';
+import { useAuth } from '@/contexts/auth/AuthContext';
+import { useAuthRedirectSystem } from '@/hooks/useAuthRedirectSystem';
+import { toast } from 'sonner';
+
+export interface OptimizedExpertCardProps {
+  expert: ExpertCardData;
+  onClick?: () => void;
+  className?: string;
+  onConnectNow?: (type: 'video' | 'voice') => void;
+  onBookNow?: () => void;
+  showConnectOptions?: boolean;
+  onShowConnectOptions?: (show: boolean) => void;
+  variant?: 'default' | 'compact' | 'detailed';
+}
+
+const OptimizedExpertCard: React.FC<OptimizedExpertCardProps> = memo(({ 
+  expert, 
+  onClick, 
+  className = '',
+  onConnectNow,
+  onBookNow,
+  showConnectOptions = false,
+  onShowConnectOptions,
+  variant = 'default'
+}) => {
+  const { isAuthenticated } = useAuth();
+  const { requireAuthForExpert, requireAuthForCall, executeIntendedAction } = useAuthRedirectSystem();
+
+  // Memoize expert data processing
+  const expertData = useMemo(() => {
+    return {
+      id: expert.id,
+      name: expert.name || 'Unnamed Expert',
+      avatarUrl: expert.profilePicture || '',
+      specialization: expert.specialization || 'General',
+      rating: expert.averageRating || 0,
+      reviewCount: expert.reviewsCount || 0,
+      isVerified: expert.verified || false,
+      status: expert.status || 'offline',
+      experience: expert.experience || 0,
+      price: expert.price || 0,
+      waitTime: expert.waitTime || 'Unknown',
+      initials: expert.name
+        ?.split(' ')
+        .map(name => name.charAt(0))
+        .join('')
+        .toUpperCase()
+        .substring(0, 2) || 'EX'
+    };
+  }, [expert]);
+
+  // Memoize availability status
+  const availabilityStatus = useMemo(() => {
+    const isOnline = expertData.status === 'online';
+    const isAvailable = isOnline && expertData.waitTime === 'Available Now';
+    
+    return {
+      isOnline,
+      isAvailable,
+      statusText: isOnline ? 'Available Now' : expertData.waitTime,
+      statusColor: isOnline ? 'text-green-600' : 'text-gray-500',
+      badgeColor: isOnline ? 'bg-green-500' : 'bg-gray-400'
+    };
+  }, [expertData.status, expertData.waitTime]);
+
+  // Handle authentication flow after login
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      const pendingAction = executeIntendedAction();
+      if (pendingAction && pendingAction.params?.expertId === expertData.id) {
+        setTimeout(() => {
+          if (pendingAction.action === 'connect' && pendingAction.params?.callType && onConnectNow) {
+            toast.success(`Logged in! Starting ${pendingAction.params.callType} call with ${expertData.name}`);
+            onConnectNow(pendingAction.params.callType as 'video' | 'voice');
+          } else if (pendingAction.action === 'book' && onBookNow) {
+            toast.success(`Logged in! Opening booking for ${expertData.name}`);
+            onBookNow();
+          } else if (pendingAction.action === 'call' && onShowConnectOptions) {
+            toast.success(`Logged in! Opening call options for ${expertData.name}`);
+            onShowConnectOptions(true);
+          }
+        }, 500);
+      }
+    }
+  }, [isAuthenticated, executeIntendedAction, onConnectNow, onBookNow, onShowConnectOptions, expertData.id, expertData.name]);
+
+  // Handle connect now with improved UX
+  const handleConnectNow = React.useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!requireAuthForExpert(expertData.id, expertData.name, 'connect')) {
+      return;
+    }
+
+    if (!availabilityStatus.isOnline) {
+      toast.error(`${expertData.name} is currently offline`);
+      return;
+    }
+
+    if (onShowConnectOptions) {
+      onShowConnectOptions(true);
+    }
+  }, [requireAuthForExpert, expertData.id, expertData.name, availabilityStatus.isOnline, onShowConnectOptions]);
+
+  // Handle book now with improved UX
+  const handleBookNow = React.useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!requireAuthForExpert(expertData.id, expertData.name, 'book')) {
+      return;
+    }
+
+    if (onBookNow) {
+      onBookNow();
+    }
+  }, [requireAuthForExpert, expertData.id, expertData.name, onBookNow]);
+
+  // Handle specific connection type
+  const handleConnectOption = React.useCallback((type: 'video' | 'voice') => {
+    if (!requireAuthForCall(expertData.id, expertData.name, type)) {
+      return;
+    }
+
+    if (onConnectNow) {
+      onConnectNow(type);
+    }
+    if (onShowConnectOptions) {
+      onShowConnectOptions(false);
+    }
+  }, [requireAuthForCall, expertData.id, expertData.name, onConnectNow, onShowConnectOptions]);
+
+  // Render buttons based on variant and state
+  const renderActionButtons = () => {
+    if (showConnectOptions && availabilityStatus.isOnline) {
+      return (
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="default"
+            className="flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleConnectOption('video');
+            }}
+          >
+            <Video className="h-3 w-3 mr-1" />
+            Video
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleConnectOption('voice');
+            }}
+          >
+            <Phone className="h-3 w-3 mr-1" />
+            Voice
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant={availabilityStatus.isOnline ? 'default' : 'outline'}
+          className="flex-1"
+          onClick={handleConnectNow}
+          disabled={!availabilityStatus.isOnline}
+        >
+          {availabilityStatus.isOnline ? (
+            <>
+              <Video className="h-3 w-3 mr-1" />
+              Connect Now
+            </>
+          ) : (
+            <>
+              <Clock className="h-3 w-3 mr-1" />
+              Offline
+            </>
+          )}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="flex-1"
+          onClick={handleBookNow}
+        >
+          <Calendar className="h-3 w-3 mr-1" />
+          Book
+        </Button>
+      </div>
+    );
+  };
+
+  const cardContent = (
+    <>
+      <CardContent className="p-4">
+        <div className="flex items-start gap-4">
+          <div className="relative">
+            <Avatar className="h-16 w-16 border-2 border-white shadow">
+              <AvatarImage src={expertData.avatarUrl} alt={expertData.name} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {expertData.initials}
+              </AvatarFallback>
+            </Avatar>
+            <span 
+              className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background ${availabilityStatus.badgeColor}`}
+            />
+          </div>
+          
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between mb-1">
+              <h3 className="font-semibold text-lg truncate">{expertData.name}</h3>
+              {expertData.isVerified && (
+                <Badge variant="outline" className="border-green-500 text-green-600 shrink-0">
+                  Verified
+                </Badge>
+              )}
+            </div>
+            
+            <p className="text-sm text-muted-foreground truncate mb-2">{expertData.specialization}</p>
+            
+            <div className="flex items-center gap-1 mb-3">
+              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-sm font-medium">{expertData.rating.toFixed(1)}</span>
+              <span className="text-xs text-muted-foreground">({expertData.reviewCount})</span>
+            </div>
+            
+            {variant !== 'compact' && (
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <p className="text-muted-foreground">Experience</p>
+                  <p className="font-medium">{expertData.experience} years</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Price</p>
+                  <p className="font-medium">₹{expertData.price}/session</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+      
+      <CardFooter className="bg-muted/50 px-4 py-3">
+        <div className="w-full space-y-2">
+          <div className={`text-xs text-center font-medium ${availabilityStatus.statusColor}`}>
+            {availabilityStatus.statusText}
+          </div>
+          {renderActionButtons()}
+        </div>
+      </CardFooter>
+    </>
+  );
+
+  return (
+    <Card 
+      className={`overflow-hidden transition-all hover:shadow-lg cursor-pointer ${className}`}
+      onClick={onClick}
+    >
+      {cardContent}
+    </Card>
+  );
+});
+
+OptimizedExpertCard.displayName = 'OptimizedExpertCard';
+
+export default OptimizedExpertCard;

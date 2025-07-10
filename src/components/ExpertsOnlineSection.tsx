@@ -9,14 +9,14 @@ import ExpertCard from '@/components/expert-card';
 import ExpertDetailModal from '@/components/expert-card/ExpertDetailModal';
 import { ExpertCardData } from '@/components/expert-card/types';
 import { usePublicExpertsData } from '@/hooks/usePublicExpertsData';
-import { useRealExpertPresence } from '@/hooks/useRealExpertPresence';
+import { useOptimizedExpertPresence } from '@/hooks/useOptimizedExpertPresence';
 
 const ExpertsOnlineSection: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useSimpleAuth();
   const { experts: allExperts, loading } = usePublicExpertsData();
-  const expertAuthIds = allExperts.map(e => e.auth_id || e.id);
-  const { getExpertAvailability, updateExpertPresence } = useRealExpertPresence(expertAuthIds);
+  const expertAuthIds = allExperts.map(e => e.auth_id || e.id).filter(Boolean) as string[];
+  const { getExpertAvailability, isExpertOnline } = useOptimizedExpertPresence(expertAuthIds);
   const [selectedExpert, setSelectedExpert] = useState<ExpertCardData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expertConnectOptions, setExpertConnectOptions] = useState<{[key: string]: boolean}>({});

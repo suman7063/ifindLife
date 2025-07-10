@@ -1,3 +1,3 @@
 
-import ExpertCard from './expert-card';
-export default ExpertCard;
+import OptimizedExpertCard from './expert-card/OptimizedExpertCard';
+export default OptimizedExpertCard;

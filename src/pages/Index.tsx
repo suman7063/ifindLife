@@ -13,6 +13,7 @@ import Footer from '@/components/Footer';
 import AuthDebugPanel from '@/components/debug/AuthDebugPanel';
 import EmergencyAuthFix from '@/components/debug/EmergencyAuthFix';
 import TestimonialsSection from '@/components/TestimonialsSection';
+import PresencePerformanceMonitor from '@/components/expert-card/PresencePerformanceMonitor';
 
 // Lazy load remaining non-critical components
 const WhyChooseUsSection = lazy(() => import('@/components/WhyChooseUsSection'));
@@ -100,6 +101,9 @@ const Index = () => {
       
       {/* Debug Panel - Only in development */}
       <AuthDebugPanel />
+      
+      {/* Performance monitoring for expert presence system */}
+      <PresencePerformanceMonitor variant="compact" />
     </div>
   );
 };

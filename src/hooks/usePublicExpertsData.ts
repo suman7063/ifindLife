@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { ExpertCardData } from '@/components/expert-card/types';
-import { useRealExpertPresence } from './useRealExpertPresence';
+import { useOptimizedExpertPresence } from './useOptimizedExpertPresence';
 
 export function usePublicExpertsData() {
   const [experts, setExperts] = useState<ExpertCardData[]>([]);
@@ -15,7 +15,7 @@ export function usePublicExpertsData() {
     .map(e => e.auth_id)
     .filter(id => id !== null && id !== undefined);
 
-  const { getExpertStatus, getExpertAvailability } = useRealExpertPresence(expertAuthIds);
+  const { getExpertStatus, getExpertAvailability } = useOptimizedExpertPresence(expertAuthIds);
 
   // Map database expert to ExpertCardData
   const mapDbExpertToExpertCard = (dbExpert: any): ExpertCardData => {

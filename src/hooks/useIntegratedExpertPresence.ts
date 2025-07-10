@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useSimpleAuth } from '@/contexts/SimpleAuthContext';
-import { useRealExpertPresence } from './useRealExpertPresence';
+import { useOptimizedExpertPresence } from './useOptimizedExpertPresence';
 import { toast } from 'sonner';
 
 /**
@@ -9,7 +9,7 @@ import { toast } from 'sonner';
  */
 export function useIntegratedExpertPresence() {
   const { expert, isAuthenticated, userType } = useSimpleAuth();
-  const { updateExpertPresence } = useRealExpertPresence();
+  const { updateExpertPresence } = useOptimizedExpertPresence();
 
   useEffect(() => {
     if (userType === 'expert' && expert && isAuthenticated) {
