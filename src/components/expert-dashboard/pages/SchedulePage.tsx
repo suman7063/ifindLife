@@ -3,6 +3,8 @@ import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import SessionManager from './sessions/SessionManager';
 import AvailabilityManagement from '@/components/expert/availability/AvailabilityManagement';
+import BookingCalendar from './schedule/BookingCalendar';
+import GoogleCalendarIntegration from './schedule/GoogleCalendarIntegration';
 
 const SchedulePage: React.FC = () => {
   return (
@@ -22,7 +24,10 @@ const SchedulePage: React.FC = () => {
         </TabsList>
 
         <TabsContent value="availability">
-          <AvailabilityManagement />
+          <div className="space-y-6">
+            <AvailabilityManagement />
+            <GoogleCalendarIntegration />
+          </div>
         </TabsContent>
 
         <TabsContent value="sessions">
@@ -30,10 +35,7 @@ const SchedulePage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="calendar">
-          <div className="text-center py-12 text-gray-500">
-            <h3 className="text-lg font-medium mb-2">Calendar View</h3>
-            <p>View all your appointments in calendar format</p>
-          </div>
+          <BookingCalendar />
         </TabsContent>
       </Tabs>
     </div>
